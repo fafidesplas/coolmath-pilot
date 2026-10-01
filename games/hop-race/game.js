@@ -144,12 +144,14 @@ const RC_ROCKET = {
     spin: 3,            // launcher rotation (rad/s)
     speed: 38,          // rocket speed (units/s)
     cooldown: .1,
+    recoil: 4,          // small kick opposite the firing direction (speed)
     radius: 4,          // blast radius
+    switchRadius: 2.5,  // a blast this close to a button presses it
     power: 30,          // blast speed at the center
     maxSpeed: 27,
     friction: 7,        // ground friction
 };
-let rcRockets = [];
+let rcRockets = [], rcBlasts = [];   // rcBlasts: expanding ring visuals
 function rcIsRocket() { return RC_MODES[rcModeIndex].type == 'rocket'; }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +208,7 @@ function rcResetPlayer(p)
     p.trail = [];
     p.aimA = p.lane * PI * .5;
     p.cool = 0;
+    p.spinDir = 1;
     if (rcIsOrbit())
     {
         p.r = RC_ORBIT.rim - RC_ORBIT.ballR;
@@ -356,7 +359,7 @@ function rcRocketStep(p)
 {
     const o = RC_ROCKET;
     const down = keyIsDown(p.key);
-    p.aimA += o.spin * timeDelta;
+    p.aimA += o.spin * p.spinDir * timeDelta;
     p.cool = max(0, p.cool - timeDelta);
     if (down && !p.down && p.cool <= 0)
     {
@@ -364,6 +367,9 @@ function rcRocketStep(p)
         rcRockets.push({x: p.x + d.x * .6, y: p.y + d.y * .6, vx: d.x * o.speed, vy: d.y * o.speed,
             owner: p, age: 0});
         p.cool = o.cooldown;
+        p.spinDir = -p.spinDir;         // each shot reverses the launcher's rotation
+        p.vx -= d.x * o.recoil;
+        p.vy -= d.y * o.recoil;
         rcSfxFire.play();
     }
     p.down = down;
@@ -371,7 +377,7 @@ function rcRocketStep(p)
     p.vy -= RC_GRAVITY * timeDelta;
     p.x += p.vx * timeDelta;
     for (const s of rcSolids)
-        if (rcOverlap({x: p.x, y: p.y + .03}, s))
+        if (isOverlapping(vec2(p.x, p.y), vec2(RC_PSIZE, RC_PSIZE - .1), s.pos, s.size))   // slightly short so floors/ceilings we rest against don't count
         {
             p.x = p.vx > 0 ? s.l - RC_PSIZE/2 - .001 : s.r + RC_PSIZE/2 + .001;
             p.vx *= -.3;
@@ -390,7 +396,7 @@ function rcRocketStep(p)
                 p.grounded = true;
                 p.cx = p.x; p.cy = p.y;
             }
-            else if (p.vy > 0)
+            else if (p.vy > 0 && prevY + RC_PSIZE/2 <= s.bottom + .15)   // only when we came from below
             {
                 p.y = s.bottom - RC_PSIZE/2;
                 p.vy = 0;
@@ -408,9 +414,20 @@ function rcRocketStep(p)
     if (p.trail.length > 14) p.trail.shift();
 }
 
+function rcPressGate(g)
+{
+    if (g.pressed) return;
+    g.pressed = true;
+    rcSfxWin.play(undefined, .6, 1.5);
+    addScreenShake(.2, .5);
+}
+
 function rcExplode(x, y)
 {
     const o = RC_ROCKET, c = vec2(x, y);
+    rcBlasts.push({x, y, age: 0});
+    for (const g of rcGates)
+        if (c.distance(vec2(g.button.x, g.button.y)) < o.switchRadius) rcPressGate(g);
     for (const p of rcPlayers)
     {
         const off = vec2(p.x, p.y).subtract(c), d = off.length();
@@ -447,12 +464,7 @@ function rcRocketsUpdate()
                 isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(p.x, p.y), vec2(RC_PSIZE)));
             const btn = rcGates.find(g => !g.pressed &&
                 isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(g.button.x, g.button.y), vec2(1.4, .9)));
-            if (btn)
-            {
-                btn.pressed = true;
-                rcSfxWin.play(undefined, .6, 1.5);
-                addScreenShake(.2, .5);
-            }
+            if (btn) rcPressGate(btn);
             if (btn || hitSolid || hitPlayer) { rcExplode(r.x, r.y); return false; }
         }
         return true;
@@ -462,6 +474,7 @@ function rcRocketsUpdate()
 function rcFinished(p)
 {
     if (rcIsOrbit()) return p.r < RC_ORBIT.ridge[RC_ORBIT.ridge.length - 1] - RC_ORBIT.half - RC_ORBIT.ballR;
+    if (rcIsRocket()) return p.x >= RC_FINISH_X - 2 && p.y <= -4.5;   // generous: anywhere near the flag, no need to be grounded
     return p.x >= RC_FINISH_X && p.grounded;
 }
 
@@ -575,7 +588,7 @@ function rcStart(modeIndex = rcModeIndex)
 {
     rcLoadMode(modeIndex);
     rcOrbitTime = 0;
-    rcRockets = [];
+    rcRockets = []; rcBlasts = [];
     rcPlayers.forEach(rcResetPlayer);
     rcWinner = null;
     rcState = 'play';
@@ -586,6 +599,8 @@ function gameUpdate()
 {
     rcStateTimer += timeDelta;
     rcOrbitTime += timeDelta;
+    for (const b of rcBlasts) b.age += timeDelta;
+    rcBlasts = rcBlasts.filter(b => b.age < .35);
 
     if (rcState == 'menu')
     {
@@ -604,7 +619,7 @@ function gameUpdate()
     {
         rcState = 'menu';
         rcMenuIndex = max(0, rcMenuModes().indexOf(rcModeIndex));
-        rcRockets = [];
+        rcRockets = []; rcBlasts = [];
         rcPlayers.forEach(rcResetPlayer);
         return;
     }
@@ -795,6 +810,15 @@ function gameRender()
     // start line label tick
     rcPlayers.forEach(rcDrawAim);
     rcPlayers.forEach(rcDrawPlayer);
+
+    // explosions: a hot disc that grows to the blast radius while a ring races outward
+    for (const b of rcBlasts)
+    {
+        const k = b.age / .35, e = 1 - (1 - k) * (1 - k), d = 2 * RC_ROCKET.radius * (.15 + .85 * e);
+        drawCircle(vec2(b.x, b.y), d, hsl(.08, 1, .6, .35 * (1 - k)));
+        drawCircle(vec2(b.x, b.y), d * .55, hsl(.13, 1, .8, .6 * (1 - k)));
+        drawCircle(vec2(b.x, b.y), d, hsl(0, 0, 0, 0), .25 * (1 - k) + .05, hsl(.1, 1, .75, 1 - k));
+    }
 }
 
 function gameRenderPost()
