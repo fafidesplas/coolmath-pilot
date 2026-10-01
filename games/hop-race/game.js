@@ -129,6 +129,19 @@ const RC_MODES = [
         ],
     },
     {
+        name: 'Flow 2',
+        desc: 'The flag hangs high. Drop into the fire pit, turn to gas, and drift along the ceiling to it.',
+        hint: 'Hold: sand     Release: pack     Fire: gas rises on its own     Press while gas: condense and fall',
+        type: 'flow',
+        solids: [],
+        slabs: [
+            [-20.5,  0.4, -12.0, -2.4],   // start slope, ~18 degrees
+            [-13.0,  2.0,  21.0, 10.5],   // the ceiling: gas rises to its underside and slides up it to the flag (keep it last)
+        ],
+        fire: {x0: -12.5, x1: 8, y: -8.5},   // touching this evaporates you
+        flag: {x: 20.6, dir: -1},            // hangs from the ceiling's underside, pennant pointing left
+    },
+    {
         name: 'Orbit',
         desc: 'Always running clockwise. Hold to aim, release to jump through the exits!',
         hint: 'You run clockwise on your own     Hold: charge the jump     Release: jump',
@@ -239,7 +252,7 @@ function rcResetPlayer(p)
     p.grounded = true;
     p.cling = 0;
     p.dir = 1;
-    p.down = false; p.gathering = false; p.asleep = false;
+    p.down = false; p.gathering = false; p.asleep = false; p.gas = false;
     p.t = p.charge = 0;
     p.cx = p.x; p.cy = p.y;
     p.trail = [];
@@ -587,6 +600,11 @@ const RC_SAND = {
     packFrac: .85,     // pack into a square once this share of grains is gathered
     packRadius: .75,   // gathered = within this many half-square-widths of the center
     airTime: .12,      // a grain this long off the ground (or off other grounded grains) is no longer pulled
+    gasLift: 20,       // gas accelerates up at this rate instead of falling
+    gasFric: .03,      // gas barely drags on the ceiling, so it slides up the slope
+    gasDrag: 1,
+    gasTop: 12,        // gas that floats above this has escaped: respawn
+    debug: true,       // print each player's grain count above them
     packTimeout: 2.5,  // seconds; then pack with whatever has gathered
 };
 const RC_SAND_D = RC_PSIZE / RC_SAND.n;       // grain diameter = grid spacing
@@ -594,6 +612,7 @@ function rcSqSize(p) { return Math.sqrt(p.grains) * RC_SAND_D; }   // the square
 let rcSlabs = [];
 const RC_SQ_OFFS = [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [0, 1], [-1, 0], [1, 0], [0, 0]];   // x h
 function rcIsFlow() { return RC_MODES[rcModeIndex].type == 'flow'; }
+function rcSandForm(p) { return p.down || p.gathering || p.gas; }   // drawn and simulated as grains
 
 function rcMakeSlabs(list)
 {
@@ -617,7 +636,7 @@ function rcSlabPush(sl, px, py, r)
     return {nx: lx * sl.c - ly * sl.s, ny: lx * sl.s + ly * sl.c, d: m};
 }
 
-function rcSandSlabs(q, r)
+function rcSandSlabs(q, r, fric = RC_SAND.platFric)
 {
     for (const sl of rcSlabs)
     {
@@ -629,7 +648,7 @@ function rcSandSlabs(q, r)
         if (vn >= 0) continue;
         q.vx -= vn * hit.nx; q.vy -= vn * hit.ny;              // inelastic: just stop going in
         const tx = -hit.ny, ty = hit.nx, vt = q.vx * tx + q.vy * ty;
-        const cut = Math.sign(vt) * Math.min(Math.abs(vt), RC_SAND.platFric * -vn);   // Coulomb friction
+        const cut = Math.sign(vt) * Math.min(Math.abs(vt), fric * -vn);   // Coulomb friction
         q.vx -= cut * tx; q.vy -= cut * ty;
     }
 }
@@ -686,6 +705,7 @@ function rcSandRespawn(p)
     rcSfxFall.play();
     p.parts = [];
     p.asleep = false;
+    p.gas = false;
     p.grains = RC_SAND.n * RC_SAND.n;
     p.x = p.cx; p.y = p.cy; p.vx = p.vy = 0; p.ang = p.cAng;
     p.trail = [];
@@ -731,13 +751,14 @@ function rcSquareStep(p, dt)
 
 function rcSandStep(p, dt, tx, ty)
 {
-    const o = RC_SAND, r = RC_SAND_D / 2, parts = p.parts;
+    const o = RC_SAND, r = RC_SAND_D / 2, parts = p.parts, fric = p.gas ? o.gasFric : o.platFric;
     for (let s = 0; s < o.sub; s++)
     {
         const h = dt / o.sub;
         for (const q of parts)
         {
-            q.vy -= o.gravity * h;
+            if (p.gas) { q.vy += o.gasLift * h; q.vx *= Math.exp(-o.gasDrag * h); q.vy *= Math.exp(-o.gasDrag * h); }
+            else q.vy -= o.gravity * h;
             q.air += h;
             if (tx !== undefined && q.air < o.airTime)
             {
@@ -748,7 +769,7 @@ function rcSandStep(p, dt, tx, ty)
             const sp = Math.hypot(q.vx, q.vy);
             if (sp > o.maxV) { q.vx *= o.maxV / sp; q.vy *= o.maxV / sp; }
             q.x += q.vx * h; q.y += q.vy * h;
-            rcSandSlabs(q, r);
+            rcSandSlabs(q, r, fric);
         }
         // grain-on-grain contacts through a spatial hash
         const grid = new Map(), D = RC_SAND_D;
@@ -784,11 +805,27 @@ function rcSandStep(p, dt, tx, ty)
         });
         for (const q of parts)
         {
-            rcSandSlabs(q, r);
+            rcSandSlabs(q, r, fric);
             if (abs(q.x) > o.wall) { q.x = Math.sign(q.x) * o.wall; q.vx = 0; }
         }
     }
-    p.parts = parts.filter(q => q.y > RC_KILL_Y);
+    if (!p.gas) p.parts = parts.filter(q => q.y > RC_KILL_Y);     // gas can't be lost: it is on its way back up
+}
+
+// the fire pit: any part of you in it evaporates you into gas
+function rcFireCheck(p)
+{
+    const f = RC_MODES[rcModeIndex].fire;
+    if (!f || p.gas) return;
+    const sand = p.down || p.gathering, r = RC_SAND_D / 2;
+    const hit = sand ? p.parts.some(q => q.x > f.x0 && q.x < f.x1 && q.y - r < f.y)
+                     : p.x > f.x0 && p.x < f.x1 && p.y - rcSqSize(p) / 2 < f.y;
+    if (!hit) return;
+    if (!sand) rcCrumble(p);
+    p.gas = true;
+    p.gathering = false;
+    p.asleep = false;
+    rcSfxFall.play(undefined, .6, 2);
 }
 
 function rcFlowStep(p)
@@ -797,15 +834,18 @@ function rcFlowStep(p)
     if (down != p.down)
     {
         rcSfxCharge.play(undefined, 1, down ? .6 : 1.6);
-        if (down) { if (!p.gathering) rcCrumble(p); p.gathering = false; }   // re-press mid-gather: flow on
+        if (p.gas) { if (down) p.gas = false; }                              // press while gas: condense and fall as sand
+        else if (down) { if (!p.gathering) rcCrumble(p); p.gathering = false; }   // re-press mid-gather: flow on
         else if (p.parts.length >= o.minGrains) { p.gathering = true; p.gT = 0; }
         else rcSandRespawn(p);
     }
     p.down = down;
 
-    if (down || p.gathering)
+    rcFireCheck(p);
+    if (down || p.gathering || p.gas)
     {
         if (p.gathering) rcSandStep(p, dt, p.x, p.y); else rcSandStep(p, dt);
+        if (p.gas && p.y > o.gasTop) rcSandRespawn(p);                       // drifted off into the sky
         if (p.gathering)
         {
             p.gT += dt;
@@ -896,19 +936,24 @@ function rcRocketsUpdate()
     });
 }
 
-// the flag stands on the last slab: x of the pole, y of its foot, and the box the pole and pennant fill
+// the flag: x of the pole, y of its end, and the box it fills. It stands on the last slab, or (flag.hang)
+// hangs from the underside of the last slab with its pennant pointing flag.dir.
 function rcFlowFlag()
 {
-    const sl = rcSlabs[rcSlabs.length - 1], x = 18;
-    return {x, y: sl.y0 + (x - sl.x0) * Math.tan(sl.ang)};
+    const sl = rcSlabs[rcSlabs.length - 1], cfg = RC_MODES[rcModeIndex].flag, x = cfg ? cfg.x : 18;
+    const line = sl.y0 + (x - sl.x0) * Math.tan(sl.ang);
+    if (!cfg) return {x, y: line, hang: false, dir: 1};
+    return {x, y: line - sl.T / sl.c, hang: true, dir: cfg.dir || 1};
 }
 
 // how many of the player's grains overlap the flag? (a square touching it counts all of its grains)
 function rcFlagTouching(p)
 {
-    const f = rcFlowFlag(), x0 = f.x - .1, x1 = f.x + 1.5, y0 = f.y, y1 = f.y + 3;
+    const f = rcFlowFlag(), len = f.hang ? 2.4 : 1.5;
+    const x0 = f.dir > 0 ? f.x - .1 : f.x - len, x1 = f.dir > 0 ? f.x + len : f.x + .1;
+    const y0 = f.hang ? f.y - 3 : f.y, y1 = f.hang ? f.y : f.y + 3;
     const near = (x, y, r) => x > x0 - r && x < x1 + r && y > y0 - r && y < y1 + r;
-    if (p.down || p.gathering) return p.parts.filter(q => near(q.x, q.y, RC_SAND_D / 2)).length;
+    if (rcSandForm(p)) return p.parts.filter(q => near(q.x, q.y, RC_SAND_D / 2)).length;
     return near(p.x, p.y, rcSqSize(p) / 2) ? p.grains : 0;
 }
 
@@ -1104,7 +1149,7 @@ function gameUpdatePost()
 ///////////////////////////////////////////////////////////////////////////////
 function rcDrawPlayer(p)
 {
-    const sandy = rcIsFlow() && (p.down || p.gathering);   // as sand, only the eye is left of the square
+    const sandy = rcIsFlow() && rcSandForm(p);   // as sand, only the eye is left of the square
     if (p.trail.length > 1 && !sandy)
         for (let i = 0; i < p.trail.length; i++)
         {
@@ -1138,10 +1183,12 @@ function rcTiltRect(center, tangent, w, h, color)
 function rcDrawFlowPlayer(p)
 {
     const t = vec2(Math.cos(p.ang), Math.sin(p.ang)), n = vec2(-t.y, t.x), c = vec2(p.x, p.y);
-    if (p.down || p.gathering)
+    if (RC_SAND.debug) drawText(`${p.grains}`, c.add(vec2(0, 1.4)), .9, WHITE, .08, BLACK);   // grains left
+    if (rcSandForm(p))
     {
         for (const q of p.parts)
-            drawCircle(vec2(q.x, q.y), RC_SAND_D * 1.6, p.color.lerp(WHITE, q.shade));
+            if (p.gas) drawCircle(vec2(q.x, q.y), RC_SAND_D * 2.2, p.color.lerp(WHITE, .5 + q.shade).scale(1, .5));   // translucent gas
+            else drawCircle(vec2(q.x, q.y), RC_SAND_D * 1.6, p.color.lerp(WHITE, q.shade));
         rcTiltRect(c, t, rcSqSize(p) * .5, rcSqSize(p) * .5, p.color.lerp(WHITE, .6));   // the eye's white
         drawRect(c.add(t.scale(.18)).add(n.scale(.1)), vec2(.12), BLACK);                  // and its iris
         return;
@@ -1236,9 +1283,32 @@ function rcDrawFlowBoard()
         drawLine(a, b, .14, hsl(.5, .8, .55));
     }
     // finish flag on the last slab
-    const {x: fx, y: fy} = rcFlowFlag();
-    drawRect(vec2(fx, fy + 1.5), vec2(.12, 3), hsl(0, 0, .9));
-    drawPoly([vec2(0, 0), vec2(1.4, .5), vec2(0, 1)], hsl(.15, 1, .55), 0, BLACK, vec2(fx + .06, fy + 2));
+    const {x: fx, y: fy, hang, dir} = rcFlowFlag();
+    if (hang)
+    {
+        drawRect(vec2(fx, fy - 1.5), vec2(.12, 3), hsl(0, 0, .9));
+        drawPoly([vec2(0, 0), vec2(2.2 * dir, .5), vec2(0, 1)], hsl(.15, 1, .55), 0, BLACK, vec2(fx + .06 * dir, fy - 3));
+    }
+    else
+    {
+        drawRect(vec2(fx, fy + 1.5), vec2(.12, 3), hsl(0, 0, .9));
+        drawPoly([vec2(0, 0), vec2(1.4, .5), vec2(0, 1)], hsl(.15, 1, .55), 0, BLACK, vec2(fx + .06, fy + 2));
+    }
+    rcDrawFire();
+}
+
+function rcDrawFire()
+{
+    const f = RC_MODES[rcModeIndex].fire;
+    if (!f) return;
+    drawRect(vec2((f.x0 + f.x1) / 2, (f.y + RC_KILL_Y) / 2 - .6), vec2(f.x1 - f.x0, f.y - RC_KILL_Y + 1.2), hsl(.03, .9, .3));
+    for (let x = f.x0; x < f.x1; x += .7)
+    {
+        const flick = Math.sin(time * 7 + x * 2.3) * .5 + Math.sin(time * 11 + x * 5.1) * .3;
+        const h = 1.6 + flick, hue = .04 + .05 * (Math.sin(x * 3.7) * .5 + .5);
+        drawPoly([vec2(-.4, 0), vec2(.4, 0), vec2(flick * .25, h)], hsl(hue, 1, .5), 0, BLACK, vec2(x, f.y - .3));
+        drawPoly([vec2(-.2, 0), vec2(.2, 0), vec2(flick * .15, h * .55)], hsl(.13, 1, .62), 0, BLACK, vec2(x, f.y - .3));
+    }
 }
 
 function gameRender()
