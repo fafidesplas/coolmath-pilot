@@ -53,6 +53,46 @@ const RC_MODES = [
         ],
     },
     {
+        name: 'Rocket Jump',
+        desc: 'Your launcher never stops spinning. Fire at the ground to blast yourself the other way!',
+        hint: 'Press: fire a rocket     The blast pushes you away from the explosion',
+        type: 'rocket',
+        solids: [
+            [-20, -14, -8],       // start ground
+            [-11,  -8, -6],
+            [ -5,  -2, -3],
+            [  1,   4,  0],       // high perch
+            [  7,   9, -4],
+            [ 14,  20, -8],       // finish ground
+            [-20,  20, 11.2, 10.2], // ceiling keeps everyone on screen
+            [-21, -20, 11],       // side walls
+            [ 20,  21, 11],
+        ],
+    },
+    {
+        name: 'Rocket Jump 2',
+        desc: 'No pits. Shoot the ceiling button to open the gate, then drop down the shaft to the flag.',
+        hint: 'Press: fire a rocket     Shoot the red button to lift the gate',
+        type: 'rocket',
+        solids: [
+            [-20,  20, -8],            // solid floor, no drops
+            [ -8,  -4, -3.5, -4.5],    // stepping-stone ledge in the start room
+            [ -1,   1, -1.5],          // divider, lower half
+            [ -1,   1, 10.2, 5],       // divider, upper half: the doorway is the gap between
+            [  8,  20, 10.2, 6],       // stalactite ceiling over the right chamber
+            [  5,  17, -3.5, -4.5],    // roof of the dead-end cellar
+            [  5,   6, -3.5],          // cellar wall
+            [ 14, 15.5,  6,  0],       // hanging wall: pass under it, then down the shaft
+            [-20,  20, 11.2, 10.2], // ceiling keeps everyone on screen
+            [-21, -20, 11],       // side walls
+            [ 20,  21, 11],
+        ],
+        // a shot rocket that hits the button slides the gate up into the ceiling
+        gates: [
+            {solid: [10, 11.5, 6, -3.5], button: {x: 3.8, y: 9.7}},
+        ],
+    },
+    {
         name: 'Orbit',
         desc: 'Always running clockwise. Hold to aim, release to jump through the exits!',
         hint: 'You run clockwise on your own     Hold: charge the jump     Release: jump',
@@ -63,17 +103,54 @@ const RC_MODES = [
 ];
 let rcModeIndex = 0, rcMenuIndex = 0;   // rcMenuIndex is a position in rcMenuModes()
 function rcMenuModes() { return RC_MODES.map((m, i) => i).filter(i => !RC_MODES[i].hidden); }
-let rcSolids = [];
+let rcSolids = [], rcGates = [];
 
 function rcLoadMode(i)
 {
     rcModeIndex = i;
-    rcSolids = RC_MODES[i].solids.map(([l, r, top, bottom = -30]) =>
-        ({pos: vec2((l+r)/2, (top+bottom)/2), size: vec2(r-l, top-bottom), top, bottom, l, r}));
+    const make = ([l, r, top, bottom = -30]) =>
+        ({pos: vec2((l+r)/2, (top+bottom)/2), size: vec2(r-l, top-bottom), top, bottom, l, r});
+    rcSolids = RC_MODES[i].solids.map(make);
+    rcGates = (RC_MODES[i].gates || []).map(g =>
+    {
+        const solid = make(g.solid);
+        solid.gate = true;
+        rcSolids.push(solid);
+        return {solid, closedBottom: solid.bottom, button: g.button, open: 0, pressed: false};
+    });
+}
+
+// Slides a gate up: its bottom edge rises toward its top as open goes 0 -> 1.
+function rcGatesUpdate()
+{
+    for (const g of rcGates)
+    {
+        if (!g.pressed || g.open >= 1) continue;
+        g.open = min(1, g.open + timeDelta / .8);
+        const s = g.solid;
+        s.bottom = lerp(g.closedBottom, s.top, g.open);
+        s.size.y = s.top - s.bottom;
+        s.pos.y = (s.top + s.bottom) / 2;
+    }
 }
 
 let rcPlayers, rcState, rcWinner, rcStateTimer, rcStars = [];
-let rcSfxJump, rcSfxLand, rcSfxFall, rcSfxWin, rcSfxCharge;
+let rcSfxJump, rcSfxLand, rcSfxFall, rcSfxWin, rcSfxCharge, rcSfxFire, rcSfxBoom;
+
+// ---------------------------------------------------------------------------
+// ROCKET MODE - a launcher spins forever; press to fire, the blast shoves you away
+// ---------------------------------------------------------------------------
+const RC_ROCKET = {
+    spin: 3,            // launcher rotation (rad/s)
+    speed: 38,          // rocket speed (units/s)
+    cooldown: .1,
+    radius: 4,          // blast radius
+    power: 30,          // blast speed at the center
+    maxSpeed: 27,
+    friction: 7,        // ground friction
+};
+let rcRockets = [];
+function rcIsRocket() { return RC_MODES[rcModeIndex].type == 'rocket'; }
 
 // ---------------------------------------------------------------------------
 // ORBIT MODE - concentric grooves with rotating exits (polar physics)
@@ -127,6 +204,8 @@ function rcResetPlayer(p)
     p.t = p.charge = 0;
     p.cx = p.x; p.cy = p.y;
     p.trail = [];
+    p.aimA = p.lane * PI * .5;
+    p.cool = 0;
     if (rcIsOrbit())
     {
         p.r = RC_ORBIT.rim - RC_ORBIT.ballR;
@@ -152,6 +231,8 @@ function gameInit()
     rcSfxFall   = new SoundGenerator({frequency:400, release:.4, slide:-.8, volume:.4});
     rcSfxWin    = new SoundGenerator({frequency:600, release:.5, pitchJump:400, pitchJumpTime:.1, repeatTime:.12, volume:.5});
     rcSfxCharge = new SoundGenerator({frequency:200, release:.03, volume:.15});
+    rcSfxFire   = new SoundGenerator({frequency:500, release:.15, slide:-1.5, noise:.3, volume:.4});
+    rcSfxBoom   = new SoundGenerator({frequency:70, release:.35, slide:-.1, noise:20, bitCrush:.4, volume:.7});
 
     for (let i = 0; i < 60; i++)
         rcStars.push({pos: vec2(rand(-22, 22), rand(-12, 12)), s: rand(.05, .15)});
@@ -269,6 +350,115 @@ function rcDrawOrbitAim(p)
     drawRect(pos.add(out).add(vec2(-.6 + .6 * p.charge, 0)), vec2(1.2 * p.charge, .18), p.color);
 }
 
+function rcRocketDir(p) { return vec2(Math.cos(p.aimA), Math.sin(p.aimA)); }
+
+function rcRocketStep(p)
+{
+    const o = RC_ROCKET;
+    const down = keyIsDown(p.key);
+    p.aimA += o.spin * timeDelta;
+    p.cool = max(0, p.cool - timeDelta);
+    if (down && !p.down && p.cool <= 0)
+    {
+        const d = rcRocketDir(p);
+        rcRockets.push({x: p.x + d.x * .6, y: p.y + d.y * .6, vx: d.x * o.speed, vy: d.y * o.speed,
+            owner: p, age: 0});
+        p.cool = o.cooldown;
+        rcSfxFire.play();
+    }
+    p.down = down;
+
+    p.vy -= RC_GRAVITY * timeDelta;
+    p.x += p.vx * timeDelta;
+    for (const s of rcSolids)
+        if (rcOverlap({x: p.x, y: p.y + .03}, s))
+        {
+            p.x = p.vx > 0 ? s.l - RC_PSIZE/2 - .001 : s.r + RC_PSIZE/2 + .001;
+            p.vx *= -.3;
+        }
+    const prevY = p.y;
+    p.y += p.vy * timeDelta;
+    p.grounded = false;
+    for (const s of rcSolids)
+        if (rcOverlap(p, s))
+        {
+            if (p.vy <= 0 && prevY - RC_PSIZE/2 >= s.top - .15)
+            {
+                if (p.vy < -8) { rcSfxLand.play(); p.squash = .3; }
+                p.y = s.top + RC_PSIZE/2;
+                p.vy = 0;
+                p.grounded = true;
+                p.cx = p.x; p.cy = p.y;
+            }
+            else if (p.vy > 0)
+            {
+                p.y = s.bottom - RC_PSIZE/2;
+                p.vy = 0;
+            }
+        }
+    if (p.grounded) p.vx *= Math.exp(-o.friction * timeDelta);
+    if (p.y < RC_KILL_Y)
+    {
+        rcSfxFall.play();
+        p.x = p.cx; p.y = p.cy;
+        p.vx = p.vy = 0;
+    }
+    p.squash *= .85;
+    p.trail.push(vec2(p.x, p.y));
+    if (p.trail.length > 14) p.trail.shift();
+}
+
+function rcExplode(x, y)
+{
+    const o = RC_ROCKET, c = vec2(x, y);
+    for (const p of rcPlayers)
+    {
+        const off = vec2(p.x, p.y).subtract(c), d = off.length();
+        if (d >= o.radius) continue;
+        const dir = d > .01 ? off.scale(1 / d) : vec2(0, 1);
+        const k = 1 - d / o.radius;
+        p.vx += dir.x * o.power * k;
+        p.vy += dir.y * o.power * k;
+        const sp = Math.hypot(p.vx, p.vy);
+        if (sp > o.maxSpeed) { p.vx *= o.maxSpeed / sp; p.vy *= o.maxSpeed / sp; }
+        p.squash = -.3;
+    }
+    rcSfxBoom.play(c);
+    addScreenShake(.25, .2);
+    new ParticleEmitter(c, 0, .3, .1, 40, PI, undefined,
+        hsl(.12, 1, .7), hsl(.02, 1, .5), hsl(.12, 1, .5, 0), hsl(0, 0, .2, 0),
+        .5, .5, .1, .25, 0, .92, 1, 0, PI, .1, .5, false, true);
+}
+
+function rcRocketsUpdate()
+{
+    const o = RC_ROCKET;
+    rcRockets = rcRockets.filter(r =>
+    {
+        r.age += timeDelta;
+        if (abs(r.x) > 30 || abs(r.y) > 20) return false;   // flew off into the void
+        const n = 3;
+        for (let i = 0; i < n; i++)
+        {
+            r.x += r.vx * timeDelta / n;
+            r.y += r.vy * timeDelta / n;
+            const hitSolid = rcSolids.some(s => isOverlapping(vec2(r.x, r.y), vec2(.1), s.pos, s.size));
+            const hitPlayer = rcPlayers.some(p => (p != r.owner || r.age > .15) &&
+                isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(p.x, p.y), vec2(RC_PSIZE)));
+            const btn = rcGates.find(g => !g.pressed &&
+                isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(g.button.x, g.button.y), vec2(1.4, .9)));
+            if (btn)
+            {
+                btn.pressed = true;
+                rcSfxWin.play(undefined, .6, 1.5);
+                addScreenShake(.2, .5);
+            }
+            if (btn || hitSolid || hitPlayer) { rcExplode(r.x, r.y); return false; }
+        }
+        return true;
+    });
+}
+
 function rcFinished(p)
 {
     if (rcIsOrbit()) return p.r < RC_ORBIT.ridge[RC_ORBIT.ridge.length - 1] - RC_ORBIT.half - RC_ORBIT.ballR;
@@ -278,6 +468,7 @@ function rcFinished(p)
 function rcStep(p)
 {
     if (rcIsOrbit()) return rcOrbitStep(p);
+    if (rcIsRocket()) return rcRocketStep(p);
     const mode = RC_MODES[rcModeIndex];
     const canCharge = p.grounded || p.cling;
     const down = keyIsDown(p.key);
@@ -384,6 +575,7 @@ function rcStart(modeIndex = rcModeIndex)
 {
     rcLoadMode(modeIndex);
     rcOrbitTime = 0;
+    rcRockets = [];
     rcPlayers.forEach(rcResetPlayer);
     rcWinner = null;
     rcState = 'play';
@@ -412,6 +604,7 @@ function gameUpdate()
     {
         rcState = 'menu';
         rcMenuIndex = max(0, rcMenuModes().indexOf(rcModeIndex));
+        rcRockets = [];
         rcPlayers.forEach(rcResetPlayer);
         return;
     }
@@ -426,6 +619,8 @@ function gameUpdate()
     for (const p of rcPlayers)
     {
         rcStep(p);
+        if (!rcWinner && rcIsRocket() && p == rcPlayers[rcPlayers.length - 1]) rcRocketsUpdate();
+        if (!rcWinner && rcIsRocket() && p == rcPlayers[rcPlayers.length - 1]) rcGatesUpdate();
         if (rcFinished(p) && !rcWinner)
         {
             rcWinner = p;
@@ -475,6 +670,7 @@ function rcDrawPlayer(p)
 function rcDrawAim(p)
 {
     if (rcIsOrbit()) return rcDrawOrbitAim(p);
+    if (rcIsRocket()) return rcDrawRocketAim(p);
     if (!(p.grounded || p.cling) || !p.down) return;
     const a = rcAim(p);
     // trajectory preview dots
@@ -497,6 +693,21 @@ function rcDrawAim(p)
     // power bar above the head
     drawRect(vec2(p.x, p.y + .9), vec2(1.2, .18), hsl(0, 0, 0, .5));
     drawRect(vec2(p.x - .6 + .6 * p.charge, p.y + .9), vec2(1.2 * p.charge, .18), p.color);
+}
+
+function rcDrawRocketAim(p)
+{
+    const d = rcRocketDir(p), pos = vec2(p.x, p.y), ready = p.cool <= 0;
+    const col = ready ? p.color : p.color.scale(1, .4);
+    // faint sight line up to the first thing it would hit
+    for (let i = 1; i < 12; i++)
+    {
+        const q = pos.add(d.scale(.6 + i * .7));
+        if (rcSolids.some(s => isOverlapping(q, vec2(.1), s.pos, s.size))) break;
+        drawRect(q, vec2(.1), p.color.lerp(WHITE, .3).scale(1, .5 - i * .04));
+    }
+    drawLine(pos, pos.add(d.scale(.9)), .22, col);
+    drawRect(pos.add(d.scale(.9)), vec2(.34, .34), col, p.aimA);
 }
 
 function rcPolar(r, a) { return vec2(r * Math.cos(a), r * Math.sin(a)); }
@@ -546,7 +757,8 @@ function gameRender()
     // solids
     for (const s of rcSolids)
     {
-        drawRect(s.pos, s.size, hsl(.7, .4, .22));
+        drawRect(s.pos, s.size, s.gate ? hsl(.97, .45, .3) : hsl(.7, .4, .22));
+        if (s.size.y < .05) continue;   // fully open gate
         drawRect(vec2(s.pos.x, s.top - .08), vec2(s.size.x, .16), hsl(.5, .8, .55));
         if (RC_MODES[rcModeIndex].wallCling)
         {
@@ -562,6 +774,23 @@ function gameRender()
     // checker line
     for (let i = 0; i < 6; i++)
         drawRect(vec2(fx + 1.8, -8 + .25 + i * .5), vec2(.5), (i % 2) ? WHITE : BLACK);
+
+    // buttons
+    for (const g of rcGates)
+    {
+        const col = g.pressed ? hsl(.38, .8, .5) : hsl(.0, .9, .55), b = vec2(g.button.x, g.button.y);
+        if (!g.pressed) drawCircle(b, 2.4 + .4 * Math.sin(time * 5), col.scale(1, .18));
+        drawRect(b.add(vec2(0, .25)), vec2(1.4, .3), hsl(0, 0, .3));
+        drawRect(b.add(vec2(0, g.pressed ? -.1 : 0)), vec2(1.0, .35), col);
+    }
+
+    // rockets
+    for (const r of rcRockets)
+    {
+        const a = Math.atan2(r.vy, r.vx);
+        drawLine(vec2(r.x, r.y), vec2(r.x - Math.cos(a) * .9, r.y - Math.sin(a) * .9), .16, hsl(.1, 1, .6, .6));
+        drawRect(vec2(r.x, r.y), vec2(.5, .22), hsl(0, 0, .95), a);
+    }
 
     // start line label tick
     rcPlayers.forEach(rcDrawAim);
@@ -583,7 +812,7 @@ function gameRenderPost()
             const x = i == 0 ? u * 4 : W - u * 4;
             drawTextScreen(`${p.name}: ${p.wins}`, vec2(x, u * 5), u * 4, p.color, u * .4,
                 undefined, i == 0 ? 'left' : 'right');
-            drawTextScreen(`hold ${p.key.slice(3)}`, vec2(x, u * 9.5), u * 2.4, dim, u * .2,
+            drawTextScreen(`${rcIsRocket() ? 'press' : 'hold'} ${p.key.slice(3)}`, vec2(x, u * 9.5), u * 2.4, dim, u * .2,
                 undefined, i == 0 ? 'left' : 'right');
         });
     }
@@ -592,11 +821,11 @@ function gameRenderPost()
     {
         drawRect(vec2(W/2, H/2), vec2(W, H), hsl(.68, .5, .1, .88), 0, undefined, true);
         drawTextScreen('HOP RACE', vec2(W/2, H * .17), u * 13, white, u * .8);
-        drawTextScreen('Hold to charge. Release to jump. The aim keeps sweeping!', vec2(W/2, H * .29), u * 3, dim, u * .3);
+        drawTextScreen('Hold to charge and release to jump, or blast off with rockets!', vec2(W/2, H * .29), u * 3, dim, u * .3);
         rcMenuModes().forEach((modeIdx, i) =>
         {
             const m = RC_MODES[modeIdx];
-            const y = H * (.4 + i * .12), sel = i == rcMenuIndex;
+            const y = H * (.35 + i * .105), sel = i == rcMenuIndex;
             drawTextScreen((sel ? '> ' : '') + `${i + 1}. ${m.name}`, vec2(W/2, y), u * 6, sel ? hsl(.15, 1, .6) : dim, u * .5);
             drawTextScreen(m.desc, vec2(W/2, y + u * 6), u * 2.6, sel ? white : hsl(0, 0, .55), u * .2);
         });
