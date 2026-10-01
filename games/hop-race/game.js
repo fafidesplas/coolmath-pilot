@@ -115,6 +115,20 @@ const RC_MODES = [
         ],
     },
     {
+        name: 'Flow',
+        desc: 'Hold to crumble into sand and pour down the slopes. Let go to pack back into a square.',
+        hint: 'Hold: turn to sand and flow downhill     Release: pack back into a square where the sand lies',
+        type: 'flow',
+        solids: [],
+        // suspended slabs as [x0, y0, x1, y1] = the left and right ends of the top surface
+        slabs: [
+            [-20.5, 10.1, -10.0,  6.4],   // start slope, ~20 degrees
+            [-13.0,  1.4,  -2.5,  4.4],   // slopes back left (ends listed left to right, like the rest)
+            [-17.0, -0.6,  -1.0, -4.5],   // and right again
+            [ -3.0, -5.9,  20.5, -10.4],  // long run-out to the flag, ~11 degrees (starts under the end of the slab above)
+        ],
+    },
+    {
         name: 'Orbit',
         desc: 'Always running clockwise. Hold to aim, release to jump through the exits!',
         hint: 'You run clockwise on your own     Hold: charge the jump     Release: jump',
@@ -133,6 +147,7 @@ function rcLoadMode(i)
     const make = ([l, r, top, bottom = -30]) =>
         ({pos: vec2((l+r)/2, (top+bottom)/2), size: vec2(r-l, top-bottom), top, bottom, l, r});
     rcSolids = RC_MODES[i].solids.map(make);
+    rcSlabs = rcMakeSlabs(RC_MODES[i].slabs || []);
     rcGates = (RC_MODES[i].gates || []).map(g =>
     {
         const solid = make(g.solid);
@@ -224,7 +239,7 @@ function rcResetPlayer(p)
     p.grounded = true;
     p.cling = 0;
     p.dir = 1;
-    p.down = false;
+    p.down = false; p.gathering = false; p.asleep = false;
     p.t = p.charge = 0;
     p.cx = p.x; p.cy = p.y;
     p.trail = [];
@@ -232,6 +247,18 @@ function rcResetPlayer(p)
     p.cool = 0;
     p.hook = null;
     p.spinDir = 1;
+    p.parts = [];
+    p.grains = RC_SAND.n * RC_SAND.n;
+    p.ang = p.cAng = 0;
+    if (rcIsFlow())
+    {
+        const sl = rcSlabs[0], x = -18.5 + p.lane * 1.4;
+        p.x = x; p.y = sl.y0 + (x - sl.x0) * Math.tan(sl.ang) + 1;
+        for (let i = 0; i < 90; i++) rcSquareStep(p, 1/60);   // settle onto the slope
+        p.vx = p.vy = 0;
+        p.cx = p.x; p.cy = p.y; p.cAng = p.ang;
+        p.trail = [];
+    }
     if (rcIsOrbit())
     {
         p.r = RC_ORBIT.rim - RC_ORBIT.ballR;
@@ -538,6 +565,280 @@ function rcGrappleStep(p)
     if (rcMotion(p, 0, p.hook ? 0 : o.friction)) p.hook = null;
 }
 
+// ---------------------------------------------------------------------------
+// FLOW MODE - suspended slabs. Hold to crumble into sand grains that pour downhill; release to
+//   pack the surviving grains back into a square at their center.
+//   p.x / p.y is the square's center, or the sand's center of mass while crumbled.
+// ---------------------------------------------------------------------------
+const RC_SAND = {
+    n: 7,              // the square is n x n grains
+    gravity: 30,
+    sub: 2,            // physics substeps per frame
+    slabThick: .6,
+    platFric: .12,     // grains slide on the slabs...
+    grainDamp: .35,    // ...but drag on each other, so they heap up
+    sqFric: .9,        // a solid square sticks to anything under ~42 degrees
+    maxV: 22,
+    wall: 20.8,
+    winGrains: 40,     // you need at least this many grains left at the flag (49 to start)
+    minGrains: 12,     // fewer than this and you are put back on your last footing
+    pull: 55,          // on release, grains accelerate toward the pile's center of mass
+    pullDamp: 3,       // ...with drag, so they settle instead of orbiting it
+    packFrac: .85,     // pack into a square once this share of grains is gathered
+    packRadius: .75,   // gathered = within this many half-square-widths of the center
+    airTime: .12,      // a grain this long off the ground (or off other grounded grains) is no longer pulled
+    packTimeout: 2.5,  // seconds; then pack with whatever has gathered
+};
+const RC_SAND_D = RC_PSIZE / RC_SAND.n;       // grain diameter = grid spacing
+function rcSqSize(p) { return Math.sqrt(p.grains) * RC_SAND_D; }   // the square shrinks as grains are lost
+let rcSlabs = [];
+const RC_SQ_OFFS = [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [0, 1], [-1, 0], [1, 0], [0, 0]];   // x h
+function rcIsFlow() { return RC_MODES[rcModeIndex].type == 'flow'; }
+
+function rcMakeSlabs(list)
+{
+    return list.map(([x0, y0, x1, y1]) =>
+    {
+        const L = Math.hypot(x1 - x0, y1 - y0), ang = Math.atan2(y1 - y0, x1 - x0);
+        return {x0, y0, x1, y1, L, ang, c: Math.cos(ang), s: Math.sin(ang), T: RC_SAND.slabThick};
+    });
+}
+
+// If a ball of radius r at (px, py) overlaps the slab, how to get out: {nx, ny, d}
+function rcSlabPush(sl, px, py, r)
+{
+    const dx = px - sl.x0, dy = py - sl.y0;
+    const u = dx * sl.c + dy * sl.s, v = -dx * sl.s + dy * sl.c;
+    if (u <= -r || u >= sl.L + r || v >= r || v <= -sl.T - r) return null;
+    const top = r - v, bottom = v + sl.T + r, left = u + r, right = sl.L + r - u;
+    const m = Math.min(top, bottom, left, right);
+    let lx = 0, ly = 0;
+    if (m == top) ly = 1; else if (m == bottom) ly = -1; else if (m == left) lx = -1; else lx = 1;
+    return {nx: lx * sl.c - ly * sl.s, ny: lx * sl.s + ly * sl.c, d: m};
+}
+
+function rcSandSlabs(q, r)
+{
+    for (const sl of rcSlabs)
+    {
+        const hit = rcSlabPush(sl, q.x, q.y, r);
+        if (!hit) continue;
+        if (hit.ny > .5) q.air = 0;
+        q.x += hit.nx * hit.d; q.y += hit.ny * hit.d;
+        const vn = q.vx * hit.nx + q.vy * hit.ny;
+        if (vn >= 0) continue;
+        q.vx -= vn * hit.nx; q.vy -= vn * hit.ny;              // inelastic: just stop going in
+        const tx = -hit.ny, ty = hit.nx, vt = q.vx * tx + q.vy * ty;
+        const cut = Math.sign(vt) * Math.min(Math.abs(vt), RC_SAND.platFric * -vn);   // Coulomb friction
+        q.vx -= cut * tx; q.vy -= cut * ty;
+    }
+}
+
+function rcCrumble(p)
+{
+    const cols = ceil(Math.sqrt(p.grains)), rows = ceil(p.grains / cols), ca = Math.cos(p.ang), sa = Math.sin(p.ang);
+    p.parts = [];
+    for (let k = 0; k < p.grains; k++)
+    {
+        const ox = (k % cols - (cols - 1) / 2) * RC_SAND_D, oy = (floor(k / cols) - (rows - 1) / 2) * RC_SAND_D;
+        p.parts.push({x: p.x + ox * ca - oy * sa, y: p.y + ox * sa + oy * ca,
+            vx: p.vx + rand(-.4, .4), vy: p.vy + rand(-.2, .2), shade: rand(0, .35), air: 0});
+    }
+}
+
+function rcPackUp(p)
+{
+    const k = p.parts.length;
+    p.x = p.y = p.vx = p.vy = 0;
+    for (const q of p.parts) { p.x += q.x / k; p.y += q.y / k; p.vx += q.vx / k; p.vy += q.vy / k; }
+    p.vx *= .5; p.vy *= .5;
+    p.grains = k;
+    p.parts = [];
+    p.asleep = false;
+    p.squash = -.2;
+    p.ang = 0;
+    // the pile's center of mass sits low, so the square would overlap the slab it lies on:
+    // lie along that slab and lift out of it
+    let under = null, bestV = 1e9;
+    for (const sl of rcSlabs)
+    {
+        const dx = p.x - sl.x0, dy = p.y - sl.y0, u = dx * sl.c + dy * sl.s, v = -dx * sl.s + dy * sl.c;
+        if (u > -.3 && u < sl.L + .3 && v > -sl.T && v < 1.5 && v < bestV) { under = sl; bestV = v; }
+    }
+    if (!under) return;
+    p.ang = under.ang;
+    for (let i = 0; i < 80 && rcSquareOverlaps(p); i++)
+    {
+        p.x -= under.s * .05;
+        p.y += under.c * .05;
+    }
+}
+
+function rcSquareOverlaps(p)
+{
+    const ca = Math.cos(p.ang), sa = Math.sin(p.ang), h = rcSqSize(p) / 2;
+    return rcSlabs.some(sl => RC_SQ_OFFS.some(([ox, oy]) =>
+        rcSlabPush(sl, p.x + ox * h * ca - oy * h * sa, p.y + ox * h * sa + oy * h * ca, 0)));
+}
+
+function rcSandRespawn(p)
+{
+    rcSfxFall.play();
+    p.parts = [];
+    p.asleep = false;
+    p.grains = RC_SAND.n * RC_SAND.n;
+    p.x = p.cx; p.y = p.cy; p.vx = p.vy = 0; p.ang = p.cAng;
+    p.trail = [];
+}
+
+// the rigid square: eight sample points are pushed out of the slabs
+function rcSquareStep(p, dt)
+{
+    const o = RC_SAND;
+    if (p.asleep) return;                       // settled on a slope it can grip: stay put
+    p.vy -= o.gravity * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    let ground = null;
+    const ca = Math.cos(p.ang), sa = Math.sin(p.ang), h = rcSqSize(p) / 2;
+    const offs = RC_SQ_OFFS.map(([x, y]) => [x * h, y * h]);
+    for (let it = 0; it < 3; it++)
+    {
+        let best = null, bestSl = null;
+        for (const sl of rcSlabs)
+            for (const [ox, oy] of offs)
+            {
+                const hit = rcSlabPush(sl, p.x + ox * ca - oy * sa, p.y + ox * sa + oy * ca, 0);
+                if (hit && (!best || hit.d > best.d)) { best = hit; bestSl = sl; }
+            }
+        if (!best) break;
+        p.x += best.nx * best.d; p.y += best.ny * best.d;
+        const vn = p.vx * best.nx + p.vy * best.ny;
+        if (vn < 0) { p.vx -= vn * best.nx; p.vy -= vn * best.ny; if (vn < -6) { rcSfxLand.play(); p.squash = .3; } }
+        if (best.ny > .5) ground = {nx: best.nx, ny: best.ny, ang: bestSl.ang};
+    }
+    if (ground)
+    {
+        const tx = -ground.ny, ty = ground.nx, vt = p.vx * tx + p.vy * ty;
+        const cut = Math.sign(vt) * Math.min(Math.abs(vt), o.sqFric * o.gravity * ground.ny * dt);
+        p.vx -= cut * tx; p.vy -= cut * ty;
+        p.ang += (ground.ang - p.ang) * min(1, dt * 14);          // lie flat on the slope
+        if (Math.abs(p.vx) + Math.abs(p.vy) < 1 && Math.abs(p.ang - ground.ang) < .02 &&
+            ground.ny * o.sqFric > Math.sqrt(1 - ground.ny * ground.ny)) { p.vx = p.vy = 0; p.asleep = true; }
+    }
+    else p.ang *= Math.exp(-3 * dt);
+    p.x = clamp(p.x, -o.wall, o.wall);
+}
+
+function rcSandStep(p, dt, tx, ty)
+{
+    const o = RC_SAND, r = RC_SAND_D / 2, parts = p.parts;
+    for (let s = 0; s < o.sub; s++)
+    {
+        const h = dt / o.sub;
+        for (const q of parts)
+        {
+            q.vy -= o.gravity * h;
+            q.air += h;
+            if (tx !== undefined && q.air < o.airTime)
+            {
+                const dx = tx - q.x, dy = ty - q.y, d = Math.hypot(dx, dy) || 1, damp = Math.exp(-o.pullDamp * h);
+                q.vx = q.vx * damp + dx / d * o.pull * h;
+                q.vy = q.vy * damp + dy / d * o.pull * h;
+            }
+            const sp = Math.hypot(q.vx, q.vy);
+            if (sp > o.maxV) { q.vx *= o.maxV / sp; q.vy *= o.maxV / sp; }
+            q.x += q.vx * h; q.y += q.vy * h;
+            rcSandSlabs(q, r);
+        }
+        // grain-on-grain contacts through a spatial hash
+        const grid = new Map(), D = RC_SAND_D;
+        parts.forEach((q, i) =>
+        {
+            const key = floor(q.x / D) * 4096 + floor(q.y / D);
+            const cell = grid.get(key);
+            if (cell) cell.push(i); else grid.set(key, [i]);
+        });
+        parts.forEach((q, i) =>
+        {
+            const cx = floor(q.x / D), cy = floor(q.y / D);
+            for (let gx = cx - 1; gx <= cx + 1; gx++)
+                for (let gy = cy - 1; gy <= cy + 1; gy++)
+                {
+                    const cell = grid.get(gx * 4096 + gy);
+                    if (!cell) continue;
+                    for (const j of cell)
+                    {
+                        if (j <= i) continue;
+                        const b = parts[j], dx = q.x - b.x, dy = q.y - b.y, d2 = dx * dx + dy * dy;
+                        if (d2 >= D * D) continue;
+                        const dist = Math.sqrt(d2) || .001, nx = dx / dist, ny = dy / dist, push = (D - dist) / 2;
+                        q.x += nx * push; q.y += ny * push; b.x -= nx * push; b.y -= ny * push;
+                        const vrel = (q.vx - b.vx) * nx + (q.vy - b.vy) * ny;
+                        if (vrel < 0) { q.vx -= nx * vrel / 2; q.vy -= ny * vrel / 2; b.vx += nx * vrel / 2; b.vy += ny * vrel / 2; }
+                        if (ny > .5 && b.air < o.airTime) q.air = 0;        // resting on a grounded grain
+                        else if (ny < -.5 && q.air < o.airTime) b.air = 0;
+                        const tx = -ny, ty = nx, vt = (q.vx - b.vx) * tx + (q.vy - b.vy) * ty, k = vt * o.grainDamp / 2;
+                        q.vx -= tx * k; q.vy -= ty * k; b.vx += tx * k; b.vy += ty * k;
+                    }
+                }
+        });
+        for (const q of parts)
+        {
+            rcSandSlabs(q, r);
+            if (abs(q.x) > o.wall) { q.x = Math.sign(q.x) * o.wall; q.vx = 0; }
+        }
+    }
+    p.parts = parts.filter(q => q.y > RC_KILL_Y);
+}
+
+function rcFlowStep(p)
+{
+    const o = RC_SAND, dt = timeDelta, down = keyIsDown(p.key);
+    if (down != p.down)
+    {
+        rcSfxCharge.play(undefined, 1, down ? .6 : 1.6);
+        if (down) { if (!p.gathering) rcCrumble(p); p.gathering = false; }   // re-press mid-gather: flow on
+        else if (p.parts.length >= o.minGrains) { p.gathering = true; p.gT = 0; }
+        else rcSandRespawn(p);
+    }
+    p.down = down;
+
+    if (down || p.gathering)
+    {
+        if (p.gathering) rcSandStep(p, dt, p.x, p.y); else rcSandStep(p, dt);
+        if (p.gathering)
+        {
+            p.gT += dt;
+            const rad = o.packRadius * rcSqSize(p), live = p.parts.filter(q => q.air < o.airTime);
+            const near = live.filter(q => Math.hypot(q.x - p.x, q.y - p.y) < rad);
+            if (near.length >= o.packFrac * live.length || p.gT > o.packTimeout)
+            {
+                p.gathering = false;
+                rcPackUp(p);                                                 // stragglers are absorbed, not lost
+                p.squash *= .85;
+                return;
+            }
+        }
+        if (p.parts.length < o.minGrains && !rcFinished(p)) { p.gathering = false; rcSandRespawn(p); }   // not enough grains left to go on
+        else
+        {
+            const k = p.parts.length;
+            p.grains = k;
+            p.x = p.y = 0;
+            for (const q of p.parts) { p.x += q.x / k; p.y += q.y / k; }
+        }
+    }
+    else
+    {
+        rcSquareStep(p, dt);
+        if (p.y < RC_KILL_Y) rcSandRespawn(p);
+    }
+    if (p.x >= 17 && p.grains < o.winGrains) rcSandRespawn(p);   // reached the flag with too little sand
+    p.squash *= .85;
+    p.trail.push(vec2(p.x, p.y));
+    if (p.trail.length > 14) p.trail.shift();
+}
+
 function rcPressGate(g)
 {
     if (g.pressed) return;
@@ -598,6 +899,7 @@ function rcRocketsUpdate()
 function rcFinished(p)
 {
     if (rcIsOrbit()) return p.r < RC_ORBIT.ridge[RC_ORBIT.ridge.length - 1] - RC_ORBIT.half - RC_ORBIT.ballR;
+    if (rcIsFlow()) return p.x >= 17 && p.grains >= RC_SAND.winGrains;
     if (rcIsRocket() || rcIsGrapple()) return p.x >= RC_FINISH_X - 2 && p.y <= -4.5;   // generous: anywhere near the flag, no need to be grounded
     return p.x >= RC_FINISH_X && p.grounded;
 }
@@ -607,6 +909,7 @@ function rcStep(p)
     if (rcIsOrbit()) return rcOrbitStep(p);
     if (rcIsRocket()) return rcRocketStep(p);
     if (rcIsGrapple()) return rcGrappleStep(p);
+    if (rcIsFlow()) return rcFlowStep(p);
     const mode = RC_MODES[rcModeIndex];
     const canCharge = p.grounded || p.cling;
     const down = keyIsDown(p.key);
@@ -799,6 +1102,7 @@ function rcDrawPlayer(p)
         drawCircle(vec2(p.x - .06, p.y + .08), d * .45, p.color.lerp(WHITE, .7));
         return;
     }
+    if (rcIsFlow()) return rcDrawFlowPlayer(p);
     const sx = 1 + p.squash, sy = 1 - p.squash;
     const pos = vec2(p.x, p.y - (1 - sy) * RC_PSIZE/2);
     drawRect(pos, vec2(RC_PSIZE * sx, RC_PSIZE * sy), p.color, 0, undefined, undefined, undefined);
@@ -807,9 +1111,32 @@ function rcDrawPlayer(p)
     drawRect(pos.add(vec2(.18 * p.dir, .1)), vec2(.12), BLACK);
 }
 
+// rotated rectangle from explicit points (avoids guessing the engine's angle direction)
+function rcTiltRect(center, tangent, w, h, color)
+{
+    const t = tangent.scale(w / 2), n = vec2(-tangent.y, tangent.x).scale(h / 2);
+    drawPoly([center.subtract(t).subtract(n), center.add(t).subtract(n), center.add(t).add(n), center.subtract(t).add(n)], color);
+}
+
+function rcDrawFlowPlayer(p)
+{
+    const t = vec2(Math.cos(p.ang), Math.sin(p.ang)), n = vec2(-t.y, t.x), c = vec2(p.x, p.y);
+    if (p.down || p.gathering)
+    {
+        for (const q of p.parts)
+            drawCircle(vec2(q.x, q.y), RC_SAND_D * 1.6, p.color.lerp(WHITE, q.shade));
+        return;
+    }
+    const sz = rcSqSize(p), sx = 1 + p.squash, sy = 1 - p.squash;
+    rcTiltRect(c.subtract(n.scale((1 - sy) * sz / 2)), t, sz * sx, sz * sy, p.color);
+    rcTiltRect(c, t, sz * .5, sz * .5, p.color.lerp(WHITE, .6));
+    drawRect(c.add(t.scale(.18)).add(n.scale(.1)), vec2(.12), BLACK);
+}
+
 function rcDrawAim(p)
 {
     if (rcIsOrbit()) return rcDrawOrbitAim(p);
+    if (rcIsFlow()) return;
     if (rcIsRocket() || rcIsGrapple()) return rcDrawRocketAim(p);
     if (!(p.grounded || p.cling) || !p.down) return;
     const a = rcAim(p);
@@ -881,6 +1208,20 @@ function rcDrawOrbitBoard()
     drawCircle(vec2(), goalR * .6 * pulse, hsl(.15, 1, .8));
 }
 
+function rcDrawFlowBoard()
+{
+    for (const sl of rcSlabs)
+    {
+        const nx = -sl.s * sl.T, ny = sl.c * sl.T, a = vec2(sl.x0, sl.y0), b = vec2(sl.x1, sl.y1);
+        drawPoly([a, b, b.subtract(vec2(nx, ny)), a.subtract(vec2(nx, ny))], hsl(.7, .4, .22));
+        drawLine(a, b, .14, hsl(.5, .8, .55));
+    }
+    // finish flag on the last slab
+    const sl = rcSlabs[rcSlabs.length - 1], fx = 18, fy = sl.y0 + (fx - sl.x0) * Math.tan(sl.ang);
+    drawRect(vec2(fx, fy + 1.5), vec2(.12, 3), hsl(0, 0, .9));
+    drawPoly([vec2(0, 0), vec2(1.4, .5), vec2(0, 1)], hsl(.15, 1, .55), 0, BLACK, vec2(fx + .06, fy + 2));
+}
+
 function gameRender()
 {
     drawRect(cameraPos, vec2(200), hsl(.68, .5, .13));
@@ -891,6 +1232,13 @@ function gameRender()
     {
         rcDrawOrbitBoard();
         rcPlayers.forEach(rcDrawAim);
+        rcPlayers.forEach(rcDrawPlayer);
+        return;
+    }
+
+    if (rcIsFlow())
+    {
+        rcDrawFlowBoard();
         rcPlayers.forEach(rcDrawPlayer);
         return;
     }
