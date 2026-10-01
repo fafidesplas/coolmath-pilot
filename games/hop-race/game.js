@@ -580,7 +580,7 @@ const RC_SAND = {
     sqFric: .9,        // a solid square sticks to anything under ~42 degrees
     maxV: 22,
     wall: 20.8,
-    winGrains: 40,     // you need at least this many grains left at the flag (49 to start)
+    winGrains: 40,     // you need at least this many grains touching the flag (49 to start)
     minGrains: 12,     // fewer than this and you are put back on your last footing
     pull: 55,          // on release, grains accelerate toward the pile's center of mass
     pullDamp: 3,       // ...with drag, so they settle instead of orbiting it
@@ -833,7 +833,7 @@ function rcFlowStep(p)
         rcSquareStep(p, dt);
         if (p.y < RC_KILL_Y) rcSandRespawn(p);
     }
-    if (p.x >= 17 && p.grains < o.winGrains) rcSandRespawn(p);   // reached the flag with too little sand
+    if (p.grains < o.winGrains && rcFlagTouching(p) > 0) rcSandRespawn(p);   // reached the flag with too little sand
     p.squash *= .85;
     p.trail.push(vec2(p.x, p.y));
     if (p.trail.length > 14) p.trail.shift();
@@ -896,10 +896,26 @@ function rcRocketsUpdate()
     });
 }
 
+// the flag stands on the last slab: x of the pole, y of its foot, and the box the pole and pennant fill
+function rcFlowFlag()
+{
+    const sl = rcSlabs[rcSlabs.length - 1], x = 18;
+    return {x, y: sl.y0 + (x - sl.x0) * Math.tan(sl.ang)};
+}
+
+// how many of the player's grains overlap the flag? (a square touching it counts all of its grains)
+function rcFlagTouching(p)
+{
+    const f = rcFlowFlag(), x0 = f.x - .1, x1 = f.x + 1.5, y0 = f.y, y1 = f.y + 3;
+    const near = (x, y, r) => x > x0 - r && x < x1 + r && y > y0 - r && y < y1 + r;
+    if (p.down || p.gathering) return p.parts.filter(q => near(q.x, q.y, RC_SAND_D / 2)).length;
+    return near(p.x, p.y, rcSqSize(p) / 2) ? p.grains : 0;
+}
+
 function rcFinished(p)
 {
     if (rcIsOrbit()) return p.r < RC_ORBIT.ridge[RC_ORBIT.ridge.length - 1] - RC_ORBIT.half - RC_ORBIT.ballR;
-    if (rcIsFlow()) return p.x >= 17 && p.grains >= RC_SAND.winGrains;
+    if (rcIsFlow()) return rcFlagTouching(p) >= RC_SAND.winGrains;
     if (rcIsRocket() || rcIsGrapple()) return p.x >= RC_FINISH_X - 2 && p.y <= -4.5;   // generous: anywhere near the flag, no need to be grounded
     return p.x >= RC_FINISH_X && p.grounded;
 }
@@ -1088,7 +1104,8 @@ function gameUpdatePost()
 ///////////////////////////////////////////////////////////////////////////////
 function rcDrawPlayer(p)
 {
-    if (p.trail.length > 1)
+    const sandy = rcIsFlow() && (p.down || p.gathering);   // as sand, only the eye is left of the square
+    if (p.trail.length > 1 && !sandy)
         for (let i = 0; i < p.trail.length; i++)
         {
             const k = i / p.trail.length;
@@ -1125,6 +1142,8 @@ function rcDrawFlowPlayer(p)
     {
         for (const q of p.parts)
             drawCircle(vec2(q.x, q.y), RC_SAND_D * 1.6, p.color.lerp(WHITE, q.shade));
+        rcTiltRect(c, t, rcSqSize(p) * .5, rcSqSize(p) * .5, p.color.lerp(WHITE, .6));   // the eye's white
+        drawRect(c.add(t.scale(.18)).add(n.scale(.1)), vec2(.12), BLACK);                  // and its iris
         return;
     }
     const sz = rcSqSize(p), sx = 1 + p.squash, sy = 1 - p.squash;
@@ -1217,7 +1236,7 @@ function rcDrawFlowBoard()
         drawLine(a, b, .14, hsl(.5, .8, .55));
     }
     // finish flag on the last slab
-    const sl = rcSlabs[rcSlabs.length - 1], fx = 18, fy = sl.y0 + (fx - sl.x0) * Math.tan(sl.ang);
+    const {x: fx, y: fy} = rcFlowFlag();
     drawRect(vec2(fx, fy + 1.5), vec2(.12, 3), hsl(0, 0, .9));
     drawPoly([vec2(0, 0), vec2(1.4, .5), vec2(0, 1)], hsl(.15, 1, .55), 0, BLACK, vec2(fx + .06, fy + 2));
 }
