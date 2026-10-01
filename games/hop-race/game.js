@@ -57,10 +57,12 @@ const RC_MODES = [
         desc: 'Always running clockwise. Hold to aim, release to jump through the exits!',
         hint: 'You run clockwise on your own     Hold: charge the jump     Release: jump',
         type: 'orbit',
+        hidden: true,   // not shown in the menu; remove this line to bring it back
         solids: [],
     },
 ];
-let rcModeIndex = 0, rcMenuIndex = 0;
+let rcModeIndex = 0, rcMenuIndex = 0;   // rcMenuIndex is a position in rcMenuModes()
+function rcMenuModes() { return RC_MODES.map((m, i) => i).filter(i => !RC_MODES[i].hidden); }
 let rcSolids = [];
 
 function rcLoadMode(i)
@@ -395,13 +397,13 @@ function gameUpdate()
 
     if (rcState == 'menu')
     {
-        const n = RC_MODES.length;
+        const list = rcMenuModes(), n = list.length;
         if (keyWasPressed('ArrowUp'))   rcMenuIndex = (rcMenuIndex + n - 1) % n;
         if (keyWasPressed('ArrowDown')) rcMenuIndex = (rcMenuIndex + 1) % n;
         for (let i = 0; i < n; i++)
-            if (keyWasPressed('Digit' + (i + 1))) { rcMenuIndex = i; rcStart(i); return; }
+            if (keyWasPressed('Digit' + (i + 1))) { rcMenuIndex = i; rcStart(list[i]); return; }
         if (keyWasPressed('Enter') || keyWasPressed('Space') || keyWasPressed('KeyA') || keyWasPressed('KeyL'))
-            rcStart(rcMenuIndex);
+            rcStart(list[rcMenuIndex]);
         return;
     }
 
@@ -409,7 +411,7 @@ function gameUpdate()
     if (keyWasPressed('KeyM'))
     {
         rcState = 'menu';
-        rcMenuIndex = rcModeIndex;
+        rcMenuIndex = max(0, rcMenuModes().indexOf(rcModeIndex));
         rcPlayers.forEach(rcResetPlayer);
         return;
     }
@@ -591,8 +593,9 @@ function gameRenderPost()
         drawRect(vec2(W/2, H/2), vec2(W, H), hsl(.68, .5, .1, .88), 0, undefined, true);
         drawTextScreen('HOP RACE', vec2(W/2, H * .17), u * 13, white, u * .8);
         drawTextScreen('Hold to charge. Release to jump. The aim keeps sweeping!', vec2(W/2, H * .29), u * 3, dim, u * .3);
-        RC_MODES.forEach((m, i) =>
+        rcMenuModes().forEach((modeIdx, i) =>
         {
+            const m = RC_MODES[modeIdx];
             const y = H * (.4 + i * .12), sel = i == rcMenuIndex;
             drawTextScreen((sel ? '> ' : '') + `${i + 1}. ${m.name}`, vec2(W/2, y), u * 6, sel ? hsl(.15, 1, .6) : dim, u * .5);
             drawTextScreen(m.desc, vec2(W/2, y + u * 6), u * 2.6, sel ? white : hsl(0, 0, .55), u * .2);
