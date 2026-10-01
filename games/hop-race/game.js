@@ -53,10 +53,11 @@ const RC_MODES = [
         ],
     },
     {
-        name: 'Rocket Jump',
+        name: 'Rocket Jump (pits)',
         desc: 'Your launcher never stops spinning. Fire at the ground to blast yourself the other way!',
         hint: 'Press: fire a rocket     The blast pushes you away from the explosion',
         type: 'rocket',
+        hidden: true,   // not shown in the menu; remove this line to bring it back
         solids: [
             [-20, -14, -8],       // start ground
             [-11,  -8, -6],
@@ -70,7 +71,7 @@ const RC_MODES = [
         ],
     },
     {
-        name: 'Rocket Jump 2',
+        name: 'Rocket Jump',
         desc: 'No pits. Shoot the ceiling button to open the gate, then drop down the shaft to the flag.',
         hint: 'Press: fire a rocket     Shoot the red button to lift the gate',
         type: 'rocket',
@@ -90,6 +91,27 @@ const RC_MODES = [
         // a shot rocket that hits the button slides the gate up into the ceiling
         gates: [
             {solid: [10, 11.5, 6, -3.5], button: {x: 3.8, y: 9.7}},
+        ],
+    },
+    {
+        name: 'Grappling Hook',
+        desc: 'Press to fire a hook, hold to reel in, release to cut loose and keep your speed!',
+        hint: 'Press: fire the hook     Hold: reel in     Release: let go (you keep your momentum)',
+        type: 'grapple',
+        solids: [
+            [-20, -14, -8],        // start ground
+            [-12, -9.5, -5],       // stepping platform
+            [ -4,  -1, -1.5],      // floating platform
+            [  4, 6.5, -4],
+            [ 10, 11.5, 1.5],      // pillar rising out of the pit
+            [ 14,  20, -8],        // finish ground
+            [-10, -8.5, 10.2, 4],  // pillars hanging from the ceiling: grab these
+            [ -2,  -.5, 10.2, 5],
+            [  6, 7.5, 10.2, 3],
+            [ 12.5, 14, 10.2, 5],
+            [-20,  20, 11.2, 10.2], // ceiling keeps everyone on screen
+            [-21, -20, 11],        // side walls
+            [ 20,  21, 11],
         ],
     },
     {
@@ -208,6 +230,7 @@ function rcResetPlayer(p)
     p.trail = [];
     p.aimA = p.lane * PI * .5;
     p.cool = 0;
+    p.hook = null;
     p.spinDir = 1;
     if (rcIsOrbit())
     {
@@ -375,12 +398,19 @@ function rcRocketStep(p)
     p.down = down;
 
     p.vy -= RC_GRAVITY * timeDelta;
+    rcMotion(p, -.3, o.friction);
+}
+
+// Shared platformer motion: integrate, collide against rcSolids, ground friction, pit respawn.
+function rcMotion(p, bounce, friction)
+{
+    let respawned = false;
     p.x += p.vx * timeDelta;
     for (const s of rcSolids)
         if (isOverlapping(vec2(p.x, p.y), vec2(RC_PSIZE, RC_PSIZE - .1), s.pos, s.size))   // slightly short so floors/ceilings we rest against don't count
         {
             p.x = p.vx > 0 ? s.l - RC_PSIZE/2 - .001 : s.r + RC_PSIZE/2 + .001;
-            p.vx *= -.3;
+            p.vx *= bounce;
         }
     const prevY = p.y;
     p.y += p.vy * timeDelta;
@@ -402,16 +432,110 @@ function rcRocketStep(p)
                 p.vy = 0;
             }
         }
-    if (p.grounded) p.vx *= Math.exp(-o.friction * timeDelta);
+    if (p.grounded) p.vx *= Math.exp(-friction * timeDelta);
     if (p.y < RC_KILL_Y)
     {
         rcSfxFall.play();
         p.x = p.cx; p.y = p.cy;
         p.vx = p.vy = 0;
+        respawned = true;
     }
     p.squash *= .85;
     p.trail.push(vec2(p.x, p.y));
     if (p.trail.length > 14) p.trail.shift();
+    return respawned;
+}
+
+// ---------------------------------------------------------------------------
+// GRAPPLE MODE - the same spinning launcher fires a hook. Hold to reel in, release to cut loose.
+//   The pull only ADDS velocity toward the anchor, so whatever speed you had is kept on release.
+// ---------------------------------------------------------------------------
+const RC_GRAPPLE = {
+    spin: 3,            // launcher rotation (rad/s)
+    speed: 55,          // hook flight speed (units/s)
+    cooldown: .12,
+    missCooldown: .3,
+    pullAccel: 95,      // reel-in acceleration (gravity is 42, so upward pulls win)
+    pullMax: 26,        // reel-in speed along the rope (extra speed from before is kept)
+    maxSpeed: 32,
+    swingDamp: 1.2,     // bleeds sideways speed so you don't orbit the anchor
+    brakeR: 4,          // start easing in this close to the anchor
+    brake: 9,
+    arrive: 1.1,        // this close to the anchor you latch on and hang
+    friction: 7,
+};
+function rcIsGrapple() { return RC_MODES[rcModeIndex].type == 'grapple'; }
+
+function rcGrappleStep(p)
+{
+    const o = RC_GRAPPLE, dt = timeDelta;
+    const down = keyIsDown(p.key);
+    if (!p.hook) p.aimA += o.spin * p.spinDir * dt;      // launcher freezes while the hook is out
+    p.cool = max(0, p.cool - dt);
+
+    if (!down && p.hook) p.hook = null;                  // release cuts the rope
+    if (down && !p.down && !p.hook && p.cool <= 0)
+    {
+        const d = rcRocketDir(p);
+        p.hook = {fly: true, x: p.x, y: p.y, dx: d.x, dy: d.y, len: 0};
+        p.cool = o.cooldown;
+        rcSfxFire.play();
+    }
+    p.down = down;
+
+    let hang = false;
+    const h = p.hook;
+    if (h && h.fly)
+    {
+        const n = 3, step = o.speed * dt / n;
+        for (let i = 0; i < n && h.fly; i++)
+        {
+            const nx = h.x + h.dx * step, ny = h.y + h.dy * step;
+            if (rcSolids.some(s => isOverlapping(vec2(nx, ny), vec2(.1), s.pos, s.size)))
+            {
+                h.fly = false;                           // stuck: h.x/h.y stay on the last free point
+                h.pull = 0;
+                rcSfxLand.play(vec2(h.x, h.y), .8, 1.6);
+                addScreenShake(.08, .1);
+            }
+            else { h.x = nx; h.y = ny; h.len += step; }
+        }
+        if (h.fly && (abs(h.x) > 30 || h.y < -20))   // no range limit; only gives up once it leaves the world (e.g. down a pit)
+        {
+            p.hook = null;
+            p.cool = o.missCooldown;
+        }
+    }
+    else if (h)
+    {
+        const ox = h.x - p.x, oy = h.y - p.y, dist = Math.hypot(ox, oy);
+        if (dist > o.arrive)
+        {
+            const ux = ox / dist, uy = oy / dist;
+            const along = p.vx * ux + p.vy * uy;
+            const gain = clamp(o.pullMax - along, 0, o.pullAccel * dt);
+            p.vx += ux * gain; p.vy += uy * gain;
+            const side = Math.exp(-o.swingDamp * dt);         // damp only the sideways part
+            const px = p.vx - ux * (p.vx * ux + p.vy * uy), py = p.vy - uy * (p.vx * ux + p.vy * uy);
+            p.vx += px * (side - 1); p.vy += py * (side - 1);
+            if (dist < o.brakeR)                         // ease in near the anchor so you don't overshoot it
+            {
+                const b = Math.exp(-o.brake * (1 - dist / o.brakeR) * dt);
+                p.vx *= b; p.vy *= b;
+            }
+        }
+        else
+        {
+            hang = true;                                 // latched on: float at the anchor
+            const k = Math.exp(-10 * dt);
+            p.vx *= k; p.vy *= k;
+        }
+    }
+    if (!hang) p.vy -= RC_GRAVITY * dt;
+    const sp = Math.hypot(p.vx, p.vy);
+    if (sp > o.maxSpeed) { p.vx *= o.maxSpeed / sp; p.vy *= o.maxSpeed / sp; }
+
+    if (rcMotion(p, 0, p.hook ? 0 : o.friction)) p.hook = null;
 }
 
 function rcPressGate(g)
@@ -474,7 +598,7 @@ function rcRocketsUpdate()
 function rcFinished(p)
 {
     if (rcIsOrbit()) return p.r < RC_ORBIT.ridge[RC_ORBIT.ridge.length - 1] - RC_ORBIT.half - RC_ORBIT.ballR;
-    if (rcIsRocket()) return p.x >= RC_FINISH_X - 2 && p.y <= -4.5;   // generous: anywhere near the flag, no need to be grounded
+    if (rcIsRocket() || rcIsGrapple()) return p.x >= RC_FINISH_X - 2 && p.y <= -4.5;   // generous: anywhere near the flag, no need to be grounded
     return p.x >= RC_FINISH_X && p.grounded;
 }
 
@@ -482,6 +606,7 @@ function rcStep(p)
 {
     if (rcIsOrbit()) return rcOrbitStep(p);
     if (rcIsRocket()) return rcRocketStep(p);
+    if (rcIsGrapple()) return rcGrappleStep(p);
     const mode = RC_MODES[rcModeIndex];
     const canCharge = p.grounded || p.cling;
     const down = keyIsDown(p.key);
@@ -685,7 +810,7 @@ function rcDrawPlayer(p)
 function rcDrawAim(p)
 {
     if (rcIsOrbit()) return rcDrawOrbitAim(p);
-    if (rcIsRocket()) return rcDrawRocketAim(p);
+    if (rcIsRocket() || rcIsGrapple()) return rcDrawRocketAim(p);
     if (!(p.grounded || p.cling) || !p.down) return;
     const a = rcAim(p);
     // trajectory preview dots
@@ -715,11 +840,12 @@ function rcDrawRocketAim(p)
     const d = rcRocketDir(p), pos = vec2(p.x, p.y), ready = p.cool <= 0;
     const col = ready ? p.color : p.color.scale(1, .4);
     // faint sight line up to the first thing it would hit
-    for (let i = 1; i < 12; i++)
+    const n = rcIsGrapple() ? 24 : 12;
+    if (!p.hook) for (let i = 1; i < n; i++)
     {
         const q = pos.add(d.scale(.6 + i * .7));
         if (rcSolids.some(s => isOverlapping(q, vec2(.1), s.pos, s.size))) break;
-        drawRect(q, vec2(.1), p.color.lerp(WHITE, .3).scale(1, .5 - i * .04));
+        drawRect(q, vec2(.1), p.color.lerp(WHITE, .3).scale(1, max(.08, .5 - i * 12 / n * .04)));
     }
     drawLine(pos, pos.add(d.scale(.9)), .22, col);
     drawRect(pos.add(d.scale(.9)), vec2(.34, .34), col, p.aimA);
@@ -805,6 +931,17 @@ function gameRender()
         const a = Math.atan2(r.vy, r.vx);
         drawLine(vec2(r.x, r.y), vec2(r.x - Math.cos(a) * .9, r.y - Math.sin(a) * .9), .16, hsl(.1, 1, .6, .6));
         drawRect(vec2(r.x, r.y), vec2(.5, .22), hsl(0, 0, .95), a);
+    }
+
+    // grappling ropes
+    for (const p of rcPlayers)
+    {
+        const h = p.hook;
+        if (!h) continue;
+        const tip = vec2(h.x, h.y), from = vec2(p.x, p.y);
+        drawLine(from, tip, .09, hsl(.1, .5, .8));
+        drawCircle(tip, .45, hsl(0, 0, .15));
+        drawCircle(tip, .3, h.fly ? p.color : WHITE);
     }
 
     // start line label tick
