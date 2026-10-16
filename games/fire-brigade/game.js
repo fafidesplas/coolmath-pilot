@@ -279,6 +279,19 @@ const spriteMaps =
         'dSddddSd',
         'dSSSSSSd',
         'dddddddd'],
+    waterSign: [
+        'BBBBBBBBBB',
+        'BbbbbbbbbB',
+        'BbbbwwbbbB',
+        'BbbbwwbbbB',
+        'BbbwwwwbbB',
+        'BbbwwwwbbB',
+        'BbwwwwwwbB',
+        'BbwcwwwwbB',
+        'BbwcwwwwbB',
+        'BbbwwwwbbB',
+        'BbbbbbbbbB',
+        'BBBBBBBBBB'],
     drop: [
         '...b...',
         '..bcb..',
@@ -345,8 +358,9 @@ function buildSpriteSheet()
     const coats = [{}, {r:'b', R:'B'}];
     for (const pose of ['idle','walk','chop','climb','down'])
         coats.forEach((recolor, i)=> addMap('p' + i + '_' + pose, spriteMaps[pose], recolor));
-    for (const name of ['axeUp','axeDown','door','debris','window','hatch','drop','heart','flame'])
+    for (const name of ['axeUp','axeDown','door','debris','window','hatch','waterSign','drop','heart','flame'])
         addMap(name, spriteMaps[name]);
+    addMap('waterSignLit', spriteMaps.waterSign, {B:'c'});
 
     // procedural flames: 3 sizes x 3 animation frames, 16 wide x 24 tall
     let seed = 3;
@@ -376,12 +390,12 @@ function buildSpriteSheet()
 }
 
 // draw a sprite from the sheet with its bottom center at pos (world units)
-function drawSprite(name, pos, mirror=false, color=WHITE)
+function drawSprite(name, pos, mirror=false, color=WHITE, additiveColor)
 {
     const s = sprites[name];
     s.tileInfo ||= new TileInfo(vec2(s.x, s.y), vec2(s.w, s.h), textureInfos[0]);
     const x = Math.round(pos.x * PX) / PX, y = Math.round(pos.y * PX) / PX;
-    drawTile(vec2(x, y + s.h / PX / 2), vec2(s.w, s.h).scale(1/PX), s.tileInfo, color, 0, mirror);
+    drawTile(vec2(x, y + s.h / PX / 2), vec2(s.w, s.h).scale(1/PX), s.tileInfo, color, 0, mirror, additiveColor);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1129,6 +1143,9 @@ class Firefighter extends EngineObject
         this.downTimer = 0;
         this.hurtFlash = 0;
         this.refilling = false;
+        this.refillFrom = vec2();
+        this.refillGlow = 0;
+        this.refillDrops = []; // stream particles flying from the refill source to the body
         this.prevBottom = this.pos.y - this.size.y/2;
         this.walkCycle = 0;
     }
@@ -1173,6 +1190,12 @@ class Firefighter extends EngineObject
         this.hurtFlash = max(0, this.hurtFlash - timeDelta);
         this.swingTime = max(0, this.swingTime - timeDelta);
         this.axeCooldown = max(0, this.axeCooldown - timeDelta);
+
+        // refill stream + glow (keeps animating while knocked out or after the round)
+        this.refillGlow = clamp(this.refillGlow + (this.refilling ? 5 : -3) * timeDelta);
+        for (const d of this.refillDrops) d.t += d.speed * timeDelta;
+        this.refillDrops = this.refillDrops.filter(d=> d.t < 1);
+        this.refilling = false;
 
         if (this.downTimer > 0)
         {
@@ -1272,24 +1295,30 @@ class Firefighter extends EngineObject
         }
 
         // refill at truck or standpipe
-        this.refilling = false;
         if (this.water < 100)
         {
             if (abs(this.pos.x - TRUCK_X) < 5 && this.pos.y < 4)
-                this.water = min(100, this.water + 45 * timeDelta), this.refilling = true;
+            {
+                this.water = min(100, this.water + 45 * timeDelta);
+                this.refilling = true;
+                this.refillFrom = vec2(TRUCK_X - 3.5, 5.2); // the tank, under the sign mast
+            }
             else
             {
-                const pipe = standpipes.find(p=> p.reserve > 0 && abs(this.pos.x - p.x) < 1.2 && abs(this.pos.y - this.size.y/2 - p.y) < .5);
+                const pipe = standpipes.find(p=> p.reserve > 0 && abs(this.pos.x - p.x) < 3 && abs(this.pos.y - this.size.y/2 - p.y) < .5);
                 if (pipe)
                 {
                     const amount = min(35 * timeDelta, 100 - this.water, pipe.reserve);
                     this.water += amount;
                     pipe.reserve -= amount;
                     this.refilling = true;
+                    this.refillFrom = vec2(pipe.x, pipe.y + 1.5); // the valve
                 }
             }
             if (this.refilling && frame % 8 == 0)
                 sndRefill.play(this.pos, .5, 1 + this.water/100);
+            if (this.refilling && rand() < .6)
+                this.refillDrops.push({from: this.refillFrom, t: 0, wobble: rand(-.4, .4), speed: rand(2, 3)});
         }
 
         // fire hurts
@@ -1323,21 +1352,34 @@ class Firefighter extends EngineObject
         const feet = vec2(this.pos.x, this.pos.y - this.size.y/2);
         const mirror = this.facing < 0;
         const tint = this.hurtFlash > 0 && (time*20|0) % 2 ? rgb(1,.5,.4) : WHITE;
+        // pulsing blue glow while refilling (additive, so alpha stays 0)
+        const glow = this.refillGlow > 0 ? rgb(.1,.3,.6,0).scale(this.refillGlow * (.75 + .25*Math.sin(time*14)), 0) : undefined;
 
         if (this.downTimer > 0)
             return drawSprite(p + 'down', feet, mirror);
 
         if (this.climbing)
-            drawSprite(p + 'climb', feet, (this.walkCycle|0) % 2 == 1, tint);
+            drawSprite(p + 'climb', feet, (this.walkCycle|0) % 2 == 1, tint, glow);
         else if (this.swingTime > 0)
         {
-            drawSprite(p + 'chop', feet, mirror, tint);
+            drawSprite(p + 'chop', feet, mirror, tint, glow);
             drawSprite(this.swingTime > .11 ? 'axeUp' : 'axeDown', feet, mirror);
         }
         else
         {
             const walking = !this.groundObject || abs(this.velocity.x) > .02 && (this.walkCycle|0) % 2;
-            drawSprite(p + (walking ? 'walk' : 'idle'), feet, mirror, tint);
+            drawSprite(p + (walking ? 'walk' : 'idle'), feet, mirror, tint, glow);
+        }
+
+        // refill stream: each drop arcs from the source into the body
+        const body = this.pos.add(vec2(0, .1));
+        for (const d of this.refillDrops)
+        {
+            const a = d.from, t = d.t;
+            const mid = a.add(body).scale(.5).add(vec2(d.wobble, 1 + a.distance(body) * .15));
+            const pos = a.scale((1-t)*(1-t)).add(mid.scale(2*(1-t)*t)).add(body.scale(t*t));
+            const snapped = vec2(Math.round(pos.x * PX), Math.round(pos.y * PX)).scale(1/PX);
+            drawRect(snapped, vec2(2/PX), palColor(t > .75 ? 'w' : d.speed > 2.5 ? 'c' : 'b'));
         }
     }
 }
@@ -1565,9 +1607,15 @@ function gameRender()
             drawRect(vec2(pos.x - 2/PX + j/PX + i*2/PX, b.y + (14 - i*5 - j) / PX), vec2(1/PX), palColor('k'));
     }
 
-    // truck refill label
-    const bounce = (time*3|0) % 2 / PX;
-    drawSprite('drop', vec2(TRUCK_X + 3, 6.6 + bounce));
+    // refill signs: water drop plates, lit up while anyone runs low on water
+    const thirsty = players.some(p=> p.water < 30 && p.downTimer <= 0) && (time*4|0) % 2;
+    const sign = thirsty ? 'waterSignLit' : 'waterSign';
+    drawRect(vec2(TRUCK_X - 3.5 + .5/PX, 5.6), vec2(1/PX, 1.2), palColor('S')); // mast on the truck
+    drawSprite(sign, vec2(TRUCK_X - 3.5, 6.1));
+    for (const p of standpipes) // wall plate beside the pipe, unlit once it runs dry
+        p.reserve > 0 ?
+            drawSprite(sign, vec2(p.x - 1.4, p.y + 2.2)) :
+            drawSprite('waterSign', vec2(p.x - 1.4, p.y + 2.2), false, rgb(.4,.4,.45));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1634,8 +1682,6 @@ function gameRenderPost()
         return;
     }
 
-    drawRefillLabels();
-
     if (gameState == 'entry')
     {
         drawEntryScreen();
@@ -1676,24 +1722,6 @@ function gameRenderPost()
         uiText('BUILDING SAVED ' + (stats.integrity*100|0) + '%   TIME ' + (playTime|0) + 'S', W/2, 130, 1, WHITE);
         uiText('R  PLAY AGAIN     ESC  TITLE', W/2, 150, 1, palColor('S'));
     }
-}
-
-// pixel font signs over the truck and every standpipe; they flash while anyone runs low
-function drawRefillLabels()
-{
-    const thirsty = players.some(p=> p.water < 30 && p.downTimer <= 0) && (time*4|0) % 2;
-    const sign = (text, pos, color)=>
-    {
-        const p = worldToScreen(pos), x = Math.round(p.x), y = Math.round(p.y);
-        const w = text.length * 8 + 4;
-        uiRect(x - w/2, y - 5, w, 10, palColor('k', .75));
-        uiText(text, x, y, 1, color, 'center', false);
-    };
-    sign('REFILL', vec2(TRUCK_X + 3, 8.1), palColor(thirsty ? 'w' : 'c'));
-    for (const p of standpipes)
-        p.reserve > 0 ?
-            sign('REFILL', vec2(p.x, p.y + 4.3), palColor(thirsty ? 'w' : 'c')) :
-            sign('EMPTY', vec2(p.x, p.y + 4.3), palColor('S'));
 }
 
 function drawEntryScreen()
