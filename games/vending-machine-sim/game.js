@@ -491,8 +491,19 @@ for (const key of itemKeys)
 // effects multiply how much customers want items, keyed by item or by tag,
 // traffic scales how many people show up, budget scales what they'll pay
 
-const tagNames = {drink:'DRINKS', cold:'COLD DRINKS', hot:'HOT DRINKS', snack:'SNACKS',
-    sweet:'SWEETS', salty:'SALTY SNACKS', food:'FOOD', healthy:'HEALTHY STUFF'};
+// every tag has its own chip color, used on items and in the news so they match up
+// color is a sprite palette character, dark chips get white text
+const tagStyles =
+{
+    drink:   {label:'DRINK',   color:'b', dark:true},
+    cold:    {label:'COLD',    color:'c'},
+    hot:     {label:'HOT',     color:'o'},
+    snack:   {label:'SNACK',   color:'y'},
+    sweet:   {label:'SWEET',   color:'p', dark:true},
+    salty:   {label:'SALTY',   color:'n', dark:true},
+    food:    {label:'FOOD',    color:'R', dark:true},
+    healthy: {label:'HEALTHY', color:'g'},
+};
 
 const newsCategories =
 {
@@ -572,10 +583,14 @@ const newsDemand = (key) => game.news.reduce((product, event) => product * effec
 const newsTraffic = () => game.news.reduce((product, event) => product * (event.traffic || 1), 1);
 const newsBudget  = () => game.news.reduce((product, event) => product * (event.budget || 1), 1);
 
-// readable effect list for the paper, like ['COLD DRINKS', 2]
+// effects as [label, multiplier, tag], tag effects get drawn as a colored chip
+const effectEntries = (effects) => Object.entries(effects).map(([key, m]) =>
+    tagStyles[key] ? [tagStyles[key].label, m, key] : [itemTypes[key].name, m]);
+
+// readable effect list for the paper, like ['COLD', 2, 'cold']
 function newsEffectList(event)
 {
-    const list = Object.entries(event.effects).map(([key, m]) => [tagNames[key] || itemTypes[key].name, m]);
+    const list = effectEntries(event.effects);
     if (event.traffic)
         list.push(['CUSTOMERS', event.traffic]);
     if (event.budget)
@@ -624,7 +639,7 @@ const startBonus = (index) => index * 20; // later starting spots come with extr
 // readable lever list for the location card, like ['COFFEE', 1.5]
 function locationEffectList(loc)
 {
-    const list = Object.entries(loc.effects).map(([key, m]) => [tagNames[key] || itemTypes[key].name, m]);
+    const list = effectEntries(loc.effects);
     for (const [label, key] of [['CUSTOMERS', 'traffic'], ['BUDGETS', 'budget'], ['PATIENCE', 'patience']])
         if (loc[key])
             list.push([label, key == 'patience' ? 1 / loc[key] : loc[key]]);
@@ -1366,7 +1381,7 @@ function prepScreen()
     // slot editor
     const slot = game.slots[selectedSlot];
     const ex = panelX, ey = 38;
-    uiPanel(ex, ey, panelW, 104);
+    uiPanel(ex, ey, panelW, 114);
     uiText('SLOT ' + (selectedSlot + 1) + (slot.item ? ' - ' + itemTypes[slot.item].name : ''), ex + 8, ey + 10, 1, uiColors.cream, 'left');
     if (slot.item && demandFor(slot.item) != 1)
     {
@@ -1387,13 +1402,14 @@ function prepScreen()
         drawBrandPips(slot.item, ex + 22, ey + 62);
         uiText(brand.name, ex + 56, ey + 28, 2, WHITE, 'left');
         const fairText = formatPrice(itemFair(slot.item));
-        uiText('COST ' + formatMoney(itemCost(slot.item)) + '  FAIR ~' + fairText, ex + 56, ey + 46, 1, uiColors.cream, 'left');
+        uiItemTags(slot.item, ex + 56, ey + 45);
+        uiText('COST ' + formatMoney(itemCost(slot.item)) + '  FAIR ~' + fairText, ex + 56, ey + 58, 1, uiColors.cream, 'left');
         const peak = item.peak && brand.perk != 'allDay' ? `BUSY ${item.peak[0]}-${item.peak[1]}H` : '';
         const note = [brand.perk && brandPerks[brand.perk].note, peak].filter(Boolean).join('  ');
-        uiText(note, ex + 56, ey + 56, 1, uiColors.gold, 'left');
+        uiText(note, ex + 56, ey + 68, 1, uiColors.gold, 'left');
 
         // price
-        const rowY = ey + 66;
+        const rowY = ey + 76;
         uiText('PRICE', ex + 10, rowY + 8, 1, WHITE, 'left');
         if (uiButton('-', ex + 60, rowY, 18, 16, uiColors.red))
             slot.price = Math.max(.25, slot.price - priceStep(slot.price, false));
@@ -1402,7 +1418,7 @@ function prepScreen()
             slot.price = Math.min(maxPrice, slot.price + priceStep(slot.price, true));
 
         // stock, paid for as it goes in
-        const stockY = ey + 86;
+        const stockY = ey + 96;
         uiText('STOCK', ex + 10, stockY + 6, 1, WHITE, 'left');
         if (uiButton('-', ex + 60, stockY - 2, 18, 16, uiColors.red))
             changeStock(slot, -1);
@@ -1416,7 +1432,7 @@ function prepScreen()
     }
 
     // item catalog cards, locked ones tease what the shop can unlock
-    const cy = 150;
+    const cy = 158;
     uiPanel(panelX, cy, panelW, 70, uiColors.dark);
     uiText('ITEMS', panelX + 8, cy + 8, 1, uiColors.cream, 'left');
     if (uiButton('NEWS', panelX + 54, cy + 2, 40, 11, uiColors.orange))
@@ -1441,6 +1457,9 @@ function prepScreen()
         {
             drawSprite(itemSprite(key), x + 16, y + 18 + lift, 2);
             drawBrandPips(key, x + 3, y + 3 + lift);
+            // a strip along the bottom in the item's tag colors, to match against the news
+            const tags = itemTypes[key].tags, stripW = 32 / tags.length;
+            tags.forEach((tag, t) => uiRect(x + Math.round(t * stripW), y + 45 + lift, Math.round((t + 1) * stripW) - Math.round(t * stripW), 3, spriteColor(tagStyles[tag].color)));
             uiText(formatCost(itemCost(key)), x + 16, y + 40 + lift, 1, uiColors.ink, 'center', false);
             // today's news and the location push demand up or down
             const demand = demandFor(key);
@@ -1462,7 +1481,7 @@ function prepScreen()
 
     // open for business
     const stock = totalStock();
-    if (uiButton(stock ? 'OPEN FOR THE DAY' : 'LOAD SOME STOCK FIRST', panelX, 230, panelW, 26, uiColors.orange, stock > 0, stock ? 2 : 1))
+    if (uiButton(stock ? 'OPEN FOR THE DAY' : 'LOAD SOME STOCK FIRST', panelX, 238, panelW, 22, uiColors.orange, stock > 0, stock ? 2 : 1))
         startDay();
 }
 
@@ -1504,14 +1523,20 @@ function dayScreen()
         const event = game.news[(time / 3 | 0) % game.news.length];
         const category = newsCategories[event.cat];
         uiPanel(panelX, 106, panelW, 14, uiColors.dark);
-        uiRect(panelX, 106, category.label.length * 8 + 6, 14, category.color);
-        uiText(category.label, panelX + 3, 113, 1, WHITE, 'left', false);
-        const effects = newsEffectList(event).map(([label, m]) => label + ' ' + formatMultiplier(m)).join(', ');
-        const room = Math.floor((panelW - category.label.length * 8 - 14) / 8);
-        let text = event.title + (effects ? ': ' + effects : '');
-        if (text.length > room)
-            text = text.slice(0, room - 2) + '..';
-        uiText(text, panelX + category.label.length * 8 + 10, 113, 1, uiColors.cream, 'left', false);
+        // category badges are ink with colored text, so they never look like tag chips
+        uiRect(panelX, 106, category.label.length * 8 + 6, 14, uiColors.ink);
+        uiText(category.label, panelX + 3, 113, 1, category.color.lerp(WHITE, .2), 'left', false);
+        // headline and effects together if they fit, otherwise take turns
+        const effects = newsEffectList(event);
+        const tx = panelX + category.label.length * 8 + 10, room = panelX + panelW - 4 - tx;
+        const title = event.title + (effects.length ? ':' : '');
+        const together = (title.length + 1) * 8 + effectListWidth(effects) <= room;
+        if (together || !effects.length || time % 3 < 1.5)
+            uiText(title, tx, 113, 1, uiColors.cream, 'left', false);
+        if (together)
+            uiEffectList(effects, tx + (title.length + 1) * 8, 113, room, true, false);
+        else if (effects.length && time % 3 >= 1.5)
+            uiEffectList(effects, tx, 113, room, true, false);
     }
 }
 
@@ -1603,7 +1628,7 @@ function shopScreen()
 function newsScreen()
 {
     uiRect(0, 0, screenW, screenH, new Color(0, 0, 0, .5));
-    const sectionH = 46;
+    const sectionH = 50;
     const w = 400, h = 76 + game.news.length * sectionH, x = (screenW - w) / 2, y = Math.round((screenH - h) / 2);
     const paper = new Color().setHex('#f3ead7');
     uiPanel(x, y, w, h, paper);
@@ -1619,8 +1644,8 @@ function newsScreen()
         const sy = y + 48 + i * sectionH;
         const category = newsCategories[event.cat];
         const chipW = category.label.length * 8 + 8;
-        uiRect(x + 10, sy, chipW, 12, category.color);
-        uiText(category.label, x + 14, sy + 6, 1, WHITE, 'left', false);
+        uiRect(x + 10, sy, chipW, 12, uiColors.ink);
+        uiText(category.label, x + 14, sy + 6, 1, category.color.lerp(WHITE, .2), 'left', false);
         uiText(event.title, x + 18 + chipW, sy + 6, 1, uiColors.ink, 'left', false);
         uiText(event.blurb, x + 10, sy + 19, 1, uiColors.gray, 'left', false);
 
@@ -1637,19 +1662,53 @@ function newsScreen()
         phase = 'prep';
 }
 
-// effect list in green or red, wrapping onto new lines, returns the last line's y
-function uiEffectList(effects, x, y, w, onDark=false)
+// colored tag chip like [HOT], centered on y, returns its width
+function uiTagChip(tag, x, y)
+{
+    const style = tagStyles[tag], w = style.label.length * 8 + 4;
+    uiRect(x, y - 5, w, 10, spriteColor(style.color));
+    uiText(style.label, x + 2, y, 1, style.dark ? WHITE : uiColors.ink, 'left', false);
+    return w;
+}
+
+// a row of chips for an item's tags, returns the width used
+function uiItemTags(key, x, y)
+{
+    let tx = x;
+    for (const tag of itemTypes[key].tags)
+        tx += uiTagChip(tag, tx, y) + 3;
+    return tx - x;
+}
+
+// how wide one effect list entry is: label or chip, a gap, then the multiplier
+const effectEntryWidth = ([label, m, tag]) => (tag ? label.length * 8 + 4 : label.length * 8) + 4 + formatMultiplier(m).length * 8;
+const effectListWidth = (effects) => effects.reduce((sum, entry) => sum + effectEntryWidth(entry) + 12, -12);
+
+// effect list with tag chips and green or red multipliers, returns the last line's y
+// wraps onto new lines, or with wrap off cuts off with '..' when out of room
+function uiEffectList(effects, x, y, w, onDark=false, wrap=true)
 {
     const good = onDark ? uiColors.green.lerp(WHITE, .35) : uiColors.green;
     const bad = onDark ? uiColors.red.lerp(WHITE, .3) : uiColors.red;
+    const plain = onDark ? uiColors.cream : uiColors.ink;
     let ex = x;
-    for (const [label, m] of effects)
+    for (const [label, m, tag] of effects)
     {
-        const text = label + ' ' + formatMultiplier(m);
-        if (ex + text.length * 8 > x + w)
-            ex = x, y += 10;
-        uiText(text, ex, y, 1, m > 1 ? good : bad, 'left', false);
-        ex += (text.length + 2) * 8;
+        const mult = formatMultiplier(m);
+        const labelW = tag ? label.length * 8 + 4 : label.length * 8;
+        const entryW = effectEntryWidth([label, m, tag]);
+        if (ex + entryW > x + w)
+        {
+            if (!wrap)
+                return uiText('..', ex, y, 1, plain, 'left', false), y;
+            ex = x, y += 12;
+        }
+        if (tag)
+            uiTagChip(tag, ex, y);
+        else
+            uiText(label, ex, y, 1, plain, 'left', false);
+        uiText(mult, ex + labelW + 4, y, 1, m > 1 ? good : bad, 'left', false);
+        ex += entryW + 12;
     }
     return y;
 }
@@ -1659,7 +1718,7 @@ function locationScreen()
 {
     uiRect(0, 0, screenW, screenH, new Color(0, 0, 0, .5));
     const loc = currentLocation();
-    const w = 360, h = 184, x = (screenW - w) / 2, y = Math.round((screenH - h) / 2);
+    const w = 360, h = 192, x = (screenW - w) / 2, y = Math.round((screenH - h) / 2);
     uiPanel(x, y, w, h, uiColors.dark);
     uiText(`LOCATION ${game.locIndex + 1} OF ${locationTypes.length}`, x + w/2, y + 12, 1, uiColors.cream);
     uiRect(x + 10, y + 22, 52, 52, loc.feltColors[1]);
