@@ -46,7 +46,7 @@ const pal =
     c:'#cfeef5', C:'#8cc3d6', s:'#c0cbdc', S:'#8b9bb4', h:'#6b4226', H:'#3a2418', y:'#fee761',
     o:'#e8813a', v:'#a98bc8', e:'#262b44', t:'#f2c4a0', u:'#d79c78', n:'#b97a52', N:'#8e5638',
     d:'#6e4430', D:'#4e2e20', p:'#f48fb1', i:'#a8e6ff', l:'#c98a5a', L:'#9a5f3c',
-    f:'#ec9c9c', T:'#ead4aa',
+    f:'#ec9c9c', T:'#ead4aa', K:'#c08552', O:'#93603a',
 };
 const colorCache = {};
 const palColor = (char, a=1)=> (colorCache[char] || (colorCache[char] = new Color().setHex(pal[char]))).scale(1, a);
@@ -69,7 +69,7 @@ const LECTURES =
 const CHAPTER_WORDS = ['ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT'];
 const SYLLABLES = ['BLOR','MUB','FEN','WOM','GRA','DUL','NIX','PLU','TASH','VOR','SNOD','KRIM','BAL','OOM','ZEP','MOR','FLIB','DRA','QUO','PUN'];
 const FILLER = ['AND','THE','SO','UHH','OF','WHICH','IS','BASICALLY','UM','THEREFORE','IN','A','HMM','RIGHT'];
-const QUESTIONS = ['WHAT DO YOU THINK, BEANIE?','YOU, FRONT ROW. THOUGHTS?','AND THE ANSWER IS... YOU THERE?','AM I BORING YOU, YOUNG SCHOLAR?'];
+const QUESTIONS = ['WHAT DO YOU THINK, SLEEPYHEAD?','YOU, FRONT ROW. THOUGHTS?','AND THE ANSWER IS... YOU THERE?','AM I BORING YOU, YOUNG SCHOLAR?'];
 // cold call answers: one comes from the current course, the others from anywhere else
 const ANSWER_BANK =
 {
@@ -92,18 +92,19 @@ const QUESTION_TIME = 5;
 const SKILLS =
 [
     {id:'eyes',   name:'WIDEN YOUR EYES',              type:'click',  cost:5,    growth:1.6, max:10, power:2,  icon:'iEye'},
-    {id:'pinch',  name:'PINCH YOURSELF',               type:'active', cost:10,   growth:1.7, max:10, power:14, perLvl:5,  tol:.35, tolDecay:.12,  anim:'pinch',  word:'OW!',   icon:'iPinch'},
+    {id:'pinch',  name:'PINCH YOURSELF',               type:'active', cost:10,   growth:1.7, max:10, power:20, perLvl:7,  tol:.3,  tolDecay:.12,  anim:'pinch',  word:'OW!',   icon:'iPinch'},
     {id:'foot',   name:'TAP YOUR FOOT',                type:'regen',  cost:25,   growth:1.6, max:10, regen:1.2, icon:'iShoe'},
-    {id:'mouth',  name:'TICKLE THE ROOF OF YOUR MOUTH', type:'active', cost:45,  growth:1.7, max:10, power:24, perLvl:7,  tol:.45, tolDecay:.1,   anim:'tickle', word:'HEHEH', icon:'iTongue'},
+    {id:'mouth',  name:'TICKLE THE ROOF OF YOUR MOUTH', type:'active', cost:45,  growth:1.7, max:10, power:36, perLvl:10, tol:.4,  tolDecay:.1,   anim:'tickle', word:'HEHEH', icon:'iTongue'},
     {id:'gum',    name:'CHEW MINT GUM',                type:'regen',  cost:90,   growth:1.6, max:10, regen:2.5, icon:'iGum'},
     {id:'posture',name:'SIT UP STRAIGHT',              type:'drain',  cost:140,  growth:1.9, max:5,  reduce:.08, icon:'iUp'},
-    {id:'slap',   name:'SLAP YOUR CHEEKS',             type:'active', cost:220,  growth:1.7, max:10, power:40, perLvl:10, tol:.55, tolDecay:.08,  anim:'slap',   word:'SLAP!', icon:'iHand'},
+    {id:'slap',   name:'SLAP YOUR CHEEKS',             type:'active', cost:220,  growth:1.7, max:10, power:60, perLvl:15, tol:.5,  tolDecay:.08,  anim:'slap',   word:'SLAP!', icon:'iHand'},
     {id:'pens',   name:'COLOR-CODED PENS',             type:'notes',  cost:300,  growth:1.8, max:8,  mult:.5, icon:'iPens'},
     {id:'doodle', name:'DOODLE IN THE MARGINS',        type:'regen',  cost:480,  growth:1.6, max:10, regen:5, icon:'iPencil'},
     {id:'brew',   name:'SNEAK A COLD BREW',            type:'active', cost:750,  growth:1.7, max:10, power:50, perLvl:12, tol:.9,  tolDecay:.045, anim:'brew',   word:'SLURP', icon:'iCup', buff:8, buffRegen:5},
     {id:'ice',    name:'ICE CUBE DOWN YOUR SHIRT',     type:'active', cost:1200, growth:1.8, max:5,  power:100, perLvl:0, tol:1,   tolDecay:.03,  anim:'ice',    word:'BRRR!', icon:'iIce', freeze:5},
 ];
 const ACTIVES = SKILLS.filter(s=> s.type == 'active');
+const PASSIVES = SKILLS.filter(s=> s.type != 'active');
 
 const skillCost = (s)=> Math.round(s.cost * Math.pow(s.growth, levels[s.id]));
 const skillPower = (s)=> s.power + (s.perLvl || 0) * (levels[s.id] - 1);
@@ -331,13 +332,6 @@ const HAIR_STYLES =
         g.ellipse(11, 1.5, 3.5, 2, 'x');
         g.rect(10, 1, 2, 1, 'X');
     },
-    beanie: (g)=>
-    {
-        g.ellipse(11, 9, 8.5, 8.5, 'r', (x, y)=> y <= 7);
-        g.rect(3, 6, 16, 3, 'R');
-        for (let x = 4; x < 11; x += 2) g.sym(x, 7, 1, 1, 'E');
-        g.sym(4, 9, 1, 3, 'x');
-    },
 };
 
 // 22x24: face, ears, brows, eye whites (pupils and lids are drawn live), neck
@@ -431,7 +425,7 @@ function makePerson(x, row, look={})
     const clothes = look.clothes || pickDeco(CLOTHES);
     return {x, row, baseY: row == 'back' ? BACK_Y : row == 'front' ? FRONT_Y : MID_Y, role: look.role || 'extra',
         hair: look.hair || pickDeco(['short','bob','curly','bun']), torsoStyle: look.torso || 'crew',
-        glasses: look.glasses, eyeliner: look.eyeliner, stripe: look.stripe, laptop: look.laptop,
+        glasses: look.glasses, eyeColor: look.eyeColor || 'k', eyeliner: look.eyeliner, stripe: look.stripe, laptop: look.laptop,
         skin: skin[0], skinShade: skin[1], sleeve: clothes[0],
         recolor: {x: hair[0], X: hair[1], z: skin[0], Z: skin[1], j: clothes[0], J: clothes[1]},
         sleepAt: .15 + decoRand()*1.3, phase: decoRand()*10,
@@ -443,8 +437,8 @@ const margot = makePerson(120 - NEIGHBOR_GAP, 'mid', {role:'margot', hair:'bob',
     skin:['t','u'], hairColor:['y','m'], clothes:['l','L']});
 const chas = makePerson(120 + NEIGHBOR_GAP, 'mid', {role:'chas', hair:'curly', torso:'track', stripe:true,
     skin:['n','N'], hairColor:['H','k'], clothes:['r','R']});
-const hero = makePerson(120, 'mid', {role:'player', hair:'beanie', torso:'jacket', glasses:true,
-    skin:['t','u'], hairColor:['h','H'], clothes:['m','M']});
+const hero = makePerson(120, 'mid', {role:'player', hair:'short', torso:'jacket', eyeColor:'d',
+    skin:['K','O'], hairColor:['k','e'], clothes:['m','M']});
 const neighbors = [margot, chas];
 const midRow = [hero, margot, chas];
 // the row in front faces the professor too: just their heads and shoulders, cut off by the frame
@@ -1074,10 +1068,18 @@ function updateClass()
 ///////////////////////////////////////////////////////////////////////////////
 // skill card layout
 
-const CARD_W = 40, CARD_H = 46, CARD_GAP = 3;
-const CARD_X0 = (screenW - (SKILLS.length * CARD_W + (SKILLS.length - 1) * CARD_GAP)) / 2 | 0;
+// passive upgrades on the left, active abilities (number keys) grouped on the right
+const CARD_W = 40, CARD_H = 46, CARD_GAP = 3, GROUP_GAP = 9;
+const CARD_X0 = (screenW - (SKILLS.length * CARD_W + (SKILLS.length - 2) * CARD_GAP + GROUP_GAP)) / 2 | 0;
 const CARD_Y = PANEL_Y + 5;
-const cardX = (i)=> CARD_X0 + i * (CARD_W + CARD_GAP);
+const ACTIVE_X0 = CARD_X0 + PASSIVES.length * (CARD_W + CARD_GAP) - CARD_GAP + GROUP_GAP;
+function cardX(i)
+{
+    const s = SKILLS[i];
+    return s.type == 'active' ?
+        ACTIVE_X0 + ACTIVES.indexOf(s) * (CARD_W + CARD_GAP) :
+        CARD_X0 + PASSIVES.indexOf(s) * (CARD_W + CARD_GAP);
+}
 const inRect = (p, x, y, w, h)=> p.x >= x && p.x < x + w && p.y >= y && p.y < y + h;
 
 // skills unlock left to right: each owned skill reveals the next two
@@ -1483,14 +1485,14 @@ function drawPerson(p, pose)
             sRect(ex, ey + 1, 3, 1, 'H');
         }
         else if (pose.eyes == 'wide')
-            sRect(ex + 1, ey, 1, 1, 'k');
+            sRect(ex + 1, ey, 1, 1, p.eyeColor);
         else if (pose.eyes == 'half' || p.eyeliner)
         {
             sRect(ex, ey, 3, 1, p.eyeliner ? 'k' : p.skinShade);
-            sRect(ex + 1 + pose.look, ey + 1, 1, 1, 'k');
+            sRect(ex + 1 + pose.look, ey + 1, 1, 1, p.eyeColor);
         }
         else
-            sRect(ex + 1 + pose.look, ey, 1, 2, 'k');
+            sRect(ex + 1 + pose.look, ey, 1, 2, p.eyeColor);
     }
     if (p.eyeliner && pose.eyes != 'closed')
         sRect(hx + 5, ey - 1, 1, 1, 'k'), sRect(hx + 16, ey - 1, 1, 1, 'k');
@@ -1737,6 +1739,11 @@ function drawSkillPanel()
     uiRect(0, PANEL_Y, screenW, 2, palColor('q'));
     uiRect(0, PANEL_Y + 2, screenW, 1, palColor('k'));
 
+    // darker tray behind the active abilities
+    const trayW = ACTIVES.length * (CARD_W + CARD_GAP) - CARD_GAP + 6;
+    uiRect(ACTIVE_X0 - 3, PANEL_Y + 3, trayW, screenH - PANEL_Y - 3, palColor('e'));
+    uiRect(ACTIVE_X0 - 5, PANEL_Y + 3, 2, screenH - PANEL_Y - 3, palColor('q'));
+
     const hover = hoveredCard();
     SKILLS.forEach((s, i)=>
     {
@@ -1781,7 +1788,7 @@ function drawSkillPanel()
         const owned = levels[s.id] > 0;
         const desc = skillDesc(s);
         const how = levels[s.id] >= s.max ? 'FULLY TRAINED' :
-            s.type == 'active' && owned ? 'CLICK ICON TO USE, PRICE TO UPGRADE' :
+            s.type == 'active' && owned ? 'PRESS ' + (ACTIVES.indexOf(s) + 1) + ' TO USE, PRICE TO UPGRADE' :
             (owned ? 'UPGRADE' : 'LEARN') + ' FOR ' + formatNumber(skillCost(s)) + ' NOTES';
         const w = max(s.name.length, desc.length, how.length) * 8 + 14;
         const x = clamp(cardX(hover) + CARD_W/2 - w/2, 4, screenW - w - 4);
