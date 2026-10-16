@@ -7,10 +7,14 @@
       and reputation decides how many people show up.
     - End of day: rent comes out of your cash. Can't pay and you're evicted.
     - Shop: spend profit on upgrade cards (more slots, bigger coils, new items...)
-    - Weird items bend the rules like Balatro jokers: eggs that double in value
-      every night, lobsters that escape, and a cursed doll that sells high but hurts rep
+    - The shop unlocks more vending classics, from mint gum up to protein shakes
+    - Every item comes in 3 brands, like Arbee Cola > Arbee Orange > RedWhite Cola.
+      Brand upgrades in the shop raise the price people will pay, and top brands get a perk
     - Morning news: each day rolls weather, maybe a trend, and rarely a natural
       disaster, which push demand for items up or down and change foot traffic
+    - Locations: the machine moves Office > Mall > Hospital > Metro > College >
+      Airport > Museum. Each one lasts 4 days and has its own tastes, crowd size,
+      budgets, and rent. Clearing one unlocks the next as a starting spot
     - Pixel art is drawn from text maps into a sprite sheet at startup, and the
       whole game renders at 480x270 and is scaled up without smoothing
     - Controls: mouse only
@@ -191,107 +195,107 @@ const spriteMaps =
         '................',
         '................',
         '................'],
-    mystery: [
+    gum: [
         '................',
-        '.....ssssss.....',
-        '....sSSSSSSs....',
-        '....PPPPPPPP....',
-        '....PppppppP....',
-        '....PppYYppP....',
-        '....PpYppYpP....',
-        '....PppppYpP....',
-        '....PpppYppP....',
-        '....PpppYppP....',
-        '....PppppppP....',
-        '....PpppYppP....',
-        '....PPPPPPPP....',
-        '....sSSSSSSs....',
-        '.....ssssss.....',
+        '................',
+        '.......ss.......',
+        '.......sw.......',
+        '.......sw.......',
+        '...gggggggggg...',
+        '...gwwwwwwwwg...',
+        '...gwccccccwg...',
+        '...gwcGGGGcwg...',
+        '...gwccccccwg...',
+        '...gwcGGGGcwg...',
+        '...gwccccccwg...',
+        '...gwwwwwwwwg...',
+        '...gggggggggg...',
+        '................',
         '................'],
-    hat: [
+    pbcups: [
+        '................',
+        '................',
+        '................',
+        '................',
+        '....NNNNNNNN....',
+        '...NnnnnnnnnN...',
+        '...NnnnnnnttN...',
+        '...NnnnnnntTt...',
+        '...NnnnnnnttN...',
+        '...oooooooooo...',
+        '...oyoyoyoyoo...',
+        '....oyoyoyoy....',
+        '....oyoyoyoy....',
+        '.....oooooo.....',
+        '................',
+        '................'],
+    granola: [
         '................',
         '................',
         '................',
         '................',
         '................',
+        '..s..........s..',
+        '..sggggggggggs..',
+        '..sgtnTtntTngs..',
+        '..sgnTtntTtngs..',
+        '..sgtnTtntTngs..',
+        '..sggggggggggs..',
+        '..s..........s..',
+        '................',
+        '................',
+        '................',
+        '................'],
+    juice: [
+        '................',
+        '......GGGG......',
+        '......gggg......',
+        '......oooo......',
+        '.....oooooo.....',
+        '.....owoooo.....',
+        '.....wwwwww.....',
+        '.....wyyyyw.....',
+        '.....wyoogw.....',
+        '.....wyyyyw.....',
+        '.....wwwwww.....',
+        '.....owoooo.....',
+        '.....owoooo.....',
+        '.....oooooo.....',
+        '......oooo......',
+        '................'],
+    noodles: [
+        '......w...w.....',
+        '.....w...w......',
+        '..ssssssssssss..',
+        '..SSSSSSSSSSSS..',
+        '..wwwwwwwwwwww..',
+        '...rrrrrrrrrr...',
+        '...rYYrrYYrrr...',
+        '...rrrrrrrrrr...',
+        '...wwwwwwwwww...',
+        '....wwwwwwww....',
+        '....wwwwwwww....',
+        '....rrrrrrrr....',
+        '.....wwwwww.....',
+        '................',
+        '................',
+        '................'],
+    protein: [
+        '................',
+        '.......dd.......',
         '......DDDD......',
-        '......DdDD......',
-        '......DdDD......',
-        '......DDDD......',
-        '......rrrr......',
-        '....DDDDDDDD....',
-        '................',
-        '................',
-        '................',
-        '................',
-        '................'],
-    egg: [
-        '................',
-        '..g.............',
-        '...g...TT.......',
-        '..g...TTTT......',
-        '.....TTTTTT.....',
-        '.....TTgTTT.....',
-        '....TTTTTTTT....',
-        '....TTTTTgTT....',
-        '....TgTTTTTT....',
-        '....TTTTTTTT....',
-        '....TTTTgTTT....',
-        '.....TTTTTT.....',
-        '......TTTT......',
-        '................',
-        '................',
-        '................'],
-    doll: [
-        '................',
-        '.........S......',
-        '......ttSt......',
-        '.....ttttrt.....',
-        '.....tkttkt.....',
-        '.....tttttt.....',
-        '.....tkkkkt.....',
-        '......tttt......',
-        '...tttttttttt...',
-        '...tt.tttt.tt...',
-        '......tRtt......',
-        '......tttt......',
-        '.....tt..tt.....',
-        '.....tt..tt.....',
-        '................',
-        '................'],
-    lobster: [
-        '................',
-        '..r..........r..',
-        '.rRr........rRr.',
-        '.rrr........rrr.',
-        '..r..rrrrrr..r..',
-        '...rrrwrrwrrr...',
-        '.....rkrrkr.....',
-        '.....rrrrrr.....',
-        '....rrRRRRrr....',
-        '.....rrrrrr.....',
-        '....rrRRRRrr....',
-        '.....rrrrrr.....',
-        '......rRRr......',
-        '.....rr..rr.....',
-        '................',
-        '................'],
-    gold: [
-        '................',
-        '................',
-        '................',
-        '................',
-        '.....YYYYYY.....',
-        '....YyyyyyyY....',
-        '...YyYYyyyyyY...',
-        '..YyyyyyyyyyyY..',
-        '..yyyyyyyyyyyy..',
-        '..oooooooooooo..',
-        '..oooooooooooo..',
-        '................',
-        '................',
-        '................',
-        '................',
+        '.....DDDDDD.....',
+        '.....ssssss.....',
+        '.....bbbbbb.....',
+        '.....bcbbbb.....',
+        '.....bcwwwb.....',
+        '.....bwBBwb.....',
+        '.....bwBBwb.....',
+        '.....bcwwwb.....',
+        '.....bcbbbb.....',
+        '.....bbbbbb.....',
+        '.....BBBBBB.....',
+        '......BBBB......',
         '................'],
     heart: [
         '................',
@@ -386,6 +390,17 @@ function buildSpriteSheet()
         addTile(name, (x, y) => isOutline(map, x, y) ? spriteHex.k : filled(map, x, y) ? spriteHex[map[y][x]] : 0);
     }
 
+    // higher brands are palette swaps of the base item
+    for (const key of itemKeys)
+    for (const brand of itemTypes[key].brands)
+    {
+        if (!brand.recolor)
+            continue;
+        const map = spriteMaps[key];
+        const color = (char) => spriteHex[brand.recolor[char] || char];
+        addTile(brand.sprite, (x, y) => isOutline(map, x, y) ? spriteHex.k : filled(map, x, y) ? color(map[y][x]) : 0);
+    }
+
     // customer layers, each one white so it can be tinted when drawn
     personFrames.forEach((map, frame) =>
     {
@@ -416,15 +431,59 @@ const itemTypes =
     energy:   {name:'ENERGY',   cost:1.00, fair:3.00, pop:.40, unlock:16, peak:[14, 19], tags:['drink', 'cold']},
     sandwich: {name:'SANDWICH', cost:1.50, fair:4.50, pop:.45, unlock:22, peak:[11, 14], tags:['food']},
 
-    // the weird stuff, each one bends a rule (see itemCost, itemFair, valueOf, and overnight)
-    mystery:  {name:'MYSTERY',  cost:.10,  fair:2,    pop:.50, unlock:10, desc:'NOBODY KNOWS\nWHAT IT IS', tags:['weird']},
-    hat:      {name:'TINY HAT', cost:.50,  fair:6,    pop:.35, unlock:12, desc:'BUYERS LOVE\nIT: +REP', tags:['weird']},
-    egg:      {name:'OLD EGG',  cost:.20,  fair:.75,  pop:.40, unlock:14, desc:'DOUBLES IN\nVALUE NIGHTLY', tags:['weird', 'food']},
-    doll:     {name:'CURSED DOLL', cost:1, fair:15,   pop:.30, unlock:16, desc:'SELLS HIGH\n-REP EACH', tags:['weird']},
-    lobster:  {name:'LOBSTER',  cost:5,    fair:18,   pop:.25, unlock:20, desc:'30% ESCAPE\nEACH NIGHT', tags:['weird', 'food']},
-    gold:     {name:'GOLD BAR', cost:30,   fair:120,  pop:.06, unlock:45, desc:'ONE IN 20\nWILL BITE', tags:['weird']},
+    gum:      {name:'MINT GUM', cost:.20,  fair:.75,  pop:.55, unlock:6,  tags:['snack']},
+    pbcups:   {name:'PB CUPS',  cost:.50,  fair:1.75, pop:.60, unlock:10, tags:['snack', 'sweet']},
+    granola:  {name:'GRANOLA',  cost:.45,  fair:1.50, pop:.45, unlock:10, tags:['snack', 'healthy']},
+    juice:    {name:'OJ',       cost:.80,  fair:2.50, pop:.50, unlock:14, peak:[8, 11], tags:['drink', 'cold', 'healthy']},
+    noodles:  {name:'NOODLES',  cost:1.00, fair:3.50, pop:.40, unlock:18, peak:[17, 20], tags:['food', 'hot']},
+    protein:  {name:'PROTEIN',  cost:1.75, fair:5.50, pop:.35, unlock:26, tags:['drink', 'healthy']},
 };
 const itemKeys = Object.keys(itemTypes);
+itemTypes.juice.name = 'JUICE';
+
+// each item comes in 3 brands, bought up through the shop: [name, sprite recolor, perk]
+// the recolor swaps sprite palette characters so every brand looks different
+const itemBrands =
+{
+    soda:     [['ARBEE COLA'],  ['ARBEE ORANGE', {r:'o', R:'n'}],        ['REDWHITE COLA', {r:'w', w:'r', R:'s'}, 'popular']],
+    chips:    [['CRUNCHOS'],    ['CRUNCHOS BBQ', {y:'o', Y:'y'}],        ['KETTLE KING', {y:'P', Y:'p', r:'Y'}, 'steady']],
+    candy:    [['CHOCO CHOMP'], ['CHOMP CARAMEL', {p:'o', P:'n'}],       ['VELVET BAR', {p:'D', P:'k', Y:'y'}, 'loved']],
+    water:    [['AQUAPURE'],    ['GLACIER H2O', {b:'c', B:'b'}],         ['ALPINE MIST', {b:'s', B:'S', c:'w'}, 'popular']],
+    cookie:   [['CRUMBLES'],    ['GRAN\'S BATCH', {t:'T'}],              ['BUTTER BARON', {t:'y', N:'n'}, 'loved']],
+    coffee:   [['JOE-TO-GO'],   ['BEANWORKS', {N:'G', n:'g'}],           ['ROAST ROYALE', {N:'P', n:'p', w:'T'}, 'allDay']],
+    energy:   [['VOLTZ'],       ['VOLTZ ZERO', {G:'D', g:'d'}],          ['MEGAWATT', {G:'B', g:'b', Y:'w'}, 'allDay']],
+    sandwich: [['QUIKSUB'],     ['DELI CLUB', {Y:'o'}],                  ['ARTISAN STACK', {t:'n', T:'t'}, 'allDay']],
+    gum:      [['MINTZ'],       ['ARCTIC MINTZ', {g:'b', G:'B'}],        ['ZEN LEAF', {g:'w', c:'g'}, 'loved']],
+    pbcups:   [['NUTTY CUPS'],  ['NUTTY CUPS XL', {o:'r', y:'Y'}],       ['PB PALACE', {o:'P', y:'p'}, 'steady']],
+    granola:  [['OATIES'],      ['OATIES HONEY', {g:'y'}],               ['SUMMIT CRUNCH', {g:'G', s:'Y'}, 'steady']],
+    juice:    [['SUNNY OJ'],    ['FRESH SQUEEZE', {G:'Y', g:'y'}],       ['GROVE GOLD', {o:'y', y:'Y'}, 'allDay']],
+    noodles:  [['SLURPO'],      ['SLURPO SPICY', {r:'o', Y:'r'}],        ['RAMEN MASTER', {r:'D', w:'T'}, 'popular']],
+    protein:  [['GAINZ'],       ['GAINZ CHOCO', {b:'n', B:'N', c:'t'}],  ['IRON WHEY', {b:'D', B:'k', c:'Y'}, 'loved']],
+};
+
+// perks for the top brands, with how they read on a shop card and in the slot editor
+const brandPerks =
+{
+    popular: {card:'MORE PEOPLE\nWANT IT',  note:'BEST SELLER'},
+    loved:   {card:'+REP ON\nEVERY SALE',   note:'FAN FAVORITE: +REP'},
+    allDay:  {card:'NO SLOW\nHOURS',        note:'SELLS WELL ALL DAY'},
+    steady:  {card:'IGNORES\nBAD NEWS',     note:'LOYAL FANS, NO BAD NEWS'},
+};
+
+// each brand tier costs 40% more wholesale but sells for 50% more, and a bit more people want it
+const roundCents = (amount) => Math.round(amount * 100) / 100;
+for (const key of itemKeys)
+{
+    const item = itemTypes[key];
+    item.brands = itemBrands[key].map(([name, recolor, perk], tier) => (
+    {
+        name, recolor, perk,
+        sprite: tier ? key + tier : key,
+        cost: roundCents(item.cost * (1 + .4 * tier)),
+        fair: Math.round(item.fair * (1 + .5 * tier) * 20) / 20,
+        pop: Math.min(.95, item.pop + .05 * tier + (perk == 'popular' ? .2 : 0)),
+    }));
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // morning news: every day rolls one weather report, usually a trend, and
@@ -433,7 +492,7 @@ const itemKeys = Object.keys(itemTypes);
 // traffic scales how many people show up, budget scales what they'll pay
 
 const tagNames = {drink:'DRINKS', cold:'COLD DRINKS', hot:'HOT DRINKS', snack:'SNACKS',
-    sweet:'SWEETS', salty:'SALTY SNACKS', food:'FOOD', weird:'WEIRD STUFF'};
+    sweet:'SWEETS', salty:'SALTY SNACKS', food:'FOOD', healthy:'HEALTHY STUFF'};
 
 const newsCategories =
 {
@@ -448,29 +507,29 @@ const newsEvents =
     {cat:'weather', title:'CLEAR SKIES',    blurb:'A PERFECTLY NORMAL DAY',      weight:4, effects:{}},
     {cat:'weather', title:'HEATWAVE',       blurb:'THE SIDEWALK IS SIZZLING',    weight:2, effects:{cold:2, hot:.4, candy:.5}},
     {cat:'weather', title:'RAINY DAY',      blurb:'BRING AN UMBRELLA',           weight:2, effects:{hot:1.6, snack:1.3}, traffic:.75},
-    {cat:'weather', title:'SNOW DAY',       blurb:'SCHOOL IS CANCELLED',         weight:1, effects:{hot:2.2, hat:2, cold:.6}, traffic:.6},
-    {cat:'weather', title:'PEA SOUP FOG',   blurb:'CAN\'T SEE A THING',          weight:1, effects:{mystery:2.5}, traffic:.85},
-    {cat:'weather', title:'GALE WARNING',   blurb:'HOLD ON TO YOUR HATS',        weight:1, effects:{hat:.2, chips:.6}},
+    {cat:'weather', title:'SNOW DAY',       blurb:'SCHOOL IS CANCELLED',         weight:1, effects:{hot:2.2, cold:.6}, traffic:.6},
+    {cat:'weather', title:'PEA SOUP FOG',   blurb:'CAN\'T SEE A THING',          weight:1, effects:{hot:1.4}, traffic:.85},
+    {cat:'weather', title:'GALE WARNING',   blurb:'HOLD ON TO YOUR HATS',        weight:1, effects:{hot:1.3, chips:.6}, traffic:.8},
 
     // trends
     {cat:'trend', title:'HYDRATION INFLUENCER', blurb:'DRINK WATER, BESTIES',    effects:{water:2.5, soda:.6}},
-    {cat:'trend', title:'KETO CRAZE',       blurb:'CARBS ARE CANCELLED',         effects:{sweet:.4, chips:.6, egg:2.5}},
+    {cat:'trend', title:'KETO CRAZE',       blurb:'CARBS ARE CANCELLED',         effects:{sweet:.4, chips:.6, protein:2.5}},
     {cat:'trend', title:'NATIONAL SUGAR DAY', blurb:'DENTISTS FURIOUS',          effects:{sweet:2}},
     {cat:'trend', title:'ESPORTS FINALS',   blurb:'GAMERS NEED FUEL',            effects:{energy:2.5, chips:1.5}},
     {cat:'trend', title:'OFFICE LUNCH RUSH', blurb:'NOBODY PACKED A LUNCH',      effects:{food:1.8}, traffic:1.1},
-    {cat:'trend', title:'CURSEDCORE IS IN', blurb:'TEENS LOVE HAUNTED TOYS',     effects:{doll:3}},
-    {cat:'trend', title:'TINY HATS GO VIRAL', blurb:'EVERYONE WANTS ONE',        effects:{hat:3}},
-    {cat:'trend', title:'AGED FOOD FAD',    blurb:'OLDER IS BOLDER',             effects:{egg:3}},
-    {cat:'trend', title:'UNBOXING VIDEOS',  blurb:'WHAT\'S INSIDE??',            effects:{mystery:2.5}},
-    {cat:'trend', title:'LOBSTER FEST',     blurb:'CLAWS OUT',                   effects:{lobster:2.5}},
-    {cat:'trend', title:'CRYPTO BROS IN TOWN', blurb:'MONEY TO BURN',            effects:{gold:3}, budget:1.2},
+    {cat:'trend', title:'NEW YEAR RESOLUTIONS', blurb:'THE GYM IS PACKED',       effects:{healthy:2, sweet:.6}},
+    {cat:'trend', title:'FRESH BREATH WEEK', blurb:'DATE NIGHT EVERY NIGHT',     effects:{gum:3}},
+    {cat:'trend', title:'PB CUP CHALLENGE', blurb:'NOBODY CAN EAT JUST ONE',     effects:{pbcups:3}},
+    {cat:'trend', title:'JUICE CLEANSE',    blurb:'VITAMIN C IS BACK',           effects:{juice:2.5, soda:.6}},
+    {cat:'trend', title:'NOODLE NIGHT',     blurb:'SLURP RESPONSIBLY',           effects:{noodles:2.5}},
+    {cat:'trend', title:'TECH BROS IN TOWN', blurb:'MONEY TO BURN',              effects:{protein:2, sandwich:1.5}, budget:1.2},
 
     // natural disasters
     {cat:'disaster', title:'EARTHQUAKE',    blurb:'EVERYTHING IS SHAKY',         effects:{water:2.5}, traffic:.7},
     {cat:'disaster', title:'FLASH FLOOD',   blurb:'WATER, WATER EVERYWHERE',     effects:{water:.2, food:1.8}, traffic:.6},
     {cat:'disaster', title:'VOLCANO ERUPTS', blurb:'ASH IN THE AIR',             effects:{hot:.2, cold:2.5}, traffic:.7},
-    {cat:'disaster', title:'METEOR SHOWER', blurb:'TOURISTS FLOCK IN',           effects:{gold:2, mystery:2}, traffic:1.6},
-    {cat:'disaster', title:'BLIZZARD',      blurb:'SNOWED IN',                   effects:{hot:3, hat:2.5}, traffic:.4},
+    {cat:'disaster', title:'METEOR SHOWER', blurb:'TOURISTS FLOCK IN',           effects:{cold:1.5, snack:1.5}, traffic:1.6},
+    {cat:'disaster', title:'BLIZZARD',      blurb:'SNOWED IN',                   effects:{hot:3, noodles:1.5}, traffic:.4},
     {cat:'disaster', title:'LOCUST SWARM',  blurb:'NOBODY IS HUNGRY NOW',        effects:{snack:.4, food:.4}, traffic:.8},
 ];
 
@@ -498,16 +557,18 @@ function rollNews()
     return news;
 }
 
-// today's multiplier on how much customers want an item
-function newsDemand(key)
+// multiplier from an effects table like {cold:2, coffee:.5} on one item
+function effectDemand(effects, key)
 {
     let demand = 1;
-    for (const event of game.news)
-    for (const [target, multiplier] of Object.entries(event.effects))
+    for (const [target, multiplier] of Object.entries(effects))
         if (target == key || itemTypes[key].tags.includes(target))
             demand *= multiplier;
     return demand;
 }
+
+// today's multiplier on how much customers want an item
+const newsDemand = (key) => game.news.reduce((product, event) => product * effectDemand(event.effects, key), 1);
 const newsTraffic = () => game.news.reduce((product, event) => product * (event.traffic || 1), 1);
 const newsBudget  = () => game.news.reduce((product, event) => product * (event.budget || 1), 1);
 
@@ -523,15 +584,59 @@ function newsEffectList(event)
 }
 const formatMultiplier = (m) => 'x' + (m % 1 ? m.toFixed(1) : m);
 
-// fair prices can change over the run (eggs gain value as they age)
-const itemCost = (key) => itemTypes[key].cost;
-function itemFair(key, slot)
+///////////////////////////////////////////////////////////////////////////////
+// locations: the machine moves somewhere new every few days, like Balatro antes
+// effects work like news effects, traffic scales the crowd, budget what they pay,
+// rent scales the nightly rent, rush hours bunch customers up, think is how long
+// they stand there deciding, and patience scales the rep lost when they walk off
+
+const levelsPerLocation = 4;
+
+const locationTypes =
+[
+    {name:'OFFICE', tag:'OFFICE', icon:'coffee', blurb:'NINE TO FIVE, EASY MONEY',
+        felt:['#1b3a33', '#22483f'], effects:{coffee:1.5, food:1.2, gum:1.5}},
+    {name:'MALL', tag:'MALL', icon:'pbcups', blurb:'SHOPPERS WITH CASH TO BURN',
+        felt:['#3b1f3a', '#4a2848'], effects:{sweet:1.5, juice:1.5, coffee:.7}, traffic:1.3, budget:1.1, rent:1.3},
+    {name:'HOSPITAL', tag:'HOSPITAL', icon:'heart', blurb:'LONG SHIFTS, TOO TIRED TO COMPLAIN',
+        felt:['#1f3a4a', '#284a5c'], effects:{water:1.6, coffee:1.8, food:1.4, healthy:1.3, sweet:.8}, traffic:.9, budget:1.2, rent:1.5, patience:.5},
+    {name:'METRO STATION', tag:'METRO', icon:'energy', blurb:'RUSH HOUR IS EVERYTHING',
+        felt:['#2e2e3a', '#3b3b4c'], effects:{coffee:1.5, energy:1.8, sandwich:1.4, gum:1.5, noodles:.5}, traffic:1.2, budget:.9, rent:1.6,
+        rush:[[8, 10], [17, 20]], think:.4},
+    {name:'COMMUNITY COLLEGE', tag:'COLLEGE', icon:'chips', blurb:'BROKE BUT ALWAYS HUNGRY',
+        felt:['#3a2f1b', '#4a3c24'], effects:{energy:2, chips:1.5, noodles:2.5, coffee:1.4, sandwich:.6, protein:.5}, traffic:1.6, budget:.7, rent:1.7},
+    {name:'AIRPORT', tag:'AIRPORT', icon:'water', blurb:'CAPTIVE AUDIENCE, AIRPORT PRICES',
+        felt:['#1b2a4a', '#24365c'], effects:{water:1.8, sandwich:1.5, gum:2, noodles:.6}, traffic:1.1, budget:1.6, rent:2.2,
+        rush:[[9, 12], [15, 18]]},
+    {name:'MUSEUM', tag:'MUSEUM', icon:'juice', blurb:'QUIET HALLS, PICKY PATRONS',
+        felt:['#3a1b1b', '#4a2424'], effects:{healthy:1.8, cookie:1.5, chips:.4, soda:.6}, traffic:.7, budget:1.5, rent:2.5, patience:1.5},
+];
+for (const loc of locationTypes)
+    loc.feltColors = loc.felt.map(hex => new Color().setHex(hex));
+
+const currentLocation = () => locationTypes[game.locIndex];
+const isLastLocation = () => game.locIndex == locationTypes.length - 1;
+const locationDemand = (key) => effectDemand(currentLocation().effects, key);
+const demandFor = (key) => (hasPerk(key, 'steady') ? Math.max(1, newsDemand(key)) : newsDemand(key)) * locationDemand(key);
+const isRushHour = () => (currentLocation().rush || []).some(([start, end]) => dayHour() >= start && dayHour() < end);
+const startBonus = (index) => index * 20; // later starting spots come with extra cash
+
+// readable lever list for the location card, like ['COFFEE', 1.5]
+function locationEffectList(loc)
 {
-    const fair = itemTypes[key].fair;
-    if (key == 'egg')
-        return fair * 2 ** (slot ? slot.age : 0);
-    return fair;
+    const list = Object.entries(loc.effects).map(([key, m]) => [tagNames[key] || itemTypes[key].name, m]);
+    for (const [label, key] of [['CUSTOMERS', 'traffic'], ['BUDGETS', 'budget'], ['PATIENCE', 'patience']])
+        if (loc[key])
+            list.push([label, key == 'patience' ? 1 / loc[key] : loc[key]]);
+    return list;
 }
+
+const brandTier = (key) => game.brands[key] || 0;
+const itemBrand = (key) => itemTypes[key].brands[brandTier(key)];
+const itemCost = (key) => itemBrand(key).cost;
+const itemFair = (key) => itemBrand(key).fair;
+const itemSprite = (key) => itemBrand(key).sprite;
+const hasPerk = (key, perk) => itemBrand(key).perk == perk;
 
 // price buttons step bigger as the price climbs, so it can skyrocket
 const priceStep = (price, up) =>
@@ -548,6 +653,9 @@ const queueFrontX = 200;   // where the first customer in line stands
 const queueSpacing = 24;
 const streetY = 240;       // center height of customers on the sidewalk
 
+const formatMoney = (amount) => (amount < 0 ? '-$' : '$') + Math.abs(amount).toFixed(2);
+const formatPrice = (amount) => amount >= 100 ? '$' + Math.round(amount) : formatMoney(amount);
+
 const upgradeTypes =
 [
     {id:'slot',   name:'EXTRA SLOT', desc:'+1 SLOT',            base:15, step:10,
@@ -561,14 +669,22 @@ const upgradeTypes =
     {id:'mascot', name:'MASCOT',     desc:'+0.3 REP',           base:10, step:5,
         available: () => game.rep < 2,                  apply: () => game.rep = Math.min(2, game.rep + .3)},
     ...itemKeys.filter(key => itemTypes[key].unlock).map(key => (
-    {id:'item_' + key, name:itemTypes[key].name, desc:itemTypes[key].desc || 'NEW ITEM', icon:key, base:itemTypes[key].unlock, step:0,
+    {id:'item_' + key, name:itemTypes[key].brands[0].name, desc:'NEW ITEM\n' + itemTypes[key].name, icon:key, base:itemTypes[key].unlock, step:0,
         available: () => !game.unlocked.includes(key),  apply: () => game.unlocked.push(key)})),
+    ...itemKeys.flatMap(key => [1, 2].map(tier =>
+    {
+        const brand = itemTypes[key].brands[tier];
+        const fairText = 'SELLS ~' + formatPrice(brand.fair);
+        return {id:'brand_' + key + tier, name:brand.name, icon:brand.sprite, base:10 * tier + brand.fair * 6, step:0,
+            desc: brand.perk ? brandPerks[brand.perk].card + '\n' + fairText : 'BRAND UPGRADE\n' + fairText,
+            available: () => game.unlocked.includes(key) && brandTier(key) == tier - 1,
+            apply: () => upgradeBrand(key)};
+    })),
 ];
 
-const upgradePrice = (upgrade) => upgrade.base + upgrade.step * (game.owned[upgrade.id] || 0);
-const rentForDay = (day) => 3 + day * 2;
-const formatMoney = (amount) => (amount < 0 ? '-$' : '$') + Math.abs(amount).toFixed(2);
-const formatPrice = (amount) => amount >= 100 ? '$' + Math.round(amount) : formatMoney(amount);
+const upgradeDiscount = .2; // upgrades cost 20% of their listed base/step
+const upgradePrice = (upgrade) => upgradeDiscount * (upgrade.base + upgrade.step * (game.owned[upgrade.id] || 0));
+const rentForDay = (day, loc=currentLocation()) => Math.round((3 + day * 2) * (loc.rent || 1));
 
 // fits in 4 characters on an item card
 function formatCost(cost)
@@ -602,7 +718,8 @@ let phase = 'news';      // news, prep, day, summary, shop
 let selectedSlot = 0;    // slot being edited in prep
 let catalogPage = 0;     // item cards are shown 8 at a time
 let shownMoney = 0;      // money counter animates toward the real value
-let saveData = readSaveData('vendingMachineSim', {bestDay: 0});
+let saveData = readSaveData('vendingMachineSim', {bestDay: 0, locationsUnlocked: 1});
+let infoReturnPhase = 'news'; // where the location card goes back to
 
 // day state
 let dayTime = 0;         // 0 to 1 across the day
@@ -621,23 +738,31 @@ let floatTexts = [];
 let shakeAmount = 0;
 let shakeOffset = vec2();
 
-function newRun()
+function newRun(locIndex=0)
 {
     game =
     {
-        day: 1, money: 15, rep: 1,
+        day: 1, money: 15 + startBonus(locIndex), rep: 1,
+        locIndex, locDay: 1,
         slotCount: 4, capacity: 6,
         traffic: 1, spend: 1,
         unlocked: ['soda', 'chips', 'candy', 'water'],
+        brands: {}, // item -> brand tier bought in the shop
         owned: {},
-        slots: [...Array(maxSlots)].map(() => ({item: null, price: 0, stock: 0, age: 0})),
+        slots: [...Array(maxSlots)].map(() => ({item: null, price: 0, stock: 0})),
     };
     shownMoney = game.money;
     selectedSlot = 0;
     catalogPage = 0;
     dayTime = 0;
     game.news = rollNews();
-    phase = 'news';
+    showLocation('news');
+}
+
+function showLocation(returnPhase)
+{
+    infoReturnPhase = returnPhase;
+    phase = 'location';
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -652,9 +777,8 @@ function assignItem(slot, key)
         game.money += slot.stock * itemCost(slot.item);
     slot.item = key;
     slot.stock = 0;
-    slot.age = 0;
     // start at the fair price, rounded onto the price button steps
-    const fair = itemFair(key, slot), step = priceStep(fair, true);
+    const fair = itemFair(key), step = priceStep(fair, true);
     slot.price = Math.max(.25, Math.round(fair / step) * step);
 }
 
@@ -668,16 +792,27 @@ function changeStock(slot, amount)
         return false;
     slot.stock += amount;
     game.money -= amount * cost;
-    if (amount > 0)
-        slot.age = 0; // fresh eggs dilute the funk
     return true;
+}
+
+// stock already in the machine becomes the new brand, and prices scale up with it
+function upgradeBrand(key)
+{
+    const oldFair = itemFair(key);
+    game.brands[key] = brandTier(key) + 1;
+    for (const slot of game.slots)
+        if (slot.item == key)
+        {
+            const price = slot.price * itemFair(key) / oldFair, step = priceStep(price, true);
+            slot.price = Math.max(.25, Math.round(price / step) * step);
+        }
 }
 
 function clearSlot(slot)
 {
     if (slot.item)
         game.money += slot.stock * itemCost(slot.item);
-    Object.assign(slot, {item: null, price: 0, stock: 0, age: 0});
+    Object.assign(slot, {item: null, price: 0, stock: 0});
 }
 
 const totalStock = () => game.slots.slice(0, game.slotCount).reduce((sum, slot) => sum + slot.stock, 0);
@@ -692,7 +827,7 @@ function startDay()
     customers = [];
     dayStats = {customers: 0, sold: 0, revenue: 0, pricey: 0, soldOut: 0, meh: 0, repStart: game.rep};
     // reputation and upgrades bring more people, and the town grows a little each day
-    const expected = (8 + game.day * 1.2) * game.rep * game.traffic * newsTraffic();
+    const expected = (16 + game.day * 2.4) * game.rep * game.traffic * newsTraffic() * (currentLocation().traffic || 1);
     spawnInterval = 1 / Math.max(3, expected);
     spawnTimer = .02;
     sfx.bell.play();
@@ -707,7 +842,9 @@ function updateDay(dt)
     // people arrive at random through opening hours
     if (dayTime < 1)
     {
-        spawnTimer -= dt / dayLength;
+        // rush hours pack the crowd in, the rest of the day goes quiet
+        const rush = !currentLocation().rush ? 1 : isRushHour() ? 2.2 : .6;
+        spawnTimer -= dt / dayLength * rush;
         if (spawnTimer <= 0)
         {
             customers.push(new Customer);
@@ -748,9 +885,9 @@ class Customer
         // taste: what they're in the mood for, one favorite, and how much they'll pay
         this.wants = {};
         for (const key of itemKeys)
-            this.wants[key] = rand() < itemTypes[key].pop ? rand(.6, 1.15) : 0;
+            this.wants[key] = rand() < itemBrand(key).pop ? rand(.6, 1.15) : 0;
         this.wants[itemKeys[randInt(itemKeys.length)]] = 1.4;
-        this.budget = rand(.85, 1.25) * game.spend * newsBudget();
+        this.budget = rand(.85, 1.25) * game.spend * newsBudget() * (currentLocation().budget || 1);
     }
 
     update(dt)
@@ -766,7 +903,7 @@ class Customer
             {
                 this.x = targetX;
                 if (place == 0)
-                    this.state = 'think', this.timer = .7;
+                    this.state = 'think', this.timer = .7 * (currentLocation().think || 1);
             }
             else
                 this.x -= Math.sign(this.x - targetX) * step;
@@ -791,18 +928,16 @@ class Customer
     }
 
     // how much they'd pay for an item right now, zero if they don't want it
-    valueOf(key, slot)
+    valueOf(key)
     {
         const item = itemTypes[key];
         if (!this.wants[key])
             return 0;
         let demand = 1;
         if (item.peak)
-            demand = dayHour() >= item.peak[0] && dayHour() < item.peak[1] ? 1.6 : .7;
-        if (key == 'mystery')
-            demand = rand(.1, 4); // nobody agrees what it's worth
-        demand *= newsDemand(key);
-        return itemFair(key, slot) * this.wants[key] * demand * this.budget;
+            demand = dayHour() >= item.peak[0] && dayHour() < item.peak[1] ? 1.6 : hasPerk(key, 'allDay') ? 1 : .7;
+        demand *= demandFor(key);
+        return itemFair(key) * this.wants[key] * demand * this.budget;
     }
 
     decide()
@@ -812,14 +947,14 @@ class Customer
         {
             if (!slot.item)
                 return;
-            const value = this.valueOf(slot.item, slot);
+            const value = this.valueOf(slot.item);
             if (!value)
                 return;
             if (!slot.stock)
                 return soldOut = true;
             if (slot.price > value)
                 return tooPricey = true;
-            const score = (value - slot.price) / itemFair(slot.item, slot) + rand(.25);
+            const score = (value - slot.price) / itemFair(slot.item) + rand(.25);
             if (score > bestScore)
                 best = i, bestScore = score;
         });
@@ -833,15 +968,10 @@ class Customer
             game.money += slot.price;
             dayStats.revenue += slot.price;
             ++dayStats.sold;
-            game.rep = Math.min(2, game.rep + .01);
-            this.bubble = {kind: 'buy', item: slot.item};
-            vendAnim = {slot: best, item: slot.item, time: 0};
+            game.rep = Math.min(2, game.rep + (hasPerk(slot.item, 'loved') ? .03 : .01));
+            this.bubble = {kind: 'buy', sprite: itemSprite(slot.item)};
+            vendAnim = {slot: best, sprite: itemSprite(slot.item), time: 0};
             addFloatText('+' + formatPrice(slot.price), this.x, streetY - 40, spriteColor('Y'));
-            if (slot.item == 'doll')
-                game.rep -= .1, addFloatText('CURSED!', this.x, streetY - 52, spriteColor('p'));
-            if (slot.item == 'hat')
-                game.rep += .08, addFloatText('ADORABLE', this.x, streetY - 52, spriteColor('c'));
-            game.rep = clamp(game.rep, .3, 2);
             if (slot.price >= 50)
                 shake(5), sfx.buy.play(); // a big sale deserves a big moment
             sfx.vend.play();
@@ -850,12 +980,13 @@ class Customer
         }
 
         // walked away: the reason decides how much reputation it costs
+        const patience = currentLocation().patience || 1;
         if (tooPricey)
-            this.bubble = {kind: 'pricey'}, ++dayStats.pricey, game.rep -= .02;
+            this.bubble = {kind: 'pricey'}, ++dayStats.pricey, game.rep -= .02 * patience;
         else if (soldOut)
-            this.bubble = {kind: 'soldOut'}, ++dayStats.soldOut, game.rep -= .025;
+            this.bubble = {kind: 'soldOut'}, ++dayStats.soldOut, game.rep -= .025 * patience;
         else
-            this.bubble = {kind: 'meh'}, ++dayStats.meh, game.rep -= .005;
+            this.bubble = {kind: 'meh'}, ++dayStats.meh, game.rep -= .005 * patience;
         game.rep = Math.max(.3, game.rep);
         sfx.sad.play();
     }
@@ -879,7 +1010,7 @@ class Customer
             const by = y - 30;
             const b = this.bubble;
             if (b.kind == 'buy')
-                drawBubble(x, by, () => { drawSprite(b.item, x - 6, by, 1); drawSprite('heart', x + 7, by, 1); });
+                drawBubble(x, by, () => { drawSprite(b.sprite, x - 6, by, 1); drawSprite('heart', x + 7, by, 1); });
             else if (b.kind == 'pricey')
                 drawBubble(x, by, () => uiText('$$!', x, by, 1, spriteColor('r'), 'center', false));
             else if (b.kind == 'soldOut')
@@ -897,7 +1028,6 @@ function endDay()
     const rent = rentForDay(game.day);
     game.money -= rent;
     const repChange = game.rep - dayStats.repStart;
-    const overnight = overnightEvents();
     summary =
     {
         time: 0, shown: 0,
@@ -908,35 +1038,22 @@ function endDay()
             ['SALES',     '+' + formatMoney(dayStats.revenue)],
             ['RENT',      '-' + formatMoney(rent)],
             ['REP',       (repChange >= 0 ? '+' : '') + repChange.toFixed(2)],
-            ...overnight,
         ],
         evicted: game.money < 0,
     };
-}
 
-// the weird items do their thing while the machine is closed
-function overnightEvents()
-{
-    const lines = [];
-    const slots = game.slots.slice(0, game.slotCount);
-
-    // eggs left in the machine get older, and somehow more valuable
-    const eggs = slots.filter(slot => slot.item == 'egg' && slot.stock);
-    for (const slot of eggs)
-        ++slot.age;
-    if (eggs.length)
-        lines.push(['EGGS AGED', 'NOW ' + formatPrice(itemFair('egg', eggs[0]))]);
-
-    // some lobsters make a break for it
-    let escaped = 0;
-    for (const slot of slots)
-        if (slot.item == 'lobster')
-            for (let i = slot.stock; i--;)
-                if (rand() < .3)
-                    --slot.stock, ++escaped;
-    if (escaped)
-        lines.push(['LOBSTERS FLED', '-' + escaped]);
-    return lines;
+    // surviving the last day here clears the location and unlocks the next one
+    if (!summary.evicted && game.locDay == levelsPerLocation)
+    {
+        if (isLastLocation())
+            summary.lines.push(['ALL CLEARED!', 'YOU WIN']);
+        else
+        {
+            summary.lines.push(['CLEARED!', 'NEXT: ' + locationTypes[game.locIndex + 1].tag]);
+            saveData.locationsUnlocked = Math.max(saveData.locationsUnlocked, game.locIndex + 2);
+            writeSaveData('vendingMachineSim', saveData);
+        }
+    }
 }
 
 function updateSummary(dt)
@@ -950,6 +1067,8 @@ function updateSummary(dt)
         sfx.tally.play(undefined, 1, 1 + summary.shown * .08);
         if (label == 'RENT')
             shake(4);
+        if (label.includes('CLEARED'))
+            sfx.buy.play(), shake(3);
     }
     if (summary.shown == summary.lines.length && summary.evicted && !summary.evictPlayed)
     {
@@ -990,14 +1109,27 @@ function buyOffer(offer)
     shake(2);
 }
 
+// the location the machine will be at tomorrow
+const nextLocationIndex = () => game.locDay >= levelsPerLocation && !isLastLocation() ? game.locIndex + 1 : game.locIndex;
+
 function nextDay()
 {
     ++game.day;
     dayTime = 0;
     if (game.day > saveData.bestDay)
-        writeSaveData('vendingMachineSim', saveData = {bestDay: game.day});
+        saveData.bestDay = game.day, writeSaveData('vendingMachineSim', saveData);
+
+    // pack up and move once this location is cleared, the last one goes on forever
+    const moving = nextLocationIndex() != game.locIndex;
+    if (moving)
+        game.locIndex = nextLocationIndex(), game.locDay = 1;
+    else
+        ++game.locDay;
     game.news = rollNews();
-    phase = 'news';
+    if (moving)
+        showLocation('news');
+    else
+        phase = 'news';
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1100,6 +1232,13 @@ function drawSprite(name, x, y, scale=2, color=WHITE)
     drawTile(vec2(x + shakeOffset.x, y + shakeOffset.y), vec2(size), tile(spriteIndex[name], 16), color, 0, false, undefined, true, true);
 }
 
+// one pip per brand tier, filled up to the brand you own
+function drawBrandPips(key, x, y)
+{
+    for (let i = 0; i < 3; ++i)
+        uiRect(x + i * 4, y, 3, 3, i <= brandTier(key) ? uiColors.gold : uiColors.gray);
+}
+
 function drawBubble(x, y, contentFn)
 {
     uiRect(x - 15, y - 9, 30, 18, uiColors.ink);
@@ -1157,9 +1296,9 @@ function drawMachine()
         if (slot.item)
         {
             if (slot.stock)
-                drawSprite(slot.item, cx, r.y + 17, 2);
+                drawSprite(itemSprite(slot.item), cx, r.y + 17, 2);
             else
-                drawSprite(slot.item, cx, r.y + 17, 2, new Color(1, 1, 1, .25));
+                drawSprite(itemSprite(slot.item), cx, r.y + 17, 2, new Color(1, 1, 1, .25));
             uiText(formatPrice(slot.price), cx, r.y + 38, 1, uiColors.gold, 'center', false);
             const outOfStock = !slot.stock && phase != 'prep';
             uiText(outOfStock ? 'OUT' : 'x' + slot.stock, r.x + r.w - 4, r.y + 7, 1, outOfStock ? uiColors.red : WHITE, 'right');
@@ -1189,7 +1328,7 @@ function drawMachine()
         const r = slotRect(vendAnim.slot);
         const fall = Math.min(1, vendAnim.time / .35);
         const startY = r.y + 17, endY = ty + 12;
-        drawSprite(vendAnim.item, r.x + r.w/2, lerp(startY, endY, fall * fall), 2);
+        drawSprite(vendAnim.sprite, r.x + r.w/2, lerp(startY, endY, fall * fall), 2);
     }
     uiRect(win.x, ty + 18, win.w, 6, body.scale(.6, 1)); // tray flap in front of the item
 }
@@ -1202,7 +1341,12 @@ const panelX = 192, panelW = 280;
 function topBar()
 {
     uiPanel(panelX, 8, panelW, 24, uiColors.dark);
-    uiText('DAY ' + game.day, panelX + 8, 20, 1, WHITE, 'left');
+    uiText(currentLocation().tag, panelX + 8, 15, 1, uiColors.gold, 'left');
+    const dayText = 'DAY ' + game.day;
+    uiText(dayText, panelX + 8, 26, 1, WHITE, 'left');
+    // one pip per day spent at this location
+    for (let i = 0; i < levelsPerLocation; ++i)
+        uiRect(panelX + 12 + dayText.length * 8 + i * 6, 23, 4, 5, i < game.locDay ? uiColors.gold : uiColors.gray);
     uiText(formatMoney(shownMoney), panelX + panelW/2, 20, 2, uiColors.gold);
     uiText('RENT $' + rentForDay(game.day), panelX + panelW - 8, 20, 1, uiColors.red.lerp(WHITE, .3), 'right');
 }
@@ -1223,10 +1367,10 @@ function prepScreen()
     const slot = game.slots[selectedSlot];
     const ex = panelX, ey = 38;
     uiPanel(ex, ey, panelW, 104);
-    uiText('SLOT ' + (selectedSlot + 1), ex + 8, ey + 10, 1, uiColors.cream, 'left');
-    if (slot.item && newsDemand(slot.item) != 1)
+    uiText('SLOT ' + (selectedSlot + 1) + (slot.item ? ' - ' + itemTypes[slot.item].name : ''), ex + 8, ey + 10, 1, uiColors.cream, 'left');
+    if (slot.item && demandFor(slot.item) != 1)
     {
-        const demand = newsDemand(slot.item);
+        const demand = demandFor(slot.item);
         uiText('TODAY ' + formatMultiplier(demand), ex + panelW - 8, ey + 10, 1, demand > 1 ? uiColors.green.lerp(WHITE, .3) : uiColors.red.lerp(WHITE, .3), 'right');
     }
     if (!slot.item)
@@ -1238,13 +1382,14 @@ function prepScreen()
     {
         const item = itemTypes[slot.item];
         uiRect(ex + 8, ey + 20, 40, 40, uiColors.dark);
-        drawSprite(slot.item, ex + 28, ey + 40, 2);
-        uiText(item.name, ex + 56, ey + 28, 2, WHITE, 'left');
-        const fairText = slot.item == 'mystery' ? '???' : formatPrice(itemFair(slot.item, slot));
+        const brand = itemBrand(slot.item);
+        drawSprite(brand.sprite, ex + 28, ey + 40, 2);
+        drawBrandPips(slot.item, ex + 22, ey + 62);
+        uiText(brand.name, ex + 56, ey + 28, 2, WHITE, 'left');
+        const fairText = formatPrice(itemFair(slot.item));
         uiText('COST ' + formatMoney(itemCost(slot.item)) + '  FAIR ~' + fairText, ex + 56, ey + 46, 1, uiColors.cream, 'left');
-        let note = item.peak ? `BUSY ${item.peak[0]}-${item.peak[1]}H` : item.desc ? item.desc.replace('\n', ' ') : '';
-        if (slot.item == 'egg')
-            note = `AGE ${slot.age} DAYS, RESTOCK RESETS`;
+        const peak = item.peak && brand.perk != 'allDay' ? `BUSY ${item.peak[0]}-${item.peak[1]}H` : '';
+        const note = [brand.perk && brandPerks[brand.perk].note, peak].filter(Boolean).join('  ');
         uiText(note, ex + 56, ey + 56, 1, uiColors.gold, 'left');
 
         // price
@@ -1276,6 +1421,8 @@ function prepScreen()
     uiText('ITEMS', panelX + 8, cy + 8, 1, uiColors.cream, 'left');
     if (uiButton('NEWS', panelX + 54, cy + 2, 40, 11, uiColors.orange))
         phase = 'news';
+    if (uiButton('SITE', panelX + 98, cy + 2, 40, 11, uiColors.blue))
+        showLocation('prep');
     const pages = Math.ceil(itemKeys.length / 8);
     uiText(catalogPage + 1 + '/' + pages, panelX + panelW - 52, cy + 8, 1, uiColors.cream);
     if (uiButton('<', panelX + panelW - 80, cy + 2, 14, 11, uiColors.blue))
@@ -1292,10 +1439,11 @@ function prepScreen()
         uiRect(x, y + lift, 32, 48, unlocked ? (slot.item == key ? uiColors.gold : uiColors.cream) : uiColors.gray);
         if (unlocked)
         {
-            drawSprite(key, x + 16, y + 18 + lift, 2);
+            drawSprite(itemSprite(key), x + 16, y + 18 + lift, 2);
+            drawBrandPips(key, x + 3, y + 3 + lift);
             uiText(formatCost(itemCost(key)), x + 16, y + 40 + lift, 1, uiColors.ink, 'center', false);
-            // today's news pushes demand up or down
-            const demand = newsDemand(key);
+            // today's news and the location push demand up or down
+            const demand = demandFor(key);
             if (demand > 1)
                 uiText('^', x + 27, y + 6 + lift, 1, uiColors.green, 'center', false);
             else if (demand < 1)
@@ -1347,6 +1495,8 @@ function dayScreen()
     });
     if (dayTime >= 1)
         uiText('CLOSING...', panelX + 214, 90, 1, uiColors.gold);
+    else if (isRushHour())
+        uiText('RUSH HOUR!', panelX + 214, 90, 1, uiColors.orange.scale(.85 + .15 * Math.sin(time * 10), 1));
 
     // news ticker, flipping through today's headlines
     if (game.news.length)
@@ -1389,7 +1539,7 @@ function summaryScreen()
     {
         uiText('BEST RUN: DAY ' + saveData.bestDay, x + w/2, by + 55, 1, uiColors.cream);
         if (uiButton('EVICTED! TRY AGAIN', x + 20, by + 22, w - 40, 20, uiColors.red))
-            newRun();
+            phase = 'map';
     }
     else if (uiButton('TO THE SHOP', x + 20, by + 22, w - 40, 20, uiColors.orange))
         openShop();
@@ -1402,10 +1552,11 @@ function shopScreen()
     uiPanel(x, y, w, h, uiColors.dark);
     uiText('SHOP', x + w/2, y + 16, 2, uiColors.gold);
     uiText(formatMoney(shownMoney), x + w - 12, y + 16, 1, uiColors.gold, 'right');
-    uiText('DAY ' + (game.day + 1) + ' RENT ' + formatMoney(rentForDay(game.day + 1)), x + 12, y + 16, 1, uiColors.cream, 'left');
+    const nextLoc = locationTypes[nextLocationIndex()];
+    uiText((nextLoc != currentLocation() ? nextLoc.tag + ' ' : 'DAY ' + (game.day + 1) + ' ') + 'RENT $' + rentForDay(game.day + 1, nextLoc), x + 12, y + 16, 1, uiColors.cream, 'left');
 
     // upgrade cards bob gently and lift when hovered
-    const cardW = 104, cardH = 140, gap = 22;
+    const cardW = 114, cardH = 140, gap = 12;
     const startX = x + (w - (cardW * 3 + gap * 2)) / 2;
     if (!shopOffers.length)
         uiText('SOLD OUT!', x + w/2, y + 100, 2, uiColors.cream);
@@ -1430,8 +1581,9 @@ function shopScreen()
             drawSprite(offer.upgrade.icon, cx + cardW/2, top + 34, 3);
         else
             drawSprite('coin', cx + cardW/2, top + 34, 3);
-        uiText(offer.upgrade.name, cx + cardW/2, top + 74, 1, uiColors.ink, 'center', false);
-        uiText(offer.upgrade.desc, cx + cardW/2, top + 92, 1, uiColors.panel, 'center', false);
+        uiText(offer.upgrade.name, cx + cardW/2, top + 70, 1, uiColors.ink, 'center', false);
+        offer.upgrade.desc.split('\n').forEach((line, j) =>
+            uiText(line, cx + cardW/2, top + 84 + j * 11, 1, uiColors.panel, 'center', false));
         uiRect(cx + 16, top + cardH - 26, cardW - 32, 18, affordable ? uiColors.orange : uiColors.gray);
         uiText(formatMoney(price), cx + cardW/2, top + cardH - 17, 1, WHITE);
         if (clicked(cx, cy, cardW, cardH))
@@ -1458,7 +1610,7 @@ function newsScreen()
 
     // masthead
     uiText('THE DAILY SNACK', x + w/2, y + 15, 2, uiColors.ink, 'center', false);
-    uiText(`DAY ${game.day} - MORNING EDITION - 25C`, x + w/2, y + 31, 1, uiColors.gray, 'center', false);
+    uiText(`DAY ${game.day} - ${currentLocation().tag} EDITION - 25C`, x + w/2, y + 31, 1, uiColors.gray, 'center', false);
     uiRect(x + 8, y + 38, w - 16, 1, uiColors.ink);
     uiRect(x + 8, y + 40, w - 16, 1, uiColors.ink);
 
@@ -1476,15 +1628,7 @@ function newsScreen()
         const effects = newsEffectList(event);
         if (!effects.length)
             uiText('NO EFFECT ON SALES', x + 10, sy + 31, 1, uiColors.gray, 'left', false);
-        let ex = x + 10, ey = sy + 31;
-        for (const [label, m] of effects)
-        {
-            const text = label + ' ' + formatMultiplier(m);
-            if (ex + text.length * 8 > x + w - 10)
-                ex = x + 10, ey += 10;
-            uiText(text, ex, ey, 1, m > 1 ? uiColors.green : uiColors.red, 'left', false);
-            ex += (text.length + 2) * 8;
-        }
+        uiEffectList(effects, x + 10, sy + 31, w - 20);
         if (i < game.news.length - 1)
             uiRect(x + 10, sy + sectionH - 4, w - 20, 1, uiColors.cream.scale(.8, 1));
     });
@@ -1493,9 +1637,107 @@ function newsScreen()
         phase = 'prep';
 }
 
+// effect list in green or red, wrapping onto new lines, returns the last line's y
+function uiEffectList(effects, x, y, w, onDark=false)
+{
+    const good = onDark ? uiColors.green.lerp(WHITE, .35) : uiColors.green;
+    const bad = onDark ? uiColors.red.lerp(WHITE, .3) : uiColors.red;
+    let ex = x;
+    for (const [label, m] of effects)
+    {
+        const text = label + ' ' + formatMultiplier(m);
+        if (ex + text.length * 8 > x + w)
+            ex = x, y += 10;
+        uiText(text, ex, y, 1, m > 1 ? good : bad, 'left', false);
+        ex += (text.length + 2) * 8;
+    }
+    return y;
+}
+
+// card for where the machine is right now, shown on arrival and from the SITE button
+function locationScreen()
+{
+    uiRect(0, 0, screenW, screenH, new Color(0, 0, 0, .5));
+    const loc = currentLocation();
+    const w = 360, h = 184, x = (screenW - w) / 2, y = Math.round((screenH - h) / 2);
+    uiPanel(x, y, w, h, uiColors.dark);
+    uiText(`LOCATION ${game.locIndex + 1} OF ${locationTypes.length}`, x + w/2, y + 12, 1, uiColors.cream);
+    uiRect(x + 10, y + 22, 52, 52, loc.feltColors[1]);
+    drawSprite(loc.icon, x + 36, y + 48, 3);
+    uiText(loc.name, x + 72, y + 36, loc.name.length > 11 ? 1 : 2, uiColors.gold, 'left');
+    uiText(loc.blurb, x + 72, y + 56, 1, WHITE, 'left');
+    const daysText = isLastLocation() && game.locDay > levelsPerLocation ? 'ENDLESS' : `DAY ${game.locDay} OF ${levelsPerLocation}`;
+    uiText(daysText + '  RENT ' + formatMultiplier(loc.rent || 1), x + 72, y + 68, 1, uiColors.red.lerp(WHITE, .3), 'left');
+
+    uiRect(x + 10, y + 82, w - 20, 1, uiColors.cream.scale(.6, 1));
+    uiText('CROWD HERE', x + 10, y + 92, 1, uiColors.cream, 'left');
+    let ly = uiEffectList(locationEffectList(loc), x + 10, y + 106, w - 20, true);
+    if (loc.rush)
+        uiText('RUSH HOURS ' + loc.rush.map(([start, end]) => start + '-' + end + 'H').join(' '), x + 10, ly += 12, 1, uiColors.orange, 'left', false);
+    if (loc.think)
+        uiText('QUICK DECIDERS', x + 10, ly += 12, 1, uiColors.orange, 'left', false);
+
+    if (uiButton(infoReturnPhase == 'prep' ? 'BACK' : 'SET UP SHOP', x + w/2 - 70, y + h - 24, 140, 16, uiColors.orange))
+        phase = infoReturnPhase;
+}
+
+// pick where to start a run, later spots unlock by clearing the one before
+function mapScreen()
+{
+    uiRect(0, 0, screenW, screenH, new Color(0, 0, 0, .6));
+    uiText('PICK A SPOT', screenW/2, 18, 2, uiColors.gold);
+    uiText(`CLEAR ${levelsPerLocation} DAYS TO UNLOCK THE NEXT`, screenW/2, 34, 1, uiColors.cream);
+    const cardW = 100, cardH = 96, gap = 12;
+    let hovered = null;
+    locationTypes.forEach((loc, i) =>
+    {
+        const row = i < 4 ? 0 : 1, perRow = row ? 3 : 4, col = row ? i - 4 : i;
+        const cx = (screenW - (cardW * perRow + gap * (perRow - 1))) / 2 + col * (cardW + gap);
+        const cy = 46 + row * (cardH + 12);
+        const unlocked = i < saveData.locationsUnlocked;
+        const hover = unlocked && mouseIn(cx, cy, cardW, cardH);
+        if (hover)
+            hovered = loc;
+        const lift = hover ? -4 : 0, top = cy + lift;
+        uiRect(cx + 3, cy + 4, cardW, cardH, new Color(0, 0, 0, .35));
+        uiRect(cx - 1, top - 1, cardW + 2, cardH + 2, uiColors.ink);
+        uiRect(cx, top, cardW, cardH, unlocked ? uiColors.cream : uiColors.gray);
+        uiRect(cx + 6, top + 6, cardW - 12, 44, unlocked ? loc.feltColors[1] : uiColors.dark);
+        uiText(i + 1 + '', cx + 12, top + 13, 1, uiColors.cream, 'center', false);
+        if (unlocked)
+        {
+            drawSprite(loc.icon, cx + cardW/2, top + 28, 2);
+            uiText(loc.tag, cx + cardW/2, top + 60, 1, uiColors.ink, 'center', false);
+            uiText('RENT ' + formatMultiplier(loc.rent || 1), cx + cardW/2, top + 74, 1, uiColors.panel, 'center', false);
+            if (startBonus(i))
+                uiText('+$' + startBonus(i) + ' CASH', cx + cardW/2, top + 86, 1, uiColors.green, 'center', false);
+        }
+        else
+        {
+            uiText('?', cx + cardW/2, top + 28, 2, uiColors.gray, 'center', false);
+            uiText('LOCKED', cx + cardW/2, top + 66, 1, uiColors.dark, 'center', false);
+        }
+        if (clicked(cx, cy, cardW, cardH))
+        {
+            if (unlocked)
+                sfx.click.play(), newRun(i);
+            else
+                sfx.error.play();
+        }
+    });
+    if (hovered)
+        uiText(hovered.blurb, screenW/2, 260, 1, WHITE);
+    else
+        uiText('BEST RUN: DAY ' + saveData.bestDay, screenW/2, 260, 1, uiColors.cream);
+}
+
 function uiFrame()
 {
-    if (phase == 'news')
+    if (phase == 'map')
+        mapScreen();
+    else if (phase == 'location')
+        locationScreen();
+    else if (phase == 'news')
         newsScreen();
     else if (phase == 'prep')
         prepScreen();
@@ -1510,10 +1752,9 @@ function uiFrame()
 ///////////////////////////////////////////////////////////////////////////////
 // background: slow diagonal bands like Balatro's swirling felt, plus scanlines
 
-const feltColors = [new Color().setHex('#1b3a33'), new Color().setHex('#22483f')];
-
 function drawBackground()
 {
+    const feltColors = currentLocation().feltColors;
     uiRect(0, 0, screenW, screenH, feltColors[0]);
     const scroll = time * 6 % 64;
     for (let i = -4; i < 14; ++i)
@@ -1538,6 +1779,7 @@ function drawScanlines()
 function gameInit()
 {
     newRun();
+    phase = 'map';
 }
 
 ///////////////////////////////////////////////////////////////////////////////
