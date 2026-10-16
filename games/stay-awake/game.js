@@ -8,9 +8,11 @@
       tickle the roof of your mouth...) that wear off if you spam them, and
       passive habits (tap your foot, chew gum...) that keep you up on their own
     - Every lecture is more boring than the last. Pass with a C or better.
+    - Layout: stats in the left column, a close-up portrait of the hero in the
+      middle (classmates only peek in at the edges), the professor's subtitles
+      and cold calls in the right column, skills along the bottom
     - Pixel art: the game renders at 480x270. The scene is painted at 240x108 and
-      drawn 3x, cropped to a close-up on the hero (classmates only peek in at the
-      edges). Sprites are text maps packed into one sheet.
+      drawn 3x, cropped to the portrait. Sprites are text maps packed into one sheet.
 */
 
 'use strict';
@@ -20,15 +22,19 @@ const screenW = 480, screenH = 270;
 setCanvasFixedSize(vec2(screenW, screenH));
 setCanvasPixelated(true);
 
+// screen columns (screen px): stats | portrait | professor
+const STATS_W = 120, PORTRAIT_W = 210;
+const PORTRAIT_X = STATS_W, PORTRAIT_CX = PORTRAIT_X + PORTRAIT_W / 2;
+const PROF_X = PORTRAIT_X + PORTRAIT_W, PROF_W = screenW - PROF_X;
+
 const SC = 3;                 // scene pixel scale
 const SCENE_W = 240, SCENE_H = 108;
-const VIEW_W = screenW / SC, VIEW_H = 72;  // the slice of the scene on camera (scene px)
-const CAM_X = (SCENE_W - VIEW_W) / 2;      // camera top left (scene px), centered on the hero
+const VIEW_W = PORTRAIT_W / SC, VIEW_H = 72; // the slice of the scene on camera (scene px)
+const CAM_X = (SCENE_W - VIEW_W) / 2;        // camera top left (scene px), centered on the hero
 const CAM_Y = 28;
 const PANEL_Y = VIEW_H * SC;  // skill panel top (screen px)
 const LECTURE_TIME = 75;      // seconds per lecture (1 second = 1 minute on the wall clock)
-const FOCUS_MIN = 20;         // wake % where note taking starts
-const FOCUS_FULL = 60;        // wake % where note taking hits full speed
+const FOCUS_CURVE = 4;        // how sharply note taking speeds up near full wake (higher = steeper end)
 
 ///////////////////////////////////////////////////////////////////////////////
 // palette: pastel Grand Budapest family, same dark outline as the other prototypes
@@ -410,7 +416,7 @@ const HAND_MAP = ['.zzzz.', 'zzzzzz', 'zzzzzz', 'zzzzZz', '.zZZz.'];
 // layout (scene pixels): the hero sits mid-row, dead center, a row behind and a row in front
 // the camera crops everyone else: the back row shows torsos, the front row the tops of heads
 const BACK_Y = 6, MID_Y = 38, FRONT_Y = 90; // head tops of the back, hero's and front rows
-const NEIGHBOR_GAP = 92;  // hero to neighbor, far enough that only a shoulder is on camera
+const NEIGHBOR_GAP = 47;  // hero to neighbor, far enough that only a shoulder is on camera
 const SKIN_TONES = [['t','u'], ['n','N'], ['d','D']];
 const HAIR_COLORS = [['h','H'], ['H','k'], ['y','m'], ['k','e'], ['o','N'], ['M','N']];
 const CLOTHES = [['g','G'], ['b','B'], ['v','e'], ['s','S'], ['o','R'], ['q','A'], ['G','e'], ['A','R']];
@@ -670,7 +676,8 @@ const blinkPower = ()=> 4 + SKILLS[0].power * levels.eyes;
 const passiveRegen = ()=> SKILLS.filter(s=> s.type == 'regen').reduce((sum, s)=> sum + s.regen * levels[s.id], 0);
 const drainMult = ()=> 1 - SKILLS.find(s=> s.id == 'posture').reduce * levels.posture;
 const noteMult = ()=> 1 + SKILLS.find(s=> s.id == 'pens').mult * levels.pens;
-const focus = ()=> asleep ? 0 : clamp((wake - FOCUS_MIN) / (FOCUS_FULL - FOCUS_MIN));
+// 0..1: creeps up while drowsy, then shoots up as you approach 100% awake
+const focus = ()=> asleep ? 0 : (Math.exp(FOCUS_CURVE * wake / 100) - 1) / (Math.exp(FOCUS_CURVE) - 1);
 const noteRate = ()=> (1 + lectureIndex * .5) * noteMult() * focus();
 
 function currentDrain()
@@ -696,7 +703,7 @@ function addWake(amount)
         {
             asleep = false;
             nod = 0;
-            addFloaty('!', 240, 66, 'r', 3);
+            addFloaty('!', PORTRAIT_CX, 66, 'r', 3);
             sndNod.play();
             startleNeighbors();
         }
@@ -723,7 +730,7 @@ function useSkill(s)
     if (asleep)
     {
         sndDeny.play();
-        addFloaty('TOO ASLEEP', 240, 100, 'S');
+        addFloaty('TOO ASLEEP', PORTRAIT_CX, 100, 'S');
         return;
     }
     const eff = max(.1, 1 - tolerance[s.id]);
@@ -733,8 +740,8 @@ function useSkill(s)
     nod = 0;
     anim = {type: s.anim, t:0, dur: s.anim == 'ice' ? 1.2 : s.anim == 'brew' ? 1 : .6};
     shakeTimer = s.anim == 'slap' || s.anim == 'ice' ? .25 : .12;
-    addFloaty(s.word, 240 + rand(-30, 30), 66, s.anim == 'ice' ? 'i' : 'y', 2);
-    addFloaty('+' + amount + (eff < .99 ? ' (' + Math.round(eff*100) + '%)' : ''), 240, 150, 'q');
+    addFloaty(s.word, PORTRAIT_CX + rand(-30, 30), 66, s.anim == 'ice' ? 'i' : 'y', 2);
+    addFloaty('+' + amount + (eff < .99 ? ' (' + Math.round(eff*100) + '%)' : ''), PORTRAIT_CX, 150, 'q');
     if (s.anim != 'pinch') startleNeighbors();
     if (s.buff) buffTimer = s.buff, buffRegen = s.buffRegen;
     if (s.freeze) freezeTimer = s.freeze;
@@ -813,7 +820,7 @@ function updateProfessor()
                 mumbleQueue.push(time + i * .1 / speed);
         }
     }
-    else if ((subHold += timeDelta) > 1.1 && !(question && question.picked < 0))
+    else if ((subHold += timeDelta) > 1.1 && !(question && question.picked == null))
         nextSubtitle(); // holds the call-out while you answer
 
     // speak queued syllables (muffled further when sleepy)
@@ -891,7 +898,7 @@ function makeQuestion()
         {text: pick(ANSWER_BANK[others[0]])},
         {text: pick(ANSWER_BANK[others[1]])},
     ]);
-    return {lines: wrapText(pick(templates)(), 38).slice(0, 2), options, timer: QUESTION_TIME, picked: null, result: 0};
+    return {lines: wrapText(pick(templates)(), PROF_CHARS).slice(0, 5), options, timer: QUESTION_TIME, picked: null, result: 0};
 }
 
 // picked: option index, or -1 when time ran out
@@ -904,7 +911,7 @@ function answerQuestion(i)
     {
         const bonus = Math.round(10 * (1 + lectureIndex * .5) * noteMult());
         notes += bonus, lectureNotes += bonus;
-        addFloaty('+' + bonus + ' NOTES', 240, 192, 'g', 2);
+        addFloaty('+' + bonus + ' NOTES', PORTRAIT_CX, 192, 'g', 2);
         setSubtitle(['...CORRECT.', 'SOMEHOW.'], 'g');
         sndGood.play();
         for (const p of neighbors) p.glance = 1.6;
@@ -914,9 +921,9 @@ function answerQuestion(i)
         const lost = Math.round(lectureNotes * .1);
         notes = max(0, notes - lost), lectureNotes -= lost;
         ++wrongCount;
-        for (const x of [60, 180, 300, 420])
-            addFloaty('HA', x + rand(-20, 20), rand(60, 110), 'q', 2);
-        if (lost) addFloaty('-' + lost + ' NOTES', 240, 192, 'r', 2);
+        for (const x of [-75, -25, 25, 75])
+            addFloaty('HA', PORTRAIT_CX + x + rand(-10, 10), rand(60, 110), 'q', 2);
+        if (lost) addFloaty('-' + lost + ' NOTES', PORTRAIT_CX, 192, 'r', 2);
         setSubtitle(['...NO.', 'NOT', 'EVEN', 'CLOSE.'], 'r');
         sndCaught.play();
         startleNeighbors();
@@ -927,15 +934,16 @@ function answerQuestion(i)
         notes = max(0, notes - lost), lectureNotes -= lost;
         ++caughtCount;
         question.napping = asleep;
-        if (lost) addFloaty('-' + lost + ' NOTES', 240, 192, 'r', 2);
+        if (lost) addFloaty('-' + lost + ' NOTES', PORTRAIT_CX, 192, 'r', 2);
         setSubtitle(['SEE', 'ME', 'AFTER', 'CLASS.'], 'r');
         sndCaught.play();
         shakeTimer = .3;
     }
 }
 
-const MODAL = {x: 72, y: 26, w: 336, h: 156};
-const optionRect = (i)=> ({x: MODAL.x + 14, y: MODAL.y + 56 + i*24, w: MODAL.w - 28, h: 20});
+// cold calls play out in the professor column
+const PROF_CHARS = (PROF_W - 20) / 8 | 0;  // characters per line of professor text
+const optionRect = (i)=> ({x: PROF_X + 10, y: 100 + i*28, w: PROF_W - 20, h: 24});
 
 function hoveredOption()
 {
@@ -1036,7 +1044,7 @@ function updateClass()
             {
                 nod = 0;
                 sndNod.play(undefined, .7);
-                addFloaty('!', 240, 66, 'q', 2);
+                addFloaty('!', PORTRAIT_CX, 66, 'q', 2);
             }
         }
         else
@@ -1046,7 +1054,7 @@ function updateClass()
         {
             asleep = true;
             ++dozeCount;
-            addFloaty('ZZZ...', 240, 90, 'v', 2);
+            addFloaty('ZZZ...', PORTRAIT_CX, 90, 'v', 2);
             snoreTimer = .5;
         }
     }
@@ -1132,20 +1140,14 @@ function gameUpdate()
     }
     else if (gameState == 'class')
     {
-        const inModal = question && inRect(mousePosScreen, MODAL.x, MODAL.y, MODAL.w, MODAL.h);
-        if (clicked && inModal)
-        {
-            if (asleep)
-                blink(mousePosScreen.x, mousePosScreen.y);
-            else if (hoveredOption() >= 0)
-                answerQuestion(hoveredOption());
-        }
+        if (clicked && question && !asleep && hoveredOption() >= 0)
+            answerQuestion(hoveredOption());
         else if (clicked && card < 0 && mousePosScreen.y < PANEL_Y)
             blink(mousePosScreen.x, mousePosScreen.y);
         if (question && !asleep)
             ['KeyA', 'KeyB', 'KeyC'].forEach((key, i)=> keyWasPressed(key) && answerQuestion(i));
         if (keyWasPressed('Space'))
-            blink(240, 110);
+            blink(PORTRAIT_CX, 110);
         ACTIVES.forEach((s, i)=> keyWasPressed('Digit' + (i+1)) && useSkill(s));
         updateClass();
     }
@@ -1225,7 +1227,7 @@ const NEIGHBOR_HABITS = {margot: {phone: 4, listen: 3, notes: 1, yawn: 1}, chas:
 
 // neighbors sit mostly off camera, so their reactions pop up where their shoulder peeks in
 const towardHero = (p)=> p.x < hero.x ? 1 : -1;
-const peekX = (p)=> p.x + 24 * towardHero(p);
+const peekX = (p)=> p.x + 16 * towardHero(p);
 
 function updateNeighbor(p)
 {
@@ -1370,8 +1372,8 @@ function uiSprite(name, x, y, scale=1, color=WHITE)
     drawTile(vec2(x + s.w*scale/2, y + s.h*scale/2), vec2(s.w, s.h).scale(scale), s.tileInfo, color, 0, false, undefined, true, true);
 }
 
-// scene space: 240x108 pixels drawn at 3x, offset so the camera's top left lands on the screen's
-const sceneToScreenX = (x)=> (x - CAM_X)*SC + sceneOffX;
+// scene space: 240x108 pixels drawn at 3x, offset so the camera's top left lands on the portrait's
+const sceneToScreenX = (x)=> (x - CAM_X)*SC + PORTRAIT_X + sceneOffX;
 const sceneToScreenY = (y)=> (y - CAM_Y)*SC + sceneOffY;
 const sRect = (x, y, w, h, c)=> uiRect(sceneToScreenX(Math.round(x)), sceneToScreenY(Math.round(y)), w*SC, h*SC, typeof c == 'string' ? palColor(c) : c);
 // map sprites carry a 1 pixel outline border, so (x, y) is the top left of the map itself
@@ -1573,14 +1575,14 @@ function drawDrowsyOverlay()
     if (gameState != 'class') return;
     const dim = clamp((55 - wake) / 55);
     if (dim > 0)
-        uiRect(0, 0, screenW, PANEL_Y, rgb(.1, .04, .16, dim * .45));
+        uiRect(PORTRAIT_X, 0, PORTRAIT_W, PANEL_Y, rgb(.1, .04, .16, dim * .45));
     // heavy eyelids close in from the top and bottom
     const lid = asleep ? 1 : clamp((25 - wake) / 25);
     if (lid > 0)
     {
         const h = Math.round(lid * (asleep ? 58 : 46));
-        uiRect(0, 0, screenW, h, palColor('k'));
-        uiRect(0, PANEL_Y - h, screenW, h, palColor('k'));
+        uiRect(PORTRAIT_X, 0, PORTRAIT_W, h, palColor('k'));
+        uiRect(PORTRAIT_X, PANEL_Y - h, PORTRAIT_W, h, palColor('k'));
     }
 }
 
@@ -1611,62 +1613,83 @@ function wallClock(minutes)
     return (total / 60 | 0) + ':' + ('0' + total % 60).slice(-2);
 }
 
-function drawHud()
+// the side columns frame the portrait like the skill panel frames the bottom
+function drawColumns()
 {
-    if (gameState == 'title' || gameState == 'card') return;
-    // notes, left
-    uiPanel(6, 6, 104, 20, 'e', 'M');
-    uiSprite('note', 11, 11);
-    uiText(formatNumber(notes), 24, 16, 1, palColor('q'), 'left');
-    if (gameState == 'class')
-        uiText('+' + noteRate().toFixed(1) + '/S', 104, 16, 1, palColor(focus() > .99 ? 'g' : 'S'), 'right');
-
-    if (gameState != 'class') return;
-
-    // lecture clock, right
-    uiPanel(370, 6, 104, 20, 'e', 'M');
-    const minutes = lectureTime;
-    uiText(wallClock(minutes), 376, 16, 1, palColor('q'), 'left');
-    uiBar(424, 14, 44, 4, minutes / LECTURE_TIME, palColor('a'));
-
-    // wakefulness, center
-    uiPanel(160, 6, 160, 20, 'e', 'M');
-    const low = wake < 30;
-    const color = asleep ? palColor('v') : wake > 60 ? palColor('g') : !low ? palColor('m') : palColor((time*6|0) % 2 ? 'r' : 'R');
-    uiText(asleep ? 'ASLEEP' : 'AWAKE', 166, 16, 1, color, 'left');
-    uiBar(216, 13, 98, 6, wake / 100, color);
-    if (freezeTimer > 0) uiText('FROZEN', 240, 34, 1, palColor('i'));
-    else if (buffTimer > 0) uiText('CAFFEINATED', 240, 34, 1, palColor('m'));
-
-    // subtitles over the desk front
-    const line = subWords.slice(0, subShown).join(' ');
-    if (line)
-    {
-        const fade = asleep ? .45 : lerp(.6, 1, wake / 100);
-        uiText(line, 240, 204, 1, palColor(subColor, fade));
-    }
-
-    drawQuestion();
-
-    if (asleep && !question)
-        uiText('CLICK TO WAKE UP!', 240, 120, 2, palColor((time*3|0) % 2 ? 'q' : 'a'));
-
-    for (const f of floaties)
-        uiText(f.text, f.x, f.y, f.scale, palColor(f.color, min(1, f.life * 2)));
+    uiRect(0, 0, STATS_W, PANEL_Y, palColor('R'));
+    uiRect(PROF_X, 0, PROF_W, PANEL_Y, palColor('R'));
+    uiRect(PORTRAIT_X - 3, 0, 1, PANEL_Y, palColor('k'));
+    uiRect(PORTRAIT_X - 2, 0, 2, PANEL_Y, palColor('q'));
+    uiRect(PROF_X, 0, 2, PANEL_Y, palColor('q'));
+    uiRect(PROF_X + 2, 0, 1, PANEL_Y, palColor('k'));
 }
 
-function drawQuestion()
+// a small label on the left and a value on the right of a stats panel row
+function statRow(label, value, y, color=palColor('q'))
 {
-    if (!question) return;
-    const {x, y, w, h} = MODAL;
-    const open = question.picked == null;
-    uiRect(0, 0, screenW, PANEL_Y, rgb(.1, .04, .16, .35));
-    uiPanel(x, y, w, h, 'q', 'R');
-    uiRect(x + 4, y + 4, w - 8, h - 8, palColor('R'));
-    uiRect(x + 5, y + 5, w - 10, h - 10, palColor('q'));
-    uiText(PROF + ' ASKS YOU:', x + w/2, y + 16, 1, palColor('R'), 'center', false);
-    question.lines.forEach((line, i)=> uiText(line, x + w/2, y + 32 + i*11, 1, palColor('e'), 'center', false));
+    uiText(label, 12, y, 1, palColor('A'), 'left', false);
+    uiText(value, STATS_W - 12, y, 1, color, 'right', false);
+}
 
+function drawStats()
+{
+    if (gameState == 'title' || gameState == 'card') return;
+    const x = 6, w = STATS_W - 14;
+    const inClass = gameState == 'class';
+
+    // notes
+    uiPanel(x, 6, w, 44, 'e', 'M');
+    uiSprite('note', 12, 11);
+    uiText('NOTES', 26, 16, 1, palColor('A'), 'left', false);
+    uiText(formatNumber(notes), 12, 32, 2, palColor('q'), 'left');
+    if (inClass)
+        uiText('+' + noteRate().toFixed(1) + '/S', STATS_W - 12, 44, 1, palColor(focus() > .5 ? 'g' : 'S'), 'right', false);
+
+    if (!inClass) return;
+
+    // wakefulness
+    uiPanel(x, 56, w, 40, 'e', 'M');
+    const low = wake < 30;
+    const color = asleep ? palColor('v') : wake > 60 ? palColor('g') : !low ? palColor('m') : palColor((time*6|0) % 2 ? 'r' : 'R');
+    statRow(asleep ? 'ASLEEP' : 'AWAKE', Math.round(wake) + '%', 65, color);
+    uiBar(12, 73, w - 12, 6, wake / 100, color);
+    if (freezeTimer > 0) uiText('FROZEN', 12, 88, 1, palColor('i'), 'left', false);
+    else if (buffTimer > 0) uiText('CAFFEINATED', 12, 88, 1, palColor('m'), 'left', false);
+
+    // lecture clock
+    uiPanel(x, 102, w, 30, 'e', 'M');
+    statRow('TIME', wallClock(lectureTime), 111);
+    uiBar(12, 120, w - 12, 4, lectureTime / LECTURE_TIME, palColor('a'));
+
+    // how the lecture is going
+    uiPanel(x, 138, w, 46, 'e', 'M');
+    statRow('DOZED', dozeCount, 148, palColor(dozeCount ? 'r' : 'q'));
+    statRow('CAUGHT', caughtCount, 160, palColor(caughtCount ? 'r' : 'q'));
+    statRow('WRONG', wrongCount, 172, palColor(wrongCount ? 'r' : 'q'));
+}
+
+// the professor column: subtitles while he drones on, the cold call when he calls on you
+function drawProfessor()
+{
+    if (gameState != 'class') return;
+    const x = PROF_X + 6, w = PROF_W - 12, cx = PROF_X + PROF_W/2;
+    uiPanel(x, 6, w, 204, 'e', 'M');
+    uiText(PROF, cx, 16, 1, palColor('a'), 'center', false);
+    uiRect(x + 6, 23, w - 12, 1, palColor('M'));
+
+    const fade = asleep ? .45 : lerp(.6, 1, wake / 100);
+    const said = wrapText(subWords.slice(0, subShown).join(' '), PROF_CHARS);
+    if (!question)
+    {
+        said.forEach((line, i)=> uiText(line, x + 6, 34 + i*11, 1, palColor(subColor, fade), 'left'));
+        return;
+    }
+
+    // the call-out stays up top, the question and answers below it
+    said.slice(0, 2).forEach((line, i)=> uiText(line, x + 6, 34 + i*11, 1, palColor(subColor, fade), 'left'));
+    question.lines.forEach((line, i)=> uiText(line, x + 6, 58 + i*9, 1, palColor('q'), 'left', false));
+
+    const open = question.picked == null;
     const hover = open && !asleep ? hoveredOption() : -1;
     question.options.forEach((option, i)=>
     {
@@ -1676,22 +1699,36 @@ function drawQuestion()
             bg = option.correct ? 'g' : i == question.picked ? 'r' : 'A';
         uiRect(r.x - 1, r.y - 1, r.w + 2, r.h + 2, palColor('k'));
         uiRect(r.x, r.y, r.w, r.h, palColor(bg));
-        uiText('ABC'[i], r.x + 10, r.y + 10, 1, palColor('R'), 'center', false);
-        uiText(open ? blurText(option.text, i) : option.text, r.x + 24, r.y + 10, 1, palColor('k'), 'left', false);
+        uiText('ABC'[i], r.x + 7, r.y + r.h/2, 1, palColor('R'), 'center', false);
+        const lines = wrapText(option.text, (r.w - 18) / 8 | 0);
+        lines.forEach((line, j)=> uiText(open ? blurText(line, i*2 + j) : line, r.x + 15,
+            r.y + r.h/2 + (j - (lines.length - 1)/2) * 10, 1, palColor('k'), 'left', false));
     });
 
     if (open)
     {
+        uiBar(x + 6, 188, w - 12, 4, question.timer / QUESTION_TIME, palColor(question.timer < 1.5 ? 'r' : 'm'));
         if (asleep)
-            uiText("YOU'RE ASLEEP! CLICK TO WAKE UP", x + w/2, y + h - 24, 1, palColor((time*3|0) % 2 ? 'r' : 'R'), 'center', false);
-        uiBar(x + 14, y + h - 14, w - 28, 4, question.timer / QUESTION_TIME, palColor(question.timer < 1.5 ? 'r' : 'm'));
+            uiText('WAKE UP!', cx, 201, 1, palColor((time*3|0) % 2 ? 'r' : 'q'), 'center', false);
     }
     else
     {
         const right = question.picked >= 0 && question.options[question.picked].correct;
-        const verdict = right ? 'CORRECT. SOMEHOW.' : question.picked >= 0 ? 'WRONG!' : question.napping ? 'CAUGHT NAPPING!' : 'TIME IS UP!';
-        uiText(verdict, x + w/2, y + h - 16, 1, palColor(right ? 'G' : 'r'), 'center', false);
+        const verdict = right ? 'CORRECT!' : question.picked >= 0 ? 'WRONG!' : question.napping ? 'CAUGHT NAPPING!' : 'TIME IS UP!';
+        uiText(verdict, cx, 196, 1, palColor(right ? 'g' : 'r'), 'center', false);
     }
+}
+
+function drawPortraitText()
+{
+    if (gameState == 'class' && asleep)
+    {
+        const color = palColor((time*3|0) % 2 ? 'q' : 'a');
+        uiText('CLICK TO', PORTRAIT_CX, 110, 2, color);
+        uiText('WAKE UP!', PORTRAIT_CX, 130, 2, color);
+    }
+    for (const f of floaties)
+        uiText(f.text, f.x, f.y, f.scale, palColor(f.color, min(1, f.life * 2)));
 }
 
 function drawSkillPanel()
@@ -1771,6 +1808,9 @@ function gameRenderPost()
 {
     drawScene();
     drawDrowsyOverlay();
+    drawColumns();
+    drawStats();
+    drawProfessor();
 
     const lecture = currentLecture();
     if (gameState == 'title')
@@ -1810,7 +1850,7 @@ function gameRenderPost()
         drawTitleCard(lines);
     }
 
-    drawHud();
+    drawPortraitText();
     drawSkillPanel();
 }
 
