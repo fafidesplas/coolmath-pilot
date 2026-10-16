@@ -3,6 +3,8 @@
     - Wes Anderson style: a dead-center, symmetrical shot of one student in a
       pastel lecture hall, framed by chapter title cards
     - The wakefulness bar drains nonstop; click (or Space) to blink yourself awake
+    - You start barely awake with weak blinks and a tiny tank; sleep upgrades raise
+      max wake into the thousands, and a fuller, bigger tank takes more notes
     - Off screen, the professor drones on in gibberish (subtitled at the bottom)
     - Being awake takes notes; notes buy skills: active tricks (pinch yourself,
       tickle the roof of your mouth...) that wear off if you spam them, and
@@ -35,6 +37,13 @@ const CAM_Y = 28;
 const PANEL_Y = VIEW_H * SC;  // skill panel top (screen px)
 const LECTURE_TIME = 75;      // seconds per lecture (1 second = 1 minute on the wall clock)
 const FOCUS_CURVE = 4;        // how sharply note taking speeds up near full wake (higher = steeper end)
+// every lecture is more boring than the last, without limit, so drain eventually outruns any build
+const BASE_DRAIN = 2, DRAIN_GROWTH = 1.5; // wake drained per second in the first lecture, growth per lecture
+const START_WAKE = 30;        // % awake when a lecture starts: already nodding off
+const LEAK = .5;              // share of your current wake that fades every second, so blinks settle short of full
+// notes per second while awake: NOTE_RATE * maxWake^NOTE_SCALE (a bigger tank pays more, but not runaway),
+// times up to 1 + AWAKE_BONUS as you near full wake
+const NOTE_RATE = .1, NOTE_SCALE = .75, AWAKE_BONUS = 19;
 
 ///////////////////////////////////////////////////////////////////////////////
 // palette: pastel Grand Budapest family, same dark outline as the other prototypes
@@ -57,14 +66,14 @@ const palColor = (char, a=1)=> (colorCache[char] || (colorCache[char] = new Colo
 const PROF = 'PROF. HUMBOLDT';
 const LECTURES =
 [
-    {course:'ECONOMICS 101', subject:'econ',         drain:4,    words:['SUPPLY','DEMAND','MARGINAL','UTILITY','ELASTIC','CURVE','GDP']},
-    {course:'INTRO TO STATISTICS', subject:'stats',   drain:6,    words:['MEAN','VARIANCE','SIGMA','REGRESSION','SAMPLE','NULL']},
-    {course:'ORGANIC CHEMISTRY', subject:'chem',     drain:8,    words:['BENZENE','CARBON','ALKANE','METHYL','ISOMER','BOND']},
-    {course:'MEDIEVAL TAX LAW', subject:'tax',      drain:10.5, words:['TITHE','FIEF','SERF','LEVY','BARON','DUCAT']},
-    {course:'PHILOSOPHY OF BEIGE', subject:'beige',   drain:13.5, words:['BEIGE','BEING','TAUPE','ESSENCE','NEUTRAL','KANT']},
-    {course:'ADVANCED SPREADSHEETS', subject:'sheets', drain:17,   words:['CELL','VLOOKUP','PIVOT','COLUMN','MACRO','ROW']},
-    {course:'A HISTORY OF CARPET', subject:'carpet',   drain:21,   words:['PILE','SHAG','LOOP','BERBER','FIBER','RUG']},
-    {course:'FINAL EXAM REVIEW', subject:'exam',     drain:26,   words:['EXAM','CHAPTER','REVIEW','WILL','BE','ON','IT']},
+    {course:'ECONOMICS 101',          subject:'econ',    words:['SUPPLY','DEMAND','MARGINAL','UTILITY','ELASTIC','CURVE','GDP']},
+    {course:'INTRO TO STATISTICS',    subject:'stats',   words:['MEAN','VARIANCE','SIGMA','REGRESSION','SAMPLE','NULL']},
+    {course:'ORGANIC CHEMISTRY',      subject:'chem',    words:['BENZENE','CARBON','ALKANE','METHYL','ISOMER','BOND']},
+    {course:'MEDIEVAL TAX LAW',       subject:'tax',     words:['TITHE','FIEF','SERF','LEVY','BARON','DUCAT']},
+    {course:'PHILOSOPHY OF BEIGE',    subject:'beige',   words:['BEIGE','BEING','TAUPE','ESSENCE','NEUTRAL','KANT']},
+    {course:'ADVANCED SPREADSHEETS',  subject:'sheets',  words:['CELL','VLOOKUP','PIVOT','COLUMN','MACRO','ROW']},
+    {course:'A HISTORY OF CARPET',    subject:'carpet',  words:['PILE','SHAG','LOOP','BERBER','FIBER','RUG']},
+    {course:'FINAL EXAM REVIEW',      subject:'exam',    words:['EXAM','CHAPTER','REVIEW','WILL','BE','ON','IT']},
 ];
 const CHAPTER_WORDS = ['ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT'];
 const SYLLABLES = ['BLOR','MUB','FEN','WOM','GRA','DUL','NIX','PLU','TASH','VOR','SNOD','KRIM','BAL','OOM','ZEP','MOR','FLIB','DRA','QUO','PUN'];
@@ -88,37 +97,44 @@ const ANSWER_BANK =
 };
 const QUESTION_TIME = 5;
 
-// type: click (blink power), active (button with tolerance), regen (wake/s), drain (% slower), notes (% more)
+// type: click (blink power), max (max wake), active (button with tolerance), regen (wake/s), notes (% more), time (% faster clock)
+// wake amounts grow by step each level, so late game numbers reach the thousands
 const SKILLS =
 [
-    {id:'eyes',   name:'WIDEN YOUR EYES',              type:'click',  cost:5,    growth:1.6, max:10, power:2,  icon:'iEye'},
-    {id:'pinch',  name:'PINCH YOURSELF',               type:'active', cost:10,   growth:1.7, max:10, power:20, perLvl:7,  tol:.3,  tolDecay:.12,  anim:'pinch',  word:'OW!',   icon:'iPinch'},
-    {id:'foot',   name:'TAP YOUR FOOT',                type:'regen',  cost:25,   growth:1.6, max:10, regen:1.2, icon:'iShoe'},
-    {id:'mouth',  name:'TICKLE THE ROOF OF YOUR MOUTH', type:'active', cost:45,  growth:1.7, max:10, power:36, perLvl:10, tol:.4,  tolDecay:.1,   anim:'tickle', word:'HEHEH', icon:'iTongue'},
-    {id:'gum',    name:'CHEW MINT GUM',                type:'regen',  cost:90,   growth:1.6, max:10, regen:2.5, icon:'iGum'},
-    {id:'posture',name:'SIT UP STRAIGHT',              type:'drain',  cost:140,  growth:1.9, max:5,  reduce:.08, icon:'iUp'},
-    {id:'slap',   name:'SLAP YOUR CHEEKS',             type:'active', cost:220,  growth:1.7, max:10, power:60, perLvl:15, tol:.5,  tolDecay:.08,  anim:'slap',   word:'SLAP!', icon:'iHand'},
-    {id:'pens',   name:'COLOR-CODED PENS',             type:'notes',  cost:300,  growth:1.8, max:8,  mult:.5, icon:'iPens'},
-    {id:'doodle', name:'DOODLE IN THE MARGINS',        type:'regen',  cost:480,  growth:1.6, max:10, regen:5, icon:'iPencil'},
-    {id:'brew',   name:'SNEAK A COLD BREW',            type:'active', cost:750,  growth:1.7, max:10, power:50, perLvl:12, tol:.9,  tolDecay:.045, anim:'brew',   word:'SLURP', icon:'iCup', buff:8, buffRegen:5},
-    {id:'ice',    name:'ICE CUBE DOWN YOUR SHIRT',     type:'active', cost:1200, growth:1.8, max:5,  power:100, perLvl:0, tol:1,   tolDecay:.03,  anim:'ice',    word:'BRRR!', icon:'iIce', freeze:5},
+    {id:'eyes',   name:'WIDEN YOUR EYES',              type:'click',  cost:20,   growth:2.5, max:10, power:1,   step:1.6, icon:'iEye'},
+    {id:'pinch',  name:'PINCH YOURSELF',               type:'active', cost:20,   growth:1.7, max:10, power:3,   step:2,   tol:.3,  tolDecay:.12,  anim:'pinch',  word:'OW!',   icon:'iPinch'},
+    {id:'foot',   name:'TAP YOUR FOOT',                type:'regen',  cost:50,   growth:1.6, max:10, regen:.8,  step:2,   icon:'iShoe'},
+    {id:'mouth',  name:'TICKLE THE ROOF OF YOUR MOUTH', type:'active', cost:90,   growth:1.7, max:10, power:15,  step:2,   tol:.4,  tolDecay:.1,   anim:'tickle', word:'HEHEH', icon:'iTongue'},
+    {id:'dream',  name:'DAYDREAM ABOUT LUNCH',         type:'time',   cost:120,  growth:1.9, max:5,  speed:.1,  icon:'iCloud'},
+    {id:'gum',    name:'CHEW MINT GUM',                type:'regen',  cost:180,  growth:1.6, max:10, regen:2.5, step:2,   icon:'iGum'},
+    {id:'sleep',  name:'SLEEP EIGHT HOURS',            type:'max',    cost:300,  growth:2,   max:9,   base:20,   step:2,   icon:'iMoon'},
+    {id:'slap',   name:'SLAP YOUR CHEEKS',             type:'active', cost:440,  growth:1.7, max:10, power:50,  step:2,   tol:.5,  tolDecay:.08,  anim:'slap',   word:'SLAP!', icon:'iHand'},
+    {id:'pens',   name:'COLOR-CODED PENS',             type:'notes',  cost:600,  growth:1.8, max:8,  mult:.5,   icon:'iPens'},
+    {id:'janitor',name:'BRIBE THE JANITOR',            type:'time',   cost:800,  growth:2.1, max:5,  speed:.15, icon:'iClock'},
+    {id:'doodle', name:'DOODLE IN THE MARGINS',        type:'regen',  cost:960,  growth:1.6, max:10, regen:8,   step:2,   icon:'iPencil'},
+    {id:'brew',   name:'SNEAK A COLD BREW',            type:'active', cost:1500, growth:1.7, max:10, power:120, step:2,   tol:.9,  tolDecay:.045, anim:'brew',   word:'SLURP', icon:'iCup', buff:8, buffRegen:20},
+    {id:'ice',    name:'ICE CUBE DOWN YOUR SHIRT',     type:'active', cost:2400, growth:1.8, max:5,  full:true, tol:1,   tolDecay:.03,  anim:'ice',    word:'BRRR!', icon:'iIce', freeze:5},
 ];
 const ACTIVES = SKILLS.filter(s=> s.type == 'active');
 const PASSIVES = SKILLS.filter(s=> s.type != 'active');
 
 const skillCost = (s)=> Math.round(s.cost * Math.pow(s.growth, levels[s.id]));
-const skillPower = (s)=> s.power + (s.perLvl || 0) * (levels[s.id] - 1);
+// a wake amount at a skill level (unowned skills show their first level)
+const scaled = (base, s, lv=max(1, levels[s.id]))=> base * Math.pow(s.step, lv - 1);
+const skillPower = (s)=> s.full ? maxWake() : scaled(s.power, s);
+const freezeTime = (s)=> s.freeze + max(1, levels[s.id]) - 1;
 
 function skillDesc(s)
 {
     const lv = max(1, levels[s.id]);
-    if (s.type == 'click')  return 'BLINKING GIVES +' + s.power*lv + ' MORE WAKE';
-    if (s.type == 'regen')  return '+' + (s.regen*lv).toFixed(1) + ' WAKE EVERY SECOND';
-    if (s.type == 'drain')  return 'THE LECTURE DRAINS ' + Math.round(s.reduce*lv*100) + '% SLOWER';
+    if (s.type == 'click')  return 'BLINKS GIVE +' + formatWake(s.power * Math.pow(s.step, lv)) + ' WAKE';
+    if (s.type == 'max')    return 'HOLD UP TO ' + formatWake(s.base * Math.pow(s.step, lv)) + ' WAKE. MORE WAKE, MORE NOTES';
+    if (s.type == 'regen')  return '+' + formatWake(scaled(s.regen, s)) + ' WAKE EVERY SECOND';
     if (s.type == 'notes')  return '+' + Math.round(s.mult*lv*100) + '% NOTES TAKEN';
-    let text = '+' + (levels[s.id] ? skillPower(s) : s.power) + ' WAKE';
-    if (s.buff)   text += ', THEN +' + s.buffRegen + '/S FOR ' + s.buff + 'S';
-    if (s.freeze) text += ', NO DRAIN FOR ' + s.freeze + 'S';
+    if (s.type == 'time')   return 'THE CLOCK RUNS ' + Math.round(s.speed*lv*100) + '% FASTER';
+    let text = s.full ? 'FULL WAKE' : '+' + formatWake(skillPower(s)) + ' WAKE';
+    if (s.buff)   text += ', THEN +' + formatWake(scaled(s.buffRegen, s)) + '/S FOR ' + s.buff + 'S';
+    if (s.freeze) text += ', NO DRAIN FOR ' + freezeTime(s) + 'S';
     return text + '. WEARS OFF IF SPAMMED';
 }
 
@@ -205,16 +221,16 @@ const spriteMaps =
         '...ppppp...',
         '...........',
         '...........'],
-    iUp: [
-        '.....g.....',
-        '....ggg....',
-        '...ggggg...',
-        '..ggggggg..',
-        '....ggg....',
-        '....ggg....',
-        '....ggg....',
-        '....ggg....',
-        '....ggg....',
+    iMoon: [
+        '....yyyy...',
+        '..yyyy.....',
+        '.yyyy....w.',
+        '.yyy....www',
+        '.yyy.....w.',
+        '.yyy.......',
+        '.yyyy......',
+        '..yyyy.....',
+        '....yyyy...',
         '...........',
         '...........'],
     iHand: [
@@ -277,6 +293,30 @@ const spriteMaps =
         '..iiiiiii..',
         '.....c.....',
         '....c.c....'],
+    iCloud: [
+        '...ww.ww...',
+        '..wwwwwwww.',
+        '.wwwwwwwwww',
+        '.wwwcwwwwww',
+        '..wwwwwwww.',
+        '...ww..ww..',
+        '...........',
+        '..ww.......',
+        '..ww.......',
+        '...........',
+        'w..........'],
+    iClock: [
+        '...qqqqq...',
+        '..qqqqqqq..',
+        '.qqqqkqqqq.',
+        '.qqqqkqqqq.',
+        '.qqqqkqqqq.',
+        '.qqqqkrrrq.',
+        '.qqqqqqqqq.',
+        '.qqqqqqqqq.',
+        '..qqqqqqq..',
+        '...qqqqq...',
+        '...........'],
 };
 
 // people: painted procedurally onto character grids with placeholder colors
@@ -614,7 +654,7 @@ let lastPassed = true;
 let lastBonus = 0;
 let stateTimer = 0;
 
-let wake = 85;
+let wake = START_WAKE;       // percent of max wake (amounts are converted through maxWake)
 let asleep = false;
 let tolerance = {};          // active skill id -> 0..1
 let buffTimer = 0, buffRegen = 0, freezeTimer = 0;
@@ -635,18 +675,18 @@ let questionCooldown = 14;
 
 function loadGame()
 {
-    const save = readSaveData('stayAwake', {notes:0, levels:{}, lecture:0});
+    const save = readSaveData('stayAwake2', {notes:0, levels:{}, lecture:0});
     notes = save.notes;
     lectureIndex = save.lecture;
     for (const s of SKILLS)
         levels[s.id] = save.levels[s.id] || 0, tolerance[s.id] = 0;
 }
 
-const saveGame = ()=> writeSaveData('stayAwake', {notes, levels, lecture: lectureIndex});
+const saveGame = ()=> writeSaveData('stayAwake2', {notes, levels, lecture: lectureIndex});
 
 function resetSave()
 {
-    writeSaveData('stayAwake', {notes:0, levels:{}, lecture:0});
+    writeSaveData('stayAwake2', {notes:0, levels:{}, lecture:0});
     loadGame();
 }
 
@@ -656,7 +696,7 @@ function currentLecture()
     const cycle = lectureIndex / LECTURES.length | 0;
     return {
         course: (cycle ? 'SUMMER SCHOOL: ' : '') + base.course,
-        drain: base.drain * Math.pow(1.3, cycle),
+        drain: BASE_DRAIN * Math.pow(DRAIN_GROWTH, lectureIndex),
         words: base.words,
         chapter: lectureIndex < CHAPTER_WORDS.length ? CHAPTER_WORDS[lectureIndex] : '' + (lectureIndex + 1),
     };
@@ -666,18 +706,23 @@ function currentLecture()
 // rates
 
 const lectureProgress = ()=> clamp(lectureTime / LECTURE_TIME);
-const blinkPower = ()=> 4 + SKILLS[0].power * levels.eyes;
-const passiveRegen = ()=> SKILLS.filter(s=> s.type == 'regen').reduce((sum, s)=> sum + s.regen * levels[s.id], 0);
-const drainMult = ()=> 1 - SKILLS.find(s=> s.id == 'posture').reduce * levels.posture;
-const noteMult = ()=> 1 + SKILLS.find(s=> s.id == 'pens').mult * levels.pens;
+const skill = (id)=> SKILLS.find(s=> s.id == id);
+const blinkPower = ()=> skill('eyes').power * Math.pow(skill('eyes').step, levels.eyes);
+const maxWake = ()=> skill('sleep').base * Math.pow(skill('sleep').step, levels.sleep);
+const wakeAmount = ()=> wake / 100 * maxWake();
+const passiveRegen = ()=> SKILLS.filter(s=> s.type == 'regen' && levels[s.id]).reduce((sum, s)=> sum + scaled(s.regen, s), 0);
+const noteMult = ()=> 1 + skill('pens').mult * levels.pens;
+// how many lecture seconds pass per real second
+const clockSpeed = ()=> 1 + SKILLS.filter(s=> s.type == 'time').reduce((sum, s)=> sum + s.speed * levels[s.id], 0);
 // 0..1: creeps up while drowsy, then shoots up as you approach 100% awake
 const focus = ()=> asleep ? 0 : (Math.exp(FOCUS_CURVE * wake / 100) - 1) / (Math.exp(FOCUS_CURVE) - 1);
-const noteRate = ()=> (1 + lectureIndex * .5) * noteMult() * focus();
+const awakeMult = ()=> 1 + AWAKE_BONUS * focus();
+const noteRate = ()=> asleep ? 0 : NOTE_RATE * Math.pow(maxWake(), NOTE_SCALE) * noteMult() * awakeMult();
 
 function currentDrain()
 {
     if (freezeTimer > 0) return 0;
-    return currentLecture().drain * (1 + .6 * lectureProgress()) * drainMult();
+    return currentLecture().drain * (1 + .6 * lectureProgress());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -688,11 +733,13 @@ function addFloaty(text, x, y, color='w', scale=1)
     floaties.push({text, x, y, life: 1, color, scale});
 }
 
+// amount is in wake points; wake itself is a percent of max wake
 function addWake(amount)
 {
+    const pct = amount * 100 / maxWake();
     if (asleep)
     {
-        wake = min(100, wake + amount);
+        wake = min(100, wake + pct);
         if (wake >= 25)
         {
             asleep = false;
@@ -703,14 +750,14 @@ function addWake(amount)
         }
         return;
     }
-    wake = min(100, wake + amount);
+    wake = min(100, wake + pct);
 }
 
 function blink(x, y)
 {
-    const amount = asleep ? 8 + blinkPower() : blinkPower();
+    const amount = asleep ? blinkPower() * 2 : blinkPower();
     addWake(amount);
-    addFloaty('+' + amount, x, y - 6, 'q');
+    addFloaty('+' + formatWake(amount), x, y - 6, 'q');
     nod = max(0, nod - .35);
     blinkClosed = .08;
     shakeTimer = .06;
@@ -728,17 +775,17 @@ function useSkill(s)
         return;
     }
     const eff = max(.1, 1 - tolerance[s.id]);
-    const amount = Math.round(skillPower(s) * eff);
+    const amount = skillPower(s) * eff;
     addWake(amount);
     tolerance[s.id] = min(1, tolerance[s.id] + s.tol);
     nod = 0;
     anim = {type: s.anim, t:0, dur: s.anim == 'ice' ? 1.2 : s.anim == 'brew' ? 1 : .6};
     shakeTimer = s.anim == 'slap' || s.anim == 'ice' ? .25 : .12;
     addFloaty(s.word, PORTRAIT_CX + rand(-30, 30), 66, s.anim == 'ice' ? 'i' : 'y', 2);
-    addFloaty('+' + amount + (eff < .99 ? ' (' + Math.round(eff*100) + '%)' : ''), PORTRAIT_CX, 150, 'q');
+    addFloaty('+' + formatWake(amount) + (eff < .99 ? ' (' + Math.round(eff*100) + '%)' : ''), PORTRAIT_CX, 150, 'q');
     if (s.anim != 'pinch') startleNeighbors();
-    if (s.buff) buffTimer = s.buff, buffRegen = s.buffRegen;
-    if (s.freeze) freezeTimer = s.freeze;
+    if (s.buff) buffTimer = s.buff, buffRegen = scaled(s.buffRegen, s);
+    if (s.freeze) freezeTimer = freezeTime(s);
     ({pinch: sndPinch, tickle: sndTickle, slap: sndSlap, brew: sndSlurp, ice: sndIce})[s.anim].play();
 }
 
@@ -752,7 +799,9 @@ function buySkill(s)
         return;
     }
     notes -= cost;
+    const oldMax = maxWake();
     ++levels[s.id];
+    wake *= oldMax / maxWake(); // a bigger tank starts out no fuller
     sndBuy.play();
     saveGame();
 }
@@ -903,7 +952,7 @@ function answerQuestion(i)
     question.result = 1.5;
     if (i >= 0 && question.options[i].correct)
     {
-        const bonus = Math.round(10 * (1 + lectureIndex * .5) * noteMult());
+        const bonus = Math.round(5 * NOTE_RATE * Math.pow(maxWake(), NOTE_SCALE) * noteMult() * (1 + AWAKE_BONUS)); // five seconds at full wake
         notes += bonus, lectureNotes += bonus;
         addFloaty('+' + bonus + ' NOTES', PORTRAIT_CX, 192, 'g', 2);
         setSubtitle(['...CORRECT.', 'SOMEHOW.'], 'g');
@@ -937,7 +986,15 @@ function answerQuestion(i)
 
 // cold calls play out in the professor column
 const PROF_CHARS = (PROF_W - 20) / 8 | 0;  // characters per line of professor text
-const optionRect = (i)=> ({x: PROF_X + 10, y: 100 + i*28, w: PROF_W - 20, h: 24});
+// the course name heads the column; a summer school name too long for two lines drops its prefix
+function courseLines()
+{
+    const lecture = currentLecture();
+    const lines = wrapText(lecture.course, PROF_CHARS);
+    return lines.length > 2 ? wrapText(LECTURES[lectureIndex % LECTURES.length].course, PROF_CHARS) : lines;
+}
+const profOffset = ()=> (courseLines().length - 1) * 10; // how far a two line course name pushes the column down
+const optionRect = (i)=> ({x: PROF_X + 10, y: 100 + profOffset() + i*25, w: PROF_W - 20, h: 22});
 
 function hoveredOption()
 {
@@ -974,7 +1031,7 @@ function startClass()
     gameState = 'class';
     lectureTime = lectureNotes = attentiveTime = 0;
     dozeCount = caughtCount = wrongCount = 0;
-    wake = 85;
+    wake = START_WAKE;
     asleep = false;
     nod = 0;
     buffTimer = freezeTimer = 0;
@@ -1009,7 +1066,9 @@ function endClass()
 function updateClass()
 {
     const dt = timeDelta;
-    lectureTime += dt;
+    // time upgrades only speed up the clock: wake and notes still tick in real time
+    const clockDt = dt * clockSpeed();
+    lectureTime += clockDt;
     if (lectureTime >= LECTURE_TIME)
     {
         endClass();
@@ -1024,8 +1083,9 @@ function updateClass()
     if (!asleep)
     {
         const regen = passiveRegen() + (buffTimer > 0 ? buffRegen : 0);
-        wake = clamp(wake + (regen - currentDrain()) * dt, 0, 100);
-        if (wake >= 40) attentiveTime += dt;
+        const leak = freezeTimer > 0 ? 0 : LEAK * wake;
+        wake = clamp(wake + ((regen - currentDrain()) * 100 / maxWake() - leak) * dt, 0, 100);
+        if (wake >= 40) attentiveTime += clockDt;
         const gained = noteRate() * dt;
         notes += gained;
         lectureNotes += gained;
@@ -1069,7 +1129,7 @@ function updateClass()
 // skill card layout
 
 // passive upgrades on the left, active abilities (number keys) grouped on the right
-const CARD_W = 40, CARD_H = 46, CARD_GAP = 3, GROUP_GAP = 9;
+const CARD_W = 34, CARD_H = 46, CARD_GAP = 2, GROUP_GAP = 8;
 const CARD_X0 = (screenW - (SKILLS.length * CARD_W + (SKILLS.length - 2) * CARD_GAP + GROUP_GAP)) / 2 | 0;
 const CARD_Y = PANEL_Y + 5;
 const ACTIVE_X0 = CARD_X0 + PASSIVES.length * (CARD_W + CARD_GAP) - CARD_GAP + GROUP_GAP;
@@ -1520,6 +1580,15 @@ function drawHeroFace({hx, hy})
         sDisc(hx + 11, hy + 19, r, 'p');
         if (r > 2) sRect(hx + 9, hy + 17, 1, 1, 'w');
     }
+    // daydreaming: a little thought cloud drifts up now and then
+    if (levels.dream && gameState == 'class' && !asleep && !anim.type && (time % 9) < 2.5)
+    {
+        for (const [x, y, r] of [[hx + 21, hy + 1, 0], [hx + 23, hy - 2, 1], [hx + 28, hy - 6, 3]])
+            sDisc(x, y, r + 1, 'k');
+        for (const [x, y, r] of [[hx + 21, hy + 1, 0], [hx + 23, hy - 2, 1], [hx + 28, hy - 6, 3]])
+            sDisc(x, y, r, 'w');
+        sRect(hx + 27, hy - 7, 2, 2, 'm'); // lunch
+    }
     // ice: a blue shiver tint over the face
     if (anim.type == 'ice')
         sRect(hx + 4, hy + 8, 14, 13, palColor('i', .35));
@@ -1608,6 +1677,10 @@ function uiBar(x, y, w, h, pct, color)
 }
 
 const formatNumber = (n)=> n < 1e3 ? '' + (n|0) : n < 1e6 ? (n/1e3).toFixed(1) + 'K' : (n/1e6).toFixed(1) + 'M';
+// early wake amounts are small, so keep a decimal below 10
+const formatWake = (n)=> n < 10 ? n.toFixed(1).replace(/\.0$/, '') : formatNumber(n);
+// at most 4 characters, to fit a skill card's price strip
+const formatShort = (n)=> n < 1e3 ? '' + (n|0) : n < 1e4 ? (n/1e3).toFixed(1) + 'K' : n < 1e6 ? (n/1e3|0) + 'K' : (n/1e6).toFixed(1) + 'M';
 
 function wallClock(minutes)
 {
@@ -1645,29 +1718,36 @@ function drawStats()
     uiText('NOTES', 26, 16, 1, palColor('A'), 'left', false);
     uiText(formatNumber(notes), 12, 32, 2, palColor('q'), 'left');
     if (inClass)
-        uiText('+' + noteRate().toFixed(1) + '/S', STATS_W - 12, 44, 1, palColor(focus() > .5 ? 'g' : 'S'), 'right', false);
+    {
+        // how much being awake is multiplying your notes
+        const mult = awakeMult(), color = palColor(asleep ? 'S' : mult > 10 ? 'g' : mult > 3 ? 'm' : 'S');
+        uiText('x' + (asleep ? 0 : mult).toFixed(mult < 10 ? 1 : 0), 12, 44, 1, color, 'left', false);
+        uiText('+' + formatWake(noteRate()) + '/S', STATS_W - 12, 44, 1, color, 'right', false);
+    }
 
     if (!inClass) return;
 
     // wakefulness
-    uiPanel(x, 56, w, 40, 'e', 'M');
+    uiPanel(x, 56, w, 52, 'e', 'M');
     const low = wake < 30;
     const color = asleep ? palColor('v') : wake > 60 ? palColor('g') : !low ? palColor('m') : palColor((time*6|0) % 2 ? 'r' : 'R');
     statRow(asleep ? 'ASLEEP' : 'AWAKE', Math.round(wake) + '%', 65, color);
     uiBar(12, 73, w - 12, 6, wake / 100, color);
-    if (freezeTimer > 0) uiText('FROZEN', 12, 88, 1, palColor('i'), 'left', false);
-    else if (buffTimer > 0) uiText('CAFFEINATED', 12, 88, 1, palColor('m'), 'left', false);
+    uiText(formatWake(wakeAmount()) + '/' + formatWake(maxWake()), 12, 87, 1, palColor('q'), 'left', false);
+    if (freezeTimer > 0) uiText('FROZEN', 12, 99, 1, palColor('i'), 'left', false);
+    else if (buffTimer > 0) uiText('CAFFEINATED', 12, 99, 1, palColor('m'), 'left', false);
 
     // lecture clock
-    uiPanel(x, 102, w, 30, 'e', 'M');
-    statRow('TIME', wallClock(lectureTime), 111);
-    uiBar(12, 120, w - 12, 4, lectureTime / LECTURE_TIME, palColor('a'));
+    uiPanel(x, 114, w, 30, 'e', 'M');
+    // a sped up clock shows its speed in place of the label
+    statRow(clockSpeed() > 1 ? 'x' + clockSpeed().toFixed(2).replace(/\.?0+$/, '') : 'TIME', wallClock(lectureTime), 123);
+    uiBar(12, 132, w - 12, 4, lectureTime / LECTURE_TIME, palColor('a'));
 
     // how the lecture is going
-    uiPanel(x, 138, w, 46, 'e', 'M');
-    statRow('DOZED', dozeCount, 148, palColor(dozeCount ? 'r' : 'q'));
-    statRow('CAUGHT', caughtCount, 160, palColor(caughtCount ? 'r' : 'q'));
-    statRow('WRONG', wrongCount, 172, palColor(wrongCount ? 'r' : 'q'));
+    uiPanel(x, 150, w, 46, 'e', 'M');
+    statRow('DOZED', dozeCount, 160, palColor(dozeCount ? 'r' : 'q'));
+    statRow('CAUGHT', caughtCount, 172, palColor(caughtCount ? 'r' : 'q'));
+    statRow('WRONG', wrongCount, 184, palColor(wrongCount ? 'r' : 'q'));
 }
 
 // the professor column: subtitles while he drones on, the cold call when he calls on you
@@ -1676,20 +1756,21 @@ function drawProfessor()
     if (gameState != 'class') return;
     const x = PROF_X + 6, w = PROF_W - 12, cx = PROF_X + PROF_W/2;
     uiPanel(x, 6, w, 204, 'e', 'M');
-    uiText(PROF, cx, 16, 1, palColor('a'), 'center', false);
-    uiRect(x + 6, 23, w - 12, 1, palColor('M'));
+    courseLines().forEach((line, i)=> uiText(line, cx, 16 + i*10, 1, palColor('a'), 'center', false));
+    const dy = profOffset();
+    uiRect(x + 6, 23 + dy, w - 12, 1, palColor('M'));
 
     const fade = asleep ? .45 : lerp(.6, 1, wake / 100);
     const said = wrapText(subWords.slice(0, subShown).join(' '), PROF_CHARS);
     if (!question)
     {
-        said.forEach((line, i)=> uiText(line, x + 6, 34 + i*11, 1, palColor(subColor, fade), 'left'));
+        said.forEach((line, i)=> uiText(line, x + 6, 34 + dy + i*11, 1, palColor(subColor, fade), 'left'));
         return;
     }
 
     // the call-out stays up top, the question and answers below it
-    said.slice(0, 2).forEach((line, i)=> uiText(line, x + 6, 34 + i*11, 1, palColor(subColor, fade), 'left'));
-    question.lines.forEach((line, i)=> uiText(line, x + 6, 58 + i*9, 1, palColor('q'), 'left', false));
+    said.slice(0, 2).forEach((line, i)=> uiText(line, x + 6, 34 + dy + i*11, 1, palColor(subColor, fade), 'left'));
+    question.lines.forEach((line, i)=> uiText(line, x + 6, 58 + dy + i*9, 1, palColor('q'), 'left', false));
 
     const open = question.picked == null;
     const hover = open && !asleep ? hoveredOption() : -1;
@@ -1709,15 +1790,15 @@ function drawProfessor()
 
     if (open)
     {
-        uiBar(x + 6, 188, w - 12, 4, question.timer / QUESTION_TIME, palColor(question.timer < 1.5 ? 'r' : 'm'));
+        uiBar(x + 6, 176 + dy, w - 12, 4, question.timer / QUESTION_TIME, palColor(question.timer < 1.5 ? 'r' : 'm'));
         if (asleep)
-            uiText('WAKE UP!', cx, 201, 1, palColor((time*3|0) % 2 ? 'r' : 'q'), 'center', false);
+            uiText('WAKE UP!', cx, 189 + dy, 1, palColor((time*3|0) % 2 ? 'r' : 'q'), 'center', false);
     }
     else
     {
         const right = question.picked >= 0 && question.options[question.picked].correct;
         const verdict = right ? 'CORRECT!' : question.picked >= 0 ? 'WRONG!' : question.napping ? 'CAUGHT NAPPING!' : 'TIME IS UP!';
-        uiText(verdict, cx, 196, 1, palColor(right ? 'g' : 'r'), 'center', false);
+        uiText(verdict, cx, 184 + dy, 1, palColor(right ? 'g' : 'r'), 'center', false);
     }
 }
 
@@ -1766,18 +1847,18 @@ function drawSkillPanel()
         uiRect(x, y, CARD_W, CARD_H, palColor(owned ? 'q' : 'A'));
 
         // icon, dimmed until bought; tolerance darkens it from the top
-        uiSprite(s.icon, x + 7, y + 8, 2, owned ? WHITE : rgb(.45, .35, .45));
+        uiSprite(s.icon, x + 4, y + 8, 2, owned ? WHITE : rgb(.45, .35, .45));
         if (s.type == 'active' && owned && tolerance[s.id] > 0)
             uiRect(x + 2, y + 8, CARD_W - 4, Math.round(26 * tolerance[s.id]), rgb(.1, .05, .15, .55));
 
         if (s.type == 'active')
-            uiText(ACTIVES.indexOf(s) + 1, x + 6, y + 6, 1, palColor(owned ? 'R' : 'E'), 'center', false);
+            uiText(ACTIVES.indexOf(s) + 1, x + 5, y + 6, 1, palColor(owned ? 'R' : 'E'), 'center', false);
         if (owned)
-            uiText('L' + levels[s.id], x + CARD_W - 2, y + 6, 1, palColor('G'), 'right', false);
+            uiText('L' + levels[s.id], x + CARD_W - 1, y + 6, 1, palColor('G'), 'right', false);
 
         // bottom strip: buy / upgrade price
         uiRect(x, y + CARD_H - 12, CARD_W, 12, palColor(maxed ? 'G' : affordable ? 'm' : 'E'));
-        const label = maxed ? 'MAX' : (owned ? '+' : '') + formatNumber(cost);
+        const label = maxed ? 'MAX' : formatShort(cost);
         uiText(label, x + CARD_W/2, y + CARD_H - 6, 1, palColor(maxed || affordable ? 'k' : 'A'), 'center', false);
     });
 
