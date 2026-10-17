@@ -1,16 +1,23 @@
 /*
     Ragdoll Couture — fashion photography, but the model is a ragdoll
-    - Grab the model and fling her (or press Space for a toss), then click to
-      snap the photo while she flies. The viewfinder follows the mouse
+    - Click and drag toward where the model should go: they launch that way,
+      harder the further you drag (a quick click or Space is a plain toss). Click to
+      snap the photo while they fly. The viewfinder follows the mouse
     - The editors grade every photo F to A and pay by the grade. They want the
       "broken doll" look: sideways or upside down, all elbows and knees, caught
-      in the air near the top of the toss where she's barely moving (less blur)
+      in the air near the top of the toss where they're barely moving (less blur)
     - Score: framing 25, pose 45, airtime 10, sharpness 20, plus style points
       from the outfit, backdrop, lights and props
     - The shop: wardrobe (style and pay), models (bendier and better paid),
       camera (shutter, burst, slow-mo, autofocus) and studio (backdrops, lights,
-      props she can drape over, a fan that blows her around, a trampoline)
+      props to drape over, a fan that blows them around, a trampoline)
     - The floor is lined with cushions, so landings are soft pomf, not crunch
+    - Jump training (bottom of the models tab): after landing the model springs
+      back up on their own, once per level, for more chances at the shot
+    - Between tosses the model stands and idles through a few poses; after a
+      landing they lie in the heap a couple of seconds, then climb back up
+    - Models have their own pronouns (she/her, he/him, they/them); text about
+      the model fills them in through say()
     - Art: a vector stickman ragdoll in round, outlined canvas strokes (no pixel
       art). The canvas is 1280x720: the stage is the left 960px, the shop the rest
 */
@@ -25,8 +32,8 @@ setGLEnable(false); // everything is canvas 2D, drawn in call order
 const STAGE_W = 960;          // screen px; the shop column fills the rest
 const PX = 40;                // screen px per world unit on the stage
 const FLOOR_Y = 2.6;          // world units, y up
-const CUSHION_Y = FLOOR_Y + .6; // where she lands on the floor cushions (sinking in a little)
-// trampoline: a damped spring holds her up on the mat; a fast landing launches her whole body
+const CUSHION_Y = FLOOR_Y + .6; // where the model lands on the floor cushions (sinking in a little)
+// trampoline: a damped spring holds the model up on the mat; a fast landing launches the whole body
 // back up at restitution x the impact speed, after a short dip
 const TRAMP = {x: 12, w: 4.4, y: FLOOR_Y + 1.4, bottom: FLOOR_Y + .25, k: 2500, damping: 40, restitution: .88, dip: .08};
 const FAN = {pos: vec2(2.2, FLOOR_Y + 2.2), dir: vec2(1, .45).normalize(), force: 12}; // blows up and right
@@ -62,27 +69,42 @@ const OUTFITS =
         top:'#ff6b35', sleeve:'long', bottom:'#ff6b35', legs:'pants', shoe:'#f4f1ea', puffy:true},
     {id:'tulle',  name:'TULLE COUTURE',     cost:3200, style:9,  pay:2.2, desc:'A THOUSAND LAYERS OF PINK.',
         top:'#f7b2c4', sleeve:'none', bottom:'#f7b2c4', legs:'tulle', shoe:'#f7b2c4'},
-    {id:'latex',  name:'LATEX & PLATFORMS', cost:8000, style:12, pay:2.8, desc:'SQUEAKS WHEN SHE LANDS.',
+    {id:'latex',  name:'LATEX & PLATFORMS', cost:8000, style:12, pay:2.8, desc:'SQUEAKS WHEN {SUB} LAND{S}.',
         top:'#151515', sleeve:'long', bottom:'#151515', legs:'pants', shoe:'#e0115f', platforms:true, shine:true},
 ];
+
+// pronouns for every line of text about the model; {SUB} {OBJ} {POS} {IS} {BE}
+// fill in the words, {S} {IES} the verb endings ('LAND{S}', 'FL{IES}')
+const PRONOUNS =
+{
+    she:  {label:'SHE/HER',   SUB:'SHE',  OBJ:'HER',  POS:'HER',   IS:"SHE'S",   BE:'IS',  S:'S', IES:'IES'},
+    he:   {label:'HE/HIM',    SUB:'HE',   OBJ:'HIM',  POS:'HIS',   IS:"HE'S",    BE:'IS',  S:'S', IES:'IES'},
+    they: {label:'THEY/THEM', SUB:'THEY', OBJ:'THEM', POS:'THEIR', IS:"THEY'RE", BE:'ARE', S:'',  IES:'Y'},
+};
+const say = (text, model)=> text.replace(/\{(\w+)\}/g, (m, key)=> PRONOUNS[model.pronouns][key] ?? m);
 
 // flex lets joints fold further (the "broken doll" look) and makes tosses wilder
 const MODELS =
 [
-    {id:'intern', name:'THE INTERN',  cost:0,     flex:0,   pay:1,   desc:'STIFF AS A BOARD.',        skin:'#f1c9a5', hair:'#5a3a22', hairStyle:'short'},
-    {id:'bex',    name:'BEX',         cost:300,   flex:.3,  pay:1.4, desc:'RUNWAY ROOKIE. BENDY-ISH.', skin:'#e0ac69', hair:'#f2d16b', hairStyle:'pony'},
-    {id:'juno',   name:'JUNO',        cost:1200,  flex:.55, pay:2,   desc:'IT GIRL. ALL ELBOWS.',      skin:'#8d5524', hair:'#ff7eb6', hairStyle:'bob'},
-    {id:'odette', name:'ODETTE',      cost:4000,  flex:.8,  pay:3,   desc:'SUPERMODEL. NO SPINE.',     skin:'#c68642', hair:'#151515', hairStyle:'long'},
-    {id:'plie',   name:'MADAME PLIÉ', cost:12000, flex:1,   pay:5,   desc:'A LEGEND. FOLDS IN FOUR.',  skin:'#f6dcc8', hair:'#d9d9d9', hairStyle:'bun'},
+    {id:'intern', name:'THE INTERN',  cost:0,     flex:0,   pay:1,   desc:'STIFF AS A BOARD.',        skin:'#f1c9a5', hair:'#5a3a22', hairStyle:'short', pronouns:'he'},
+    {id:'bex',    name:'BEX',         cost:300,   flex:.3,  pay:1.4, desc:'RUNWAY ROOKIE. BENDY-ISH.', skin:'#e0ac69', hair:'#f2d16b', hairStyle:'pony', pronouns:'they'},
+    {id:'juno',   name:'JUNO',        cost:1200,  flex:.55, pay:2,   desc:'IT GIRL. ALL ELBOWS.',      skin:'#8d5524', hair:'#ff7eb6', hairStyle:'bob', pronouns:'he'},
+    {id:'odette', name:'ODETTE',      cost:4000,  flex:.8,  pay:3,   desc:'SUPERMODEL. NO SPINE.',     skin:'#c68642', hair:'#151515', hairStyle:'long', pronouns:'she'},
+    {id:'plie',   name:'MADAME PLIÉ', cost:12000, flex:1,   pay:5,   desc:'A LEGEND. FOLDS IN FOUR.',  skin:'#f6dcc8', hair:'#d9d9d9', hairStyle:'bun', pronouns:'she'},
 ];
+
+// the model's own training, leveled like the camera: hops per toss
+const HOP = {id:'hop', name:'JUMP TRAINING', costs:[500, 1600, 4500], values:[0, 1, 2, 3], desc:'{SUB} JUMP{S} BACK UP AFTER LANDING'};
+const HOP_SPEED = 14;          // the model's own jump is a bit gentler than a toss
+const HOP_LANDED = .12;        // seconds slowed down on something before they push off
 
 // leveled upgrades: values[level]
 const CAMERA =
 [
     {id:'shutter',   name:'FAST SHUTTER', costs:[150, 500, 1500],  values:[1, .7, .5, .32], desc:'LESS MOTION BLUR'},
     {id:'burst',     name:'BURST MODE',   costs:[250, 900, 2800],  values:[1, 2, 3, 4],     desc:'MORE SHOTS PER TOSS. THEY BUY THE BEST'},
-    {id:'slowmo',    name:'SLOW-MO RIG',  costs:[400, 1400, 4000], values:[1, .8, .65, .5], desc:'TIME SLOWS WHILE SHE FLIES'},
-    {id:'autofocus', name:'AUTOFOCUS',    costs:[200, 700, 2200],  values:[0, .25, .45, .6], desc:'THE FRAME PULLS TOWARD HER'},
+    {id:'slowmo',    name:'SLOW-MO RIG',  costs:[400, 1400, 4000], values:[1, .8, .65, .5], desc:'TIME SLOWS WHILE {SUB} FL{IES}'},
+    {id:'autofocus', name:'AUTOFOCUS',    costs:[200, 700, 2200],  values:[0, .25, .45, .6], desc:'THE FRAME PULLS TOWARD {OBJ}'},
 ];
 
 // backdrops: one at a time. Lights and props stack once bought
@@ -92,8 +114,8 @@ const STUDIO =
     {id:'blush',  kind:'backdrop', name:'BLUSH BACKDROP', cost:150,  style:4,  desc:'SOFT. PINK. FLATTERING.', colors:['#f8d3d8', '#e3a1ac']},
     {id:'ring',   kind:'light',    name:'RING LIGHT',     cost:350,  style:3,  desc:'MORE LIGHT, SHARPER PHOTOS'},
     {id:'cube',   kind:'prop',     name:'ACRYLIC CUBE',   cost:600,  style:4,  desc:'SOMETHING TO DRAPE OVER', box:{x:17.6, w:2.4, h:2.2}},
-    {id:'fan',    kind:'prop',     name:'STUDIO FAN',     cost:1000, style:3,  desc:'BLOWS HER AROUND. HAIR FLIES'},
-    {id:'trampoline', kind:'prop', name:'TRAMPOLINE',     cost:1400, style:2,  desc:'SHE BOUNCES BACK UP'},
+    {id:'fan',    kind:'prop',     name:'STUDIO FAN',     cost:1000, style:3,  desc:'BLOWS {OBJ} AROUND. HAIR FLIES'},
+    {id:'trampoline', kind:'prop', name:'TRAMPOLINE',     cost:1400, style:2,  desc:'{SUB} BOUNCE{S} BACK UP'},
     {id:'chaise', kind:'prop',     name:'VELVET CHAISE',  cost:1800, style:5,  desc:'FAINTING COUCH, LITERALLY', box:{x:5.4, w:4, h:1.3}},
     {id:'gold',   kind:'backdrop', name:'GOLD LAMÉ',      cost:3500, style:7,  desc:'EXPENSIVE-LOOKING', colors:['#f1d58a', '#b8860b']},
     {id:'disco',  kind:'light',    name:'DISCO BALL',     cost:6000, style:6,  desc:'SPARKLE ON EVERYTHING'},
@@ -111,11 +133,9 @@ const STYLE_WEIGHT = .6;       // style points per point of item style
 const SAVE_KEY = 'ragdollCouture';
 let save;
 
-function loadGame()
-{
-    save = readSaveData(SAVE_KEY, {money:0, owned:{tee:1, intern:1, grey:1}, levels:{},
-        equip:{outfit:'tee', model:'intern', backdrop:'grey'}, photos:0, best:''});
-}
+const freshSave = ()=> ({money:0, owned:{tee:1, intern:1, grey:1}, levels:{},
+    equip:{outfit:'tee', model:'intern', backdrop:'grey'}, photos:0, best:''});
+const loadGame = ()=> save = readSaveData(SAVE_KEY, freshSave());
 const saveGame = ()=> writeSaveData(SAVE_KEY, save);
 
 const findItem = (list, id)=> list.find(item=> item.id == id);
@@ -142,13 +162,13 @@ function styleBonus(look)
 }
 
 const onTrampoline = (x, look)=> look.trampoline && Math.abs(x - TRAMP.x) < TRAMP.w / 2;
-// hard ground: over the trampoline she sinks into the mat (a spring) and only stops near the floor
+// hard ground: over the trampoline the model sinks into the mat (a spring) and only stops near the floor
 const groundAt = (x, look)=> onTrampoline(x, look) ? TRAMP.bottom : CUSHION_Y;
 // what counts as resting on something, for judging
 const surfaceAt = (x, look)=> onTrampoline(x, look) ? TRAMP.y : CUSHION_Y;
 
 // the fan's air: strongest close to it and along its aim, gusty, and a little
-// different for every joint so her limbs flutter
+// different for every joint so the limbs flutter
 function fanForce(pos, i, t)
 {
     const r = pos.subtract(FAN.pos);
@@ -159,7 +179,7 @@ function fanForce(pos, i, t)
     return FAN.dir.scale(FAN.force * gust * Math.exp(-along / 16) * Math.exp(-perp * perp / 18));
 }
 
-// soft spots where she hit the cushions or the trampoline: {x, amount, bouncy}
+// soft spots where the model hit the cushions or the trampoline: {x, amount, bouncy}
 let dents = [];
 const dentAt = (x, bouncy)=> Math.min(.7, dents.reduce((sum, d)=> d.bouncy == bouncy ? sum + d.amount * Math.exp(-(((x - d.x) / 1.2) ** 2)) : sum, 0));
 
@@ -181,7 +201,69 @@ const BONES = [[0,1], [1,2], [1,3], [3,4], [1,5], [5,6], [2,7], [7,8], [2,9], [9
     .map(([a, b])=> ({a, b, len: REST_POSE[a].distance(REST_POSE[b])}));
 // joints can't fold all the way: [a, b, closest at flex 0, closest at flex 1]
 const LIMITS = [[0, 2, 2, 1.45], [4, 1, 1.25, .25], [6, 1, 1.25, .25], [8, 2, 1.65, .4], [10, 2, 1.65, .4], [7, 1, 2.15, .55], [9, 1, 2.15, .55]];
-const MAX_SPEED = 30;         // world units per second, so flings stay on the stage
+const MAX_SPEED = 40;         // world units per second, so launches stay on the stage
+// aim: drag toward the target up to AIM_PULL units; launch speed scales with the drag
+const AIM_PULL = 5, AIM_MIN_SPEED = 8, AIM_MAX_SPEED = 30, AIM_CLICK = .3;
+
+// standing poses as limb angles: 0 points an arm or leg straight down and positive swings it toward +x;
+// torso and head tilt from straight up the same way. Arms and legs are [upper, lower]
+const POSES =
+{
+    hip:    {torso: .04,  head: .12,  lArm: [-.9, .48],  rArm: [.25, .1],    lLeg: [-.12, .25], rLeg: [.12, .1]},  // hand on hip
+    hands:  {torso: 0,    head: -.08, lArm: [-.9, .48],  rArm: [.9, -.48],   lLeg: [-.2, -.1],  rLeg: [.2, .1]},   // both hands on hips
+    head:   {torso: -.05, head: -.2,  lArm: [-.3, -.1],  rArm: [2.6, -1.23], lLeg: [-.1, .05],  rLeg: [.05, -.25]}, // hand behind the head
+    crouch: {torso: 0,    head: 0,    lArm: [-.35, -.15], rArm: [.35, .15],  lLeg: [-1.1, .15], rLeg: [1.1, -.15]}, // halfway up off the floor
+};
+const IDLE_ORDER = ['hip', 'hands', 'head'];
+const IDLE_HOLD = 3.5, IDLE_BLEND = .5;   // seconds per idle pose, and blending into the next
+const GETUP_DELAY = 2.5, GETUP_TIME = 1.1; // lying still before getting up, and how long that takes
+
+const blendPose = (a, b, f)=> Object.fromEntries(Object.keys(a).map(k=>
+    [k, Array.isArray(a[k]) ? a[k].map((v, i)=> lerp(v, b[k][i], f)) : lerp(a[k], b[k], f)]));
+
+// the idle loop: hold a pose, blend into the next, breathing and shifting weight throughout
+function idlePose(t)
+{
+    const i = Math.floor(t / IDLE_HOLD), n = IDLE_ORDER.length;
+    const f = smoothStep(clamp((t - i * IDLE_HOLD - (IDLE_HOLD - IDLE_BLEND)) / IDLE_BLEND));
+    const pose = blendPose(POSES[IDLE_ORDER[i % n]], POSES[IDLE_ORDER[(i + 1) % n]], f);
+    pose.torso += Math.sin(t * 1.2) * .04;
+    pose.head += Math.sin(t * .8) * .08;
+    pose.rArm[0] += Math.sin(t * 1.7) * .05;
+    return pose;
+}
+
+// joint positions for a pose with the pelvis over x and the lower foot resting at height y
+function posePoints(pose, x, y)
+{
+    const up = (a)=> vec2(Math.sin(a), Math.cos(a)), down = (a)=> vec2(Math.sin(a), -Math.cos(a));
+    const len = BONES.map(b=> b.len);
+    const pts = [];
+    pts[J.pelvis] = vec2();
+    pts[J.neck] = up(pose.torso).scale(len[1]);
+    pts[J.head] = pts[J.neck].add(up(pose.torso + pose.head).scale(len[0]));
+    for (const [elbow, hand, [a, b]] of [[J.lElbow, J.lHand, pose.lArm], [J.rElbow, J.rHand, pose.rArm]])
+    {
+        pts[elbow] = pts[J.neck].add(down(a).scale(len[2]));
+        pts[hand] = pts[elbow].add(down(b).scale(len[3]));
+    }
+    for (const [knee, foot, [a, b]] of [[J.lKnee, J.lFoot, pose.lLeg], [J.rKnee, J.rFoot, pose.rLeg]])
+    {
+        pts[knee] = down(a).scale(len[6]);
+        pts[foot] = pts[knee].add(down(b).scale(len[7]));
+    }
+    const offset = vec2(x, y + JOINT_R[J.lFoot] - Math.min(pts[J.lFoot].y, pts[J.rFoot].y));
+    return pts.map(p=> p.add(offset));
+}
+
+// where standing feet rest: the cushions, the trampoline mat or the top of a prop
+function standY(x, look, boxes)
+{
+    let y = surfaceAt(x, look);
+    for (const b of boxes)
+        if (x > b.x0 && x < b.x1) y = Math.max(y, b.y1);
+    return y;
+}
 
 class Ragdoll
 {
@@ -189,13 +271,44 @@ class Ragdoll
     {
         this.pts = REST_POSE.map((o, i)=>
         {
-            const pos = o.add(vec2(x, TRAMP.y + 2.2)); // just above the trampoline mat, so she drops onto whatever is there
+            const pos = o.add(vec2(x, TRAMP.y + 2.2)); // just above the trampoline mat, so the model drops onto whatever is there
             return {pos, prev: pos.copy(), r: JOINT_R[i], touch: false};
         });
-        this.grab = -1;
-        this.grabTarget = vec2();
         this.thudCooldown = 0;
         this.bounce = null;   // pending trampoline launch: {timer, speed}
+        this.stand();
+    }
+
+    // on their feet and idling (kinematic) until tossed: {t, x, from}, where from is
+    // the heap they're getting up out of
+    stand(from=null) { this.pose = {t: 0, x: clamp(this.center().x, WALL_L + 1, WALL_R - 1), from}; }
+    getUp() { this.stand(this.pts.map(p=> p.pos.copy())); }
+    gettingUp() { return this.pose?.from && this.pose.t < GETUP_TIME; }
+
+    animate(look, boxes)
+    {
+        const pose = this.pose;
+        pose.t += SUB_DT;
+        const x = pose.x + (pose.from ? 0 : Math.sin(pose.t * 1.2) * .05); // weight shift
+        const y = standY(pose.x, look, boxes);
+        let targets;
+        if (this.gettingUp())
+        {
+            // heap to crouch, then crouch to standing
+            const f = pose.t / GETUP_TIME;
+            const crouch = posePoints(POSES.crouch, x, y);
+            targets = f < .5 ? pose.from.map((p, i)=> p.lerp(crouch[i], smoothStep(f * 2))) :
+                posePoints(blendPose(POSES.crouch, idlePose(0), smoothStep(f * 2 - 1)), x, y);
+        }
+        else
+            targets = posePoints(idlePose(pose.from ? pose.t - GETUP_TIME : pose.t), x, y);
+        targets.forEach((pos, i)=>
+        {
+            const p = this.pts[i];
+            p.prev = p.pos;
+            p.pos = pos;
+            p.touch = i == J.lFoot || i == J.rFoot;
+        });
     }
 
     vel(i) { const p = this.pts[i]; return p.pos.subtract(p.prev).scale(1 / SUB_DT); }
@@ -203,27 +316,34 @@ class Ragdoll
     maxSpeed() { return Math.max(...this.pts.map((p, i)=> this.vel(i).length())); }
     touching() { return this.pts.some(p=> p.touch); }
 
-    nearest(pos, range)
+    // send the model off at vel with a spin and some flailing
+    fling(vel, flex, spinScale=1)
     {
-        let best = -1, bestDist = range;
-        this.pts.forEach((p, i)=>
-        {
-            const d = p.pos.distance(pos) - p.r;
-            if (d < bestDist) best = i, bestDist = d;
-        });
-        return best;
-    }
-
-    // throw her straight up with a spin and some flailing
-    toss(flex)
-    {
+        this.pose = null;
         const c = this.center();
-        const spin = rand(2.5, 4.5) * (1 + flex * .6) * (rand() < .5 ? -1 : 1);
-        const lift = vec2(rand(-2.5, 2.5), rand(15.5, 18.5));
+        const spin = rand(2.5, 4.5) * spinScale * (1 + flex * .6) * (rand() < .5 ? -1 : 1);
         for (const p of this.pts)
         {
             const r = p.pos.subtract(c);
-            const v = lift.add(vec2(-r.y, r.x).scale(spin)).add(randInCircle(3 + flex * 4));
+            const v = vel.add(vec2(-r.y, r.x).scale(spin)).add(randInCircle(3 + flex * 4));
+            p.prev = p.pos.subtract(v.scale(SUB_DT));
+        }
+    }
+
+    // throw the model straight up
+    toss(flex) { this.fling(vec2(rand(-2.5, 2.5), rand(15.5, 18.5)), flex); }
+
+    // the model pushes off by themself: up, back toward the middle of the stage, flailing
+    hop(flex)
+    {
+        this.pose = null;
+        const c = this.center();
+        const spin = rand(1.5, 3) * (1 + flex * .6) * (rand() < .5 ? -1 : 1);
+        const lift = vec2(clamp((12 - c.x) * .4, -3, 3) + rand(-1, 1), HOP_SPEED * rand(.95, 1.05));
+        for (const p of this.pts)
+        {
+            const r = p.pos.subtract(c);
+            const v = lift.add(vec2(-r.y, r.x).scale(spin)).add(randInCircle(2 + flex * 3));
             p.prev = p.pos.subtract(v.scale(SUB_DT));
         }
     }
@@ -240,13 +360,14 @@ class Ragdoll
 
     step(flex, look, boxes, t)
     {
+        if (this.pose) return this.animate(look, boxes);
         this.pts.forEach((p, i)=>
         {
             let accel = look.fan ? fanForce(p.pos, i, t).add(vec2(0, RAG_GRAVITY)) : vec2(0, RAG_GRAVITY);
             const v = p.pos.subtract(p.prev);
             p.touch = false;
 
-            // the trampoline mat pushes back the deeper she sinks, and throws her up again
+            // the trampoline mat pushes back the deeper the model sinks, and throws them up again
             const depth = onTrampoline(p.pos.x, look) ? TRAMP.y + p.r - p.pos.y : 0;
             if (depth > 0)
             {
@@ -266,11 +387,6 @@ class Ragdoll
             p.prev = p.pos.copy();
             p.pos = p.pos.add(v.scale(.998)).add(accel.scale(SUB_DT * SUB_DT));
         });
-        if (this.grab >= 0)
-        {
-            const p = this.pts[this.grab];
-            p.pos = p.pos.lerp(this.grabTarget, .35);
-        }
         if (this.bounce && (this.bounce.timer -= SUB_DT) <= 0)
         {
             // the mat springs back: everyone goes up together, limbs flung a bit
@@ -327,11 +443,9 @@ class Ragdoll
         const delta = pb.pos.subtract(pa.pos);
         const d = delta.length() || .001;
         if (minOnly && d >= len) return;
-        const wa = a == this.grab ? 0 : 1, wb = b == this.grab ? 0 : 1;
-        if (!wa && !wb) return;
-        const push = delta.scale((d - len) / d / (wa + wb));
-        pa.pos = pa.pos.add(push.scale(wa));
-        pb.pos = pb.pos.subtract(push.scale(wb));
+        const push = delta.scale((d - len) / d / 2);
+        pa.pos = pa.pos.add(push);
+        pb.pos = pb.pos.subtract(push);
     }
 
     collide(p, boxes, look)
@@ -381,7 +495,7 @@ function jointAngle(pts, a, j, b)
 const pick = (list)=> list[randInt(list.length)];
 const PRAISE =
 {
-    A: ['ICONIC. COVER. TODAY.', 'SHE LOOKS DESTROYED. I LOVE IT.', 'BROKEN, BUT MAKE IT FASHION.', 'I FELT THAT IN MY KNEES.'],
+    A: ['ICONIC. COVER. TODAY.', '{SUB} LOOK{S} DESTROYED. I LOVE IT.', 'BROKEN, BUT MAKE IT FASHION.', 'I FELT THAT IN MY KNEES.'],
     B: ['ALMOST THERE. ALMOST.', 'THE ELBOWS ARE WORKING.', 'GIVE ME MORE ANGLES, DARLING.', 'NICE. NOT ICONIC. NICE.'],
     C: ['FINE. JUST FINE.', 'I HAVE SEEN THIS BEFORE.', 'IT IS... A PHOTO.'],
     D: ['WHY DID YOU SHOW ME THIS?', 'DO BETTER.'],
@@ -392,7 +506,7 @@ function judge(shot)
 {
     const {pts, frame, look} = shot;
 
-    // framing: is she in it, big enough, and centered
+    // framing: is the model in it, big enough, and centered
     let inside = 0, total = 0;
     pts.forEach((p, i)=>
     {
@@ -444,15 +558,15 @@ function judge(shot)
 
     let comment =
         !inFrac ? 'A STUNNING PHOTO OF THE BACKDROP.' :
-        !headIn ? 'WHERE IS HER HEAD? I NEED THE HEAD.' :
-        inFrac < .8 ? 'YOU CROPPED HER. AMATEUR.' :
-        fill < .4 ? "SHE'S A SPECK. GET CLOSER." :
-        sharp < .35 ? 'SO BLURRY. IS SHE A GHOST?' :
-        onFloor ? "SHE'S JUST LYING THERE." :
-        pose < .35 ? 'TOO STIFF. SHE LOOKS LIKE A PLANK.' : '';
+        !headIn ? 'WHERE IS {POS} HEAD? I NEED THE HEAD.' :
+        inFrac < .8 ? 'YOU CROPPED {OBJ}. AMATEUR.' :
+        fill < .4 ? '{IS} A SPECK. GET CLOSER.' :
+        sharp < .35 ? 'SO BLURRY. {BE} {SUB} A GHOST?' :
+        onFloor ? '{IS} JUST LYING THERE.' :
+        pose < .35 ? 'TOO STIFF. {SUB} LOOK{S} LIKE A PLANK.' : '';
     if (!comment)
         comment = draped && score >= 70 ? 'DRAPED. DEVASTATED. DIVINE.' : pick(PRAISE[grade]);
-    return {score, grade, color, pay, comment, parts, style};
+    return {score, grade, color, pay, comment: say(comment, look.model), parts, style};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -467,23 +581,26 @@ const sndGood    = new SoundGenerator({frequency:520, slide:.3, repeatTime:.08, 
 const sndBad     = new SoundGenerator({frequency:200, slide:-.6, release:.5, volume:.35});
 const sndBuy     = new SoundGenerator({frequency:900, release:.12, pitchJump:600, pitchJumpTime:.05, volume:.4});
 const sndDeny    = new SoundGenerator({frequency:140, release:.08, volume:.25});
+const sndHop     = new SoundGenerator({frequency:380, slide:.8, release:.12, volume:.3});
 const sndClick   = new SoundGenerator({frequency:700, release:.03, volume:.2});
 
 ///////////////////////////////////////////////////////////////////////////////
 // game state
 
-let gameState = 'title';      // title | ready | grab | air | review
+let gameState = 'title';      // title | ready | aim | air | review
 let doll;
 let physAcc = 0;
 let shots = [];               // photos from the current toss
 let shotsLeft = 0;
 let airTimer = 0, settleTimer = 0, lastShotTimer = 0;
-let grabTimer = 0, grabTravel = 0;
+let hopsLeft = 0, landedTimer = 0;
+let restTimer = 0;            // how long the model has been lying still in a heap
+let aimStart = vec2();        // where the aiming drag began
 let reviewShot = null, reviewTimer = 0, shownMoney = 0;
 let flashTimer = 0, hitstopTimer = 0;
 let toastText = '', toastTimer = 0;
 let shopTab = 0;
-let lastMouseWorld = vec2();
+let resetArmed = 0;           // seconds left to confirm clearing the save
 
 const mouseWorld = ()=> vec2(mousePosScreen.x / PX, (SCREEN_H - mousePosScreen.y) / PX);
 const onStage = ()=> mousePosScreen.x < STAGE_W;
@@ -503,24 +620,29 @@ function launch()
     gameState = 'air';
     shots = [];
     shotsLeft = camValue('burst');
-    airTimer = settleTimer = 0;
+    airTimer = settleTimer = landedTimer = 0;
     lastShotTimer = 99;
+    hopsLeft = HOP.values[camLevel(HOP.id)];
     sndWhoosh.play(undefined, 1, rand(.9, 1.1));
+}
+
+// the shot being lined up: the model flies the way the drag points from aimStart
+function aimShot()
+{
+    const pull = mouseWorld().subtract(aimStart);
+    const power = clamp(pull.length() / AIM_PULL);
+    // never straight down into the cushions
+    const dir = vec2(pull.x, Math.max(pull.y, Math.abs(pull.x) * .25 + .01)).normalize();
+    return {pull, power, vel: dir.scale(lerp(AIM_MIN_SPEED, AIM_MAX_SPEED, power))};
 }
 
 function release()
 {
-    doll.grab = -1;
+    const {pull, power, vel} = aimShot();
+    const flex = currentLook().model.flex;
+    // a quick click without dragging is a plain toss
+    pull.length() < AIM_CLICK ? doll.toss(flex) : doll.fling(vel, flex, .5 + power * .7);
     doll.capSpeed();
-    // a quick click without dragging is a toss; a real drag is a fling
-    if (grabTravel < .4 && grabTimer < .3)
-        doll.toss(currentLook().model.flex);
-    if (doll.maxSpeed() < 7)
-    {
-        gameState = 'ready';
-        toast('THROW HER HARDER');
-        return;
-    }
     launch();
 }
 
@@ -586,22 +708,16 @@ function gameUpdate()
     }
     else if (gameState == 'ready')
     {
-        const i = clicked && onStage() ? doll.nearest(mw, .8) : -1;
-        if (i >= 0)
-        {
-            gameState = 'grab';
-            doll.grab = i;
-            grabTimer = grabTravel = 0;
-        }
+        if (clicked && onStage())
+            gameState = 'aim', aimStart = mw;
         else if (space)
             doll.toss(look.model.flex), launch();
     }
-    else if (gameState == 'grab')
+    else if (gameState == 'aim')
     {
-        grabTimer += dt;
-        grabTravel += mw.distance(lastMouseWorld);
-        doll.grabTarget = vec2(clamp(mw.x, WALL_L + .5, WALL_R - .5), Math.max(mw.y, CUSHION_Y + .4));
-        if (!mouseIsDown(0))
+        if (keyWasPressed('Escape') || mouseWasPressed(2))
+            gameState = 'ready';
+        else if (!mouseIsDown(0))
             release();
     }
     else if (gameState == 'air')
@@ -610,6 +726,15 @@ function gameUpdate()
         lastShotTimer += dt;
         if (shotsLeft && ((clicked && onStage()) || space))
             snap();
+        // trained models jump back up once they've come down on something
+        landedTimer = doll.touching() && doll.maxSpeed() < 3 && !doll.bounce ? landedTimer + dt : 0;
+        if (hopsLeft && landedTimer > HOP_LANDED)
+        {
+            doll.hop(look.model.flex);
+            --hopsLeft;
+            landedTimer = 0;
+            sndHop.play(undefined, 1, rand(.9, 1.1));
+        }
         settleTimer = doll.touching() && doll.maxSpeed() < 1.2 ? settleTimer + dt : 0;
         if (settleTimer > .4 || airTimer > 8 || (!shotsLeft && lastShotTimer > .7))
             endToss();
@@ -622,9 +747,8 @@ function gameUpdate()
             gameState = 'ready', sndClick.play();
     }
     if (gameState != 'review') shownMoney = save.money;
-    lastMouseWorld = mw;
 
-    // physics: slow-mo runs fewer substeps while she's in the air
+    // physics: slow-mo runs fewer substeps while the model is in the air
     if (hitstopTimer > 0)
         hitstopTimer -= dt;
     else
@@ -634,10 +758,17 @@ function gameUpdate()
         for (; physAcc >= SUB_DT; physAcc -= SUB_DT)
             doll.step(look.model.flex, look, boxes, time);
     }
+    // left in a heap, the model gets back up after a while
+    const lying = !doll.pose && gameState != 'air' && gameState != 'aim' && doll.touching() && doll.maxSpeed() < 1.2;
+    restTimer = lying ? restTimer + dt : 0;
+    if (restTimer > GETUP_DELAY)
+        doll.getUp(), restTimer = 0;
+
     for (const d of dents) d.amount -= dt * .8;
     dents = dents.filter(d=> d.amount > 0);
     flashTimer = Math.max(0, flashTimer - dt);
     toastTimer = Math.max(0, toastTimer - dt);
+    resetArmed = Math.max(0, resetArmed - dt);
 }
 
 function gameUpdatePost() {}
@@ -816,28 +947,78 @@ function drawStudio(v, look, t)
 
 const CUSHION_COLORS = ['#f4c7d0', '#c9e4de', '#f6e7b0', '#cdd5f3', '#f9d9c4'];
 
-// a row of plump pillows along the floor; they squash where she lands
+// mix a hex color toward another
+function mixHex(hex, toHex, f)
+{
+    const a = hexColor(hex), b = hexColor(toHex);
+    const ch = (x, y)=> Math.round(lerp(x, y, f) * 255).toString(16).padStart(2, '0');
+    return '#' + ch(a.r, b.r) + ch(a.g, b.g) + ch(a.b, b.b);
+}
+
+// pillow outline: a squircle with its corners pulled out into little ears
+function pillowPath(c, P, a, b)
+{
+    c.beginPath();
+    for (let i = 0; i <= 48; ++i)
+    {
+        const t = i / 48 * PI * 2, cos = Math.cos(t), sin = Math.sin(t);
+        const ear = 1 - .1 * Math.cos(4 * t);
+        const x = Math.sign(cos) * Math.abs(cos) ** .85 * a * ear, y = Math.sign(sin) * Math.abs(sin) ** .85 * b * ear;
+        i ? c.lineTo(P.x + x, P.y + y) : c.moveTo(P.x + x, P.y + y);
+    }
+    c.closePath();
+}
+
+function drawPillow(v, center, w, h, color)
+{
+    const c = ctx(), P = toScreen(v, center), a = w / 2 * v.s, b = h / 2 * v.s;
+    pillowPath(c, P, a, b);
+    // lit from the top left, shadowed underneath
+    const g = c.createRadialGradient(P.x - a * .35, P.y - b * .45, b * .1, P.x, P.y, a * 1.1);
+    g.addColorStop(0, mixHex(color, '#ffffff', .55));
+    g.addColorStop(.45, color);
+    g.addColorStop(1, mixHex(color, INK, .28));
+    c.fillStyle = g;
+    c.fill();
+    c.lineWidth = .06 * v.s;
+    c.lineJoin = 'round';
+    c.strokeStyle = INK;
+    c.stroke();
+
+    // tufted: soft creases pulled into a button
+    c.lineWidth = .035 * v.s;
+    c.lineCap = 'round';
+    c.strokeStyle = mixHex(color, INK, .35);
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
+    {
+        c.beginPath();
+        c.moveTo(P.x + dx * a * .14, P.y + dy * b * .14);
+        c.quadraticCurveTo(P.x + dx * a * .38, P.y + dy * b * .2, P.x + dx * a * .5, P.y + dy * b * .5);
+        c.stroke();
+    }
+    c.beginPath();
+    c.arc(P.x, P.y, .08 * v.s, 0, PI * 2);
+    c.fillStyle = mixHex(color, INK, .3);
+    c.fill();
+
+    // a puff of sheen near the top
+    c.beginPath();
+    c.ellipse(P.x - a * .4, P.y - b * .55, a * .2, b * .12, -.3, 0, PI * 2);
+    c.fillStyle = '#ffffff99';
+    c.fill();
+}
+
+// two staggered rows of plump pillows along the floor, back row first;
+// they squash where the model lands
 function drawCushions(v)
 {
-    const c = ctx();
-    for (let i = 0, x = 1.5; x < 23; ++i, x += 1.9)
+    for (let row = 1; row >= 0; --row)
+    for (let i = 0, x = row ? 2.45 : 1.5; x < 23; ++i, x += 1.9)
     {
-        const h = .95 * (1 - dentAt(x, false) * .6);
-        const center = vec2(x, FLOOR_Y + h / 2 - .1);
-        const P = toScreen(v, center);
-        c.beginPath();
-        c.ellipse(P.x, P.y, 1.2 * v.s, h / 2 * v.s, 0, 0, PI * 2);
-        c.fillStyle = CUSHION_COLORS[i % CUSHION_COLORS.length];
-        c.fill();
-        c.lineWidth = .06 * v.s;
-        c.strokeStyle = INK;
-        c.stroke();
-        // soft sheen on top and a tuft button in the middle
-        c.beginPath();
-        c.ellipse(P.x - .2 * v.s, P.y - h * .18 * v.s, .65 * v.s, h * .14 * v.s, 0, 0, PI * 2);
-        c.fillStyle = '#ffffff55';
-        c.fill();
-        vCircle(v, center, .07, '#00000030');
+        const squash = dentAt(x, false);
+        const h = (row ? 1.05 : 1.3) * (1 - squash * .55), w = (row ? 2.15 : 2.4) * (1 + squash * .25);
+        const color = CUSHION_COLORS[(i + row * 2) % CUSHION_COLORS.length];
+        drawPillow(v, vec2(x, FLOOR_Y + h / 2 + (row ? .45 : -.2)), w, h, row ? mixHex(color, INK, .12) : color);
     }
 }
 
@@ -846,7 +1027,7 @@ function drawTrampoline(v)
     const x0 = TRAMP.x - TRAMP.w / 2, x1 = TRAMP.x + TRAMP.w / 2;
     for (const x of [x0 + .3, x1 - .3, TRAMP.x])
         vLine(v, vec2(x, FLOOR_Y), vec2(x, TRAMP.y), .12, '#2b2b2b');
-    // the mat sags where she lands
+    // the mat sags where the model lands
     const points = [];
     for (let i = 0; i <= 12; ++i)
     {
@@ -899,7 +1080,7 @@ function drawDoll(v, pts, look, alpha=1, dizzy=false)
         const hip = P(J.pelvis).add(side.scale(back ? .14 : -.14));
         limb(v, hip, P(knee), .27, thigh);
         limb(v, P(knee), P(foot), .21, shin);
-        // shoe points off the shin, toward her front
+        // shoe points off the shin, toward the front
         const shinDir = P(foot).subtract(P(knee)).normalize();
         const toe = vec2(-shinDir.y, shinDir.x).scale(.24);
         const sole = outfit.platforms ? .22 : .15;
@@ -1042,16 +1223,46 @@ function drawViewfinder()
     }
 }
 
+// aim: drag line, dotted flight path and a power bar
+function drawAim(v)
+{
+    if (gameState != 'aim') return;
+    const {pull, power, vel} = aimShot();
+    if (pull.length() < AIM_CLICK) return;
+    const c = ctx();
+    const color = power < .5 ? '#8ecae6' : power < .85 ? '#e9c46a' : '#e63946';
+
+    const A = toScreen(v, aimStart), M = toScreen(v, mouseWorld());
+    c.setLineDash([6, 6]);
+    c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(M.x, M.y);
+    c.lineWidth = 2; c.strokeStyle = '#ffffff88'; c.stroke();
+    c.setLineDash([]);
+
+    // where the model's middle would go, ignoring spin, fan and bounces
+    let p = doll.center(), u = vel.copy();
+    for (let i = 1; i <= 14; ++i)
+    {
+        for (let k = 0; k < 4; ++k)
+            u = u.add(vec2(0, RAG_GRAVITY * .015)), p = p.add(u.scale(.015));
+        vCircle(v, p, .14 * (1 - i / 22), color, .04);
+    }
+
+    const bx = M.x + 18, by = M.y + 14;
+    c.fillStyle = INK; c.fillRect(bx - 2, by - 2, 68, 12);
+    c.fillStyle = '#ffffff22'; c.fillRect(bx, by, 64, 8);
+    c.fillStyle = color; c.fillRect(bx, by, 64 * power, 8);
+}
+
 function drawStageText()
 {
     const hints =
     {
-        ready: 'GRAB HER AND THROW · OR CLICK HER / PRESS SPACE TO TOSS',
-        grab: 'LET GO TO THROW',
+        ready: 'DRAG WHERE {SUB} SHOULD GO · CLICK OR SPACE TO TOSS',
+        aim: 'RELEASE TO LAUNCH · ESC TO CANCEL',
         air: shotsLeft ? 'CLICK TO SNAP' + (shotsLeft > 1 ? ' · ' + shotsLeft + ' SHOTS LEFT' : '') : 'THE EDITORS ARE LOOKING...',
     };
     if (hints[gameState])
-        drawTextScreen(hints[gameState], vec2(STAGE_W / 2, SCREEN_H - 22), 16, hexColor('#ffffff', .8), 3, hexColor('#000000', .4), 'center', SANS, 'bold');
+        drawTextScreen(say(hints[gameState], currentLook().model), vec2(STAGE_W / 2, SCREEN_H - 22), 16, hexColor('#ffffff', .8), 3, hexColor('#000000', .4), 'center', SANS, 'bold');
     if (toastTimer > 0)
         drawTextScreen(toastText, vec2(STAGE_W / 2, 60), 30, hexColor('#ffffff', Math.min(1, toastTimer * 2)), 5,
             hexColor('#000000', Math.min(.6, toastTimer)), 'center', SERIF, 'bold');
@@ -1151,8 +1362,8 @@ function drawTitle()
     c.fillRect(0, 0, STAGE_W, SCREEN_H);
     drawTextScreen('RAGDOLL', vec2(STAGE_W / 2, 200), 96, hexColor('#ffffff'), 0, BLACK, 'center', SERIF, 'bold');
     drawTextScreen('COUTURE', vec2(STAGE_W / 2, 290), 96, hexColor('#f7b2c4'), 0, BLACK, 'center', SERIF, 'italic');
-    const lines = ['TOSS THE MODEL. SNAP HER MID-AIR.', 'THE EDITORS PAY FOR BROKEN-DOLL GLAMOUR:', 'TWISTED, UPSIDE DOWN, AND SHARP AT THE TOP OF THE THROW.'];
-    lines.forEach((line, i)=> drawTextScreen(line, vec2(STAGE_W / 2, 390 + i * 28), 17, hexColor('#ffffff', .8), 0, BLACK, 'center', SANS, 'bold'));
+    const lines = ['TOSS THE MODEL. SNAP {OBJ} MID-AIR.', 'THE EDITORS PAY FOR BROKEN-DOLL GLAMOUR:', 'TWISTED, UPSIDE DOWN, AND SHARP AT THE TOP OF THE THROW.'];
+    lines.forEach((line, i)=> drawTextScreen(say(line, currentLook().model), vec2(STAGE_W / 2, 390 + i * 28), 17, hexColor('#ffffff', .8), 0, BLACK, 'center', SANS, 'bold'));
     drawTextScreen('CLICK TO OPEN THE STUDIO', vec2(STAGE_W / 2, 520), 20, hexColor('#e9c46a', .6 + .4 * Math.sin(time * 4)), 0, BLACK, 'center', SANS, 'bold');
 }
 
@@ -1163,6 +1374,7 @@ const SHOP_X = STAGE_W, SHOP_W = SCREEN_W - STAGE_W;
 const CARD_Y0 = 188, CARD_H = 48, CARD_GAP = 4;
 const tabRect = (i)=> ({x: SHOP_X + 12 + i * 75, y: 150, w: 71, h: 26});
 const cardRect = (i)=> ({x: SHOP_X + 12, y: CARD_Y0 + i * (CARD_H + CARD_GAP), w: SHOP_W - 24, h: CARD_H});
+const RESET_RECT = {x: SHOP_X + SHOP_W - 122, y: 76, w: 110, h: 24}; // beside the money
 const hit = (r)=> mousePosScreen.x >= r.x && mousePosScreen.x < r.x + r.w && mousePosScreen.y >= r.y && mousePosScreen.y < r.y + r.h;
 
 // one row per item: {name, desc, label, state: equipped|owned|buy|max, cost, pips, action}
@@ -1174,18 +1386,21 @@ function shopRows()
         const owned = !!save.owned[item.id], equipped = save.equip[slot] == item.id;
         const perks = [item.style && '+' + item.style + ' STYLE', item.pay > 1 && 'x' + item.pay + ' PAY', item.flex && 'FLEX ' + Math.round(item.flex * 100) + '%']
             .filter(Boolean).join(' · ');
-        return {name: item.name, desc: perks || item.desc, sub: item.desc, cost: item.cost,
+        // models lead with their pronouns
+        const desc = [item.pronouns && PRONOUNS[item.pronouns].label, perks || item.desc].filter(Boolean).join(' · ');
+        return {name: item.name, desc, sub: item.desc, cost: item.cost,
             state: equipped ? 'equipped' : owned ? 'owned' : 'buy',
             action: ()=> owned ? equip(slot, item) : buy(item, ()=> equip(slot, item))};
     };
     if (tab == 'WARDROBE') return OUTFITS.map(o=> equipRow(o, 'outfit'));
-    if (tab == 'MODELS') return MODELS.map(m=> equipRow(m, 'model'));
-    if (tab == 'CAMERA') return CAMERA.map(cam=>
+    const levelRow = (item)=>
     {
-        const lv = camLevel(cam.id), maxed = lv >= cam.costs.length;
-        return {name: cam.name, desc: cam.desc, cost: maxed ? 0 : cam.costs[lv], state: maxed ? 'max' : 'buy',
-            pips: [lv, cam.costs.length], action: ()=> !maxed && buy({cost: cam.costs[lv], id: cam.id, level: true}, ()=> 0)};
-    });
+        const lv = camLevel(item.id), maxed = lv >= item.costs.length;
+        return {name: item.name, desc: item.desc, cost: maxed ? 0 : item.costs[lv], state: maxed ? 'max' : 'buy',
+            pips: [lv, item.costs.length], action: ()=> !maxed && buy({cost: item.costs[lv], id: item.id, level: true}, ()=> 0)};
+    };
+    if (tab == 'MODELS') return [...MODELS.map(m=> equipRow(m, 'model')), levelRow(HOP)];
+    if (tab == 'CAMERA') return CAMERA.map(levelRow);
     return STUDIO.map(s=>
     {
         if (s.kind == 'backdrop') return equipRow(s, 'backdrop');
@@ -1218,8 +1433,28 @@ function buy(item, then)
     saveGame();
 }
 
+// wipe everything back to a new game: money, purchases, upgrades and stats
+function clearSave()
+{
+    save = freshSave();
+    saveGame();
+    doll = new Ragdoll(12);
+    shots = [];
+    shownMoney = 0;
+    shopTab = 0;
+    if (gameState != 'title') gameState = 'ready';
+    toast('SAVE CLEARED');
+    sndBad.play();
+}
+
 function shopClick()
 {
+    // two clicks to clear the save, so a stray one can't
+    if (hit(RESET_RECT))
+    {
+        resetArmed ? (resetArmed = 0, clearSave()) : (resetArmed = 3, sndDeny.play());
+        return;
+    }
     TABS.forEach((t, i)=> hit(tabRect(i)) && (shopTab = i, sndClick.play()));
     shopRows().forEach((row, i)=> hit(cardRect(i)) && row.action());
 }
@@ -1260,7 +1495,7 @@ function drawShop()
             c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
         }
         drawTextScreen(row.name, vec2(r.x + 12, r.y + 16), 14, hexColor('#ffffff'), 0, BLACK, 'left', SANS, 'bold');
-        drawTextScreen(row.desc, vec2(r.x + 12, r.y + 34), 10, hexColor('#ffffff', .55), 0, BLACK, 'left', SANS, 'bold', 190);
+        drawTextScreen(say(row.desc, currentLook().model), vec2(r.x + 12, r.y + 34), 10, hexColor('#ffffff', .55), 0, BLACK, 'left', SANS, 'bold', 190);
         if (row.pips)
             for (let p = 0; p < row.pips[1]; ++p)
             {
@@ -1275,6 +1510,12 @@ function drawShop()
         drawTextScreen(label, vec2(r.x + r.w - 12, r.y + r.h / 2), 15, hexColor(color, row.state == 'buy' && !affordable ? .35 : 1),
             0, BLACK, 'right', SANS, 'bold');
     });
+
+    const r = RESET_RECT;
+    c.fillStyle = resetArmed ? '#e63946' : hit(r) ? '#2a2832' : '#1f1d25';
+    c.fillRect(r.x, r.y, r.w, r.h);
+    drawTextScreen(resetArmed ? 'CLICK TO CONFIRM' : 'CLEAR SAVE', vec2(r.x + r.w / 2, r.y + r.h / 2 + 1), 11,
+        hexColor('#ffffff', resetArmed || hit(r) ? 1 : .45), 0, BLACK, 'center', SANS, 'bold');
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1288,7 +1529,8 @@ function gameRenderPost()
     c.clip();
     const v = stageView();
     drawStudio(v, currentLook(), time);
-    drawDoll(v, doll.pts, currentLook(), 1, gameState == 'air' && !doll.touching() && doll.maxSpeed() > 6);
+    drawDoll(v, doll.pts, currentLook(), 1, gameState == 'air' && !doll.touching() && doll.maxSpeed() > 6 || doll.gettingUp() && doll.pose.t < GETUP_TIME * .6);
+    drawAim(v);
     drawViewfinder();
     if (flashTimer > 0)
     {
