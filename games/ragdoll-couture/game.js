@@ -4,12 +4,14 @@
       harder the further you drag (a quick click or Space is a plain toss). Click to
       snap the photo while they fly. The viewfinder follows the mouse
     - The editors grade every photo F to A and pay by the grade. They want the
-      "broken doll" look: sideways or upside down, all elbows and knees, caught
+      "broken doll" look: all elbows and knees, limbs every which way, caught
       in the air near the top of the toss where they're barely moving (less blur)
     - Score: framing 25, pose 45, airtime 10, sharpness 20, plus style points
       from the outfit, backdrop, lights and props
-    - The shop: wardrobe (style and pay), models (bendier and better paid),
-      camera (shutter, burst, slow-mo, autofocus) and studio (backdrops, lights,
+    - The shop: wardrobe (style and pay), accessories (a hat, a scarf and a bag,
+      one of each, for style), models (bendier and better paid),
+      camera (lenses, shutter, burst, slow-mo, autofocus), filters (a color
+      grade on the printed photo, for style) and studio (backdrops, lights,
       props to drape over, a fan that blows them around, a trampoline)
     - The floor is lined with cushions, so landings are soft pomf, not crunch
     - Jump training (bottom of the models tab): after landing the model springs
@@ -73,6 +75,19 @@ const OUTFITS =
         top:'#151515', sleeve:'long', bottom:'#151515', legs:'pants', shoe:'#e0115f', platforms:true, shine:true},
 ];
 
+// accessories: one per slot, worn over any outfit, style only. Click a worn one to take it off
+const SLOTS = ['hat', 'scarf', 'bag'];
+const ACCESSORIES =
+[
+    {id:'beret',  slot:'hat',   name:'BERET',             cost:200,  style:2, desc:'VERY LEFT BANK.',             color:'#b5172f'},
+    {id:'sunhat', slot:'hat',   name:'WIDE-BRIM SUN HAT', cost:1500, style:5, desc:'SHADE FOR THE WHOLE SET.',    color:'#e8d3a2'},
+    {id:'silk',   slot:'scarf', name:'SILK SCARF',        cost:350,  style:3, desc:'FLUTTERS WHEN {SUB} FL{IES}.', color:'#2a9d8f'},
+    {id:'boa',    slot:'scarf', name:'FEATHER BOA',       cost:2400, style:6, desc:'SHEDS ON EVERYTHING.',        color:'#ff7eb6'},
+    {id:'tote',   slot:'bag',   name:'CANVAS TOTE',       cost:180,  style:2, desc:'FULL OF OTHER TOTE BAGS.',    color:'#efe6d2'},
+    {id:'chain',  slot:'bag',   name:'QUILTED CHAIN BAG', cost:1100, style:4, desc:'SWINGS ON A GOLD CHAIN.',     color:'#232323'},
+    {id:'micro',  slot:'bag',   name:'MICRO BAG',         cost:5000, style:8, desc:'HOLDS ONE MINT. MAYBE.',      color:'#e0115f'},
+];
+
 // pronouns for every line of text about the model; {SUB} {OBJ} {POS} {IS} {BE}
 // fill in the words, {S} {IES} the verb endings ('LAND{S}', 'FL{IES}')
 const PRONOUNS =
@@ -107,6 +122,30 @@ const CAMERA =
     {id:'autofocus', name:'AUTOFOCUS',    costs:[200, 700, 2200],  values:[0, .25, .45, .6], desc:'THE FRAME PULLS TOWARD {OBJ}'},
 ];
 
+// lenses: one at a time. zoom scales the viewfinder; bulge magnifies the middle of the photo
+const LENSES =
+[
+    {id:'std',     name:'STANDARD 50MM',   cost:0,    style:0, zoom:1,   desc:'SEES WHAT YOU SEE.'},
+    {id:'wide',    name:'WIDE ANGLE 24MM', cost:350,  style:1, zoom:1.4, desc:'BIG FRAME. TINY MODEL.'},
+    {id:'tele',    name:'TELEPHOTO 200MM', cost:900,  style:6, zoom:.7,  desc:'TIGHT CROP. HARD TO AIM.'},
+    {id:'fisheye', name:'FISHEYE 8MM',     cost:2500, style:8, zoom:1.6, bulge:.4, vig:.5, desc:'BULGES THE MIDDLE.'},
+];
+
+// filters: a color grade on the printed photo. sat and con scale saturation and contrast,
+// bright scales brightness, fade lifts the blacks, tint [r, g, b, amount] washes toward a color,
+// vig darkens the corners, mono drains the color
+const FILTERS =
+[
+    {id:'nofilter',  name:'NO FILTER', cost:0,    style:0, desc:'#NOFILTER. BRAVE.'},
+    {id:'clarendon', name:'CLARENDON', cost:150,  style:2, desc:'PUNCHY. A LITTLE COOL.',   con:1.2,  sat:1.35, tint:[120, 190, 230, .1]},
+    {id:'gingham',   name:'GINGHAM',   cost:300,  style:3, desc:'SOFT AND WASHED OUT.',     con:.9,   sat:.85, bright:1.05, fade:.35, tint:[230, 230, 250, .1]},
+    {id:'valencia',  name:'VALENCIA',  cost:600,  style:4, desc:'WARM, LIKE AN OLD SUMMER.', con:1.08, sat:1.1, fade:.15, tint:[255, 200, 140, .15]},
+    {id:'nashville', name:'NASHVILLE', cost:1000, style:5, desc:'PEACHY AND FADED.',        con:1.1,  bright:1.05, fade:.25, tint:[247, 176, 153, .2]},
+    {id:'1977',      name:'1977',      cost:1800, style:6, desc:'ROSY. VERY DISCO.',        sat:1.3,  bright:1.1, fade:.1, tint:[243, 106, 188, .12]},
+    {id:'xpro',      name:'X-PRO II',  cost:3000, style:7, desc:'HARSH, GOLDEN, VIGNETTED.', con:1.35, sat:1.2, tint:[255, 230, 160, .08], vig:.6},
+    {id:'inkwell',   name:'INKWELL',   cost:5000, style:9, desc:'BLACK AND WHITE. SERIOUS.', con:1.15, bright:1.05, mono:true, vig:.2},
+];
+
 // backdrops: one at a time. Lights and props stack once bought
 const STUDIO =
 [
@@ -122,7 +161,7 @@ const STUDIO =
     {id:'neon',   kind:'backdrop', name:'NEON GRADIENT',  cost:9000, style:10, desc:'VERY NOW', colors:['#ff2e93', '#3a0ca3']},
 ];
 
-const TABS = ['WARDROBE', 'MODELS', 'CAMERA', 'STUDIO'];
+const TABS = ['WARDROBE', 'ACCESSORIES', 'MODELS', 'CAMERA', 'FILTERS', 'STUDIO'];
 const GRADES = [['A', 85, 200, '#e9c46a'], ['B', 70, 90, '#8ecae6'], ['C', 55, 40, '#f4f1ea'], ['D', 40, 15, '#f4a261'], ['F', 0, 3, '#e63946']];
 const EDITOR = 'VALENTINA PRUNE, EDITOR-IN-CHIEF';
 const STYLE_WEIGHT = .6;       // style points per point of item style
@@ -133,9 +172,16 @@ const STYLE_WEIGHT = .6;       // style points per point of item style
 const SAVE_KEY = 'ragdollCouture';
 let save;
 
-const freshSave = ()=> ({money:0, owned:{tee:1, intern:1, grey:1}, levels:{},
-    equip:{outfit:'tee', model:'intern', backdrop:'grey'}, photos:0, best:''});
-const loadGame = ()=> save = readSaveData(SAVE_KEY, freshSave());
+const freshSave = ()=> ({money:0, owned:{tee:1, intern:1, grey:1, std:1, nofilter:1}, levels:{},
+    equip:{outfit:'tee', model:'intern', backdrop:'grey', lens:'std', filter:'nofilter'}, photos:0, best:''});
+function loadGame()
+{
+    // older saves predate some of the free starting gear
+    const fresh = freshSave();
+    save = readSaveData(SAVE_KEY, fresh);
+    save.owned = {...fresh.owned, ...save.owned};
+    save.equip = {...fresh.equip, ...save.equip};
+}
 const saveGame = ()=> writeSaveData(SAVE_KEY, save);
 
 const findItem = (list, id)=> list.find(item=> item.id == id);
@@ -147,7 +193,10 @@ const studioOn = (id)=> { const s = findItem(STUDIO, id); return s.kind == 'back
 function currentLook()
 {
     const look = {outfit: findItem(OUTFITS, save.equip.outfit), model: findItem(MODELS, save.equip.model),
-        backdrop: findItem(STUDIO, save.equip.backdrop)};
+        backdrop: findItem(STUDIO, save.equip.backdrop), lens: findItem(LENSES, save.equip.lens),
+        filter: findItem(FILTERS, save.equip.filter)};
+    for (const slot of SLOTS)
+        look[slot] = findItem(ACCESSORIES, save.equip[slot]);
     for (const s of STUDIO)
         if (s.kind != 'backdrop') look[s.id] = studioOn(s.id);
     return look;
@@ -155,9 +204,11 @@ function currentLook()
 
 function styleBonus(look)
 {
-    let style = look.outfit.style + look.backdrop.style;
+    let style = look.outfit.style + look.backdrop.style + look.lens.style + look.filter.style;
     for (const s of STUDIO)
         if (s.kind != 'backdrop' && look[s.id]) style += s.style;
+    for (const slot of SLOTS)
+        if (look[slot]) style += look[slot].style;
     return style;
 }
 
@@ -517,13 +568,14 @@ function judge(shot)
     const inFrac = inside / total;
     const headIn = inRect(pts[J.head].pos, frame);
     const b = boundsOf(pts, true);
-    const fill = Math.max(b.w / frame.w, b.h / frame.h);
-    const fillScore = fill > 1 ? Math.max(0, 1 - (fill - 1) * 3) : fill >= .55 ? 1 : Math.max(0, 1 - (.55 - fill) * 2.5);
     const off = b.center.subtract(frame.pos);
     const centerScore = clamp(1 - (Math.abs(off.x) / frame.w + Math.abs(off.y) / frame.h) * 2.5);
+    // a fisheye blows up whatever sits in the middle
+    const fill = Math.max(b.w / frame.w, b.h / frame.h) / (1 - (look.lens.bulge || 0) * centerScore);
+    const fillScore = fill > 1 ? Math.max(0, 1 - (fill - 1) * 3) : fill >= .55 ? 1 : Math.max(0, 1 - (.55 - fill) * 2.5);
     const framing = inFrac * inFrac * (.5 + .25 * fillScore + .25 * centerScore) * (headIn ? 1 : .4);
 
-    // pose: bent joints, spread out, tipped over, lopsided
+    // pose: bent joints, spread out, lopsided (which way up the model is doesn't count)
     const bendAt = (a, j, c, full)=> clamp((PI - jointAngle(pts, a, j, c)) / full);
     const B = PI * 2/3; // a 120 degree fold counts as fully bent
     const bends = [bendAt(1, 3, 4, B), bendAt(1, 5, 6, B), bendAt(2, 7, 8, B), bendAt(2, 9, 10, B),
@@ -531,12 +583,10 @@ function judge(shot)
     const bend = bends.reduce((s, v)=> s + v, 0) / bends.length;
     const raw = boundsOf(pts, false);
     const spread = clamp((raw.w * raw.h - 5) / 12);
-    const torso = pts[J.neck].pos.subtract(pts[J.pelvis].pos);
-    const tilt = clamp(Math.acos(clamp(torso.y / torso.length(), -1, 1)) / (PI * .55));
     const P = (i)=> pts[i].pos;
     const asym = clamp((Math.abs(P(J.lHand).y - P(J.rHand).y) + Math.abs(P(J.lFoot).y - P(J.rFoot).y)) / 4);
     // bent joints are the broken-doll signature; the rest only shades it
-    const pose = Math.pow(bend, .8) * (.6 + .4 * (spread + tilt + asym) / 3);
+    const pose = Math.pow(bend, .8) * (.6 + .4 * (spread + asym) / 2);
 
     // airtime: floating beats draped over a prop beats lying on the floor
     const onFloor = pts.some(p=> p.pos.y - p.r < surfaceAt(p.pos.x, look) + .06);
@@ -610,9 +660,10 @@ function toast(text) { toastText = text; toastTimer = 2; }
 function frameRect()
 {
     const center = mouseWorld().lerp(boundsOf(doll.pts, true).center, camValue('autofocus'));
-    center.x = clamp(center.x, FRAME_W / 2, STAGE_W / PX - FRAME_W / 2);
-    center.y = clamp(center.y, FRAME_H / 2, SCREEN_H / PX - FRAME_H / 2);
-    return {pos: center, w: FRAME_W, h: FRAME_H};
+    const zoom = findItem(LENSES, save.equip.lens).zoom, w = FRAME_W * zoom, h = FRAME_H * zoom;
+    center.x = clamp(center.x, w / 2, STAGE_W / PX - w / 2);
+    center.y = clamp(center.y, h / 2, SCREEN_H / PX - h / 2);
+    return {pos: center, w, h};
 }
 
 function launch()
@@ -781,7 +832,8 @@ function gameRender() {}
 const stageView = ()=> ({wx: 0, wy: 0, s: PX, ox: -_shakeOffset.x * PX, oy: SCREEN_H + _shakeOffset.y * PX}); // gameFx shake nudges the camera
 const toScreen = (v, p)=> vec2(v.ox + (p.x - v.wx) * v.s, v.oy - (p.y - v.wy) * v.s);
 
-const ctx = ()=> mainContext;
+let drawTarget = null;        // set while rendering a photo offscreen
+const ctx = ()=> drawTarget || mainContext;
 
 function vLine(v, a, b, width, color)
 {
@@ -1049,6 +1101,113 @@ function drawTrampoline(v)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// accessories: drawn in the doll's own frame, loose ends hang down and trail behind
+
+// live points carry prev, photo snapshots carry vel, motion-blur ghosts neither
+const velOf = (p)=> p.vel || (p.prev ? p.pos.subtract(p.prev).scale(1 / SUB_DT) : vec2());
+// which way something dangling from this point hangs: down, pushed back by its speed
+const hangDir = (p)=> vec2(0, -1).add(velOf(p).scale(-.04).clampLength(1.2)).normalize();
+
+function oval(center, ax, ay, rx, ry, a0=0, a1=PI*2, n=20)
+{
+    const points = [];
+    for (let i = 0; i <= n; ++i)
+    {
+        const a = a0 + (a1 - a0) * i / n;
+        points.push(center.add(ax.scale(Math.cos(a) * rx)).add(ay.scale(Math.sin(a) * ry)));
+    }
+    return points;
+}
+
+function drawHat(v, hat, head, up, side)
+{
+    if (hat.id == 'beret') // a flat pancake slouched to one side, with a little stalk
+    {
+        const center = head.add(up.scale(.3)).add(side.scale(.08));
+        vPoly(v, oval(center, side, up, .44, .16), hat.color, .06);
+        vCircle(v, center.add(up.scale(.17)), .045, hat.color, .04);
+    }
+    if (hat.id == 'sunhat') // a wide brim and a round crown with a black band
+    {
+        const brim = head.add(up.scale(.22));
+        vPoly(v, oval(brim, side, up, .9, .11), hat.color, .06);
+        vPoly(v, oval(brim, side, up, .4, .42, 0, PI, 14), hat.color, .06);
+        vLine(v, brim.add(side.scale(.33)).add(up.scale(.08)), brim.subtract(side.scale(.33)).add(up.scale(.08)), .1, '#151515');
+    }
+}
+
+function drawScarf(v, scarf, neckPoint, axis, side, down)
+{
+    const neck = neckPoint.subtract(axis.scale(.04));
+    const across = vec2(down.y, -down.x);
+    if (scarf.id == 'silk') // two tails from a knot, fluttering harder the faster they fly
+    {
+        const knot = neck.subtract(side.scale(.14));
+        const flutter = Math.sin(time * 14) * .02 + .02;
+        for (const [len, bend, width] of [[.75, 1, .13], [.55, -1.4, .11]])
+        {
+            const mid = knot.add(down.scale(len / 2)).add(across.scale(flutter * bend * 3));
+            const end = knot.add(down.scale(len)).subtract(across.scale(flutter * bend * 2));
+            limb(v, knot, mid, width, scarf.color);
+            limb(v, mid, end, width, scarf.color);
+        }
+        limb(v, neck.add(side.scale(.24)), neck.subtract(side.scale(.24)), .17, scarf.color);
+        vCircle(v, knot, .09, mixHex(scarf.color, INK, .25), .04);
+    }
+    if (scarf.id == 'boa') // puffs of feather: both ends dangle, then a ring around the neck
+    {
+        const puff = (p, i)=> vCircle(v, p, .11, i % 2 ? mixHex(scarf.color, '#ffffff', .3) : scarf.color, .035);
+        for (const s of [-1, 1])
+            for (let k = 5; k >= 1; --k)
+                puff(neck.add(side.scale(.28 * s)).add(down.scale(.17 * k)).add(across.scale(Math.sin(k * 1.3 + time * 8) * .04)), k);
+        for (let i = 0; i <= 8; ++i)
+        {
+            const a = i / 8 * PI;
+            puff(neck.add(side.scale(Math.cos(a) * .3)).subtract(axis.scale(Math.sin(a) * .12)), i);
+        }
+    }
+}
+
+function drawBag(v, bag, hand, down)
+{
+    const across = vec2(down.y, -down.x), gold = '#d4af37';
+    // a bag body hanging from top, w wide at the top and flaring a little to the bottom
+    const body = (top, w, h, flare)=> vPoly(v, [top.add(across.scale(w / 2)), top.subtract(across.scale(w / 2)),
+        top.add(down.scale(h)).subtract(across.scale(w / 2 + flare)), top.add(down.scale(h)).add(across.scale(w / 2 + flare))], bag.color, .06);
+    if (bag.id == 'tote')
+    {
+        const top = hand.add(down.scale(.32));
+        for (const s of [-1, 1])
+            vLine(v, hand, top.add(across.scale(.17 * s)), .05, mixHex(bag.color, INK, .35));
+        body(top, .56, .6, .05);
+        vCircle(v, top.add(down.scale(.3)), .08, '#e63946');
+    }
+    if (bag.id == 'chain')
+    {
+        const top = hand.add(down.scale(.45));
+        for (const s of [-1, 1])
+        {
+            const end = top.add(across.scale(.2 * s));
+            for (let k = 1; k <= 6; ++k)
+                vCircle(v, hand.add(end.subtract(hand).scale(k / 6)), .035, gold);
+        }
+        body(top, .6, .4, 0);
+        const quilt = mixHex(bag.color, '#ffffff', .2);
+        for (const s of [-1, 1])
+            vLine(v, top.add(across.scale(.15 * s)), top.add(down.scale(.4)).subtract(across.scale(.15 * s)), .025, quilt);
+        vCircle(v, top.add(down.scale(.08)), .06, gold, .03);
+    }
+    if (bag.id == 'micro') // comically tiny
+    {
+        const top = hand.add(down.scale(.18));
+        for (const s of [-1, 1])
+            vLine(v, hand, top.add(across.scale(.06 * s)), .035, gold);
+        body(top, .24, .17, .01);
+        vCircle(v, top.add(down.scale(.04)), .03, gold);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // the doll
 
 function drawDoll(v, pts, look, alpha=1, dizzy=false)
@@ -1137,6 +1296,7 @@ function drawDoll(v, pts, look, alpha=1, dizzy=false)
 
     // head
     vLine(v, P(J.neck), P(J.head), .16, skin);
+    if (look.scarf) drawScarf(v, look.scarf, P(J.neck), axis, side, hangDir(pts[J.neck]));
     vCircle(v, P(J.head), .36, skin, .07);
     const face = P(J.head).subtract(headUp.scale(.03));
     for (const s of [-1, 1])
@@ -1176,7 +1336,10 @@ function drawDoll(v, pts, look, alpha=1, dizzy=false)
     }
     if (model.hairStyle == 'bun')
         vCircle(v, P(J.head).add(headUp.scale(.44)), .17, model.hair, .05);
+    if (look.hat) drawHat(v, look.hat, P(J.head), headUp, headSide);
 
+    // the bag hangs from the front hand, which grips it
+    if (look.bag) drawBag(v, look.bag, P(J.lHand), hangDir(pts[J.lHand]));
     arm(J.lElbow, J.lHand, false);
     c.globalAlpha = 1;
 }
@@ -1210,6 +1373,22 @@ function drawViewfinder()
         c.beginPath(); c.moveTo(tl.x, tl.y + h * i / 3); c.lineTo(tl.x + w, tl.y + h * i / 3); c.stroke();
     }
     const cx = tl.x + w / 2, cy = tl.y + h / 2;
+    const {lens, filter} = currentLook();
+    if (filter.tint || filter.mono) // a rough preview of the filter
+    {
+        c.save();
+        c.globalCompositeOperation = filter.mono ? 'saturation' : 'soft-light';
+        c.fillStyle = filter.mono ? '#808080' : `rgba(${filter.tint.slice(0, 3)},${Math.min(1, filter.tint[3] * 4)})`;
+        c.fillRect(tl.x, tl.y, w, h);
+        c.restore();
+    }
+    if (lens.bulge)
+    {
+        c.strokeStyle = '#ffffff33';
+        c.beginPath();
+        c.ellipse(cx, cy, w / 2, h / 2, 0, 0, PI * 2);
+        c.stroke();
+    }
     c.strokeStyle = '#ffffff99';
     c.beginPath(); c.moveTo(cx - 8, cy); c.lineTo(cx + 8, cy); c.moveTo(cx, cy - 8); c.lineTo(cx, cy + 8); c.stroke();
 
@@ -1271,15 +1450,28 @@ function drawStageText()
 ///////////////////////////////////////////////////////////////////////////////
 // the editors' review
 
+// the print is rendered once, offscreen, then run through the lens and the filter
 function drawPhoto(shot, x, y, w, h)
+{
+    if (!shot.image)
+    {
+        const canvas = document.createElement('canvas');
+        canvas.width = w, canvas.height = h;
+        drawTarget = canvas.getContext('2d', {willReadFrequently: true});
+        renderPhoto(shot, w, h);
+        developPhoto(drawTarget, w, h, shot.look);
+        drawTarget = null;
+        shot.image = canvas;
+    }
+    ctx().drawImage(shot.image, x, y);
+}
+
+function renderPhoto(shot, w, h)
 {
     const c = ctx();
     c.save();
-    c.beginPath();
-    c.rect(x, y, w, h);
-    c.clip();
     const f = shot.frame;
-    const v = {wx: f.pos.x - f.w / 2, wy: f.pos.y - f.h / 2, s: w / f.w, ox: x, oy: y + h};
+    const v = {wx: f.pos.x - f.w / 2, wy: f.pos.y - f.h / 2, s: w / f.w, ox: 0, oy: h};
     drawStudio(v, shot.look, shot.time);
     // motion blur: ghosts trail behind fast limbs
     const ghosts = clamp((1 - shot.result.parts.sharp) * 4, 0, 3) | 0;
@@ -1290,6 +1482,37 @@ function drawPhoto(shot, x, y, w, h)
     }
     drawDoll(v, shot.pts, shot.look, 1, !shot.pts.some(p=> p.pos.y - p.r < surfaceAt(p.pos.x, shot.look) + .06));
     c.restore();
+}
+
+// one pass per pixel: a fisheye samples from nearer the middle, then the filter grades the color
+function developPhoto(c, w, h, look)
+{
+    const {lens, filter} = look;
+    const bulge = lens.bulge || 0, vig = Math.max(lens.vig || 0, filter.vig || 0);
+    const {sat = 1, con = 1, bright = 1, fade = 0, tint, mono} = filter;
+    if (!bulge && !vig && filter.id == 'nofilter') return;
+
+    const src = c.getImageData(0, 0, w, h).data, out = c.createImageData(w, h);
+    const cx = w / 2, cy = h / 2, R = Math.hypot(cx, cy);
+    for (let y = 0; y < h; ++y)
+    for (let x = 0; x < w; ++x)
+    {
+        const dx = (x - cx) / R, dy = (y - cy) / R, r2 = dx * dx + dy * dy;
+        const k = 1 - bulge + bulge * r2;
+        const sx = clamp(cx + dx * k * R | 0, 0, w - 1), sy = clamp(cy + dy * k * R | 0, 0, h - 1);
+        const i = (sy * w + sx) * 4;
+        let r = src[i], g = src[i + 1], b = src[i + 2];
+
+        const l = .3 * r + .59 * g + .11 * b;
+        if (mono) r = g = b = l;
+        else r = l + (r - l) * sat, g = l + (g - l) * sat, b = l + (b - l) * sat;
+        r = (r - 128) * con + 128, g = (g - 128) * con + 128, b = (b - 128) * con + 128;
+        if (tint) r += (tint[0] - r) * tint[3], g += (tint[1] - g) * tint[3], b += (tint[2] - b) * tint[3];
+        const lift = fade * 60, keep = (1 - lift / 255) * bright * (1 - vig * r2 * 1.2);
+        const o = (y * w + x) * 4, d = out.data;
+        d[o] = lift + r * keep, d[o + 1] = lift + g * keep, d[o + 2] = lift + b * keep, d[o + 3] = 255;
+    }
+    c.putImageData(out, 0, 0);
 }
 
 function drawReview()
@@ -1317,7 +1540,9 @@ function drawReview()
         drawTextScreen('LIMP', vec2(0, -195), 72, hexColor('#ffffff'), 4, hexColor('#000000', .35), 'center', SERIF, 'bold');
         drawTextScreen('THE BROKEN DOLL ISSUE', vec2(0, -150), 13, hexColor('#ffffff'), 3, hexColor('#000000', .4), 'center', SANS, 'bold');
     }
-    drawTextScreen(shot.look.model.name + ' IN ' + shot.look.outfit.name, vec2(0, 228), 15, hexColor('#3a3742'), 0, BLACK, 'center', SERIF, 'italic');
+    drawTextScreen(shot.look.model.name + ' IN ' + shot.look.outfit.name, vec2(0, 222), 15, hexColor('#3a3742'), 0, BLACK, 'center', SERIF, 'italic');
+    drawTextScreen('#' + shot.look.filter.name.replace(/[^\w]/g, '') + '  ·  ' + shot.look.lens.name, vec2(0, 242), 10,
+        hexColor('#3a3742', .55), 0, BLACK, 'center', SANS, 'bold');
     c.restore();
 
     // the verdict
@@ -1371,8 +1596,10 @@ function drawTitle()
 // shop column
 
 const SHOP_X = STAGE_W, SHOP_W = SCREEN_W - STAGE_W;
-const CARD_Y0 = 188, CARD_H = 48, CARD_GAP = 4;
-const tabRect = (i)=> ({x: SHOP_X + 12 + i * 75, y: 150, w: 71, h: 26});
+const CARD_Y0 = 218, CARD_H = 46, CARD_GAP = 4;
+const TAB_COLS = 3, TAB_GAP = 4, TAB_W = (SHOP_W - 24 - TAB_GAP * (TAB_COLS - 1)) / TAB_COLS;
+// tabs in two rows of three
+const tabRect = (i)=> ({x: SHOP_X + 12 + i % TAB_COLS * (TAB_W + TAB_GAP), y: 150 + (i / TAB_COLS | 0) * 30, w: TAB_W, h: 26});
 const cardRect = (i)=> ({x: SHOP_X + 12, y: CARD_Y0 + i * (CARD_H + CARD_GAP), w: SHOP_W - 24, h: CARD_H});
 const RESET_RECT = {x: SHOP_X + SHOP_W - 122, y: 76, w: 110, h: 24}; // beside the money
 const hit = (r)=> mousePosScreen.x >= r.x && mousePosScreen.x < r.x + r.w && mousePosScreen.y >= r.y && mousePosScreen.y < r.y + r.h;
@@ -1393,6 +1620,14 @@ function shopRows()
             action: ()=> owned ? equip(slot, item) : buy(item, ()=> equip(slot, item))};
     };
     if (tab == 'WARDROBE') return OUTFITS.map(o=> equipRow(o, 'outfit'));
+    if (tab == 'ACCESSORIES') return ACCESSORIES.map(a=>
+    {
+        const row = equipRow(a, a.slot);
+        row.desc = a.slot.toUpperCase() + ' · ' + row.desc;
+        if (row.state == 'equipped')
+            Object.assign(row, {onLabel: 'WEARING', offLabel: 'TAKE OFF', action: ()=> unequip(a.slot)});
+        return row;
+    });
     const levelRow = (item)=>
     {
         const lv = camLevel(item.id), maxed = lv >= item.costs.length;
@@ -1400,7 +1635,10 @@ function shopRows()
             pips: [lv, item.costs.length], action: ()=> !maxed && buy({cost: item.costs[lv], id: item.id, level: true}, ()=> 0)};
     };
     if (tab == 'MODELS') return [...MODELS.map(m=> equipRow(m, 'model')), levelRow(HOP)];
-    if (tab == 'CAMERA') return CAMERA.map(levelRow);
+    // lenses and filters say what they do next to their style
+    const gearRow = (item, slot)=> ({...equipRow(item, slot), desc: (item.style ? '+' + item.style + ' STYLE · ' : '') + item.desc});
+    if (tab == 'CAMERA') return [...LENSES.map(l=> gearRow(l, 'lens')), ...CAMERA.map(levelRow)];
+    if (tab == 'FILTERS') return FILTERS.map(f=> gearRow(f, 'filter'));
     return STUDIO.map(s=>
     {
         if (s.kind == 'backdrop') return equipRow(s, 'backdrop');
@@ -1414,6 +1652,13 @@ function equip(slot, item)
 {
     if (save.equip[slot] == item.id) return;
     save.equip[slot] = item.id;
+    sndClick.play();
+    saveGame();
+}
+
+function unequip(slot)
+{
+    delete save.equip[slot];
     sndClick.play();
     saveGame();
 }
@@ -1503,7 +1748,7 @@ function drawShop()
                 c.fillRect(r.x + 150 + p * 14, r.y + 11, 10, 10);
             }
 
-        const label = row.state == 'equipped' ? row.onLabel || 'IN USE' :
+        const label = row.state == 'equipped' ? (hit(r) && row.offLabel) || row.onLabel || 'IN USE' :
             row.state == 'owned' ? 'USE' : row.state == 'max' ? 'MAX' : row.cost ? '$' + row.cost.toLocaleString() : 'FREE';
         const color = row.state == 'equipped' ? '#e9c46a' : row.state == 'owned' ? '#ffffff' : row.state == 'max' ? '#7ee081' :
             affordable ? '#7ee081' : '#ffffff';
