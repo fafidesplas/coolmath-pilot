@@ -66,7 +66,21 @@ const BUILDING_COLORS =
     ['#d77643', '#a85032'], ['#c0cbdc', '#8b9bb4'], ['#e8b796', '#be7f5e'], ['#5a6988', '#3a4466'],
     ['#ead4aa', '#c4a57a'], ['#63a35c', '#3e7044'], ['#c27ba0', '#8c4f72'], ['#b86f50', '#733e39'],
 ];
-const ADS = ['COLA', 'LOAD', 'SOAP', 'PANCIT', 'HALO', 'TAHO', 'BIBINGKA', 'SIOPAO'];
+// made-up brands for the billboards: food shot on a sunburst with a price sticker, logo plate
+const ADS =
+[
+    {lines:['HALO','HALO!'],     icon:'halo',     bg:'c', ray:'b', plate:'w', ink:'P', ink2:'p', sticker:'NEW'},
+    {lines:['PANCIT','KING'],    icon:'pancit',   bg:'r', ray:'R', plate:'Y', ink:'R', ink2:'r', sticker:'$45'},
+    {lines:['SIOPAO','EXPRESS'], icon:'siopao',   bg:'Y', ray:'y', plate:'R', ink:'Y', ink2:'w'},
+    {lines:['TAHO','SARAP'],     icon:'taho',     bg:'n', ray:'N', plate:'T', ink:'N', ink2:'n', sticker:'$15'},
+    {lines:['MANGO','COLA'],     icon:'cola',     bg:'o', ray:'y', plate:'w', ink:'o', ink2:'R'},
+    {lines:['LOAD','MO NA!'],    icon:'phone',    bg:'p', ray:'P', plate:'Y', ink:'P', ink2:'p', icon2:'bolt'},
+    {lines:['BIBINGKA'],         icon:'bibingka', bg:'G', ray:'g', plate:'T', ink:'G', ink2:'N', sticker:'HOT'},
+    {lines:['MANOK','ATBP'],     icon:'chicken',  bg:'R', ray:'r', plate:'Y', ink:'R', ink2:'o', sticker:'$99'},
+    {lines:['BULA','SOAP'],      icon:'soap',     bg:'b', ray:'B', plate:'w', ink:'B', ink2:'b'},
+    {lines:['ISAW','GRILL'],     icon:'isaw',     bg:'e', ray:'m', plate:'o', ink:'k', ink2:'R', sticker:'$10'},
+];
+const AD_W = 9; // billboard platform width in units (72 pixel panel)
 
 // each stop has a name and a strong color; passengers wear their stop's color
 const STOPS =
@@ -148,6 +162,134 @@ const spriteMaps =
         '.j...j.',
         '.j...j.',
         '.k...k.'],
+    // ad food shots
+    halo: [
+        '.....r.....',
+        '....rrr....',
+        '..ppp.YYY..',
+        '.pppppYYYY.',
+        '.pppwwwYYY.',
+        'swwwwwwwwws',
+        'swpwwwwwgws',
+        '.spppppppS.',
+        '.sTTwTTwTS.',
+        '.sRgRgRgRS.',
+        '..spppppS..',
+        '..sTTTTTS..',
+        '...sssSS...',
+        '....sSs....',
+        '...sssss...'],
+    pancit: [
+        '.....g.....gG...',
+        '...YyYYgYy.gg...',
+        '..YyYoYYyYYyY...',
+        '.YyYYyYwwYoYYy..',
+        'YyYoYYyYwYYyYYg.',
+        'wwwwwwwwwwwwwwww',
+        'swwwwwwwwwwwwwws',
+        '.sswwwwwwwwwwss.',
+        '...ssssssssss...'],
+    siopao: [
+        '...w...w....',
+        '....w...w...',
+        '...w...w....',
+        '....wwrw....',
+        '..wwwwwwww..',
+        '.wwwwwwwwww.',
+        'wwwwwwwwwwws',
+        'wwwwwwwwwwss',
+        '.swwwwwwwss.',
+        'TTTTTTTTTTTT',
+        '.TTTTTTTTTT.'],
+    taho: [
+        '......S..',
+        '.....S...',
+        'sssssssss',
+        'sTTTTTTTs',
+        'sTmTTmTTs',
+        'snnnnnnns',
+        'snmnnmnns',
+        '.sTTTTTs.',
+        '.sTTmTTs.',
+        '.sTTTTTs.',
+        '.snnnnns.',
+        '..sssss..'],
+    cola: [
+        '..RR..',
+        '..oo..',
+        '..oo..',
+        '.oooo.',
+        'oooooo',
+        'oYYYYo',
+        'oYgYYo',
+        'oYYYyo',
+        'oYYyyo',
+        'oooooo',
+        'oowooo',
+        'oowooo',
+        'oooooo',
+        '.RRRR.'],
+    phone: [
+        'DDDDDDD',
+        'DcccccD',
+        'DccccBD',
+        'DcccBBD',
+        'DccBBBD',
+        'DcBBBBD',
+        'DcccccD',
+        'DDDDDDD',
+        'DsDsDsD',
+        'DDDDDDD',
+        'DsDsDsD',
+        'DDDDDDD',
+        'DsDsDsD',
+        'DDDDDDD'],
+    bolt: [
+        '..YY',
+        '.YY.',
+        'YYYY',
+        '.YY.',
+        'YY..',
+        'Y...'],
+    bibingka: [
+        '...yyyyyyyy...',
+        '..yynyyyynyy..',
+        '.yyyyrryyyyyy.',
+        'yyyyyrryyynyyy',
+        'nnnnnnnnnnnnnn',
+        'GgGgGgGgGgGgGg',
+        '.GGGGGGGGGGGG.'],
+    chicken: [
+        '...nnnn.....',
+        '..nooonn....',
+        '.noooyoon...',
+        '.nooyooooo..',
+        '.noooooooN..',
+        '..nooooooN..',
+        '...nNooNN...',
+        '......Nww...',
+        '.......ww...',
+        '........ww..',
+        '.......wwww.',
+        '........www.'],
+    soap: [
+        '.......w..w.',
+        '..w...w.w...',
+        '.....w......',
+        '..cccccccc..',
+        '.cwwcccccccb',
+        '.ccccccccccb',
+        '.ccccccccccb',
+        '..bbbbbbbbbb'],
+    isaw: [
+        'TT.NnNnNnNnN..',
+        '...nNnNnNnNn..',
+        '..............',
+        'TT.RnRnRnRnR..',
+        '...nRnRnRnRn..',
+        '..............',
+        'DDDDDDDDDDDDDD',
+        '.o.r.o.r.o.r..'],
 };
 
 // jeepney map landmarks (map columns and rows)
@@ -176,7 +318,7 @@ const sprites = {}; // name -> {x, y, w, h, pad}
 
 function buildSpriteSheet()
 {
-    const size = 256;
+    const size = 512;
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
     const ctx = canvas.getContext('2d');
@@ -200,21 +342,59 @@ function buildSpriteSheet()
         rowH = max(rowH, h);
     };
 
+    // sprites are painted into grids of hex colors (0 is empty), then packed
+    const newGrid = (w, h)=> [...Array(h)].map(()=> Array(w).fill(0));
+    const addGrid = (name, grid, pad=0)=> addSprite(name, grid[0].length, grid.length, pad, (x, y)=> grid[y][x]);
+    const fill = (grid, x, y, w, h, c)=>
+    {
+        ASSERT(pal[c], 'missing color ' + c);
+        for (let j = max(y, 0); j < min(y + h, grid.length); ++j)
+        for (let i = max(x, 0); i < min(x + w, grid[0].length); ++i)
+            grid[j][i] = pal[c];
+    };
+
+    // a text map with its dark outline, (x, y) is the outline's top left
     const filled = (map, x, y)=> map[y] && map[y][x] && map[y][x] != '.';
     const isOutline = (map, x, y)=> !filled(map, x, y) &&
         (filled(map, x-1, y) || filled(map, x+1, y) || filled(map, x, y-1) || filled(map, x, y+1));
+    const stamp = (grid, map, x, y, recolor={})=>
+    {
+        ASSERT(map.every(row=> row.length == map[0].length), 'sprite rows must match');
+        for (let j = -1; j <= map.length; ++j)
+        for (let i = -1; i <= map[0].length; ++i)
+        {
+            const c = isOutline(map, i, j) ? 'k' : filled(map, i, j) ? recolor[map[j][i]] || map[j][i] : 0;
+            if (c)
+                fill(grid, x + 1 + i, y + 1 + j, 1, 1, c);
+        }
+    };
+    const mapSize = (map)=> vec2(map[0].length + 2, map.length + 2);
     const addMap = (name, map, recolor={})=>
     {
-        ASSERT(map.every(row=> row.length == map[0].length), 'sprite rows must match: ' + name);
-        addSprite(name, map[0].length + 2, map.length + 2, 1, (x, y)=>
+        const grid = newGrid(map[0].length + 2, map.length + 2);
+        stamp(grid, map, 0, 0, recolor);
+        addGrid(name, grid, 1);
+    };
+
+    // 3x5 font into a grid, x is the left edge or the center
+    const write = (grid, text, x, y, c, scale=1, center=true)=>
+    {
+        if (center)
+            x -= textWidth(text, scale) >> 1;
+        for (let i = 0; i < text.length; ++i)
         {
-            x -= 1, y -= 1;
-            if (isOutline(map, x, y)) return pal.k;
-            if (!filled(map, x, y)) return 0;
-            const c = recolor[map[y][x]] || map[y][x];
-            ASSERT(pal[c], 'missing color ' + c + ' in ' + name);
-            return pal[c];
-        });
+            const bits = glyphBits(text[i]);
+            for (let j = 0; bits && j < 15; ++j)
+                if (bits[j] == '#')
+                    fill(grid, x + (i*4 + j%3) * scale, y + Math.floor(j/3) * scale, scale, scale, c);
+        }
+    };
+    const disc = (grid, x, y, r, c)=>
+    {
+        for (let j = -r; j <= r; ++j)
+        for (let i = -r; i <= r; ++i)
+            if (i*i + j*j <= r*r + r)
+                fill(grid, x + i, y + j, 1, 1, c);
     };
 
     addMap('jeep', spriteMaps.jeep);
@@ -224,6 +404,46 @@ function buildSpriteSheet()
     for (const skin of ['t', 'n'])
     for (const pose of ['stand', 'wave0', 'wave1', 'cheer'])
         addMap(personSprite(pose, shirt, skin), spriteMaps[pose], {h:'m', j:'B', x:shirt, t:skin});
+
+    // ad billboards, 72x26
+    ADS.forEach((ad, adIndex)=>
+    {
+        const w = AD_W * PX, h = 26, grid = newGrid(w, h);
+        fill(grid, 0, 0, w, h, 'k');
+        fill(grid, 1, 1, w - 2, h - 2, 's');
+        const sunX = 14, sunY = 13;
+        for (let y = 2; y < h - 2; ++y)
+        for (let x = 2; x < w - 2; ++x)
+        {
+            const sector = Math.floor((Math.atan2(y - sunY, x - sunX) + PI) / (PI / 8));
+            fill(grid, x, y, 1, 1, sector % 2 ? ad.bg : ad.ray);
+        }
+
+        const icon = spriteMaps[ad.icon], size = mapSize(icon);
+        const iconX = sunX - (size.x >> 1) - (ad.icon2 ? 2 : 0) + (ad.sticker ? 3 : 0), iconY = sunY - (size.y >> 1);
+        stamp(grid, icon, iconX, iconY);
+        if (ad.icon2)
+            stamp(grid, spriteMaps[ad.icon2], iconX + size.x - 2, iconY);
+
+        // logo plate
+        fill(grid, 28, 3, 40, 20, 'k');
+        fill(grid, 29, 4, 38, 18, ad.plate);
+        const [line1, line2] = ad.lines, big = textWidth(line1, 2) <= 36;
+        if (!line2)
+            write(grid, line1, 48, 11, ad.ink);
+        else if (big)
+            write(grid, line1, 48, 5, ad.ink, 2), write(grid, line2, 48, 16, ad.ink2);
+        else
+            write(grid, line1, 48, 7, ad.ink), write(grid, line2, 48, 14, ad.ink2);
+
+        if (ad.sticker)
+        {
+            disc(grid, 9, 8, 6, 'k');
+            disc(grid, 9, 8, 5, 'Y');
+            write(grid, ad.sticker, 9, 6, 'r');
+        }
+        addGrid('ad' + adIndex, grid);
+    });
 
     return canvas.toDataURL();
 }
@@ -403,10 +623,9 @@ function addBuilding(x, w, h)
 }
 
 // floating billboard, its top edge is the platform
-function addBoard(x, w, h)
+function addBoard(x, h)
 {
-    const p = {kind:'board', x0:x, x1:x + w, y:h, ad: ADS[randInt(ADS.length)],
-        color: ['B','N','P','G','R'][randInt(5)]};
+    const p = {kind:'board', x0:x, x1:x + AD_W, y:h, ad: randInt(ADS.length)};
     platforms.push(p);
     return p;
 }
@@ -442,7 +661,7 @@ function genPit()
     const w = randInt(3, 6 + Math.round(4 * progress()));
     openRoad.x1 = genX;
     if (w >= 7 && rand() < .6)
-        addBoard(genX + w/2 - 3, 6, randInt(3, 5));
+        addBoard(genX + w/2 - AD_W/2, randInt(4, 6));
     genX += w;
     openRoadAt(genX);
     lastPitEnd = genX;
@@ -479,9 +698,8 @@ function genStop()
     if (high)
     {
         // a billboard halfway up to step from
-        const stepW = randInt(6, 8);
-        addBoard(x, stepW, Math.round(h) / 2);
-        x += stepW + randInt(3, 6);
+        addBoard(x, Math.round(h) / 2);
+        x += AD_W + randInt(3, 6);
     }
     const w = randInt(9, 13);
     const roof = addBuilding(x, w, h);
@@ -622,6 +840,10 @@ function updateJeep()
     const stop = jeep.ground?.stop;
     if (stop)
     {
+        // they line up behind the jeepney, kept on the roof: the jeepney can land
+        // with only its front wheels on, so its center may be off the edge
+        const count = riders.filter(r=> r.dest == stop).length;
+        const first = clamp(jeep.x - 2.2, stop.x0 + .5 + (count - 1) * .9, stop.x1 - .5);
         let n = 0;
         riders = riders.filter(r=>
         {
@@ -629,7 +851,7 @@ function updateJeep()
             const fare = BASE_FARE + Math.floor(stop.y) * 2;
             fares += fare;
             ++delivered;
-            people.push({x: jeep.x - 2.2 - n*.9, y: stop.y, state:'arrived', dest:stop, skin:r.skin, t:rand(9), vx:0, vy:0});
+            people.push({x: first - n*.9, y: stop.y, state:'arrived', dest:stop, skin:r.skin, t:rand(9), vx:0, vy:0});
             addPopup('+$' + fare, jeep.x, jeep.y + 3 + n * .9, STOPS[stop.type].c);
             ++n;
             return false;
@@ -891,53 +1113,64 @@ function drawBuilding(b)
         wRect(x, b.y + 1.375, 1, u, palColor('B'));
     }
     if (stop)
-        drawStopProps(b, stop);
+        drawStopProps(b, b.stop);
 }
 
+// what a rider calls out from the window when their stop is coming up
+const PARA_PO = 'PARA PO!';
+const PARA_PO_RANGE = 14; // units before the stop
+
+// jeepney pictogram on stop signs
+const JEEP_PICTO = ['.#######.', '#.#.#.##.', '#########', '.#.....#.'];
+
+// world rect in whole world pixels from its bottom left
+const pRect = (x, y, w, h, char)=> wRect(x / PX, y / PX, w / PX, h / PX, palColor(char));
+
+// a plain transit stop: waiting shed and a sign on a pole
 function drawStopProps(b, stop)
 {
-    const u = 1/PX, color = palColor(stop.c);
+    const info = STOPS[stop.type];
+    const x0 = Math.round(b.x0 * PX), x1 = Math.round(b.x1 * PX), roof = Math.round(b.y * PX);
 
-    // waiting shed
-    const sx = b.x0 + 1;
-    wRect(sx + .25, b.y, u, 1.5, palColor('S'));
-    wRect(sx + 3.5, b.y, u, 1.5, palColor('S'));
-    wRect(sx, b.y + 1.5, 4, .375, color);
-    wRect(sx, b.y + 1.5, 4, u, palColor('k'));
-    wRect(sx + .75, b.y + .5, 2.5, u * 2, palColor('n')); // bench
+    // shed: posts, a canopy in the stop's color, a bench
+    const shed = x0 + 4, shedW = 28;
+    for (const x of [shed + 3, shed + shedW - 4])
+        pRect(x - 1, roof, 3, 13, 'k'), pRect(x, roof, 1, 13, 'S');
+    pRect(shed - 1, roof + 12, shedW + 2, 6, 'k');
+    pRect(shed, roof + 13, shedW, 4, info.c);
+    pRect(shed, roof + 16, shedW, 1, 'w');
+    pRect(shed + 7, roof + 3, shedW - 14, 2, 'n');
+    pRect(shed + 8, roof, 1, 3, 'N'), pRect(shed + shedW - 9, roof, 1, 3, 'N');
 
-    // sign on a pole, name in the stop's color
-    const px = b.x1 - 2;
-    wRect(px, b.y, u, 2.25, palColor('S'));
-    const textW = textWidth(stop.name), sx0 = toScreenX(px) - Math.floor(textW/2) - 2;
-    const sy0 = toScreenY(b.y + 2.25) - 9;
-    sRect(sx0 - 1, sy0 - 1, textW + 6, 11, palColor('k'));
-    sRect(sx0, sy0, textW + 4, 9, color);
-    sText(stop.name, sx0 + 2, sy0 + 2, stop.ink, 1, 'left', false);
+    // sign: jeepney pictogram over the stop name
+    const signW = textWidth(info.name) + 6, pole = x1 - (signW >> 1) - 4;
+    const left = pole - (signW >> 1), base = roof + 20; // clears the canopy
+    pRect(pole - 1, roof, 3, 20, 'k'), pRect(pole, roof, 1, 20, 'S');
+    pRect(left - 1, base - 1, signW + 2, 19, 'k');
+    pRect(left, base, signW, 9, info.c);
+    pRect(left, base + 9, signW, 8, 'w');
+    JEEP_PICTO.forEach((row, r)=> [...row].forEach((c, i)=>
+        c == '#' && pRect(pole - 4 + i, base + 14 - r, 1, 1, 'k')));
+    sText(info.name, toScreenX(left / PX) + 3, toScreenY((base + 9) / PX) + 2, info.ink, 1, 'left', false);
 
     // bouncing arrow when someone aboard is getting off here
-    if (riders.some(r=> r.dest == b.stop) && Math.floor(time * 4) % 2)
+    if (riders.some(r=> r.dest == stop) && Math.floor(time * 4) % 2)
     {
-        const ax = toScreenX(px), ay = sy0 - 9;
-        sRect(ax - 3, ay, 7, 2, palColor('k'));
-        sRect(ax - 2, ay + 2, 5, 1, palColor('k'));
-        sRect(ax - 2, ay, 5, 2, color);
-        sRect(ax - 1, ay + 2, 3, 1, color);
-        sRect(ax, ay + 3, 1, 1, color);
+        const ay = base + 26;
+        pRect(pole - 6, ay + 1, 13, 1, 'k');
+        for (let i = 0; i < 6; ++i)
+            pRect(pole - 5 + i, ay - i, 11 - i*2, 1, i == 5 ? 'k' : info.c);
     }
 }
 
 function drawBoard(b)
 {
-    const u = 1/PX, w = b.x1 - b.x0;
+    const u = 1/PX, w = b.x1 - b.x0, cx = (b.x0 + b.x1) / 2, panel = sprites['ad' + b.ad];
     // pole down into the ground (the road covers the bottom)
-    wRect((b.x0 + b.x1)/2 - .25, -2, .5, b.y, palColor('S'));
-    wRect((b.x0 + b.x1)/2 - .25, -2, u, b.y, palColor('s'));
+    wRect(cx - .25, -2, .5, b.y, palColor('S'));
+    wRect(cx - .25, -2, u, b.y, palColor('s'));
     // the ad panel hangs under the walkable top beam
-    wRect(b.x0, b.y - 2, w, 1.75, palColor('k'));
-    wRect(b.x0 + u, b.y - 2 + u, w - u*2, 1.75 - u*2, palColor(b.color));
-    const sx = toScreenX((b.x0 + b.x1)/2), sy = toScreenY(b.y - .25) + 4;
-    sText(b.ad, sx, sy, 'w', 1, 'center');
+    drawSprite('ad' + b.ad, vec2(cx, b.y - .25 - panel.h / PX));
     wRect(b.x0 - u, b.y - .25, w + u*2, .25, palColor('D'));
     wRect(b.x0 - u, b.y - u, w + u*2, u, palColor('s'));
 }
@@ -1009,6 +1242,20 @@ function drawJeep()
         px(SEAT_COLS[i], 3, 1, r.skin);
         px(SEAT_COLS[i], 4, 1, STOPS[r.dest.type].c);
     });
+
+    // a rider whose stop is coming up calls out from their window
+    const caller = riders.findIndex(r=> !r.dest.passed && r.dest.x0 - jeep.x < PARA_PO_RANGE);
+    if (caller >= 0)
+    {
+        const w = textWidth(PARA_PO) + 4, h = 9, seat = left + SEAT_COLS[caller];
+        const bx = clamp(seat - 8, left - 6, left + s.w - w), by = top + 6;
+        pRect(seat - 1, top + 2, 3, by - top - 2, 'k');
+        pRect(bx - 1, by - 1, w + 2, h + 2, 'k');
+        pRect(bx, by, w, h, 'w');
+        pRect(seat, top + 3, 1, by - top - 2, 'w');
+        pRect(bx + 2, by + 1, w - 4, 1, STOPS[riders[caller].dest.type].c);
+        sText(PARA_PO, toScreenX((bx + 2) / PX), toScreenY((by + h) / PX) + 2, 'k', 1, 'left', false);
+    }
 
     // booster flames
     if (jeep.boost > 0)
@@ -1090,8 +1337,9 @@ function drawStopMarkers()
         const s = r.dest;
         if (seen.has(s)) continue;
         seen.add(s);
-        const sx = toScreenX(s.x1 - 2), sy = toScreenY(s.y + 2.5);
-        const offRight = sx > screenW - 4, offTop = sy < 18;
+        // off screen once the whole roof is past the right edge or above the hud
+        const sx = toScreenX((s.x0 + s.x1) / 2), sy = toScreenY(s.y);
+        const offRight = toScreenX(s.x0) > screenW, offTop = sy < 16;
         if (!offRight && !offTop) continue;
         const x = Math.min(sx, screenW - 12), y = clamp(sy, 20, screenH - 12);
         const c = palColor(STOPS[s.type].c), k = palColor('k');
