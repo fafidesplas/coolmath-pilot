@@ -7,6 +7,9 @@
       color is their stop: land on the rooftop with the matching sign to drop
       them off. Pass their stop and they bail out, fare lost
     - Fall into a canal and the run is over
+    - Sagging live power lines (from 150m on): over the road you drive under
+      them or double jump over the posts; between rooftops you hop over them.
+      A zap knocks the jeepney down, one rider bails, then it blinks for a bit
     - Rooftops, billboards and the LRT deck are one-way platforms: jump up
       through them, land on top. Buildings stand behind the road, so the
       jeepney drives in front of them
@@ -41,6 +44,9 @@ const WHEELBASE = 1.3;          // half width of the jeepney's footing
 const DEATH_Y = -1.6;           // sunk in the canal
 const GEN_AHEAD = 200;          // the world is generated this far past the camera
 const BASE_FARE = 10;
+const WIRE_START = 150;         // no power lines before this distance
+const WIRE_CLEARANCE = 2.6;     // lowest a wire hangs over the road (the jeepney is 1.75 tall)
+const STUN_TIME = 1.5;          // blinking after a zap, wires can't hit again
 
 ///////////////////////////////////////////////////////////////////////////////
 // palette
@@ -539,6 +545,7 @@ const sndBoard   = new SoundGenerator({frequency:900, release:.12, pitchJump:600
 const sndDeliver = new SoundGenerator({frequency:400, release:.3, slide:.4, repeatTime:.08, pitchJump:300, volume:.6});
 const sndMiss    = new SoundGenerator({frequency:260, release:.25, slide:-.6, volume:.5});
 const sndFull    = new SoundGenerator({frequency:140, release:.08, shapeCurve:0, volume:.3});
+const sndZap     = new SoundGenerator({frequency:150, release:.3, noise:3, bitCrush:.5, repeatTime:.04, volume:.5});
 const sndSplash  = new SoundGenerator({shape:4, bitCrush:.5, sustain:.15, release:.4, sustainVolume:.5, volume:.7});
 
 function honk()
@@ -567,10 +574,11 @@ let roads;               // road platforms, in order; the gaps between them are 
 let stops;               // {type, x0, x1, y, passed}
 let people;              // waiting, arrived and bailing passengers
 let decos;               // street lamps and palm trees
+let wires;               // live power lines {x0, y0, x1, y1, sag, base0, base1}: post tops and bottoms
 let particles, popups;
 let fares, delivered, missed;
 let camX, camY, shakeTime;
-let genX, openRoad, lastStopX, stopGap, lastStopType, lastPitEnd;
+let genX, openRoad, lastStopX, stopGap, lastStopType, lastPitEnd, lastWireEnd;
 let save = readSaveData('jumpingJeepney', {best: 0, bestDist: 0});
 
 const JEEP_START_X = 0;
@@ -581,9 +589,9 @@ const minCamY = viewH/2 - 3.5; // road surface sits 3.5 units above the bottom o
 
 function newRun()
 {
-    jeep = {x: JEEP_START_X, y: 0, vy: 0, ground: null, jumps: 2, boost: 0};
+    jeep = {x: JEEP_START_X, y: 0, vy: 0, ground: null, jumps: 2, boost: 0, stun: 0};
     riders = [];
-    platforms = [], roads = [], stops = [], people = [], decos = [];
+    platforms = [], roads = [], stops = [], people = [], decos = [], wires = [];
     particles = [], popups = [];
     fares = delivered = missed = 0;
     shakeTime = 0;
@@ -591,7 +599,7 @@ function newRun()
     // a calm stretch of road with two easy pickups to start
     genX = -40;
     openRoadAt(genX);
-    lastStopX = 0, stopGap = 30, lastStopType = -1, lastPitEnd = 0;
+    lastStopX = 0, stopGap = 30, lastStopType = -1, lastPitEnd = 0, lastWireEnd = -99;
     genFlat(55, [14, 24]);
     generate(JEEP_START_X + GEN_AHEAD);
 
@@ -643,10 +651,19 @@ function genBlock()
 {
     let x = genX + randInt(1, 4);
     const count = randInt(1, 4);
+    let prev;
     for (let i = 0; i < count; ++i)
     {
         const w = randInt(4, 9), h = randInt(3, 12) / 2;
-        addBuilding(x, w, h);
+        // a power line from the last roof to this one: hop over it to cross
+        if (prev && rand() < wireChance(.25, .6))
+        {
+            const ax = prev.x1 - .5, bx = x + .5, ay = prev.y + 2.25, by = h + 2.25;
+            const sag = min(1 + (bx - ax) * .15, min(ay, by) - WIRE_CLEARANCE);
+            if (sag > .3)
+                addWire(ax, ay, bx, by, sag, prev.y, h);
+        }
+        prev = addBuilding(x, w, h);
         if (rand() < .35)
             spawnPerson(x + rand(1, w - 1), h);
         x += w + (rand() < .5 ? 0 : randInt(1, 4));
@@ -654,6 +671,33 @@ function genBlock()
     if (rand() < .5)
         spawnPerson(rand(genX + 1, x), 0);
     genX = x + randInt(2, 5);
+}
+
+const wireChance = (low, high)=> genX < WIRE_START ? 0 : lerp(low, high, progress());
+
+function addWire(x0, y0, x1, y1, sag, base0, base1)
+{
+    wires.push({x0, y0, x1, y1, sag, base0, base1, seed: rand()});
+    lastWireEnd = max(lastWireEnd, x1);
+}
+
+// sagging wire between two post tops
+function wireY(w, x)
+{
+    const t = (x - w.x0) / (w.x1 - w.x0);
+    return lerp(w.y0, w.y1, t) - w.sag * 4 * t * (1 - t);
+}
+
+// power lines over a bare stretch of road: drive under, or double jump the posts
+function genWires()
+{
+    const x0 = genX + randInt(2, 4), span = randInt(9, 15);
+    const top0 = randInt(10, 13) / 2, top1 = randInt(10, 13) / 2;
+    const sag = (top0 + top1) / 2 - rand(WIRE_CLEARANCE, 3.2);
+    addWire(x0, top0, x0 + span, top1, sag, -1, -1);
+    if (rand() < .5)
+        spawnPerson(x0 + span / 2, 0);
+    genX = x0 + span + randInt(3, 6);
 }
 
 function genPit()
@@ -694,7 +738,7 @@ function genStop()
 
     const high = rand() < .25 + .35 * progress();
     const h = high ? randInt(16, 27) / 2 : randInt(4, 14) / 2;
-    let x = genX + randInt(3, 7);
+    let x = max(genX + randInt(3, 7), lastWireEnd + 8); // room to jump after power lines
     if (high)
     {
         // a billboard halfway up to step from
@@ -721,6 +765,8 @@ function generate(toX)
         const r = rand();
         if (genX - lastStopX > stopGap)
             genStop();
+        else if (rand() < wireChance(.15, .4))
+            genWires();
         else if (r < .3 && genX > 60 && genX - lastPitEnd > 10)
             genPit();
         else if (r < .55)
@@ -741,6 +787,7 @@ function pruneWorld()
     roads = roads.filter(keep);
     stops = stops.filter(keep);
     decos = decos.filter(keep);
+    wires = wires.filter(keep);
     people = people.filter(p=> p.x > left && p.y > -12);
 }
 
@@ -873,8 +920,7 @@ function updateJeep()
         riders = riders.filter(r=>
         {
             if (r.dest != s) return true;
-            ++missed;
-            people.push({x: jeep.x - 1, y: jeep.y + 1, state:'bail', dest:s, skin:r.skin, t:0, vx: rand(-6, -3), vy: rand(6, 10)});
+            bailRider(r);
             ++n;
             return false;
         });
@@ -884,6 +930,11 @@ function updateJeep()
             addPopup('MISSED ' + STOPS[s.type].name, jeep.x, jeep.y + 3, 'r');
         }
     }
+
+    // live power lines
+    jeep.stun -= timeDelta;
+    if (jeep.stun <= 0 && wires.some(wireHitsJeep))
+        zapJeep();
 
     // fell in a canal
     if (jeep.y < DEATH_Y)
@@ -899,6 +950,40 @@ function updateJeep()
             writeSaveData('jumpingJeepney', save);
         }
     }
+}
+
+function bailRider(r)
+{
+    ++missed;
+    people.push({x: jeep.x - 1, y: jeep.y + 1, state:'bail', dest:r.dest, skin:r.skin, t:0, vx: rand(-6, -3), vy: rand(6, 10)});
+}
+
+function wireHitsJeep(w)
+{
+    const lo = max(w.x0, jeep.x - 1.6), hi = min(w.x1, jeep.x + 1.6);
+    for (let x = lo; x <= hi; x += .25)
+    {
+        const y = wireY(w, x);
+        if (y > jeep.y && y < jeep.y + 1.7)
+            return true;
+    }
+    return false;
+}
+
+// knocked down out of the jump, one rider bails, then a blinking grace period
+function zapJeep()
+{
+    jeep.stun = STUN_TIME;
+    jeep.vy = min(jeep.vy, -8);
+    jeep.jumps = 0;
+    jeep.boost = 0;
+    shakeTime = .2;
+    sndZap.play();
+    addPopup('BZZZT!', jeep.x, jeep.y + 3, 'Y');
+    for (let i = 24; i--;)
+        addParticle(jeep.x + rand(-1.7, 1.7), jeep.y + rand(0, 1.8), rand(-8, 8), rand(-4, 8), rand(.2, .5), ['w', 'Y', 'c'], 10);
+    if (riders.length)
+        bailRider(riders.splice(randInt(riders.length), 1)[0]);
 }
 
 function updatePeople()
@@ -1006,11 +1091,18 @@ function gameRender()
     for (const d of decos)
         if (d.x > left && d.x < right)
             drawDeco(d);
+    const wiresOnScreen = wires.filter(onScreen);
+    wiresOnScreen.forEach(drawWirePosts);
     for (const p of people)
         if (p.x > left && p.x < right)
             drawPerson(p);
-    if (!(gameState == 'over' && jeep.y < DEATH_Y))
+    wiresOnScreen.forEach(drawWire);
+    const blink = jeep.stun > 0 && Math.floor(jeep.stun * 16) % 2;
+    if (!(gameState == 'over' && jeep.y < DEATH_Y) && !blink)
         drawJeep();
+    if (jeep.stun > STUN_TIME - .35) // electric arcs right after a zap
+        for (let i = 10; i--;)
+            wRect(snap(jeep.x + rand(-1.9, 1.9)), snap(jeep.y + rand(-.2, 2)), 1/PX, 1/PX, palColor(rand() < .5 ? 'Y' : 'w'));
     drawRoad(left, right);
     for (const p of particles)
         wRect(p.x, p.y, 1/PX, 1/PX, palColor(p.colors[Math.floor(p.age / p.life * p.colors.length)]));
@@ -1190,6 +1282,45 @@ function drawDeck(d)
     // rail ties
     for (let x = d.x0; x < d.x1; x += .5)
         wRect(x, d.y - u, u * 2, u, palColor('N'));
+}
+
+function drawWirePosts(w)
+{
+    for (const [x, top, base] of [[w.x0, w.y0, w.base0], [w.x1, w.y1, w.base1]])
+    {
+        const px = Math.round(x * PX), t = Math.round(top * PX), b = Math.round(base * PX);
+        pRect(px - 2, b, 4, t - b + 1, 'k');
+        pRect(px - 1, b, 2, t - b, 'N');
+        pRect(px - 1, b, 1, t - b, 'n');
+        // crossarm with insulators
+        pRect(px - 5, t - 1, 10, 3, 'k');
+        pRect(px - 4, t, 8, 1, 'N');
+        pRect(px - 4, t + 1, 1, 1, 'w'), pRect(px + 3, t + 1, 1, 1, 'w');
+    }
+}
+
+function drawWire(w)
+{
+    const x0 = Math.round(w.x0 * PX), x1 = Math.round(w.x1 * PX);
+    let prevY = Math.round(w.y0 * PX);
+    for (let x = x0; x <= x1; ++x)
+    {
+        const y = Math.round(wireY(w, x / PX) * PX);
+        pRect(x, min(y, prevY), 1, max(1, abs(y - prevY)), 'k'); // no gaps on steep parts
+        prevY = y;
+    }
+
+    // a tangle of extra cable, and sparks crawling along the wire
+    const tx = Math.round(lerp(x0, x1, .3 + w.seed * .2)), ty = Math.round(wireY(w, tx / PX) * PX);
+    pRect(tx - 1, ty - 2, 3, 1, 'k'), pRect(tx - 2, ty - 1, 1, 1, 'k'), pRect(tx + 2, ty - 1, 1, 1, 'k');
+    pRect(tx, ty - 3, 1, 1, 'k');
+    for (let i = 0; i < 2; ++i)
+    {
+        const t = (time * .5 + w.seed + i * .5) % 1, sx = Math.round(lerp(x0, x1, t));
+        const sy = Math.round(wireY(w, sx / PX) * PX), flicker = Math.floor(time * 20 + i) % 2;
+        pRect(sx - 1, sy, 3, 1, flicker ? 'Y' : 'w');
+        pRect(sx, sy - 1, 1, 3, flicker ? 'w' : 'Y');
+    }
 }
 
 function drawDeco(d)
