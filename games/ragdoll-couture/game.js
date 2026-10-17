@@ -216,7 +216,7 @@ const POSES =
 };
 const IDLE_ORDER = ['hip', 'hands', 'head'];
 const IDLE_HOLD = 3.5, IDLE_BLEND = .5;   // seconds per idle pose, and blending into the next
-const GETUP_DELAY = 2.5, GETUP_TIME = 1.1; // lying still before getting up, and how long that takes
+const GETUP_DELAY = 1.25, GETUP_TIME = .55; // lying still before getting up, and how long that takes
 
 const blendPose = (a, b, f)=> Object.fromEntries(Object.keys(a).map(k=>
     [k, Array.isArray(a[k]) ? a[k].map((v, i)=> lerp(v, b[k][i], f)) : lerp(a[k], b[k], f)]));
