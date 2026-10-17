@@ -1,13 +1,20 @@
 /*
     Fire Brigade — 2D side-scrolling firefighting platformer prototype
     - Building is a cross-section (This War of Mine style): floors, rooms, doors, ladders
-    - Fires grow and spread room to room (and upward) if not doused
+    - Fires grow and spread room to room (never up a floor) if not doused
     - Water tanks run dry: refill at the fire truck or the limited standpipes
     - Hose and axe are automatic: fire in range gets sprayed, and walking into
       a door or debris chops it
     - 1P or 2P (P1 WASD, P2 arrows): move, jump and climb only
-    - Pick a way in each run: front door, an aerial ladder to a window on any
-      upper floor, or the roof (chop the hatch and climb down)
+    - The truck's aerial ladder always stands against the left wall, street to
+      roof, with a landing at every upper floor window. Pick where to start each
+      run: front door, a window landing (chop it open), or the roof (chop the
+      hatch and climb down)
+    - Burning ledges 3 tiles up on random floors (a jump reaches ~2.4). Solo:
+      1-2 ledges with their ladder already down. 2P: a partner's head is a
+      platform (a stacked jump reaches ~3.3), and each run has 2-3 co-op spots:
+      ledges (a lever up top drops the ladder) and unchoppable steel barricades
+      (a lever on the far side rolls them up)
     - Pixel art: the game renders at 480x270 and is scaled up without smoothing.
       1 world unit = 8 pixels. Sprites are text maps (plus procedural flames)
       packed into one sheet at startup; the static building is painted pixel by
@@ -37,17 +44,26 @@ const BG_H = 36;             // background texture height in units (covers the v
 const TRUCK_X = 18;          // fire truck center (refill)
 const SPRAY_RANGE = 6;       // tiles: fire this close turns the hose on
 
-const T_SOLID = 1, T_DOOR = 2, T_DEBRIS = 3, T_PLATFORM = 4;
+// fire tuning (rates are chances per second)
+const FIRE_GROW = .1;          // heat gained per second
+const FIRE_SPREAD_HEAT = .4;   // heat a cell needs before it spreads
+const FIRE_SPREAD_RATE = .45;  // sideways, per neighbor
+const FIRE_DRIP_RATE = .075;   // a raging ledge drips down onto the floor below (fire never spreads up)
+const FIRE_DOOR_BURN = 9;      // closed doors burn through after this much heat-seconds
+
+const T_SOLID = 1, T_DOOR = 2, T_DEBRIS = 3, T_PLATFORM = 4, T_RUBBLE = 5;
 
 const floorY = (f)=> 2 + f*FLOOR_H; // floor surface y of floor f
 
 // per-floor design: wall column (relative to BLD_X), door state, ladder up, debris, standpipe
+// debris walls each standpipe in from both sides (pipe-4 and pipe+2), far enough
+// out that it can't be used from the other side of the pile
 const FLOOR_PLANS =
 [
-    { walls:[[16,'closed'],[34,'open'],[48,'closed']], ladder:42, debris:[24], pipe:0  },
-    { walls:[[12,'open'],[28,'closed'],[44,'closed']], ladder:6,  debris:[52], pipe:20 },
-    { walls:[[18,'closed'],[36,'open'],[50,'closed']], ladder:56, debris:[30], pipe:0  },
-    { walls:[[14,'closed'],[30,'closed'],[46,'open']], ladder:22, debris:[8],  pipe:38 }, // top ladder: roof hatch
+    { walls:[[16,'closed'],[34,'open'],[48,'closed']], ladder:42, debris:[],       pipe:0  },
+    { walls:[[12,'open'],[28,'closed'],[44,'closed']], ladder:6,  debris:[16, 22], pipe:20 },
+    { walls:[[18,'closed'],[36,'open'],[50,'closed']], ladder:56, debris:[],       pipe:0  },
+    { walls:[[14,'closed'],[30,'closed'],[46,'open']], ladder:22, debris:[34, 40], pipe:38 }, // top ladder: roof hatch
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -299,6 +315,46 @@ const spriteMaps =
         '.bcwcb.',
         '.bcccb.',
         '..bbb..'],
+    rubble: [ // steel barricade, hazard stripes say the axe won't work
+        'DdYYkkYYkkYYkkdD',
+        'DdYkkYYkkYYkkYdD',
+        'DdkkYYkkYYkkYYdD',
+        'DdkYYkkYYkkYYkdD',
+        'DddddddddddddddD',
+        'DdSSSSSSSSSSSSdD',
+        'DdssssssssssssdD',
+        'DdSwSSSwSSSwSSdD',
+        'DdSSSSSSSSSSSSdD',
+        'DdDDDDDDDDDDDDdD',
+        'DdkkYYkkYYkkYYdD',
+        'DdkYYkkYYkkYYkdD',
+        'DdYYkkYYkkYYkkdD',
+        'DdYkkYYkkYYkkYdD',
+        'DddddddddddddddD',
+        'DdSSSSSSSSSSSSdD',
+        'DdssssssssssssdD',
+        'DdSwSSSwSSSwSSdD',
+        'DdSSSSSSSSSSSSdD',
+        'DdDDDDDDDDDDDDdD',
+        'DdYYkkYYkkYYkkdD',
+        'DdYkkYYkkYYkkYdD',
+        'DdkkYYkkYYkkYYdD',
+        'DDDDDDDDDDDDDDDD'],
+    lever: [
+        '.r.....',
+        'rRr....',
+        '.rd....',
+        '..d....',
+        '...d...',
+        '...d...',
+        '.SSSSS.',
+        'SsssssS',
+        'SSSSSSS'],
+    boost: [
+        '..Y..',
+        '.YyY.',
+        'Yy.yY',
+        'y...y'],
     heart: [
         '.rr.rr.',
         'rrrrrrr',
@@ -358,8 +414,9 @@ function buildSpriteSheet()
     const coats = [{}, {r:'b', R:'B'}];
     for (const pose of ['idle','walk','chop','climb','down'])
         coats.forEach((recolor, i)=> addMap('p' + i + '_' + pose, spriteMaps[pose], recolor));
-    for (const name of ['axeUp','axeDown','door','debris','window','hatch','waterSign','drop','heart','flame'])
+    for (const name of ['axeUp','axeDown','door','debris','window','hatch','waterSign','drop','heart','flame','rubble','lever','boost'])
         addMap(name, spriteMaps[name]);
+    addMap('leverOn', spriteMaps.lever, {r:'g', R:'G'});
     addMap('waterSignLit', spriteMaps.waterSign, {B:'c'});
 
     // procedural flames: 3 sizes x 3 animation frames, 16 wide x 24 tall
@@ -784,6 +841,7 @@ const sndHurt    = new SoundGenerator({frequency:220, release:.18, slide:-.4, no
 const sndIgnite  = new SoundGenerator({frequency:90, sustain:.1, release:.4, noise:4, bitCrush:.3, volume:.3});
 const sndEmpty   = new SoundGenerator({frequency:140, release:.08, volume:.3, shapeCurve:0});
 const sndWin     = new SoundGenerator({frequency:440, release:.4, slide:.3, repeatTime:.1, pitchJump:220, volume:.5});
+const sndLever   = new SoundGenerator({frequency:520, release:.12, slide:-.6, noise:.1, volume:.5});
 const sndLose    = new SoundGenerator({frequency:260, slide:-.5, release:.8, bitCrush:.2, volume:.5});
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -797,6 +855,9 @@ let collisionLayer;
 let breakables = [];         // doors + debris
 let ladders = [];
 let standpipes = [];
+let ledges = [];             // burning shelves 3 tiles up {f, c0, c1, y, cells}
+let rubbles = [];            // 2P: steel barricades 3 tiles tall {f, x, y, far, burn, opening, open}
+let levers = [];             // 2P: {x, y, f, boostX, ledge|rubble, pulled}
 let fireGrid = [];           // [floor][col] -> cell
 let playTime = 0;
 let endTimer = 0;
@@ -838,7 +899,10 @@ function buildWorld()
     collisionLayer.render = ()=> {}; // the background texture draws the building
     breakables = [];
     fireGrid = [];
-    ladders = ladderSpots;
+    ledges = [];
+    rubbles = [];
+    levers = [];
+    ladders = [...ladderSpots];
     standpipes = pipeSpots.map(p=> ({...p, reserve: 180, max: 180}));
 
     // ground + world edges
@@ -868,6 +932,13 @@ function buildWorld()
     const hatch = ladderSpots[FLOORS-1];
     addBreakable('hatch', hatch.x, hatch.y1, 1, 1, 2);
 
+    // the truck's aerial ladder: street to roof, a 2 tile landing at every
+    // upper floor window and at the roof edge
+    const aerial = {x: BLD_X - 2, y0: floorY(0), y1: floorY(FLOORS), outside: true};
+    ladders.push(aerial);
+    for (let f = 1; f <= FLOORS; ++f)
+        setTile(aerial.x, floorY(f) - 1, T_PLATFORM), setTile(aerial.x + 1, floorY(f) - 1, T_PLATFORM);
+
     for (let f = 0; f < FLOORS; ++f)
     {
         const plan = FLOOR_PLANS[f];
@@ -896,6 +967,151 @@ function buildWorld()
     // ladder tops are one-way platforms
     for (const l of ladders)
         setTile(l.x, l.y1 - 1, T_PLATFORM);
+
+    placeCoopSpots();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// co-op spots: everything sits 3 tiles up, out of reach of a solo jump (~2.4)
+// but not of a jump off a partner's head (~3.3, capped by the ceiling)
+
+const shuffled = (a)=> a.map(v=> [rand(), v]).sort((p, q)=> p[0] - q[0]).map(p=> p[1]);
+
+// columns (relative to BLD_X) on floor f that co-op spots must stay clear of
+function coopBlocked(f)
+{
+    const plan = FLOOR_PLANS[f];
+    const out = new Set([0, 1, 2, BLD_W-1]); // entry door/window and outer walls
+    const mark = (c, r)=> { for (let i = -r; i <= r; ++i) out.add(c + i); };
+    for (const [wx] of plan.walls) mark(wx, 0);
+    mark(plan.ladder, 1);
+    f && mark(FLOOR_PLANS[f-1].ladder, 1);
+    plan.pipe && mark(plan.pipe, 3);
+    for (const dx of plan.debris) mark(dx, 1), mark(dx + 1, 1);
+    return out;
+}
+
+function placeCoopSpots()
+{
+    const floors = shuffled([0, 1, 2, 3]);
+    if (playerCount == 1)
+    {
+        // solo: 1 or 2 ledges with their ladders already down, no barricades
+        let count = rand() < .5 ? 2 : 1;
+        for (const f of floors)
+            count && placeLedge(f) && --count;
+        return;
+    }
+
+    // 2P: 2 or 3 spots on different floors, at least one of each kind;
+    // each spot takes the first free floor it fits on
+    const kinds = shuffled(['ledge', 'rubble']);
+    rand() < .5 && kinds.push(rand() < .5 ? 'ledge' : 'rubble');
+    for (const kind of kinds)
+    {
+        const f = floors.find(f=> (kind == 'ledge' ? placeLedge : placeRubble)(f));
+        f !== undefined && floors.splice(floors.indexOf(f), 1);
+    }
+}
+
+// a shelf against one wall of a room; in 2P the lever at the wall end drops a
+// ladder down the open end, solo starts with that ladder down
+function placeLedge(f)
+{
+    const W = 7, blocked = coopBlocked(f), options = [];
+    for (const room of rooms[f])
+    {
+        const r0 = room.x0 - BLD_X, r1 = room.x1 - BLD_X;
+        if (r1 - r0 < W + 4) continue;
+        options.push({c0: r0, c1: r0 + W, lever: r0, ladder: r0 + W - 1, boost: r0 + W});
+        options.push({c0: r1 - W, c1: r1, lever: r1 - 1, ladder: r1 - W, boost: r1 - W - 1});
+    }
+    const valid = options.filter(o=> ![...Array(o.c1 - o.c0 + 1)].some((_, i)=> blocked.has(min(o.c0, o.boost) + i)));
+    if (!valid.length) return false;
+    const o = valid[randInt(valid.length)];
+
+    const y = floorY(f) + 3;
+    const ledge = {f, c0: o.c0, c1: o.c1, y, ladderX: BLD_X + o.ladder,
+        cells: [...Array(BLD_W)].map((_, c)=> ({heat:0, burnt:0, wall: c < o.c0 || c >= o.c1, emitter:undefined}))};
+    for (let c = o.c0; c < o.c1; ++c)
+        setTile(BLD_X + c, y - 1, T_SOLID);
+    ledges.push(ledge);
+    if (playerCount == 1)
+        dropLedgeLadder(ledge);
+    else
+        levers.push({x: BLD_X + o.lever + .5, y, f, boostX: BLD_X + o.boost + .5, ledge, pulled: false});
+    return true;
+}
+
+// a 2 wide steel barricade between where you arrive on the floor and the far
+// side, where its lever is
+function placeRubble(f)
+{
+    const blocked = coopBlocked(f), options = [];
+    const arrive = f ? FLOOR_PLANS[f-1].ladder : 1;
+    for (let rc = 3; rc < BLD_W - 5; ++rc)
+    {
+        if (abs(rc - arrive) < 5) continue;
+        const far = rc > arrive ? 1 : -1;
+        if (!roomsBehind(fireRooms(f), BLD_X + rc, far).length) continue; // a fire must be able to start behind it
+        let clear = true;
+        for (let c = rc - 2; c <= rc + 3; ++c)
+            clear &&= !blocked.has(c);
+        clear && options.push({rc, far});
+    }
+    if (!options.length) return false;
+    const {rc, far} = options[randInt(options.length)];
+
+    const y = floorY(f);
+    const rubble = {f, x: BLD_X + rc, y, far, burn: 0, opening: 0, open: false};
+    for (let c = rc; c < rc + 2; ++c)
+    {
+        for (let j = 0; j < 3; ++j)
+            setTile(BLD_X + c, y + j, T_RUBBLE);
+        fireGrid[f][c].wall = true;
+        fireGrid[f][c].rubble = rubble;
+    }
+    rubbles.push(rubble);
+    levers.push({x: BLD_X + (far > 0 ? rc + 3 : rc - 2) + .5, y, f,
+        boostX: BLD_X + (far > 0 ? rc - 1 : rc + 2) + .5, rubble, pulled: false});
+    return true;
+}
+
+function pullLever(lever)
+{
+    lever.pulled = true;
+    sndLever.play(vec2(lever.x, lever.y));
+    addScreenShake(.1, .15);
+    if (lever.ledge)
+        dropLedgeLadder(lever.ledge);
+    else
+        lever.rubble.opening = .5; // rattles, then rolls up
+}
+
+// a ladder down the open end of the shelf
+function dropLedgeLadder(l)
+{
+    setTile(l.ladderX, l.y - 1, T_PLATFORM);
+    ladders = [...ladders, {x: l.ladderX, y0: floorY(l.f), y1: l.y, dropped: true}];
+}
+
+function updateCoopSpots()
+{
+    for (const r of rubbles)
+    {
+        if (r.opening <= 0 || (r.opening -= timeDelta) > 0) continue;
+        r.open = true;
+        for (let c = 0; c < 2; ++c)
+        {
+            for (let j = 0; j < 3; ++j)
+                setTile(r.x + c, r.y + j, 0);
+            const cell = fireGrid[r.f][r.x + c - BLD_X];
+            cell.wall = false;
+            cell.rubble = undefined;
+        }
+        sndBreak.play(vec2(r.x + 1, r.y));
+        breakBurst(vec2(r.x + 1, r.y + 1.5), vec2(2, 3), palColor('y'));
+    }
 }
 
 function addBreakable(type, x, y, w, h, hp)
@@ -915,9 +1131,14 @@ function breakBreakable(b)
         setTile(b.x+i, b.y+j, 0);
     breakables.splice(breakables.indexOf(b), 1);
     sndBreak.play(b.pos);
+    breakBurst(b.pos, b.size, b.type == 'door' ? palColor('n') : palColor('S'));
+}
+
+function breakBurst(pos, size, a)
+{
     addScreenShake(.25, .25);
-    const a = b.type == 'door' ? palColor('n') : palColor('S'), c = palColor('N');
-    new ParticleEmitter(b.pos, 0, b.size, .1, 200, PI, undefined,
+    const c = palColor('N');
+    new ParticleEmitter(pos, 0, size, .1, 200, PI, undefined,
         a, c, a.scale(1,0), c.scale(1,0),
         .8, .25, .25, .15, 0, .97, 1, 1, PI, .1, .5, true);
 }
@@ -927,20 +1148,24 @@ const breakableAt = (x, y)=> breakables.find(b=> x >= b.x && x < b.x + b.w && y 
 ///////////////////////////////////////////////////////////////////////////////
 // fire simulation
 
+// fire cell at a world position; base is the surface it burns on
 function cellAt(pos)
 {
-    const f = floor((pos.y - 2) / FLOOR_H);
     const c = floor(pos.x) - BLD_X;
+    for (const ledge of ledges)
+        if (c >= ledge.c0 && c < ledge.c1 && pos.y >= ledge.y - .2 && pos.y < ledge.y + 2)
+            return {cell: ledge.cells[c], f: ledge.f, c, ledge, base: ledge.y};
+    const f = floor((pos.y - 2) / FLOOR_H);
     if (f < 0 || f >= FLOORS || c < 0 || c >= BLD_W) return;
-    return {cell: fireGrid[f][c], f, c};
+    return {cell: fireGrid[f][c], f, c, base: floorY(f)};
 }
 
-function ignite(f, c, heat=.12)
+function ignite(f, c, heat=.12, ledge)
 {
-    const cell = fireGrid[f]?.[c];
-    if (!cell || cell.wall || cell.heat > 0 || cell.burnt >= 1) return false;
+    const cell = (ledge ? ledge.cells : fireGrid[f])?.[c];
+    if (!cell || cell.wall || cell.heat > 0) return false;
     cell.heat = heat;
-    const pos = vec2(BLD_X + c + .5, floorY(f) + 2);
+    const pos = vec2(BLD_X + c + .5, ledge ? ledge.y + 1.2 : floorY(f) + 2);
     cell.emitter = new ParticleEmitter(pos, 0, vec2(.8, .6), 0, 4, .4, undefined,
         palColor('D', .8), palColor('e', .8), palColor('k', 0), palColor('D', 0),
         1.4, .4, 1, .03, 0, .99, 1, -.08, 0, .3, .3);
@@ -964,6 +1189,16 @@ function fireNeighbor(f, c, dir, heat)
     let n = c + dir;
     const row = fireGrid[f];
     if (n <= 0 || n >= BLD_W-1) return;
+    const rubble = row[n].rubble;
+    if (rubble)
+    {
+        // steel barricades slowly let fire through to the other side
+        rubble.burn += heat * timeDelta;
+        if (rubble.burn < FIRE_DOOR_BURN * .6) return;
+        rubble.burn = 0;
+        while (row[n].rubble) n += dir;
+        return row[n].wall ? undefined : n;
+    }
     if (!row[n].wall) return n;
 
     // interior wall column: check doorway at floor level
@@ -973,12 +1208,21 @@ function fireNeighbor(f, c, dir, heat)
     {
         // closed doors slowly burn through
         door.burn += heat * timeDelta;
-        if (door.burn > 14)
+        if (door.burn > FIRE_DOOR_BURN)
             breakBreakable(door);
         return;
     }
     if (getTile(x, y)) return; // solid wall
     return n + dir;            // open doorway
+}
+
+// heat up and char a burning cell; fires never burn out, the char is only damage
+function burnCell(cell)
+{
+    cell.heat = min(1, cell.heat + timeDelta * FIRE_GROW);
+    cell.burnt = min(1, cell.burnt + cell.heat * timeDelta / 50);
+    if (cell.emitter)
+        cell.emitter.emitRate = 2 + cell.heat * 6;
 }
 
 function updateFire()
@@ -988,37 +1232,37 @@ function updateFire()
     {
         const cell = fireGrid[f][c];
         if (cell.heat <= 0) continue;
-
-        cell.heat = min(1, cell.heat + timeDelta * .06);
-        cell.burnt += cell.heat * timeDelta / 50;
-        if (cell.emitter)
-            cell.emitter.emitRate = 2 + cell.heat * 6;
-        if (cell.burnt >= 1)
-        {
-            cell.burnt = 1;
-            extinguish(cell);
-            continue;
-        }
+        burnCell(cell);
 
         // spread sideways
-        if (cell.heat > .5)
+        if (cell.heat > FIRE_SPREAD_HEAT)
         for (const dir of [-1, 1])
         {
             const n = fireNeighbor(f, c, dir, cell.heat);
-            if (n !== undefined && rand() < .25 * timeDelta)
+            if (n !== undefined && rand() < FIRE_SPREAD_RATE * timeDelta)
                 ignite(f, n);
         }
+    }
 
-        // creep upward through the slab when raging
-        if (cell.heat > .9 && f < FLOORS-1 && rand() < .02 * timeDelta)
-            ignite(f+1, c) && sndIgnite.play(vec2(BLD_X + c, floorY(f+1)));
+    // ledges: spread along the shelf and drip down onto the floor
+    for (const ledge of ledges)
+    for (let c = ledge.c0; c < ledge.c1; ++c)
+    {
+        const cell = ledge.cells[c];
+        if (cell.heat <= 0) continue;
+        burnCell(cell);
+        if (cell.heat > FIRE_SPREAD_HEAT)
+        for (const dir of [-1, 1])
+            rand() < FIRE_SPREAD_RATE * timeDelta && ignite(ledge.f, c + dir, .12, ledge);
+        if (cell.heat > .8 && rand() < FIRE_DRIP_RATE * timeDelta)
+            ignite(ledge.f, c) && sndIgnite.play(vec2(BLD_X + c, floorY(ledge.f)));
     }
 }
 
 function fireStats()
 {
     let burning = 0, burnt = 0, total = 0;
-    for (const row of fireGrid)
+    for (const row of [...fireGrid, ...ledges.map(l=> l.cells)])
     for (const cell of row)
     {
         if (cell.wall) continue;
@@ -1029,17 +1273,42 @@ function fireStats()
     return {burning, integrity: 1 - burnt / total};
 }
 
+// rooms a floor's fire can start in: never the entry room or a standpipe's walled in room
+function fireRooms(f)
+{
+    const pipe = pipeSpots.find(p=> p.y == floorY(f));
+    return rooms[f].slice(1).filter(r=> !pipe || pipe.x < r.x0 || pipe.x >= r.x1);
+}
+
+// rooms on the far side of a 2 wide barricade at x
+const roomsBehind = (floorRooms, x, far)=> floorRooms.filter(r=> far > 0 ? r.x0 > x + 2 : r.x1 <= x);
+
 function startFires()
 {
     // one fire per floor, upper floors bigger
     for (let f = 0; f < FLOORS; ++f)
     {
-        const floorRooms = rooms[f];
-        const room = floorRooms[1 + randInt(floorRooms.length-1)];
+        let floorRooms = fireRooms(f);
+        // a floor with a barricade starts burning behind it
+        const rubble = rubbles.find(r=> r.f == f);
+        if (rubble)
+            floorRooms = roomsBehind(floorRooms, rubble.x, rubble.far);
+        const room = floorRooms[randInt(floorRooms.length)];
         const c = (room.x0 + room.x1) / 2 - BLD_X | 0;
         const size = 2 + f;
         for (let i = 0; i < size; ++i)
-            ignite(f, c + i - (size>>1), rand(.3, .7));
+        {
+            const col = c + i - (size>>1);
+            breakableAt(BLD_X + col, floorY(f)) || ignite(f, col, rand(.3, .7)); // debris starts clear of fire
+        }
+    }
+
+    // every ledge starts with a fire on it
+    for (const ledge of ledges)
+    {
+        const c = (ledge.c0 + ledge.c1) / 2 | 0;
+        for (let i = -1; i <= 1; ++i)
+            ignite(ledge.f, c + i, rand(.3, .6), ledge);
     }
 }
 
@@ -1072,12 +1341,12 @@ class Drop extends EngineObject
         const at = cellAt(this.pos);
         if (at && at.cell.heat > 0)
         {
-            const flameTop = floorY(at.f) + .6 + at.cell.heat * 2.8;
+            const flameTop = at.base + .6 + at.cell.heat * 2.8;
             if (this.pos.y < flameTop)
             {
-                douse(at.f, at.c, .08);
-                douse(at.f, at.c - 1, .025);
-                douse(at.f, at.c + 1, .025);
+                douse(at.f, at.c, .08, at.ledge);
+                douse(at.f, at.c - 1, .025, at.ledge);
+                douse(at.f, at.c + 1, .025, at.ledge);
                 this.splash(palColor('s', .8));
                 return this.destroy();
             }
@@ -1107,15 +1376,15 @@ class Drop extends EngineObject
     }
 }
 
-function douse(f, c, amount)
+function douse(f, c, amount, ledge)
 {
-    const cell = fireGrid[f]?.[c];
+    const cell = (ledge ? ledge.cells : fireGrid[f])?.[c];
     if (!cell || cell.heat <= 0) return;
     cell.heat -= amount;
     if (cell.heat <= 0)
     {
         extinguish(cell);
-        sndSizzle.play(vec2(BLD_X + c, floorY(f)));
+        sndSizzle.play(vec2(BLD_X + c, ledge ? ledge.y : floorY(f)));
     }
 }
 
@@ -1148,6 +1417,8 @@ class Firefighter extends EngineObject
         this.refillDrops = []; // stream particles flying from the refill source to the body
         this.prevBottom = this.pos.y - this.size.y/2;
         this.walkCycle = 0;
+        this.standingOn = undefined; // partner whose head this one stands on
+        this.onGround = false;
     }
 
     collideWithTile(data, pos)
@@ -1163,29 +1434,65 @@ class Firefighter extends EngineObject
         return ladders.find(l=> abs(this.pos.x - (l.x + .5)) < .6 && bottom >= l.y0 - .05 && bottom <= l.y1 + .1);
     }
 
-    // direction (+1/-1) of a burning tile within hose range on this floor, 0 if none
-    // walking only checks ahead; standing still also checks behind
+    // stacking (2P): a partner's head is a one-way platform, landing on it from
+    // above stands there; nobody gets carried, so walk away and the rider drops
+    standOnPartner()
+    {
+        const bottom = this.pos.y - this.size.y/2;
+        this.standingOn = this.downTimer > 0 || this.climbing || this.velocity.y > 0 ? undefined :
+            players.find(o=> o != this && o.downTimer <= 0 && !o.climbing && abs(this.pos.x - o.pos.x) < .7 &&
+                this.prevBottom >= o.pos.y + o.size.y/2 - .1 && bottom < o.pos.y + o.size.y/2 + .05);
+        if (this.standingOn)
+        {
+            this.pos.y = this.standingOn.pos.y + this.standingOn.size.y/2 + this.size.y/2;
+            this.velocity.y = 0;
+        }
+        this.onGround = !!(this.groundObject || this.standingOn);
+    }
+
+    // direction (+1/-1) of a burning tile within hose range on this floor (or
+    // ledge), 0 if none; walking only checks ahead, standing still also checks behind
     fireInRange(moveX)
     {
         const bottom = this.pos.y - this.size.y/2;
-        const f = floor((bottom + .1 - 2) / FLOOR_H);
-        if (f < 0 || f >= FLOORS || bottom - floorY(f) > 1.5) return 0;
         const c = floor(this.pos.x) - BLD_X;
         const dirs = moveX ? [Math.sign(moveX)] : [this.facing, -this.facing];
-        for (const dir of dirs)
-        for (let d = 0; d <= SPRAY_RANGE; ++d)
+        const scan = (row, tileY, stopAtWall)=>
         {
-            const col = c + d*dir;
-            if (col < 0 || col >= BLD_W) break;
-            const tile = getTile(BLD_X + col, floorY(f) + 1);
-            if (d && tile && tile != T_PLATFORM) break; // walls, doors and debris block the hose
-            if (fireGrid[f][col].heat > 0) return dir;
+            for (const dir of dirs)
+            for (let d = 0; d <= SPRAY_RANGE; ++d)
+            {
+                const col = c + d*dir;
+                if (col < 0 || col >= BLD_W) break;
+                const tile = getTile(BLD_X + col, tileY);
+                if (d && (tile && tile != T_PLATFORM || stopAtWall && row[col].wall)) break; // walls, doors, debris and ledge ends block the hose
+                if (row[col].heat > 0) return dir;
+            }
+            return 0;
+        };
+
+        const ledge = ledges.find(l=> c >= l.c0 && c < l.c1 && bottom >= l.y - .1 && bottom - l.y < 1.5);
+        if (ledge)
+            return scan(ledge.cells, ledge.y + 1, true);
+
+        // jumping up beside a ledge (only a boost off a partner's head gets this
+        // high) sprinkles the near edge before committing to land in the fire
+        if (!this.onGround && !this.climbing)
+        for (const l of ledges)
+        {
+            if (bottom < l.y - .5 || bottom > l.y + 1.5) continue;
+            const dir = scan(l.cells, l.y + 1, false);
+            if (dir) return dir;
         }
-        return 0;
+
+        const f = floor((bottom + .1 - 2) / FLOOR_H);
+        if (f < 0 || f >= FLOORS || bottom - floorY(f) > (this.standingOn ? 1.8 : 1.5)) return 0;
+        return scan(fireGrid[f], floorY(f) + 1, false);
     }
 
     update()
     {
+        this.standOnPartner();
         this.prevBottom = this.pos.y - this.size.y/2;
         this.hurtFlash = max(0, this.hurtFlash - timeDelta);
         this.swingTime = max(0, this.swingTime - timeDelta);
@@ -1244,12 +1551,19 @@ class Firefighter extends EngineObject
         {
             this.gravityScale = 1;
             const target = dir.x * .13;
-            this.velocity.x = lerp(this.velocity.x, target, this.groundObject ? .35 : .12);
-            if (this.groundObject && anyPressed(ctl.jump))
+            this.velocity.x = lerp(this.velocity.x, target, this.onGround ? .35 : .12);
+            // whoever has a partner on their head stays planted
+            const carrying = players.some(p=> p.standingOn == this);
+            if (this.onGround && !carrying && anyPressed(ctl.jump))
                 this.velocity.y = .3;
-            if (this.groundObject)
+            if (this.onGround)
                 this.walkCycle += abs(this.velocity.x) * 1.4;
         }
+
+        // walk into a lever to pull it
+        const lever = !this.climbing && levers.find(l=> !l.pulled &&
+            abs(this.pos.x - l.x) < .7 && abs(this.pos.y - this.size.y/2 - l.y) < .6);
+        lever && pullLever(lever);
 
         // auto chop: pressing up against a door or debris swings the axe
         if (!this.climbing && this.axeCooldown <= 0)
@@ -1326,7 +1640,7 @@ class Firefighter extends EngineObject
         for (const dx of [-.3, .3])
         {
             const at = cellAt(vec2(this.pos.x + dx, this.pos.y - .5));
-            if (at && at.cell.heat > .35 && this.pos.y - this.size.y/2 < floorY(at.f) + at.cell.heat * 2.5)
+            if (at && at.cell.heat > .35 && this.pos.y - this.size.y/2 < at.base + at.cell.heat * 2.5)
                 burning = max(burning, at.cell.heat);
         }
         if (burning)
@@ -1367,7 +1681,7 @@ class Firefighter extends EngineObject
         }
         else
         {
-            const walking = !this.groundObject || abs(this.velocity.x) > .02 && (this.walkCycle|0) % 2;
+            const walking = !this.onGround || abs(this.velocity.x) > .02 && (this.walkCycle|0) % 2;
             drawSprite(p + (walking ? 'walk' : 'idle'), feet, mirror, tint, glow);
         }
 
@@ -1398,12 +1712,13 @@ class FireLayer extends EngineObject
 
     render()
     {
-        for (let f = 0; f < FLOORS; ++f)
+        const rows = [...fireGrid.map((cells, f)=> ({cells, base: floorY(f)})), ...ledges.map(l=> ({cells: l.cells, base: l.y}))];
+        for (const {cells, base} of rows)
         for (let c = 0; c < BLD_W; ++c)
         {
-            const cell = fireGrid[f][c];
+            const cell = cells[c];
             if (cell.heat <= 0) continue;
-            const x = BLD_X + c + .5, base = floorY(f);
+            const x = BLD_X + c + .5;
             const size = cell.heat < .35 ? 0 : cell.heat < .7 ? 1 : 2;
             const anim = (time * 9 + c * 7) % 3 | 0;
             drawSprite('fire' + size + '_' + anim, vec2(x, base), c % 2 == 1);
@@ -1446,14 +1761,7 @@ function enterBuilding(f)
     if (f == FLOORS)
         pos = vec2(BLD_X + 4, floorY(f) + 3); // dropped onto the roof
     else if (f > 0)
-    {
-        // aerial ladder from the street up to the window, with a small landing
-        const l = {x: BLD_X - 2, y0: floorY(0), y1: floorY(f), outside: true};
-        ladders = [...ladderSpots, l];
-        setTile(l.x, l.y1 - 1, T_PLATFORM);
-        setTile(l.x + 1, l.y1 - 1, T_PLATFORM);
-        pos = vec2(BLD_X - 1.5, floorY(f) + 1);
-    }
+        pos = vec2(BLD_X - 1.5, floorY(f) + 1); // on the aerial ladder's landing
     players = playerCount == 1 ?
         [new Firefighter(pos, CONTROLS_SOLO, 0)] :
         [new Firefighter(pos.add(vec2(-.5, 0)), CONTROLS_P1, 0),
@@ -1501,10 +1809,11 @@ function gameUpdate()
     {
         playTime += timeDelta;
         updateFire();
+        updateCoopSpots();
         const stats = fireStats();
         if (stats.burning == 0)
             gameState = 'won', sndWin.play();
-        else if (stats.integrity < .6)
+        else if (stats.integrity < .001) // lost only once the whole building is charred
             gameState = 'lost', sndLose.play();
     }
     else
@@ -1563,6 +1872,48 @@ function gameRender()
         }
     }
 
+    // ledges: charring above the shelf, hanger rods, then the wooden shelf
+    for (const l of ledges)
+    {
+        for (let c = l.c0; c < l.c1; ++c)
+        {
+            const cell = l.cells[c], pos = vec2(BLD_X + c + .5, l.y + 1);
+            cell.burnt > 0 && drawRect(pos, vec2(1, 2), palColor('k', min(.85, cell.burnt * .9)));
+            cell.heat > 0 && drawRect(pos, vec2(1, 2), palColor('o', cell.heat * .14));
+        }
+        const w = l.c1 - l.c0, mid = BLD_X + l.c0 + w/2;
+        for (let c = l.c0 + 1; c < l.c1; c += 3)
+            drawRect(vec2(BLD_X + c + .5, l.y + 1), vec2(1/PX, 2), palColor('D'));
+        drawRect(vec2(mid, l.y - .5), vec2(w, 1), palColor('N'));
+        drawRect(vec2(mid, l.y - 1.5/PX), vec2(w, 3/PX), palColor('n'));
+        drawRect(vec2(mid, l.y - 1 + .5/PX), vec2(w, 1/PX), palColor('m'));
+        for (let c = l.c0 + 2; c < l.c1; c += 2)
+            drawRect(vec2(BLD_X + c, l.y - .5), vec2(1/PX, 1), palColor('m'));
+    }
+
+    // 2P steel barricades; once open, only the rolled up drum under the ceiling is left
+    for (const r of rubbles)
+    {
+        if (r.open)
+        {
+            drawRect(vec2(r.x + 1, r.y + 4.65), vec2(2, .7), palColor('m'));
+            drawRect(vec2(r.x + 1, r.y + 4.65), vec2(2 - 2/PX, .7 - 2/PX), palColor('S'));
+            drawRect(vec2(r.x + 1, r.y + 4.6), vec2(2 - 2/PX, 1/PX), palColor('d'));
+            continue;
+        }
+        const jitter = r.opening > 0 ? ((time*60|0) % 2 ? 1 : -1) / PX : 0;
+        drawSprite('rubble', vec2(r.x + 1 + jitter, r.y));
+    }
+
+    // 2P levers, plus a blinking boost marker while a partner is close by
+    for (const l of levers)
+    {
+        drawSprite(l.pulled ? 'leverOn' : 'lever', vec2(l.x, l.y), l.pulled);
+        const near = players.some(p=> abs(p.pos.x - l.boostX) < 8 && abs(p.pos.y - p.size.y/2 - floorY(l.f)) < 2);
+        if (!l.pulled && near && (time*3|0) % 2)
+            drawSprite('boost', vec2(l.boostX, floorY(l.f) + 2.3 + (time*3 % 1) * .25));
+    }
+
     // truck light bar
     const on = (time*4|0) % 2;
     drawRect(vec2(TRUCK_X + 2.6, 5.9), vec2(.5, .25), palColor(on ? 'r' : 'R'));
@@ -1578,17 +1929,21 @@ function gameRender()
         pct > 0 && drawRect(vec2(p.x + .75, p.y + 1.6 - (1 - pct) * 8/PX), vec2(1/PX, 16*pct/PX), palColor('c'));
     }
 
-    // aerial ladder to an upper floor window
+    // aerial ladder with its landings, and ladders dropped from ledges
     for (const l of ladders)
     {
-        if (!l.outside) continue;
+        if (!l.outside && !l.dropped) continue;
         const h = l.y1 + 1 - l.y0;
         for (const dx of [1, 6])
             drawRect(vec2(l.x + (dx + .5)/PX, l.y0 + h/2), vec2(1/PX, h), palColor('s'));
         for (let y = l.y0 + 3/PX; y < l.y1 + 1; y += 4/PX)
             drawRect(vec2(l.x + .5, y + .5/PX), vec2(4/PX, 1/PX), palColor('S'));
-        drawRect(vec2(l.x + 1, l.y1 - 1.5/PX), vec2(2, 3/PX), palColor('d'));
-        drawRect(vec2(l.x + 1, l.y1 - .5/PX), vec2(2, 1/PX), palColor('S'));
+        if (!l.outside) continue;
+        for (let f = 1; f <= FLOORS; ++f)
+        {
+            drawRect(vec2(l.x + 1, floorY(f) - 1.5/PX), vec2(2, 3/PX), palColor('d'));
+            drawRect(vec2(l.x + 1, floorY(f) - .5/PX), vec2(2, 1/PX), palColor('S'));
+        }
     }
 
     // doors, windows, debris, roof hatch
@@ -1596,7 +1951,7 @@ function gameRender()
     {
         b.shake = max(0, b.shake - timeDelta);
         const jitter = b.shake > 0 ? ((time*60|0) % 2 ? 1 : -1) / PX : 0;
-        const burn = clamp(b.burn / 14);
+        const burn = clamp(b.burn / FIRE_DOOR_BURN);
         const tint = WHITE.lerp(rgb(.3,.2,.2), burn);
         const pos = vec2(b.x + b.w/2 + jitter, b.y);
         drawSprite(b.type, pos, false, tint);
@@ -1679,6 +2034,7 @@ function gameRenderPost()
         uiText('GET CLOSE TO FIRE AND THE HOSE SPRAYS', W/2, 194, 1, palColor('S'));
         uiText('WALK INTO DOORS + DEBRIS TO CHOP THEM', W/2, 208, 1, palColor('S'));
         uiText('REFILL AT THE TRUCK OR WALL STANDPIPES', W/2, 222, 1, palColor('S'));
+        uiText('2P: STAND ON EACH OTHER TO REACH HIGH SPOTS', W/2, 236, 1, palColor('S'));
         return;
     }
 
@@ -1709,7 +2065,7 @@ function gameRenderPost()
     uiIcon('flame', W/2 - 56, 9);
     uiText(stats.burning, W/2 - 44, 13, 1, palColor('o'), 'left');
     uiText((playTime|0) + 'S', W/2 + 56, 13, 1, palColor('T'), 'right');
-    const integ = clamp((stats.integrity - .6) / .4);
+    const integ = stats.integrity;
     uiBar(W/2 - 55, 25, 110, integ, integ > .5 ? palColor('g') : palColor('o'));
 
     drawMinimap();
@@ -1738,6 +2094,7 @@ function drawEntryScreen()
     uiRect(mx - 3, roofY, BLD_W * s + 6, s, palColor('S'));
 
     const blink = (time*4|0) % 2;
+    uiRect(mx - 3 - 2*s, roofY, s, surface(0) - roofY, palColor('s')); // aerial ladder, street to roof
     for (let f = 0; f <= FLOORS; ++f)
     {
         const selected = f == entryFloor;
@@ -1751,8 +2108,6 @@ function drawEntryScreen()
         blink && uiRect(mx + (ladderSpots[FLOORS-1].x - BLD_X) * s, roofY - s, s, s, palColor('Y'));
     else
     {
-        if (f > 0)
-            uiRect(mx - 3 - 2*s, surface(f), s, surface(0) - surface(f), palColor('s'));
         blink && uiRect(mx, surface(f) - 3*s, s, 3*s, palColor('Y'));
     }
 
@@ -1774,7 +2129,9 @@ function drawMinimap(s=1, ox=screenW - BLD_W - 8, oy=screenH - FLOORS*FLOOR_H - 
         for (let c = 0; c < BLD_W; ++c)
         {
             const cell = fireGrid[f][c];
-            if (cell.wall)
+            if (cell.rubble)
+                uiRect(ox + c*s, fy + 2*s, s, 3*s, palColor('n'));
+            else if (cell.wall)
                 uiRect(ox + c*s, fy, s, (FLOOR_H - 1) * s, palColor('S'));
             else if (cell.heat > 0)
             {
@@ -1783,6 +2140,18 @@ function drawMinimap(s=1, ox=screenW - BLD_W - 8, oy=screenH - FLOORS*FLOOR_H - 
             }
             else if (cell.burnt > .3)
                 uiRect(ox + c*s, fy + (FLOOR_H - 2) * s, s, s, palColor('N'));
+        }
+    }
+    for (const l of ledges)
+    {
+        const fy = oy + (mh - (l.f+1) * FLOOR_H) * s;
+        uiRect(ox + l.c0*s, fy + 2*s, (l.c1 - l.c0) * s, s, palColor('n'));
+        for (let c = l.c0; c < l.c1; ++c)
+        {
+            const cell = l.cells[c];
+            if (cell.heat <= 0) continue;
+            const h = max(1, Math.round(2 * cell.heat));
+            uiRect(ox + c*s, fy + (2 - h) * s, s, h*s, palColor(cell.heat > .6 ? 'Y' : 'o'));
         }
     }
     for (const p of standpipes)
