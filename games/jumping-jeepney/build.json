@@ -1,0 +1,6 @@
+{
+    "title": "Jumping Jeepney",
+    "name": "jumpingJeepney",
+    "engine": "dist/littlejs.js",
+    "sources": ["templates/gameFx.js", "game.js"]
+}
