@@ -55,6 +55,9 @@ const FIRE_SPREAD_RATE = .45;  // sideways, per neighbor
 const FIRE_DRIP_RATE = .075;   // a raging ledge drips down onto the floor below (fire never spreads up)
 const FIRE_DOOR_BURN = 9;      // closed doors burn through after this much heat-seconds
 
+const PIPE_RESERVE = 180;      // standpipe capacity (a full tank is 100)
+const PIPE_REFILL_RATE = 3;    // standpipes recover this much per second (empty to full in a minute)
+
 const T_SOLID = 1, T_DOOR = 2, T_DEBRIS = 3, T_PLATFORM = 4, T_RUBBLE = 5;
 
 const floorY = (f)=> 2 + f*FLOOR_H; // floor surface y of floor f
@@ -1189,7 +1192,7 @@ function buildWorld()
     levers = [];
     ladders = [...ladderSpots];
     escalators = [];
-    standpipes = pipeSpots.map(p=> ({...p, reserve: 180, max: 180}));
+    standpipes = pipeSpots.map(p=> ({...p, reserve: PIPE_RESERVE, max: PIPE_RESERVE}));
 
     // ground + world edges
     for (let x = 0; x < GRID_W; ++x)
@@ -2199,6 +2202,8 @@ function gameUpdate()
         playTime += timeDelta;
         updateFire();
         updateCoopSpots();
+        for (const p of standpipes) // standpipes slowly fill back up
+            p.reserve = min(p.max, p.reserve + PIPE_REFILL_RATE * timeDelta);
         const stats = fireStats();
         if (stats.burning == 0)
             gameState = 'won', sndWin.play();
