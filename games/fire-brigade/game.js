@@ -1,6 +1,10 @@
 /*
     Fire Brigade — 2D side-scrolling firefighting platformer prototype
     - Building is a cross-section (This War of Mine style): floors, rooms, doors, ladders
+    - Two levels, picked on the title screen: the apartment block, and a shopping
+      mall whose open atrium (never burns) rises to a roof skylight; balconies,
+      zig-zag walkable escalators (one broken, reached by a co-op boost) and props link the
+      floors through it, and stairwell ladders in the shop wings are the solo route
     - Fires grow and spread room to room (never up a floor) if not doused
     - Water tanks run dry: refill at the fire truck or the limited standpipes
     - Hose and axe are automatic: fire in range gets sprayed, and walking into
@@ -34,9 +38,9 @@ const PX = 8; // pixels per world unit
 ///////////////////////////////////////////////////////////////////////////////
 // layout constants (1 world unit = 1 tile)
 
-const GRID_W = 112;          // whole world width
+let GRID_W = 112;            // whole world width (set per level)
 const BLD_X = 34;            // building left wall column
-const BLD_W = 62;            // building width in columns (incl. both outer walls)
+let BLD_W = 62;              // building width in columns, incl. both outer walls (set per level)
 const FLOORS = 4;
 const FLOOR_H = 6;           // 5 rows of room + 1 slab
 const GRID_H = 2 + FLOORS*FLOOR_H + 6;
@@ -58,13 +62,47 @@ const floorY = (f)=> 2 + f*FLOOR_H; // floor surface y of floor f
 // per-floor design: wall column (relative to BLD_X), door state, ladder up, debris, standpipe
 // debris walls each standpipe in from both sides (pipe-4 and pipe+2), far enough
 // out that it can't be used from the other side of the pile
-const FLOOR_PLANS =
+const APARTMENT_PLANS =
 [
     { walls:[[16,'closed'],[34,'open'],[48,'closed']], ladder:42, debris:[],       pipe:0  },
     { walls:[[12,'open'],[28,'closed'],[44,'closed']], ladder:6,  debris:[16, 22], pipe:20 },
     { walls:[[18,'closed'],[36,'open'],[50,'closed']], ladder:56, debris:[],       pipe:0  },
     { walls:[[14,'closed'],[30,'closed'],[46,'open']], ladder:22, debris:[34, 40], pipe:38 }, // top ladder: roof hatch
 ];
+
+// the mall: three shops per wing either side of an open atrium up to the roof
+const MALL_PLANS =
+[
+    { walls:[[13,'closed'],[27,'open'],[73,'open'],[86,'closed']], ladder:33, debris:[],       pipe:0  },
+    { walls:[[13,'open'],[27,'closed'],[73,'closed'],[86,'open']], ladder:92, debris:[16, 22], pipe:20 },
+    { walls:[[13,'closed'],[27,'open'],[73,'open'],[86,'closed']], ladder:8,  debris:[],       pipe:0  },
+    { walls:[[13,'open'],[27,'closed'],[73,'closed'],[86,'open']], ladder:66, debris:[75, 81], pipe:79 }, // top ladder: roof hatch
+];
+
+// atrium layout, columns relative to BLD_X. It never burns. Pillars stand just
+// outside c0..c1. No ceiling here, so a stacked jump reaches ~4 (3 still splits
+// solo from co-op). Escalators are walkable ramps that cross the atrium and hand
+// you straight onto the balcony ahead: base column x on floor f, run = signed
+// tiles across per tile up. The broken one is missing its bottom 3 rises, its end
+// hanging over the wide floor 1 balcony
+const MALL_ATRIUM =
+{
+    c0: 40, c1: 60,
+    balconies: [, [3, 10], [3, 3], [3, 3]],            // [left, right] widths on floors 1..3
+    skylight: [48, 52],                                // roof columns
+    landings: [[1, 49, 50], [2, 43, 44], [3, 56, 57]], // [floor, c0, c1) one-way escalator tops
+    escalators: [{x: 41, f: 0, run: 4/3}, {x: 58, f: 1, run: -2.5, broken: 3}, {x: 41, f: 2, run: 2.5}],
+    props: [{kind: 'fountain', c: 51, w: 5}, {kind: 'planter', c: 57, w: 2, h: 2}], // under the wide balcony, clear of the ramps
+};
+
+// is column c (relative) open air at the slab under floor f (FLOORS = roof)?
+function atriumOpen(f, c)
+{
+    if (!atrium || c < atrium.c0 || c >= atrium.c1) return false;
+    if (f == FLOORS) return c >= atrium.skylight[0] && c < atrium.skylight[1];
+    const [left, right] = atrium.balconies[f];
+    return c >= atrium.c0 + left && c < atrium.c1 - right;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // palette (same family as Vending Machine Sim)
@@ -85,6 +123,23 @@ const WALLPAPERS =
     ['#6b5a4a','#5c4d40'], ['#4f5e52','#445147'], ['#4a5568','#3f495a'], ['#6a4b52','#5b4047'],
     ['#5e5a50','#514d44'], ['#56496a','#4a3f5c'], ['#6b6248','#5c543e'], ['#4b5b5e','#404e51'],
 ];
+
+// bright shop interiors: [base, pattern]
+const MALL_PAPERS =
+[
+    ['#8a8f9e','#7d8291'], ['#9a8a7a','#8c7d6e'], ['#7a8f8a','#6e827d'], ['#9a7f8c','#8c727f'],
+    ['#8a8a6e','#7d7d63'], ['#7f86a0','#737992'],
+];
+
+const LEVELS =
+[
+    {name: 'APARTMENTS',    width: 62,  plans: APARTMENT_PLANS, firesPerFloor: 1, papers: WALLPAPERS,
+        brick: ['#4a2a26', '#7a3b2e'], antenna: 380},
+    {name: 'SHOPPING MALL', width: 100, plans: MALL_PLANS,      firesPerFloor: 2, papers: MALL_PAPERS,
+        brick: ['#2f3542', '#4a5366'], antenna: 600, atrium: MALL_ATRIUM},
+];
+let levelIndex = 0, level, FLOOR_PLANS, atrium;
+let rooms, ladderSpots, pipeSpots; // static layout of the current level
 
 ///////////////////////////////////////////////////////////////////////////////
 // sprites: text maps, one character per pixel, '.' is transparent
@@ -315,6 +370,65 @@ const spriteMaps =
         '.bcwcb.',
         '.bcccb.',
         '..bbb..'],
+    glassdoor: [
+        'SSSSSSSS',
+        'ScbbbbcS',
+        'SbcbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'ScbbbbcS',
+        'SbcbbbbS',
+        'SbbbbbbS',
+        'SSSSSSSS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'ScbbbbcS',
+        'SbcbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SbbbbbbS',
+        'SSSSSSSS',
+        'dddddddd'],
+    shutter: [
+        'DDDDDDDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DdddddDD',
+        'DsssssSD',
+        'DyyyyyyD',
+        'dddddddd'],
+    skylight: [
+        '....SSSSSSSSSSSSSSSSSSSSSSSS....',
+        '..SSbbbbbcbbbbbcbbbbbcbbbbbcSS..',
+        '.SbbbbcbSbbbcbbSbbcbbbSbcbbbbSS.',
+        '.SbbbcbbSbbcbbbSbcbbbbScbbbbbSS.',
+        '.SbbcbbbSbcbbbbScbbbbbSbbbbbcSS.',
+        '.SbcbbbbScbbbbbSbbbbbcSbbbbcbSS.',
+        'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS',
+        'dddddddddddddddddddddddddddddddd'],
     rubble: [ // steel barricade, hazard stripes say the axe won't work
         'DdYYkkYYkkYYkkdD',
         'DdYkkYYkkYYkkYdD',
@@ -414,7 +528,7 @@ function buildSpriteSheet()
     const coats = [{}, {r:'b', R:'B'}];
     for (const pose of ['idle','walk','chop','climb','down'])
         coats.forEach((recolor, i)=> addMap('p' + i + '_' + pose, spriteMaps[pose], recolor));
-    for (const name of ['axeUp','axeDown','door','debris','window','hatch','waterSign','drop','heart','flame','rubble','lever','boost'])
+    for (const name of ['axeUp','axeDown','door','debris','window','hatch','waterSign','drop','heart','flame','rubble','lever','boost','glassdoor','shutter','skylight'])
         addMap(name, spriteMaps[name]);
     addMap('leverOn', spriteMaps.lever, {r:'g', R:'G'});
     addMap('waterSignLit', spriteMaps.waterSign, {B:'c'});
@@ -461,33 +575,60 @@ function drawSprite(name, pos, mirror=false, color=WHITE, additiveColor)
 let decoSeed = 7;
 const decoRand = ()=> (decoSeed = (decoSeed*16807) % 2147483647) / 2147483647;
 
-const rooms = []; // [floor] -> [{x0, x1, paper, pattern, furniture, windows, pictures}]
-const ladderSpots = [];
-const pipeSpots = [];
-
-for (let f = 0; f < FLOORS; ++f)
+// make a level current; its static layout is worked out the first time
+function selectLevel(index)
 {
-    const plan = FLOOR_PLANS[f];
-    const edges = [0, ...plan.walls.map(w=> w[0]), BLD_W-1];
-    const floorRooms = [];
-    for (let i = 0; i < edges.length-1; ++i)
+    levelIndex = index;
+    level = LEVELS[index];
+    BLD_W = level.width;
+    GRID_W = BLD_X + BLD_W + 16;
+    FLOOR_PLANS = level.plans;
+    atrium = level.atrium;
+    level.rooms || layoutLevel();
+    ({rooms, ladderSpots, pipeSpots, backgroundTile} = level);
+}
+
+// rooms between walls (the atrium is one room of its own, flagged), stairwell
+// ladders, standpipes and decoration
+function layoutLevel()
+{
+    decoSeed = 7 + levelIndex * 1000;
+    const out = level.rooms = [], ladderOut = level.ladderSpots = [], pipeOut = level.pipeSpots = [];
+    for (let f = 0; f < FLOORS; ++f)
     {
-        const x0 = BLD_X + edges[i] + 1, x1 = BLD_X + edges[i+1];
-        const w = x1 - x0;
-        const room = {x0, x1, paper: WALLPAPERS[(f*3 + i) % WALLPAPERS.length], pattern: (f + i*2) % 4,
-            furniture: [], windows: [], pictures: []};
-        for (let wx = x0 + 2; wx < x1 - 3; wx += 6)
-            decoRand() < .55 ? room.windows.push(wx + (decoRand()*2|0)) : room.pictures.push(wx + 1);
-        const kinds = ['bed','sofa','table','shelf','fridge','desk','lamp','tv','plant'];
-        const count = 1 + (w/5|0);
-        for (let k = 0; k < count; ++k)
-            room.furniture.push({kind: kinds[decoRand()*kinds.length|0], x: x0 + 1.5 + decoRand()*(w-3), color: decoRand()});
-        floorRooms.push(room);
+        const plan = FLOOR_PLANS[f];
+        // atrium bounds act as room edges with a pillar column between, not a wall
+        const edges = [0, ...plan.walls.map(w=> w[0]), BLD_W-1, ...(atrium ? [atrium.c0 - 1, atrium.c1] : [])].sort((a, b)=> a - b);
+        const floorRooms = [];
+        for (let i = 0; i < edges.length-1; ++i)
+        {
+            const x0 = BLD_X + edges[i] + 1, x1 = BLD_X + edges[i+1];
+            const w = x1 - x0;
+            const room = {x0, x1, paper: level.papers[(f*3 + i) % level.papers.length], pattern: (f + i*2) % 4,
+                furniture: [], windows: [], pictures: [], atrium: atrium && x0 == BLD_X + atrium.c0};
+            floorRooms.push(room);
+            if (room.atrium) continue;
+            if (atrium)
+            {
+                // shops: a sign out front, posters instead of windows, shop fittings
+                room.sign = [pal.r, pal.b, pal.g, pal.p, pal.o, pal.B][(f*3 + i) % 6];
+                for (let wx = x0 + 3; wx < x1 - 4; wx += 7)
+                    decoRand() < .5 && room.pictures.push(wx);
+            }
+            else
+            for (let wx = x0 + 2; wx < x1 - 3; wx += 6)
+                decoRand() < .55 ? room.windows.push(wx + (decoRand()*2|0)) : room.pictures.push(wx + 1);
+            const kinds = atrium ? ['rack','rack','counter','shelf','plant','mannequin','tv','mannequin'] :
+                ['bed','sofa','table','shelf','fridge','desk','lamp','tv','plant'];
+            const count = 1 + (w/5|0);
+            for (let k = 0; k < count; ++k)
+                room.furniture.push({kind: kinds[decoRand()*kinds.length|0], x: x0 + 1.5 + decoRand()*(w-3), color: decoRand()});
+        }
+        out.push(floorRooms);
+        ladderOut.push({x: BLD_X + plan.ladder, y0: floorY(f), y1: floorY(f+1)});
+        if (plan.pipe)
+            pipeOut.push({x: BLD_X + plan.pipe + .5, y: floorY(f)});
     }
-    rooms.push(floorRooms);
-    ladderSpots.push({x: BLD_X + plan.ladder, y0: floorY(f), y1: floorY(f+1)});
-    if (plan.pipe)
-        pipeSpots.push({x: BLD_X + plan.pipe + .5, y: floorY(f)});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -547,7 +688,7 @@ function buildBackground()
     for (let x = 0; x < W; x += 16) dot(x, 13, pal.D);
 
     // street lamps
-    for (const lx of [40, 240, 820])
+    for (const lx of [40, 240, (BLD_X + BLD_W + 6) * PX])
     {
         fill(lx, 16, 2, 40, pal.D);
         fill(lx, 54, 8, 2, pal.D);
@@ -618,6 +759,7 @@ function paintBuilding(fill, dot)
         const y0 = floorY(f) * PX, h = (FLOOR_H-1) * PX;
         for (const room of rooms[f])
         {
+            if (room.atrium) continue; // painted as one tall space below
             const x0 = room.x0 * PX, w = (room.x1 - room.x0) * PX;
             const [base, accent] = room.paper;
             fill(x0, y0, w, h, base);
@@ -656,18 +798,35 @@ function paintBuilding(fill, dot)
                 fill(p, py, 7, 6, colors[(p/8|0) % 4]);
                 fill(p + 1, py, 5, 2, pal.T);
             }
-            // ceiling light
-            const lx = (x0 + w/2)|0;
-            fill(lx, y0 + h - 5, 1, 4, pal.k);
-            fill(lx - 3, y0 + h - 7, 7, 2, pal.N);
-            for (let i = 1; i < 10; ++i)
-            for (let xx = -i; xx <= i; xx += 2)
-                dot(lx + xx + (i % 2), y0 + h - 7 - i, 'rgba(254,231,97,.07)');
+            if (room.sign)
+            {
+                // shop sign under the ceiling, with a glow underneath
+                const sw = min(w - 16, 72), sx = x0 + (w - sw)/2 | 0, sy = y0 + h - 11;
+                fill(sx - 1, sy - 1, sw + 2, 9, pal.k);
+                fill(sx, sy, sw, 7, room.sign);
+                for (let i = 4; i < sw - 4; i += 4)
+                    decoRand() < .8 && fill(sx + i, sy + 2, 3, 3, pal.w);
+                for (let i = 1; i < 8; ++i)
+                for (let xx = sx; xx < sx + sw; xx += 2)
+                    dot(xx + (i % 2), sy - 1 - i, 'rgba(255,255,255,.05)');
+            }
+            else
+            {
+                // ceiling light
+                const lx = (x0 + w/2)|0;
+                fill(lx, y0 + h - 5, 1, 4, pal.k);
+                fill(lx - 3, y0 + h - 7, 7, 2, pal.N);
+                for (let i = 1; i < 10; ++i)
+                for (let xx = -i; xx <= i; xx += 2)
+                    dot(lx + xx + (i % 2), y0 + h - 7 - i, 'rgba(254,231,97,.07)');
+            }
 
             for (const item of room.furniture)
                 paintFurniture(fill, dot, item, y0);
         }
     }
+
+    atrium && paintAtrium(fill, dot);
 
     // ladders through the slabs
     for (const l of ladderSpots)
@@ -685,7 +844,8 @@ function paintBuilding(fill, dot)
         const y = (floorY(f) - 1) * PX;
         for (let x = bx; x < bx + bw; ++x)
         {
-            const isHole = ladderSpots.some(l=> l.y1 == floorY(f) && x >= l.x*PX && x < l.x*PX + 8);
+            const isHole = ladderSpots.some(l=> l.y1 == floorY(f) && x >= l.x*PX && x < l.x*PX + 8) ||
+                atriumOpen(f, floor(x / PX) - BLD_X);
             if (isHole) continue;
             fill(x, y + 1, 1, 6, concrete);
             fill(x, y, 1, 1, concreteDark);
@@ -699,10 +859,10 @@ function paintBuilding(fill, dot)
     const wallTop = floorY(FLOORS) * PX;
     for (const wx of [bx, bx + bw - PX])
     {
-        fill(wx, 16, 8, wallTop - 16, '#4a2a26');
+        fill(wx, 16, 8, wallTop - 16, level.brick[0]);
         for (let y = 16; y < wallTop; y += 3)
         for (let x = wx - ((y/3|0) % 2 ? 2 : 0); x < wx + 8; x += 4)
-            fill(max(x, wx), y, min(3, x + 3 - max(x, wx)), 2, '#7a3b2e');
+            fill(max(x, wx), y, min(3, x + 3 - max(x, wx)), 2, level.brick[1]);
     }
 
     // interior walls: plaster above a dark doorway with a frame
@@ -723,10 +883,15 @@ function paintBuilding(fill, dot)
     // front doorway + upper floor window openings
     for (let f = 0; f < FLOORS; ++f)
         fill(bx, floorY(f) * PX, 8, 24, '#14121c');
+    atrium && fill(bx + bw - PX, floorY(0) * PX, 8, 24, '#14121c'); // loading dock
 
     // roof clutter: parapet, water tower, AC unit, antenna
-    fill(bx - 2, wallTop, bw + 4, 3, concreteDark);
-    fill(bx - 2, wallTop + 3, bw + 4, 1, concreteLite);
+    for (let x = bx - 2; x < bx + bw + 2; ++x)
+    {
+        if (atriumOpen(FLOORS, floor(x / PX) - BLD_X)) continue; // skylight
+        fill(x, wallTop, 1, 3, concreteDark);
+        fill(x, wallTop + 3, 1, 1, concreteLite);
+    }
     const tx = bx + 64;
     for (const lx of [tx, tx + 18]) fill(lx, wallTop + 4, 2, 14, pal.k);
     fill(tx - 2, wallTop + 10, 24, 1, pal.k);
@@ -740,7 +905,7 @@ function paintBuilding(fill, dot)
     fill(ax + 1, wallTop + 5, 24, 11, pal.S);
     for (let y = wallTop + 6; y < wallTop + 15; y += 2) fill(ax + 3, y, 12, 1, pal.d);
     fill(ax + 17, wallTop + 7, 6, 6, pal.d);
-    const nx = bx + 380;
+    const nx = bx + level.antenna;
     fill(nx, wallTop + 4, 1, 36, pal.D);
     fill(nx - 6, wallTop + 30, 13, 1, pal.D);
     fill(nx - 4, wallTop + 22, 9, 1, pal.D);
@@ -758,6 +923,107 @@ function paintBuilding(fill, dot)
         fill(x - 3, y + 23, 7, 4, pal.w);
         fill(x - 1, y + 23, 3, 4, pal.r);
         fill(x - 3, y + 24, 7, 2, pal.r);
+    }
+}
+
+// the mall atrium: tall tiled hall lit by the skylight, pillars, banners,
+// escalator landings, ground floor props and the collapsed escalator's rubble
+function paintAtrium(fill, dot)
+{
+    const ax = (BLD_X + atrium.c0) * PX, aw = (atrium.c1 - atrium.c0) * PX;
+    const yb = floorY(0) * PX, yt = floorY(FLOORS) * PX;
+    fill(ax, yb, aw, yt - yb, '#3b4054');
+    for (let y = yb + 8; y < yt; y += 8)
+        fill(ax, y, aw, 1, '#343849');
+    for (let x = ax + 4; x < ax + aw; x += 16)
+        fill(x, yb, 1, yt - yb, '#343849');
+
+    // light falling from the skylight, widening as it drops
+    const sx = (BLD_X + atrium.skylight[0]) * PX, sw = (atrium.skylight[1] - atrium.skylight[0]) * PX;
+    for (let y = yb; y < yt; ++y)
+    {
+        const spread = (yt - y) * .2;
+        for (let x = sx - spread | 0; x < sx + sw + spread; x += 2)
+            dot(x + (y % 2), y, 'rgba(254,231,97,.06)');
+    }
+
+    // banners hanging from the roof
+    for (const [c, color] of [[atrium.c0 + 6, pal.r], [atrium.c1 - 7, pal.b]])
+    {
+        const x = (BLD_X + c) * PX;
+        fill(x - 1, yt - 2, 8, 2, pal.k);
+        fill(x, yt - 42, 6, 40, color);
+        fill(x, yt - 30, 6, 3, pal.w);
+        fill(x + 2, yt - 46, 2, 4, color);
+    }
+
+    // pillars framing the atrium
+    for (const c of [atrium.c0 - 1, atrium.c1])
+    {
+        const x = (BLD_X + c) * PX;
+        fill(x, yb, 8, yt - yb, '#5d5664');
+        fill(x + 1, yb, 1, yt - yb, '#6e6876');
+        fill(x + 6, yb, 1, yt - yb, '#4b4552');
+    }
+
+    // escalator landings: thin steel grating
+    for (const [f, c0, c1] of atrium.landings)
+    {
+        const x = (BLD_X + c0) * PX, w = (c1 - c0) * PX, y = floorY(f) * PX;
+        fill(x, y - 4, w, 4, pal.D);
+        fill(x, y - 1, w, 1, pal.S);
+        for (let i = 1; i < w; i += 3) dot(x + i, y - 3, pal.d);
+    }
+
+    for (const p of atrium.props)
+    {
+        const x = (BLD_X + p.c) * PX, w = p.w * PX;
+        if (p.kind == 'planter')
+        {
+            fill(x, yb, w, p.h * PX - 3, pal.N);
+            fill(x, yb + p.h * PX - 4, w, 1, pal.n);
+            fill(x + 1, yb + 2, w - 2, 1, pal.m);
+            for (let i = 0; i < 26; ++i)
+                dot(x + 1 + decoRand()*(w - 2), yb + p.h * PX - 3 + decoRand()*3, decoRand() < .5 ? pal.G : pal.g);
+        }
+        else if (p.kind == 'kiosk')
+        {
+            // canopy roof on two poles over a counter
+            const top = yb + p.y * PX;
+            fill(x + 1, yb, 1, top - yb, pal.S);
+            fill(x + w - 2, yb, 1, top - yb, pal.S);
+            fill(x, yb, w, 9, pal.N);
+            fill(x, yb + 9, w, 1, pal.n);
+            fill(x + 3, yb + 10, 4, 3, pal.y);
+            fill(x - 1, top - 3, w + 2, 3, pal.r);
+            for (let i = 0; i < w + 2; i += 4) fill(x - 1 + i, top - 3, 2, 3, pal.w);
+            fill(x - 1, top - 4, w + 2, 1, pal.R);
+        }
+        else if (p.kind == 'fountain')
+        {
+            fill(x, yb, 8, 8, pal.S);
+            fill(x + w - 8, yb, 8, 8, pal.S);
+            fill(x, yb + 7, 8, 1, pal.s);
+            fill(x + w - 8, yb + 7, 8, 1, pal.s);
+            fill(x + 8, yb, w - 16, 5, pal.B);
+            fill(x + 8, yb + 4, w - 16, 1, pal.b);
+            const mx = x + w/2 | 0;
+            fill(mx - 1, yb + 5, 2, 8, pal.S);
+            for (let i = 0; i < 18; ++i) dot(mx - 6 + decoRand()*12, yb + 6 + decoRand()*10, decoRand() < .5 ? pal.c : pal.w);
+        }
+    }
+
+    // a collapsed escalator leaves its bottom steps in a heap under where they hung
+    for (const e of atrium.escalators)
+    {
+        if (!e.broken) continue;
+        const xa = (BLD_X + e.x + .5) * PX, xb = xa + e.run * e.broken * PX;
+        const x = min(xa, xb), w = abs(xb - xa), y = floorY(e.f) * PX;
+        for (let i = 0; i < w * 1.5; ++i)
+        {
+            const dx = decoRand() * w, h = 1 + decoRand() * (8 - abs(dx - w/2) / (w/12));
+            fill(x + dx, y, 2, max(1, h), [pal.D, pal.S, pal.d, pal.e][decoRand()*4|0]);
+        }
     }
 }
 
@@ -821,6 +1087,23 @@ function paintFurniture(fill, dot, item, floorPy)
             fill(x - 5, y + 7, 10, 7, '#2b3a55');
             dot(x + 3, y + 12, pal.s);
             break;
+        case 'rack':
+            fill(x - 9, y, 1, 18, pal.S); fill(x + 8, y, 1, 18, pal.S);
+            fill(x - 10, y, 4, 1, pal.d); fill(x + 6, y, 4, 1, pal.d);
+            fill(x - 9, y + 17, 18, 1, pal.s);
+            for (let cx = x - 7; cx < x + 7; cx += 3)
+                fill(cx, y + 7 + (decoRand()*3|0), 2, 10, [pal.r, pal.b, pal.y, pal.g, pal.p, pal.w][decoRand()*6|0]);
+            break;
+        case 'mannequin':
+            fill(x - 3, y, 7, 1, pal.d); fill(x, y + 1, 1, 6, pal.S);
+            fill(x - 2, y + 7, 5, 9, fabric); fill(x - 3, y + 14, 7, 2, fabric);
+            fill(x - 1, y + 16, 3, 1, pal.s); fill(x - 1, y + 17, 3, 3, pal.T);
+            break;
+        case 'counter':
+            fill(x - 10, y, 20, 9, pal.N); fill(x - 10, y + 9, 20, 1, pal.n);
+            fill(x - 9, y + 3, 18, 1, pal.m);
+            fill(x + 3, y + 10, 5, 4, pal.D); fill(x + 4, y + 11, 3, 2, pal.c);
+            break;
         case 'plant':
             fill(x - 2, y, 5, 4, pal.n); fill(x - 3, y + 4, 7, 1, pal.N);
             for (let i = 0; i < 14; ++i)
@@ -849,11 +1132,13 @@ const sndLose    = new SoundGenerator({frequency:260, slide:-.5, release:.8, bit
 
 let gameState = 'title';     // title | entry | play | won | lost
 let playerCount = 1;
-let entryFloor = 0;          // chosen way in: 0 front door, 1..FLOORS-1 window, FLOORS roof
+let entries = [];            // ways in for the current level, bottom to top
+let entryIndex = 0;
 let players = [];
 let collisionLayer;
 let breakables = [];         // doors + debris
 let ladders = [];
+let escalators = [];         // mall: walkable ramps {x0, yBase, y0, y1, slope, broken}
 let standpipes = [];
 let ledges = [];             // burning shelves 3 tiles up {f, c0, c1, y, cells}
 let rubbles = [];            // 2P: steel barricades 3 tiles tall {f, x, y, far, burn, opening, open}
@@ -903,6 +1188,7 @@ function buildWorld()
     rubbles = [];
     levers = [];
     ladders = [...ladderSpots];
+    escalators = [];
     standpipes = pipeSpots.map(p=> ({...p, reserve: 180, max: 180}));
 
     // ground + world edges
@@ -911,10 +1197,10 @@ function buildWorld()
     for (let y = 0; y < GRID_H; ++y)
         setTile(0, y, T_SOLID), setTile(GRID_W-1, y, T_SOLID);
 
-    // floor slabs (floors 1+) and roof
+    // floor slabs (floors 1+) and roof, open over the atrium past its balconies
     for (let f = 1; f <= FLOORS; ++f)
     for (let x = BLD_X; x < BLD_X + BLD_W; ++x)
-        setTile(x, floorY(f)-1, T_SOLID);
+        atriumOpen(f, x - BLD_X) || setTile(x, floorY(f)-1, T_SOLID);
 
     // outer walls
     for (let y = 2; y < floorY(FLOORS); ++y)
@@ -923,8 +1209,15 @@ function buildWorld()
         setTile(BLD_X + BLD_W - 1, y, T_SOLID);
     }
 
-    // front door on the ground floor
-    addBreakable('door', BLD_X, floorY(0), 1, 3, 4);
+    // front door on the ground floor; the mall has glass doors, a loading dock
+    // round the back and a skylight over the atrium
+    addBreakable(atrium ? 'glassdoor' : 'door', BLD_X, floorY(0), 1, 3, 4);
+    if (atrium)
+    {
+        addBreakable('shutter', BLD_X + BLD_W - 1, floorY(0), 1, 3, 4);
+        const [s0, s1] = atrium.skylight;
+        addBreakable('skylight', BLD_X + s0, floorY(FLOORS), s1 - s0, 1, 3);
+    }
 
     // upper floor windows on the same wall (aerial ladder entries) + roof hatch
     for (let f = 1; f < FLOORS; ++f)
@@ -946,7 +1239,10 @@ function buildWorld()
 
         const row = [];
         for (let c = 0; c < BLD_W; ++c)
-            row.push({heat:0, burnt:0, wall: c == 0 || c == BLD_W-1, emitter:undefined});
+        {
+            const inAtrium = atrium && c >= atrium.c0 && c < atrium.c1; // never burns
+            row.push({heat:0, burnt:0, wall: c == 0 || c == BLD_W-1 || inAtrium, atrium: inAtrium, emitter:undefined});
+        }
         fireGrid.push(row);
 
         // interior walls with doors / open doorways
@@ -968,8 +1264,38 @@ function buildWorld()
     for (const l of ladders)
         setTile(l.x, l.y1 - 1, T_PLATFORM);
 
+    atrium && buildAtrium();
     placeCoopSpots();
 }
+
+// escalators (walkable ramps), their one-way landings and the ground floor props
+function buildAtrium()
+{
+    for (const e of atrium.escalators)
+        escalators.push({x0: BLD_X + e.x + .5, yBase: floorY(e.f), y0: floorY(e.f) + (e.broken || 0), y1: floorY(e.f+1),
+            slope: e.run, broken: e.broken});
+    for (const [f, c0, c1] of atrium.landings)
+    for (let c = c0; c < c1; ++c)
+        setTile(BLD_X + c, floorY(f) - 1, T_PLATFORM);
+    const y0 = floorY(0);
+    for (const p of atrium.props)
+    {
+        const x = BLD_X + p.c;
+        if (p.kind == 'planter')
+            for (let i = 0; i < p.w; ++i)
+            for (let j = 0; j < p.h; ++j)
+                setTile(x + i, y0 + j, T_SOLID);
+        else if (p.kind == 'kiosk')
+            for (let i = 0; i < p.w; ++i)
+                setTile(x + i, y0 + p.y - 1, T_PLATFORM);
+        else if (p.kind == 'fountain')
+            setTile(x, y0, T_SOLID), setTile(x + p.w - 1, y0, T_SOLID); // rim, water in between
+    }
+}
+
+// an escalator's surface: x at height y, and height at x
+const escalatorX = (l, y)=> l.x0 + (y - l.yBase) * l.slope;
+const escalatorY = (l, x)=> l.yBase + (x - l.x0) / l.slope;
 
 ///////////////////////////////////////////////////////////////////////////////
 // co-op spots: everything sits 3 tiles up, out of reach of a solo jump (~2.4)
@@ -988,6 +1314,8 @@ function coopBlocked(f)
     f && mark(FLOOR_PLANS[f-1].ladder, 1);
     plan.pipe && mark(plan.pipe, 3);
     for (const dx of plan.debris) mark(dx, 1), mark(dx + 1, 1);
+    if (atrium)
+        for (let c = atrium.c0 - 2; c <= atrium.c1 + 1; ++c) out.add(c);
     return out;
 }
 
@@ -1022,7 +1350,7 @@ function placeLedge(f)
     for (const room of rooms[f])
     {
         const r0 = room.x0 - BLD_X, r1 = room.x1 - BLD_X;
-        if (r1 - r0 < W + 4) continue;
+        if (room.atrium || r1 - r0 < W + 4) continue;
         options.push({c0: r0, c1: r0 + W, lever: r0, ladder: r0 + W - 1, boost: r0 + W});
         options.push({c0: r1 - W, c1: r1, lever: r1 - 1, ladder: r1 - W, boost: r1 - W - 1});
     }
@@ -1188,7 +1516,7 @@ function fireNeighbor(f, c, dir, heat)
 {
     let n = c + dir;
     const row = fireGrid[f];
-    if (n <= 0 || n >= BLD_W-1) return;
+    if (n <= 0 || n >= BLD_W-1 || row[n].atrium) return;
     const rubble = row[n].rubble;
     if (rubble)
     {
@@ -1277,7 +1605,7 @@ function fireStats()
 function fireRooms(f)
 {
     const pipe = pipeSpots.find(p=> p.y == floorY(f));
-    return rooms[f].slice(1).filter(r=> !pipe || pipe.x < r.x0 || pipe.x >= r.x1);
+    return rooms[f].slice(1).filter(r=> !r.atrium && (!pipe || pipe.x < r.x0 || pipe.x >= r.x1));
 }
 
 // rooms on the far side of a 2 wide barricade at x
@@ -1285,7 +1613,7 @@ const roomsBehind = (floorRooms, x, far)=> floorRooms.filter(r=> far > 0 ? r.x0 
 
 function startFires()
 {
-    // one fire per floor, upper floors bigger
+    // one fire per floor (the mall: one per wing), upper floors bigger
     for (let f = 0; f < FLOORS; ++f)
     {
         let floorRooms = fireRooms(f);
@@ -1293,13 +1621,19 @@ function startFires()
         const rubble = rubbles.find(r=> r.f == f);
         if (rubble)
             floorRooms = roomsBehind(floorRooms, rubble.x, rubble.far);
-        const room = floorRooms[randInt(floorRooms.length)];
-        const c = (room.x0 + room.x1) / 2 - BLD_X | 0;
-        const size = 2 + f;
-        for (let i = 0; i < size; ++i)
+        const picks = [floorRooms[randInt(floorRooms.length)]];
+        const wing = (r)=> atrium && r.x0 < BLD_X + atrium.c0;
+        const others = fireRooms(f).filter(r=> r != picks[0] && wing(r) != wing(picks[0]));
+        level.firesPerFloor > 1 && others.length && picks.push(others[randInt(others.length)]);
+        for (const room of picks)
         {
-            const col = c + i - (size>>1);
-            breakableAt(BLD_X + col, floorY(f)) || ignite(f, col, rand(.3, .7)); // debris starts clear of fire
+            const c = (room.x0 + room.x1) / 2 - BLD_X | 0;
+            const size = 2 + f;
+            for (let i = 0; i < size; ++i)
+            {
+                const col = c + i - (size>>1);
+                breakableAt(BLD_X + col, floorY(f)) || ignite(f, col, rand(.3, .7)); // debris starts clear of fire
+            }
         }
     }
 
@@ -1418,6 +1752,7 @@ class Firefighter extends EngineObject
         this.prevBottom = this.pos.y - this.size.y/2;
         this.walkCycle = 0;
         this.standingOn = undefined; // partner whose head this one stands on
+        this.onRamp = undefined;     // escalator underfoot
         this.onGround = false;
     }
 
@@ -1436,6 +1771,7 @@ class Firefighter extends EngineObject
 
     // stacking (2P): a partner's head is a one-way platform, landing on it from
     // above stands there; nobody gets carried, so walk away and the rider drops
+    // also keeps players on escalators
     standOnPartner()
     {
         const bottom = this.pos.y - this.size.y/2;
@@ -1447,7 +1783,23 @@ class Firefighter extends EngineObject
             this.pos.y = this.standingOn.pos.y + this.standingOn.size.y/2 + this.size.y/2;
             this.velocity.y = 0;
         }
-        this.onGround = !!(this.groundObject || this.standingOn);
+
+        // escalators are one-way ramps: once on one, walking follows the slope
+        this.onRamp = undefined;
+        if (!this.standingOn && !this.climbing && this.downTimer <= 0 && this.velocity.y <= 0)
+        for (const l of escalators)
+        {
+            // half a tile of flat lip past each end so the top meets its landing
+            const xa = escalatorX(l, l.y0), xb = escalatorX(l, l.y1);
+            if (this.pos.x < min(xa, xb) - .5 || this.pos.x > max(xa, xb) + .5) continue;
+            const y = clamp(escalatorY(l, this.pos.x), l.y0, l.y1);
+            if (this.prevBottom < y - .3 || bottom > y + .3) continue;
+            this.onRamp = l;
+            this.pos.y = y + this.size.y/2;
+            this.velocity.y = 0;
+            break;
+        }
+        this.onGround = !!(this.groundObject || this.standingOn || this.onRamp);
     }
 
     // direction (+1/-1) of a burning tile within hose range on this floor (or
@@ -1550,7 +1902,7 @@ class Firefighter extends EngineObject
         else
         {
             this.gravityScale = 1;
-            const target = dir.x * .13;
+            const target = dir.x * (this.onRamp ? .1 : .13); // a bit slower along a slope
             this.velocity.x = lerp(this.velocity.x, target, this.onGround ? .35 : .12);
             // whoever has a partner on their head stays planted
             const carrying = players.some(p=> p.standingOn == this);
@@ -1735,6 +2087,19 @@ class FireLayer extends EngineObject
     }
 }
 
+// interactables over the flames and their smoke (smoke draws at 12)
+class InteractLayer extends EngineObject
+{
+    constructor()
+    {
+        super(vec2(GRID_W/2, GRID_H/2), vec2());
+        this.mass = 0;
+        this.renderOrder = 13;
+    }
+
+    render() { drawInteractables(); }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // game flow
 
@@ -1744,24 +2109,35 @@ function startGame(count)
     playerCount = count;
     buildWorld();
     new FireLayer();
+    new InteractLayer();
     startFires();
     players = [];
     playTime = 0;
     endTimer = 0;
+    entries = levelEntries();
+    entryIndex = min(entryIndex, entries.length - 1);
     gameState = 'entry'; // fires wait while the player picks a way in
 }
 
-const entryName = (f)=> f == 0 ? 'GROUND FLOOR' : f == FLOORS ? 'ROOF' : (f+1) + ['ST','ND','RD','TH'][min(f, 3)] + ' FLOOR';
-const entryInfo = (f)=> f == 0 ? 'FRONT DOOR, NEXT TO THE TRUCK' : f == FLOORS ? 'DROP ON THE ROOF, CHOP THE HATCH' :
-    'AERIAL LADDER TO A WINDOW, CHOP IT OPEN';
-
-function enterBuilding(f)
+// ways in, bottom to top: f is the floor (FLOORS = roof), right means the far wall
+function levelEntries()
 {
-    let pos = vec2(TRUCK_X + 4, 3);
-    if (f == FLOORS)
-        pos = vec2(BLD_X + 4, floorY(f) + 3); // dropped onto the roof
-    else if (f > 0)
-        pos = vec2(BLD_X - 1.5, floorY(f) + 1); // on the aerial ladder's landing
+    const list = [atrium ?
+        {name: 'MAIN DOORS', info: 'GLASS DOORS, NEXT TO THE TRUCK', f: 0, pos: vec2(TRUCK_X + 4, 3)} :
+        {name: 'GROUND FLOOR', info: 'FRONT DOOR, NEXT TO THE TRUCK', f: 0, pos: vec2(TRUCK_X + 4, 3)}];
+    atrium && list.push({name: 'LOADING DOCK', info: 'ROLL-UP DOOR ROUND THE BACK', f: 0, right: true, pos: vec2(BLD_X + BLD_W + 2, 3)});
+    for (let f = 1; f < FLOORS; ++f)
+        list.push({name: (f+1) + ['ST','ND','RD','TH'][min(f, 3)] + ' FLOOR', info: 'AERIAL LADDER TO A WINDOW, CHOP IT OPEN',
+            f, pos: vec2(BLD_X - 1.5, floorY(f) + 1)}); // on the aerial ladder's landing
+    list.push(atrium ?
+        {name: 'ROOF', info: 'DROP ON THE ROOF, CHOP THE SKYLIGHT', f: FLOORS, pos: vec2(BLD_X + atrium.skylight[0] - 5, floorY(FLOORS) + 3)} :
+        {name: 'ROOF', info: 'DROP ON THE ROOF, CHOP THE HATCH', f: FLOORS, pos: vec2(BLD_X + 4, floorY(FLOORS) + 3)});
+    return list;
+}
+
+function enterBuilding(entry)
+{
+    const pos = entry.pos.copy();
     players = playerCount == 1 ?
         [new Firefighter(pos, CONTROLS_SOLO, 0)] :
         [new Firefighter(pos.add(vec2(-.5, 0)), CONTROLS_P1, 0),
@@ -1773,10 +2149,21 @@ function gameInit()
 {
     setGravity(vec2(0, -.018));
     setCameraScale(PX);
-    backgroundTile = new TileInfo(vec2(), vec2(GRID_W, BG_H).scale(PX), textureInfos[1]);
+    LEVELS.forEach((lv, i)=> lv.backgroundTile = new TileInfo(vec2(), vec2(BLD_X + lv.width + 16, BG_H).scale(PX), textureInfos[1 + i]));
+    showLevel(0);
+}
+
+// make a level current and let it smoulder behind the title
+function showLevel(index)
+{
+    engineObjectsDestroy();
+    selectLevel(index);
+    playerCount = 1;
     buildWorld();
     new FireLayer();
+    new InteractLayer();
     startFires();
+    camX = BLD_X + BLD_W/2;
 }
 
 function gameUpdate()
@@ -1785,6 +2172,8 @@ function gameUpdate()
     {
         if (keyWasPressed('Digit1') || keyWasPressed('Numpad1')) startGame(1);
         if (keyWasPressed('Digit2') || keyWasPressed('Numpad2')) startGame(2);
+        const pick = (keyWasPressed('ArrowRight') || keyWasPressed('KeyD')) - (keyWasPressed('ArrowLeft') || keyWasPressed('KeyA'));
+        pick && showLevel((levelIndex + pick + LEVELS.length) % LEVELS.length);
         updateFire(); // the building smoulders behind the title
         return;
     }
@@ -1799,11 +2188,11 @@ function gameUpdate()
     if (gameState == 'entry')
     {
         if (keyWasPressed('KeyW') || keyWasPressed('ArrowUp'))
-            entryFloor = min(FLOORS, entryFloor + 1);
+            entryIndex = min(entries.length - 1, entryIndex + 1);
         if (keyWasPressed('KeyS') || keyWasPressed('ArrowDown'))
-            entryFloor = max(0, entryFloor - 1);
+            entryIndex = max(0, entryIndex - 1);
         if (keyWasPressed('Enter') || keyWasPressed('Space'))
-            enterBuilding(entryFloor);
+            enterBuilding(entries[entryIndex]);
     }
     else if (gameState == 'play')
     {
@@ -1891,6 +2280,38 @@ function gameRender()
             drawRect(vec2(BLD_X + c, l.y - .5), vec2(1/PX, 1), palColor('m'));
     }
 
+    // truck light bar
+    const on = (time*4|0) % 2;
+    drawRect(vec2(TRUCK_X + 2.6, 5.9), vec2(.5, .25), palColor(on ? 'r' : 'R'));
+    drawRect(vec2(TRUCK_X + 3.4, 5.9), vec2(.5, .25), palColor(on ? 'B' : 'b'));
+    // roof antenna beacon
+    (time*1.5|0) % 2 && drawRect(vec2(BLD_X + level.antenna/PX + 1/16, floorY(FLOORS) + 5.1), vec2(.25), palColor('r'));
+
+    escalators.forEach(drawEscalator);
+
+    // aerial ladder with its landings, and ladders dropped from ledges
+    for (const l of ladders)
+    {
+        if (!l.outside && !l.dropped) continue;
+        const h = l.y1 + 1 - l.y0;
+        for (const dx of [1, 6])
+            drawRect(vec2(l.x + (dx + .5)/PX, l.y0 + h/2), vec2(1/PX, h), palColor('s'));
+        for (let y = l.y0 + 3/PX; y < l.y1 + 1; y += 4/PX)
+            drawRect(vec2(l.x + .5, y + .5/PX), vec2(4/PX, 1/PX), palColor('S'));
+        if (!l.outside) continue;
+        for (let f = 1; f <= FLOORS; ++f)
+        {
+            drawRect(vec2(l.x + 1, floorY(f) - 1.5/PX), vec2(2, 3/PX), palColor('d'));
+            drawRect(vec2(l.x + 1, floorY(f) - .5/PX), vec2(2, 1/PX), palColor('S'));
+        }
+    }
+
+}
+
+// interactables drawn on top of the fire so they stay readable when engulfed:
+// barricades, levers, doors and debris, refill signs and gauges
+function drawInteractables()
+{
     // 2P steel barricades; once open, only the rolled up drum under the ceiling is left
     for (const r of rubbles)
     {
@@ -1914,38 +2335,6 @@ function gameRender()
             drawSprite('boost', vec2(l.boostX, floorY(l.f) + 2.3 + (time*3 % 1) * .25));
     }
 
-    // truck light bar
-    const on = (time*4|0) % 2;
-    drawRect(vec2(TRUCK_X + 2.6, 5.9), vec2(.5, .25), palColor(on ? 'r' : 'R'));
-    drawRect(vec2(TRUCK_X + 3.4, 5.9), vec2(.5, .25), palColor(on ? 'B' : 'b'));
-    // roof antenna beacon
-    (time*1.5|0) % 2 && drawRect(vec2(BLD_X + 380/PX + 1/16, floorY(FLOORS) + 5.1), vec2(.25), palColor('r'));
-
-    // standpipe gauges
-    for (const p of standpipes)
-    {
-        const pct = p.reserve / p.max;
-        drawRect(vec2(p.x + .75, p.y + 1.6), vec2(3, 18).scale(1/PX), palColor('k'));
-        pct > 0 && drawRect(vec2(p.x + .75, p.y + 1.6 - (1 - pct) * 8/PX), vec2(1/PX, 16*pct/PX), palColor('c'));
-    }
-
-    // aerial ladder with its landings, and ladders dropped from ledges
-    for (const l of ladders)
-    {
-        if (!l.outside && !l.dropped) continue;
-        const h = l.y1 + 1 - l.y0;
-        for (const dx of [1, 6])
-            drawRect(vec2(l.x + (dx + .5)/PX, l.y0 + h/2), vec2(1/PX, h), palColor('s'));
-        for (let y = l.y0 + 3/PX; y < l.y1 + 1; y += 4/PX)
-            drawRect(vec2(l.x + .5, y + .5/PX), vec2(4/PX, 1/PX), palColor('S'));
-        if (!l.outside) continue;
-        for (let f = 1; f <= FLOORS; ++f)
-        {
-            drawRect(vec2(l.x + 1, floorY(f) - 1.5/PX), vec2(2, 3/PX), palColor('d'));
-            drawRect(vec2(l.x + 1, floorY(f) - .5/PX), vec2(2, 1/PX), palColor('S'));
-        }
-    }
-
     // doors, windows, debris, roof hatch
     for (const b of breakables)
     {
@@ -1962,6 +2351,14 @@ function gameRender()
             drawRect(vec2(pos.x - 2/PX + j/PX + i*2/PX, b.y + (14 - i*5 - j) / PX), vec2(1/PX), palColor('k'));
     }
 
+    // standpipe gauges
+    for (const p of standpipes)
+    {
+        const pct = p.reserve / p.max;
+        drawRect(vec2(p.x + .75, p.y + 1.6), vec2(3, 18).scale(1/PX), palColor('k'));
+        pct > 0 && drawRect(vec2(p.x + .75, p.y + 1.6 - (1 - pct) * 8/PX), vec2(1/PX, 16*pct/PX), palColor('c'));
+    }
+
     // refill signs: water drop plates, lit up while anyone runs low on water
     const thirsty = players.some(p=> p.water < 30 && p.downTimer <= 0) && (time*4|0) % 2;
     const sign = thirsty ? 'waterSignLit' : 'waterSign';
@@ -1971,6 +2368,27 @@ function gameRender()
         p.reserve > 0 ?
             drawSprite(sign, vec2(p.x - 1.4, p.y + 2.2)) :
             drawSprite('waterSign', vec2(p.x - 1.4, p.y + 2.2), false, rgb(.4,.4,.45));
+}
+
+// a diagonal escalator one pixel at a time: truss, step edge, glass, handrail;
+// a broken one ends in a ragged stub where its bottom steps fell away
+function drawEscalator(l)
+{
+    for (let i = 0; i <= (l.y1 - l.y0) * PX; ++i)
+    {
+        const y = l.y0 + i/PX, x = Math.round(escalatorX(l, y) * PX) / PX;
+        const w = Math.ceil(abs(l.slope)) / PX; // shallow runs advance several pixels per rise
+        drawRect(vec2(x, y - 4/PX), vec2(w, 7/PX), palColor('e'));
+        drawRect(vec2(x, y - .5/PX), vec2(w, 1/PX), palColor(i % 3 ? 'S' : 'd'));
+        drawRect(vec2(x, y + 6/PX), vec2(w, 9/PX), palColor('c', .1));
+        drawRect(vec2(x, y + 11/PX), vec2(w, 1/PX), palColor('k'));
+    }
+    if (l.broken)
+    for (let i = 0; i < 6; ++i)
+    {
+        const x = Math.round(escalatorX(l, l.y0) * PX) / PX - Math.sign(l.slope) * i/PX;
+        drawRect(vec2(x, l.y0 - (5 + (i*7 % 5))/PX), vec2(1/PX, 3/PX), palColor(i % 2 ? 'D' : 'e'));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2026,9 +2444,10 @@ function gameRenderPost()
         uiRect(0, 0, W, H, rgb(.05,.04,.09,.72));
         uiText('FIRE BRIGADE', W/2 + 1, 52, 3, palColor('o'));
         uiText('PUT OUT EVERY FIRE BEFORE THE BUILDING BURNS DOWN', W/2, 80, 1, palColor('T'));
-        uiPanel(W/2 - 130, 100, 260, 34);
-        uiText('1  SOLO', W/2 - 60, 117, 1, palColor('Y'));
-        uiText('2  TWO PLAYERS', W/2 + 50, 117, 1, palColor('Y'));
+        uiText('<  ' + level.name + '  >', W/2, 98, 1, palColor('w'));
+        uiPanel(W/2 - 130, 108, 260, 26);
+        uiText('1  SOLO', W/2 - 60, 121, 1, palColor('Y'));
+        uiText('2  TWO PLAYERS', W/2 + 50, 121, 1, palColor('Y'));
         uiText('P1  WASD      P2  ARROWS', W/2, 156, 1, palColor('T'));
         uiText('UP TO JUMP OR CLIMB LADDERS', W/2, 170, 1, palColor('T'));
         uiText('GET CLOSE TO FIRE AND THE HOSE SPRAYS', W/2, 194, 1, palColor('S'));
@@ -2087,7 +2506,7 @@ function drawEntryScreen()
     uiText('CHOOSE YOUR WAY IN', W/2 + 1, 34, 2, palColor('o'));
 
     // big minimap with the options lined up beside their floors
-    const s = 3, mx = W/2 - 30, my = 84, mh = FLOORS * FLOOR_H * s;
+    const s = BLD_W > 70 ? 2 : 3, mx = W/2 - BLD_W * s / 2 + 50, my = 84, mh = FLOORS * FLOOR_H * s;
     drawMinimap(s, mx, my);
     const surface = (f)=> my + (FLOORS - f) * FLOOR_H * s - s; // floor surface (FLOORS = roof)
     const roofY = my - 3 - s;
@@ -2095,25 +2514,26 @@ function drawEntryScreen()
 
     const blink = (time*4|0) % 2;
     uiRect(mx - 3 - 2*s, roofY, s, surface(0) - roofY, palColor('s')); // aerial ladder, street to roof
-    for (let f = 0; f <= FLOORS; ++f)
+    entries.forEach((e, i)=>
     {
-        const selected = f == entryFloor;
-        const y = f == FLOORS ? roofY - 6 : surface(f) - 7;
-        uiText((selected ? '> ' : '') + entryName(f), mx - 16, y, 1, palColor(selected ? 'Y' : 'S'), 'right');
-    }
+        const selected = i == entryIndex;
+        const y = e.f == FLOORS ? roofY - 6 : e.right ? surface(0) + 6 : surface(e.f) - 7;
+        uiText((selected ? '> ' : '') + e.name, mx - 16, y, 1, palColor(selected ? 'Y' : 'S'), 'right');
+    });
 
     // highlight the entry point
-    const f = entryFloor;
-    if (f == FLOORS)
-        blink && uiRect(mx + (ladderSpots[FLOORS-1].x - BLD_X) * s, roofY - s, s, s, palColor('Y'));
-    else
+    const e = entries[entryIndex];
+    if (e.f == FLOORS)
     {
-        blink && uiRect(mx, surface(f) - 3*s, s, 3*s, palColor('Y'));
+        const [c0, c1] = atrium ? atrium.skylight : [ladderSpots[FLOORS-1].x - BLD_X, ladderSpots[FLOORS-1].x - BLD_X + 1];
+        blink && uiRect(mx + c0 * s, roofY - s, (c1 - c0) * s, s, palColor('Y'));
     }
+    else
+        blink && uiRect(mx + (e.right ? BLD_W - 1 : 0) * s, surface(e.f) - 3*s, s, 3*s, palColor('Y'));
 
     uiRect(mx + BLD_W * s - 58, my + mh + 6, 2*s, 2*s, palColor('c'));
     uiText('REFILL', mx + BLD_W * s, my + mh + 9, 1, palColor('S'), 'right');
-    uiText(entryInfo(f), W/2, my + mh + 22, 1, palColor('T'));
+    uiText(e.info, W/2, my + mh + 22, 1, palColor('T'));
     uiText('UP DOWN  CHOOSE     ENTER  GO     ESC  BACK', W/2, my + mh + 42, 1, palColor('S'));
 }
 
@@ -2125,11 +2545,17 @@ function drawMinimap(s=1, ox=screenW - BLD_W - 8, oy=screenH - FLOORS*FLOOR_H - 
     for (let f = 0; f < FLOORS; ++f)
     {
         const fy = oy + (mh - (f+1) * FLOOR_H) * s;
-        uiRect(ox, fy + (FLOOR_H - 1) * s, mw * s, s, palColor('d'));
+        if (atrium)
+            for (let c = 0; c < BLD_W; ++c)
+                f && atriumOpen(f, c) || uiRect(ox + c*s, fy + (FLOOR_H - 1) * s, s, s, palColor('d'));
+        else
+            uiRect(ox, fy + (FLOOR_H - 1) * s, mw * s, s, palColor('d'));
         for (let c = 0; c < BLD_W; ++c)
         {
             const cell = fireGrid[f][c];
-            if (cell.rubble)
+            if (cell.atrium)
+                continue;
+            else if (cell.rubble)
                 uiRect(ox + c*s, fy + 2*s, s, 3*s, palColor('n'));
             else if (cell.wall)
                 uiRect(ox + c*s, fy, s, (FLOOR_H - 1) * s, palColor('S'));
@@ -2170,4 +2596,5 @@ function drawMinimap(s=1, ox=screenW - BLD_W - 8, oy=screenH - FLOORS*FLOOR_H - 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [buildSpriteSheet(), buildBackground()]);
+engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost,
+    [buildSpriteSheet(), ...LEVELS.map((lv, i)=> (selectLevel(i), buildBackground()))]);
