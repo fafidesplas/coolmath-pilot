@@ -5,10 +5,12 @@
     - QB: scramble behind the line and don't get sacked (any X touching you
       while you hold the ball). Action = throw; the pass leads your receiver
     - Receiver (WR): shake the cornerbacks. They jam you when they touch you,
-      so shove them off (action, beat-em-up style) and get open. With the ball
-      in the air, action = jump: time it so you're up top when it lands to
-      out-reach the defender (one jump per pass, no steering mid-air). The
-      defensive backs go up for it too, with shakier timing
+      so juke them (below) to break free and get open. A rusher in the QB's
+      throwing lane can get a hand up and bat the pass down
+    - Juke (WR, or the QB with the ball): push one way then the opposite way
+      within .25s. You cut hard the new way, and nearby defenders slip and
+      fall. It breaks ankles hardest when the defender is close, moving fast
+      and running the way you faked. A juke always shakes off a WR's jammer
     - Catch it and the LOS jumps to the catch spot, the roles swap (the catcher
       is the new QB) and everyone resets. 4 downs to gain 10 yards: reach the
       first-down line for a fresh set, every other play (short catches included)
@@ -20,7 +22,7 @@
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
       scrambles and throws only when you call for it (action while no X is on you), so
       call too late and it gets sacked; as WR it runs a random route drawn
-      dashed on the board and shoves its way free) or 2 players
+      dashed on the board and jukes its way free) or 2 players
     - P1 = WASD + Space/F, P2 = arrows + Enter/Shift (solo: either set). Touch:
       each player owns half the screen (solo: all of it), drag to run, quick
       tap = action
@@ -38,7 +40,6 @@ const FIELD_HALF = 18;   // sideline x (1 world unit = 1 yard)
 const VIEW_W = 40, VIEW_H = 28;
 const START_LOS = 20;
 const BODY_R = .6;
-const JUMP_TIME = .55;  // seconds a WR's jump stays off the ground
 
 // marker inks
 const BOARD = '#f7f7f2';
@@ -57,6 +58,7 @@ const sndThrow    = new SoundGenerator({frequency:300, release:.15, slide:.6, no
 const sndCatch    = new SoundGenerator({frequency:900, release:.12, pitchJump:600, pitchJumpTime:.05});
 const sndPow      = new SoundGenerator({frequency:220, release:.18, slide:-.4, noise:.1});
 const sndWhiff    = new SoundGenerator({frequency:500, release:.08, slide:-1, noise:.5, volume:.3});
+const sndJuke     = new SoundGenerator({frequency:1300, release:.07, slide:.9, volume:.3}); // sneaker squeak
 const sndSack     = new SoundGenerator({frequency:90, sustain:.15, release:.35, noise:5, bitCrush:.5, sustainVolume:.5, delay:.05});
 const sndNope     = new SoundGenerator({frequency:200, release:.3, slide:-.5, volume:.6});
 const sndPick     = new SoundGenerator({frequency:420, release:.6, slide:-.6, repeatTime:.1, volume:.6});
@@ -104,6 +106,7 @@ const playerInput = [{dir:vec2(), pressed:false}, {dir:vec2(), pressed:false}];
 const fingers = new Map;            // touch id -> {player, start, cur, t0}
 const fingerTaps = [false, false];
 let tappedHalf = -1;                // screen half of the last quick tap (menus)
+const flicks = [{cur: vec2(), last: vec2(), t: -9}, {cur: vec2(), last: vec2(), t: -9}]; // juke detection
 let usedTouch = false;
 
 function touchToCanvas(t)
@@ -182,8 +185,24 @@ function readInputs()
         }
         playerInput[i].dir = dir.length() > 1 ? dir.normalize() : dir;
         playerInput[i].pressed = keyActs[i] || fingerTaps[i];
+        playerInput[i].juke = detectJuke(i, dir);
         fingerTaps[i] = false;
     }
+}
+
+// a fresh push one way (snapped to 8 directions) and then the opposite way within .25s is a juke.
+// Returns the direction of the cut, or undefined
+function detectJuke(i, dir)
+{
+    const f = flicks[i];
+    const d8 = dir.length() > .5 ? vec2().setAngle(round(dir.angle() / (PI / 4)) * PI / 4) : vec2();
+    if (d8.distance(f.cur) < .1) return;
+    f.cur = d8;
+    if (!d8.length()) return;
+    const juke = time - f.t < .25 && d8.dot(f.last) < -.9;
+    f.last = d8;
+    f.t = juke ? -9 : time; // a juke's cut doesn't count as the fake for another one
+    return juke ? d8 : undefined;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -296,10 +315,7 @@ function cpuInput(h)
 
     if (gameState == 'air')
     {
-        // run under it and go up so the jump peaks as it lands
         out.dir = ball.to.subtract(h.pos).clampLength(1);
-        const left = ball.thrownAt + ball.duration - time;
-        out.pressed = left < JUMP_TIME / 2 + ai.jumpEarly && h.pos.distance(ball.to) < 3;
         return out;
     }
 
@@ -319,13 +335,13 @@ function cpuInput(h)
         out.dir = dir.length() > .2 ? dir.clampLength(1) : vec2();
     }
 
-    // shove a defender off after a short reaction
-    const crowded = nearestCover(h.pos).dist < 1.7;
-    ai.shoveTime = crowded ? ai.shoveTime + timeDelta : 0;
-    if (ai.shoveTime > ai.reaction)
+    // juke a crowding defender after a short reaction: cut straight away from them
+    const {defender, dist} = nearestCover(h.pos);
+    ai.jukeTime = dist < 1.7 ? ai.jukeTime + timeDelta : 0;
+    if (ai.jukeTime > ai.reaction)
     {
-        out.pressed = true;
-        ai.shoveTime = 0;
+        out.juke = h.pos.subtract(defender.pos).normalize();
+        ai.jukeTime = 0;
         ai.reaction = rand(.15, .4);
     }
     return out;
@@ -346,25 +362,6 @@ class Body extends EngineObject
         this.trail = [pos];
         this.trailTimer = 0;
         this.trailMax = 30;
-        this.jumpT = -1;        // time since the jump, -1 before it
-    }
-    // how far off the ground: 0 standing, 1 at the top of the jump
-    get up() { return this.jumpT >= 0 && this.jumpT < JUMP_TIME ? Math.sin(PI * this.jumpT / JUMP_TIME) : 0; }
-    jump()
-    {
-        if (this.jumpT >= 0) return; // one jump per pass
-        this.jumpT = 0;
-        sndWhiff.play(this.pos);
-        addEffect('hup!', this.pos.add(vec2(0, 1.6)), this.ink, .7);
-    }
-    // jumping: a shadow stays on the ground, the body lifts and swells toward the viewer.
-    // Returns where to draw the body and how much bigger
-    drawJump()
-    {
-        const up = this.up;
-        if (up)
-            markerCircle(this.pos, BODY_R * .8, INK, .3, this.seed + 3, .15);
-        return {p: this.pos.add(vec2(0, up * .9)), scale: 1 + up * .4};
     }
     update()
     {
@@ -374,7 +371,6 @@ class Body extends EngineObject
             return;
         }
         this.stun = max(0, this.stun - timeDelta);
-        if (this.jumpT >= 0) this.jumpT += timeDelta;
         this.think();
         this.pos = this.pos.add(this.vel.scale(timeDelta));
         this.pos.x = clamp(this.pos.x, -FIELD_HALF + BODY_R, FIELD_HALF - BODY_R);
@@ -409,7 +405,7 @@ class Human extends Body
         super(pos, PLAYER_INK[index]);
         this.index = index;
         this.hasBall = false;
-        this.shoveCooldown = 0;
+        this.jukeCooldown = 0;
         this.jammed = false;
         this.trailMax = 45;
     }
@@ -417,9 +413,10 @@ class Human extends Body
     think()
     {
         const input = playerInput[this.index];
-        this.shoveCooldown -= timeDelta;
+        this.jukeCooldown -= timeDelta;
         if (this.stunned()) return;
-        if (this.up) return; // mid-air: momentum carries you, no steering until you land
+        if (input.juke && (!this.isQB() || this.hasBall))
+            this.juke(input.juke);
 
         let speed = this.isQB() ? 8.5 : 10;
         this.jammed = !this.isQB() && coverage.some(d => !d.stun && d.pos.distance(this.pos) < BODY_R * 2 + .15);
@@ -439,60 +436,40 @@ class Human extends Body
                 throwBall(this);
             else if (gameState == 'live' && isCPU(qbIndex) && qb().hasBall && !this.jammed)
                 callForBall(this);
-            else if (gameState == 'air' && !this.isQB())
-                this.jump();
-            else if (!this.hasBall && !(gameState == 'air' && tightCoverage())) // no push-offs with the ball in the air
-                this.shove();
         }
     }
-    shove()
+    juke(cut)
     {
-        if (this.shoveCooldown > 0) return;
-        const tight = tightCoverage();
-        this.shoveCooldown = tight ? 1.3 : .8;
-        const reach = tight ? 2 : 2.5;
-        let hit = 0;
-        for (const d of [...rushers, ...coverage])
+        if (this.jukeCooldown > 0) return;
+        this.jukeCooldown = .8;
+        this.vel = cut.scale(this.isQB() ? 9 : 11); // plant and cut: full speed the new way, right now
+        sndJuke.play(this.pos);
+
+        // ankle-breaking hits harder the closer the defender, the faster they're moving, and the more
+        // their run lines up with the cut, most of all when they bit on the fake and are running the other way
+        // A WR's jammer, in contact, always gets shaken loose
+        for (const d of this.isQB() ? rushers : coverage)
         {
-            const offset = d.pos.subtract(this.pos);
-            if (offset.length() > reach) continue;
-            const push = offset.length() > .01 ? offset.normalize() : vec2(0, 1);
-            d.vel = push.scale(tight ? 9 : 15);
-            // tight coverage: each shove this play wears off quicker, they brace for the next one
-            d.stun = tight ? [.6, .35, .2][min(d.shoved = (d.shoved || 0) + 1, 3) - 1] : 1.1;
+            const dist = d.pos.distance(this.pos), speed = d.vel.length();
+            if (d.stun || dist > 3) continue;
+            const along = speed > .5 ? d.vel.dot(cut) / speed : 0;
+            let power = (1 - dist / 3) * min(1, speed / 8) * (along < 0 ? -along : along * .4);
+            if (!this.isQB() && dist < BODY_R * 2 + .15)
+                power = max(power, .3);
+            if (power < .1) continue;
+            d.vel = d.vel.scale(1.3); // committed: their momentum carries them on past, then down they go
+            d.stun = .4 + 1.4 * power;
             d.spin = 0;
-            ++hit;
+            const broke = power > .45;
+            addEffect(broke ? 'ANKLES!' : 'juked!', d.pos.add(vec2(0, 1.6)), INK_GREEN, broke ? 1.4 : .9, broke);
         }
-        const fxPos = this.pos.add(this.vel.clampLength(1));
-        if (hit)
-        {
-            sndPow.play(this.pos);
-            addScreenShake(.25, .2);
-            addEffect(['POW!', 'BAM!', 'WHAM!', 'OOF!'][randInt(4)], fxPos.add(vec2(0, 1.4)), INK_GREEN, 1.5, true);
-        }
-        else
-        {
-            sndWhiff.play(this.pos);
-            addEffect('swish', fxPos.add(vec2(0, 1.2)), this.ink, .9);
-        }
-        this.shoveFx = .18;
     }
     render()
     {
-        if (this.shoveFx > 0)
-        {
-            this.shoveFx -= timeDelta;
-            markerCircle(this.pos, 2.5, this.ink, .08, this.seed + 9, .35);
-        }
-        const {p, scale} = this.drawJump();
-        markerCircle(p, BODY_R * scale, this.ink, .17, this.seed);
+        const p = this.pos;
+        markerCircle(p, BODY_R, this.ink, .17, this.seed);
         markerText(this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
         markerText(this.isQB() ? 'QB' : 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
-        if (gameState == 'air' && !this.isQB() && !this.ai && this.jumpT < 0)
-        {
-            const key = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[this.index];
-            markerText(key + ': JUMP', p.add(vec2(0, -1.2)), .7, this.ink, .6 + .4 * Math.sin(time * 10));
-        }
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
@@ -602,23 +579,18 @@ class Cover extends Body
         this.role = role;
         this.half = half;       // two-deep safeties each own one half of the field
         this.react = rand(.2, .35);
-        this.jumpEarly = rand(-.2, .2); // defenders time their jump worse than receivers
     }
     think()
     {
         if (this.stunned()) return;
-        if (this.up) return; // mid-air: momentum carries them
         const diff = difficulty();
         const w = wr(), tight = tightCoverage();
         let target, speed = (tight ? 9.2 : 8.4) * diff;
         if (gameState == 'air' && time - ball.thrownAt > this.react)
         {
-            // ball hawk: break on the landing spot and go up for it if they get there
+            // ball hawk: break on the landing spot
             target = ball.to;
             speed = 9 * diff;
-            const left = ball.thrownAt + ball.duration - time;
-            if (left < JUMP_TIME / 2 + this.jumpEarly && this.pos.distance(ball.to) < 3)
-                this.jump();
         }
         else if (this.role == 'safety')
         {
@@ -653,9 +625,8 @@ class Cover extends Body
     }
     render()
     {
-        const {p, scale} = this.drawJump();
-        markerX(p, BODY_R * .9 * scale, INK, .17, this.seed, this.stun ? time * 12 : 0);
-        markerText(this.role == 'safety' ? 'S' : 'CB', p.add(vec2(0, 1.05)), .75, INK);
+        markerX(this.pos, BODY_R * .9, INK, .17, this.seed, this.stun ? time * 12 : 0);
+        markerText(this.role == 'safety' ? 'S' : 'CB', this.pos.add(vec2(0, 1.05)), .75, INK);
         if (this.stun)
             drawDizzy(this.pos.add(vec2(0, 1.6)));
     }
@@ -698,7 +669,7 @@ function setupPlay()
     callDefense(side);
 
     if (numPlayers == 1)
-        humans[1].ai = {route: makeRoute(humans[1].pos), called: false, shoveTime: 0, reaction: rand(.15, .4), jumpEarly: rand(-.12, .12)};
+        humans[1].ai = {route: makeRoute(humans[1].pos), called: false, jukeTime: 0, reaction: rand(.15, .4)};
 
     for (const b of allBodies())
         b.trail = [b.pos.copy()];
@@ -719,7 +690,7 @@ function callDefense(side)
     if (rush >= 5)
         rushers.push(new Rusher(vec2(-side * 3, los + 5), 1.2, 'LB')); // the 5th rusher blitzes a beat late
 
-    // man vs a human WR presses: the CB lines up in the receiver's face, so they have to shove free.
+    // man vs a human WR presses: the CB lines up in the receiver's face, so they have to juke free.
     // In zone the CB bails to its spot instead
     const cbDepth = defense.zone ? 5 : tightCoverage() ? 1.1 : 3.5;
     coverage = [new Cover(vec2(side * 12, los + cbDepth), 'cb')];
@@ -808,8 +779,30 @@ function throwBall(thrower)
         to = from.add(to.subtract(from).normalize(46));
     to.x = clamp(to.x, -FIELD_HALF + .5, FIELD_HALF - .5);
 
+    // a rusher standing in the throwing lane may get a hand up on it: it pops loose
+    // behind them. The closer they are to the middle of the lane, the likelier the tip
+    const lane = to.subtract(from).normalize();
+    let batter;
+    for (const r of rushers)
+    {
+        if (r.stun || !r.active) continue;
+        const rel = r.pos.subtract(from), along = rel.dot(lane), off = abs(rel.cross(lane));
+        if (along < .3 || along > 3.5 || off > 1.3) continue;
+        if (rand() < .6 * (1 - off / 1.3))
+        {
+            batter = r;
+            to = r.pos.add(lane.scale(rand(1, 2.5))).add(randInCircle(1.5));
+            to.x = clamp(to.x, -FIELD_HALF + .5, FIELD_HALF - .5);
+            sndPow.play(r.pos);
+            addEffect('SWAT!', r.pos.add(vec2(0, 1.8)), INK, 1.4, true);
+            break;
+        }
+    }
+
     const dist = from.distance(to);
-    ball = {from, to, thrownAt: time, duration: dist / 22 + .25, peak: dist * .16 + 1, wobble: pressure > .2};
+    ball = batter ?
+        {from, to, batted: true, thrownAt: time, duration: .6, peak: 1.4, wobble: true} : // a tip floats off end over end
+        {from, to, thrownAt: time, duration: dist / 22 + .25, peak: dist * .16 + 1, wobble: pressure > .2};
     thrower.hasBall = false;
     gameState = 'air';
     sndThrow.play(thrower.pos);
@@ -825,15 +818,15 @@ function ballPos(t)
 
 function resolvePass()
 {
+    if (ball.batted)
+        return failedPlay('BATTED DOWN!', 'tipped at the line');
     const spot = ball.to;
     const w = wr();
-    // a well-timed jump is up to a yard more reach, for the receiver and defenders alike
-    const up = w.stun ? 0 : w.up;
-    const dr = w.stun ? 1e9 : w.pos.distance(spot) - up;
+    const dr = w.stun ? 1e9 : w.pos.distance(spot);
     let defender, dd = 1e9;
     for (const d of [...coverage, ...rushers])
     {
-        const dist = d.pos.distance(spot) - d.up;
+        const dist = d.pos.distance(spot);
         if (!d.stun && dist < dd) { dd = dist; defender = d; }
     }
 
@@ -843,7 +836,7 @@ function resolvePass()
     if (dd < 1.6 && dd < dr)
         return failedPlay('BROKEN UP!', 'pass defended');
     // tight coverage contests the catch: a defender on the receiver's hip can knock it loose
-    if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < (.25 + .6 * (1.5 - dd) / 1.5) * (1 - up))
+    if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
         return failedPlay('BROKEN UP!', 'contested at the catch');
     if (dr < 1.7)
     {
@@ -857,8 +850,6 @@ function resolvePass()
         ++completions;
         sndCatch.play(w.pos);
         addEffect('CATCH!', w.pos.add(vec2(0, 2)), INK_GREEN, 1.8, true);
-        if (up > .5)
-            addEffect('UP TOP!', w.pos.add(vec2(-2.5, 1)), w.ink, 1.1);
         const converted = firstDown - los < .5;
         if (converted)
         {
@@ -1245,7 +1236,7 @@ function drawHUD()
             [
                 usedTouch ? 'drag anywhere to run, quick tap = action' : 'WASD / ARROWS to run, SPACE / ENTER = action',
                 usedTouch ? 'QB: drag to draw the CPU\'s route, tap to snap' : 'QB: drag the mouse to draw the CPU\'s route',
-                'WR: shove the X\'s off you, call for the ball before the sack',
+                'WR: juke the X\'s off you, call for the ball before the sack',
                 'catch it and you swap: catcher plays QB',
             ] :
             usedTouch ?
@@ -1258,7 +1249,8 @@ function drawHUD()
                 'P2: ARROWS to run, ENTER = action',
             ];
             if (numPlayers == 2)
-                lines.push('QB action = throw (it leads your WR)', 'WR action = shove the X\'s off you');
+                lines.push('QB action = throw (it leads your WR)');
+            lines.push(usedTouch ? 'flick back and forth = juke' : 'tap opposite directions fast = juke');
             lines.push('don\'t get sacked, don\'t get picked');
             const top = H * .16 + s * 2.8;
             const card = ctxBegin(BOARD, 0);
@@ -1399,7 +1391,7 @@ function gameUpdate()
     }
     else if (gameState == 'presnap' && stateTimer.elapsed() && playerInput[snapper()].pressed)
     {
-        playerInput[snapper()].pressed = false; // the snap press isn't also a throw or shove
+        playerInput[snapper()].pressed = false; // the snap press isn't also a throw or a call for the ball
         snap();
     }
     else if (gameState == 'result' && stateTimer.elapsed())
