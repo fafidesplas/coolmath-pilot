@@ -10,7 +10,9 @@
     - Juke (WR, or the QB with the ball): push one way then the opposite way
       within .25s. You cut hard the new way, and nearby defenders slip and
       fall. It breaks ankles hardest when the defender is close, moving fast
-      and running the way you faked. A juke always shakes off a WR's jammer
+      and running the way you faked. A juke always shakes off a WR's jammer.
+      Drawing the CPU WR's route, any acute corner (a zigzag, a curl's
+      turn back) is a drawn juke: the WR jukes as it makes that cut
     - Catch it and the LOS jumps to the catch spot, the roles swap (the catcher
       is the new QB) and everyone resets. 4 downs to gain 10 yards: reach the
       first-down line for a fresh set, every other play (short catches included)
@@ -40,6 +42,7 @@ const FIELD_HALF = 18;   // sideline x (1 world unit = 1 yard)
 const VIEW_W = 40, VIEW_H = 28;
 const START_LOS = 20;
 const BODY_R = .6;
+const JAM = false;      // a coverage defender touching the WR slows them down (and the CPU QB won't throw to them)
 
 // marker inks
 const BOARD = '#f7f7f2';
@@ -253,25 +256,84 @@ function drawRouteUpdate()
     if (!penPos)
         return routePen = undefined;
 
-    const route = humans[1].ai.route, points = route.points, last = points[points.length - 1];
+    const route = humans[1].ai.route, points = route.points;
     const p = vec2(clamp(penPos.x, -FIELD_HALF + 1, FIELD_HALF - 1), penPos.y);
-    if (!last)
+    if (!points.length)
         points.push(p);
-    else if (p.distance(last) >= ROUTE_STEP && route.length < ROUTE_MAX_LEN)
+    route.raw ??= [{pos: points[0], wp: 1}];
+    if (p.distance(route.raw[route.raw.length - 1].pos) < .15) return;
+    extendRoute(route, p);
+    route.raw.push({pos: p, wp: points.length});
+    findDrawnJuke(route);
+}
+
+function extendRoute(route, p)
+{
+    // resample at even steps so a fast swipe still leaves waypoints to follow
+    const points = route.points, last = points[points.length - 1], dist = p.distance(last);
+    if (dist < ROUTE_STEP || route.length >= ROUTE_MAX_LEN) return;
+    const steps = min(dist / ROUTE_STEP | 0, (ROUTE_MAX_LEN - route.length) / ROUTE_STEP | 0);
+    const dir = p.subtract(last).normalize(ROUTE_STEP);
+    for (let i = 1; i <= steps; ++i)
+        points.push(last.add(dir.scale(i)));
+    route.length += steps * ROUTE_STEP;
+}
+
+// drawn jukes are read off the raw pen stroke (route.raw: samples since the leg began, each with how many
+// waypoints existed then), not the waypoints, which round off a small zigzag's tip. A leg runs until the
+// stroke doubles back from its tip (the sample farthest along it) or bends off its straight line.
+// Once the pen is a yard past that corner, an acute angle (under 90°) is a juke
+function findDrawnJuke(route)
+{
+    const raw = route.raw, start = raw[0].pos, pen = raw[raw.length - 1].pos;
+    if (route.legFrom && pen.distance(start) >= 1)
     {
-        // resample at even steps so a fast swipe still leaves waypoints to follow
-        const steps = min(p.distance(last) / ROUTE_STEP | 0, (ROUTE_MAX_LEN - route.length) / ROUTE_STEP | 0);
-        const dir = p.subtract(last).normalize(ROUTE_STEP);
-        for (let i = 1; i <= steps; ++i)
-            points.push(last.add(dir.scale(i)));
-        route.length += steps * ROUTE_STEP;
+        const back = route.legFrom.subtract(start), out = pen.subtract(start);
+        if (back.dot(out) > 0 && back.length() >= .6)
+            addDrawnJuke(route, raw[0]);
+        route.legFrom = undefined;
     }
+
+    let tip = 0;
+    raw.forEach((r, i) => { if (r.pos.distance(start) > raw[tip].pos.distance(start)) tip = i; });
+    let end = tip < raw.length - 1 && pen.distance(raw[tip].pos) >= .6 ? tip : 0;
+    if (!end)
+    {
+        const chord = pen.subtract(start).normalize();
+        let most = .5;
+        raw.forEach((r, i) =>
+        {
+            const off = abs(r.pos.subtract(start).cross(chord));
+            if (off > most) { most = off; end = i; }
+        });
+    }
+    if (end)
+    {
+        route.legFrom = start;
+        route.raw = raw.slice(end);
+    }
+}
+
+function addDrawnJuke(route, tip)
+{
+    // swap the waypoints laid since the tip for one right on it, mark it, then pick the stroke back up
+    const points = route.points;
+    points.length = tip.wp;
+    if (tip.pos.distance(points[points.length - 1]) > .3)
+        points.push(tip.pos.copy());
+    route.jukes.add(points.length - 1);
+    for (const r of route.raw)
+        if (r.wp > tip.wp) r.wp = points.length;
+    route.length = points.reduce((len, q, i) => i ? len + q.distance(points[i - 1]) : 0, 0);
+    extendRoute(route, route.raw[route.raw.length - 1].pos);
+    sndJuke.play(tip.pos);
 }
 
 function startDrawnRoute(pen, from)
 {
     routePen = pen;
-    humans[1].ai.route = {name: 'your route', points: from ? [vec2(clamp(from.x, -FIELD_HALF + 1, FIELD_HALF - 1), from.y)] : [], next: 0, length: 0, drawn: true};
+    humans[1].ai.route = {name: 'your route', points: from ? [vec2(clamp(from.x, -FIELD_HALF + 1, FIELD_HALF - 1), from.y)] : [], next: 0, length: 0, drawn: true,
+        jukes: new Set}; // jukes: indices of the points where a drawn juke cuts
 }
 
 function nearestCover(pos, countDazed = false)
@@ -324,7 +386,13 @@ function cpuInput(h)
     if (target)
     {
         if (h.pos.distance(target) < 1.2)
+        {
+            // reaching a drawn juke's turn: cut toward the next point
+            const after = route.points[route.next + 1];
+            if (after && route.jukes?.has(route.next))
+                out.juke = after.subtract(target).normalize();
             ++route.next;
+        }
         out.dir = target.subtract(h.pos).normalize();
     }
     else
@@ -335,10 +403,11 @@ function cpuInput(h)
         out.dir = dir.length() > .2 ? dir.clampLength(1) : vec2();
     }
 
-    // juke a crowding defender after a short reaction: cut straight away from them
+    // juke a crowding defender after a short reaction: cut straight away from them.
+    // A route you drew is the whole plan: it only jukes where you drew one
     const {defender, dist} = nearestCover(h.pos);
-    ai.jukeTime = dist < 1.7 ? ai.jukeTime + timeDelta : 0;
-    if (ai.jukeTime > ai.reaction)
+    ai.jukeTime = dist < 1.7 && !route.drawn ? ai.jukeTime + timeDelta : 0;
+    if (ai.jukeTime > ai.reaction && !out.juke) // a drawn juke this frame takes priority
     {
         out.juke = h.pos.subtract(defender.pos).normalize();
         ai.jukeTime = 0;
@@ -419,7 +488,7 @@ class Human extends Body
             this.juke(input.juke);
 
         let speed = this.isQB() ? 8.5 : 10;
-        this.jammed = !this.isQB() && coverage.some(d => !d.stun && d.pos.distance(this.pos) < BODY_R * 2 + .15);
+        this.jammed = JAM && !this.isQB() && coverage.some(d => !d.stun && d.pos.distance(this.pos) < BODY_R * 2 + .15);
         if (this.jammed) speed *= tightCoverage() ? .35 : .45;
         this.steer(input.dir.scale(speed), 60);
 
@@ -1171,6 +1240,9 @@ function drawBoard()
             const n = ahead.length;
             markerArrowHead(ahead[n - 1], ahead[n - 1].subtract(ahead[n - 2]), .7, cpu.ink, .1, .5);
         }
+        for (const i of route.jukes ?? [])
+            if (i >= route.next)
+                markerText('juke!', route.points[i].add(vec2(0, .9)), .6, cpu.ink, .8);
         if (gameState == 'presnap' && !route.drawn)
             markerText(route.name, route.points[0].add(vec2(sign(cpu.pos.x) * 2.2, 0)), .8, cpu.ink, .7);
         if (canDrawRoute() && !route.drawn)
@@ -1236,6 +1308,7 @@ function drawHUD()
             [
                 usedTouch ? 'drag anywhere to run, quick tap = action' : 'WASD / ARROWS to run, SPACE / ENTER = action',
                 usedTouch ? 'QB: drag to draw the CPU\'s route, tap to snap' : 'QB: drag the mouse to draw the CPU\'s route',
+                'zigzag in the route = a juke',
                 'WR: juke the X\'s off you, call for the ball before the sack',
                 'catch it and you swap: catcher plays QB',
             ] :
