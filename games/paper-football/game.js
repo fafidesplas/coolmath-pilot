@@ -12,7 +12,8 @@
     - Endless: the field and its yard numbers keep going. Each catch makes the
       defense a bit faster and adds bodies (4th rusher, bracket CB, blitzer)
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
-      scrambles, throws when you're open and throws it away when you're not, as WR it runs a random route drawn
+      scrambles and throws when you call for it (action while no X is on you), throwing it
+      away under pressure; as WR it runs a random route drawn
       dashed on the board and shoves its way free) or 2 players
     - P1 = WASD + Space/F, P2 = arrows + Enter/Shift (solo: either set). Touch:
       each player owns half the screen (solo: all of it), drag to run, quick
@@ -276,16 +277,11 @@ function cpuInput(h)
         const dir = away.scale(1.6).add(pocket.subtract(h.pos).scale(.3));
         out.dir = dir.length() > .2 ? dir.clampLength(1) : vec2();
 
-        // read the receiver: throw once they (and where the ball would land) are clear of coverage
-        // against tight coverage, also check nobody can run to the spot while the ball's in the air
-        const spot = passTarget(h), tight = tightCoverage();
-        const flight = throwOrigin(h).distance(spot) / 22 + .25;
-        const cushion = tight ? max(2.6, 1.6 + 9 * difficulty() * (flight - .3)) : 2.6;
-        const open = playTime > (tight ? 1.2 : .7) && nearestCover(wr().pos, tight).dist > (tight ? 2.6 + 1.5 * flight : 2.6) && nearestCover(spot, tight).dist > cushion;
-        ai.openTime = open ? ai.openTime + timeDelta : 0;
+        // you call for the ball and it comes, covered or not. Otherwise the QB only lets go
+        // when it's about to be sacked or the play drags on: thrown away, out of bounds
         const pressure = rushers.some(r => !r.stun && r.pos.distance(h.pos) < 1.9);
-        out.pressed = ai.openTime > .2 || (pressure && playTime > 1.2) || playTime > 5;
-        out.throwAway = tight && !open; // covered: sail it out of bounds rather than force it
+        out.pressed = ai.called || (pressure && playTime > 1.2) || playTime > 5;
+        out.throwAway = !ai.called;
         return out;
     }
 
@@ -409,6 +405,8 @@ class Human extends Body
         {
             if (this.hasBall && gameState == 'live')
                 throwBall(this, input.throwAway);
+            else if (gameState == 'live' && isCPU(qbIndex) && qb().hasBall && !this.jammed)
+                callForBall(this);
             else if (!this.hasBall && !(gameState == 'air' && tightCoverage())) // no push-offs with the ball in the air
                 this.shove();
         }
@@ -647,7 +645,7 @@ function setupPlay()
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
 
     if (numPlayers == 1)
-        humans[1].ai = {route: makeRoute(humans[1].pos), openTime: 0, shoveTime: 0, reaction: rand(.15, .4)};
+        humans[1].ai = {route: makeRoute(humans[1].pos), called: false, shoveTime: 0, reaction: rand(.15, .4)};
 
     for (const b of allBodies())
         b.trail = [b.pos.copy()];
@@ -679,6 +677,13 @@ function showTitle()
     numPlayers = 2; // title touches split by screen half
     resetGame();
     gameState = 'title';
+}
+
+function callForBall(receiver)
+{
+    // 1P with you at WR: the CPU QB throws on the next frame
+    qb().ai.called = true;
+    addEffect('HEY!', receiver.pos.add(vec2(0, 1.6)), receiver.ink, 1.2);
 }
 
 function snap()
@@ -1116,7 +1121,7 @@ function drawHUD()
         const how = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[who];
         const prompt = numPlayers == 2 || qbI == 0 ?
             playerName(qbI) + ' (QB): ' + how + ' to call HUT!' :
-            'YOU (WR): ' + how + ' to snap. CPU throws when you\'re open';
+            'YOU (WR): ' + how + ' to snap, ' + how + ' again to call for the ball';
         screenText(prompt, midX, H * .16 + s * 1.6, s * .9, PLAYER_INK[who], 'center', blink);
         if (plays == 0 && !humans[1].ai?.route.drawn) // the card gets out of the way of a route being drawn
         {
@@ -1124,7 +1129,7 @@ function drawHUD()
             [
                 usedTouch ? 'drag anywhere to run, quick tap = action' : 'WASD / ARROWS to run, SPACE / ENTER = action',
                 usedTouch ? 'QB: drag to draw the CPU\'s route, tap to snap' : 'QB: drag the mouse to draw the CPU\'s route',
-                'WR: shove the X\'s off you and get open',
+                'WR: shove the X\'s off you, then call for the ball',
                 'catch it and you swap: catcher plays QB',
             ] :
             usedTouch ?
