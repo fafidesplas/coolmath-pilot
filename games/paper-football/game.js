@@ -888,7 +888,7 @@ function ballPos(t)
 function resolvePass()
 {
     if (ball.batted)
-        return failedPlay('BATTED DOWN!', 'tipped at the line');
+        return ball.swatted ? failedPlay('BATTED AWAY!', 'swatted in coverage') : failedPlay('BATTED DOWN!', 'tipped at the line');
     const spot = ball.to;
     const w = wr();
     const dr = w.stun ? 1e9 : w.pos.distance(spot);
@@ -899,11 +899,14 @@ function resolvePass()
         if (!d.stun && dist < dd) { dd = dist; defender = d; }
     }
 
-    // tight coverage: a defender has to clearly beat the receiver to it for a pick, a tie is a breakup
-    if (dd < 1 && dd < dr - (tightCoverage() ? .5 : 0))
-        return endDrive('INTERCEPTED!', 'picked off by the ' + (defender.role == 'safety' ? 'safety' : 'defense'), sndPick, defender.pos);
+    // a defender there first usually just swats it away. A pick takes being right on the spot,
+    // clearly ahead of the receiver (further still against tight coverage), and a bit of luck
     if (dd < 1.6 && dd < dr)
-        return failedPlay('BROKEN UP!', 'pass defended');
+    {
+        if (dd < .8 && dd < dr - (tightCoverage() ? 1 : .5) && rand() < .4)
+            return endDrive('INTERCEPTED!', 'picked off by the ' + (defender.role == 'safety' ? 'safety' : 'defense'), sndPick, defender.pos);
+        return swatAway(defender);
+    }
     // tight coverage contests the catch: a defender on the receiver's hip can knock it loose
     if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
         return failedPlay('BROKEN UP!', 'contested at the catch');
@@ -934,6 +937,17 @@ function resolvePass()
         return;
     }
     failedPlay('INCOMPLETE', 'nobody home');
+}
+
+// the ball pops off the defender's hand and flutters down nearby before the play is called
+function swatAway(defender)
+{
+    const from = ball.to;
+    const to = defender.pos.add(randInCircle(2.5, 1.2));
+    to.x = clamp(to.x, -FIELD_HALF + .5, FIELD_HALF - .5);
+    ball = {from, to, batted: true, swatted: true, thrownAt: time, duration: .5, peak: 1.2, wobble: true};
+    sndPow.play(defender.pos);
+    addEffect('SWAT!', defender.pos.add(vec2(0, 1.8)), INK, 1.4, true);
 }
 
 function sack(rusher)
