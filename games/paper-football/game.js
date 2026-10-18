@@ -16,7 +16,8 @@
     - Catch it and run: every defender chases the ball carrier, juke them to
       break free. Tackled (any X touching you) or out at the sideline, the LOS
       jumps to that spot, the roles swap (the catcher is the new QB) and
-      everyone resets. 4 downs to gain 10 yards: reach the
+      everyone resets. With the ball, action = jump: hurdle a tackle (a diving
+      X goes right under you). One jump every 2.5s, no steering mid-air 4 downs to gain 10 yards: reach the
       first-down line for a fresh set, every other play (short catches included)
       burns a down. Running out of downs, or one interception, ends the drive
     - Endless: the field and its yard numbers keep going. Each catch makes the
@@ -66,6 +67,7 @@ const sndWhiff    = new SoundGenerator({frequency:500, release:.08, slide:-1, no
 const sndJuke     = new SoundGenerator({frequency:1300, release:.07, slide:.9, volume:.3}); // sneaker squeak
 const sndSack     = new SoundGenerator({frequency:90, sustain:.15, release:.35, noise:5, bitCrush:.5, sustainVolume:.5, delay:.05});
 const sndNope     = new SoundGenerator({frequency:200, release:.3, slide:-.5, volume:.6});
+const sndHop      = new SoundGenerator({frequency:330, release:.2, slide:.5, volume:.4});
 const sndPick     = new SoundGenerator({frequency:420, release:.6, slide:-.6, repeatTime:.1, volume:.6});
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -90,6 +92,8 @@ let saveData = readSaveData('chalkTalk', {best:0, longPass:0, longRec:0});
 let ball;                  // pass in the air
 let catchY = 0;            // where the ball carrier caught it, for yards after the catch
 let catchTime = 0;
+const HURDLE_TIME = .5;      // seconds the ball carrier is off the ground
+const HURDLE_COOLDOWN = 2.5; // seconds from one jump to the next
 const TACKLE_GRACE = .5;   // a beat to tuck the ball after the catch: time to juke the closest defender
 let defense = {zone: false, side: 1}; // this play's call: zone coverage or man, and the WR's side
 let camY = START_LOS + 7;
@@ -446,7 +450,10 @@ function cpuRun(h, out)
     {
         // cut across the tackler's path, toward the side they're not on (or back inside, near the sideline)
         const side = abs(h.pos.x) > 12 ? -sign(h.pos.x) : sign(h.pos.x - defender.pos.x) || 1;
-        out.juke = vec2(side, .6).normalize();
+        if (h.canHurdle() && rand() < .4)
+            out.pressed = true; // go over them instead
+        else
+            out.juke = vec2(side, .6).normalize();
         ai.jukeTime = 0;
         ai.reaction = rand(.2, .55); // a beat slower with the ball, so dives land sometimes
     }
@@ -536,14 +543,26 @@ class Human extends Body
         this.hasBall = false;
         this.jukeCooldown = 0;
         this.jammed = false;
+        this.jumpT = -1;        // time since the last hurdle, -1 before the first
         this.trailMax = 45;
     }
     isQB() { return this.index == qbIndex; }
+    airborne() { return this.jumpT >= 0 && this.jumpT < HURDLE_TIME; }
+    canHurdle() { return gameState == 'run' && this.hasBall && (this.jumpT < 0 || this.jumpT > HURDLE_COOLDOWN); }
+    // how far off the ground: 0 standing, 1 at the top of the jump
+    get up() { return this.airborne() ? Math.sin(PI * this.jumpT / HURDLE_TIME) : 0; }
+    hurdle()
+    {
+        this.jumpT = 0;
+        sndHop.play(this.pos);
+        addEffect('hup!', this.pos.add(vec2(0, 1.8)), this.ink, .9);
+    }
     think()
     {
         const input = playerInput[this.index];
         this.jukeCooldown -= timeDelta;
-        if (this.stunned()) return;
+        if (this.jumpT >= 0) this.jumpT += timeDelta;
+        if (this.stunned() || this.airborne()) return; // mid-air: momentum carries you over, no steering until you land
         if (input.juke && (!this.isQB() || this.hasBall))
             this.juke(input.juke);
 
@@ -561,7 +580,9 @@ class Human extends Body
 
         if (input.pressed)
         {
-            if (this.hasBall && gameState == 'live')
+            if (this.canHurdle())
+                this.hurdle();
+            else if (this.hasBall && gameState == 'live')
                 throwBall(this);
             else if (gameState == 'live' && isCPU(qbIndex) && qb().hasBall && !this.jammed)
                 callForBall(this);
@@ -595,16 +616,26 @@ class Human extends Body
             addEffect(broke ? 'ANKLES!' : 'juked!', d.pos.add(vec2(0, 1.6)), INK_GREEN, broke ? 1.4 : .9, broke);
         }
     }
+    canCollideWith(other) { return !this.airborne(); } // up and over: nobody gets a body on you
     render()
     {
-        const p = this.pos;
-        markerCircle(p, BODY_R, this.ink, .17, this.seed);
+        // jumping: a shadow stays on the ground, the body lifts and swells toward the viewer
+        const up = this.up;
+        if (up)
+            markerCircle(this.pos, BODY_R * .8, INK, .3, this.seed + 3, .15);
+        const p = this.pos.add(vec2(0, up * .9));
+        markerCircle(p, BODY_R * (1 + up * .4), this.ink, .17, this.seed);
         markerText(this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
         markerText(this.isQB() ? 'QB' : 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
             markerText('!!', p.add(vec2(-1, .9)), .8, INK);
+        if (!this.ai && this.canHurdle())
+        {
+            const key = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[this.index];
+            markerText(key + ': JUMP', p.add(vec2(0, -1.2)), .7, this.ink, .6 + .4 * Math.sin(time * 10));
+        }
     }
 }
 
@@ -1430,6 +1461,7 @@ function drawHUD()
             if (numPlayers == 2)
                 lines.push('QB action = throw (it leads your WR)');
             lines.push(usedTouch ? 'flick back and forth = juke' : 'tap opposite directions fast = juke');
+            lines.push('after the catch: action = jump a tackle');
             lines.push('don\'t get sacked, don\'t get picked');
             const top = H * .16 + s * 2.8;
             const card = ctxBegin(BOARD, 0);
@@ -1610,7 +1642,7 @@ function gameUpdatePost()
     else if (gameState == 'run')
     {
         const w = wr(), tucked = time - catchTime > TACKLE_GRACE;
-        const d = tucked && defenders().find(d => !d.stun && d.pos.distance(w.pos) < BODY_R * 2 + .1);
+        const d = tucked && !w.airborne() && defenders().find(d => !d.stun && d.pos.distance(w.pos) < BODY_R * 2 + .1);
         if (d) tackle();
         else if (tucked && abs(w.pos.x) > FIELD_HALF - BODY_R - .05)
         {
