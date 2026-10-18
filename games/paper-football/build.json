@@ -1,0 +1,6 @@
+{
+    "title": "Chalk Talk",
+    "name": "chalkTalk",
+    "engine": "dist/littlejs.js",
+    "sources": ["templates/gameFx.js", "game.js"]
+}
