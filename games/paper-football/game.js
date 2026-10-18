@@ -5,15 +5,21 @@
     - QB: scramble behind the line and don't get sacked (any X touching you
       while you hold the ball). Action = throw; the pass leads your receiver
     - Receiver (WR): shake the cornerbacks. They jam you when they touch you,
-      so shove them off (action, beat-em-up style) and get open
+      so shove them off (action, beat-em-up style) and get open. With the ball
+      in the air, action = jump: time it so you're up top when it lands to
+      out-reach the defender (one jump per pass, no steering mid-air). The
+      defensive backs go up for it too, with shakier timing
     - Catch it and the LOS jumps to the catch spot, the roles swap (the catcher
-      is the new QB) and everyone resets. Sacks and incompletions burn a down;
-      4 downs without a catch, or one interception, ends the drive
+      is the new QB) and everyone resets. 4 downs to gain 10 yards: reach the
+      first-down line for a fresh set, every other play (short catches included)
+      burns a down. Running out of downs, or one interception, ends the drive
     - Endless: the field and its yard numbers keep going. Each catch makes the
-      defense a bit faster and adds bodies (4th rusher, bracket CB, blitzer)
+      defense a bit faster, every 2nd catch adds a body (5 up to 8). Each play
+      the defense calls man or zone and splits its bodies between the rush (3-5)
+      and coverage: a blitz gets home faster but leaves receivers open
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
-      scrambles and throws when you call for it (action while no X is on you), throwing it
-      away under pressure; as WR it runs a random route drawn
+      scrambles and throws only when you call for it (action while no X is on you), so
+      call too late and it gets sacked; as WR it runs a random route drawn
       dashed on the board and shoves its way free) or 2 players
     - P1 = WASD + Space/F, P2 = arrows + Enter/Shift (solo: either set). Touch:
       each player owns half the screen (solo: all of it), drag to run, quick
@@ -32,11 +38,13 @@ const FIELD_HALF = 18;   // sideline x (1 world unit = 1 yard)
 const VIEW_W = 40, VIEW_H = 28;
 const START_LOS = 20;
 const BODY_R = .6;
+const JUMP_TIME = .55;  // seconds a WR's jump stays off the ground
 
 // marker inks
 const BOARD = '#f7f7f2';
 const INK = '#202028';
 const INK_GREEN = '#139157';
+const INK_FIRST = '#e07a10';   // first-down line
 const INK_FIELD = 'rgba(40,70,120,.22)';
 const PLAYER_INK = ['#1f5fd1', '#d42a2a'];
 const PLAYER_NAME = ['P1', 'P2'];
@@ -63,13 +71,17 @@ let titleChoice = 0;       // highlighted title option: 0 = 1 player, 1 = 2 play
 let snapTime = 0;
 let los = START_LOS;       // line of scrimmage (y)
 let down = 1;
+let firstDown = START_LOS + 10; // the line to reach for a fresh set of downs
 let completions = 0;
 let qbIndex = 0;           // which player is QB this play
 let furthest = 0;          // yards of the best LOS reached this drive
 let plays = 0;
 let resultInfo;            // {text, sub, color} for the result banner
-let saveData = readSaveData('chalkTalk', {best:0});
+let longPass = 0, longRec = 0; // longest completion this drive thrown / caught by a human
+let newRecords = new Set;  // which saved records this drive beat
+let saveData = readSaveData('chalkTalk', {best:0, longPass:0, longRec:0});
 let ball;                  // pass in the air
+let defense = {zone: false, side: 1}; // this play's call: zone coverage or man, and the WR's side
 let camY = START_LOS + 7;
 
 let humans = [], linemen = [], rushers = [], coverage = [];
@@ -81,6 +93,7 @@ const wr = () => humans[1 - qbIndex];
 const isLive = () => gameState == 'live' || gameState == 'air';
 const isCPU = (i) => numPlayers == 1 && i == 1;
 const tightCoverage = () => !isCPU(wr().index); // a human WR draws the full defense, the CPU WR the looser one
+const defenseAccel = () => tightCoverage() ? 1 : .7; // the looser defense is a step slower off the mark
 const playerName = (i) => numPlayers == 1 ? ['YOU', 'CPU'][i] : PLAYER_NAME[i];
 const snapper = () => numPlayers == 1 ? 0 : qbIndex; // in 1P the human always calls the snap
 
@@ -259,7 +272,6 @@ function cpuInput(h)
     const out = {dir: vec2(), pressed: false};
     if (!h || !isLive()) return out;
     const ai = h.ai;
-    const playTime = time - snapTime;
 
     if (h.isQB())
     {
@@ -277,17 +289,17 @@ function cpuInput(h)
         const dir = away.scale(1.6).add(pocket.subtract(h.pos).scale(.3));
         out.dir = dir.length() > .2 ? dir.clampLength(1) : vec2();
 
-        // you call for the ball and it comes, covered or not. Otherwise the QB only lets go
-        // when it's about to be sacked or the play drags on: thrown away, out of bounds
-        const pressure = rushers.some(r => !r.stun && r.pos.distance(h.pos) < 1.9);
-        out.pressed = ai.called || (pressure && playTime > 1.2) || playTime > 5;
-        out.throwAway = !ai.called;
+        // you call for the ball and it comes, covered or not. Call too late and it's a sack
+        out.pressed = ai.called;
         return out;
     }
 
     if (gameState == 'air')
     {
+        // run under it and go up so the jump peaks as it lands
         out.dir = ball.to.subtract(h.pos).clampLength(1);
+        const left = ball.thrownAt + ball.duration - time;
+        out.pressed = left < JUMP_TIME / 2 + ai.jumpEarly && h.pos.distance(ball.to) < 3;
         return out;
     }
 
@@ -334,6 +346,25 @@ class Body extends EngineObject
         this.trail = [pos];
         this.trailTimer = 0;
         this.trailMax = 30;
+        this.jumpT = -1;        // time since the jump, -1 before it
+    }
+    // how far off the ground: 0 standing, 1 at the top of the jump
+    get up() { return this.jumpT >= 0 && this.jumpT < JUMP_TIME ? Math.sin(PI * this.jumpT / JUMP_TIME) : 0; }
+    jump()
+    {
+        if (this.jumpT >= 0) return; // one jump per pass
+        this.jumpT = 0;
+        sndWhiff.play(this.pos);
+        addEffect('hup!', this.pos.add(vec2(0, 1.6)), this.ink, .7);
+    }
+    // jumping: a shadow stays on the ground, the body lifts and swells toward the viewer.
+    // Returns where to draw the body and how much bigger
+    drawJump()
+    {
+        const up = this.up;
+        if (up)
+            markerCircle(this.pos, BODY_R * .8, INK, .3, this.seed + 3, .15);
+        return {p: this.pos.add(vec2(0, up * .9)), scale: 1 + up * .4};
     }
     update()
     {
@@ -343,6 +374,7 @@ class Body extends EngineObject
             return;
         }
         this.stun = max(0, this.stun - timeDelta);
+        if (this.jumpT >= 0) this.jumpT += timeDelta;
         this.think();
         this.pos = this.pos.add(this.vel.scale(timeDelta));
         this.pos.x = clamp(this.pos.x, -FIELD_HALF + BODY_R, FIELD_HALF - BODY_R);
@@ -362,11 +394,10 @@ class Body extends EngineObject
     }
     stunned()
     {
-        // stunned bodies slide to a stop. Against the CPU WR the brake stays on every frame,
-        // which is what keeps that defense slow off the mark; tight coverage gets full acceleration
-        if (this.stun <= 0 && tightCoverage()) return false;
+        // stunned bodies slide to a stop
+        if (this.stun <= 0) return false;
         this.steer(vec2(), 25);
-        return this.stun > 0;
+        return true;
     }
     canCollideWith(other) { return true; }
 }
@@ -388,6 +419,7 @@ class Human extends Body
         const input = playerInput[this.index];
         this.shoveCooldown -= timeDelta;
         if (this.stunned()) return;
+        if (this.up) return; // mid-air: momentum carries you, no steering until you land
 
         let speed = this.isQB() ? 8.5 : 10;
         this.jammed = !this.isQB() && coverage.some(d => !d.stun && d.pos.distance(this.pos) < BODY_R * 2 + .15);
@@ -404,9 +436,11 @@ class Human extends Body
         if (input.pressed)
         {
             if (this.hasBall && gameState == 'live')
-                throwBall(this, input.throwAway);
+                throwBall(this);
             else if (gameState == 'live' && isCPU(qbIndex) && qb().hasBall && !this.jammed)
                 callForBall(this);
+            else if (gameState == 'air' && !this.isQB())
+                this.jump();
             else if (!this.hasBall && !(gameState == 'air' && tightCoverage())) // no push-offs with the ball in the air
                 this.shove();
         }
@@ -445,15 +479,20 @@ class Human extends Body
     }
     render()
     {
-        const p = this.pos;
         if (this.shoveFx > 0)
         {
             this.shoveFx -= timeDelta;
-            markerCircle(p, 2.5, this.ink, .08, this.seed + 9, .35);
+            markerCircle(this.pos, 2.5, this.ink, .08, this.seed + 9, .35);
         }
-        markerCircle(p, BODY_R, this.ink, .17, this.seed);
+        const {p, scale} = this.drawJump();
+        markerCircle(p, BODY_R * scale, this.ink, .17, this.seed);
         markerText(this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
         markerText(this.isQB() ? 'QB' : 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
+        if (gameState == 'air' && !this.isQB() && !this.ai && this.jumpT < 0)
+        {
+            const key = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[this.index];
+            markerText(key + ': JUMP', p.add(vec2(0, -1.2)), .7, this.ink, .6 + .4 * Math.sin(time * 10));
+        }
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
@@ -538,7 +577,7 @@ class Rusher extends Body
             speed = 8 * diff;
         if (gameState == 'air')
             speed *= .5;
-        this.steer(dir.scale(speed), 35);
+        this.steer(dir.scale(speed), 35 * defenseAccel());
     }
     canCollideWith(other) { return !(this.spin && other instanceof Lineman); }
     render()
@@ -557,28 +596,49 @@ class Rusher extends Body
 class Cover extends Body
 {
     // a defensive back: 'cb' trails the receiver, 'under' sits underneath, 'safety' stays deep
-    constructor(pos, role)
+    constructor(pos, role, half = 0)
     {
         super(pos, INK);
         this.role = role;
+        this.half = half;       // two-deep safeties each own one half of the field
         this.react = rand(.2, .35);
+        this.jumpEarly = rand(-.2, .2); // defenders time their jump worse than receivers
     }
     think()
     {
         if (this.stunned()) return;
+        if (this.up) return; // mid-air: momentum carries them
         const diff = difficulty();
         const w = wr(), tight = tightCoverage();
         let target, speed = (tight ? 9.2 : 8.4) * diff;
         if (gameState == 'air' && time - ball.thrownAt > this.react)
         {
-            // ball hawk: break on the landing spot
+            // ball hawk: break on the landing spot and go up for it if they get there
             target = ball.to;
             speed = 9 * diff;
+            const left = ball.thrownAt + ball.duration - time;
+            if (left < JUMP_TIME / 2 + this.jumpEarly && this.pos.distance(ball.to) < 3)
+                this.jump();
         }
         else if (this.role == 'safety')
         {
-            target = vec2(lerp(w.pos.x, 0, .35), max(w.pos.y + 6, los + 9));
             speed = 7 * diff;
+            if (this.half && sign(w.pos.x) != this.half)
+                target = vec2(this.half * 5, max(w.pos.y + 4, los + 10)); // the other half's safety stays home
+            else if (defense.zone && w.pos.y > los + 8)
+            {
+                // the short zones hand off a deep receiver: the safety takes them man to man
+                target = w.pos.add(vec2(0, 1.5));
+                speed = 8.4 * diff;
+            }
+            else
+                target = vec2(lerp(w.pos.x, 0, .35), max(w.pos.y + 6, los + 9));
+        }
+        else if (defense.zone)
+        {
+            // short zones: shadow the WR while they're in it, wait on its edge when they leave
+            const [x0, x1] = this.role == 'under' ? [-5, 5] : defense.side < 0 ? [-FIELD_HALF + 1, -2] : [2, FIELD_HALF - 1];
+            target = vec2(clamp(w.pos.x, x0, x1), clamp(w.pos.y + 1, los + 2, los + 8));
         }
         else if (this.role == 'under')
             target = w.pos.add(vec2(0, -1.4));
@@ -589,12 +649,13 @@ class Cover extends Body
         const offset = target.subtract(this.pos);
         if (tight && offset.length() > 4)
             speed *= 1.15;
-        this.steer(offset.clampLength(1).scale(speed * min(1, offset.length())), 26);
+        this.steer(offset.clampLength(1).scale(speed * min(1, offset.length())), 26 * defenseAccel());
     }
     render()
     {
-        markerX(this.pos, BODY_R * .9, INK, .17, this.seed, this.stun ? time * 12 : 0);
-        markerText(this.role == 'safety' ? 'S' : 'CB', this.pos.add(vec2(0, 1.05)), .75, INK);
+        const {p, scale} = this.drawJump();
+        markerX(p, BODY_R * .9 * scale, INK, .17, this.seed, this.stun ? time * 12 : 0);
+        markerText(this.role == 'safety' ? 'S' : 'CB', p.add(vec2(0, 1.05)), .75, INK);
         if (this.stun)
             drawDizzy(this.pos.add(vec2(0, 1.6)));
     }
@@ -634,18 +695,10 @@ function setupPlay()
 
     linemen = [-4, -2, 0, 2, 4].map(x => new Lineman(vec2(x * .95, los - .9)));
 
-    const rushXs = completions >= 2 ? [-4.5, -1.5, 1.5, 4.5] : [-3, 0, 3];
-    rushers = rushXs.map(x => new Rusher(vec2(x, los + .9)));
-    if (completions >= 6)
-        rushers.push(new Rusher(vec2(-side * 3, los + 5), 1.2, 'LB'));
-
-    // tight coverage presses: the CB lines up in the receiver's face, so they have to shove free
-    coverage = [new Cover(vec2(side * 12, los + (tightCoverage() ? 1.1 : 3.5)), 'cb'), new Cover(vec2(side * 5, los + 12), 'safety')];
-    if (completions >= 4)
-        coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
+    callDefense(side);
 
     if (numPlayers == 1)
-        humans[1].ai = {route: makeRoute(humans[1].pos), called: false, shoveTime: 0, reaction: rand(.15, .4)};
+        humans[1].ai = {route: makeRoute(humans[1].pos), called: false, shoveTime: 0, reaction: rand(.15, .4), jumpEarly: rand(-.12, .12)};
 
     for (const b of allBodies())
         b.trail = [b.pos.copy()];
@@ -653,13 +706,41 @@ function setupPlay()
     stateTimer.set(.4);
 }
 
+function callDefense(side)
+{
+    // a body joins the defense every 2 catches (5 up to 8). The call splits them between the rush
+    // and coverage, so a heavier rush always leaves fewer X's back there
+    const total = 5 + min(3, completions >> 1);
+    const covers = randInt(max(2, total - 5), min(total >= 8 ? 4 : 3, total - 3) + 1);
+    const rush = total - covers;
+    defense = {zone: completions >= 2 && rand() < .5, side};
+
+    rushers = (rush >= 4 ? [-4.5, -1.5, 1.5, 4.5] : [-3, 0, 3]).map(x => new Rusher(vec2(x, los + .9)));
+    if (rush >= 5)
+        rushers.push(new Rusher(vec2(-side * 3, los + 5), 1.2, 'LB')); // the 5th rusher blitzes a beat late
+
+    // man vs a human WR presses: the CB lines up in the receiver's face, so they have to shove free.
+    // In zone the CB bails to its spot instead
+    const cbDepth = defense.zone ? 5 : tightCoverage() ? 1.1 : 3.5;
+    coverage = [new Cover(vec2(side * 12, los + cbDepth), 'cb')];
+    if (covers >= 4)
+        coverage.push(new Cover(vec2(-6, los + 12), 'safety', -1), new Cover(vec2(6, los + 12), 'safety', 1));
+    else
+        coverage.push(new Cover(vec2(side * 5, los + 12), 'safety'));
+    if (covers >= 3)
+        coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
+}
+
 function resetGame()
 {
     los = START_LOS;
     down = 1;
+    firstDown = START_LOS + 10;
     completions = 0;
     qbIndex = 0;
     furthest = 0;
+    longPass = longRec = 0;
+    newRecords = new Set;
     plays = 0;
     effects = [];
     setupPlay();
@@ -699,8 +780,13 @@ const throwOrigin = (thrower) => thrower.pos.add(vec2(.5, .3));
 
 function passTarget(thrower)
 {
+    // a route you drew is the play call: the ball goes to the end of it, wherever the WR is now
+    const target = wr(), drawn = target.ai?.route.drawn && target.ai.route.points;
+    if (drawn?.length)
+        return drawn[drawn.length - 1].copy();
+
     // lead the receiver: aim where they'll be when the ball lands
-    const target = wr(), from = throwOrigin(thrower);
+    const from = throwOrigin(thrower);
     let to = target.pos;
     for (let i = 3; i--;)
     {
@@ -710,7 +796,7 @@ function passTarget(thrower)
     return to;
 }
 
-function throwBall(thrower, away = false)
+function throwBall(thrower)
 {
     const from = throwOrigin(thrower);
     let to = passTarget(thrower);
@@ -721,11 +807,9 @@ function throwBall(thrower, away = false)
     if (to.distance(from) > 46)
         to = from.add(to.subtract(from).normalize(46));
     to.x = clamp(to.x, -FIELD_HALF + .5, FIELD_HALF - .5);
-    if (away)
-        to = vec2((sign(to.x) || 1) * (FIELD_HALF + 3), from.y + 6); // over the sideline, out of everyone's reach
 
     const dist = from.distance(to);
-    ball = {from, to, away, thrownAt: time, duration: dist / 22 + .25, peak: dist * .16 + 1, wobble: pressure > .2};
+    ball = {from, to, thrownAt: time, duration: dist / 22 + .25, peak: dist * .16 + 1, wobble: pressure > .2};
     thrower.hasBall = false;
     gameState = 'air';
     sndThrow.play(thrower.pos);
@@ -741,15 +825,15 @@ function ballPos(t)
 
 function resolvePass()
 {
-    if (ball.away)
-        return failedPlay('THROWN AWAY', 'nobody open');
     const spot = ball.to;
     const w = wr();
-    const dr = w.stun ? 1e9 : w.pos.distance(spot);
+    // a well-timed jump is up to a yard more reach, for the receiver and defenders alike
+    const up = w.stun ? 0 : w.up;
+    const dr = w.stun ? 1e9 : w.pos.distance(spot) - up;
     let defender, dd = 1e9;
     for (const d of [...coverage, ...rushers])
     {
-        const dist = d.pos.distance(spot);
+        const dist = d.pos.distance(spot) - d.up;
         if (!d.stun && dist < dd) { dd = dist; defender = d; }
     }
 
@@ -759,7 +843,7 @@ function resolvePass()
     if (dd < 1.6 && dd < dr)
         return failedPlay('BROKEN UP!', 'pass defended');
     // tight coverage contests the catch: a defender on the receiver's hip can knock it loose
-    if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
+    if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < (.25 + .6 * (1.5 - dd) / 1.5) * (1 - up))
         return failedPlay('BROKEN UP!', 'contested at the catch');
     if (dr < 1.7)
     {
@@ -767,11 +851,25 @@ function resolvePass()
         const gained = round(w.pos.y - los);
         los = w.pos.y;
         furthest = max(furthest, round(los - START_LOS));
-        down = 1;
+        if (!isCPU(qbIndex)) longPass = max(longPass, gained);
+        if (!isCPU(w.index)) longRec = max(longRec, gained);
+        saveRecords();
         ++completions;
         sndCatch.play(w.pos);
         addEffect('CATCH!', w.pos.add(vec2(0, 2)), INK_GREEN, 1.8, true);
-        showResult('CATCH!  ' + (gained >= 0 ? '+' : '') + gained + ' YDS', playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' take' : ' takes') + ' over at QB', INK_GREEN);
+        if (up > .5)
+            addEffect('UP TOP!', w.pos.add(vec2(-2.5, 1)), w.ink, 1.1);
+        const converted = firstDown - los < .5;
+        if (converted)
+        {
+            down = 1;
+            firstDown = los + 10;
+            addEffect('FIRST DOWN!', w.pos.add(vec2(0, 3.4)), INK_FIRST, 1.4);
+        }
+        else if (++down > 4)
+            return endDrive('TURNOVER ON DOWNS', 'caught ' + toGo() + ' YDS short on 4th down');
+        const takes = playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' take' : ' takes') + ' over at QB';
+        showResult('CATCH!  ' + (gained >= 0 ? '+' : '') + gained + ' YDS', (converted ? 'FIRST DOWN! ' : downAndDistance() + ' — ') + takes, INK_GREEN);
         qbIndex = w.index;
         return;
     }
@@ -797,8 +895,11 @@ function failedPlay(text, sub)
         return endDrive('TURNOVER ON DOWNS', sub);
     if (!text.startsWith('SACK'))
         sndNope.play();
-    showResult(text, sub + ' — ' + ordinal(down) + ' down', INK);
+    showResult(text, sub + ' — ' + downAndDistance(), INK);
 }
+
+const toGo = () => max(1, round(firstDown - los));
+const downAndDistance = () => ordinal(min(down, 4)) + ' & ' + toGo();
 
 function endDrive(text, sub, sound = sndNope, pos)
 {
@@ -806,12 +907,24 @@ function endDrive(text, sub, sound = sndNope, pos)
     if (pos) addEffect(text, pos.add(vec2(0, 2)), INK, 1.8, true);
     gameState = 'over';
     stateTimer.set(1);
-    if (furthest > saveData.best)
-    {
-        saveData.best = furthest;
-        writeSaveData('chalkTalk', saveData);
-    }
+    saveRecords();
     resultInfo = {text, sub, color: INK};
+}
+
+function saveRecords()
+{
+    // saved as soon as they're beaten, so a record survives closing the tab mid-drive
+    const run = {best: furthest, longPass, longRec};
+    let changed = false;
+    for (const key in run)
+        if (run[key] > saveData[key])
+        {
+            saveData[key] = run[key];
+            newRecords.add(key);
+            changed = true;
+        }
+    if (changed)
+        writeSaveData('chalkTalk', saveData);
 }
 
 function showResult(text, sub, color)
@@ -1040,6 +1153,9 @@ function drawBoard()
     // line of scrimmage
     strokeWorld([vec2(-FIELD_HALF, los), vec2(FIELD_HALF, los)], PLAYER_INK[0], .12, .5, [.8, .5]);
     markerText('LOS', vec2(-FIELD_HALF - 1, los), .7, PLAYER_INK[0], .7);
+    // first-down line
+    strokeWorld([vec2(-FIELD_HALF, firstDown), vec2(FIELD_HALF, firstDown)], INK_FIRST, .16, .7);
+    markerText('1ST', vec2(-FIELD_HALF - 1, firstDown), .7, INK_FIRST, .8);
 
     // every body's route so far, like arrows on a play diagram
     for (const b of allBodies())
@@ -1103,8 +1219,8 @@ function drawHUD()
     const s = min(W, H) / 22, pad = s * .8;
     const yards = round(los - START_LOS);
     screenText('YARDS ' + yards, pad, pad + s * .4, s * 1.2, INK);
-    screenText('BEST ' + max(saveData.best, furthest), pad, pad + s * 1.6, s * .75, INK, 'left', .6);
-    screenText(ordinal(min(down, 4)) + ' DOWN', pad, pad + s * 2.6, s * .85, INK);
+    screenText('HIGH SCORE ' + max(saveData.best, furthest), pad, pad + s * 1.6, s * .75, INK, 'left', .6);
+    screenText(downAndDistance(), pad, pad + s * 2.6, s * .85, INK);
 
     for (let i = 2; i--;)
     {
@@ -1117,7 +1233,7 @@ function drawHUD()
     if (gameState == 'presnap')
     {
         const qbI = qbIndex, who = snapper();
-        screenText(ordinal(down) + ' & GO', midX, H * .16, s * 1.6, INK, 'center');
+        screenText(downAndDistance(), midX, H * .16, s * 1.6, INK, 'center');
         const how = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[who];
         const prompt = numPlayers == 2 || qbI == 0 ?
             playerName(qbI) + ' (QB): ' + how + ' to call HUT!' :
@@ -1129,7 +1245,7 @@ function drawHUD()
             [
                 usedTouch ? 'drag anywhere to run, quick tap = action' : 'WASD / ARROWS to run, SPACE / ENTER = action',
                 usedTouch ? 'QB: drag to draw the CPU\'s route, tap to snap' : 'QB: drag the mouse to draw the CPU\'s route',
-                'WR: shove the X\'s off you, then call for the ball',
+                'WR: shove the X\'s off you, call for the ball before the sack',
                 'catch it and you swap: catcher plays QB',
             ] :
             usedTouch ?
@@ -1161,10 +1277,15 @@ function drawHUD()
         if (big)
         {
             screenText('drive: ' + furthest + ' yards   ·   ' + completions + ' catches', midX, H * .16 + s * 3.2, s, INK, 'center');
+            const isNew = (key) => newRecords.has(key) ? ' NEW!' : '';
+            const records = 'HIGH SCORE ' + saveData.best + isNew('best') +
+                '   ·   LONGEST PASS ' + saveData.longPass + isNew('longPass') +
+                '   ·   LONGEST REC ' + saveData.longRec + isNew('longRec');
+            screenText(records, midX, H * .16 + s * 4.4, s * .75, newRecords.size ? INK_GREEN : INK, 'center', .8);
             if (stateTimer.elapsed())
             {
                 const again = usedTouch ? 'tap left: run it back   ·   tap right: menu' : 'SPACE / ENTER: run it back   ·   ESC: menu';
-                screenText(again, midX, H * .16 + s * 4.6, s * .9, INK_GREEN, 'center', blink);
+                screenText(again, midX, H * .16 + s * 5.8, s * .9, INK_GREEN, 'center', blink);
             }
         }
     }
@@ -1238,7 +1359,7 @@ function drawTitle()
 
     const how = usedTouch ? 'tap a box to play' : '1 / 2 or ← → to pick   ·   SPACE / ENTER to play';
     screenText(how, midX, boxY + boxH / 2 + s * 1.6, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
-    screenText('BEST DRIVE ' + saveData.best + ' YDS', midX, H - s * 1.5, s * .8, INK, 'center', .6);
+    screenText('HIGH SCORE ' + saveData.best + ' YDS   ·   LONGEST PASS ' + saveData.longPass + '   ·   LONGEST REC ' + saveData.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
 }
 
 // a mouse click or tap on the left or right half of the screen, -1 if none
