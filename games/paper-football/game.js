@@ -23,9 +23,10 @@
       burns a down. Running out of downs, or one interception, ends the drive
     - Endless: the field and its yard numbers keep going. Each catch makes the
       defense a bit faster
-    - Team size (title screen, 2 to 11 a side): QB and WR, then an extra WR (a
-      decoy on a deep route), a tight end, a running back (blocks, then flattens
-      a tackler after the catch) and a slot WR, then up to 5 linemen. The
+    - Team size (title screen, 2 to 11 a side) and receivers (1 to 5, the NFL's
+      most eligible receivers): QB and WR, then an extra WR (a decoy on a deep
+      route), a tight end, a running back (blocks, then flattens a tackler after
+      the catch) and a slot WR. Everyone else is a lineman. The
       defense matches it body for body: one man on each receiver, the rest
       split each play between the rush and deep help, man or zone. With no
       linemen the lone rusher counts a beat before coming
@@ -36,7 +37,7 @@
       the snap) and jukes its way free) or 2 players
     - P1 = WASD + Space/F, P2 = arrows + Enter/Shift (solo: either set). Touch:
       each player owns half the screen (solo: all of it), drag to run, quick
-      tap = action
+      tap = action. M (any time in a game) = back to the title screen
     - Art: hand-drawn marker shapes on a whiteboard (O = offense, X = defense),
       every body leaves its route behind it as a marker trail
 */
@@ -98,6 +99,10 @@ let newRecords = new Set;  // which saved records this drive beat
 let saveData = readSaveData('chalkTalk', {best:0, longPass:0, longRec:0, teamSize:7});
 const MIN_TEAM = 2, MAX_TEAM = 11;
 let teamSize = clamp(saveData.teamSize, MIN_TEAM, MAX_TEAM); // players a side, see setupPlay
+// receivers besides the QB. NFL max is 5: 7 must be on the line and only its 2 ends are eligible,
+// plus the 4 backs, one of them the QB. Older saves had no setting: they got every spot that fit
+const MAX_RECEIVERS = 5;
+let receiverCount = clamp(saveData.receiverCount ?? teamSize - 1, 1, min(MAX_RECEIVERS, teamSize - 1));
 let ball;                  // pass in the air
 let catchY = 0;            // where the ball carrier caught it, for yards after the catch
 let catchTime = 0;
@@ -1053,8 +1058,10 @@ function setupPlay()
         {key: 'rb',  label: 'RB', pos: vec2(-side * 2, los - 4.5)},
         {key: 'wr3', label: 'WR', pos: vec2(side * 7.5, los - 1.6)},
     ];
-    formation = spots.slice(0, teamSize - 1);
-    linemen = [0, -2, 2, -4, 4].slice(0, max(0, teamSize - 1 - spots.length)).map(x => new Lineman(vec2(x * .95, los - .9)));
+    formation = spots.slice(0, receiverCount);
+    // the rest block, from the center out. Past 5 the line squeezes in to stay clear of the TE
+    const lineCount = teamSize - 1 - receiverCount, gap = lineCount > 5 ? 1.35 : 1.9;
+    linemen = [...Array(lineCount)].map((_, i) => new Lineman(vec2((i % 2 ? -1 : 1) * Math.ceil(i / 2) * gap, los - .9)));
     decoys = [];
     passTo = undefined;
 
@@ -1084,8 +1091,8 @@ function callDefense(side)
     defense = {zone: completions >= 2 && rand() < .5, side};
 
     rushers = [[0], [-1.5, 1.5], [-3, 0, 3], [-4.5, -1.5, 1.5, 4.5]][min(rush, 4) - 1].map(x => new Rusher(vec2(x, los + .9), linemen.length ? 0 : 1.5));
-    if (rush >= 5)
-        rushers.push(new Rusher(vec2(-side * 3, los + 5), 1.2, 'LB')); // the 5th rusher blitzes a beat late
+    for (let i = 0; i < rush - 4; i++) // past 4, linebackers blitz a beat late, alternating sides
+        rushers.push(new Rusher(vec2((i % 2 ? side : -side) * (3 + (i >> 1) * 2.5), los + 5), 1.2, 'LB'));
 
     // man vs a human WR presses: the CB lines up in the receiver's face, so they have to juke free.
     // In zone the CB bails to its spot instead
@@ -1097,6 +1104,8 @@ function callDefense(side)
         coverage.push(new Cover(vec2(side * 5, los + 12), 'safety'));
     if (deep >= 2)
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
+    for (let i = 0; i < deep - 3; i++) // a light offense leaves more X's to sit underneath
+        coverage.push(new Cover(vec2((i % 2 ? side : -side) * (6 - i * 2), los + 2), 'under'));
 
     // every receiving spot has its own man: the corner on WR 1, plus one per CPU receiver
     coverage[0].spotKey = 'wr1';
@@ -1264,6 +1273,19 @@ function changeTeamSize(step)
     const size = clamp(teamSize + step, MIN_TEAM, MAX_TEAM);
     if (size == teamSize) return;
     teamSize = saveData.teamSize = size;
+    receiverCount = saveData.receiverCount = min(receiverCount, teamSize - 1); // a smaller team sheds receivers first
+    writeSaveData('chalkTalk', saveData);
+    sndJuke.play();
+    showTitle();
+}
+
+// the title's receiver count: more receivers than the team holds grows the team to fit
+function changeReceivers(step)
+{
+    const count = clamp(receiverCount + step, 1, MAX_RECEIVERS);
+    if (count == receiverCount) return;
+    receiverCount = saveData.receiverCount = count;
+    teamSize = saveData.teamSize = max(teamSize, receiverCount + 1);
     writeSaveData('chalkTalk', saveData);
     sndJuke.play();
     showTitle();
@@ -1896,6 +1918,8 @@ function drawHUD()
             lines.push(usedTouch ? 'flick back and forth = juke' : 'tap opposite directions fast = juke');
             lines.push('after the catch: action = jump a tackle');
             lines.push('don\'t get sacked, don\'t get picked');
+            if (!usedTouch)
+                lines.push('M = back to the menu');
             const top = H * .16 + s * 2.8;
             const card = ctxBegin(BOARD, 0);
             card.globalAlpha = .9;
@@ -1920,7 +1944,7 @@ function drawHUD()
             screenText(records, midX, H * .16 + s * 4.4, s * .75, newRecords.size ? INK_GREEN : INK, 'center', .8);
             if (stateTimer.elapsed())
             {
-                const again = usedTouch ? 'tap left: run it back   ·   tap right: menu' : 'SPACE / ENTER: run it back   ·   ESC: menu';
+                const again = usedTouch ? 'tap left: run it back   ·   tap right: menu' : 'SPACE / ENTER: run it back   ·   M / ESC: menu';
                 screenText(again, midX, H * .16 + s * 5.8, s * .9, INK_GREEN, 'center', blink);
             }
         }
@@ -1953,7 +1977,7 @@ function drawTitle()
     screenText('PAPER FOOTBALL', midX, H * .22, s * 3.2, INK, 'center');
 
     // two hand-drawn option boxes, side by side so a tap on either half picks one
-    const {boxW, boxH, boxY, rowY} = titleLayout();
+    const {boxW, boxH, boxY, rowY, recY} = titleLayout();
     const options = [['1 PLAYER', 'you + a CPU teammate'], ['2 PLAYERS', 'P1 WASD  ·  P2 ARROWS']];
     options.forEach(([label, sub], i) =>
     {
@@ -1964,27 +1988,32 @@ function drawTitle()
         screenText(sub, x, boxY + s * 1.05, s * .75, ink, 'center', picked ? .85 : .45);
     });
 
-    // team size: - and + boxes either side, a tap on either half of the row steps it
-    screenText(teamSize + ' ON ' + teamSize, midX, rowY - s * .35, s * 1.4, INK, 'center');
-    screenText('players per team', midX, rowY + s * .75, s * .65, INK, 'center', .6);
-    [['-', MIN_TEAM], ['+', MAX_TEAM]].forEach(([mark, limit], i) =>
+    // team size and receivers: - and + boxes either side, a tap on either half of a row steps it
+    const stepper = (y, value, label, lo, hi, seed) =>
     {
-        const x = midX + (i ? 1 : -1) * s * 5, live = teamSize != limit;
-        markerBox(x, rowY, s * 2, s * 2, INK, live, s, 20 + i * 7);
-        screenText(mark, x, rowY, s * 1.4, INK, 'center', live ? 1 : .3);
-    });
+        screenText(value, midX, y - s * .35, s * 1.4, INK, 'center');
+        screenText(label, midX, y + s * .75, s * .65, INK, 'center', .6);
+        [['-', lo], ['+', hi]].forEach(([mark, live], i) =>
+        {
+            const x = midX + (i ? 1 : -1) * s * 6.5;
+            markerBox(x, y, s * 2, s * 2, INK, live, s, seed + i * 7);
+            screenText(mark, x, y, s * 1.4, INK, 'center', live ? 1 : .3);
+        });
+    };
+    stepper(rowY, teamSize + ' ON ' + teamSize, 'players per team', teamSize > MIN_TEAM, teamSize < MAX_TEAM, 20);
+    stepper(recY, receiverCount + (receiverCount == 1 ? ' RECEIVER' : ' RECEIVERS'), 'besides the QB', receiverCount > 1, receiverCount < MAX_RECEIVERS, 40);
 
-    const how = usedTouch ? 'tap a box to play   ·   tap - / + for team size' : '1 / 2 or ← → to pick   ·   ↑ ↓ team size   ·   SPACE / ENTER to play';
-    screenText(how, midX, rowY + s * 2.4, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
+    const how = usedTouch ? 'tap a box to play   ·   tap - / + to change a setting' : '1 / 2 or ← → to pick   ·   ↑ ↓ team size   ·   Q / R receivers   ·   SPACE / ENTER to play';
+    screenText(how, midX, recY + s * 2.2, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
     screenText('HIGH SCORE ' + saveData.best + ' YDS   ·   LONGEST PASS ' + saveData.longPass + '   ·   LONGEST REC ' + saveData.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
 }
 
-// where the title's mode boxes and team size row sit, shared by drawing and tapping
+// where the title's mode boxes, team size and receiver rows sit, shared by drawing and tapping
 function titleLayout()
 {
     const W = mainCanvasSize.x, H = mainCanvasSize.y, s = min(W, H) / 22;
-    const boxH = s * 4.2, boxY = H * .5;
-    return {s, boxW: min(W * .4, s * 13), boxH, boxY, rowY: boxY + boxH / 2 + s * 2};
+    const boxH = s * 4.2, boxY = H * .44, rowY = boxY + boxH / 2 + s * 2;
+    return {s, boxW: min(W * .4, s * 13), boxH, boxY, rowY, recY: rowY + s * 2.8};
 }
 
 // a hand-drawn screen-space box around (x, y), bolder when picked
@@ -2034,16 +2063,21 @@ function gameUpdate()
     {
         if (['ArrowLeft', 'KeyA'].some(k => keyWasPressed(k))) titleChoice = 0;
         if (['ArrowRight', 'KeyD'].some(k => keyWasPressed(k))) titleChoice = 1;
-        const {s, rowY} = titleLayout();
-        const onRow = tapPos && abs(tapPos.y - rowY) < s * 1.4;
+        const {s, rowY, recY} = titleLayout();
+        const onRow = (y) => tapPos && abs(tapPos.y - y) < s * 1.4;
         const digit = [1, 2].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n));
         if (['ArrowUp', 'KeyW', 'Equal', 'NumpadAdd'].some(k => keyWasPressed(k))) changeTeamSize(1);
         else if (['ArrowDown', 'KeyS', 'Minus', 'NumpadSubtract'].some(k => keyWasPressed(k))) changeTeamSize(-1);
-        else if (onRow) changeTeamSize(half ? 1 : -1);
+        else if (keyWasPressed('KeyR')) changeReceivers(1);
+        else if (keyWasPressed('KeyQ')) changeReceivers(-1);
+        else if (onRow(rowY)) changeTeamSize(half ? 1 : -1);
+        else if (onRow(recY)) changeReceivers(half ? 1 : -1);
         else if (digit >= 0) startGame(digit);
         else if (tapX >= 0) startGame(min(1, tapX * 2 | 0));
         else if (anyPress) startGame(titleChoice);
     }
+    else if (keyWasPressed('KeyM'))
+        showTitle(); // quit to the menu from anywhere, mid-play included
     else if (gameState == 'presnap' && stateTimer.elapsed() && pickSpot(tapPos)) {}
     else if (gameState == 'presnap' && stateTimer.elapsed() && pickTarget(tapPos)) {}
     else if (gameState == 'presnap' && stateTimer.elapsed() && playerInput[snapper()].pressed)
