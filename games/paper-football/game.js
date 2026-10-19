@@ -96,13 +96,20 @@ let plays = 0;
 let resultInfo;            // {text, sub, color} for the result banner
 let longPass = 0, longRec = 0; // longest completion this drive thrown / caught by a human
 let newRecords = new Set;  // which saved records this drive beat
-let saveData = readSaveData('chalkTalk', {best:0, longPass:0, longRec:0, teamSize:7});
+const SAVE_VERSION = 3; // kept out of the defaults, so a save without it reads as old
+let saveData = readSaveData('chalkTalk', {});
+if (saveData.version != SAVE_VERSION) // saves from older versions are wiped: fresh settings and records
+    writeSaveData('chalkTalk', saveData = {version: SAVE_VERSION, teamSize: 8, receiverCount: 2, records: {}});
 const MIN_TEAM = 2, MAX_TEAM = 11;
 let teamSize = clamp(saveData.teamSize, MIN_TEAM, MAX_TEAM); // players a side, see setupPlay
 // receivers besides the QB. NFL max is 5: 7 must be on the line and only its 2 ends are eligible,
-// plus the 4 backs, one of them the QB. Older saves had no setting: they got every spot that fit
+// plus the 4 backs, one of them the QB
 const MAX_RECEIVERS = 5;
-let receiverCount = clamp(saveData.receiverCount ?? teamSize - 1, 1, min(MAX_RECEIVERS, teamSize - 1));
+let receiverCount = clamp(saveData.receiverCount, 1, min(MAX_RECEIVERS, teamSize - 1));
+
+// each team size and receiver count keeps its own records
+function recordsKey(size, count) { return size + 'on' + size + '/' + count; }
+const records = () => saveData.records[recordsKey(teamSize, receiverCount)] ?? {best:0, longPass:0, longRec:0};
 let ball;                  // pass in the air
 let catchY = 0;            // where the ball carrier caught it, for yards after the catch
 let catchTime = 0;
@@ -119,6 +126,21 @@ let humans = [], linemen = [], rushers = [], coverage = [], decoys = [];
 let formation = [];        // this play's receiving spots {key, label, pos}: you line up at one, the CPU plays the rest
 let passTo;                // 1P at QB: the receiver you picked to throw to (undefined: the WR)
 let effects = [];
+
+// the session's first kickoff drops in from way up, to show off a field that never ends
+const INTRO_TIME = 4;        // seconds to land
+const INTRO_ALTITUDE = 1000; // yards of field in view at the start
+const INTRO_DRIFT = 700;     // how far downfield the camera starts
+const introTimer = new Timer;
+let introPlayed = false;
+let keyHit = false;          // any key at all this frame, so any key skips the intro
+let shortcutHit = false;     // a key pressed with cmd / ctrl / alt this frame: a browser shortcut, not a menu key
+addEventListener('keydown', (e) =>
+{
+    keyHit = true;
+    shortcutHit ||= e.metaKey || e.ctrlKey || e.altKey;
+});
+const introEase = () => smoothStep(introTimer.getPercent()); // 0 up high, 1 landed
 
 const difficulty = () => min(1 + completions * .045, 1.6);
 const qb = () => humans[qbIndex];
@@ -767,8 +789,11 @@ class Human extends Body
             markerCircle(this.pos, BODY_R * .8, INK, .3, this.seed + 3, .15);
         const p = this.pos.add(vec2(0, up * .9));
         markerCircle(p, BODY_R * (1 + up * .4), this.ink, .17, this.seed);
-        markerText(this.num ?? this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
+        const you = numPlayers == 1 && this.index == 0; // solo: point out which one is yours
+        markerText(this.num ?? (you ? 'P' : this.index + 1 + ''), p.add(vec2(0, -.05)), .8, this.ink);
         markerText(this.isQB() ? 'QB' : this.spotLabel ?? 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
+        if (you)
+            markerText('--- YOU', p.add(vec2(0, 2.05)), .75, this.ink);
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
@@ -1258,6 +1283,11 @@ function startGame(choice)
     titleChoice = choice;
     numPlayers = choice == 1 ? 2 : 1;
     resetGame();
+    if (!introPlayed)
+    {
+        introPlayed = true;
+        introTimer.set(INTRO_TIME);
+    }
 }
 
 function showTitle()
@@ -1519,17 +1549,20 @@ function endDrive(text, sub, sound = sndNope, pos)
 function saveRecords()
 {
     // saved as soon as they're beaten, so a record survives closing the tab mid-drive
-    const run = {best: furthest, longPass, longRec};
+    const run = {best: furthest, longPass, longRec}, rec = records();
     let changed = false;
     for (const key in run)
-        if (run[key] > saveData[key])
+        if (run[key] > rec[key])
         {
-            saveData[key] = run[key];
+            rec[key] = run[key];
             newRecords.add(key);
             changed = true;
         }
     if (changed)
+    {
+        saveData.records[recordsKey(teamSize, receiverCount)] = rec;
         writeSaveData('chalkTalk', saveData);
+    }
 }
 
 function showResult(text, sub, color)
@@ -1747,11 +1780,11 @@ function drawBoard()
     for (let y = Math.ceil(y0 / 5) * 5; y < y1; y += 5)
     {
         markerLine(vec2(-FIELD_HALF, y), vec2(FIELD_HALF, y), INK_FIELD, y % 10 ? .08 : .14, y, 1, .12);
-        if (y % 10 == 0)
+        if (y % 10 == 0 && cameraScale > 4) // too small to read from up high
             for (const x of [-12, 12])
                 markerText('' + y, vec2(x, y), 2, INK_FIELD, 1, x < 0 ? -PI / 2 : PI / 2);
     }
-    for (let y = Math.ceil(y0); y < y1; ++y)
+    for (let y = Math.ceil(y0); cameraScale > 4 && y < y1; ++y)
     for (const x of [-4, 4])
         if (y % 5)
             markerLine(vec2(x - .4, y), vec2(x + .4, y), INK_FIELD, .08, y + x, 1, .04);
@@ -1851,7 +1884,7 @@ function drawHUD()
     const s = min(W, H) / 22, pad = s * .8;
     const yards = round(los - START_LOS);
     screenText('YARDS ' + yards, pad, pad + s * .4, s * 1.2, INK);
-    screenText('HIGH SCORE ' + max(saveData.best, furthest), pad, pad + s * 1.6, s * .75, INK, 'left', .6);
+    screenText('HIGH SCORE ' + max(records().best, furthest), pad, pad + s * 1.6, s * .75, INK, 'left', .6);
     screenText(downAndDistance(), pad, pad + s * 2.6, s * .85, INK);
 
     for (let i = 2; i--;)
@@ -1938,10 +1971,11 @@ function drawHUD()
         {
             const isNew = (key) => newRecords.has(key) ? ' NEW!' : '';
             screenText('drive: ' + furthest + ' yards   ·   ' + completions + ' catches', midX, H * .16 + s * 3.2, s, INK, 'center');
-            const records = 'HIGH SCORE ' + saveData.best + isNew('best') +
-                '   ·   LONGEST PASS ' + saveData.longPass + isNew('longPass') +
-                '   ·   LONGEST REC ' + saveData.longRec + isNew('longRec');
-            screenText(records, midX, H * .16 + s * 4.4, s * .75, newRecords.size ? INK_GREEN : INK, 'center', .8);
+            const rec = records();
+            const line = 'HIGH SCORE ' + rec.best + isNew('best') +
+                '   ·   LONGEST PASS ' + rec.longPass + isNew('longPass') +
+                '   ·   LONGEST REC ' + rec.longRec + isNew('longRec');
+            screenText(line, midX, H * .16 + s * 4.4, s * .75, newRecords.size ? INK_GREEN : INK, 'center', .8);
             if (stateTimer.elapsed())
             {
                 const again = usedTouch ? 'tap left: run it back   ·   tap right: menu' : 'SPACE / ENTER: run it back   ·   M / ESC: menu';
@@ -2005,7 +2039,8 @@ function drawTitle()
 
     const how = usedTouch ? 'tap a box to play   ·   tap - / + to change a setting' : '1 / 2 or ← → to pick   ·   ↑ ↓ team size   ·   Q / R receivers   ·   SPACE / ENTER to play';
     screenText(how, midX, recY + s * 2.2, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
-    screenText('HIGH SCORE ' + saveData.best + ' YDS   ·   LONGEST PASS ' + saveData.longPass + '   ·   LONGEST REC ' + saveData.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
+    const rec = records();
+    screenText('HIGH SCORE ' + rec.best + ' YDS   ·   LONGEST PASS ' + rec.longPass + '   ·   LONGEST REC ' + rec.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
 }
 
 // where the title's mode boxes, team size and receiver rows sit, shared by drawing and tapping
@@ -2057,9 +2092,12 @@ function gameUpdate()
     const tapX = clickedX(), half = tapX < 0 ? -1 : tapX < .5 ? 0 : 1;
     const tapPos = tappedPos;
     tappedPos = undefined;
+    const anyKey = keyHit, shortcut = shortcutHit;
+    keyHit = shortcutHit = false;
     drawRouteUpdate();
 
-    if (gameState == 'title')
+    if (gameState == 'title' && shortcut) {} // cmd+shift+R to reload shouldn't also add a receiver
+    else if (gameState == 'title')
     {
         if (['ArrowLeft', 'KeyA'].some(k => keyWasPressed(k))) titleChoice = 0;
         if (['ArrowRight', 'KeyD'].some(k => keyWasPressed(k))) titleChoice = 1;
@@ -2075,6 +2113,11 @@ function gameUpdate()
         else if (digit >= 0) startGame(digit);
         else if (tapX >= 0) startGame(min(1, tapX * 2 | 0));
         else if (anyPress) startGame(titleChoice);
+    }
+    else if (introTimer.active())
+    {
+        if (anyKey || anyPress || tapX >= 0) // skip the descent; the press doesn't also snap
+            introTimer.unset();
     }
     else if (keyWasPressed('KeyM'))
         showTitle(); // quit to the menu from anywhere, mid-play included
@@ -2101,12 +2144,17 @@ function gameUpdate()
         targetY = max(targetY, ball.to.y - 7);
     if (gameState == 'run')
         targetY = max(targetY, wr().pos.y + 2); // keep open field ahead of the runner in view
-    cameraPos = cameraPos.add(vec2(-cameraPos.x, targetY - cameraPos.y).scale(min(1, timeDelta * 4)));
+    if (introTimer.active())
+        cameraPos = vec2(0, targetY + INTRO_DRIFT * (1 - introEase()));
+    else
+        cameraPos = cameraPos.add(vec2(-cameraPos.x, targetY - cameraPos.y).scale(min(1, timeDelta * 4)));
 }
 
 function gameUpdatePost()
 {
-    setCameraScale(min(mainCanvasSize.x / VIEW_W, mainCanvasSize.y / VIEW_H));
+    // during the intro, zoom in evenly in log space: each second covers the same factor of altitude
+    const altitude = introTimer.active() ? (INTRO_ALTITUDE / VIEW_H) ** (1 - introEase()) : 1;
+    setCameraScale(min(mainCanvasSize.x / VIEW_W, mainCanvasSize.y / VIEW_H) / altitude);
     boil = Math.floor(time * 7);
     if (!isLive()) return;
 
@@ -2145,8 +2193,19 @@ function gameRenderPost()
     renderEffects();
     if (gameState == 'title')
         drawTitle();
+    else if (introTimer.active())
+        drawIntro();
     else
         drawHUD();
+}
+
+// the intro's title card: there from the start, gone as the camera lands
+function drawIntro()
+{
+    const W = mainCanvasSize.x, H = mainCanvasSize.y, s = min(W, H) / 22;
+    const alpha = 1 - percent(introTimer.getPercent(), .45, .85);
+    screenText('PAPER FOOTBALL', W / 2, H * .4, s * 3.2, INK, 'center', alpha);
+    screenText(usedTouch ? 'tap to skip' : 'press any key to skip', W / 2, H - s * 1.5, s * .7, INK, 'center', alpha * .5);
 }
 
 engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost);
