@@ -18,7 +18,7 @@
       jumps to that spot, the roles swap (the catcher is the new QB) and
       everyone resets. With the ball, action = jump: hurdle a tackle (a diving
       X goes right under you). One jump every 2.5s, no steering mid-air. The
-      ball carrier also stiff-arms one tackler per first down. 4 downs to gain 10 yards: reach the
+      ball carrier may stiff-arm a tackler (40%), once per first down. 4 downs to gain 10 yards: reach the
       first-down line for a fresh set, every other play (short catches included)
       burns a down. Running out of downs, or one interception, ends the drive
     - Endless: the field and its yard numbers keep going. Each catch makes the
@@ -108,6 +108,7 @@ let defense = {zone: false, side: 1}; // this play's call: zone coverage or man,
 let camY = START_LOS + 7;
 let stiffArmAt = -9;       // a stiff arm buys a moment free of the pile around you
 let stiffArmUsed = false;  // the stiff arm is spent until the next first down
+const STIFF_ARM_CHANCE = .4; // odds a tackle gets shrugged off, while the stiff arm is unspent
 
 let humans = [], linemen = [], rushers = [], coverage = [], decoys = [];
 let formation = [];        // this play's receiving spots {key, label, pos}: you line up at one, the CPU plays the rest
@@ -1836,7 +1837,7 @@ function drawHUD()
         const role = i == qbIndex ? 'QB' : 'WR';
         screenText(playerName(i) + ' ' + role, W - pad, pad + s * .4 + i * s * 1.2, s, PLAYER_INK[i], 'right');
     }
-    screenText('STIFF ARM' + (stiffArmUsed ? ' (used)' : ''), W - pad, pad + s * 2.8, s * .7, INK_GREEN, 'right', stiffArmUsed ? .45 : .85);
+    screenText('STIFF ARM' + (stiffArmUsed ? ' (used)' : ' ' + STIFF_ARM_CHANCE * 100 + '%'), W - pad, pad + s * 2.8, s * .7, INK_GREEN, 'right', stiffArmUsed ? .45 : .85);
     screenText(teamSize + ' ON ' + teamSize, W - pad, pad + s * 3.7, s * .65, INK, 'right', .55);
 
     const midX = W / 2;
@@ -2088,7 +2089,7 @@ function gameUpdatePost()
     {
         const w = wr(), tucked = time - catchTime > TACKLE_GRACE && time - stiffArmAt > .4;
         const d = tucked && !w.airborne() && defenders().find(d => !d.stun && d.pos.distance(w.pos) < BODY_R * 2 + .1);
-        if (d && !stiffArmUsed) // every receiver gets one stiff arm per first down
+        if (d && !stiffArmUsed && rand() < STIFF_ARM_CHANCE) // every receiver has a shot at one stiff arm per first down
             stiffArm(w, d);
         else if (d) tackle();
         else if (tucked && abs(w.pos.x) > FIELD_HALF - BODY_R - .05)
