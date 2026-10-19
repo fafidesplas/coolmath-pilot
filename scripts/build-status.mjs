@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Builds status.json for the dashboard: game info from each CLAUDE.md,
-// owner/stage from games.json, and progress from git history.
+// owner/stage from each game's meta.json, and progress from git history.
 // Usage: node scripts/build-status.mjs   (run from anywhere inside the repo)
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -77,25 +77,33 @@ function readGdd(slug) {
   return { status };
 }
 
-const manifest = JSON.parse(readFileSync(join(root, 'games.json'), 'utf8'));
-
-const games = manifest.games.map(g => {
-  const dir = `games/${g.slug}`;
-  const commits = log(dir);
-  return {
-    slug: g.slug,
-    owner: g.owner,
-    stage: g.stage || 'brief',
-    ...readBrief(g.slug),
-    playable: existsSync(join(root, dir, 'index.html')),
-    mechanic: existsSync(join(root, dir, 'mechanic.svg')),
-    commitCount: commits.length,
-    lastCommit: commits[0] || null,
-    firstCommit: commits.at(-1) || null,
-    devlog: readDevlog(g.slug),
-    gdd: readGdd(g.slug),
-  };
-});
+// Every folder in games/ with a CLAUDE.md brief is a game.
+// meta.json is { "owner": "...", "stage": "brief | gdd | slice | content | polish | done" }.
+const games = readdirSync(join(root, 'games'))
+  .filter(slug => existsSync(join(root, 'games', slug, 'CLAUDE.md')))
+  .map(slug => {
+    const metaFile = join(root, 'games', slug, 'meta.json');
+    let meta = {};
+    try { meta = JSON.parse(readFileSync(metaFile, 'utf8')); } catch {}
+    return { slug, ...meta };
+  })
+  .map(g => {
+    const dir = `games/${g.slug}`;
+    const commits = log(dir);
+    return {
+      slug: g.slug,
+      owner: g.owner || 'Unassigned',
+      stage: g.stage || 'brief',
+      ...readBrief(g.slug),
+      playable: existsSync(join(root, dir, 'index.html')),
+      mechanic: existsSync(join(root, dir, 'mechanic.svg')),
+      commitCount: commits.length,
+      lastCommit: commits[0] || null,
+      firstCommit: commits.at(-1) || null,
+      devlog: readDevlog(g.slug),
+      gdd: readGdd(g.slug),
+    };
+  });
 
 const status = {
   generatedAt: new Date().toISOString(),

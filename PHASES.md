@@ -1,8 +1,8 @@
 # Production phases — every Coolmath pilot game
 
-Every game goes through the same five phases. Each phase has prompts to paste into Claude Code (run from `games/<slug>/`) and an exit gate. Don't skip a gate: when it passes, update the game's `stage` in `games.json` so the dashboard shows it.
+Every game goes through the same five phases. Each phase has prompts to paste into Claude Code (run from `games/<slug>/`) and an exit gate. Don't skip a gate: when it passes, update `stage` in the game's `meta.json` so the dashboard shows it.
 
-| # | Phase | `stage` in games.json | Output | Gate |
+| # | Phase | `stage` in meta.json | Output | Gate |
 |---|---|---|---|---|
 | 0 | Brief | `brief` | `CLAUDE.md` (already written) | — |
 | 1 | Game design document | `gdd` | `GDD.md`, status **Approved** | The team has read it and agrees |
@@ -45,7 +45,7 @@ Review GDD.md as a demanding game designer who knows the Coolmath audience (quic
 
 Then: "Apply fixes 1, 2 and 4" (or whichever you accept), and repeat 1c until nothing important is left.
 
-**Gate:** someone else on the team reads `GDD.md`. When you both agree, set `Status: Approved` in the GDD, `stage: "slice"` in `games.json`, and commit.
+**Gate:** someone else on the team reads `GDD.md`. When you both agree, set `Status: Approved` in the GDD, `stage: "slice"` in `meta.json`, and commit.
 
 ---
 
@@ -131,4 +131,4 @@ List every GameAnalytics event this game sends, when it fires and with what valu
 Go through the "Done checklist" in STANDARDS.md item by item. Check everything you can automatically (use window.game, measure the build size, look for console errors and network calls), and tell me exactly how to check the rest by hand. Report pass/fail with evidence for each item, then fix the failures. Finally make sure debug tools and window.game.win() are removed from the release build.
 ```
 
-**Gate:** every checklist item passes. Set `stage: "done"` in `games.json`.
+**Gate:** every checklist item passes. Set `stage: "done"` in `meta.json`.

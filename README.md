@@ -29,13 +29,40 @@ Three shared looks, so games reuse parts and the catalog feels coherent:
 - **Chunky Cartoon** — round characters with big eyes, saturated colors, squash-and-stretch. Character games: Magnet Twins, Flip Runner, Ice Slide.
 - **Night Neon** — dark navy backgrounds, glowing outlines, a few vivid accents. Mood games: Echo Steps, Orbit Hop, Shadow Shapes.
 
+## Getting started (new to the repo)
+
+You need [git](https://git-scm.com), the [GitHub CLI](https://cli.github.com) (`gh`), [Claude Code](https://claude.com/claude-code) and a GitHub account that has accepted the invitation to this repo.
+
+```bash
+gh auth login                                  # once, with your GitHub account
+gh repo clone fafidesplas/coolmath-pilot
+cd coolmath-pilot
+git config user.name "<Your name>"             # how you appear on the dashboard
+git config user.email "<your work email>"
+git config pull.rebase true                    # keeps history linear when you pull
+```
+
+Then, every work session:
+
+```bash
+git pull                                       # get your teammate's latest work
+cd games/<your-game>
+claude                                         # loads the brief, STANDARDS.md, PHASES.md and AGENTS.md
+# ... work through the phase prompts in PHASES.md, commit as you go ...
+git pull && git push                           # publish; the dashboard updates in ~2 minutes
+```
+
+Read [AGENTS.md](AGENTS.md) once: it has the house rules. The short version: **only touch your own game folder** (owners are in each game's `meta.json` and in the table above), commit small with the game name first (`Ice Slide: fish sink into holes`), push often, never force-push, everything in English. Since each person works in their own folders, pulls and pushes don't conflict.
+
+Dashboard: https://fafidesplas.github.io/coolmath-pilot/
+
 ## How to work on a game with Claude Code
 
 1. `cd games/<game>` and run `claude`. It reads that game's `CLAUDE.md`, which pulls in `STANDARDS.md` and `PHASES.md`.
 2. **Phase 1, GDD:** paste the phase 1 prompts from `PHASES.md`. Claude asks the open questions, writes `GDD.md` from `templates/GDD.md`, and reviews it critically. No code until a teammate approves it.
 3. **Phase 2, vertical slice:** Claude plans, then builds one juicy, playable level with the full shell (scope in the brief's "Vertical slice" section). Iterate on feel until it's fun.
 4. **Phases 3–5:** content, polish, release, each with its own prompts and exit gate in `PHASES.md`.
-5. Play after every step, keep notes in `DEVLOG.md`, and move the game's `stage` in `games.json` when a gate passes.
+5. Play after every step, keep notes in `DEVLOG.md`, and move `stage` in the game's `meta.json` when a gate passes.
 
 Anything marked **[confirm]** is still open and gets decided with the team.
 
@@ -46,5 +73,5 @@ Anything marked **[confirm]** is still open and gets decided with the team.
 - **Online:** GitHub Pages, rebuilt by `.github/workflows/dashboard.yml` on every push to `main`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
 - **Local:** `node scripts/build-status.mjs && python3 -m http.server 8000`, then open http://localhost:8000.
 - **A game becomes playable** as soon as `games/<slug>/index.html` exists.
-- **Phase and owner** are edited by hand in `games.json` (`brief → gdd → slice → content → polish → done`, see `PHASES.md`). The GDD status (Draft / In review / Approved) is read from `GDD.md`. Last commit, commit count and devlog come from git automatically.
+- **Phase and owner** are edited by hand in each game's `meta.json` (`brief → gdd → slice → content → polish → done`, see `PHASES.md`). The GDD status (Draft / In review / Approved) is read from `GDD.md`. Last commit, commit count and devlog come from git automatically.
 - Write `DEVLOG.md` entries as `## <date> — <title>` with the newest entry at the top; the dashboard shows the latest one.
