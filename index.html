@@ -78,6 +78,7 @@
     background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
     padding: 16px; display: flex; flex-direction: column; gap: 12px;
   }
+  .mechanic { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: var(--surface-2); }
   .card-head { display: flex; gap: 10px; align-items: flex-start; }
   .rank { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 3px; min-width: 22px; }
   .card h2 { font-size: 16px; margin: 0; }
@@ -258,6 +259,7 @@ function renderCard(g) {
   const version = c ? c.short : '';
   return `
   <article class="card">
+    ${g.mechanic ? `<img class="mechanic" src="games/${esc(g.slug)}/mechanic.svg" alt="How ${esc(g.name)} plays" loading="lazy">` : ''}
     <div class="card-head">
       <span class="rank">#${g.rank ?? ''}</span>
       <div>

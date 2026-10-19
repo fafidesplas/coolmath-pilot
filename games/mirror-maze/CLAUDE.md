@@ -2,6 +2,8 @@
 
 > Place and rotate mirrors to bend a laser beam onto every crystal.
 
+![How Mirror Maze plays](mechanic.svg)
+
 **Rank:** #3 · **Genre:** Logic puzzle · **Art family:** Toybox Flat · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md

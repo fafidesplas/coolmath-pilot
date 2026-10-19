@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Flip Runner: tap flips the runner to the ceiling over a floor spike, grab a star, tap again to flip back. Loop 5 s. -->
+  <rect width="480" height="270" fill="#fff4e6"/>
+
+  <!-- corridor: ceiling (light) and floor (dark) -->
+  <rect x="-10" y="26" width="500" height="24" fill="#a99ff9" stroke="#2b2b2b" stroke-width="4"/>
+  <rect x="-10" y="200" width="500" height="24" fill="#6c5ce7" stroke="#2b2b2b" stroke-width="4"/>
+
+  <!-- floor spikes (scroll left) -->
+  <g transform="translate(520 0)" fill="#b8c2cc" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.5;1" values="520 0;-60 0;-60 0"/>
+    <path d="M-24 200 L-12 176 L0 200 L12 176 L24 200 Z"/>
+  </g>
+
+  <!-- ceiling spikes (scroll left, second half) -->
+  <g transform="translate(520 0)" fill="#b8c2cc" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.5;1" values="520 0;520 0;-60 0"/>
+    <path d="M-24 50 L-12 74 L0 50 L12 74 L24 50 Z"/>
+  </g>
+
+  <!-- star on the ceiling route, collected at t=0.5 -->
+  <g transform="translate(520 72)">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.18;0.5;1" values="520 72;520 72;150 72;150 72"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.49;0.5;1" values="1;1;0;0"/>
+    <path d="M0 -13 L4 -4 L13 -4 L6 2 L9 12 L0 6 L-9 12 L-6 2 L-13 -4 L-4 -4 Z"
+      fill="#ffc93c" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+
+  <!-- sparkle when star is grabbed -->
+  <g transform="translate(150 72)" stroke="#ffc93c" stroke-width="4" stroke-linecap="round" opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.49;0.5;0.6;1" values="0;0;1;0;0"/>
+    <g>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.49;0.6;1" values="0.6;0.6;1.4;1.4"/>
+      <line x1="0" y1="-30" x2="0" y2="-40"/>
+      <line x1="0" y1="30" x2="0" y2="40"/>
+      <line x1="30" y1="0" x2="40" y2="0"/>
+      <line x1="-30" y1="0" x2="-40" y2="0"/>
+      <line x1="22" y1="22" x2="29" y2="29"/>
+      <line x1="-22" y1="22" x2="-29" y2="29"/>
+      <line x1="22" y1="-22" x2="29" y2="-29"/>
+      <line x1="-22" y1="-22" x2="-29" y2="-29"/>
+    </g>
+  </g>
+
+  <!-- runner: floor (y=176) -> ceiling (y=74) -> floor -->
+  <g transform="translate(150 176)">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.28;0.66;0.74;1" values="150 176;150 176;150 74;150 74;150 176;150 176"
+      calcMode="spline" keySplines="0 0 1 1;0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1;0 0 1 1"/>
+    <g>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.2;0.28;0.66;0.74;1" values="1 1;1 1;1 -1;1 -1;1 1;1 1"/>
+      <!-- scarf trails behind and shows "down" -->
+      <path d="M-12 8 Q-30 4 -40 14 Q-30 16 -16 14 Z" fill="#e84a4a" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="0" cy="0" r="22" fill="#ff8a3d" stroke="#2b2b2b" stroke-width="4"/>
+      <ellipse cx="0" cy="22" rx="12" ry="4" fill="#2b2b2b"/>
+      <circle cx="4" cy="-6" r="8" fill="#fff" stroke="#2b2b2b" stroke-width="2.5"/>
+      <circle cx="16" cy="-6" r="7" fill="#fff" stroke="#2b2b2b" stroke-width="2.5"/>
+      <circle cx="7" cy="-5" r="3.5" fill="#2b2b2b"/>
+      <circle cx="18" cy="-5" r="3" fill="#2b2b2b"/>
+    </g>
+  </g>
+
+  <!-- tap input: pointer + ring at each flip -->
+  <g transform="translate(360 125)">
+    <circle r="8" fill="none" stroke="#2b2b2b" stroke-width="3" opacity="0">
+      <animate attributeName="r" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.2;0.28;0.66;0.74;1" values="8;8;34;8;34;34"/>
+      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.199;0.2;0.28;0.659;0.66;0.74;1" values="0;0;1;0;0;1;0;0"/>
+    </circle>
+    <g transform="translate(6 4)">
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.17;0.2;0.24;0.63;0.66;0.7;1" values="6 4;6 4;0 0;6 4;6 4;0 0;6 4;6 4"/>
+      <path d="M0 0 L0 30 L8 23 L14 36 L20 33 L14 20 L24 20 Z"
+        fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <rect x="145" y="232" width="190" height="32" rx="16" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="240" y="253" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#2b2b2b">Tap to flip gravity</text>
+</svg>

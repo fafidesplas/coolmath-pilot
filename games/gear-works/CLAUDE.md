@@ -2,6 +2,8 @@
 
 > Place gears on the pegs so the last one turns the right way at the right speed.
 
+![How Gear Works plays](mechanic.svg)
+
 **Rank:** #11 · **Genre:** Mechanical logic puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md

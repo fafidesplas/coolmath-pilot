@@ -2,6 +2,8 @@
 
 > Every attempt leaves an echo that replays what you did; solve each room by working together with your past selves.
 
+![How Echo Steps plays](mechanic.svg)
+
 **Rank:** #6 · **Genre:** Time-loop puzzle platformer · **Art family:** Night Neon · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md

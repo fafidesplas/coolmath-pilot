@@ -2,6 +2,8 @@
 
 > Rotate the pipe tiles to route the water to every tank before the pressure gauge maxes out.
 
+![How Pipe Pressure plays](mechanic.svg)
+
 **Rank:** #8 · **Genre:** Tile-rotation puzzle · **Art family:** Toybox Flat · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md

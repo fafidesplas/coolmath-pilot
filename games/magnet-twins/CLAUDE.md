@@ -2,6 +2,8 @@
 
 > Two little robots share one keyboard: one attracts metal, one repels it, and every level needs both.
 
+![How Magnet Twins plays](mechanic.svg)
+
 **Rank:** #1 · **Genre:** 2-player co-op puzzle platformer · **Art family:** Chunky Cartoon · **Audience habit:** Coolmath nostalgia (fans of two-players-one-keyboard co-op games)
 
 @../../STANDARDS.md

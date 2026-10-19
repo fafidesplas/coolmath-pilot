@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Mirror Maze: click a mirror to rotate it; the laser bends onto the crystal. Loop 4s. -->
+  <rect width="480" height="270" fill="#f6efe3"/>
+
+  <!-- Board: 5 x 3 grid, 48px cells -->
+  <rect x="124" y="40" width="240" height="144" rx="10" fill="#2b2b2b" fill-opacity="0.15"/>
+  <rect x="120" y="36" width="240" height="144" rx="10" fill="#f2d49b" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+  <g stroke="#2b2b2b" stroke-opacity="0.25" stroke-width="2">
+    <path d="M168 36V180M216 36V180M264 36V180M312 36V180M120 84H360M120 132H360"/>
+  </g>
+
+  <!-- Laser emitter -->
+  <rect x="78" y="48" width="40" height="28" rx="6" fill="#2b2b2b" fill-opacity="0.15" transform="translate(4 4)"/>
+  <rect x="78" y="48" width="40" height="28" rx="6" fill="#e8504f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="92" cy="62" r="5" fill="#fffaf0" stroke="#2b2b2b" stroke-width="2"/>
+
+  <!-- Beam: emitter to mirror (always on) -->
+  <g stroke-linecap="round" fill="none">
+    <path d="M118 60H240" stroke="#e8504f" stroke-width="12" stroke-opacity="0.3"/>
+    <path d="M118 60H240" stroke="#e8504f" stroke-width="5"/>
+    <!-- Wrong bounce: up and off the board -->
+    <g>
+      <path d="M240 60V14" stroke="#e8504f" stroke-width="12" stroke-opacity="0.3"/>
+      <path d="M240 60V14" stroke="#e8504f" stroke-width="5"/>
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite" calcMode="discrete"
+               values="1;0;1" keyTimes="0;0.3;0.9"/>
+    </g>
+    <!-- Right bounce: down onto the crystal -->
+    <g stroke-dasharray="96" stroke-dashoffset="96">
+      <path d="M240 60V156" stroke="#e8504f" stroke-width="12" stroke-opacity="0.3"/>
+      <path d="M240 60V156" stroke="#e8504f" stroke-width="5"/>
+      <animate attributeName="stroke-dashoffset" dur="4s" repeatCount="indefinite"
+               values="96;96;0;0" keyTimes="0;0.3;0.36;1"/>
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite" calcMode="discrete"
+               values="0;1;0" keyTimes="0;0.3;0.88"/>
+    </g>
+  </g>
+
+  <!-- Crystal (diamond), unlit then lit -->
+  <g transform="translate(240 156)">
+    <circle r="24" fill="#4cb3e6" opacity="0">
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+               values="0;0;0.35;0.35;0;0" keyTimes="0;0.36;0.4;0.86;0.89;1"/>
+    </circle>
+    <path d="M4 -12L18 4L4 20L-10 4Z" fill="#2b2b2b" fill-opacity="0.15"/>
+    <path d="M0 -16L14 0L0 16L-14 0Z" fill="#fffaf0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M0 -16L14 0L0 16L-14 0Z" fill="#4cb3e6" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" opacity="0">
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+               values="0;0;1;1;0;0" keyTimes="0;0.36;0.38;0.86;0.89;1"/>
+    </path>
+    <path d="M-14 0H14" stroke="#2b2b2b" stroke-width="2"/>
+  </g>
+
+  <!-- Mirror: "/" rotates to "\" -->
+  <g transform="translate(240 60)">
+    <g>
+      <animateTransform attributeName="transform" type="rotate" dur="4s" repeatCount="indefinite"
+                        values="0;0;90;90;0;0" keyTimes="0;0.28;0.33;0.895;0.9;1"/>
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+               values="1;1;0;0;1;1" keyTimes="0;0.86;0.89;0.91;0.95;1"/>
+      <path d="M-14 22L22 -14" stroke="#2b2b2b" stroke-opacity="0.15" stroke-width="10" stroke-linecap="round"/>
+      <path d="M-17 17L17 -17" stroke="#2b2b2b" stroke-width="11" stroke-linecap="round"/>
+      <path d="M-17 17L17 -17" stroke="#fffaf0" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- Tap ring at the click -->
+  <circle cx="240" cy="60" r="8" fill="none" stroke="#2b2b2b" stroke-width="3" opacity="0">
+    <animate attributeName="r" dur="4s" repeatCount="indefinite"
+             values="8;8;28;28" keyTimes="0;0.27;0.37;1"/>
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             values="0;0;1;0;0" keyTimes="0;0.27;0.28;0.37;1"/>
+  </circle>
+
+  <!-- Sparkles on the lit crystal -->
+  <g fill="#ffd23f" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round">
+    <g transform="translate(272 136)">
+      <path d="M0 -10L3 -3L10 0L3 3L0 10L-3 3L-10 0L-3 -3Z">
+        <animateTransform attributeName="transform" type="scale" dur="4s" repeatCount="indefinite"
+                          values="0;0;1.2;1;0;0" keyTimes="0;0.38;0.44;0.6;0.66;1"/>
+      </path>
+    </g>
+    <g transform="translate(206 140)">
+      <path d="M0 -8L2.5 -2.5L8 0L2.5 2.5L0 8L-2.5 2.5L-8 0L-2.5 -2.5Z">
+        <animateTransform attributeName="transform" type="scale" dur="4s" repeatCount="indefinite"
+                          values="0;0;0;1.2;1;0;0" keyTimes="0;0.38;0.41;0.47;0.62;0.68;1"/>
+      </path>
+    </g>
+  </g>
+
+  <!-- Cursor (arrow pointer, tip at origin) -->
+  <g opacity="0">
+    <animateTransform attributeName="transform" type="translate" dur="4s" repeatCount="indefinite"
+                      values="420 220;420 220;250 70;250 70;420 220;420 220"
+                      keyTimes="0;0.05;0.24;0.36;0.56;1"/>
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             values="0;0;1;1;0;0" keyTimes="0;0.05;0.1;0.48;0.56;1"/>
+    <path d="M3 3V27L9 21L13 30L17 28L13 19H21Z" fill="#2b2b2b" fill-opacity="0.15"/>
+    <path d="M0 0V24L6 18L10 27L14 25L10 16H18Z" fill="#fffaf0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Caption -->
+  <rect x="100" y="222" width="280" height="34" rx="17" fill="#fffaf0" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="240" y="245" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+        font-size="16" font-weight="700" fill="#2b2b2b">Rotate mirrors to light crystals</text>
+</svg>

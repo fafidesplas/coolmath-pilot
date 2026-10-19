@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Orbit Hop: orbit, tap, launch along tangent, captured by next planet. Loop: 4s -->
+  <rect width="480" height="270" fill="#121833"/>
+  <g fill="#EAF0FF" opacity="0.5">
+    <circle cx="40" cy="40" r="1.2"/><circle cx="260" cy="24" r="1"/>
+    <circle cx="440" cy="50" r="1.3"/><circle cx="230" cy="150" r="1"/>
+    <circle cx="455" cy="190" r="1"/><circle cx="30" cy="200" r="1.2"/>
+  </g>
+
+  <!-- Planet A (violet, craters) with orbit ring -->
+  <circle cx="130" cy="120" r="58" fill="none" stroke="#B48CFF" stroke-width="6" opacity="0.15"/>
+  <circle cx="130" cy="120" r="58" fill="none" stroke="#B48CFF" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.7"/>
+  <circle cx="130" cy="120" r="32" fill="#B48CFF" fill-opacity="0.18" stroke="#B48CFF" stroke-width="8" stroke-opacity="0.2"/>
+  <circle cx="130" cy="120" r="32" fill="none" stroke="#B48CFF" stroke-width="2.5"/>
+  <circle cx="120" cy="112" r="6" fill="none" stroke="#B48CFF" stroke-width="1.5"/>
+  <circle cx="140" cy="130" r="4" fill="none" stroke="#B48CFF" stroke-width="1.5"/>
+
+  <!-- Planet B (pink, Saturn ring) with capture ring -->
+  <circle cx="350" cy="120" r="50" fill="none" stroke="#FF5FA2" stroke-width="6" opacity="0.15"/>
+  <circle cx="350" cy="120" r="50" fill="none" stroke="#FF5FA2" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.7">
+    <animate attributeName="stroke-width" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.6;0.62;0.75;1" values="1.5;1.5;5;1.5;1.5"/>
+  </circle>
+  <circle cx="350" cy="120" r="26" fill="#FF5FA2" fill-opacity="0.18" stroke="#FF5FA2" stroke-width="8" stroke-opacity="0.2"/>
+  <circle cx="350" cy="120" r="26" fill="none" stroke="#FF5FA2" stroke-width="2.5"/>
+  <ellipse cx="350" cy="120" rx="40" ry="9" fill="none" stroke="#FF5FA2" stroke-width="2" transform="rotate(-18 350 120)"/>
+
+  <!-- Capture flash -->
+  <circle cx="350" cy="120" r="50" fill="none" stroke="#FFD25A" stroke-width="3" opacity="0">
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.6;0.62;0.8;1" values="0;0;1;0;0"/>
+    <animate attributeName="r" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.6;0.8;1" values="50;50;68;68"/>
+  </circle>
+
+  <!-- Dotted aim guide (tangent at top of planet A) -->
+  <line x1="130" y1="62" x2="185" y2="62" stroke="#EAF0FF" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round" opacity="0">
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.25;0.32;0.4;0.42;1" values="0;0;0.8;0.8;0;0"/>
+  </line>
+
+  <!-- Flight trail, drawn along the same path as the astronaut -->
+  <g id="fx" opacity="0">
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.05;0.9;0.97;1" values="0;1;1;0;0"/>
+    <path d="M130,178 A58,58 0 0 1 130,62 C190,62 280,60 350,70 A50,50 0 0 1 400,120 A50,50 0 0 1 350,170"
+          pathLength="1" fill="none" stroke="#3EE6FF" stroke-width="2.5" stroke-linecap="round"
+          stroke-dasharray="1 1" stroke-dashoffset="1" opacity="0.6">
+      <animate attributeName="stroke-dashoffset" dur="4s" repeatCount="indefinite"
+               keyTimes="0;0.4;0.6;0.9;1" values="1;0.68;0.28;0;0"/>
+    </path>
+    <!-- Astronaut -->
+    <g>
+      <animateMotion dur="4s" repeatCount="indefinite" calcMode="linear"
+                     keyTimes="0;0.4;0.6;0.9;1" keyPoints="0;0.32;0.72;1;1"
+                     path="M130,178 A58,58 0 0 1 130,62 C190,62 280,60 350,70 A50,50 0 0 1 400,120 A50,50 0 0 1 350,170"/>
+      <circle r="12" fill="#3EE6FF" opacity="0.2"/>
+      <circle r="7" fill="#121833" stroke="#3EE6FF" stroke-width="2.5"/>
+      <circle r="2.5" fill="#EAF0FF"/>
+    </g>
+  </g>
+
+  <!-- Tap: pointer + ring -->
+  <circle cx="210" cy="190" r="4" fill="none" stroke="#FFD25A" stroke-width="2.5" opacity="0">
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.4;0.41;0.55;1" values="0;0;1;0;0"/>
+    <animate attributeName="r" dur="4s" repeatCount="indefinite"
+             keyTimes="0;0.4;0.55;1" values="4;4;22;22"/>
+  </circle>
+  <g transform="translate(210 190)">
+    <path d="M0,0 L0,19 L5,15 L9,23 L12.5,21.5 L8.5,13.5 L15,13.5 Z"
+          fill="#EAF0FF" stroke="#121833" stroke-width="1.5" stroke-linejoin="round">
+      <animateTransform attributeName="transform" type="translate" dur="4s" repeatCount="indefinite"
+                        keyTimes="0;0.36;0.4;0.46;1" values="4 6;4 6;0 0;4 6;4 6"/>
+    </path>
+  </g>
+
+  <!-- Caption -->
+  <rect x="100" y="230" width="280" height="30" rx="15" fill="#000000" fill-opacity="0.55"/>
+  <text x="240" y="250.5" text-anchor="middle" fill="#EAF0FF" font-size="16" font-weight="700"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Tap to launch to next planet</text>
+</svg>

@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Magnet Twins: Minus (blue) pushes the crate, Plus (red) pulls it onto the pad. Loop 5 s. -->
+  <rect width="480" height="270" fill="#fff4e6"/>
+
+  <!-- ground + target pad -->
+  <line x1="20" y1="200" x2="460" y2="200" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"/>
+  <rect x="294" y="196" width="52" height="8" rx="4" fill="#ffc93c" stroke="#2b2b2b" stroke-width="3"/>
+
+  <!-- shadows -->
+  <g fill="#2b2b2b" opacity="0.15">
+    <ellipse cx="70" cy="204" rx="32" ry="5"/>
+    <ellipse cx="410" cy="204" rx="32" ry="5"/>
+  </g>
+
+  <!-- Minus robot (blue), facing right -->
+  <g transform="translate(70 200)" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <line x1="0" y1="-56" x2="0" y2="-68"/>
+    <circle cx="0" cy="-70" r="5" fill="#3a86e8"/>
+    <rect x="-30" y="-56" width="60" height="50" rx="18" fill="#3a86e8"/>
+    <circle cx="-14" cy="-4" r="6" fill="#2b2b2b"/>
+    <circle cx="14" cy="-4" r="6" fill="#2b2b2b"/>
+    <circle cx="-9" cy="-38" r="9" fill="#fff"/>
+    <circle cx="13" cy="-38" r="9" fill="#fff"/>
+    <circle cx="-5" cy="-37" r="4" fill="#2b2b2b" stroke="none"/>
+    <circle cx="17" cy="-37" r="4" fill="#2b2b2b" stroke="none"/>
+    <line x1="-8" y1="-18" x2="8" y2="-18" stroke="#fff" stroke-width="4"/>
+  </g>
+
+  <!-- Plus robot (red), facing left -->
+  <g transform="translate(410 200)" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <line x1="0" y1="-56" x2="0" y2="-68"/>
+    <circle cx="0" cy="-70" r="5" fill="#e84a4a"/>
+    <rect x="-30" y="-56" width="60" height="50" rx="18" fill="#e84a4a"/>
+    <circle cx="-14" cy="-4" r="6" fill="#2b2b2b"/>
+    <circle cx="14" cy="-4" r="6" fill="#2b2b2b"/>
+    <circle cx="-13" cy="-38" r="9" fill="#fff"/>
+    <circle cx="9" cy="-38" r="9" fill="#fff"/>
+    <circle cx="-17" cy="-37" r="4" fill="#2b2b2b" stroke="none"/>
+    <circle cx="5" cy="-37" r="4" fill="#2b2b2b" stroke="none"/>
+    <line x1="-8" y1="-18" x2="8" y2="-18" stroke="#fff" stroke-width="4"/>
+    <line x1="0" y1="-26" x2="0" y2="-10" stroke="#fff" stroke-width="4"/>
+  </g>
+
+  <!-- key caps: "/" for Minus, "F" for Plus -->
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="700" text-anchor="middle">
+    <g>
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.07;0.08;0.32;0.33;1" values="0 0;0 0;0 3;0 3;0 0;0 0"/>
+      <rect x="52" y="64" width="36" height="34" rx="8" fill="#fff" stroke="#2b2b2b" stroke-width="3">
+        <animate attributeName="fill" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.07;0.08;0.32;0.33;1" values="#fff;#fff;#ffc93c;#ffc93c;#fff;#fff"/>
+      </rect>
+      <text x="70" y="87" fill="#2b2b2b">/</text>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.35;0.36;0.6;0.61;1" values="0 0;0 0;0 3;0 3;0 0;0 0"/>
+      <rect x="392" y="64" width="36" height="34" rx="8" fill="#fff" stroke="#2b2b2b" stroke-width="3">
+        <animate attributeName="fill" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.35;0.36;0.6;0.61;1" values="#fff;#fff;#ffc93c;#ffc93c;#fff;#fff"/>
+      </rect>
+      <text x="410" y="87" fill="#2b2b2b">F</text>
+    </g>
+  </g>
+
+  <!-- field arcs: Minus pushes (bulge outward), Plus pulls (bulge inward) -->
+  <g fill="none" stroke="#3a86e8" stroke-width="4" stroke-linecap="round" opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.07;0.08;0.32;0.33;1" values="0;0;1;1;0;0"/>
+    <path d="M106 166 Q114 175 106 184"/>
+    <path d="M116 158 Q128 175 116 192"/>
+    <path d="M126 150 Q142 175 126 200"/>
+  </g>
+  <g fill="none" stroke="#e84a4a" stroke-width="4" stroke-linecap="round" opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.35;0.36;0.6;0.61;1" values="0;0;1;1;0;0"/>
+    <path d="M374 166 Q366 175 374 184"/>
+    <path d="M364 158 Q352 175 364 192"/>
+    <path d="M354 150 Q338 175 354 200"/>
+  </g>
+
+  <!-- metal crate -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.08;0.32;0.36;0.6;0.86;0.9;1" values="0 0;0 0;80 0;80 0;160 0;160 0;0 0;0 0"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.82;0.86;0.9;0.94;1" values="1;1;0;0;1;1"/>
+    <rect x="138" y="152" width="44" height="44" rx="6" fill="#b8c2cc" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M144 158 L176 190 M176 158 L144 190" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- success check above pad -->
+  <g transform="translate(320 120)">
+    <g opacity="0">
+      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.6;0.63;0.8;0.84;1" values="0;0;1;1;0;0"/>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.6;0.64;0.68;1" values="0.3;0.3;1.25;1;1"/>
+      <circle r="18" fill="#ffc93c" stroke="#2b2b2b" stroke-width="3"/>
+      <path d="M-8 0 L-2 7 L9 -7" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <g stroke="#2b2b2b" stroke-width="3" stroke-linecap="round">
+        <line x1="-30" y1="-14" x2="-24" y2="-10"/>
+        <line x1="30" y1="-14" x2="24" y2="-10"/>
+        <line x1="0" y1="-32" x2="0" y2="-25"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <rect x="120" y="226" width="240" height="32" rx="16" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="240" y="247" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#2b2b2b">Minus pushes, plus pulls</text>
+</svg>

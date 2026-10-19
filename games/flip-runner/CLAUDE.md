@@ -2,6 +2,8 @@
 
 > An auto-runner where one tap flips gravity: run on the floor, flip to the ceiling, thread the gaps.
 
+![How Flip Runner plays](mechanic.svg)
+
 **Rank:** #2 · **Genre:** One-button skill runner · **Art family:** Chunky Cartoon · **Audience habit:** Coolmath nostalgia (fans of classic tunnel and gravity runners)
 
 @../../STANDARDS.md

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Ice Slide: press Right, penguin slides until it bumps the fish, fish slides into the hole. Loop 5 s. -->
+  <rect width="480" height="270" fill="#fff4e6"/>
+
+  <!-- ice board 7x3, 40 px cells -->
+  <rect x="104" y="64" width="280" height="120" rx="10" fill="#2b2b2b" opacity="0.15"/>
+  <rect x="100" y="60" width="280" height="120" rx="10" fill="#cdeefc" stroke="#2b2b2b" stroke-width="4"/>
+  <g stroke="#9fd3ec" stroke-width="2">
+    <line x1="140" y1="62" x2="140" y2="178"/>
+    <line x1="180" y1="62" x2="180" y2="178"/>
+    <line x1="220" y1="62" x2="220" y2="178"/>
+    <line x1="260" y1="62" x2="260" y2="178"/>
+    <line x1="300" y1="62" x2="300" y2="178"/>
+    <line x1="340" y1="62" x2="340" y2="178"/>
+    <line x1="102" y1="100" x2="378" y2="100"/>
+    <line x1="102" y1="140" x2="378" y2="140"/>
+  </g>
+
+  <!-- hole -->
+  <circle cx="360" cy="120" r="15" fill="#1f4f8a" stroke="#2b2b2b" stroke-width="3"/>
+
+  <!-- splash ring when fish drops in -->
+  <circle cx="360" cy="120" r="14" fill="none" stroke="#2b2b2b" stroke-width="3" opacity="0">
+    <animate attributeName="r" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.46;0.58;1" values="14;14;30;30"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.459;0.46;0.58;1" values="0;0;1;0;0"/>
+  </circle>
+
+  <!-- fish: pushed 240 -> 360, then sinks -->
+  <g transform="translate(240 120)">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.24;0.42;0.88;0.9;1" values="240 120;240 120;360 120;360 120;240 120;240 120"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.86;0.88;0.92;0.96;1" values="1;1;0;0;1;1"/>
+    <g>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.42;0.5;0.88;0.9;1" values="1;1;0;0;1;1"/>
+      <path d="M-8 0 L-17 -9 L-17 9 Z" fill="#ff8a3d" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="3" cy="0" rx="13" ry="9" fill="#ff8a3d" stroke="#2b2b2b" stroke-width="3"/>
+      <circle cx="8" cy="-2" r="2.5" fill="#2b2b2b"/>
+    </g>
+  </g>
+
+  <!-- penguin: slides 120 -> 200, stops at the fish -->
+  <g transform="translate(120 120)">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.1;0.24;0.88;0.9;1" values="120 120;120 120;200 120;200 120;120 120;120 120"
+      calcMode="spline" keySplines="0 0 1 1;0.5 0 1 1;0 0 1 1;0 0 1 1;0 0 1 1"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.86;0.88;0.92;0.96;1" values="1;1;0;0;1;1"/>
+    <g>
+      <!-- squash on bump -->
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.24;0.27;0.31;1" values="1 1;1 1;0.8 1.15;1 1;1 1"/>
+      <ellipse cx="0" cy="0" rx="16" ry="18" fill="#34456b" stroke="#2b2b2b" stroke-width="3"/>
+      <ellipse cx="0" cy="4" rx="10" ry="12" fill="#fff"/>
+      <path d="M-13 6 Q0 12 13 6" fill="none" stroke="#e84a4a" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="-5" cy="-7" r="5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
+      <circle cx="6" cy="-7" r="5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
+      <circle cx="-3" cy="-7" r="2.5" fill="#2b2b2b"/>
+      <circle cx="8" cy="-7" r="2.5" fill="#2b2b2b"/>
+      <path d="M-3 -1 L3 -1 L0 3 Z" fill="#ffc93c" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- input: Right arrow key -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.06;0.07;0.2;0.21;1" values="0 0;0 0;0 3;0 3;0 0;0 0"/>
+    <rect x="34" y="102" width="40" height="36" rx="8" fill="#fff" stroke="#2b2b2b" stroke-width="3">
+      <animate attributeName="fill" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.06;0.07;0.2;0.21;1" values="#fff;#fff;#ffc93c;#ffc93c;#fff;#fff"/>
+    </rect>
+    <path d="M44 120 L62 120 M55 113 L62 120 L55 127" fill="none" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- success check over the filled hole -->
+  <g transform="translate(360 120)">
+    <g opacity="0">
+      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.5;0.53;0.8;0.84;1" values="0;0;1;1;0;0"/>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.5;0.54;0.58;1" values="0.3;0.3;1.25;1;1"/>
+      <circle r="16" fill="#ffc93c" stroke="#2b2b2b" stroke-width="3"/>
+      <path d="M-7 0 L-2 6 L8 -6" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <rect x="110" y="226" width="260" height="32" rx="16" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="240" y="247" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#2b2b2b">Slide to push fish into holes</text>
+</svg>

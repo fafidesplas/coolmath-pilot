@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Ink Path: draw one line, release, the ball rolls along it into the cup. Loop 4s. -->
+  <rect width="480" height="270" fill="#f6efe3"/>
+
+  <!-- Goal cup (shadow + body) -->
+  <path d="M404 154 L409 199 L449 199 L454 154" fill="#2b2b2b" opacity="0.15"/>
+  <path d="M400 150 L405 195 L445 195 L450 150" fill="#5cc46b"
+        stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M425 150 L425 112 L446 120 L425 128" fill="#ffc93c"
+        stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- Ink line being drawn -->
+  <path d="M90 90 Q 220 210 390 160" pathLength="100" fill="none"
+        stroke="#3a6fd8" stroke-width="8" stroke-linecap="round"
+        stroke-dasharray="100 120" stroke-dashoffset="100">
+    <animate attributeName="stroke-dashoffset" dur="4s" repeatCount="indefinite"
+             values="100;100;0;0;100;100" keyTimes="0;0.06;0.4;0.94;0.95;1"/>
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             values="1;1;0;0;1" keyTimes="0;0.88;0.93;0.95;1"/>
+  </path>
+
+  <!-- Ball: waits, drops onto the line, rolls into the cup -->
+  <g transform="translate(90 62)">
+    <animateMotion dur="4s" repeatCount="indefinite" calcMode="linear"
+                   path="M0 0 L0 14 Q 130 134 300 84 L335 119"
+                   keyPoints="0;0;1;1;0;0" keyTimes="0;0.45;0.8;0.93;0.94;1"/>
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             values="1;1;0;0;1" keyTimes="0;0.88;0.93;0.95;1"/>
+    <circle cx="3" cy="3" r="13" fill="#2b2b2b" opacity="0.15"/>
+    <circle r="13" fill="#ef5b5b" stroke="#2b2b2b" stroke-width="3"/>
+    <circle cx="-4" cy="-4" r="3.5" fill="#ffffff"/>
+  </g>
+
+  <!-- Pointer drawing the line -->
+  <g transform="translate(90 90)">
+    <animateMotion dur="4s" repeatCount="indefinite" calcMode="linear"
+                   path="M0 0 Q 130 120 300 70"
+                   keyPoints="0;0;1;1;0;0" keyTimes="0;0.06;0.4;0.94;0.95;1"/>
+    <animate attributeName="opacity" dur="4s" repeatCount="indefinite"
+             values="1;1;0;0;1" keyTimes="0;0.42;0.46;0.95;1"/>
+    <path d="M0 0 L0 24 L6 18 L11 28 L16 26 L11 16 L19 16 Z"
+          fill="#ffffff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Success sparkle over the cup -->
+  <g transform="translate(425 105)">
+    <g transform="scale(0)">
+      <animateTransform attributeName="transform" type="scale" dur="4s" repeatCount="indefinite"
+                        values="0;0;1.3;1;1;0;0" keyTimes="0;0.8;0.84;0.87;0.9;0.93;1"/>
+      <path d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#ffc93c"
+            stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" transform="translate(-30 -6) scale(0.6)"/>
+      <path d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#ffc93c"
+            stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" transform="translate(30 -14) scale(0.5)"/>
+    </g>
+  </g>
+
+  <!-- Caption -->
+  <rect x="120" y="226" width="240" height="32" rx="16" fill="#fffaf2" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="240" y="247" text-anchor="middle" font-size="16" font-weight="700" fill="#2b2b2b"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Draw a line, the ball rolls</text>
+</svg>

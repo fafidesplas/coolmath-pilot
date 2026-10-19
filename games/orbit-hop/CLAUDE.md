@@ -2,6 +2,8 @@
 
 > A tiny astronaut circles a planet; tap to launch at the right moment and slingshot to the next one.
 
+![How Orbit Hop plays](mechanic.svg)
+
 **Rank:** #10 · **Genre:** One-button timing game · **Art family:** Night Neon · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md

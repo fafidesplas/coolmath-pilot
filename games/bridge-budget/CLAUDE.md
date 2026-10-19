@@ -2,6 +2,8 @@
 
 > Build a bridge from beams and cables under a budget, then press Test and watch the truck try to cross.
 
+![How Bridge Budget plays](mechanic.svg)
+
 **Rank:** #7 · **Genre:** Physics construction puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md

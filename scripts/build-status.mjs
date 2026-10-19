@@ -88,6 +88,7 @@ const games = manifest.games.map(g => {
     stage: g.stage || 'brief',
     ...readBrief(g.slug),
     playable: existsSync(join(root, dir, 'index.html')),
+    mechanic: existsSync(join(root, dir, 'mechanic.svg')),
     commitCount: commits.length,
     lastCommit: commits[0] || null,
     firstCommit: commits.at(-1) || null,

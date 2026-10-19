@@ -2,6 +2,8 @@
 
 > A penguin slides across the ice until it hits something; push every fish into a hole in as few moves as possible.
 
+![How Ice Slide plays](mechanic.svg)
+
 **Rank:** #4 · **Genre:** Sliding-block puzzle · **Art family:** Chunky Cartoon · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md

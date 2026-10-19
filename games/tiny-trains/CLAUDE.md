@@ -2,6 +2,8 @@
 
 > Flip the track switches so every colored train reaches its own station, without crashing.
 
+![How Tiny Trains plays](mechanic.svg)
+
 **Rank:** #5 · **Genre:** Routing puzzle · **Art family:** Toybox Flat · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md

@@ -2,6 +2,8 @@
 
 > Draw one line with a limited pot of ink; when you let go, the ball rolls and must reach the goal.
 
+![How Ink Path plays](mechanic.svg)
+
 **Rank:** #9 · **Genre:** Physics drawing puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md

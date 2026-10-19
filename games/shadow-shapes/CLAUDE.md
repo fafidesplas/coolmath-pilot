@@ -2,6 +2,8 @@
 
 > Rotate a strange object in the light until its shadow on the wall matches the outline.
 
+![How Shadow Shapes plays](mechanic.svg)
+
 **Rank:** #12 · **Genre:** Spatial 3D puzzle · **Art family:** Night Neon · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md

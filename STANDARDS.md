@@ -78,6 +78,7 @@ Expose `window.game` with read-only state for automated checks: `screen` (`'titl
 ```
 games/<game-slug>/
   CLAUDE.md      the brief (do not delete)
+  mechanic.svg   animated schematic of the core mechanic (shown in the brief and the dashboard)
   GDD.md         the game design document (phase 1, source of truth for the design)
   DEVLOG.md      short notes per work session: what changed, what is next
   index.html
