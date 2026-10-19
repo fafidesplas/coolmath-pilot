@@ -1,0 +1,17 @@
+{
+  "_help": "Edit owner and stage by hand. stage: brief | plan | slice | content | polish | done (see STANDARDS.md, 'Working rhythm'). Everything else is read from each game's CLAUDE.md and from git.",
+  "games": [
+    { "slug": "magnet-twins",  "owner": "Fafi", "stage": "brief" },
+    { "slug": "flip-runner",   "owner": "Fafi", "stage": "brief" },
+    { "slug": "mirror-maze",   "owner": "Pao",  "stage": "brief" },
+    { "slug": "ice-slide",     "owner": "Pao",  "stage": "brief" },
+    { "slug": "tiny-trains",   "owner": "Pao",  "stage": "brief" },
+    { "slug": "echo-steps",    "owner": "Fafi", "stage": "brief" },
+    { "slug": "bridge-budget", "owner": "Fafi", "stage": "brief" },
+    { "slug": "pipe-pressure", "owner": "Pao",  "stage": "brief" },
+    { "slug": "ink-path",      "owner": "Fafi", "stage": "brief" },
+    { "slug": "orbit-hop",     "owner": "Pao",  "stage": "brief" },
+    { "slug": "gear-works",    "owner": "Pao",  "stage": "brief" },
+    { "slug": "shadow-shapes", "owner": "Fafi", "stage": "brief" }
+  ]
+}

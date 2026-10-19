@@ -1,0 +1,45 @@
+name: Dashboard
+
+# Rebuilds status.json from git history and publishes the dashboard
+# plus every game (as it is at that commit) to GitHub Pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history, needed for per-game commit info
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build status.json
+        run: node scripts/build-status.mjs
+      - name: Prepare site
+        run: |
+          mkdir _site
+          cp index.html status.json _site/
+          cp -r games _site/
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

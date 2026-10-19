@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coolmath pilot — dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f4f3f0;
+    --surface-1: #fcfcfb;
+    --surface-2: #f0efec;
+    --border: #e2e0da;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #77756f;
+    --accent: #2a78d6;
+    --pip-off: #dcdad4;
+    --good: #0ca30c;
+    --owner-fafi: #2a78d6;
+    --owner-pao: #eb6834;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page: #121211;
+      --surface-1: #1a1a19;
+      --surface-2: #232321;
+      --border: #2f2f2c;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8f8d85;
+      --accent: #3987e5;
+      --pip-off: #383835;
+      --owner-fafi: #3987e5;
+      --owner-pao: #d95926;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px 48px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  header .meta { color: var(--text-muted); font-size: 13px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .tile .label { color: var(--text-secondary); font-size: 12px; }
+  .tile .value { font-size: 26px; font-weight: 650; letter-spacing: -.02em; margin-top: 2px; }
+  .tile .sub { color: var(--text-muted); font-size: 12px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 16px; }
+  .seg { display: inline-flex; background: var(--surface-2); border-radius: 8px; padding: 3px; }
+  .seg button {
+    border: 0; background: transparent; color: var(--text-secondary); font: inherit; font-size: 13px;
+    padding: 5px 12px; border-radius: 6px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--surface-1); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .filters label { color: var(--text-muted); font-size: 12px; }
+  .filters select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); }
+
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+  @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+    padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .card-head { display: flex; gap: 10px; align-items: flex-start; }
+  .rank { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 3px; min-width: 22px; }
+  .card h2 { font-size: 16px; margin: 0; }
+  .tagline { color: var(--text-secondary); font-size: 13px; margin: 2px 0 0; }
+  .owner { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  .owner i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--surface-2); color: var(--text-secondary); font-size: 11.5px; padding: 2px 8px; border-radius: 999px; }
+
+  .stage { display: flex; flex-direction: column; gap: 6px; }
+  .stage-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+  .stage-top strong { color: var(--text-primary); font-weight: 600; }
+  .pips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+  .pip { height: 6px; background: var(--pip-off); }
+  .pip:first-child { border-radius: 4px 0 0 4px; }
+  .pip:last-child { border-radius: 0 4px 4px 0; }
+  .pip.on { background: var(--accent); }
+  .pips.done .pip { background: var(--good); }
+
+  .commit { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+  .commit .subject { color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .commit .who { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  .commit.empty { color: var(--text-muted); }
+  details.devlog { font-size: 12.5px; color: var(--text-secondary); }
+  details.devlog summary { cursor: pointer; color: var(--text-secondary); }
+  details.devlog ul { margin: 6px 0 0; padding-left: 18px; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px;
+    font-weight: 600; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer; text-decoration: none;
+  }
+  .btn:hover { text-decoration: none; background: var(--surface-2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn[disabled] { opacity: .5; cursor: not-allowed; }
+  .links { margin-left: auto; display: flex; gap: 12px; font-size: 12.5px; }
+
+  aside { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); position: sticky; top: 16px; }
+  aside h3 { font-size: 14px; margin: 0 0 10px; }
+  .feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .feed li { font-size: 12.5px; border-left: 2px solid var(--border); padding-left: 10px; }
+  .feed .when { color: var(--text-muted); font-size: 11.5px; }
+  .empty-note { color: var(--text-muted); font-size: 13px; }
+
+  .banner { background: var(--surface-1); border: 1px dashed var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; color: var(--text-secondary); font-size: 13px; }
+
+  dialog {
+    border: 0; padding: 0; border-radius: 12px; background: #000; color: #fff;
+    width: min(96vw, calc((92vh - 44px) * 16 / 9)); max-width: none; max-height: none;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  .player-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #1a1a19; font-size: 13px; }
+  .player-bar .title { font-weight: 600; }
+  .player-bar .ver { color: #8f8d85; }
+  .player-bar .spacer { flex: 1; }
+  .player-bar a, .player-bar button { color: #c3c2b7; background: none; border: 0; font: inherit; cursor: pointer; padding: 4px 6px; }
+  .player-bar a:hover, .player-bar button:hover { color: #fff; text-decoration: none; }
+  .player-frame { aspect-ratio: 16 / 9; width: 100%; display: block; border: 0; background: #000; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Coolmath pilot</h1>
+    <span class="meta" id="meta">Cargando…</span>
+  </header>
+
+  <div id="banner"></div>
+
+  <section class="tiles" id="tiles" aria-label="Resumen"></section>
+
+  <div class="filters">
+    <div class="seg" role="group" aria-label="Responsable" id="owner-filter"></div>
+    <label>Familia
+      <select id="family-filter"><option value="">Todas</option></select>
+    </label>
+    <label>Orden
+      <select id="sort">
+        <option value="rank">Ranking</option>
+        <option value="activity">Última actividad</option>
+        <option value="stage">Fase</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="layout">
+    <main class="grid" id="grid"></main>
+    <aside>
+      <h3>Actividad reciente</h3>
+      <ul class="feed" id="feed"></ul>
+    </aside>
+  </div>
+</div>
+
+<dialog id="player" aria-label="Probar juego">
+  <div class="player-bar">
+    <span class="title" id="player-title"></span>
+    <span class="ver mono" id="player-ver"></span>
+    <span class="spacer"></span>
+    <button type="button" id="player-reload" title="Reiniciar">↻ Reiniciar</button>
+    <a id="player-open" target="_blank" rel="noopener">Abrir en pestaña ↗</a>
+    <button type="button" id="player-close" title="Cerrar (Esc)">✕</button>
+  </div>
+  <iframe class="player-frame" id="player-frame" title="Juego" allow="autoplay; fullscreen"></iframe>
+</dialog>
+
+<script>
+const STAGES = [
+  { id: 'brief',   label: 'Brief' },
+  { id: 'plan',    label: 'Plan' },
+  { id: 'slice',   label: 'Vertical slice' },
+  { id: 'content', label: 'Contenido' },
+  { id: 'polish',  label: 'Pulido' },
+  { id: 'done',    label: 'Terminado' },
+];
+const stageIndex = id => Math.max(0, STAGES.findIndex(s => s.id === id));
+
+const state = { data: null, owner: '', family: '', sort: 'rank' };
+const $ = id => document.getElementById(id);
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
+function ago(iso) {
+  if (!iso) return '—';
+  const sec = (new Date(iso) - Date.now()) / 1000;
+  const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+  for (const [unit, s] of units) if (Math.abs(sec) >= s) return rtf.format(Math.round(sec / s), unit);
+  return 'ahora mismo';
+}
+const fullDate = iso => iso ? new Date(iso).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+
+function commitLink(c) {
+  const repo = state.data.repoUrl;
+  const hash = `<code>${esc(c.short)}</code>`;
+  return repo ? `<a href="${esc(repo)}/commit/${esc(c.hash)}" target="_blank" rel="noopener">${hash}</a>` : hash;
+}
+function repoPath(kind, path) {
+  const { repoUrl, branch } = state.data;
+  return repoUrl ? `${repoUrl}/${kind}/${branch || 'main'}/${path}` : path;
+}
+
+function ownerColor(owner) {
+  return owner === 'Pao' ? 'var(--owner-pao)' : 'var(--owner-fafi)';
+}
+
+function renderTiles() {
+  const all = state.data.games;
+  const playable = all.filter(g => g.playable).length;
+  const commits = all.reduce((n, g) => n + g.commitCount, 0);
+  const latest = all.map(g => g.lastCommit).filter(Boolean).sort((a, b) => b.date.localeCompare(a.date))[0];
+  const done = all.filter(g => g.stage === 'done').length;
+  $('tiles').innerHTML = [
+    ['Juegos', all.length, `${done} terminados`],
+    ['Jugables', playable, `${all.length - playable} sin build todavía`],
+    ['Commits en juegos', commits, `${all.filter(g => g.commitCount).length} juegos con actividad`],
+    ['Último commit', latest ? ago(latest.date) : '—', latest ? esc(latest.author) : 'Aún no hay ninguno'],
+  ].map(([label, value, sub]) =>
+    `<div class="tile"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`
+  ).join('');
+}
+
+function renderCard(g) {
+  const si = stageIndex(g.stage);
+  const isDone = g.stage === 'done';
+  const pips = STAGES.map((_, i) => `<span class="pip${i <= si ? ' on' : ''}"></span>`).join('');
+  const c = g.lastCommit;
+  const commit = c
+    ? `<div class="commit">
+         <div class="subject" title="${esc(c.subject)}">${esc(c.subject)}</div>
+         <div class="who">${commitLink(c)} · ${esc(c.author)} · <span title="${esc(fullDate(c.date))}">${ago(c.date)}</span> · ${g.commitCount} commit${g.commitCount === 1 ? '' : 's'}</div>
+       </div>`
+    : `<div class="commit empty">Sin commits todavía</div>`;
+  const devlog = g.devlog
+    ? `<details class="devlog"><summary>DEVLOG: ${esc(g.devlog.title)}</summary><ul>${g.devlog.lines.map(l => `<li>${esc(l.replace(/^[-*]\s*/, ''))}</li>`).join('')}</ul></details>`
+    : '';
+  const version = c ? c.short : '';
+  return `
+  <article class="card">
+    <div class="card-head">
+      <span class="rank">#${g.rank ?? ''}</span>
+      <div>
+        <h2>${esc(g.name)}</h2>
+        <p class="tagline">${esc(g.tagline)}</p>
+      </div>
+      <span class="owner"><i style="background:${ownerColor(g.owner)}"></i>${esc(g.owner)}</span>
+    </div>
+    <div class="chips">
+      <span class="chip">${esc(g.genre)}</span>
+      <span class="chip">${esc(g.family)}</span>
+      <span class="chip">${esc(g.habit)}</span>
+    </div>
+    <div class="stage">
+      <div class="stage-top"><span>Fase <strong>${isDone ? '✓ ' : ''}${STAGES[si].label}</strong></span><span>${si + 1}/${STAGES.length}</span></div>
+      <div class="pips${isDone ? ' done' : ''}" role="img" aria-label="Fase ${si + 1} de ${STAGES.length}: ${STAGES[si].label}">${pips}</div>
+    </div>
+    ${commit}
+    ${devlog}
+    <div class="actions">
+      ${g.playable
+        ? `<button class="btn primary" data-play="${esc(g.slug)}" data-ver="${esc(version)}">▶ Jugar</button>`
+        : `<button class="btn" disabled title="Aún no hay games/${esc(g.slug)}/index.html">▶ Sin build</button>`}
+      <span class="links">
+        <a href="${esc(repoPath('blob', `games/${g.slug}/CLAUDE.md`))}" target="_blank" rel="noopener">Brief</a>
+        ${state.data.repoUrl ? `<a href="${esc(repoPath('commits', `games/${g.slug}`))}" target="_blank" rel="noopener">Historial</a>` : ''}
+      </span>
+    </div>
+  </article>`;
+}
+
+function renderGrid() {
+  let games = state.data.games.filter(g =>
+    (!state.owner || g.owner === state.owner) && (!state.family || g.family === state.family));
+  const byRank = (a, b) => (a.rank ?? 99) - (b.rank ?? 99);
+  if (state.sort === 'activity') {
+    games.sort((a, b) => (b.lastCommit?.date || '').localeCompare(a.lastCommit?.date || '') || byRank(a, b));
+  } else if (state.sort === 'stage') {
+    games.sort((a, b) => stageIndex(b.stage) - stageIndex(a.stage) || byRank(a, b));
+  } else {
+    games.sort(byRank);
+  }
+  $('grid').innerHTML = games.length ? games.map(renderCard).join('') : '<p class="empty-note">Ningún juego con estos filtros.</p>';
+}
+
+function renderFeed() {
+  const recent = state.data.recent || [];
+  if (!recent.length) {
+    $('feed').innerHTML = '<li class="empty-note" style="border:0;padding:0">Todavía no hay commits en <code>games/</code>.</li>';
+    return;
+  }
+  $('feed').innerHTML = recent.map(c =>
+    `<li><div>${esc(c.subject)}</div><div class="when">${commitLink(c)} · ${esc(c.author)} · <span title="${esc(fullDate(c.date))}">${ago(c.date)}</span></div></li>`
+  ).join('');
+}
+
+function renderFilters() {
+  const owners = [...new Set(state.data.games.map(g => g.owner))];
+  $('owner-filter').innerHTML = [['', 'Todos'], ...owners.map(o => [o, o])]
+    .map(([v, l]) => `<button type="button" data-owner="${esc(v)}" aria-pressed="${state.owner === v}">${esc(l)}</button>`).join('');
+  const families = [...new Set(state.data.games.map(g => g.family))].sort();
+  $('family-filter').innerHTML = '<option value="">Todas</option>' + families.map(f => `<option>${esc(f)}</option>`).join('');
+}
+
+function render() {
+  const d = state.data;
+  const head = d.head ? ` · HEAD ${commitLink(d.head)}` : '';
+  $('meta').innerHTML = `Actualizado ${ago(d.generatedAt)}${head}${d.repoUrl ? ` · <a href="${esc(d.repoUrl)}" target="_blank" rel="noopener">Repositorio</a>` : ''}`;
+  renderTiles();
+  renderGrid();
+  renderFeed();
+}
+
+// Player
+function openPlayer(slug, ver) {
+  const g = state.data.games.find(x => x.slug === slug);
+  const url = `games/${slug}/index.html${ver ? `?v=${ver}` : ''}`;
+  $('player-title').textContent = g.name;
+  $('player-ver').textContent = ver ? `@ ${ver}` : '';
+  $('player-open').href = url;
+  $('player-frame').src = url;
+  $('player').showModal();
+  $('player-frame').focus();
+}
+function closePlayer() {
+  $('player').close();
+}
+$('player').addEventListener('close', () => { $('player-frame').src = 'about:blank'; });
+$('player-close').onclick = closePlayer;
+$('player-reload').onclick = () => { $('player-frame').src = $('player-frame').src; };
+$('player').addEventListener('click', e => { if (e.target === $('player')) closePlayer(); });
+
+document.addEventListener('click', e => {
+  const play = e.target.closest('[data-play]');
+  if (play) return openPlayer(play.dataset.play, play.dataset.ver);
+  const owner = e.target.closest('[data-owner]');
+  if (owner) {
+    state.owner = owner.dataset.owner;
+    renderFilters();
+    $('family-filter').value = state.family;
+    renderGrid();
+  }
+});
+$('family-filter').onchange = e => { state.family = e.target.value; renderGrid(); };
+$('sort').onchange = e => { state.sort = e.target.value; renderGrid(); };
+
+fetch('status.json', { cache: 'no-store' })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(data => {
+    state.data = data;
+    renderFilters();
+    render();
+  })
+  .catch(() => {
+    $('meta').textContent = '';
+    $('banner').innerHTML = `<div class="banner">No se encontró <code>status.json</code>. En local, genera los datos y sirve la carpeta:<br>
+      <code>node scripts/build-status.mjs &amp;&amp; python3 -m http.server 8000</code> y abre <code>http://localhost:8000</code>.
+      En GitHub Pages lo genera la Action en cada push.</div>`;
+  });
+</script>
+</body>
+</html>
