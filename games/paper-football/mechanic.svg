@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Paper Football: the WR (O) jukes, the X bites and falls, the QB's pass lands on the WR, who runs past the first-down line. Upfield is right. Loop 5 s. -->
+  <rect width="480" height="270" fill="#dfe3e8"/>
+
+  <!-- whiteboard -->
+  <rect x="24" y="22" width="440" height="190" rx="8" fill="#2b2b2b" opacity="0.15"/>
+  <rect x="20" y="18" width="440" height="190" rx="8" fill="#f7f7f2" stroke="#2b2b2b" stroke-width="4"/>
+
+  <!-- yard lines, line of scrimmage (blue dashes), first-down line (orange) -->
+  <g stroke="#28467a" stroke-opacity="0.22" stroke-linecap="round">
+    <path d="M70 22V204M110 22V204M190 22V204M230 22V204M270 22V204M310 22V204M390 22V204M430 22V204" stroke-width="2"/>
+  </g>
+  <path d="M150 24V202" stroke="#1f5fd1" stroke-opacity="0.5" stroke-width="3" stroke-dasharray="9 6"/>
+  <path d="M362 24V202" stroke="#e07a10" stroke-opacity="0.8" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- linemen -->
+  <g fill="none" stroke="#202028" stroke-width="3">
+    <circle cx="142" cy="118" r="7"/>
+    <circle cx="142" cy="136" r="7"/>
+    <circle cx="142" cy="154" r="7"/>
+  </g>
+
+  <g>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.86;0.88;0.92;0.96;1" values="1;1;0;0;1;1"/>
+
+    <!-- rushers lean on the line -->
+    <g fill="none" stroke="#202028" stroke-width="4" stroke-linecap="round">
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.08;0.3;0.895;0.9;1" values="0 0;0 0;-6 0;-6 0;0 0;0 0"/>
+      <path d="M164 121l12 12M176 121l-12 12"/>
+      <path d="M164 141l12 12M176 141l-12 12"/>
+    </g>
+
+    <!-- WR's marker trail -->
+    <path d="M142 66H225L300 112L330 116H410" fill="none" stroke="#d42a2a" stroke-opacity="0.45" stroke-width="3"
+      stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="282 282" stroke-dashoffset="282">
+      <animate attributeName="stroke-dashoffset" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.08;0.36;0.54;0.62;0.84;0.895;0.9;1" values="282;282;199;111;81;0;0;282;282"/>
+    </path>
+
+    <!-- QB -->
+    <g transform="translate(110 136)">
+      <g>
+        <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.39;0.42;0.47;1" values="1;1;1.2;1;1"/>
+        <circle r="10" fill="#fff" stroke="#1f5fd1" stroke-width="4"/>
+      </g>
+    </g>
+
+    <!-- cornerback: shadows the WR, bites on the fake, spins to the turf -->
+    <g transform="translate(176 66)">
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.08;0.36;0.46;0.895;0.9;1" values="176 66;176 66;236 60;262 50;262 50;176 66;176 66"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.38;0.46;0.7;0.895;0.9;1" values="0;0;45;450;450;0;0"/>
+        <path d="M-8 -8L8 8M8 -8L-8 8" fill="none" stroke="#202028" stroke-width="4.5" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <!-- juke burst on the beaten X -->
+    <g transform="translate(262 34)" fill="#7fd36b" stroke="#2b2b2b" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M0 -12L3.5 -3.5L12 0L3.5 3.5L0 12L-3.5 3.5L-12 0L-3.5 -3.5Z" transform="scale(0)">
+        <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.4;0.45;0.52;0.58;1" values="0;0;1.25;1;0;0"/>
+      </path>
+    </g>
+
+    <!-- pass: dashed arc, landing ring, ball in flight -->
+    <g opacity="0">
+      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.4;0.41;0.63;0.64;1" values="0;0;1;1;0;0"/>
+      <path d="M120 132Q225 30 330 112" fill="none" stroke="#a0592b" stroke-opacity="0.5" stroke-width="2.5" stroke-dasharray="5 5"/>
+      <circle cx="330" cy="116" r="13" fill="none" stroke="#139157" stroke-width="3" stroke-opacity="0.7"/>
+    </g>
+    <g>
+      <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear" path="M120 132Q225 30 330 112"
+        keyPoints="0;0;1;1" keyTimes="0;0.4;0.62;1"/>
+      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.62;0.621;0.895;0.9;1" values="1;1;0;0;1;1"/>
+      <ellipse rx="7" ry="4.5" fill="#a0592b" stroke="#2b2b2b" stroke-width="2"/>
+      <path d="M-3 0H3" stroke="#fff" stroke-width="1.5"/>
+    </g>
+
+    <!-- WR: runs the route, jukes, catches, runs it upfield -->
+    <g transform="translate(142 66)">
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.08;0.36;0.54;0.62;0.84;0.895;0.9;1"
+        values="142 66;142 66;225 66;300 112;330 116;410 116;410 116;142 66;142 66"/>
+      <g>
+        <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.35;0.38;0.42;1" values="1 1;1 1;0.8 1.25;1 1;1 1"/>
+        <circle r="10" fill="#fff" stroke="#d42a2a" stroke-width="4"/>
+      </g>
+      <g opacity="0">
+        <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.62;0.621;0.895;0.9;1" values="0;0;1;1;0;0"/>
+        <ellipse cx="11" cy="5" rx="7" ry="4.5" fill="#a0592b" stroke="#2b2b2b" stroke-width="2"/>
+        <path d="M8 5H14" stroke="#fff" stroke-width="1.5"/>
+      </g>
+    </g>
+
+    <!-- catch burst -->
+    <g transform="translate(330 92)" fill="#ffd23f" stroke="#2b2b2b" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M0 -14L4 -4L14 0L4 4L0 14L-4 4L-14 0L-4 -4Z" transform="scale(0)">
+        <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.62;0.67;0.72;0.78;1" values="0;0;1.3;1;0;0"/>
+      </path>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <rect x="96" y="224" width="288" height="32" rx="16" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="240" y="245" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#2b2b2b">Juke the X, catch, run upfield</text>
+</svg>
