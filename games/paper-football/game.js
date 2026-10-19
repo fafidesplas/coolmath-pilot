@@ -792,8 +792,16 @@ class Human extends Body
         const you = numPlayers == 1 && this.index == 0; // solo: point out which one is yours
         markerText(this.num ?? (you ? 'P' : this.index + 1 + ''), p.add(vec2(0, -.05)), .8, this.ink);
         markerText(this.isQB() ? 'QB' : this.spotLabel ?? 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
-        if (you)
-            markerText('--- YOU', p.add(vec2(0, 2.05)), .75, this.ink);
+        if (you && gameState == 'presnap') // a whiteboard callout: a shaky line out toward the word, short of the circle
+        {
+            const from = p.add(vec2(-.7, .7).scale(BODY_R + .5)), to = p.add(vec2(-2.2, 1.75));
+            const bow = vec2(.15, -.15); // a hand-drawn line sags a little in the middle
+            const points = [0, .25, .5, .75, 1].map((t, i) =>
+                jitter(from.lerp(to, t).add(bow.scale(Math.sin(t * PI))), this.seed + i * 2.3, .12));
+            strokeWorld(points, INK, .09, .85);
+            const twitch = jitter(p.add(vec2(-3.15, 2.15)), this.seed + 9, .1);
+            markerText('YOU', twitch, 1.15, INK, 1, (inkHash(this.seed + boil) - .5) * .1);
+        }
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
