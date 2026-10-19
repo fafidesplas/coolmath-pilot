@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -143,23 +143,23 @@
 <div class="wrap">
   <header>
     <h1>Coolmath pilot</h1>
-    <span class="meta" id="meta">Cargando…</span>
+    <span class="meta" id="meta">Loading…</span>
   </header>
 
   <div id="banner"></div>
 
-  <section class="tiles" id="tiles" aria-label="Resumen"></section>
+  <section class="tiles" id="tiles" aria-label="Summary"></section>
 
   <div class="filters">
-    <div class="seg" role="group" aria-label="Responsable" id="owner-filter"></div>
-    <label>Familia
-      <select id="family-filter"><option value="">Todas</option></select>
+    <div class="seg" role="group" aria-label="Owner" id="owner-filter"></div>
+    <label>Art family
+      <select id="family-filter"><option value="">All</option></select>
     </label>
-    <label>Orden
+    <label>Sort
       <select id="sort">
-        <option value="rank">Ranking</option>
-        <option value="activity">Última actividad</option>
-        <option value="stage">Fase</option>
+        <option value="rank">Rank</option>
+        <option value="activity">Latest activity</option>
+        <option value="stage">Stage</option>
       </select>
     </label>
   </div>
@@ -167,22 +167,22 @@
   <div class="layout">
     <main class="grid" id="grid"></main>
     <aside>
-      <h3>Actividad reciente</h3>
+      <h3>Recent activity</h3>
       <ul class="feed" id="feed"></ul>
     </aside>
   </div>
 </div>
 
-<dialog id="player" aria-label="Probar juego">
+<dialog id="player" aria-label="Play game">
   <div class="player-bar">
     <span class="title" id="player-title"></span>
     <span class="ver mono" id="player-ver"></span>
     <span class="spacer"></span>
-    <button type="button" id="player-reload" title="Reiniciar">↻ Reiniciar</button>
-    <a id="player-open" target="_blank" rel="noopener">Abrir en pestaña ↗</a>
-    <button type="button" id="player-close" title="Cerrar (Esc)">✕</button>
+    <button type="button" id="player-reload" title="Restart">↻ Restart</button>
+    <a id="player-open" target="_blank" rel="noopener">Open in new tab ↗</a>
+    <button type="button" id="player-close" title="Close (Esc)">✕</button>
   </div>
-  <iframe class="player-frame" id="player-frame" title="Juego" allow="autoplay; fullscreen"></iframe>
+  <iframe class="player-frame" id="player-frame" title="Game" allow="autoplay; fullscreen"></iframe>
 </dialog>
 
 <script>
@@ -190,9 +190,9 @@ const STAGES = [
   { id: 'brief',   label: 'Brief' },
   { id: 'plan',    label: 'Plan' },
   { id: 'slice',   label: 'Vertical slice' },
-  { id: 'content', label: 'Contenido' },
-  { id: 'polish',  label: 'Pulido' },
-  { id: 'done',    label: 'Terminado' },
+  { id: 'content', label: 'Content' },
+  { id: 'polish',  label: 'Polish' },
+  { id: 'done',    label: 'Done' },
 ];
 const stageIndex = id => Math.max(0, STAGES.findIndex(s => s.id === id));
 
@@ -201,15 +201,15 @@ const $ = id => document.getElementById(id);
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
+const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 function ago(iso) {
   if (!iso) return '—';
   const sec = (new Date(iso) - Date.now()) / 1000;
   const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
   for (const [unit, s] of units) if (Math.abs(sec) >= s) return rtf.format(Math.round(sec / s), unit);
-  return 'ahora mismo';
+  return 'just now';
 }
-const fullDate = iso => iso ? new Date(iso).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const fullDate = iso => iso ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 
 function commitLink(c) {
   const repo = state.data.repoUrl;
@@ -232,10 +232,10 @@ function renderTiles() {
   const latest = all.map(g => g.lastCommit).filter(Boolean).sort((a, b) => b.date.localeCompare(a.date))[0];
   const done = all.filter(g => g.stage === 'done').length;
   $('tiles').innerHTML = [
-    ['Juegos', all.length, `${done} terminados`],
-    ['Jugables', playable, `${all.length - playable} sin build todavía`],
-    ['Commits en juegos', commits, `${all.filter(g => g.commitCount).length} juegos con actividad`],
-    ['Último commit', latest ? ago(latest.date) : '—', latest ? esc(latest.author) : 'Aún no hay ninguno'],
+    ['Games', all.length, `${done} done`],
+    ['Playable', playable, `${all.length - playable} without a build yet`],
+    ['Game commits', commits, `${all.filter(g => g.commitCount).length} games with activity`],
+    ['Latest commit', latest ? ago(latest.date) : '—', latest ? esc(latest.author) : 'None yet'],
   ].map(([label, value, sub]) =>
     `<div class="tile"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`
   ).join('');
@@ -251,7 +251,7 @@ function renderCard(g) {
          <div class="subject" title="${esc(c.subject)}">${esc(c.subject)}</div>
          <div class="who">${commitLink(c)} · ${esc(c.author)} · <span title="${esc(fullDate(c.date))}">${ago(c.date)}</span> · ${g.commitCount} commit${g.commitCount === 1 ? '' : 's'}</div>
        </div>`
-    : `<div class="commit empty">Sin commits todavía</div>`;
+    : `<div class="commit empty">No commits yet</div>`;
   const devlog = g.devlog
     ? `<details class="devlog"><summary>DEVLOG: ${esc(g.devlog.title)}</summary><ul>${g.devlog.lines.map(l => `<li>${esc(l.replace(/^[-*]\s*/, ''))}</li>`).join('')}</ul></details>`
     : '';
@@ -272,15 +272,15 @@ function renderCard(g) {
       <span class="chip">${esc(g.habit)}</span>
     </div>
     <div class="stage">
-      <div class="stage-top"><span>Fase <strong>${isDone ? '✓ ' : ''}${STAGES[si].label}</strong></span><span>${si + 1}/${STAGES.length}</span></div>
-      <div class="pips${isDone ? ' done' : ''}" role="img" aria-label="Fase ${si + 1} de ${STAGES.length}: ${STAGES[si].label}">${pips}</div>
+      <div class="stage-top"><span>Stage <strong>${isDone ? '✓ ' : ''}${STAGES[si].label}</strong></span><span>${si + 1}/${STAGES.length}</span></div>
+      <div class="pips${isDone ? ' done' : ''}" role="img" aria-label="Stage ${si + 1} of ${STAGES.length}: ${STAGES[si].label}">${pips}</div>
     </div>
     ${commit}
     ${devlog}
     <div class="actions">
       ${g.playable
-        ? `<button class="btn primary" data-play="${esc(g.slug)}" data-ver="${esc(version)}">▶ Jugar</button>`
-        : `<button class="btn" disabled title="Aún no hay games/${esc(g.slug)}/index.html">▶ Sin build</button>`}
+        ? `<button class="btn primary" data-play="${esc(g.slug)}" data-ver="${esc(version)}">▶ Play</button>`
+        : `<button class="btn" disabled title="No games/${esc(g.slug)}/index.html yet">▶ No build yet</button>`}
       <span class="links">
         <a href="${esc(repoPath('blob', `games/${g.slug}/CLAUDE.md`))}" target="_blank" rel="noopener">Brief</a>
         ${state.data.repoUrl ? `<a href="${esc(repoPath('commits', `games/${g.slug}`))}" target="_blank" rel="noopener">Historial</a>` : ''}
@@ -300,13 +300,13 @@ function renderGrid() {
   } else {
     games.sort(byRank);
   }
-  $('grid').innerHTML = games.length ? games.map(renderCard).join('') : '<p class="empty-note">Ningún juego con estos filtros.</p>';
+  $('grid').innerHTML = games.length ? games.map(renderCard).join('') : '<p class="empty-note">No games match these filters.</p>';
 }
 
 function renderFeed() {
   const recent = state.data.recent || [];
   if (!recent.length) {
-    $('feed').innerHTML = '<li class="empty-note" style="border:0;padding:0">Todavía no hay commits en <code>games/</code>.</li>';
+    $('feed').innerHTML = '<li class="empty-note" style="border:0;padding:0">No commits in <code>games/</code> yet.</li>';
     return;
   }
   $('feed').innerHTML = recent.map(c =>
@@ -316,16 +316,16 @@ function renderFeed() {
 
 function renderFilters() {
   const owners = [...new Set(state.data.games.map(g => g.owner))];
-  $('owner-filter').innerHTML = [['', 'Todos'], ...owners.map(o => [o, o])]
+  $('owner-filter').innerHTML = [['', 'All'], ...owners.map(o => [o, o])]
     .map(([v, l]) => `<button type="button" data-owner="${esc(v)}" aria-pressed="${state.owner === v}">${esc(l)}</button>`).join('');
   const families = [...new Set(state.data.games.map(g => g.family))].sort();
-  $('family-filter').innerHTML = '<option value="">Todas</option>' + families.map(f => `<option>${esc(f)}</option>`).join('');
+  $('family-filter').innerHTML = '<option value="">All</option>' + families.map(f => `<option>${esc(f)}</option>`).join('');
 }
 
 function render() {
   const d = state.data;
   const head = d.head ? ` · HEAD ${commitLink(d.head)}` : '';
-  $('meta').innerHTML = `Actualizado ${ago(d.generatedAt)}${head}${d.repoUrl ? ` · <a href="${esc(d.repoUrl)}" target="_blank" rel="noopener">Repositorio</a>` : ''}`;
+  $('meta').innerHTML = `Updated ${ago(d.generatedAt)}${head}${d.repoUrl ? ` · <a href="${esc(d.repoUrl)}" target="_blank" rel="noopener">Repository</a>` : ''}`;
   renderTiles();
   renderGrid();
   renderFeed();
@@ -373,9 +373,9 @@ fetch('status.json', { cache: 'no-store' })
   })
   .catch(() => {
     $('meta').textContent = '';
-    $('banner').innerHTML = `<div class="banner">No se encontró <code>status.json</code>. En local, genera los datos y sirve la carpeta:<br>
-      <code>node scripts/build-status.mjs &amp;&amp; python3 -m http.server 8000</code> y abre <code>http://localhost:8000</code>.
-      En GitHub Pages lo genera la Action en cada push.</div>`;
+    $('banner').innerHTML = `<div class="banner"><code>status.json</code> not found. To run locally, generate the data and serve the folder:<br>
+      <code>node scripts/build-status.mjs &amp;&amp; python3 -m http.server 8000</code> then open <code>http://localhost:8000</code>.
+      On GitHub Pages the Action generates it on every push.</div>`;
   });
 </script>
 </body>
