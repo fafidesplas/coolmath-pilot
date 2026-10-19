@@ -1,6 +1,6 @@
 {
-    "title": "Chalk Talk",
-    "name": "chalkTalk",
+    "title": "Endless Football",
+    "name": "endlessFootball",
     "engine": "dist/littlejs.js",
     "sources": ["templates/gameFx.js", "game.js"]
 }

@@ -1,5 +1,5 @@
 /*
-    Chalk Talk — endless two-player football drawn on a coach's whiteboard
+    Endless Football — two-player football drawn on a coach's whiteboard
     - Everyone lines up at the line of scrimmage (LOS). The QB calls "HUT!"
       with their action key, then it's live
     - QB: scramble behind the line and don't get sacked (any X touching you
@@ -118,7 +118,7 @@ const snapper = () => numPlayers == 1 ? 0 : qbIndex; // in 1P the human always c
 const playerInput = [{dir:vec2(), pressed:false}, {dir:vec2(), pressed:false}];
 const fingers = new Map;            // touch id -> {player, start, cur, t0}
 const fingerTaps = [false, false];
-let tappedHalf = -1;                // screen half of the last quick tap (menus)
+let tappedX = -1;                   // where across the screen (0 to 1) the last quick tap was (menus)
 const flicks = [{cur: vec2(), last: vec2(), t: -9}, {cur: vec2(), last: vec2(), t: -9}]; // juke detection
 let usedTouch = false;
 
@@ -153,7 +153,7 @@ function onTouch(e)
                 if (time - f.t0 < .25 && f.cur.distance(f.start) < 25)
                 {
                     fingerTaps[f.player] = true;
-                    tappedHalf = f.half;
+                    tappedX = f.cur.x / mainCanvas.width;
                 }
                 fingers.delete(t.identifier);
             }
@@ -188,19 +188,25 @@ function readInputs()
             fingerTaps[i] = false;
             continue;
         }
-        let dir = keyDirs[i];
-        for (const f of fingers.values())
-        {
-            if (f.player != i) continue;
-            const d = f.cur.subtract(f.start).scale(1 / stickRadius());
-            if (d.length() > .15)
-                dir = vec2(d.x, -d.y).clampLength(1);
-        }
-        playerInput[i].dir = dir.length() > 1 ? dir.normalize() : dir;
+        const dir = touchDir(i, keyDirs[i]);
+        playerInput[i].dir = dir;
         playerInput[i].pressed = keyActs[i] || fingerTaps[i];
         playerInput[i].juke = detectJuke(i, dir);
         fingerTaps[i] = false;
     }
+}
+
+// a finger dragged on the player's side of the screen overrides their keys
+function touchDir(i, dir)
+{
+    for (const f of fingers.values())
+    {
+        if (f.player != i) continue;
+        const d = f.cur.subtract(f.start).scale(1 / stickRadius());
+        if (d.length() > .15)
+            dir = vec2(d.x, -d.y).clampLength(1);
+    }
+    return dir.length() > 1 ? dir.normalize() : dir;
 }
 
 // a fresh push one way (snapped to 8 directions) and then the opposite way within .25s is a juke.
@@ -511,25 +517,32 @@ class Body extends EngineObject
         return true;
     }
     canCollideWith(other) { return true; }
+    // a diving tackle: a burst one way with no steering until it's over. Miss and you eat turf
+    launchDive(dir)
+    {
+        this.dive = .3;
+        this.vel = dir.normalize(15);
+    }
+    diving()
+    {
+        if (this.dive <= 0) return false;
+        if ((this.dive -= timeDelta) <= 0)
+        {
+            this.stun = .8;
+            this.jukedAt = time;
+            sndWhiff.play(this.pos);
+            addEffect('whiff', this.pos.add(vec2(0, 1.4)), this.ink, .8);
+        }
+        return true;
+    }
     // a defender closing on the ball carrier launches a diving tackle. Juke out of its way and they eat turf
     tryDive()
     {
         if (gameState != 'run' || this.stun) return false;
-        if (this.dive > 0)
-        {
-            if ((this.dive -= timeDelta) <= 0)
-            {
-                this.stun = .8;
-                this.jukedAt = time;
-                sndWhiff.play(this.pos);
-                addEffect('whiff', this.pos.add(vec2(0, 1.4)), INK, .8);
-            }
-            return true;
-        }
+        if (this.diving()) return true;
         const w = wr();
         if (w.pos.distance(this.pos) > 2.4 || time - catchTime < TACKLE_GRACE) return false;
-        this.dive = .3;
-        this.vel = w.pos.add(w.vel.scale(.15)).subtract(this.pos).normalize(15);
+        this.launchDive(w.pos.add(w.vel.scale(.15)).subtract(this.pos));
         return true;
     }
 }
@@ -795,8 +808,8 @@ class Cover extends Body
     }
     render()
     {
-        markerX(this.pos, BODY_R * .9, INK, .17, this.seed, this.dive ? PI / 4 : this.stun ? time * 12 : 0);
-        markerText(this.role == 'safety' ? 'S' : 'CB', this.pos.add(vec2(0, 1.05)), .75, INK);
+        markerX(this.pos, BODY_R * .9, this.ink, .17, this.seed, this.dive ? PI / 4 : this.stun ? time * 12 : 0);
+        markerText(this.role == 'safety' ? 'S' : 'CB', this.pos.add(vec2(0, 1.05)), .75, this.ink);
         if (this.stun)
             drawDizzy(this.pos.add(vec2(0, 1.6)));
     }
@@ -872,13 +885,18 @@ function callDefense(side)
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
 }
 
-function resetGame()
+function newDrive()
 {
     los = START_LOS;
     down = 1;
     firstDown = START_LOS + 10;
     completions = 0;
     qbIndex = 0;
+}
+
+function resetGame()
+{
+    newDrive();
     furthest = 0;
     longPass = longRec = 0;
     newRecords = new Set;
@@ -887,10 +905,10 @@ function resetGame()
     setupPlay();
 }
 
-function startGame(players)
+function startGame(choice)
 {
-    numPlayers = players;
-    titleChoice = players - 1;
+    titleChoice = choice;
+    numPlayers = choice == 1 ? 2 : 1;
     resetGame();
 }
 
@@ -1479,8 +1497,8 @@ function drawHUD()
         screenText(resultInfo.sub, midX, H * .16 + s * 1.8, s * .9, INK, 'center', .75);
         if (big)
         {
-            screenText('drive: ' + furthest + ' yards   ·   ' + completions + ' catches', midX, H * .16 + s * 3.2, s, INK, 'center');
             const isNew = (key) => newRecords.has(key) ? ' NEW!' : '';
+            screenText('drive: ' + furthest + ' yards   ·   ' + completions + ' catches', midX, H * .16 + s * 3.2, s, INK, 'center');
             const records = 'HIGH SCORE ' + saveData.best + isNew('best') +
                 '   ·   LONGEST PASS ' + saveData.longPass + isNew('longPass') +
                 '   ·   LONGEST REC ' + saveData.longRec + isNew('longRec');
@@ -1534,8 +1552,8 @@ function drawTitle()
     card.fillRect(0, 0, W, H);
     card.restore();
 
-    screenText('CHALK TALK', midX, H * .22, s * 3.2, INK, 'center');
-    screenText('endless football, drawn on the whiteboard', midX, H * .22 + s * 2.4, s * .95, INK, 'center', .7);
+    screenText('ENDLESS FOOTBALL', midX, H * .22, s * 3.2, INK, 'center');
+    screenText('football, drawn on the whiteboard', midX, H * .22 + s * 2.4, s * .95, INK, 'center', .7);
 
     // two hand-drawn option boxes, side by side so a tap on either half picks one
     const options = [['1 PLAYER', 'you + a CPU teammate'], ['2 PLAYERS', 'P1 WASD  ·  P2 ARROWS']];
@@ -1565,14 +1583,14 @@ function drawTitle()
     screenText('HIGH SCORE ' + saveData.best + ' YDS   ·   LONGEST PASS ' + saveData.longPass + '   ·   LONGEST REC ' + saveData.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
 }
 
-// a mouse click or tap on the left or right half of the screen, -1 if none
-function clickedHalf()
+// where across the screen (0 to 1) a mouse click or tap landed this frame, -1 if none
+function clickedX()
 {
-    let half = tappedHalf;
-    tappedHalf = -1;
+    let x = tappedX;
+    tappedX = -1;
     if (mouseWasPressed(0))
-        half = mousePosScreen.x < mainCanvasSize.x / 2 ? 0 : 1;
-    return half;
+        x = mousePosScreen.x / mainCanvasSize.x;
+    return x;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1588,17 +1606,17 @@ function gameUpdate()
 {
     readInputs();
     const anyPress = playerInput[0].pressed || playerInput[1].pressed;
-    const half = clickedHalf();
+    const tapX = clickedX(), half = tapX < 0 ? -1 : tapX < .5 ? 0 : 1;
     drawRouteUpdate();
 
     if (gameState == 'title')
     {
-        if (['ArrowLeft', 'ArrowUp', 'KeyA', 'KeyW'].some(k => keyWasPressed(k))) titleChoice = 0;
-        if (['ArrowRight', 'ArrowDown', 'KeyD', 'KeyS'].some(k => keyWasPressed(k))) titleChoice = 1;
-        if (keyWasPressed('Digit1') || keyWasPressed('Numpad1')) startGame(1);
-        else if (keyWasPressed('Digit2') || keyWasPressed('Numpad2')) startGame(2);
-        else if (half >= 0) startGame(half + 1);
-        else if (anyPress) startGame(titleChoice + 1);
+        if (['ArrowLeft', 'ArrowUp', 'KeyA', 'KeyW'].some(k => keyWasPressed(k))) titleChoice = max(0, titleChoice - 1);
+        if (['ArrowRight', 'ArrowDown', 'KeyD', 'KeyS'].some(k => keyWasPressed(k))) titleChoice = min(1, titleChoice + 1);
+        const digit = [1, 2].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n));
+        if (digit >= 0) startGame(digit);
+        else if (tapX >= 0) startGame(min(1, tapX * 2 | 0));
+        else if (anyPress) startGame(titleChoice);
     }
     else if (gameState == 'presnap' && stateTimer.elapsed() && playerInput[snapper()].pressed)
     {
