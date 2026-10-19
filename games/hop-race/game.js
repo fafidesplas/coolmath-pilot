@@ -252,7 +252,7 @@ function rcResetPlayer(p)
     p.grounded = true;
     p.cling = 0;
     p.dir = 1;
-    p.down = false; p.gathering = false; p.asleep = false; p.gas = false;
+    p.down = false; p.gathering = false; p.asleep = false; p.gas = false; p.condT = -1;
     p.t = p.charge = 0;
     p.cx = p.x; p.cy = p.y;
     p.trail = [];
@@ -603,6 +603,13 @@ const RC_SAND = {
     gasLift: 20,       // gas accelerates up at this rate instead of falling
     gasFric: .03,      // gas barely drags on the ceiling, so it slides up the slope
     gasDrag: 1,
+    condTime: 1.5,     // letting go as gas: gas -> liquid -> solid takes this long in all
+    condGas: .5,       // ...of which this much is still gas, tightening up
+    condFreeze: .35,   // ...and the last bit of the liquid is it freezing into the square
+    cohGas: 8,         // gas drifts toward its center at this rate while condensing
+    cohLiq: 70,        // liquid is pulled hard into a blob
+    cohLiqDamp: 9,     // ...and loses its spread so it doesn't orbit
+    liqFric: .1,       // liquid slides on slabs
     gasTop: 12,        // gas that floats above this has escaped: respawn
     debug: true,       // print each player's grain count above them
     packTimeout: 2.5,  // seconds; then pack with whatever has gathered
@@ -612,7 +619,7 @@ function rcSqSize(p) { return Math.sqrt(p.grains) * RC_SAND_D; }   // the square
 let rcSlabs = [];
 const RC_SQ_OFFS = [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [0, 1], [-1, 0], [1, 0], [0, 0]];   // x h
 function rcIsFlow() { return RC_MODES[rcModeIndex].type == 'flow'; }
-function rcSandForm(p) { return p.down || p.gathering || p.gas; }   // drawn and simulated as grains
+function rcSandForm(p) { return p.down || p.gathering || p.gas || p.condT >= 0; }   // drawn and simulated as grains
 
 function rcMakeSlabs(list)
 {
@@ -706,6 +713,7 @@ function rcSandRespawn(p)
     p.parts = [];
     p.asleep = false;
     p.gas = false;
+    p.condT = -1;
     p.grains = RC_SAND.n * RC_SAND.n;
     p.x = p.cx; p.y = p.cy; p.vx = p.vy = 0; p.ang = p.cAng;
     p.trail = [];
@@ -751,7 +759,7 @@ function rcSquareStep(p, dt)
 
 function rcSandStep(p, dt, tx, ty)
 {
-    const o = RC_SAND, r = RC_SAND_D / 2, parts = p.parts, fric = p.gas ? o.gasFric : o.platFric;
+    const o = RC_SAND, r = RC_SAND_D / 2, parts = p.parts, fric = p.gas ? o.gasFric : p.condT >= 0 ? o.liqFric : o.platFric;
     for (let s = 0; s < o.sub; s++)
     {
         const h = dt / o.sub;
@@ -812,17 +820,18 @@ function rcSandStep(p, dt, tx, ty)
     if (!p.gas) p.parts = parts.filter(q => q.y > RC_KILL_Y);     // gas can't be lost: it is on its way back up
 }
 
-// the fire pit: any part of you in it evaporates you into gas
+// the fire pit: sand or liquid in it evaporates you into gas; a solid (or nearly solid) square just respawns
 function rcFireCheck(p)
 {
     const f = RC_MODES[rcModeIndex].fire;
     if (!f || p.gas) return;
-    const sand = p.down || p.gathering, r = RC_SAND_D / 2;
+    const sand = p.down || p.gathering || p.condT >= 0, r = RC_SAND_D / 2;
     const hit = sand ? p.parts.some(q => q.x > f.x0 && q.x < f.x1 && q.y - r < f.y)
                      : p.x > f.x0 && p.x < f.x1 && p.y - rcSqSize(p) / 2 < f.y;
     if (!hit) return;
-    if (!sand) rcCrumble(p);
+    if (!sand || p.condT >= RC_SAND.condTime - RC_SAND.condFreeze) { rcSandRespawn(p); return; }   // solid, or freezing into it: burnt up
     p.gas = true;
+    p.condT = -1;
     p.gathering = false;
     p.asleep = false;
     rcSfxFall.play(undefined, .6, 2);
@@ -834,7 +843,8 @@ function rcFlowStep(p)
     if (down != p.down)
     {
         rcSfxCharge.play(undefined, 1, down ? .6 : 1.6);
-        if (p.gas) { if (down) p.gas = false; }                              // press while gas: condense and fall as sand
+        if (p.condT >= 0) { if (down) { p.condT = -1; p.gas = false; } }    // re-press mid-condense: flow on as sand
+        else if (p.gas) { if (down) p.gas = false; else p.condT = 0; }       // press while gas: condense and fall as sand; let go: gas -> liquid -> solid
         else if (down) { if (!p.gathering) rcCrumble(p); p.gathering = false; }   // re-press mid-gather: flow on
         else if (p.parts.length >= o.minGrains) { p.gathering = true; p.gT = 0; }
         else rcSandRespawn(p);
@@ -842,8 +852,22 @@ function rcFlowStep(p)
     p.down = down;
 
     rcFireCheck(p);
-    if (down || p.gathering || p.gas)
+    if (down || p.gathering || p.gas || p.condT >= 0)
     {
+        if (p.condT >= 0)
+        {
+            p.condT += dt;
+            if (p.condT >= o.condTime) { p.condT = -1; p.gas = false; rcPackUp(p); p.squash *= .85; return; }   // frozen solid
+            if (p.gas && p.condT >= o.condGas) p.gas = false;                 // gas has become liquid
+            const k = p.gas ? o.cohGas : o.cohLiq, damp = p.gas ? 1 : Math.exp(-o.cohLiqDamp * dt), n = p.parts.length;
+            let mx = 0, my = 0;
+            for (const q of p.parts) { mx += q.vx / n; my += q.vy / n; }
+            for (const q of p.parts)                                              // pull toward the center; kill the spread, keep the common motion
+            {
+                q.vx = mx + (q.vx - mx) * damp + (p.x - q.x) * k * dt;
+                q.vy = my + (q.vy - my) * damp + (p.y - q.y) * k * dt;
+            }
+        }
         if (p.gathering) rcSandStep(p, dt, p.x, p.y); else rcSandStep(p, dt);
         if (p.gas && p.y > o.gasTop) rcSandRespawn(p);                       // drifted off into the sky
         if (p.gathering)
@@ -1186,9 +1210,16 @@ function rcDrawFlowPlayer(p)
     if (RC_SAND.debug) drawText(`${p.grains}`, c.add(vec2(0, 1.4)), .9, WHITE, .08, BLACK);   // grains left
     if (rcSandForm(p))
     {
+        const liquid = p.condT >= 0 && !p.gas, freeze = liquid ? clamp((p.condT - (RC_SAND.condTime - RC_SAND.condFreeze)) / RC_SAND.condFreeze, 0, 1) : 0;
         for (const q of p.parts)
             if (p.gas) drawCircle(vec2(q.x, q.y), RC_SAND_D * 2.2, p.color.lerp(WHITE, .5 + q.shade).scale(1, .5));   // translucent gas
+            else if (liquid)                                                                                          // liquid: merged, glossy blob
+            {
+                drawCircle(vec2(q.x, q.y), RC_SAND_D * 2.4, p.color.scale(1, .35 * (1 - freeze)));
+                drawCircle(vec2(q.x, q.y), RC_SAND_D * 1.7, p.color.lerp(WHITE, q.shade * .5).scale(1, .85 * (1 - freeze)));
+            }
             else drawCircle(vec2(q.x, q.y), RC_SAND_D * 1.6, p.color.lerp(WHITE, q.shade));
+        if (freeze > 0) rcTiltRect(c, t, rcSqSize(p), rcSqSize(p), p.color.scale(1, freeze));                       // the square forms as it freezes
         rcTiltRect(c, t, rcSqSize(p) * .5, rcSqSize(p) * .5, p.color.lerp(WHITE, .6));   // the eye's white
         drawRect(c.add(t.scale(.18)).add(n.scale(.1)), vec2(.12), BLACK);                  // and its iris
         return;
