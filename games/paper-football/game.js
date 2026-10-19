@@ -648,7 +648,10 @@ function cpuRun(h, out)
 const BLADE_ARM = 2.2;       // a blade is a bar this far out each side of its hub
 const TRAP_SIZE = 2.6;
 const TRAP_CYCLE = 3, TRAP_OPEN = 1.1, TRAP_WARN = .6; // seconds: each loop, open for the last TRAP_OPEN, flashing before that
+const PUZZLE_CROWDED = 6;    // this many hazards or more: only 1 X in coverage
+const PORTAL_R = 1, PORTAL_INK = '#9b51e0';
 let hazards = [];
+let portals = [];            // a linked pair, or none: receivers run in one and out the other
 
 function placeHazards(count)
 {
@@ -670,6 +673,38 @@ function placeHazards(count)
         else
             h.phase = rand(TRAP_CYCLE);
         hazards.push(h);
+    }
+
+    // most puzzle plays also get a portal pair: one near the line, its twin well downfield
+    portals = [];
+    if (!count || rand() < .4) return;
+    const clear = (pos) => !hazards.some(h => h.pos.distance(pos) < 4.5) && !allBodies().some(b => b.pos.distance(pos) < 2.5);
+    for (let tries = 0; tries < 200; ++tries)
+    {
+        const a = vec2(rand(-14, 14), los + rand(4, 10)), b = vec2(rand(-14, 14), los + rand(16, 26));
+        if (clear(a) && clear(b) && a.distance(b) > 10)
+            return portals = [{pos: a, seed: rand(1000)}, {pos: b, seed: rand(1000)}];
+    }
+}
+
+// a receiver (not the QB, never an X) stepping into a portal comes out the other one, still running
+const usesPortals = (b) => b == wr() || b instanceof Decoy || b.spot;
+function updatePortals()
+{
+    for (const b of allBodies())
+    {
+        if (!usesPortals(b) || time - (b.portalAt ?? -9) < 1 || b instanceof Human && b.airborne()) continue;
+        const i = portals.findIndex(p => p.pos.distance(b.pos) < PORTAL_R);
+        if (i < 0) continue;
+        const shift = portals[1 - i].pos.subtract(portals[i].pos);
+        b.pos = b.pos.add(shift);
+        b.portalAt = time;
+        b.trail = [b.pos.copy()]; // no streak across the field
+        const route = routeOf(b);
+        if (route?.points.length) // a CPU route picks up where it left off, from the far side
+            route.points = route.points.map((p, k) => k >= route.next ? p.add(shift) : p);
+        sndHop.play(b.pos);
+        addEffect('ZAP!', b.pos.add(vec2(0, 1.8)), PORTAL_INK, 1.1, true);
     }
 }
 
@@ -775,6 +810,24 @@ function hazardHit(b, h, kind)
     b.gone = true; // an X (or a CPU teammate) is out of the play
     b.pos = vec2(0, -1e4);
     return false;
+}
+
+function drawPortals()
+{
+    if (!portals.length) return;
+    // a faint dotted link so the pair reads as one, then each swirl
+    strokeWorld([portals[0].pos, portals[1].pos], PORTAL_INK, .07, .18, [.2, .5]);
+    for (const p of portals)
+    {
+        markerCircle(p.pos, PORTAL_R, PORTAL_INK, .14, p.seed, .9);
+        const spiral = [];
+        for (let k = 0; k <= 24; ++k)
+        {
+            const a = time * 4 + k * .45, r = PORTAL_R * .85 * (1 - k / 26);
+            spiral.push(jitter(p.pos.add(vec2(Math.cos(a), Math.sin(a)).scale(r)), p.seed + k, .04));
+        }
+        strokeWorld(spiral, PORTAL_INK, .08, .7);
+    }
 }
 
 function drawHazards()
@@ -1293,7 +1346,7 @@ function setupPlay()
         humans[1].ai = {route: {name: '', points: [], next: 0}, called: false, jukeTime: 0, reaction: rand(.15, .4)};
     if (canDrawRoutes())
         callPlay();
-    placeHazards(puzzleMode ? min(8, 3 + defense.deep + (completions >> 1)) : 0);
+    placeHazards(defense.hazardCount);
 
     for (const b of allBodies())
         b.trail = [b.pos.copy()];
@@ -1310,7 +1363,8 @@ function callDefense(side)
     const spare = teamSize - formation.length;
     const rush = spare < 2 ? 1 : randInt(max(1, Math.ceil(spare / 2)), spare);
     const deep = spare - rush;
-    defense = {zone: completions >= 2 && rand() < .5, side, deep};
+    const hazardCount = puzzleMode ? min(8, 3 + deep + (completions >> 1)) : 0;
+    defense = {zone: completions >= 2 && rand() < .5, side, hazardCount};
 
     rushers = [[0], [-1.5, 1.5], [-3, 0, 3], [-4.5, -1.5, 1.5, 4.5]][min(rush, 4) - 1].map(x => new Rusher(vec2(x, los + .9), linemen.length ? 0 : 1.5));
     for (let i = 0; i < rush - 4; i++) // past 4, linebackers blitz a beat late, alternating sides
@@ -1334,6 +1388,15 @@ function callDefense(side)
     coverage[0].spotKey = 'wr1';
     for (const f of formation.slice(1))
         coverage.push(coverForSpot(f));
+
+    // puzzle: the hazards do most of the defending, so 2 in coverage at most, 1 on a crowded field.
+    // The cut receivers run free
+    if (puzzleMode)
+    {
+        const keep = hazardCount >= PUZZLE_CROWDED ? 1 : 2;
+        coverage.slice(keep).forEach(c => c.destroy());
+        coverage = coverage.slice(0, keep);
+    }
 }
 
 // the extra and slot WRs bring a corner with them, the TE and RB a linebacker each
@@ -2017,6 +2080,7 @@ function drawBoard()
     markerText('1ST', vec2(-FIELD_HALF - 1, firstDown), .7, INK_FIRST, .8);
 
     drawHazards();
+    drawPortals();
 
     // every body's route so far, like arrows on a play diagram
     for (const b of allBodies())
@@ -2175,7 +2239,7 @@ function drawHUD()
             lines.push('after the catch: action = jump a tackle');
             lines.push('don\'t get sacked, don\'t get picked');
             if (puzzleMode)
-                lines.push('PUZZLE: blades + open trapdoors stop you, and the X\'s', 'blocks wall everyone off · a jump clears the rest');
+                lines.push('PUZZLE: blades + open trapdoors stop you, and the X\'s', 'blocks wall everyone off · a jump clears the rest', 'portals: receivers only, in one and out the other');
             if (!usedTouch)
                 lines.push('M = back to the menu');
             const top = H * .16 + s * 2.8;
@@ -2396,6 +2460,7 @@ function gameUpdatePost()
     separateBodies();
     updateHazards();
     if (!isLive()) return; // a hazard ended the play
+    updatePortals();
 
     if (gameState == 'live' && qb().hasBall)
     {
