@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Stay Awake: wake drains and the student nods off; a click blinks him awake, the bar jumps up and notes fly to the counter. Two blinks per 5 s loop. -->
+  <rect width="480" height="270" fill="#f7e6cf"/>
+
+  <!-- wake bar: drains, jumps up on each click -->
+  <rect x="70" y="48" width="28" height="144" rx="4" fill="#5e1f2a" stroke="#181425" stroke-width="4"/>
+  <rect x="72" y="127" width="24" height="63" fill="#9ed8be">
+    <animate attributeName="height" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.22;0.7;0.72;1" values="63;30;110;30;110;63"/>
+    <animate attributeName="y" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.22;0.7;0.72;1" values="127;160;80;160;80;127"/>
+    <animate attributeName="fill" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.22;0.7;0.72;1" values="#e9b44c;#d9434b;#9ed8be;#d9434b;#9ed8be;#e9b44c"/>
+  </rect>
+  <!-- eye icon above the bar -->
+  <ellipse cx="84" cy="30" rx="14" ry="8" fill="#fff" stroke="#181425" stroke-width="3"/>
+  <circle cx="84" cy="30" r="4" fill="#6e4430"/>
+
+  <!-- portrait frame: pastel lecture hall -->
+  <rect x="144" y="32" width="200" height="180" rx="8" fill="#181425" opacity="0.15"/>
+  <rect x="140" y="28" width="200" height="180" rx="8" fill="#f2b8c6" stroke="#181425" stroke-width="4"/>
+  <rect x="142" y="112" width="196" height="24" fill="#d98ea3"/>
+
+  <!-- shoulders: mustard jacket, teal shirt -->
+  <path d="M184 206 C186 160 204 142 240 142 C276 142 294 160 296 206 Z" fill="#e9b44c" stroke="#181425" stroke-width="3"/>
+  <path d="M230 143 L240 166 L250 143 Z" fill="#9ed8be" stroke="#181425" stroke-width="2.5" stroke-linejoin="round"/>
+  <rect x="233" y="128" width="14" height="16" fill="#93603a"/>
+
+  <!-- head: droops and tilts, snaps up on click -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.22;0.25;0.7;0.72;0.75;1" values="0 5.6;0 10;0 -3;0 0;0 10;0 -3;0 0;0 5.6"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.2;0.22;0.25;0.7;0.72;0.75;1"
+        values="5 240 128;9 240 128;-2 240 128;0 240 128;9 240 128;-2 240 128;0 240 128;5 240 128"/>
+      <circle cx="215" cy="102" r="6" fill="#c08552" stroke="#181425" stroke-width="3"/>
+      <circle cx="265" cy="102" r="6" fill="#c08552" stroke="#181425" stroke-width="3"/>
+      <ellipse cx="240" cy="100" rx="25" ry="29" fill="#c08552" stroke="#181425" stroke-width="3"/>
+      <path d="M214 96 C210 66 270 66 266 96 L262 84 L250 80 L238 84 L226 80 L218 86 Z" fill="#262b44" stroke="#181425" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="231" cy="101" rx="5" ry="4.5" fill="#fff" stroke="#181425" stroke-width="2"/>
+      <ellipse cx="249" cy="101" rx="5" ry="4.5" fill="#fff" stroke="#181425" stroke-width="2"/>
+      <circle cx="231" cy="102" r="2.2" fill="#6e4430"/>
+      <circle cx="249" cy="102" r="2.2" fill="#6e4430"/>
+      <!-- eyelids close as wake drains -->
+      <g fill="#c08552">
+        <rect x="224" y="95" width="14" height="5">
+          <animate attributeName="height" dur="5s" repeatCount="indefinite"
+            keyTimes="0;0.2;0.22;0.25;0.7;0.72;0.75;1" values="5;10;0;0;10;0;0;5"/>
+        </rect>
+        <rect x="242" y="95" width="14" height="5">
+          <animate attributeName="height" dur="5s" repeatCount="indefinite"
+            keyTimes="0;0.2;0.22;0.25;0.7;0.72;0.75;1" values="5;10;0;0;10;0;0;5"/>
+        </rect>
+      </g>
+      <path d="M235 116 H245" stroke="#5e1f2a" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- desk, notebook, hands -->
+  <rect x="142" y="170" width="196" height="36" fill="#8c2f39"/>
+  <rect x="142" y="168" width="196" height="4" fill="#c98a5a" stroke="#181425" stroke-width="2"/>
+  <rect x="222" y="174" width="36" height="20" rx="2" fill="#fff" stroke="#181425" stroke-width="2.5"/>
+  <path d="M227 180 H253 M227 186 H247" stroke="#6c93c9" stroke-width="2"/>
+  <path d="M200 156 L216 182 M280 156 L264 182" stroke="#181425" stroke-width="13" stroke-linecap="round"/>
+  <path d="M200 156 L216 182 M280 156 L264 182" stroke="#e9b44c" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="217" cy="184" r="6" fill="#c08552" stroke="#181425" stroke-width="2.5"/>
+  <circle cx="263" cy="184" r="6" fill="#c08552" stroke="#181425" stroke-width="2.5"/>
+
+  <!-- Z's while drowsy -->
+  <path d="M0 0 H9 L0 9 H9" fill="none" stroke="#a98bc8" stroke-width="3" stroke-linejoin="round" opacity="0">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.05;0.2;0.55;0.7;1" values="270 76;270 76;282 56;270 76;282 56;282 56"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.05;0.08;0.19;0.2;0.55;0.58;0.69;0.7;1" values="0;0;1;1;0;0;1;1;0;0"/>
+  </path>
+
+  <!-- notes counter -->
+  <g transform="translate(410 96)">
+    <g>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.42;0.45;0.49;0.92;0.95;0.99;1" values="1;1;1.25;1;1;1.25;1;1"/>
+      <rect x="-20" y="-24" width="40" height="48" rx="3" fill="#fff" stroke="#181425" stroke-width="3"/>
+      <path d="M-12 -12 H12 M-12 -2 H12 M-12 8 H6" stroke="#6c93c9" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- a note sheet flies from the notebook to the counter after each blink -->
+  <g opacity="0">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.25;0.42;0.75;0.92;1" values="240 176;240 176;410 96;240 176;410 96;410 96"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.25;0.26;0.41;0.42;0.75;0.76;0.91;0.92;1" values="0;0;1;1;0;0;1;1;0;0"/>
+    <rect x="-8" y="-10" width="16" height="20" rx="2" fill="#fff" stroke="#181425" stroke-width="2.5"/>
+    <path d="M-4 -4 H4 M-4 2 H4" stroke="#6c93c9" stroke-width="2"/>
+  </g>
+
+  <!-- "+" pops up on each blink -->
+  <path d="M-6 0 H6 M0 -6 V6" stroke="#181425" stroke-width="7" stroke-linecap="round" opacity="0">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.21;0.36;0.71;0.86;1" values="300 100;300 100;300 72;300 100;300 72;300 72"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.21;0.22;0.36;0.71;0.72;0.86;1" values="0;0;1;0;0;1;0;0"/>
+  </path>
+
+  <!-- tap ring at the cursor -->
+  <circle cx="306" cy="128" r="6" fill="none" stroke="#181425" stroke-width="3" opacity="0">
+    <animate attributeName="r" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.3;0.7;0.8;1" values="6;6;24;6;24;24"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.199;0.2;0.3;0.699;0.7;0.8;1" values="0;0;1;0;0;1;0;0"/>
+  </circle>
+
+  <!-- cursor (arrow pointer, tip at origin), presses on each click -->
+  <g transform="translate(306 128)">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.18;0.2;0.24;0.68;0.7;0.74;1" values="306 128;306 128;306 131;306 128;306 128;306 131;306 128;306 128"/>
+    <path d="M3 3V27L9 21L13 30L17 28L13 19H21Z" fill="#181425" fill-opacity="0.15"/>
+    <path d="M0 0V24L6 18L10 27L14 25L10 16H18Z" fill="#fff" stroke="#181425" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+
+  <!-- caption -->
+  <rect x="100" y="224" width="280" height="34" rx="17" fill="#fff" stroke="#181425" stroke-width="3"/>
+  <text x="240" y="247" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#181425">Click to blink yourself awake</text>
+</svg>
