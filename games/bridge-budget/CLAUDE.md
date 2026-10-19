@@ -32,7 +32,15 @@ Budget leaderboard against your own best, replay of your best bridge, stars unlo
 
 ## Art direction
 Toybox Flat: cardboard-and-wood diorama look, chunky beams, cute vehicles with faces, big readable stress colors. Collapses get dust puffs and a comic slow-motion moment.
-Concept prompt: *"Flat cartoon bridge building puzzle game, a toy truck crossing a wooden and steel truss bridge over a river canyon, beams colored green to red by stress, cardboard diorama style, warm light background, thick outlines, 2D side view game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Flat cartoon bridge building puzzle game, a toy truck crossing a wooden and steel truss bridge over a river canyon, beams colored green to red by stress, cardboard diorama style, warm light background, thick outlines, 2D side view game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a cute toy truck with a face bravely crossing a wooden and steel truss bridge over a canyon river, some beams glowing green and a couple turning orange under stress, cardboard diorama look, dust puffs, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"pieces on a plain background: wood beam, steel beam, cable, road segment, joint anchor, the cute truck and a small car with faces, a beam snapping with a dust puff, stress colors from green to red with icons, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "BRIDGE BUDGET" in chunky letters built from wooden beams and bolts, a tiny truck crossing the top of the letters, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Wooden click when placing, creaks rising with stress, crunch on break, horn and cheer on success.

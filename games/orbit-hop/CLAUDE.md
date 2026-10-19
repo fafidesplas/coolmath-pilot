@@ -34,7 +34,15 @@ Daily endless seed with emoji result; astronaut suits and trail colors unlocked 
 
 ## Art direction
 Night Neon: deep space background with soft nebula, planets as glowing flat circles with rings, the astronaut a tiny bright figure leaving a colored trail. Minimal, calm, beautiful.
-Concept prompt: *"Minimal neon space game, a tiny glowing astronaut slingshotting between colorful flat planets with glowing orbit rings, dotted trajectory arc, dark navy space background with soft nebula, clean 2D game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Minimal neon space game, a tiny glowing astronaut slingshotting between colorful flat planets with glowing orbit rings, dotted trajectory arc, dark navy space background with soft nebula, clean 2D game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a tiny glowing astronaut launching from one colorful flat planet towards another, leaving a bright dotted trail, glowing orbit rings around each planet, soft nebula and stars in deep space, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"the tiny astronaut in orbit, launch and landing poses; several flat planets with rings in different colors and sizes, capture ring, star pickup, asteroid, black hole, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, game asset sheet on a plain dark navy background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "ORBIT HOP" in clean glowing neon letters, the O drawn as a planet with a ring and a tiny astronaut hopping from it, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, game logo on a plain dark navy background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Soft whoosh on launch, pitch-bending hum as gravity pulls, chime on capture, ambient pad music.

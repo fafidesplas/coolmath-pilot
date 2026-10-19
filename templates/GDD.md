@@ -44,6 +44,7 @@ Title → level select → playing → pause → level complete → (daily). Wha
 - **Palette:** 4–6 hex colors with their role.
 - **Key visuals:** player, elements, backgrounds, UI.
 - **Juice list:** every moment that gets motion, particles or shake.
+- **Concept art prompts:** the brief's prompts, updated to match this GDD (palette, elements, characters).
 
 ## 10. Audio
 | Sound | When | Character |

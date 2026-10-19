@@ -38,7 +38,15 @@ Star chasing, a robot paint shop unlocked with stars (cosmetic colors and hats),
 
 ## Art direction
 Chunky round robots with big expressive eyes and readable red/blue colors plus a plus/minus symbol on each (color-blind safe). Industrial but friendly backgrounds. Magnetic fields drawn as animated arcs.
-Concept prompt: *"Two cute chunky round robots, one red with a plus sign, one blue with a minus sign, in a friendly cartoon workshop platform level, magnetic field arcs pulling a metal crate, bright saturated colors, thick outlines, 2D side view game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Two cute chunky round robots, one red with a plus sign, one blue with a minus sign, in a friendly cartoon workshop platform level, magnetic field arcs pulling a metal crate, bright saturated colors, thick outlines, 2D side view game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"two cute chunky round robots side by side, a red one with a plus sign on its chest and a blue one with a minus sign, high-fiving, glowing magnetic field arcs swirling around them, a metal crate floating between them, friendly workshop background, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"the red Plus robot and the blue Minus robot from front and side, idle, jump and magnet-power poses, plus a metal crate, a magnetic door and a spring plate, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "MAGNET TWINS" in chunky rounded letters, a red plus and a blue minus magnet worked into the letters, small magnetic arcs, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Electric hum while power is held, clank on metal, cheerful jingle at the exit.

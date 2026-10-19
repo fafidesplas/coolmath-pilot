@@ -32,7 +32,15 @@ Ink-saving records per level, a replay of your best solution, pen colors and lin
 
 ## Art direction
 Toybox Flat with a paper-craft feel: lined-paper or cardboard backgrounds, thick hand-drawn ink line with a slight wobble, a shiny cartoon ball with a face. Bright, clean, readable.
-Concept prompt: *"Flat cartoon physics drawing puzzle, a thick hand-drawn ink line guiding a cute shiny ball with a face towards a goal cup, paper craft notebook background, bouncy pads and walls, warm light colors, thick outlines, 2D game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Flat cartoon physics drawing puzzle, a thick hand-drawn ink line guiding a cute shiny ball with a face towards a goal cup, paper craft notebook background, bouncy pads and walls, warm light colors, thick outlines, 2D game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a thick wobbly hand-drawn ink line on notebook paper guiding a shiny cartoon ball with a happy face as it rolls towards a goal cup with a flag, ink drops and doodles around, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"pieces on a plain background: the shiny ball with a face in several expressions, goal cup, ink pot meter full and empty, wall block, bouncy pad, a sample ink stroke, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "INK PATH" written as one continuous thick ink stroke, with a small cartoon ball rolling along the end of the line, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Pen scratch while drawing, soft rolling, boing on pads, applause on goal.

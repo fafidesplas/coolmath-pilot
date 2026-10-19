@@ -34,7 +34,15 @@ Daily endless seed (same run for everyone that day, emoji result line), characte
 
 ## Art direction
 A round, determined little character with a trailing scarf that shows the gravity direction. Flip animation squashes and stretches. Each world has a distinct palette; floor and ceiling clearly different shades.
-Concept prompt: *"Cute round cartoon character running upside down on the ceiling of a colorful lab corridor, gravity flip motion trail, spikes and gaps below, bright chunky cartoon style, thick outlines, 2D side-scrolling game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Cute round cartoon character running upside down on the ceiling of a colorful lab corridor, gravity flip motion trail, spikes and gaps below, bright chunky cartoon style, thick outlines, 2D side-scrolling game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a round determined little character with a long trailing scarf flipping in mid-air between floor and ceiling of a colorful corridor, motion arc showing the flip, spikes below, sense of speed, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"the round runner character with scarf: running, flipping, upside-down running on the ceiling, landing squash, and a fall; plus spikes, gaps, checkpoint flag and star, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "FLIP RUNNER" in bold rounded letters, with the word RUNNER flipped upside down like a mirror, a curved arrow showing a gravity flip, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 A short "whoop" on every flip (pitch rises with consecutive quick flips), crunchy death sound, star pickup chime.

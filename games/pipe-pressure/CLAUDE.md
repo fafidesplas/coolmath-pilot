@@ -33,7 +33,15 @@ Daily puzzle (random rotation of a solvable board) with streak and emoji line; g
 
 ## Art direction
 Toybox Flat: shiny chunky pipes with bolts, bright blue water with animated flow, cute tanks that smile when full. Warm workshop background.
-Concept prompt: *"Flat cartoon pipe puzzle game, grid of chunky shiny pipe tiles carrying bright blue water from a valve to smiling water tanks, garden workshop theme, warm light background, thick outlines, soft shadows, top-down 2D game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Flat cartoon pipe puzzle game, grid of chunky shiny pipe tiles carrying bright blue water from a valve to smiling water tanks, garden workshop theme, warm light background, thick outlines, soft shadows, top-down 2D game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"bright blue water rushing through a grid of chunky shiny pipes with bolts into smiling water tanks, one pipe joint leaking a little spray, a pressure gauge with its needle rising, warm garden workshop, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"pieces on a plain background: straight, corner, T and cross pipe tiles empty and full of water, source valve, smiling empty and full tanks, leak spray, pressure gauge, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "PIPE PRESSURE" made of chunky shiny pipes with bolts, water splashing out of the last letter, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Ratchet click on rotate, gurgle and flow, happy "bloop" as each tank fills, comic leak spray.

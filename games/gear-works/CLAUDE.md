@@ -33,7 +33,15 @@ Fewest-gear stars, a machine gallery that fills with every target you have power
 
 ## Art direction
 Toybox Flat: brass and wood workshop, chunky gears with clear teeth, each size a different color plus size label, targets as cute machines that come alive when powered.
-Concept prompt: *"Flat cartoon gear puzzle game, chunky brass and colorful gears meshing on a wooden pegboard, a cute music box machine coming alive when the gears turn, workshop background, warm light colors, thick outlines, soft shadows, 2D game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Flat cartoon gear puzzle game, chunky brass and colorful gears meshing on a wooden pegboard, a cute music box machine coming alive when the gears turn, workshop background, warm light colors, thick outlines, soft shadows, 2D game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"chunky colorful gears meshing on a wooden pegboard in a cozy workshop, the last gear powering a cute music box machine that comes alive with musical notes, brass details, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"pieces on a plain background: small, medium and large gears each in its own color with a size number, pegboard, motor gear, axle, belt, jammed gears with a warning icon, cute target machines, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "GEAR WORKS" in chunky brass letters, the O replaced by a turning gear, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Satisfying click when a gear meshes, ticking while running at speed-matched tempo, machine jingle on success, grinding on jam.

@@ -34,7 +34,15 @@ Daily puzzle with streak and emoji line; collectible train liveries.
 
 ## Art direction
 Toybox Flat: wooden toy-train look, rounded carriages in bright primary colors, little stations with colored roofs that match their trains (plus a shape symbol on each for color-blind players).
-Concept prompt: *"Flat cartoon toy train set puzzle, colorful wooden trains on a track grid with switches, small stations with matching colored roofs and shape symbols, village landscape, warm light background, thick outlines, soft shadows, top-down 2D game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Flat cartoon toy train set puzzle, colorful wooden trains on a track grid with switches, small stations with matching colored roofs and shape symbols, village landscape, warm light background, thick outlines, soft shadows, top-down 2D game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a cheerful wooden toy train set seen from above, several small colorful trains running along curving tracks through track switches towards little stations with matching colored roofs and shape symbols, tiny village and trees around, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"game pieces on a plain background: trains and carriages in red, blue, yellow and green each with a shape symbol, straight, curved and switch track tiles, stations with matching roofs, tunnel, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "TINY TRAINS" in rounded wooden toy letters, a small train running along the top of the letters on a track, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Switch click, choo-choo on Go, cheerful ding per arrival, comic crash puff.

@@ -33,7 +33,15 @@ Daily puzzle with par moves, streak and emoji line. Penguin hats unlocked by sta
 
 ## Art direction
 Chunky cartoon penguin with a scarf, wobbly squash on impact, fish that flap when pushed. Icy blues with warm accents so it does not feel cold. Clear grid lines faintly etched into the ice.
-Concept prompt: *"Cute chunky cartoon penguin with a red scarf sliding on an icy puzzle grid, pushing colorful fish towards holes in the ice, rocks and snow tiles, bright saturated colors, thick outlines, top-down 2D puzzle game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Cute chunky cartoon penguin with a red scarf sliding on an icy puzzle grid, pushing colorful fish towards holes in the ice, rocks and snow tiles, bright saturated colors, thick outlines, top-down 2D puzzle game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a cute chunky penguin with a red scarf sliding happily across shiny ice, pushing a surprised colorful fish towards a hole in the ice, splash and sparkle, cozy icy blues with warm accents, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"the penguin with red scarf: idle, sliding, bump squash, celebrating; plus fish in several colors with shape markings, ice hole, rock, snow tile and cracked ice tile, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "ICE SLIDE" in chunky icy letters with a little snow on top, a penguin sliding along the baseline leaving a streak, chunky cartoon style, round squishy shapes, big expressive eyes, saturated colors, thick dark outlines, soft cel shading, playful squash-and-stretch energy, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Ice "shhh" slide, soft bonk on rocks, splash and cheer when a fish drops in.

@@ -34,7 +34,15 @@ Daily puzzle (date-seeded selection from a generated pool, verified solvable) wi
 
 ## Art direction
 Toybox Flat: wooden board on a warm light background, chunky gem crystals that glow when lit, beam as a bright line with a soft glow and sparkle particles at each bounce.
-Concept prompt: *"Flat cartoon puzzle game board, wooden grid with chunky mirrors, a bright laser beam bouncing between mirrors to light up colorful gem crystals, warm light background, thick dark outlines, soft shadows, clean 2D top-down game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Flat cartoon puzzle game board, wooden grid with chunky mirrors, a bright laser beam bouncing between mirrors to light up colorful gem crystals, warm light background, thick dark outlines, soft shadows, clean 2D top-down game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a bright laser beam zig-zagging across a wooden puzzle board between chunky mirrors and lighting up a cluster of colorful glowing gem crystals, sparkles at every bounce, seen from slightly above, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"game pieces on a plain background: laser emitter, diagonal mirrors in both orientations, unlit and lit gem crystals in several shapes, wall block, beam splitter, color filter, portal, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game asset sheet on a plain light background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "MIRROR MAZE" in chunky letters, a laser beam bouncing off the letter M and lighting a gem on the last letter, flat vector cartoon style, bright flat colors, thick dark outlines, soft drop shadows, warm cream background, toy-like and clean, highly readable shapes, game logo on a plain background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Soft glass "tink" on placement, rising chime as each crystal lights, full chord when all are lit.

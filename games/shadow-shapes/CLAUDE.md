@@ -32,7 +32,15 @@ Collection book of revealed pictures, daily shadow with streak and emoji line, t
 
 ## Art direction
 Night Neon: a dark room, one warm spotlight, the object in soft glowing pastel blocks, the wall outline dashed and glowing. The reveal turns the shadow into a small illustrated picture.
-Concept prompt: *"Dark cozy room with a single warm spotlight shining on an abstract floating sculpture of glowing pastel blocks, its shadow on the wall matching a dashed glowing outline of a cat, minimal neon style, 3D puzzle game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Dark cozy room with a single warm spotlight shining on an abstract floating sculpture of glowing pastel blocks, its shadow on the wall matching a dashed glowing outline of a cat, minimal neon style, 3D puzzle game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"an abstract floating sculpture of glowing pastel blocks under a single warm spotlight in a dark cozy room, its shadow on the wall exactly matching a dashed glowing outline of a cat, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"several abstract block sculptures from different angles, each next to the shadow silhouette it casts (a cat and other simple everyday silhouettes), the spotlight, a dashed glowing target outline, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, game asset sheet on a plain dark navy background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "SHADOW SHAPES" in soft glowing letters with a long cast shadow behind them that forms a different shape, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, game logo on a plain dark navy background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Soft whirr while rotating, rising tone as the match gets closer, magical reveal chime.

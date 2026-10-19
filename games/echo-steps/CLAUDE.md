@@ -32,7 +32,15 @@ Star chasing (fewest echoes), time attack per room, an unlockable "speed echo" c
 
 ## Art direction
 Night Neon: dark navy rooms, the player a bright cyan figure, echoes in fading violet with a trail, glowing plates and doors. Clean geometric shapes.
-Concept prompt: *"Dark navy neon puzzle platformer room, a glowing cyan character and three fading violet ghost copies of itself standing on pressure plates holding doors open, glowing geometric platforms, minimal clean neon style, 2D side view game screenshot, 16:9"*
+
+### Concept art prompts
+Starting points for any image generator; the art direction above wins if they disagree. Paste each one whole.
+
+- **Gameplay screenshot (16:9):** *"Dark navy neon puzzle platformer room, a glowing cyan character and three fading violet ghost copies of itself standing on pressure plates holding doors open, glowing geometric platforms, minimal clean neon style, 2D side view game screenshot, 16:9"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a glowing cyan figure standing in a dark neon room while three fading violet ghost copies of itself, each with a faint trail, hold down glowing pressure plates that open a tall glowing door, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, centered composition with room for a title, game key art"*
+- **Character and element sheet:** *"the cyan player figure in idle, run, jump poses; violet echo versions with trails and decreasing opacity; pressure plate, door, lever, moving platform, exit door, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, game asset sheet on a plain dark navy background, evenly spaced, consistent scale"*
+- **Logo (try several, keep the most readable):** *"the words "ECHO STEPS" in thin glowing neon letters, repeated twice behind themselves in fading violet like echoes, minimal neon style, dark navy background, glowing outlines, a few vivid accent colors, clean geometric shapes, soft glow, calm and atmospheric, game logo on a plain dark navy background, bold and readable at small size"*
+- **Negative prompt (generators that support it; drop "text, letters" for the logo):** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, extra limbs, UI buttons"*
 
 ## Audio
 Ticking loop timer, reverse-whoosh on reset, layered tones as each echo is created.
