@@ -1,6 +1,6 @@
 # Coolmath pilot — game briefs
 
-12 original HTML5 games for Coolmath Games, ranked. Each game has its own folder with a `CLAUDE.md` brief that Claude Code loads automatically, plus the shared rules in `STANDARDS.md` and the production phases in `PHASES.md` that every game follows.
+12 original HTML5 games for Coolmath Games, ranked, plus 6 playable prototypes brought in from the prototype-city repo. Each game has its own folder with a `CLAUDE.md` brief that Claude Code loads automatically, plus the shared rules in `STANDARDS.md` and the production phases in `PHASES.md` that every game follows.
 
 ## The 12 games
 
@@ -20,6 +20,21 @@
 | 12 | [Shadow Shapes](games/shadow-shapes/CLAUDE.md) | Rotate objects to match a shadow | Play at the desk | Fafi |
 
 Suggested split: Pao takes the grid and logic puzzles (shared tech: tile grids, level editor, daily puzzle); Fafi takes physics, 2-player and 3D-ish games. Change it freely.
+
+## Prototypes
+
+Playable LittleJS prototypes that started in the prototype-city repo and moved here with their git history. They are not ranked yet. Each one has a brief written from what is built; the next step is phase 1 (a GDD for what is built), like every other game.
+
+| Game | In one line | Audience habit | Owner |
+|---|---|---|---|
+| [Fire Brigade](games/fire-brigade/CLAUDE.md) | Chop through doors and hose down every fire, solo or 2P co-op | Coolmath nostalgia | Pao |
+| [Jumping Jeepney](games/jumping-jeepney/CLAUDE.md) | Jump canals and drop riders on rooftop stops | Coolmath nostalgia | Pao |
+| [Paper Football](games/paper-football/CLAUDE.md) | Whiteboard football: juke, catch, see how far one drive goes | Coolmath nostalgia | Pao |
+| [Ragdoll Couture](games/ragdoll-couture/CLAUDE.md) | Fling a ragdoll model and snap the photo mid-air | Coolmath nostalgia | Pao |
+| [Stay Awake](games/stay-awake/CLAUDE.md) | Clicker: stay awake through ever more boring lectures | Play at the desk | Pao |
+| [Vending Machine Sim](games/vending-machine-sim/CLAUDE.md) | Stock, price and pay the rent on one vending machine | Play at the desk | Pao |
+
+They use the LittleJS engine (`dist/littlejs.js`) and run straight from `index.html`; `build.mjs` is an optional minify-and-zip step. Gaps against `STANDARDS.md` are listed in each brief.
 
 ## Art families
 
@@ -68,7 +83,7 @@ Anything marked **[confirm]** is still open and gets decided with the team.
 
 ## Dashboard
 
-`index.html` at the repo root is a progress dashboard for the 12 games: phase, owner, last commit, latest `DEVLOG.md` entry, and a **Play** button that opens the game exactly as it is on `main`.
+`index.html` at the repo root is a progress dashboard for every game in `games/`: phase, owner, last commit, latest `DEVLOG.md` entry, and a **Play** button that opens the game exactly as it is on `main`.
 
 - **Online:** GitHub Pages, rebuilt by `.github/workflows/dashboard.yml` on every push to `main`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
 - **Local:** `node scripts/build-status.mjs && python3 -m http.server 8000`, then open http://localhost:8000.
