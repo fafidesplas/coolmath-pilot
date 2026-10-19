@@ -1,6 +1,6 @@
 # Coolmath pilot — game briefs
 
-12 original HTML5 games for Coolmath Games, ranked, plus 6 playable prototypes brought in from the prototype-city repo. Each game has its own folder with a `CLAUDE.md` brief that Claude Code loads automatically, plus the shared rules in `STANDARDS.md` and the production phases in `PHASES.md` that every game follows.
+12 original HTML5 games for Coolmath Games, ranked, plus 7 playable prototypes brought in from other repos. Each game has its own folder with a `CLAUDE.md` brief that Claude Code loads automatically, plus the shared rules in `STANDARDS.md` and the production phases in `PHASES.md` that every game follows.
 
 ## The 12 games
 
@@ -23,11 +23,12 @@ Suggested split: Pao takes the grid and logic puzzles (shared tech: tile grids, 
 
 ## Prototypes
 
-Playable LittleJS prototypes that started in the prototype-city repo and moved here with their git history. They are not ranked yet. Each one has a brief written from what is built; the next step is phase 1 (a GDD for what is built), like every other game.
+Playable LittleJS prototypes that started in other repos (prototype-city, onebutton-twoplayer-game) and moved here with their git history. They are not ranked yet. Each one has a brief written from what is built; the next step is phase 1 (a GDD for what is built), like every other game.
 
 | Game | In one line | Audience habit | Owner |
 |---|---|---|---|
 | [Fire Brigade](games/fire-brigade/CLAUDE.md) | Chop through doors and hose down every fire, solo or 2P co-op | Coolmath nostalgia | Pao |
+| [Hop Race](games/hop-race/CLAUDE.md) | Two players, one key each: hop, rocket, grapple or flow to the flag | Coolmath nostalgia | Pao |
 | [Jumping Jeepney](games/jumping-jeepney/CLAUDE.md) | Jump canals and drop riders on rooftop stops | Coolmath nostalgia | Pao |
 | [Paper Football](games/paper-football/CLAUDE.md) | Whiteboard football: juke, catch, see how far one drive goes | Coolmath nostalgia | Pao |
 | [Ragdoll Couture](games/ragdoll-couture/CLAUDE.md) | Fling a ragdoll model and snap the photo mid-air | Coolmath nostalgia | Pao |
