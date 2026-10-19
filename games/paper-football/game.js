@@ -130,11 +130,12 @@ const snapper = () => numPlayers == 1 ? 0 : qbIndex; // in 1P the human always c
 // input: keys + one touch finger per player
 
 const playerInput = [{dir:vec2(), pressed:false}, {dir:vec2(), pressed:false}];
-const fingers = new Map;            // touch id -> {player, start, cur, t0}
+const fingers = new Map;            // touch id (or 'mouse') -> {player, start, cur, t0}
 const fingerTaps = [false, false];
 let tappedX = -1;                   // where across the screen (0 to 1) the last quick tap was (menus)
-const flicks = [{cur: vec2(), last: vec2(), t: -9}, {cur: vec2(), last: vec2(), t: -9}]; // juke detection
+const flicks = [{cur: vec2(), last: vec2(), t: -9, held: -9}, {cur: vec2(), last: vec2(), t: -9, held: -9}]; // juke detection
 let usedTouch = false;
+const stickMode = [false, false];   // this player steers with a stick (finger or mouse), not keys
 
 function touchToCanvas(t)
 {
@@ -152,27 +153,49 @@ function onTouch(e)
     {
         const p = touchToCanvas(t);
         if (e.type == 'touchstart')
-        {
-            // 2P: each player owns half the screen, 1P: any finger steers
-            const half = p.x < mainCanvas.width/2 ? 0 : 1;
-            fingers.set(t.identifier, {half, player: numPlayers == 1 ? 0 : half, start:p, cur:p, t0:time});
-        }
+            fingerDown(t.identifier, p);
         else
-        {
-            const f = fingers.get(t.identifier);
-            if (!f) continue;
-            f.cur = p;
-            if (e.type == 'touchend' || e.type == 'touchcancel')
-            {
-                if (time - f.t0 < .25 && f.cur.distance(f.start) < 25)
-                {
-                    fingerTaps[f.player] = true;
-                    tappedX = f.cur.x / mainCanvas.width;
-                }
-                fingers.delete(t.identifier);
-            }
-        }
+            fingerMove(t.identifier, p, e.type == 'touchend' || e.type == 'touchcancel');
     }
+}
+
+function fingerDown(id, p)
+{
+    // 2P: each player owns half the screen, 1P: any finger steers
+    const half = p.x < mainCanvas.width/2 ? 0 : 1;
+    const player = numPlayers == 1 ? 0 : half;
+    fingers.set(id, {half, player, start:p, cur:p, t0:time});
+    stickMode[player] = true;
+}
+
+// on a phone's stick, the WR (or the ball carrier) always runs: the stick only steers, and letting go is the action.
+// The mouse stick on desktop runs and stops like the keys
+const stickRunner = (i) => usedTouch && stickMode[i] && isLive() && humans[i] == wr();
+
+function fingerMove(id, p, up)
+{
+    const f = fingers.get(id);
+    if (!f) return;
+    f.cur = p;
+    if (!up) return;
+    if (time - f.t0 < .25 && f.cur.distance(f.start) < 25)
+    {
+        fingerTaps[f.player] = true;
+        tappedX = f.cur.x / mainCanvas.width;
+    }
+    else if (stickRunner(f.player))
+        fingerTaps[f.player] = true;
+    fingers.delete(id);
+}
+
+// the mouse is one more finger: hold and drag for the stick, a quick click is the action
+function mouseFinger()
+{
+    if (usedTouch) return; // a phone's synthesized mouse events would double every touch
+    if (mouseWasPressed(0))
+        fingerDown('mouse', mousePosScreen.copy());
+    else if (fingers.has('mouse'))
+        fingerMove('mouse', mousePosScreen.copy(), !mouseIsDown(0));
 }
 for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel'])
     document.addEventListener(type, onTouch, {passive:false});
@@ -181,6 +204,7 @@ function stickRadius() { return min(mainCanvasSize.x, mainCanvasSize.y) * .09; }
 
 function readInputs()
 {
+    mouseFinger();
     const keyAxis = (l, r, d, u) => vec2(keyIsDown(r) - keyIsDown(l), keyIsDown(u) - keyIsDown(d));
     const keyDirs = [keyAxis('KeyA', 'KeyD', 'KeyS', 'KeyW'), keyAxis('ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp')];
     const keyActs =
@@ -202,10 +226,15 @@ function readInputs()
             fingerTaps[i] = false;
             continue;
         }
-        const dir = touchDir(i, keyDirs[i]);
+        if (keyDirs[i].length())
+            stickMode[i] = false;
+        let dir = touchDir(i, keyDirs[i]);
+        if (stickRunner(i))
+            dir = dir.length() > .15 ? dir.normalize() : vec2(0, 1); // full speed the way you steer, upfield when let go
+        const stick = [...fingers.values()].some(f => f.player == i);
         playerInput[i].dir = dir;
         playerInput[i].pressed = keyActs[i] || fingerTaps[i];
-        playerInput[i].juke = detectJuke(i, dir);
+        playerInput[i].juke = detectJuke(i, dir, stick);
         fingerTaps[i] = false;
     }
 }
@@ -216,6 +245,10 @@ function touchDir(i, dir)
     for (const f of fingers.values())
     {
         if (f.player != i) continue;
+        // the stick's center trails a finger dragged past its rim, so a flick back always crosses it fast
+        const off = f.cur.subtract(f.start);
+        if (off.length() > stickRadius())
+            f.start = f.cur.subtract(off.normalize(stickRadius()));
         const d = f.cur.subtract(f.start).scale(1 / stickRadius());
         if (d.length() > .15)
             dir = vec2(d.x, -d.y).clampLength(1);
@@ -224,17 +257,24 @@ function touchDir(i, dir)
 }
 
 // a fresh push one way (snapped to 8 directions) and then the opposite way within .25s is a juke.
+// On a stick (finger or mouse) a single fast flick from one way to the opposite is enough.
 // Returns the direction of the cut, or undefined
-function detectJuke(i, dir)
+function detectJuke(i, dir, stick)
 {
     const f = flicks[i];
-    const d8 = dir.length() > .5 ? vec2().setAngle(round(dir.angle() / (PI / 4)) * PI / 4) : vec2();
-    if (d8.distance(f.cur) < .1) return;
+    const d8 = dir.length() > (stick ? .35 : .5) ? vec2().setAngle(round(dir.angle() / (PI / 4)) * PI / 4) : vec2();
+    if (d8.distance(f.cur) < .1)
+    {
+        if (d8.length()) f.held = time; // last moment the stick still pointed the old way
+        return;
+    }
     f.cur = d8;
     if (!d8.length()) return;
-    const juke = time - f.t < .25 && d8.dot(f.last) < -.9;
+    const flipped = d8.dot(f.last) < -.9;
+    const juke = flipped && (time - f.t < .25 || stick && time - f.held < .15);
     f.last = d8;
     f.t = juke ? -9 : time; // a juke's cut doesn't count as the fake for another one
+    f.held = time;
     return juke ? d8 : undefined;
 }
 
@@ -265,7 +305,7 @@ function makeRoute(start)
 // 1P with you at QB: before the snap, drag on the board (mouse or finger) to draw the CPU's route
 const canDrawRoute = () => gameState == 'presnap' && isCPU(1) && !humans[1].isQB();
 const ROUTE_STEP = 1.2, ROUTE_MAX_LEN = 70;
-let routePen;   // what's drawing right now: 'mouse' or a touch id
+let routePen;   // what's drawing right now: a touch id or 'mouse'
 
 function drawRouteUpdate()
 {
@@ -274,14 +314,10 @@ function drawRouteUpdate()
 
     // a finger that's dragged past tap distance becomes the pen
     let penPos;
-    if (mouseWasPressed(0))
-        startDrawnRoute('mouse');
     for (const [id, f] of fingers)
         if (routePen != id && f.cur.distance(f.start) > 25)
             startDrawnRoute(id, screenToWorld(f.start));
-    if (routePen == 'mouse')
-        penPos = mouseIsDown(0) ? mousePos : undefined;
-    else if (routePen != undefined)
+    if (routePen != undefined)
         penPos = fingers.get(routePen) && screenToWorld(fingers.get(routePen).cur);
     if (!penPos)
         return routePen = undefined;
@@ -1669,7 +1705,8 @@ function drawHUD()
         {
             const lines = numPlayers == 1 ?
             [
-                usedTouch ? 'drag anywhere to run, quick tap = action' : 'WASD / ARROWS to run, SPACE / ENTER = action',
+                usedTouch ? 'drag anywhere to run, quick tap = action' : 'WASD / ARROWS or drag the mouse to run, SPACE / click = action',
+                ...usedTouch ? ['WR runs upfield: drag to steer, let go = action'] : [],
                 usedTouch ? 'QB: drag to draw the CPU\'s route, tap to snap' : 'QB: drag the mouse to draw the CPU\'s route',
                 'zigzag in the route = a juke',
                 'WR: juke the X\'s off you, call for the ball before the sack',
@@ -1679,6 +1716,7 @@ function drawHUD()
             [
                 'each player owns half the screen',
                 'drag to run, quick tap = action',
+                'WR runs upfield: drag to steer, let go = action',
             ] :
             [
                 'P1: WASD to run, SPACE = action',
@@ -1719,23 +1757,6 @@ function drawHUD()
         }
     }
 
-    // touch sticks
-    if (usedTouch && gameState != 'title')
-    {
-        for (const f of fingers.values())
-        {
-            const c = ctxBegin(PLAYER_INK[f.player], 0, .5);
-            c.lineWidth = 3;
-            c.beginPath();
-            c.arc(f.start.x, f.start.y, stickRadius(), 0, PI * 2);
-            c.stroke();
-            const knob = f.cur.subtract(f.start).clampLength(stickRadius()).add(f.start);
-            c.beginPath();
-            c.arc(knob.x, knob.y, stickRadius() * .35, 0, PI * 2);
-            c.fill();
-            c.restore();
-        }
-    }
     if (usedTouch && numPlayers == 2 && gameState != 'title')
     {
         const ctx = ctxBegin(INK, 0, .25);
@@ -1867,10 +1888,8 @@ function drawAskRun()
 // where across the screen (0 to 1) a mouse click or tap landed this frame, -1 if none
 function clickedX()
 {
-    let x = tappedX;
+    const x = tappedX; // mouse clicks land here too, on release like a tap
     tappedX = -1;
-    if (mouseWasPressed(0))
-        x = mousePosScreen.x / mainCanvasSize.x;
     return x;
 }
 
