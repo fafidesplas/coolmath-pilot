@@ -5,6 +5,7 @@
 **Rank:** #2 · **Genre:** One-button skill runner · **Art family:** Chunky Cartoon · **Audience habit:** Coolmath nostalgia (fans of classic tunnel and gravity runners)
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 One-button runners are a Coolmath staple: instantly understood, endlessly retried. Gravity flipping adds a fresh, readable twist and makes every death feel like "one more try".
@@ -51,5 +52,8 @@ A short "whoop" on every flip (pitch rises with consecutive quick flips), crunch
 ## Definition of done
 `STANDARDS.md` checklist, plus: a new player clears level 1 on the first or second try.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: the runner with gravity flip, checkpoints, gaps and spikes, one complete level, instant restart, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+The runner with gravity flip, checkpoints, gaps and spikes, one complete level, instant restart, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

@@ -5,6 +5,7 @@
 **Rank:** #5 · **Genre:** Routing puzzle · **Art family:** Toybox Flat · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 A toy train set is instantly appealing, and routing is a satisfying logic problem. Planning mode keeps it calm; the run itself is a little show.
@@ -50,5 +51,8 @@ Switch click, choo-choo on Go, cheerful ding per arrival, comic crash puff.
 ## Definition of done
 `STANDARDS.md` checklist, plus: every level verified solvable by the solver.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: track grid, switches, two trains and two stations, planning and run phases, crash feedback, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Track grid, switches, two trains and two stations, planning and run phases, crash feedback, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

@@ -69,6 +69,14 @@ function readDevlog(slug) {
   return { title: title.trim(), lines };
 }
 
+// "**Status:** Approved" line from GDD.md, if the game has one.
+function readGdd(slug) {
+  const file = join(root, 'games', slug, 'GDD.md');
+  if (!existsSync(file)) return null;
+  const status = (readFileSync(file, 'utf8').match(/\*\*Status:\*\*\s*([^\n·|]+)/) || [])[1]?.trim() || 'Draft';
+  return { status };
+}
+
 const manifest = JSON.parse(readFileSync(join(root, 'games.json'), 'utf8'));
 
 const games = manifest.games.map(g => {
@@ -84,6 +92,7 @@ const games = manifest.games.map(g => {
     lastCommit: commits[0] || null,
     firstCommit: commits.at(-1) || null,
     devlog: readDevlog(g.slug),
+    gdd: readGdd(g.slug),
   };
 });
 

@@ -5,6 +5,7 @@
 **Rank:** #6 · **Genre:** Time-loop puzzle platformer · **Art family:** Night Neon · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 A fresh, clever idea that feels like a brain-teaser and looks great in clips: three ghostly copies of yourself pressing buttons in sync. Short rooms suit a quick break.
@@ -49,5 +50,8 @@ Ticking loop timer, reverse-whoosh on reset, layered tones as each echo is creat
 ## Definition of done
 `STANDARDS.md` checklist, plus: two new players understand echoes without being told.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: platformer movement on a fixed-step simulation, the loop timer, recorded echoes that replay exactly, a pressure plate and door, 3 tutorial rooms, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Platformer movement on a fixed-step simulation, the loop timer, recorded echoes that replay exactly, a pressure plate and door, 3 tutorial rooms, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

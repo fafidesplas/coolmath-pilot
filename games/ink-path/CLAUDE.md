@@ -5,6 +5,7 @@
 **Rank:** #9 · **Genre:** Physics drawing puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Draw-a-line puzzles have many valid answers, so every player feels clever in their own way. Easy to start with a mouse or trackpad, endlessly replayable for 3 stars.
@@ -49,5 +50,8 @@ Pen scratch while drawing, soft rolling, boing on pads, applause on goal.
 ## Definition of done
 `STANDARDS.md` checklist, plus: each level has a recorded reference solution that passes.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: stroke drawing with an ink meter, line to static body, ball physics on a fixed step, goal detection, instant retry, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Stroke drawing with an ink meter, line to static body, ball physics on a fixed step, goal detection, instant retry, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

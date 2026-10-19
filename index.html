@@ -188,7 +188,7 @@
 <script>
 const STAGES = [
   { id: 'brief',   label: 'Brief' },
-  { id: 'plan',    label: 'Plan' },
+  { id: 'gdd',     label: 'GDD' },
   { id: 'slice',   label: 'Vertical slice' },
   { id: 'content', label: 'Content' },
   { id: 'polish',  label: 'Polish' },
@@ -272,7 +272,7 @@ function renderCard(g) {
       <span class="chip">${esc(g.habit)}</span>
     </div>
     <div class="stage">
-      <div class="stage-top"><span>Stage <strong>${isDone ? '✓ ' : ''}${STAGES[si].label}</strong></span><span>${si + 1}/${STAGES.length}</span></div>
+      <div class="stage-top"><span>Stage <strong>${isDone ? '✓ ' : ''}${STAGES[si].label}</strong></span><span>${g.gdd ? `GDD: ${esc(g.gdd.status)} · ` : ''}${si + 1}/${STAGES.length}</span></div>
       <div class="pips${isDone ? ' done' : ''}" role="img" aria-label="Stage ${si + 1} of ${STAGES.length}: ${STAGES[si].label}">${pips}</div>
     </div>
     ${commit}
@@ -283,6 +283,7 @@ function renderCard(g) {
         : `<button class="btn" disabled title="No games/${esc(g.slug)}/index.html yet">▶ No build yet</button>`}
       <span class="links">
         <a href="${esc(repoPath('blob', `games/${g.slug}/CLAUDE.md`))}" target="_blank" rel="noopener">Brief</a>
+        ${g.gdd ? `<a href="${esc(repoPath('blob', `games/${g.slug}/GDD.md`))}" target="_blank" rel="noopener">GDD</a>` : ''}
         ${state.data.repoUrl ? `<a href="${esc(repoPath('commits', `games/${g.slug}`))}" target="_blank" rel="noopener">Historial</a>` : ''}
       </span>
     </div>

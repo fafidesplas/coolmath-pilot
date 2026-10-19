@@ -5,6 +5,7 @@
 **Rank:** #10 · **Genre:** One-button timing game · **Art family:** Night Neon · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 One-button timing is instant to learn and hard to master, ideal for a quick break. Gravity arcs look beautiful and every launch is a small gamble.
@@ -50,5 +51,8 @@ Soft whoosh on launch, pitch-bending hum as gravity pulls, chime on capture, amb
 ## Definition of done
 `STANDARDS.md` checklist, plus: a new player clears level 1 within three tries.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: orbiting, launch on tap, gravity with capture rings, trajectory preview, one level with three planets and stars, instant retry, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Orbiting, launch on tap, gravity with capture rings, trajectory preview, one level with three planets and stars, instant retry, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

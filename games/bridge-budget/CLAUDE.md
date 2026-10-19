@@ -5,6 +5,7 @@
 **Rank:** #7 · **Genre:** Physics construction puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Bridge builders are proven, quietly educational (structures, forces) and very replayable: there is always a cheaper bridge. The failure is funny, the success is earned.
@@ -49,5 +50,8 @@ Wooden click when placing, creaks rising with stress, crunch on break, horn and 
 ## Definition of done
 `STANDARDS.md` checklist, plus: every level has a known solution under the 3-star budget, saved as a test.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: build mode with joints and wood beams plus road, budget counter, a deterministic Verlet test mode with stress colors and breaking, a truck, one level, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Build mode with joints and wood beams plus road, budget counter, a deterministic Verlet test mode with stress colors and breaking, a truck, one level, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

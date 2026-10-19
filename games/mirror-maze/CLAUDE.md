@@ -5,6 +5,7 @@
 **Rank:** #3 · **Genre:** Logic puzzle · **Art family:** Toybox Flat · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Pure, untimed logic that looks great when solved: the beam lighting up every crystal is a natural "aha" and a natural daily puzzle. Small window, no sound needed.
@@ -50,5 +51,8 @@ Soft glass "tink" on placement, rising chime as each crystal lights, full chord 
 ## Definition of done
 `STANDARDS.md` checklist, plus: solver confirms all 60 levels and every daily candidate.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: grid, emitter, crystals, placeable rotating mirrors, live beam, undo, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Grid, emitter, crystals, placeable rotating mirrors, live beam, undo, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

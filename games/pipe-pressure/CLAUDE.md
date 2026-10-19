@@ -5,6 +5,7 @@
 **Rank:** #8 · **Genre:** Tile-rotation puzzle · **Art family:** Toybox Flat · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Pipe puzzles are a timeless, instantly understood format. A gentle pressure timer adds tension in later worlds, while early levels stay calm and untimed.
@@ -49,5 +50,8 @@ Ratchet click on rotate, gurgle and flow, happy "bloop" as each tank fills, comi
 ## Definition of done
 `STANDARDS.md` checklist, plus: solver verifies every level and daily board.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: grid of rotating pipe tiles, source, tanks, flow simulation with leaks, valve, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Grid of rotating pipe tiles, source, tanks, flow simulation with leaks, valve, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

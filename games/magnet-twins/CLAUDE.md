@@ -5,6 +5,7 @@
 **Rank:** #1 · **Genre:** 2-player co-op puzzle platformer · **Art family:** Chunky Cartoon · **Audience habit:** Coolmath nostalgia (fans of two-players-one-keyboard co-op games)
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Same-keyboard co-op is one of the few ways two friends can play together on one school Chromebook, and Coolmath players already love that format. The magnet twist gives it its own identity: the two players are not copies of each other, they need each other.
@@ -55,5 +56,8 @@ Electric hum while power is held, clank on metal, cheerful jingle at the exit.
 ## Definition of done
 `STANDARDS.md` checklist, plus: tested by two people on one Chromebook keyboard and by one person in solo mode.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: both robots with movement, jump and magnet powers, one complete level using crates and a magnetic door, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Both robots with movement, jump and magnet powers, one complete level using crates and a magnetic door, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

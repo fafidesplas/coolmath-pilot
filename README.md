@@ -1,6 +1,6 @@
 # Coolmath pilot — game briefs
 
-12 original HTML5 games for Coolmath Games, ranked. Each game has its own folder with a `CLAUDE.md` brief that Claude Code loads automatically, plus the shared rules in `STANDARDS.md` that every game follows.
+12 original HTML5 games for Coolmath Games, ranked. Each game has its own folder with a `CLAUDE.md` brief that Claude Code loads automatically, plus the shared rules in `STANDARDS.md` and the production phases in `PHASES.md` that every game follows.
 
 ## The 12 games
 
@@ -31,11 +31,11 @@ Three shared looks, so games reuse parts and the catalog feels coherent:
 
 ## How to work on a game with Claude Code
 
-1. Copy the whole `coolmath-pilot` folder into your repo (keep `STANDARDS.md` two levels above each game).
-2. `cd games/<game>` and run `claude`. It reads that game's `CLAUDE.md`, which pulls in `STANDARDS.md`.
-3. Paste the "First prompt" at the end of the brief. Claude proposes a plan, then builds a playable first level.
-4. Iterate in short loops: play it, tell Claude what feels wrong, repeat. Keep notes in `DEVLOG.md` in the game folder.
-5. Before calling a game done, run through the checklist in `STANDARDS.md`.
+1. `cd games/<game>` and run `claude`. It reads that game's `CLAUDE.md`, which pulls in `STANDARDS.md` and `PHASES.md`.
+2. **Phase 1, GDD:** paste the phase 1 prompts from `PHASES.md`. Claude asks the open questions, writes `GDD.md` from `templates/GDD.md`, and reviews it critically. No code until a teammate approves it.
+3. **Phase 2, vertical slice:** Claude plans, then builds one juicy, playable level with the full shell (scope in the brief's "Vertical slice" section). Iterate on feel until it's fun.
+4. **Phases 3–5:** content, polish, release, each with its own prompts and exit gate in `PHASES.md`.
+5. Play after every step, keep notes in `DEVLOG.md`, and move the game's `stage` in `games.json` when a gate passes.
 
 Anything marked **[confirm]** is still open and gets decided with the team.
 
@@ -46,5 +46,5 @@ Anything marked **[confirm]** is still open and gets decided with the team.
 - **Online:** GitHub Pages, rebuilt by `.github/workflows/dashboard.yml` on every push to `main`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
 - **Local:** `node scripts/build-status.mjs && python3 -m http.server 8000`, then open http://localhost:8000.
 - **A game becomes playable** as soon as `games/<slug>/index.html` exists.
-- **Phase and owner** are edited by hand in `games.json` (`brief → plan → slice → content → polish → done`). Last commit, commit count and devlog come from git automatically.
+- **Phase and owner** are edited by hand in `games.json` (`brief → gdd → slice → content → polish → done`, see `PHASES.md`). The GDD status (Draft / In review / Approved) is read from `GDD.md`. Last commit, commit count and devlog come from git automatically.
 - Write `DEVLOG.md` entries as `## <date> — <title>` with the newest entry at the top; the dashboard shows the latest one.

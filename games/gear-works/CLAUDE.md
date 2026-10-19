@@ -5,6 +5,7 @@
 **Rank:** #11 · **Genre:** Mechanical logic puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Gears are tactile and quietly mathematical (direction alternates, size changes speed), a perfect fit for Coolmath's brand. Watching the whole machine spin up is deeply satisfying.
@@ -49,5 +50,8 @@ Satisfying click when a gear meshes, ticking while running at speed-matched temp
 ## Definition of done
 `STANDARDS.md` checklist, plus: solver confirms the minimum gear count for every level.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: pegboard, three gear sizes, drag to place, meshing graph with direction and speed, jam detection, a target machine, Run, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Pegboard, three gear sizes, drag to place, meshing graph with direction and speed, jam detection, a target machine, Run, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

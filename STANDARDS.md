@@ -78,6 +78,7 @@ Expose `window.game` with read-only state for automated checks: `screen` (`'titl
 ```
 games/<game-slug>/
   CLAUDE.md      the brief (do not delete)
+  GDD.md         the game design document (phase 1, source of truth for the design)
   DEVLOG.md      short notes per work session: what changed, what is next
   index.html
   src/           game code, split by concern (game, render, input, levels, audio, ui, analytics)
@@ -87,11 +88,15 @@ games/<game-slug>/
 
 ## Working rhythm with Claude Code
 
-1. Plan first: ask Claude to restate the design and propose a short build plan before writing code.
-2. Vertical slice: one complete, juicy, playable level with the full shell, before adding content.
-3. Content: levels in data files; puzzle games get a simple in-game level editor (debug only) to make levels fast.
-4. Polish: feel, sound, juice, difficulty curve, then GameAnalytics checks.
-5. Play it yourself after every step. Write what changed in `DEVLOG.md`.
+Every game follows the phases in `PHASES.md`, with ready-to-paste prompts and an exit gate for each:
+
+1. **GDD:** no code until `GDD.md` (from `templates/GDD.md`) is written, reviewed and marked Approved.
+2. **Vertical slice:** one complete, juicy, playable level with the full shell, before adding content.
+3. **Content:** levels in data files; puzzle games get a simple in-game level editor (debug only) and a solver.
+4. **Polish:** feel, sound, juice, difficulty curve, then GameAnalytics checks.
+5. **Release:** the done checklist below.
+
+Play it yourself after every step. Write what changed in `DEVLOG.md`. If the design changes, update `GDD.md` in the same commit.
 
 ## Done checklist
 

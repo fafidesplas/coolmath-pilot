@@ -5,6 +5,7 @@
 **Rank:** #4 · **Genre:** Sliding-block puzzle · **Art family:** Chunky Cartoon · **Audience habit:** Daily puzzle
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Ice-sliding puzzles are simple to read and surprisingly deep. A charming penguin gives it personality, and "solve it in N moves" makes a perfect daily puzzle.
@@ -49,5 +50,8 @@ Ice "shhh" slide, soft bonk on rocks, splash and cheer when a fish drops in.
 ## Definition of done
 `STANDARDS.md` checklist, plus: solver verifies par for every level.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: grid, sliding penguin, pushable fish, holes, rocks, move counter, undo, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+Grid, sliding penguin, pushable fish, holes, rocks, move counter, undo, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.

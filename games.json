@@ -1,5 +1,5 @@
 {
-  "_help": "Edit owner and stage by hand. stage: brief | plan | slice | content | polish | done (see STANDARDS.md, 'Working rhythm'). Everything else is read from each game's CLAUDE.md and from git.",
+  "_help": "Edit owner and stage by hand. stage: brief | gdd | slice | content | polish | done (see PHASES.md). Everything else is read from each game's CLAUDE.md and from git.",
   "games": [
     { "slug": "magnet-twins",  "owner": "Fafi", "stage": "brief" },
     { "slug": "flip-runner",   "owner": "Fafi", "stage": "brief" },

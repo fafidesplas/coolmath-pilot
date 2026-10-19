@@ -5,6 +5,7 @@
 **Rank:** #12 · **Genre:** Spatial 3D puzzle · **Art family:** Night Neon · **Audience habit:** Play at the desk
 
 @../../STANDARDS.md
+@../../PHASES.md
 
 ## Why it works for Coolmath
 Spatial reasoning with a magic reveal: a random-looking clump suddenly casts a perfect cat or key. Calm, untimed, and very "Coolmath brain game".
@@ -49,5 +50,8 @@ Soft whirr while rotating, rising tone as the match gets closer, magical reveal 
 ## Definition of done
 `STANDARDS.md` checklist, plus: 60 fps on a low-end Chromebook with the 3D scene, every target reachable.
 
-## First prompt for Claude Code
-"Read CLAUDE.md and STANDARDS.md. Restate the design in 5 lines and propose a build plan. Then build a vertical slice: a local Three.js scene with a block object, drag rotation on two axes, a live projected shadow on the wall, mask comparison against a target, snap-and-reveal, 3 tutorial levels, the full game shell and GameAnalytics stubs. Stop there so I can play it."
+## Vertical slice (phase 2)
+A local Three.js scene with a block object, drag rotation on two axes, a live projected shadow on the wall, mask comparison against a target, snap-and-reveal, 3 tutorial levels, the full game shell and GameAnalytics stubs.
+
+## How to start
+Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.
