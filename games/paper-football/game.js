@@ -24,6 +24,10 @@
       defense a bit faster, every 2nd catch adds a body (5 up to 8). Each play
       the defense calls man or zone and splits its bodies between the rush (3-5)
       and coverage: a blitz gets home faster but leaves receivers open
+    - Upgrades: every 120 yards of the drive, pick 1 of 3 cards. They last the
+      drive: an extra WR (a decoy that drags a safety deep), stiff arm (shrug
+      off one tackle), QB run (one use: the QB can tuck it and cross the LOS),
+      fresh legs (run faster) and sticky gloves (no more broken-up catches)
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
       scrambles and throws only when you call for it (action while no X is on you), so
       call too late and it gets sacked; as WR it runs a random route drawn
@@ -73,7 +77,7 @@ const sndPick     = new SoundGenerator({frequency:420, release:.6, slide:-.6, re
 ///////////////////////////////////////////////////////////////////////////////
 // game state
 
-let gameState = 'title';   // title, presnap, live, air, run, result, over
+let gameState = 'title';   // title, presnap, live, air, run, result, upgrade, over
 let stateTimer = new Timer;
 let numPlayers = 2;        // 1 = P1 plus a CPU teammate in the P2 slot
 let titleChoice = 0;       // highlighted title option: 0 = 1 player, 1 = 2 players
@@ -97,8 +101,14 @@ const HURDLE_COOLDOWN = 2.5; // seconds from one jump to the next
 const TACKLE_GRACE = .5;   // a beat to tuck the ball after the catch: time to juke the closest defender
 let defense = {zone: false, side: 1}; // this play's call: zone coverage or man, and the WR's side
 let camY = START_LOS + 7;
+const UPGRADE_EVERY = 120;   // drive yards between upgrade picks
+let nextUpgrade = UPGRADE_EVERY;
+let upgrades;              // what this drive has picked up, see resetUpgrades
+let cards = [], cardChoice = 0; // the upgrade cards on offer, and the highlighted one
+let qbRunning = false;     // this play's ball carrier is the QB, who ran it past the line
+let stiffArmAt = -9;       // a stiff arm buys a moment free of the pile around you
 
-let humans = [], linemen = [], rushers = [], coverage = [];
+let humans = [], linemen = [], rushers = [], coverage = [], decoys = [];
 let effects = [];
 
 const difficulty = () => min(1 + completions * .045, 1.6);
@@ -582,13 +592,19 @@ class Human extends Body
         let speed = this.isQB() ? 8.5 : this.hasBall ? 9 : 10; // with the ball, pursuit can run you down: juke to make room
         this.jammed = JAM && !this.isQB() && coverage.some(d => !d.stun && d.pos.distance(this.pos) < BODY_R * 2 + .15);
         if (this.jammed) speed *= tightCoverage() ? .35 : .45;
+        speed *= 1 + upgrades.legs * .06;
         this.steer(input.dir.scale(speed), 60);
 
-        // the QB can't cross the line while holding the ball
+        // the QB can't cross the line while holding the ball, unless they've got a QB run card to spend
         if (this.hasBall && this.isQB() && this.pos.y > los - BODY_R)
         {
-            this.pos.y = los - BODY_R;
-            this.vel.y = min(this.vel.y, 0);
+            if (upgrades.qbRun && gameState == 'live' && !isCPU(this.index))
+                startQBRun(this);
+            else
+            {
+                this.pos.y = los - BODY_R;
+                this.vel.y = min(this.vel.y, 0);
+            }
         }
 
         if (input.pressed)
@@ -639,11 +655,13 @@ class Human extends Body
         const p = this.pos.add(vec2(0, up * .9));
         markerCircle(p, BODY_R * (1 + up * .4), this.ink, .17, this.seed);
         markerText(this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
-        markerText(this.isQB() ? 'QB' : 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
+        markerText(this.isQB() != qbRunning ? 'QB' : 'WR', p.add(vec2(0, 1.15)), .85, this.ink); // a running QB is still the QB
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
             markerText('!!', p.add(vec2(-1, .9)), .8, INK);
+        if (!this.ai && this.isQB() && this.hasBall && upgrades.qbRun && gameState == 'live')
+            markerText('cross the LOS to run!', p.add(vec2(0, -1.2)), .65, this.ink, .6 + .4 * Math.sin(time * 6));
         if (!this.ai && this.canHurdle())
         {
             const key = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[this.index];
@@ -775,6 +793,12 @@ class Cover extends Body
             target = ball.to;
             speed = 9 * diff;
         }
+        else if (this.mark)
+        {
+            // the extra WR drags this safety along: it stays over the top of them
+            target = this.mark.pos.add(vec2(0, 2));
+            speed = 8.4 * diff;
+        }
         else if (this.role == 'safety')
         {
             speed = 7 * diff;
@@ -815,7 +839,37 @@ class Cover extends Body
     }
 }
 
-function allBodies() { return [...humans, ...linemen, ...rushers, ...coverage]; }
+// the extra WR upgrade: a CPU receiver who runs a deep route, a decoy who drags a safety with them
+class Decoy extends Body
+{
+    constructor(pos)
+    {
+        super(pos, INK_GREEN);
+        const deep = ['go', 'post', 'corner'][randInt(3)];
+        this.route = {next: 0, points: ROUTES[deep].map(([x, y]) =>
+            vec2(clamp(pos.x + x * (sign(pos.x) || 1), -FIELD_HALF + 1, FIELD_HALF - 1), pos.y + y))};
+        this.trailMax = 30;
+    }
+    think()
+    {
+        if (this.stunned()) return;
+        if (gameState == 'run')
+            return this.steer(vec2(), 12); // the play's elsewhere now: pull up
+        const target = this.route.points[this.route.next];
+        if (target && this.pos.distance(target) < 1.2)
+            ++this.route.next;
+        const dir = target ? target.subtract(this.pos).normalize() : vec2(-this.pos.x / FIELD_HALF * .5, 1).normalize();
+        this.steer(dir.scale(9.5), 40);
+    }
+    render()
+    {
+        markerCircle(this.pos, BODY_R, this.ink, .17, this.seed);
+        markerText('3', this.pos.add(vec2(0, -.05)), .8, this.ink);
+        markerText('WR', this.pos.add(vec2(0, 1.15)), .85, this.ink);
+    }
+}
+
+function allBodies() { return [...humans, ...decoys, ...linemen, ...rushers, ...coverage]; }
 
 function separateBodies()
 {
@@ -848,6 +902,8 @@ function setupPlay()
     qbPlayer.hasBall = true;
 
     linemen = [-4, -2, 0, 2, 4].map(x => new Lineman(vec2(x * .95, los - .9)));
+    decoys = upgrades.decoy ? [new Decoy(vec2(-side * 13, los - .9))] : [];
+    qbRunning = false;
 
     callDefense(side);
 
@@ -883,6 +939,13 @@ function callDefense(side)
         coverage.push(new Cover(vec2(side * 5, los + 12), 'safety'));
     if (covers >= 3)
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
+
+    // the extra WR lines up on the far side: the safety on that side (or the only one) goes with them
+    if (decoys.length)
+    {
+        const safeties = coverage.filter(c => c.role == 'safety');
+        (safeties.find(c => c.half == -side) ?? safeties[0]).mark = decoys[0];
+    }
 }
 
 function newDrive()
@@ -897,6 +960,7 @@ function newDrive()
 function resetGame()
 {
     newDrive();
+    resetUpgrades();
     furthest = 0;
     longPass = longRec = 0;
     newRecords = new Set;
@@ -917,6 +981,90 @@ function showTitle()
     numPlayers = 2; // title touches split by screen half
     resetGame();
     gameState = 'title';
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// upgrades: every UPGRADE_EVERY yards of the drive, pick 1 of 3 cards
+
+const UPGRADES =
+[
+    {key: 'decoy', name: 'EXTRA WR', tag: 'PERMANENT', max: 1,
+        lines: ['a 3rd receiver runs deep', 'and drags a safety', 'away with them']},
+    {key: 'stiffArm', name: 'STIFF ARM', tag: '1 USE', max: 9,
+        lines: ['the ball carrier', 'shrugs off one tackle', 'and keeps going']},
+    {key: 'qbRun', name: 'QB RUN', tag: '1 USE', max: 9,
+        lines: ['your QB can tuck it', 'and run past the line', '(no throw that play)']},
+    {key: 'legs', name: 'FRESH LEGS', tag: 'PERMANENT', max: 3,
+        lines: ['you run 6% faster', 'stacks up to 3 times']},
+    {key: 'gloves', name: 'STICKY GLOVES', tag: 'PERMANENT', max: 1,
+        lines: ['a defender on your hip', 'can\'t knock the catch', 'loose anymore']},
+];
+for (const u of UPGRADES)
+    u.count = () => upgrades[u.key];
+
+function resetUpgrades()
+{
+    upgrades = {};
+    for (const u of UPGRADES)
+        upgrades[u.key] = 0;
+    nextUpgrade = UPGRADE_EVERY;
+}
+
+// between plays: a drive that just passed the next mark picks a card first
+function nextPlay()
+{
+    if (los - START_LOS < nextUpgrade)
+        return setupPlay();
+    nextUpgrade += UPGRADE_EVERY;
+    const pool = UPGRADES.filter(u => upgrades[u.key] < u.max);
+    cards = [];
+    while (cards.length < 3 && pool.length)
+        cards.push(pool.splice(randInt(pool.length), 1)[0]);
+    cardChoice = 1;
+    gameState = 'upgrade';
+    stateTimer.set(.6); // a beat so a button mashed through the result banner doesn't pick blind
+    sndCatch.play();
+}
+
+function pickCard(i)
+{
+    ++upgrades[cards[i].key];
+    sndHut.play();
+    nextPlay(); // a huge gain can pass two marks at once
+}
+
+function upgradeSummary()
+{
+    return UPGRADES.filter(u => upgrades[u.key])
+        .map(u => u.name + (u.max > 1 && upgrades[u.key] > 1 ? ' x' + upgrades[u.key] : '')).join('  ·  ');
+}
+
+// QB run: the QB crosses the line with the ball and the play becomes a run, with them as the ball carrier.
+// The roles flip for the run (every run reads wr() as the ball carrier), and endRun hands them the QB job back
+function startQBRun(q)
+{
+    --upgrades.qbRun;
+    qbRunning = true;
+    qbIndex = 1 - q.index;
+    catchY = los;
+    catchTime = time;
+    gameState = 'run';
+    sndHut.play(q.pos);
+    addEffect('QB RUN!', q.pos.add(vec2(0, 2)), q.ink, 1.8, true);
+}
+
+// stiff arm: the tackler bounces off and hits the turf, the ball carrier keeps going
+function stiffArm(carrier, d)
+{
+    --upgrades.stiffArm;
+    stiffArmAt = time;
+    d.vel = d.pos.subtract(carrier.pos).normalize(10);
+    d.stun = 1.4;
+    d.dive = 0;
+    d.jukedAt = time;
+    sndPow.play(d.pos);
+    addScreenShake(.2, .15);
+    addEffect('STIFF ARM!', carrier.pos.add(vec2(0, 2)), INK_GREEN, 1.4, true);
 }
 
 function callForBall(receiver)
@@ -1027,7 +1175,7 @@ function resolvePass()
         return swatAway(defender);
     }
     // tight coverage contests the catch: a defender on the receiver's hip can knock it loose
-    if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
+    if (!upgrades.gloves && tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
         return failedPlay('BROKEN UP!', 'contested at the catch');
     if (dr < 1.7)
     {
@@ -1053,8 +1201,11 @@ function endRun(how)
     const gained = round(w.pos.y - los), after = round(w.pos.y - catchY);
     los = w.pos.y;
     furthest = max(furthest, round(los - START_LOS));
-    if (!isCPU(qbIndex)) longPass = max(longPass, gained);
-    if (!isCPU(w.index)) longRec = max(longRec, gained);
+    if (!qbRunning)
+    {
+        if (!isCPU(qbIndex)) longPass = max(longPass, gained);
+        if (!isCPU(w.index)) longRec = max(longRec, gained);
+    }
     saveRecords();
     const converted = firstDown - los < .5;
     if (converted)
@@ -1065,8 +1216,9 @@ function endRun(how)
     }
     else if (++down > 4)
         return endDrive('TURNOVER ON DOWNS', 'stopped ' + toGo() + ' YDS short on 4th down');
-    const takes = playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' take' : ' takes') + ' over at QB';
-    const yac = after > 0 ? after + ' after the catch · ' : '';
+    const takes = qbRunning ? playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' stay' : ' stays') + ' at QB' :
+        playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' take' : ' takes') + ' over at QB';
+    const yac = qbRunning ? 'QB RUN · ' : after > 0 ? after + ' after the catch · ' : '';
     showResult(how + '  ' + (gained >= 0 ? '+' : '') + gained + ' YDS', yac + (converted ? 'FIRST DOWN! ' : downAndDistance() + ' — ') + takes, INK_GREEN);
     qbIndex = w.index;
 }
@@ -1445,6 +1597,10 @@ function drawHUD()
         const role = i == qbIndex ? 'QB' : 'WR';
         screenText(playerName(i) + ' ' + role, W - pad, pad + s * .4 + i * s * 1.2, s, PLAYER_INK[i], 'right');
     }
+    const held = upgradeSummary();
+    if (held)
+        screenText(held, W - pad, pad + s * 2.8, s * .7, INK_GREEN, 'right', .85);
+    screenText('next upgrade in ' + max(0, round(START_LOS + nextUpgrade - los)) + ' YDS', W - pad, pad + s * (held ? 3.7 : 2.8), s * .65, INK, 'right', .55);
 
     const midX = W / 2;
     const blink = .6 + .4 * Math.sin(time * 6);
@@ -1562,18 +1718,7 @@ function drawTitle()
     {
         const x = midX + (i ? 1 : -1) * (boxW / 2 + s * .6);
         const picked = titleChoice == i, ink = PLAYER_INK[i];
-        const ctx = ctxBegin(ink, 0, picked ? 1 : .45);
-        ctx.lineWidth = picked ? s * .22 : s * .12;
-        ctx.beginPath();
-        const wob = (k) => (inkHash(k + boil + i * 9) - .5) * s * .25;
-        const l = x - boxW / 2, r = x + boxW / 2, t = boxY - boxH / 2, b = boxY + boxH / 2;
-        ctx.moveTo(l + wob(1), t + wob(2));
-        ctx.lineTo(r + wob(3), t + wob(4));
-        ctx.lineTo(r + wob(5), b + wob(6));
-        ctx.lineTo(l + wob(7), b + wob(8));
-        ctx.lineTo(l + wob(9), t + wob(10) + s * .3); // a marker box never quite closes
-        ctx.stroke();
-        ctx.restore();
+        markerBox(x, boxY, boxW, boxH, ink, picked, s, i * 9);
         screenText(label, x, boxY - s * .55, s * 1.5, ink, 'center', picked ? 1 : .55);
         screenText(sub, x, boxY + s * 1.05, s * .75, ink, 'center', picked ? .85 : .45);
     });
@@ -1581,6 +1726,58 @@ function drawTitle()
     const how = usedTouch ? 'tap a box to play' : '1 / 2 or ← → to pick   ·   SPACE / ENTER to play';
     screenText(how, midX, boxY + boxH / 2 + s * 1.6, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
     screenText('HIGH SCORE ' + saveData.best + ' YDS   ·   LONGEST PASS ' + saveData.longPass + '   ·   LONGEST REC ' + saveData.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
+}
+
+// a hand-drawn screen-space box around (x, y), bolder when picked
+function markerBox(x, y, w, h, ink, picked, s, seed)
+{
+    const ctx = ctxBegin(ink, 0, picked ? 1 : .45);
+    ctx.lineWidth = picked ? s * .22 : s * .12;
+    ctx.beginPath();
+    const wob = (k) => (inkHash(k + boil + seed) - .5) * s * .25;
+    const l = x - w / 2, r = x + w / 2, t = y - h / 2, b = y + h / 2;
+    ctx.moveTo(l + wob(1), t + wob(2));
+    ctx.lineTo(r + wob(3), t + wob(4));
+    ctx.lineTo(r + wob(5), b + wob(6));
+    ctx.lineTo(l + wob(7), b + wob(8));
+    ctx.lineTo(l + wob(9), t + wob(10) + s * .3); // a marker box never quite closes
+    ctx.stroke();
+    ctx.restore();
+}
+
+// the upgrade pick: three cards side by side, a tap on each third of the screen picks one
+function drawCards()
+{
+    const W = mainCanvasSize.x, H = mainCanvasSize.y;
+    const s = min(W, H) / 22, midX = W / 2;
+
+    const card = ctxBegin(BOARD, 0);
+    card.globalAlpha = .88;
+    card.fillRect(0, 0, W, H);
+    card.restore();
+
+    screenText(round(los - START_LOS) + ' YARDS!', midX, H * .14, s * 2.2, INK_GREEN, 'center');
+    screenText('pick an upgrade for this drive', midX, H * .14 + s * 1.8, s * .95, INK, 'center', .7);
+
+    const boxW = min(W * .3, s * 9), boxH = s * 9, boxY = H * .52, gap = min(W * .02, s * .8);
+    cards.forEach((c, i) =>
+    {
+        const x = midX + (i - (cards.length - 1) / 2) * (boxW + gap);
+        const picked = cardChoice == i, alpha = picked ? 1 : .55;
+        const fit = min(1, boxW / (s * 9)); // narrow screens shrink the card text with the card
+        markerBox(x, boxY, boxW, boxH, INK_GREEN, picked, s, i * 13);
+        screenText(i + 1 + '', x - boxW / 2 + s * .7, boxY - boxH / 2 + s * .8, s * .8 * fit, INK, 'left', alpha * .6);
+        screenText(c.name, x, boxY - s * 2.6, s * 1.25 * fit, INK_GREEN, 'center', alpha);
+        c.lines.forEach((l, j) => screenText(l, x, boxY - s * .8 + j * s * .95 * fit, s * .72 * fit, INK, 'center', alpha));
+        const have = c.count();
+        screenText(c.tag + (have ? '  ·  have ' + have : ''), x, boxY + boxH / 2 - s * .9, s * .65 * fit, INK, 'center', alpha * .7);
+    });
+
+    if (stateTimer.elapsed())
+    {
+        const how = usedTouch ? 'tap a card' : '1 / 2 / 3 or ← → to pick   ·   SPACE / ENTER to take it';
+        screenText(how, midX, boxY + boxH / 2 + s * 1.4, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
+    }
 }
 
 // where across the screen (0 to 1) a mouse click or tap landed this frame, -1 if none
@@ -1624,7 +1821,16 @@ function gameUpdate()
         snap();
     }
     else if (gameState == 'result' && stateTimer.elapsed())
-        setupPlay();
+        nextPlay();
+    else if (gameState == 'upgrade' && stateTimer.elapsed())
+    {
+        if (['ArrowLeft', 'ArrowUp', 'KeyA', 'KeyW'].some(k => keyWasPressed(k))) cardChoice = max(0, cardChoice - 1);
+        if (['ArrowRight', 'ArrowDown', 'KeyD', 'KeyS'].some(k => keyWasPressed(k))) cardChoice = min(cards.length - 1, cardChoice + 1);
+        const digit = [1, 2, 3].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n));
+        if (digit >= 0) pickCard(digit);
+        else if (tapX >= 0) pickCard(min(cards.length - 1, tapX * cards.length | 0));
+        else if (anyPress) pickCard(cardChoice);
+    }
     else if (gameState == 'over' && stateTimer.elapsed())
     {
         if (keyWasPressed('Escape') || half == 1) showTitle();
@@ -1659,9 +1865,11 @@ function gameUpdatePost()
         resolvePass();
     else if (gameState == 'run')
     {
-        const w = wr(), tucked = time - catchTime > TACKLE_GRACE;
+        const w = wr(), tucked = time - catchTime > TACKLE_GRACE && time - stiffArmAt > .4;
         const d = tucked && !w.airborne() && defenders().find(d => !d.stun && d.pos.distance(w.pos) < BODY_R * 2 + .1);
-        if (d) tackle();
+        if (d && upgrades.stiffArm)
+            stiffArm(w, d);
+        else if (d) tackle();
         else if (tucked && abs(w.pos.x) > FIELD_HALF - BODY_R - .05)
         {
             addEffect('OUT!', w.pos.add(vec2(0, 2)), INK, 1.4, true);
@@ -1681,6 +1889,8 @@ function gameRenderPost()
     renderEffects();
     if (gameState == 'title')
         drawTitle();
+    else if (gameState == 'upgrade')
+        drawCards();
     else
         drawHUD();
 }
