@@ -1,0 +1,6 @@
+{
+    "title": "Vending Machine Sim",
+    "name": "vendingMachineSim",
+    "engine": "dist/littlejs.js",
+    "sources": ["templates/gameFx.js", "game.js"]
+}

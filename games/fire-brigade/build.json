@@ -1,0 +1,6 @@
+{
+    "title": "Fire Brigade",
+    "name": "fireBrigade",
+    "engine": "dist/littlejs.js",
+    "sources": ["templates/gameFx.js", "game.js"]
+}

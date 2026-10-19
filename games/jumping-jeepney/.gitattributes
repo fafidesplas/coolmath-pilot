@@ -1,0 +1,24 @@
+# Everything below is vendored from the LittleJS plugin, not written here:
+# the engine build, the shared build script, and the helper modules.
+# Marking it keeps review on the game code you actually wrote.
+#
+#   linguist-vendored  collapses the file in GitHub pull requests and drops
+#                      it from the repo's language statistics
+#   -diff              git prints "Binary files differ" instead of dumping
+#                      the contents
+
+# The engine is a ~640KB generated build. Nobody should ever read it, and
+# nobody edits it, so hide its contents outright.
+dist/** -diff linguist-vendored
+
+# Shared build tooling, copied in verbatim and effectively never edited by
+# hand. -diff as well, so it stays out of local diffs too - not just PRs.
+build.mjs -diff linguist-vendored
+
+# Copied verbatim, but these are plausible to tweak while making a game
+# (sounds in gameFx.js, sprites in textureGenerator.js). Collapse them in
+# review WITHOUT -diff, so a real edit still shows up normally.
+templates/** linguist-vendored
+
+*.zip binary
+*.png binary
