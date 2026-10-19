@@ -107,9 +107,10 @@ let teamSize = clamp(saveData.teamSize, MIN_TEAM, MAX_TEAM); // players a side, 
 const MAX_RECEIVERS = 5;
 let receiverCount = clamp(saveData.receiverCount, 1, min(MAX_RECEIVERS, teamSize - 1));
 
-// each team size and receiver count keeps its own records
-function recordsKey(size, count) { return size + 'on' + size + '/' + count; }
-const records = () => saveData.records[recordsKey(teamSize, receiverCount)] ?? {best:0, longPass:0, longRec:0};
+let puzzleMode = !!saveData.puzzle; // puzzle: the defense brings hazards (see placeHazards)
+// each mode, team size and receiver count keeps its own records
+const recordsKey = () => (puzzleMode ? 'puzzle ' : '') + teamSize + 'on' + teamSize + '/' + receiverCount;
+const records = () => saveData.records[recordsKey()] ?? {best:0, longPass:0, longRec:0};
 let ball;                  // pass in the air
 let catchY = 0;            // where the ball carrier caught it, for yards after the catch
 let catchTime = 0;
@@ -640,6 +641,193 @@ function cpuRun(h, out)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// puzzle mode hazards: part of the defense, and they hit the X's as hard as the O's.
+// Blades and open trapdoors stop the ball carrier where they are, blocks wall everyone off.
+// A hurdle clears blades and trapdoors, not blocks; passes fly over all of it
+
+const BLADE_ARM = 2.2;       // a blade is a bar this far out each side of its hub
+const TRAP_SIZE = 2.6;
+const TRAP_CYCLE = 3, TRAP_OPEN = 1.1, TRAP_WARN = .6; // seconds: each loop, open for the last TRAP_OPEN, flashing before that
+let hazards = [];
+
+function placeHazards(count)
+{
+    hazards = [];
+    for (let tries = 0; hazards.length < count && tries < 300; ++tries)
+    {
+        const type = ['blade', 'block', 'trap'][randInt(3)];
+        const pos = vec2(rand(-13, 13), los + rand(4, 22));
+        if (hazards.some(h => h.pos.distance(pos) < 5.5) || allBodies().some(b => b.pos.distance(pos) < 3))
+            continue;
+        const h = {type, pos, seed: rand(1000)};
+        if (type == 'blade')
+        {
+            h.spin = randSign() * rand(1.6, 2.6);
+            h.angle0 = rand(PI);
+        }
+        else if (type == 'block')
+            h.size = rand() < .5 ? vec2(rand(3, 5.5), 1.2) : vec2(1.2, rand(2.5, 4));
+        else
+            h.phase = rand(TRAP_CYCLE);
+        hazards.push(h);
+    }
+}
+
+function bladeEnds(h)
+{
+    const a = h.angle0 + h.spin * time, arm = vec2(Math.cos(a), Math.sin(a)).scale(BLADE_ARM);
+    return [h.pos.subtract(arm), h.pos.add(arm)];
+}
+function distToSegment(p, a, b)
+{
+    const ab = b.subtract(a), t = clamp(p.subtract(a).dot(ab) / ab.lengthSquared(), 0, 1);
+    return p.distance(a.add(ab.scale(t)));
+}
+// where a trapdoor is in its loop: 'open', 'warn' (about to open) or 'shut'
+function trapState(h)
+{
+    const t = (time + h.phase) % TRAP_CYCLE;
+    return t > TRAP_CYCLE - TRAP_OPEN ? 'open' : t > TRAP_CYCLE - TRAP_OPEN - TRAP_WARN ? 'warn' : 'shut';
+}
+const onTrap = (pos, h) => abs(pos.x - h.pos.x) < TRAP_SIZE / 2 && abs(pos.y - h.pos.y) < TRAP_SIZE / 2;
+
+// a body can't stand inside a block: slide it out the nearest side
+function pushOutOfBlock(b, h)
+{
+    const half = h.size.scale(.5);
+    const near = vec2(clamp(b.pos.x, h.pos.x - half.x, h.pos.x + half.x), clamp(b.pos.y, h.pos.y - half.y, h.pos.y + half.y));
+    let out = b.pos.subtract(near), d = out.length();
+    if (d >= BODY_R) return;
+    if (d < .001) // center inside: out the shallowest side
+    {
+        const dx = half.x - abs(b.pos.x - h.pos.x), dy = half.y - abs(b.pos.y - h.pos.y);
+        out = dx < dy ? vec2(sign(b.pos.x - h.pos.x) || 1, 0) : vec2(0, sign(b.pos.y - h.pos.y) || 1);
+        b.pos = dx < dy ? vec2(h.pos.x + out.x * (half.x + BODY_R), b.pos.y) : vec2(b.pos.x, h.pos.y + out.y * (half.y + BODY_R));
+    }
+    else
+    {
+        out = out.scale(1 / d);
+        b.pos = near.add(out.scale(BODY_R));
+    }
+    const into = b.vel.dot(out);
+    if (into < 0) b.vel = b.vel.subtract(out.scale(into)); // keep the slide along the wall, lose the push into it
+}
+
+function updateHazards()
+{
+    for (const b of allBodies())
+    for (const h of hazards)
+    {
+        if (h.type == 'block')
+        {
+            pushOutOfBlock(b, h);
+            continue;
+        }
+        if (b instanceof Human && b.airborne()) continue; // hurdled
+        if (h.type == 'blade')
+        {
+            if (time - (b.bladeAt ?? -9) < .8) continue;
+            const [e0, e1] = bladeEnds(h);
+            if (distToSegment(b.pos, e0, e1) < BODY_R + .1 && hazardHit(b, h, 'blade'))
+                return;
+        }
+        else if (trapState(h) == 'open' && onTrap(b.pos, h) && hazardHit(b, h, 'trap'))
+            return;
+    }
+}
+
+// returns true when the hit ends the play
+function hazardHit(b, h, kind)
+{
+    const carrier = gameState == 'run' && b == wr();
+    if (kind == 'blade')
+    {
+        b.bladeAt = time;
+        sndPow.play(b.pos);
+        addEffect('ZING!', b.pos.add(vec2(0, 2)), INK, 1.3, true);
+        if (carrier)
+        {
+            addScreenShake(.3, .2);
+            endRun('CUT DOWN');
+            return true;
+        }
+        b.stun = 1.4; // knocked flat, slides off the blade
+        b.dive = 0;
+        b.vel = b.pos.subtract(h.pos).normalize(9);
+        return false;
+    }
+
+    sndSack.play(b.pos);
+    addEffect('AAAH!', h.pos.add(vec2(0, 2)), INK, 1.3, true);
+    if (carrier)
+    {
+        b.pos = h.pos.copy(); // the ball is spotted at the trapdoor
+        endRun('FELL THROUGH');
+        return true;
+    }
+    if (b instanceof Human) // a WR or QB down the hole kills the play
+    {
+        b.hasBall = false;
+        ball = undefined;
+        failedPlay('FELL THROUGH!', playerName(b.index) + ' fell down a trapdoor');
+        return true;
+    }
+    b.gone = true; // an X (or a CPU teammate) is out of the play
+    b.pos = vec2(0, -1e4);
+    return false;
+}
+
+function drawHazards()
+{
+    for (const h of hazards)
+    {
+        if (h.type == 'block')
+        {
+            const half = h.size.scale(.5);
+            const c = [vec2(-1, -1), vec2(1, -1), vec2(1, 1), vec2(-1, 1)].map((k, i) => jitter(h.pos.add(vec2(k.x * half.x, k.y * half.y)), h.seed + i, .08));
+            fillWorld(c, INK, .16);
+            strokeWorld([...c, c[0], c[1]], INK, .14, .9);
+            // hatching, like a shaded-in wall
+            for (let t = -half.x - half.y + .5; t < half.x + half.y; t += .7)
+            {
+                const a = vec2(clamp(t + half.y, -half.x, half.x), 0), b = vec2(clamp(t - half.y, -half.x, half.x), 0);
+                a.y = a.x - t; b.y = b.x - t;
+                strokeWorld([jitter(h.pos.add(a), h.seed + t, .05), jitter(h.pos.add(b), h.seed + t + 3, .05)], INK, .05, .45);
+            }
+        }
+        else if (h.type == 'blade')
+        {
+            markerCircle(h.pos, BLADE_ARM + BODY_R * .5, INK, .05, h.seed, .15); // its sweep, faint
+            const [e0, e1] = bladeEnds(h), along = e1.subtract(e0).normalize(), side = along.rotate(PI / 2);
+            strokeWorld([e0, e1], INK, .18, .95);
+            for (const [end, dir] of [[e0, along.scale(-1)], [e1, along]]) // saw teeth at both tips
+            {
+                const teeth = [];
+                for (let k = 0; k <= 4; ++k)
+                    teeth.push(end.subtract(dir.scale(k * .25)).add(side.scale(k % 2 ? .32 : -.32)));
+                strokeWorld(teeth, INK, .09, .9);
+            }
+            markerCircle(h.pos, .3, INK, .12, h.seed + 1);
+        }
+        else
+        {
+            const state = trapState(h), half = TRAP_SIZE / 2;
+            const c = [vec2(-1, -1), vec2(1, -1), vec2(1, 1), vec2(-1, 1)].map((k, i) => jitter(h.pos.add(k.scale(half)), h.seed + i, .07));
+            if (state == 'open')
+                fillWorld(c, INK, .85);
+            const flash = state == 'warn' ? .45 + .45 * Math.sin(time * 30) : 1;
+            strokeWorld([...c, c[0]], INK, .1, .8 * flash, state == 'open' ? undefined : [.5, .3]);
+            if (state != 'open')
+            {
+                strokeWorld([h.pos.add(vec2(-half, 0)), h.pos.add(vec2(half, 0))], INK, .05, .4 * flash); // the two doors
+                if (state == 'warn')
+                    markerText('!', h.pos, 1.2, INK, flash);
+            }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // bodies
 
 class Body extends EngineObject
@@ -659,7 +847,7 @@ class Body extends EngineObject
     }
     update()
     {
-        if (!isLive())
+        if (!isLive() || this.gone)
         {
             this.vel = vec2();
             return;
@@ -1050,7 +1238,7 @@ class Decoy extends Body
     }
 }
 
-function allBodies() { return [...humans, ...decoys, ...linemen, ...rushers, ...coverage]; }
+function allBodies() { return [...humans, ...decoys, ...linemen, ...rushers, ...coverage].filter(b => !b.gone); }
 
 function separateBodies()
 {
@@ -1105,6 +1293,7 @@ function setupPlay()
         humans[1].ai = {route: {name: '', points: [], next: 0}, called: false, jukeTime: 0, reaction: rand(.15, .4)};
     if (canDrawRoutes())
         callPlay();
+    placeHazards(puzzleMode ? min(8, 3 + defense.deep + (completions >> 1)) : 0);
 
     for (const b of allBodies())
         b.trail = [b.pos.copy()];
@@ -1121,7 +1310,7 @@ function callDefense(side)
     const spare = teamSize - formation.length;
     const rush = spare < 2 ? 1 : randInt(max(1, Math.ceil(spare / 2)), spare);
     const deep = spare - rush;
-    defense = {zone: completions >= 2 && rand() < .5, side};
+    defense = {zone: completions >= 2 && rand() < .5, side, deep};
 
     rushers = [[0], [-1.5, 1.5], [-3, 0, 3], [-4.5, -1.5, 1.5, 4.5]][min(rush, 4) - 1].map(x => new Rusher(vec2(x, los + .9), linemen.length ? 0 : 1.5));
     for (let i = 0; i < rush - 4; i++) // past 4, linebackers blitz a beat late, alternating sides
@@ -1131,13 +1320,14 @@ function callDefense(side)
     // In zone the CB bails to its spot instead
     const cbDepth = defense.zone ? 5 : tightCoverage() ? 1.1 : 3.5;
     coverage = [new Cover(vec2(side * 12, los + cbDepth), 'cb')];
-    if (deep >= 3)
+    if (puzzleMode) {} // no deep help: hazards hold the field instead (placeHazards)
+    else if (deep >= 3)
         coverage.push(new Cover(vec2(-6, los + 12), 'safety', -1), new Cover(vec2(6, los + 12), 'safety', 1));
     else if (deep >= 1)
         coverage.push(new Cover(vec2(side * 5, los + 12), 'safety'));
-    if (deep >= 2)
+    if (deep >= 2 && !puzzleMode)
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
-    for (let i = 0; i < deep - 3; i++) // a light offense leaves more X's to sit underneath
+    for (let i = 0; i < deep - 3 && !puzzleMode; i++) // a light offense leaves more X's to sit underneath
         coverage.push(new Cover(vec2((i % 2 ? side : -side) * (6 - i * 2), los + 2), 'under'));
 
     // every receiving spot has its own man: the corner on WR 1, plus one per CPU receiver
@@ -1317,6 +1507,16 @@ function changeTeamSize(step)
     showTitle();
 }
 
+// the title's mode toggle: remembered, and the board behind the menu redraws to show it
+function setPuzzleMode(on)
+{
+    if (on == puzzleMode) return;
+    puzzleMode = saveData.puzzle = on;
+    writeSaveData('chalkTalk', saveData);
+    sndJuke.play();
+    showTitle();
+}
+
 // the title's receiver count: more receivers than the team holds grows the team to fit
 function changeReceivers(step)
 {
@@ -1381,6 +1581,7 @@ function passTarget(thrower)
 
 function throwBall(thrower)
 {
+    if (passTo?.gone) passTo = undefined; // your pick fell through a trapdoor: the WR it is
     if (passTo && passTo != wr())
         swapReceiver(passTo);
     passTo = undefined;
@@ -1568,7 +1769,7 @@ function saveRecords()
         }
     if (changed)
     {
-        saveData.records[recordsKey(teamSize, receiverCount)] = rec;
+        saveData.records[recordsKey()] = rec;
         writeSaveData('chalkTalk', saveData);
     }
 }
@@ -1627,6 +1828,18 @@ function ctxBegin(color, widthWorld, alpha = 1)
     return ctx;
 }
 
+function fillWorld(points, color, alpha = 1)
+{
+    const ctx = ctxBegin(color, 0, alpha);
+    ctx.beginPath();
+    points.forEach((p, i) =>
+    {
+        const s = worldToScreen(p);
+        i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y);
+    });
+    ctx.fill();
+    ctx.restore();
+}
 function strokeWorld(points, color, width, alpha = 1, dash)
 {
     const ctx = ctxBegin(color, width, alpha);
@@ -1803,6 +2016,8 @@ function drawBoard()
     strokeWorld([vec2(-FIELD_HALF, firstDown), vec2(FIELD_HALF, firstDown)], INK_FIRST, .16, .7);
     markerText('1ST', vec2(-FIELD_HALF - 1, firstDown), .7, INK_FIRST, .8);
 
+    drawHazards();
+
     // every body's route so far, like arrows on a play diagram
     for (const b of allBodies())
     {
@@ -1901,7 +2116,7 @@ function drawHUD()
         screenText(playerName(i) + ' ' + role, W - pad, pad + s * .4 + i * s * 1.2, s, PLAYER_INK[i], 'right');
     }
     screenText('STIFF ARM' + (stiffArmUsed ? ' (used)' : ' ' + STIFF_ARM_CHANCE * 100 + '%'), W - pad, pad + s * 2.8, s * .7, INK_GREEN, 'right', stiffArmUsed ? .45 : .85);
-    screenText(teamSize + ' ON ' + teamSize, W - pad, pad + s * 3.7, s * .65, INK, 'right', .55);
+    screenText((puzzleMode ? 'PUZZLE  ·  ' : '') + teamSize + ' ON ' + teamSize, W - pad, pad + s * 3.7, s * .65, INK, 'right', .55);
 
     const midX = W / 2;
     const blink = .6 + .4 * Math.sin(time * 6);
@@ -1959,6 +2174,8 @@ function drawHUD()
             lines.push(usedTouch ? 'flick back and forth = juke' : 'tap opposite directions fast = juke');
             lines.push('after the catch: action = jump a tackle');
             lines.push('don\'t get sacked, don\'t get picked');
+            if (puzzleMode)
+                lines.push('PUZZLE: blades + open trapdoors stop you, and the X\'s', 'blocks wall everyone off · a jump clears the rest');
             if (!usedTouch)
                 lines.push('M = back to the menu');
             const top = H * .16 + s * 2.8;
@@ -2016,10 +2233,18 @@ function drawTitle()
     card.fillRect(0, 0, W, H);
     card.restore();
 
-    screenText('PAPER FOOTBALL', midX, H * .22, s * 3.2, INK, 'center');
+    const {boxW, boxH, boxY, rowY, recY, modeY} = titleLayout();
+    screenText('PAPER FOOTBALL', midX, H * .17, s * 3.2, INK, 'center');
+
+    // mode toggle: the picked one boxed, a tap on either half picks one
+    ['NORMAL', 'PUZZLE'].forEach((label, i) =>
+    {
+        const x = midX + (i ? 1 : -1) * s * 3.3, picked = puzzleMode == !!i;
+        if (picked) markerBox(x, modeY, s * 6, s * 1.7, INK, true, s, 60 + i);
+        screenText(label, x, modeY, s * 1.1, INK, 'center', picked ? 1 : .35);
+    });
 
     // two hand-drawn option boxes, side by side so a tap on either half picks one
-    const {boxW, boxH, boxY, rowY, recY} = titleLayout();
     const options = [['1 PLAYER', 'you + a CPU teammate'], ['2 PLAYERS', 'P1 WASD  ·  P2 ARROWS']];
     options.forEach(([label, sub], i) =>
     {
@@ -2045,7 +2270,7 @@ function drawTitle()
     stepper(rowY, teamSize + ' ON ' + teamSize, 'players per team', teamSize > MIN_TEAM, teamSize < MAX_TEAM, 20);
     stepper(recY, receiverCount + (receiverCount == 1 ? ' RECEIVER' : ' RECEIVERS'), 'besides the QB', receiverCount > 1, receiverCount < MAX_RECEIVERS, 40);
 
-    const how = usedTouch ? 'tap a box to play   ·   tap - / + to change a setting' : '1 / 2 or ← → to pick   ·   ↑ ↓ team size   ·   Q / R receivers   ·   SPACE / ENTER to play';
+    const how = usedTouch ? 'tap a box to play   ·   tap - / + to change a setting' : '1 / 2 or ← → to pick   ·   M mode   ·   ↑ ↓ team size   ·   Q / R receivers   ·   SPACE / ENTER to play';
     screenText(how, midX, recY + s * 2.2, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
     const rec = records();
     screenText('HIGH SCORE ' + rec.best + ' YDS   ·   LONGEST PASS ' + rec.longPass + '   ·   LONGEST REC ' + rec.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
@@ -2056,7 +2281,7 @@ function titleLayout()
 {
     const W = mainCanvasSize.x, H = mainCanvasSize.y, s = min(W, H) / 22;
     const boxH = s * 4.2, boxY = H * .44, rowY = boxY + boxH / 2 + s * 2;
-    return {s, boxW: min(W * .4, s * 13), boxH, boxY, rowY, recY: rowY + s * 2.8};
+    return {s, boxW: min(W * .4, s * 13), boxH, boxY, rowY, recY: rowY + s * 2.8, modeY: boxY - boxH / 2 - s * 1.5};
 }
 
 // a hand-drawn screen-space box around (x, y), bolder when picked
@@ -2109,13 +2334,15 @@ function gameUpdate()
     {
         if (['ArrowLeft', 'KeyA'].some(k => keyWasPressed(k))) titleChoice = 0;
         if (['ArrowRight', 'KeyD'].some(k => keyWasPressed(k))) titleChoice = 1;
-        const {s, rowY, recY} = titleLayout();
+        const {s, rowY, recY, modeY} = titleLayout();
         const onRow = (y) => tapPos && abs(tapPos.y - y) < s * 1.4;
         const digit = [1, 2].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n));
         if (['ArrowUp', 'KeyW', 'Equal', 'NumpadAdd'].some(k => keyWasPressed(k))) changeTeamSize(1);
         else if (['ArrowDown', 'KeyS', 'Minus', 'NumpadSubtract'].some(k => keyWasPressed(k))) changeTeamSize(-1);
         else if (keyWasPressed('KeyR')) changeReceivers(1);
         else if (keyWasPressed('KeyQ')) changeReceivers(-1);
+        else if (keyWasPressed('KeyM')) setPuzzleMode(!puzzleMode);
+        else if (onRow(modeY)) setPuzzleMode(half == 1);
         else if (onRow(rowY)) changeTeamSize(half ? 1 : -1);
         else if (onRow(recY)) changeReceivers(half ? 1 : -1);
         else if (digit >= 0) startGame(digit);
@@ -2167,6 +2394,8 @@ function gameUpdatePost()
     if (!isLive()) return;
 
     separateBodies();
+    updateHazards();
+    if (!isLive()) return; // a hazard ended the play
 
     if (gameState == 'live' && qb().hasBall)
     {
