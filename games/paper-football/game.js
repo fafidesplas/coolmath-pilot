@@ -32,8 +32,9 @@
       tackler after the catch)
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
       scrambles and throws only when you call for it (action while no X is on you), so
-      call too late and it gets sacked; as WR it runs a random route drawn
-      dashed on the board and jukes its way free) or 2 players
+      call too late and it gets sacked; as WR it runs its route from the play
+      call (a random play from a small real playbook, redraw any route before
+      the snap) and jukes its way free) or 2 players
     - P1 = WASD + Space/F, P2 = arrows + Enter/Shift (solo: either set). Touch:
       each player owns half the screen (solo: all of it), drag to run, quick
       tap = action
@@ -287,29 +288,62 @@ function detectJuke(i, dir, stick)
 ///////////////////////////////////////////////////////////////////////////////
 // CPU teammate (1P): fills the P2 slot by producing the same input a player would
 
-// route waypoints in yards from the WR's start: x > 0 is toward their sideline, y is upfield
+// route waypoints in yards from the receiver's start: x > 0 is toward their sideline, y is upfield
 const ROUTES =
 {
     go:     [[0, 4], [.5, 28]],
+    seam:   [[0, 4], [-.5, 25]],
     slant:  [[0, 3], [-9, 12], [-14, 20]],
     out:    [[0, 9], [8, 9.5]],
     curl:   [[0, 11], [-1.5, 8.5]],
+    hitch:  [[0, 6], [0, 4.5]],
     post:   [[0, 8], [-9, 22]],
     corner: [[0, 8], [6, 18]],
     dig:    [[0, 10], [-14, 10.5]],
+    cross:  [[0, 6], [-22, 14]],
+    drag:   [[0, 2], [-16, 3.5]],
+    drag2:  [[0, 3], [-16, 5.5]],   // the 2nd drag of a mesh runs just over the 1st
+    flat:   [[3, 1], [9, 2.5]],
+    wheel:  [[5, 1], [9, 5], [9, 22]],
 };
 
-function makeRoute(start)
+// 1P at QB: every play comes from the playbook, each spot running its part of the concept.
+// Redraw any of them before the snap. A TE or RB with no route stays in to block
+const PLAYBOOK =
+[
+    {name: 'FOUR VERTS', wr1: 'go',    wr2: 'go',    te: 'seam',   rb: null},
+    {name: 'SMASH',      wr1: 'hitch', wr2: 'hitch', te: 'corner', rb: 'flat'},
+    {name: 'MESH',       wr1: 'drag',  wr2: 'drag2', te: 'seam',   rb: 'wheel'},
+    {name: 'SLANT-FLAT', wr1: 'slant', wr2: 'slant', te: 'flat',   rb: null},
+    {name: 'CURL-FLAT',  wr1: 'curl',  wr2: 'curl',  te: 'flat',   rb: null},
+    {name: 'Y-CROSS',    wr1: 'go',    wr2: 'post',  te: 'cross',  rb: 'flat'},
+    {name: 'DAGGER',     wr1: 'dig',   wr2: 'go',    te: 'seam',   rb: null},
+];
+let playCall;              // this play's playbook entry, when you're the QB
+
+function makeRoute(name, start)
 {
-    const names = Object.keys(ROUTES), name = names[randInt(names.length)];
     const side = sign(start.x) || 1;
     const points = ROUTES[name].map(([x, y]) =>
         vec2(clamp(start.x + x * side, -FIELD_HALF + 1, FIELD_HALF - 1), start.y + y));
     return {name, points, next: 0};
 }
 
+// the play call hands every receiver its route
+function callPlay()
+{
+    playCall = PLAYBOOK[randInt(PLAYBOOK.length)];
+    for (const f of formation)
+    {
+        const b = occupant(f), name = playCall[f.key];
+        if (name)
+            setRoute(b, makeRoute(name, b.pos));
+    }
+}
+
 // 1P with you at QB: before the snap, drag on the board (mouse or finger) to draw the CPU's route
-const canDrawRoute = () => gameState == 'presnap' && isCPU(1) && !humans[1].isQB();
+const canDrawRoutes = () => numPlayers == 1 && !isCPU(qbIndex); // you're the QB calling the play
+const canDrawRoute = () => gameState == 'presnap' && canDrawRoutes();
 const ROUTE_STEP = 1.2, ROUTE_MAX_LEN = 70;
 let routePen;   // what's drawing right now: a touch id or 'mouse'
 let routeOwner; // whose route it is: the CPU WR, or an extra WR, TE or RB the stroke started on
@@ -971,8 +1005,7 @@ class Decoy extends Body
     {
         super(pos, INK_GREEN);
         const deep = ['go', 'post', 'corner'][randInt(3)];
-        this.route = {next: 0, points: ROUTES[deep].map(([x, y]) =>
-            vec2(clamp(pos.x + x * (sign(pos.x) || 1), -FIELD_HALF + 1, FIELD_HALF - 1), pos.y + y))};
+        this.route = makeRoute(deep, pos); // the play call replaces it when you're the QB
         this.trailMax = 30;
     }
     think()
@@ -1038,7 +1071,9 @@ function setupPlay()
     lineUp(formation[0]);
 
     if (numPlayers == 1)
-        humans[1].ai = {route: makeRoute(humans[1].pos), called: false, runPlanned: false, runCalled: false, jukeTime: 0, reaction: rand(.15, .4)};
+        humans[1].ai = {route: {name: '', points: [], next: 0}, called: false, runPlanned: false, runCalled: false, jukeTime: 0, reaction: rand(.15, .4)};
+    if (canDrawRoutes())
+        callPlay();
 
     for (const b of allBodies())
         b.trail = [b.pos.copy()];
@@ -1160,13 +1195,14 @@ function pickSpot(tapPos)
 const occupant = (f) => [...decoys, ...linemen].find(b => b.spot == f) ?? wr();
 const receivers = () => formation.map(occupant);
 
-// 1P at QB with card players out there: tap one (or press their number) to make them the target,
-// then throw as usual. Tapping the target again throws
-const canPickTarget = () => gameState == 'live' && numPlayers == 1 && !isCPU(qbIndex) && qb().hasBall && formation.length > 1;
+// 1P at QB with card players out there: before the snap, tap one (or press their number) to make
+// them the target, so the play's throw goes to them. A tap in the open snaps
+const canPickTarget = () => canDrawRoute() && formation.length > 1;
+const showTarget = () => canPickTarget() || gameState == 'live' && numPlayers == 1 && !isCPU(qbIndex) && qb().hasBall && formation.length > 1;
 
 function pickTarget(tapPos)
 {
-    if (!canPickTarget()) return;
+    if (!canPickTarget()) return false;
     const all = receivers();
     let b = all[[1, 2, 3, 4].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
     if (!b && tapPos)
@@ -1174,10 +1210,16 @@ function pickTarget(tapPos)
         const p = screenToWorld(tapPos);
         b = all.filter(b => b.pos.distance(p) < 2.5).sort((a, c) => a.pos.distance(p) - c.pos.distance(p))[0];
     }
-    if (!b || b == (passTo ?? wr())) return;
-    passTo = b;
-    playerInput[0].pressed = false; // picking isn't throwing
+    return b ? markTarget(b) : false;
+}
+
+function markTarget(b)
+{
+    passTo = b == wr() ? undefined : b;
+    playerInput[0].pressed = false; // marking isn't snapping
     sndJuke.play(b.pos);
+    addEffect('target!', b.pos.add(vec2(0, 1.8)), INK_GREEN, .9);
+    return true;
 }
 
 // throwing to a card player: they trade places with the CPU WR, look and all, so the WR's catch and run
@@ -1828,9 +1870,7 @@ function drawBoard()
         for (const i of route.jukes ?? [])
             if (i >= route.next)
                 markerText('juke!', route.points[i].add(vec2(0, .9)), .6, cpu.ink, .8);
-        if (gameState == 'presnap' && !route.drawn)
-            markerText(route.name, route.points[0].add(vec2(sign(cpu.pos.x) * 2.2, 0)), .8, cpu.ink, .7);
-        if (canDrawRoute() && !route.drawn)
+        if (canDrawRoute() && !route.points.length)
             markerText('draw my route!', cpu.pos.add(vec2(0, -1.6)), .75, cpu.ink, .6 + .4 * Math.sin(time * 6));
     }
 
@@ -1846,14 +1886,15 @@ function drawBoard()
             markerArrowHead(ahead[n - 1], ahead[n - 1].subtract(ahead[n - 2]), .6, b.ink, .08, .4);
         }
 
-    // who you're throwing to: ringed, every receiver numbered
-    if (canPickTarget())
+    // who you're throwing to: ringed, and before the snap every receiver numbered
+    if (showTarget())
         receivers().forEach((b, i) =>
         {
             const picked = b == (passTo ?? wr());
             if (picked)
                 markerCircle(b.pos, BODY_R * 1.6, INK_GREEN, .12, 5, .9);
-            markerText(i + 1 + '', b.pos.add(vec2(1.3, -1)), .65, INK_GREEN, picked ? .9 : .5);
+            if (canPickTarget())
+                markerText(i + 1 + '', b.pos.add(vec2(1.3, -1)), .65, INK_GREEN, picked ? .9 : .5);
         });
 }
 
@@ -1912,14 +1953,14 @@ function drawHUD()
         screenText(downAndDistance(), midX, H * .16, s * 1.6, INK, 'center');
         const how = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[who];
         const prompt = numPlayers == 2 || qbI == 0 ?
-            playerName(qbI) + ' (QB): ' + how + ' to call HUT!' :
+            (canDrawRoute() ? playCall.name + '  ·  ' : '') + playerName(qbI) + ' (QB): ' + how + ' to call HUT!' :
             'YOU (WR): ' + how + ' to snap, ' + how + ' again to call for the ' + (humans[1].ai.runPlanned ? 'QB run' : 'ball');
         screenText(prompt, midX, H * .16 + s * 1.6, s * .9, PLAYER_INK[who], 'center', blink);
         if (canDrawRoute() && formation.length > 1)
         {
-            const pick = usedTouch ? 'tap' : 'click or press 1-' + formation.length + ' on';
-            screenText('drag from a player to draw their route', midX, H * .16 + s * 2.7, s * .7, INK_GREEN, 'center', .8);
-            screenText('after the snap, ' + pick + ' a receiver to throw to them', midX, H * .16 + s * 3.6, s * .7, INK_GREEN, 'center', .8);
+            const pick = usedTouch ? 'tap' : 'click (or press 1-' + formation.length + ')';
+            screenText('drag from a player to redraw their route', midX, H * .16 + s * 2.7, s * .7, INK_GREEN, 'center', .8);
+            screenText(pick + ' a receiver to throw to them', midX, H * .16 + s * 3.6, s * .7, INK_GREEN, 'center', .8);
         }
         if (canPickSpot())
         {
@@ -2142,7 +2183,6 @@ function gameUpdate()
     const tapPos = tappedPos;
     tappedPos = undefined;
     drawRouteUpdate();
-    pickTarget(tapPos);
 
     if (gameState == 'title')
     {
@@ -2154,6 +2194,7 @@ function gameUpdate()
         else if (anyPress) startGame(titleChoice);
     }
     else if (gameState == 'presnap' && stateTimer.elapsed() && pickSpot(tapPos)) {}
+    else if (gameState == 'presnap' && stateTimer.elapsed() && pickTarget(tapPos)) {}
     else if (gameState == 'presnap' && stateTimer.elapsed() && playerInput[snapper()].pressed)
     {
         playerInput[snapper()].pressed = false; // the snap press isn't also a throw or a call for the ball
