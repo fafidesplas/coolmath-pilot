@@ -1,6 +1,6 @@
 {
-    "title": "Endless Football",
-    "name": "endlessFootball",
+    "title": "Paper Football",
+    "name": "paperFootball",
     "engine": "dist/littlejs.js",
     "sources": ["templates/gameFx.js", "game.js"]
 }

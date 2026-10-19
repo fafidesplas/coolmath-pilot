@@ -1,5 +1,5 @@
 /*
-    Endless Football — two-player football drawn on a coach's whiteboard
+    Paper Football — two-player football drawn on a coach's whiteboard
     - Everyone lines up at the line of scrimmage (LOS). The QB calls "HUT!"
       with their action key, then it's live
     - QB: scramble behind the line and don't get sacked (any X touching you
@@ -21,13 +21,15 @@
       first-down line for a fresh set, every other play (short catches included)
       burns a down. Running out of downs, or one interception, ends the drive
     - Endless: the field and its yard numbers keep going. Each catch makes the
-      defense a bit faster, every 2nd catch adds a body (5 up to 8). Each play
-      the defense calls man or zone and splits its bodies between the rush (3-5)
+      defense a bit faster. The defense always matches the offense's headcount:
+      7, plus one for each extra WR, TE or RB card, who covers that player. Each
+      play it calls man or zone and splits the base 7 between the rush (3-5)
       and coverage: a blitz gets home faster but leaves receivers open
     - Upgrades: every 120 yards of the drive, pick 1 of 3 cards. They last the
-      drive: an extra WR (a decoy that drags a safety deep), stiff arm (shrug
-      off one tackle per first down), QB run (one use: the QB can tuck it and cross the LOS)
-      and sticky gloves (no more broken-up catches)
+      drive: an extra WR (a decoy on a deep route), stiff arm (shrug
+      off one tackle per first down), QB run (one use: the QB can tuck it and cross the LOS),
+      tight end (an extra blocker) and running back (blocks, then flattens a
+      tackler after the catch)
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
       scrambles and throws only when you call for it (action while no X is on you), so
       call too late and it gets sacked; as WR it runs a random route drawn
@@ -113,6 +115,8 @@ let stiffArmAt = -9;       // a stiff arm buys a moment free of the pile around 
 let stiffArmUsed = false;  // the stiff arm is spent until the next first down
 
 let humans = [], linemen = [], rushers = [], coverage = [], decoys = [];
+let formation = [];        // this play's receiving spots {key, label, pos}: you line up at one, the CPU plays the rest
+let passTo;                // 1P at QB: the receiver you picked to throw to (undefined: the WR)
 let effects = [];
 
 const difficulty = () => min(1 + completions * .045, 1.6);
@@ -133,6 +137,7 @@ const playerInput = [{dir:vec2(), pressed:false}, {dir:vec2(), pressed:false}];
 const fingers = new Map;            // touch id (or 'mouse') -> {player, start, cur, t0}
 const fingerTaps = [false, false];
 let tappedX = -1;                   // where across the screen (0 to 1) the last quick tap was (menus)
+let tappedPos;                      // and where on the canvas it was, for tapping a player
 const flicks = [{cur: vec2(), last: vec2(), t: -9, held: -9}, {cur: vec2(), last: vec2(), t: -9, held: -9}]; // juke detection
 let usedTouch = false;
 const stickMode = [false, false];   // this player steers with a stick (finger or mouse), not keys
@@ -182,6 +187,7 @@ function fingerMove(id, p, up)
     {
         fingerTaps[f.player] = true;
         tappedX = f.cur.x / mainCanvas.width;
+        tappedPos = f.cur;
     }
     else if (stickRunner(f.player))
         fingerTaps[f.player] = true;
@@ -306,6 +312,16 @@ function makeRoute(start)
 const canDrawRoute = () => gameState == 'presnap' && isCPU(1) && !humans[1].isQB();
 const ROUTE_STEP = 1.2, ROUTE_MAX_LEN = 70;
 let routePen;   // what's drawing right now: a touch id or 'mouse'
+let routeOwner; // whose route it is: the CPU WR, or an extra WR, TE or RB the stroke started on
+
+// a receiver's route: the CPU WR keeps it with its AI, the card players on themselves.
+// A TE or RB with no route stays in to block
+const routeOf = (b) => b.ai ? b.ai.route : b.route;
+function setRoute(b, route)
+{
+    if (b.ai) b.ai.route = route;
+    else b.route = route;
+}
 
 function drawRouteUpdate()
 {
@@ -316,13 +332,18 @@ function drawRouteUpdate()
     let penPos;
     for (const [id, f] of fingers)
         if (routePen != id && f.cur.distance(f.start) > 25)
-            startDrawnRoute(id, screenToWorld(f.start));
+        {
+            // the stroke draws for the receiver it starts on, or the WR when it starts in the open
+            const from = screenToWorld(f.start);
+            const near = receivers().filter(b => b.pos.distance(from) < 2.5).sort((a, b) => a.pos.distance(from) - b.pos.distance(from));
+            startDrawnRoute(id, from, near[0] ?? humans[1]);
+        }
     if (routePen != undefined)
         penPos = fingers.get(routePen) && screenToWorld(fingers.get(routePen).cur);
     if (!penPos)
         return routePen = undefined;
 
-    const route = humans[1].ai.route, points = route.points;
+    const route = routeOf(routeOwner), points = route.points;
     const p = vec2(clamp(penPos.x, -FIELD_HALF + 1, FIELD_HALF - 1), penPos.y);
     if (!points.length)
         points.push(p);
@@ -395,11 +416,23 @@ function addDrawnJuke(route, tip)
     sndJuke.play(tip.pos);
 }
 
-function startDrawnRoute(pen, from)
+function startDrawnRoute(pen, from, owner)
 {
     routePen = pen;
-    humans[1].ai.route = {name: 'your route', points: from ? [vec2(clamp(from.x, -FIELD_HALF + 1, FIELD_HALF - 1), from.y)] : [], next: 0, length: 0, drawn: true,
-        jukes: new Set}; // jukes: indices of the points where a drawn juke cuts
+    routeOwner = owner;
+    setRoute(owner, {name: 'your route', points: from ? [vec2(clamp(from.x, -FIELD_HALF + 1, FIELD_HALF - 1), from.y)] : [], next: 0, length: 0, drawn: true,
+        jukes: new Set}); // jukes: indices of the points where a drawn juke cuts
+}
+
+// a CPU body runs its route's waypoints in order, then drifts upfield off the sideline
+function runRoute(b, speed)
+{
+    const route = b.route;
+    if (route.points[route.next] && b.pos.distance(route.points[route.next]) < 1.2)
+        ++route.next;
+    const target = route.points[route.next];
+    const dir = target ? target.subtract(b.pos).normalize() : vec2(-b.pos.x / FIELD_HALF * .5, 1).normalize();
+    b.steer(dir.scale(speed), 40);
 }
 
 function nearestCover(pos, countDazed = false, bodies = coverage)
@@ -704,8 +737,8 @@ class Human extends Body
             markerCircle(this.pos, BODY_R * .8, INK, .3, this.seed + 3, .15);
         const p = this.pos.add(vec2(0, up * .9));
         markerCircle(p, BODY_R * (1 + up * .4), this.ink, .17, this.seed);
-        markerText(this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
-        markerText(this.isQB() != qbRunning ? 'QB' : 'WR', p.add(vec2(0, 1.15)), .85, this.ink); // a running QB is still the QB
+        markerText(this.num ?? this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
+        markerText(this.isQB() != qbRunning ? 'QB' : this.spotLabel ?? 'WR', p.add(vec2(0, 1.15)), .85, this.ink); // a running QB is still the QB
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
@@ -722,15 +755,18 @@ class Human extends Body
 
 class Lineman extends Body
 {
-    constructor(pos)
+    constructor(pos, ink = INK, label = '')
     {
-        super(pos, INK);
+        super(pos, ink);
         this.home = pos.copy();
+        this.label = label;     // the tight end and running back upgrades block like linemen
         this.trailMax = 10;
     }
     think()
     {
         if (this.stunned()) return;
+        if (this.route && (gameState == 'live' || gameState == 'air'))
+            return runRoute(this, 9); // a TE or RB you drew a route for goes out for a pass
         if (gameState != 'live' || !qb().hasBall)
             return this.steer(vec2(), 20);
 
@@ -749,7 +785,42 @@ class Lineman extends Body
     }
     render()
     {
-        markerCircle(this.pos, BODY_R, INK, .14, this.seed);
+        markerCircle(this.pos, BODY_R, this.ink, .14, this.seed);
+        if (this.num)
+            markerText(this.num, this.pos.add(vec2(0, -.05)), .8, this.ink);
+        if (this.label)
+            markerText(this.label, this.pos.add(vec2(0, 1.05)), .75, this.ink);
+    }
+}
+
+// the running back upgrade: picks up rushers beside the QB, then after the catch
+// runs ahead of the ball carrier and flattens the closest tackler, once a play
+class Back extends Lineman
+{
+    constructor(pos)
+    {
+        super(pos, INK_GREEN, 'RB');
+        this.pancaked = false;
+    }
+    think()
+    {
+        if (gameState != 'run')
+            return super.think();
+        if (this.stunned()) return;
+        const {defender: d} = nearestCover(wr().pos, false, defenders());
+        if (this.pancaked || !d)
+            return this.steer(vec2(), 12);
+        this.steer(d.pos.subtract(this.pos).clampLength(1).scale(10), 40);
+        if (d.pos.distance(this.pos) < BODY_R * 2 + .15)
+        {
+            this.pancaked = true;
+            d.vel = d.pos.subtract(this.pos).normalize(8);
+            d.stun = 1.6;
+            d.dive = 0;
+            d.jukedAt = time;
+            sndPow.play(d.pos);
+            addEffect('PANCAKE!', d.pos.add(vec2(0, 2)), INK_GREEN, 1.4, true);
+        }
     }
 }
 
@@ -845,7 +916,7 @@ class Cover extends Body
         }
         else if (this.mark)
         {
-            // the extra WR drags this safety along: it stays over the top of them
+            // covering a CPU player (the extra WR, TE or RB): stay on top of them
             target = this.mark.pos.add(vec2(0, 2));
             speed = 8.4 * diff;
         }
@@ -874,6 +945,10 @@ class Cover extends Body
         else
             target = w.pos.add(vec2(sign(-w.pos.x) * .4, 1.5));
 
+        // before the throw, coverage stays on its side of the line: it waits for you to come out
+        if (gameState == 'live')
+            target = vec2(target.x, max(target.y, los + .9));
+
         // tight coverage sprints to recover when beaten
         const offset = target.subtract(this.pos);
         if (tight && offset.length() > 4)
@@ -883,13 +958,13 @@ class Cover extends Body
     render()
     {
         markerX(this.pos, BODY_R * .9, this.ink, .17, this.seed, this.dive ? PI / 4 : this.stun ? time * 12 : 0);
-        markerText(this.role == 'safety' ? 'S' : 'CB', this.pos.add(vec2(0, 1.05)), .75, this.ink);
+        markerText({safety: 'S', lb: 'LB'}[this.role] ?? 'CB', this.pos.add(vec2(0, 1.05)), .75, this.ink);
         if (this.stun)
             drawDizzy(this.pos.add(vec2(0, 1.6)));
     }
 }
 
-// the extra WR upgrade: a CPU receiver who runs a deep route, a decoy who drags a safety with them
+// the extra WR upgrade: a CPU receiver who runs a deep route, a decoy with a corner of their own
 class Decoy extends Body
 {
     constructor(pos)
@@ -905,17 +980,13 @@ class Decoy extends Body
         if (this.stunned()) return;
         if (gameState == 'run')
             return this.steer(vec2(), 12); // the play's elsewhere now: pull up
-        const target = this.route.points[this.route.next];
-        if (target && this.pos.distance(target) < 1.2)
-            ++this.route.next;
-        const dir = target ? target.subtract(this.pos).normalize() : vec2(-this.pos.x / FIELD_HALF * .5, 1).normalize();
-        this.steer(dir.scale(9.5), 40);
+        runRoute(this, 9.5);
     }
     render()
     {
         markerCircle(this.pos, BODY_R, this.ink, .17, this.seed);
-        markerText('3', this.pos.add(vec2(0, -.05)), .8, this.ink);
-        markerText('WR', this.pos.add(vec2(0, 1.15)), .85, this.ink);
+        markerText(this.num ?? '3', this.pos.add(vec2(0, -.05)), .8, this.ink);
+        markerText(this.label ?? 'WR', this.pos.add(vec2(0, 1.15)), .85, this.ink);
     }
 }
 
@@ -952,10 +1023,19 @@ function setupPlay()
     qbPlayer.hasBall = true;
 
     linemen = [-4, -2, 0, 2, 4].map(x => new Lineman(vec2(x * .95, los - .9)));
-    decoys = upgrades.decoy ? [new Decoy(vec2(-side * 13, los - .9))] : [];
+    decoys = [];
+    formation = [{key: 'wr1', label: 'WR', pos: vec2(side * 12, los - .9)}];
+    if (upgrades.decoy)
+        formation.push({key: 'wr2', label: 'WR', pos: vec2(-side * 13, los - .9)});
+    if (upgrades.tightEnd)
+        formation.push({key: 'te', label: 'TE', pos: vec2(-side * 5.8, los - .9)});
+    if (upgrades.runningBack)
+        formation.push({key: 'rb', label: 'RB', pos: vec2(-side * 2, los - 4.5)});
     qbRunning = false;
+    passTo = undefined;
 
     callDefense(side);
+    lineUp(formation[0]);
 
     if (numPlayers == 1)
         humans[1].ai = {route: makeRoute(humans[1].pos), called: false, runPlanned: false, runCalled: false, jukeTime: 0, reaction: rand(.15, .4)};
@@ -985,11 +1065,10 @@ function answerRun(yes)
 
 function callDefense(side)
 {
-    // a body joins the defense every 2 catches (5 up to 8). The call splits them between the rush
-    // and coverage, so a heavier rush always leaves fewer X's back there
-    const total = 5 + min(3, completions >> 1);
-    const covers = randInt(max(2, total - 5), min(total >= 8 ? 4 : 3, total - 3) + 1);
-    const rush = total - covers;
+    // the defense matches the offense body for body: 7 against QB, WR and the line, plus one
+    // more for each extra player the cards add (see coverForSpot). The call splits the 7
+    // them between the rush and coverage, so a heavier rush always leaves fewer X's back there
+    const covers = randInt(2, 5), rush = 7 - covers;
     defense = {zone: completions >= 2 && rand() < .5, side};
 
     rushers = (rush >= 4 ? [-4.5, -1.5, 1.5, 4.5] : [-3, 0, 3]).map(x => new Rusher(vec2(x, los + .9)));
@@ -1007,11 +1086,119 @@ function callDefense(side)
     if (covers >= 3)
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
 
-    // the extra WR lines up on the far side: the safety on that side (or the only one) goes with them
-    if (decoys.length)
+    // every receiving spot has its own man: the corner on WR 1, plus one per card-added player
+    coverage[0].spotKey = 'wr1';
+    for (const f of formation.slice(1))
+        coverage.push(coverForSpot(f));
+}
+
+// the extra WR brings a corner with them, the TE and RB a linebacker each
+function coverForSpot(f)
+{
+    const c = new Cover(vec2(f.pos.x, los + (f.key == 'rb' ? 4.5 : 3.5)), f.key == 'wr2' ? 'cb' : 'lb');
+    c.spotKey = f.key;
+    return c;
+}
+
+// put the receiver at one of the formation's spots, and the CPU's upgrade players at the others:
+// a WR spot runs a deep decoy route, the TE blocks on the line, the RB blocks beside the QB
+function lineUp(spot)
+{
+    const w = wr();
+    w.pos = spot.pos.copy();
+    w.spotLabel = spot.label;
+    for (const b of [...decoys, ...linemen.filter(l => l.spot)])
+        b.destroy();
+    linemen = linemen.filter(l => !l.spot);
+    decoys = [];
+    for (const f of formation)
     {
-        const safeties = coverage.filter(c => c.role == 'safety');
-        (safeties.find(c => c.half == -side) ?? safeties[0]).mark = decoys[0];
+        if (f == spot) continue;
+        const b = f.key == 'te' ? new Lineman(f.pos.copy(), INK_GREEN, 'TE') : f.key == 'rb' ? new Back(f.pos.copy()) : new Decoy(f.pos.copy());
+        b.spot = f;
+        (b instanceof Lineman ? linemen : decoys).push(b);
+    }
+
+    // each spot's defender: the one on yours plays you (man or zone), the rest stick with their CPU player.
+    // In man they line up across from their player; a back in the backfield isn't pressed, it's covered
+    // from linebacker depth
+    for (const c of coverage)
+    {
+        if (!c.spotKey) continue;
+        const f = formation.find(f => f.key == c.spotKey), yours = f == spot;
+        c.mark = yours ? undefined : [...decoys, ...linemen].find(b => b.spot == f);
+        if (!(yours && defense.zone))
+            c.pos = vec2(f.pos.x, los + (f.key == 'rb' ? 4.5 : yours && tightCoverage() ? 1.1 : 3.5));
+    }
+    for (const b of allBodies())
+        b.trail = [b.pos.copy()];
+}
+
+// 1P at WR with an extra WR, TE or RB: before the snap, tap a player (or press their number) to line up there
+const canPickSpot = () => gameState == 'presnap' && numPlayers == 1 && isCPU(qbIndex) && formation.length > 1;
+
+function pickSpot(tapPos)
+{
+    if (!canPickSpot()) return false;
+    let spot = formation[[1, 2, 3, 4].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
+    if (!spot && tapPos)
+    {
+        const p = screenToWorld(tapPos);
+        spot = formation.find(f => f.pos.distance(p) < 2);
+    }
+    if (!spot) return false;
+    if (wr().pos.distance(spot.pos) > .1)
+    {
+        lineUp(spot);
+        sndJuke.play(spot.pos);
+    }
+    playerInput[0].pressed = false; // the tap picks a spot, it doesn't snap
+    return true;
+}
+
+// who's at each formation spot: the WR (on WR 1 unless you moved them) or a card player
+const occupant = (f) => [...decoys, ...linemen].find(b => b.spot == f) ?? wr();
+const receivers = () => formation.map(occupant);
+
+// 1P at QB with card players out there: tap one (or press their number) to make them the target,
+// then throw as usual. Tapping the target again throws
+const canPickTarget = () => gameState == 'live' && numPlayers == 1 && !isCPU(qbIndex) && qb().hasBall && formation.length > 1;
+
+function pickTarget(tapPos)
+{
+    if (!canPickTarget()) return;
+    const all = receivers();
+    let b = all[[1, 2, 3, 4].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
+    if (!b && tapPos)
+    {
+        const p = screenToWorld(tapPos);
+        b = all.filter(b => b.pos.distance(p) < 2.5).sort((a, c) => a.pos.distance(p) - c.pos.distance(p))[0];
+    }
+    if (!b || b == (passTo ?? wr())) return;
+    passTo = b;
+    playerInput[0].pressed = false; // picking isn't throwing
+    sndJuke.play(b.pos);
+}
+
+// throwing to a card player: they trade places with the CPU WR, look and all, so the WR's catch and run
+// code plays them. Their defenders trade marks with them too
+function swapReceiver(b)
+{
+    const w = wr(), route = routeOf(w);
+    [w.pos, b.pos] = [b.pos, w.pos];
+    [w.vel, b.vel] = [b.vel, w.vel];
+    [w.trail, b.trail] = [b.trail, w.trail];
+    [w.ink, b.ink] = [b.ink, w.ink];
+    [w.spot, b.spot] = [b.spot, w.spot];
+    const wLook = [w.num ?? w.index + 1 + '', w.spotLabel ?? 'WR'];
+    [w.num, w.spotLabel] = [b.num ?? (b instanceof Decoy ? '3' : ''), b.label ?? 'WR'];
+    [b.num, b.label] = wLook;
+    setRoute(w, b.route ?? {name: '', points: [], next: 0});
+    b.route = route;
+    for (const c of coverage)
+    {
+        if (c.mark == b) c.mark = w;
+        else if (!c.mark && c.spotKey) c.mark = b; // the man on the WR stays on the WR
     }
 }
 
@@ -1056,13 +1243,15 @@ function showTitle()
 const UPGRADES =
 [
     {key: 'decoy', name: 'EXTRA WR', tag: 'PERMANENT', max: 1,
-        lines: ['a 3rd receiver runs deep', 'and drags a safety', 'away with them']},
+        lines: ['another receiver', 'runs a deep route', '+1 defender (a CB)']},
     {key: 'stiffArm', name: 'STIFF ARM', tag: 'PERMANENT', max: 1,
         lines: ['the ball carrier', 'shrugs off a tackle', '(once per first down)']},
     {key: 'qbRun', name: 'QB RUN', tag: '1 USE', max: 9,
         lines: ['your QB can tuck it', 'and run past the line', '(no throw that play)']},
-    {key: 'gloves', name: 'STICKY GLOVES', tag: 'PERMANENT', max: 1,
-        lines: ['a defender on your hip', 'can\'t knock the catch', 'loose anymore']},
+    {key: 'tightEnd', name: 'TIGHT END', tag: 'PERMANENT', max: 1,
+        lines: ['an extra blocker', 'on the end of the line', '+1 defender (an LB)']},
+    {key: 'runningBack', name: 'RUNNING BACK', tag: 'PERMANENT', max: 1,
+        lines: ['blocks by the QB, then', 'flattens a tackler', '+1 defender (an LB)']},
 ];
 for (const u of UPGRADES)
     u.count = () => upgrades[u.key];
@@ -1189,6 +1378,9 @@ function passTarget(thrower)
 
 function throwBall(thrower)
 {
+    if (passTo && passTo != wr())
+        swapReceiver(passTo);
+    passTo = undefined;
     const from = throwOrigin(thrower);
     let to = passTarget(thrower);
 
@@ -1259,7 +1451,7 @@ function resolvePass()
         return swatAway(defender);
     }
     // tight coverage contests the catch: a defender on the receiver's hip can knock it loose
-    if (!upgrades.gloves && tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
+    if (tightCoverage() && dr < 1.7 && dd < 1.5 && rand() < .25 + .6 * (1.5 - dd) / 1.5)
         return failedPlay('BROKEN UP!', 'contested at the catch');
     if (dr < 1.7)
     {
@@ -1641,6 +1833,28 @@ function drawBoard()
         if (canDrawRoute() && !route.drawn)
             markerText('draw my route!', cpu.pos.add(vec2(0, -1.6)), .75, cpu.ink, .6 + .4 * Math.sin(time * 6));
     }
+
+    // the card players' routes too, when you're the QB throwing to them
+    if (cpu?.ai && !cpu.isQB() && (gameState == 'presnap' || gameState == 'live'))
+        for (const b of receivers())
+        {
+            if (b == cpu || !b.route) continue;
+            const ahead = [b.pos, ...b.route.points.slice(b.route.next)];
+            if (ahead.length < 2) continue;
+            strokeWorld(ahead, b.ink, .08, .3, [.5, .4]);
+            const n = ahead.length;
+            markerArrowHead(ahead[n - 1], ahead[n - 1].subtract(ahead[n - 2]), .6, b.ink, .08, .4);
+        }
+
+    // who you're throwing to: ringed, every receiver numbered
+    if (canPickTarget())
+        receivers().forEach((b, i) =>
+        {
+            const picked = b == (passTo ?? wr());
+            if (picked)
+                markerCircle(b.pos, BODY_R * 1.6, INK_GREEN, .12, 5, .9);
+            markerText(i + 1 + '', b.pos.add(vec2(1.3, -1)), .65, INK_GREEN, picked ? .9 : .5);
+        });
 }
 
 function drawBall()
@@ -1701,6 +1915,25 @@ function drawHUD()
             playerName(qbI) + ' (QB): ' + how + ' to call HUT!' :
             'YOU (WR): ' + how + ' to snap, ' + how + ' again to call for the ' + (humans[1].ai.runPlanned ? 'QB run' : 'ball');
         screenText(prompt, midX, H * .16 + s * 1.6, s * .9, PLAYER_INK[who], 'center', blink);
+        if (canDrawRoute() && formation.length > 1)
+        {
+            const pick = usedTouch ? 'tap' : 'click or press 1-' + formation.length + ' on';
+            screenText('drag from a player to draw their route', midX, H * .16 + s * 2.7, s * .7, INK_GREEN, 'center', .8);
+            screenText('after the snap, ' + pick + ' a receiver to throw to them', midX, H * .16 + s * 3.6, s * .7, INK_GREEN, 'center', .8);
+        }
+        if (canPickSpot())
+        {
+            // number every spot you could line up at, ringing the ones the CPU has now
+            const keys = usedTouch ? 'tap' : 'click or press 1-' + formation.length + ' on';
+            screenText(keys + ' a player to line up there', midX, H * .16 + s * 2.7, s * .75, INK_GREEN, 'center', .8);
+            formation.forEach((f, i) =>
+            {
+                const yours = wr().pos.distance(f.pos) < .1;
+                if (!yours)
+                    markerCircle(f.pos, BODY_R * 1.5, INK_GREEN, .08, i * 7, .5 + .3 * Math.sin(time * 6));
+                markerText(i + 1 + '', f.pos.add(vec2(0, -1.3)), .7, INK_GREEN, yours ? .5 : .9);
+            });
+        }
         if (plays == 0 && !humans[1].ai?.route.drawn) // the card gets out of the way of a route being drawn
         {
             const lines = numPlayers == 1 ?
@@ -1781,8 +2014,7 @@ function drawTitle()
     card.fillRect(0, 0, W, H);
     card.restore();
 
-    screenText('ENDLESS FOOTBALL', midX, H * .22, s * 3.2, INK, 'center');
-    screenText('football, drawn on the whiteboard', midX, H * .22 + s * 2.4, s * .95, INK, 'center', .7);
+    screenText('PAPER FOOTBALL', midX, H * .22, s * 3.2, INK, 'center');
 
     // two hand-drawn option boxes, side by side so a tap on either half picks one
     const options = [['1 PLAYER', 'you + a CPU teammate'], ['2 PLAYERS', 'P1 WASD  ·  P2 ARROWS']];
@@ -1907,7 +2139,10 @@ function gameUpdate()
     readInputs();
     const anyPress = playerInput[0].pressed || playerInput[1].pressed;
     const tapX = clickedX(), half = tapX < 0 ? -1 : tapX < .5 ? 0 : 1;
+    const tapPos = tappedPos;
+    tappedPos = undefined;
     drawRouteUpdate();
+    pickTarget(tapPos);
 
     if (gameState == 'title')
     {
@@ -1918,6 +2153,7 @@ function gameUpdate()
         else if (tapX >= 0) startGame(min(1, tapX * 2 | 0));
         else if (anyPress) startGame(titleChoice);
     }
+    else if (gameState == 'presnap' && stateTimer.elapsed() && pickSpot(tapPos)) {}
     else if (gameState == 'presnap' && stateTimer.elapsed() && playerInput[snapper()].pressed)
     {
         playerInput[snapper()].pressed = false; // the snap press isn't also a throw or a call for the ball
