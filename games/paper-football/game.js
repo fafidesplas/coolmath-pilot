@@ -61,6 +61,7 @@ const INK_GREEN = '#139157';
 const INK_FIRST = '#e07a10';   // first-down line
 const INK_FIELD = 'rgba(40,70,120,.22)';
 const PLAYER_INK = ['#1f5fd1', '#d42a2a'];
+const SPOT_INK = {wr2: '#7b3fc4', te: '#0b8aa0', rb: '#c2378f'}; // the card players each get their own color
 const PLAYER_NAME = ['P1', 'P2'];
 const PLAYER_KEYS = ['SPACE', 'ENTER'];
 const MARKER_FONT = '"Marker Felt", "Chalkboard SE", "Comic Sans MS", "Segoe Print", cursive';
@@ -458,12 +459,46 @@ function startDrawnRoute(pen, from, owner)
         jukes: new Set}); // jukes: indices of the points where a drawn juke cuts
 }
 
-// a CPU body runs its route's waypoints in order, then drifts upfield off the sideline
+// plant and cut: full speed the new way, right now
+function jukeCut(b, cut, qb = false)
+{
+    b.vel = cut.scale(qb ? 9 : 11);
+    sndJuke.play(b.pos);
+
+    // ankle-breaking hits harder the closer the defender, the faster they're moving, and the more
+    // their run lines up with the cut, most of all when they bit on the fake and are running the other way
+    // A receiver's jammer, in contact, always gets shaken loose
+    for (const d of qb ? rushers : gameState == 'run' ? defenders() : coverage)
+    {
+        const dist = d.pos.distance(b.pos), speed = d.vel.length();
+        if (d.stun || dist > 3 || time - d.jukedAt < 1.5) continue; // back on their feet, they won't bite again right away
+        const along = speed > .5 ? d.vel.dot(cut) / speed : 0;
+        let power = (1 - dist / 3) * min(1, speed / 8) * (along < 0 ? -along : along * .4);
+        if (!qb && dist < BODY_R * 2 + .15)
+            power = max(power, .3);
+        if (power < .1) continue;
+        d.vel = d.vel.scale(1.3); // committed: their momentum carries them on past, then down they go
+        d.stun = .4 + 1.4 * power;
+        d.jukedAt = time;
+        d.spin = 0;
+        d.dive = 0;
+        const broke = power > .45;
+        addEffect(broke ? 'ANKLES!' : 'juked!', d.pos.add(vec2(0, 1.6)), INK_GREEN, broke ? 1.4 : .9, broke);
+    }
+}
+
+// a CPU body runs its route's waypoints in order, cutting hard at any juke you drew,
+// then drifts upfield off the sideline
 function runRoute(b, speed)
 {
     const route = b.route;
     if (route.points[route.next] && b.pos.distance(route.points[route.next]) < 1.2)
+    {
+        const after = route.points[route.next + 1];
+        if (after && route.jukes?.has(route.next))
+            return jukeCut(b, after.subtract(route.points[route.next++]).normalize());
         ++route.next;
+    }
     const target = route.points[route.next];
     const dir = target ? target.subtract(b.pos).normalize() : vec2(-b.pos.x / FIELD_HALF * .5, 1).normalize();
     b.steer(dir.scale(speed), 40);
@@ -738,29 +773,7 @@ class Human extends Body
     {
         if (this.jukeCooldown > 0) return;
         this.jukeCooldown = .8;
-        this.vel = cut.scale(this.isQB() ? 9 : 11); // plant and cut: full speed the new way, right now
-        sndJuke.play(this.pos);
-
-        // ankle-breaking hits harder the closer the defender, the faster they're moving, and the more
-        // their run lines up with the cut, most of all when they bit on the fake and are running the other way
-        // A WR's jammer, in contact, always gets shaken loose
-        for (const d of this.isQB() ? rushers : gameState == 'run' ? defenders() : coverage)
-        {
-            const dist = d.pos.distance(this.pos), speed = d.vel.length();
-            if (d.stun || dist > 3 || time - d.jukedAt < 1.5) continue; // back on their feet, they won't bite again right away
-            const along = speed > .5 ? d.vel.dot(cut) / speed : 0;
-            let power = (1 - dist / 3) * min(1, speed / 8) * (along < 0 ? -along : along * .4);
-            if (!this.isQB() && dist < BODY_R * 2 + .15)
-                power = max(power, .3);
-            if (power < .1) continue;
-            d.vel = d.vel.scale(1.3); // committed: their momentum carries them on past, then down they go
-            d.stun = .4 + 1.4 * power;
-            d.jukedAt = time;
-            d.spin = 0;
-            d.dive = 0;
-            const broke = power > .45;
-            addEffect(broke ? 'ANKLES!' : 'juked!', d.pos.add(vec2(0, 1.6)), INK_GREEN, broke ? 1.4 : .9, broke);
-        }
+        jukeCut(this, cut, this.isQB());
     }
     canCollideWith(other) { return !this.airborne(); } // up and over: nobody gets a body on you
     render()
@@ -831,9 +844,9 @@ class Lineman extends Body
 // runs ahead of the ball carrier and flattens the closest tackler, once a play
 class Back extends Lineman
 {
-    constructor(pos)
+    constructor(pos, ink)
     {
-        super(pos, INK_GREEN, 'RB');
+        super(pos, ink, 'RB');
         this.pancaked = false;
     }
     think()
@@ -1001,9 +1014,9 @@ class Cover extends Body
 // the extra WR upgrade: a CPU receiver who runs a deep route, a decoy with a corner of their own
 class Decoy extends Body
 {
-    constructor(pos)
+    constructor(pos, ink)
     {
-        super(pos, INK_GREEN);
+        super(pos, ink);
         const deep = ['go', 'post', 'corner'][randInt(3)];
         this.route = makeRoute(deep, pos); // the play call replaces it when you're the QB
         this.trailMax = 30;
@@ -1149,7 +1162,8 @@ function lineUp(spot)
     for (const f of formation)
     {
         if (f == spot) continue;
-        const b = f.key == 'te' ? new Lineman(f.pos.copy(), INK_GREEN, 'TE') : f.key == 'rb' ? new Back(f.pos.copy()) : new Decoy(f.pos.copy());
+        const ink = SPOT_INK[f.key] ?? PLAYER_INK[1]; // you moved off WR 1: the CPU there wears the P2 color
+        const b = f.key == 'te' ? new Lineman(f.pos.copy(), ink, 'TE') : f.key == 'rb' ? new Back(f.pos.copy(), ink) : new Decoy(f.pos.copy(), ink);
         b.spot = f;
         (b instanceof Lineman ? linemen : decoys).push(b);
     }
@@ -1881,9 +1895,12 @@ function drawBoard()
             if (b == cpu || !b.route) continue;
             const ahead = [b.pos, ...b.route.points.slice(b.route.next)];
             if (ahead.length < 2) continue;
-            strokeWorld(ahead, b.ink, .08, .3, [.5, .4]);
+            strokeWorld(ahead, b.ink, .1, .4, [.5, .4]);
             const n = ahead.length;
-            markerArrowHead(ahead[n - 1], ahead[n - 1].subtract(ahead[n - 2]), .6, b.ink, .08, .4);
+            markerArrowHead(ahead[n - 1], ahead[n - 1].subtract(ahead[n - 2]), .7, b.ink, .1, .5);
+            for (const i of b.route.jukes ?? [])
+                if (i >= b.route.next)
+                    markerText('juke!', b.route.points[i].add(vec2(0, .9)), .6, b.ink, .8);
         }
 
     // who you're throwing to: ringed, and before the snap every receiver numbered
