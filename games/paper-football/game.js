@@ -17,19 +17,18 @@
       break free. Tackled (any X touching you) or out at the sideline, the LOS
       jumps to that spot, the roles swap (the catcher is the new QB) and
       everyone resets. With the ball, action = jump: hurdle a tackle (a diving
-      X goes right under you). One jump every 2.5s, no steering mid-air 4 downs to gain 10 yards: reach the
+      X goes right under you). One jump every 2.5s, no steering mid-air. The
+      ball carrier also stiff-arms one tackler per first down. 4 downs to gain 10 yards: reach the
       first-down line for a fresh set, every other play (short catches included)
       burns a down. Running out of downs, or one interception, ends the drive
     - Endless: the field and its yard numbers keep going. Each catch makes the
-      defense a bit faster. The defense always matches the offense's headcount:
-      7, plus one for each extra WR, TE or RB card, who covers that player. Each
-      play it calls man or zone and splits the base 7 between the rush (3-5)
-      and coverage: a blitz gets home faster but leaves receivers open
-    - Upgrades: every 120 yards of the drive, pick 1 of 3 cards. They last the
-      drive: an extra WR (a decoy on a deep route), stiff arm (shrug
-      off one tackle per first down), QB run (one use: the QB can tuck it and cross the LOS),
-      tight end (an extra blocker) and running back (blocks, then flattens a
-      tackler after the catch)
+      defense a bit faster
+    - Team size (title screen, 2 to 11 a side): QB and WR, then an extra WR (a
+      decoy on a deep route), a tight end, a running back (blocks, then flattens
+      a tackler after the catch) and a slot WR, then up to 5 linemen. The
+      defense matches it body for body: one man on each receiver, the rest
+      split each play between the rush and deep help, man or zone. With no
+      linemen the lone rusher counts a beat before coming
     - Title screen picks 1 player (you + a CPU teammate in the P2 slot: as QB it
       scrambles and throws only when you call for it (action while no X is on you), so
       call too late and it gets sacked; as WR it runs its route from the play
@@ -61,7 +60,7 @@ const INK_GREEN = '#139157';
 const INK_FIRST = '#e07a10';   // first-down line
 const INK_FIELD = 'rgba(40,70,120,.22)';
 const PLAYER_INK = ['#1f5fd1', '#d42a2a'];
-const SPOT_INK = {wr2: '#7b3fc4', te: '#0b8aa0', rb: '#c2378f'}; // the card players each get their own color
+const SPOT_INK = {wr2: '#7b3fc4', te: '#0b8aa0', rb: '#c2378f', wr3: '#6b8a12'}; // the CPU receivers each get their own color
 const PLAYER_NAME = ['P1', 'P2'];
 const PLAYER_KEYS = ['SPACE', 'ENTER'];
 const MARKER_FONT = '"Marker Felt", "Chalkboard SE", "Comic Sans MS", "Segoe Print", cursive';
@@ -81,7 +80,7 @@ const sndPick     = new SoundGenerator({frequency:420, release:.6, slide:-.6, re
 ///////////////////////////////////////////////////////////////////////////////
 // game state
 
-let gameState = 'title';   // title, presnap, live, air, run, result, upgrade, over
+let gameState = 'title';   // title, presnap, live, air, run, result, over
 let stateTimer = new Timer;
 let numPlayers = 2;        // 1 = P1 plus a CPU teammate in the P2 slot
 let titleChoice = 0;       // highlighted title option: 0 = 1 player, 1 = 2 players
@@ -96,7 +95,9 @@ let plays = 0;
 let resultInfo;            // {text, sub, color} for the result banner
 let longPass = 0, longRec = 0; // longest completion this drive thrown / caught by a human
 let newRecords = new Set;  // which saved records this drive beat
-let saveData = readSaveData('chalkTalk', {best:0, longPass:0, longRec:0});
+let saveData = readSaveData('chalkTalk', {best:0, longPass:0, longRec:0, teamSize:7});
+const MIN_TEAM = 2, MAX_TEAM = 11;
+let teamSize = clamp(saveData.teamSize, MIN_TEAM, MAX_TEAM); // players a side, see setupPlay
 let ball;                  // pass in the air
 let catchY = 0;            // where the ball carrier caught it, for yards after the catch
 let catchTime = 0;
@@ -105,14 +106,6 @@ const HURDLE_COOLDOWN = 2.5; // seconds from one jump to the next
 const TACKLE_GRACE = .5;   // a beat to tuck the ball after the catch: time to juke the closest defender
 let defense = {zone: false, side: 1}; // this play's call: zone coverage or man, and the WR's side
 let camY = START_LOS + 7;
-const UPGRADE_EVERY = 120;   // drive yards between upgrade picks
-const UPGRADE_ON_FIRST_DOWN = true; // testing: pick a card on every first down instead
-let nextUpgrade = UPGRADE_EVERY;
-let upgradeDue = false;    // UPGRADE_ON_FIRST_DOWN: the last play moved the chains
-let upgrades;              // what this drive has picked up, see resetUpgrades
-let cards = [], cardChoice = 0; // the upgrade cards on offer, and the highlighted one
-let runChoice = 1;         // the 'use QB run?' answer highlighted: 0 = yes, 1 = no
-let qbRunning = false;     // this play's ball carrier is the QB, who ran it past the line
 let stiffArmAt = -9;       // a stiff arm buys a moment free of the pile around you
 let stiffArmUsed = false;  // the stiff arm is spent until the next first down
 
@@ -312,13 +305,13 @@ const ROUTES =
 // Redraw any of them before the snap. A TE or RB with no route stays in to block
 const PLAYBOOK =
 [
-    {name: 'FOUR VERTS', wr1: 'go',    wr2: 'go',    te: 'seam',   rb: null},
-    {name: 'SMASH',      wr1: 'hitch', wr2: 'hitch', te: 'corner', rb: 'flat'},
-    {name: 'MESH',       wr1: 'drag',  wr2: 'drag2', te: 'seam',   rb: 'wheel'},
-    {name: 'SLANT-FLAT', wr1: 'slant', wr2: 'slant', te: 'flat',   rb: null},
-    {name: 'CURL-FLAT',  wr1: 'curl',  wr2: 'curl',  te: 'flat',   rb: null},
-    {name: 'Y-CROSS',    wr1: 'go',    wr2: 'post',  te: 'cross',  rb: 'flat'},
-    {name: 'DAGGER',     wr1: 'dig',   wr2: 'go',    te: 'seam',   rb: null},
+    {name: 'FOUR VERTS', wr1: 'go',    wr2: 'go',    te: 'seam',   rb: null,    wr3: 'seam'},
+    {name: 'SMASH',      wr1: 'hitch', wr2: 'hitch', te: 'corner', rb: 'flat',  wr3: 'corner'},
+    {name: 'MESH',       wr1: 'drag',  wr2: 'drag2', te: 'seam',   rb: 'wheel', wr3: 'dig'},
+    {name: 'SLANT-FLAT', wr1: 'slant', wr2: 'slant', te: 'flat',   rb: null,    wr3: 'flat'},
+    {name: 'CURL-FLAT',  wr1: 'curl',  wr2: 'curl',  te: 'flat',   rb: null,    wr3: 'flat'},
+    {name: 'Y-CROSS',    wr1: 'go',    wr2: 'post',  te: 'cross',  rb: 'flat',  wr3: 'out'},
+    {name: 'DAGGER',     wr1: 'dig',   wr2: 'go',    te: 'seam',   rb: null,    wr3: 'seam'},
 ];
 let playCall;              // this play's playbook entry, when you're the QB
 
@@ -349,7 +342,7 @@ const ROUTE_STEP = 1.2, ROUTE_MAX_LEN = 70;
 let routePen;   // what's drawing right now: a touch id or 'mouse'
 let routeOwner; // whose route it is: the CPU WR, or an extra WR, TE or RB the stroke started on
 
-// a receiver's route: the CPU WR keeps it with its AI, the card players on themselves.
+// a receiver's route: the CPU WR keeps it with its AI, the other CPU receivers on themselves.
 // A TE or RB with no route stays in to block
 const routeOf = (b) => b.ai ? b.ai.route : b.route;
 function setRoute(b, route)
@@ -525,15 +518,6 @@ function cpuInput(h)
     if (h.isQB())
     {
         if (!h.hasBall) return out;
-
-        // you called the QB run: tuck it and head for the line, sliding away from the closest rusher
-        if (ai.runCalled)
-        {
-            const {defender} = nearestCover(h.pos, false, rushers);
-            const dx = defender && defender.pos.distance(h.pos) < 4 ? sign(h.pos.x - defender.pos.x) || 1 : 0;
-            out.dir = vec2(dx * .6, 1).normalize();
-            return out;
-        }
 
         // scramble: slide away from nearby rushers, otherwise settle back into the pocket
         let away = vec2();
@@ -745,16 +729,11 @@ class Human extends Body
         if (this.jammed) speed *= tightCoverage() ? .35 : .45;
         this.steer(input.dir.scale(speed), 60);
 
-        // the QB can't cross the line while holding the ball, unless they've got a QB run card to spend
+        // the QB can't cross the line while holding the ball
         if (this.hasBall && this.isQB() && this.pos.y > los - BODY_R)
         {
-            if (upgrades.qbRun && gameState == 'live' && (!isCPU(this.index) || this.ai.runCalled))
-                startQBRun(this);
-            else
-            {
-                this.pos.y = los - BODY_R;
-                this.vel.y = min(this.vel.y, 0);
-            }
+            this.pos.y = los - BODY_R;
+            this.vel.y = min(this.vel.y, 0);
         }
 
         if (input.pressed)
@@ -763,8 +742,6 @@ class Human extends Body
                 this.hurdle();
             else if (this.hasBall && gameState == 'live')
                 throwBall(this);
-            else if (gameState == 'live' && isCPU(qbIndex) && qb().hasBall && qb().ai.runPlanned)
-                !qb().ai.runCalled && callForRun(this);
             else if (gameState == 'live' && isCPU(qbIndex) && qb().hasBall && !this.jammed)
                 callForBall(this);
         }
@@ -785,13 +762,11 @@ class Human extends Body
         const p = this.pos.add(vec2(0, up * .9));
         markerCircle(p, BODY_R * (1 + up * .4), this.ink, .17, this.seed);
         markerText(this.num ?? this.index + 1 + '', p.add(vec2(0, -.05)), .8, this.ink);
-        markerText(this.isQB() != qbRunning ? 'QB' : this.spotLabel ?? 'WR', p.add(vec2(0, 1.15)), .85, this.ink); // a running QB is still the QB
+        markerText(this.isQB() ? 'QB' : this.spotLabel ?? 'WR', p.add(vec2(0, 1.15)), .85, this.ink);
         if (this.hasBall)
             drawFootball(p.add(vec2(.75, .2)), .9, 0);
         if (this.jammed && isLive())
             markerText('!!', p.add(vec2(-1, .9)), .8, INK);
-        if (!this.ai && this.isQB() && this.hasBall && upgrades.qbRun && gameState == 'live')
-            markerText('cross the LOS to run!', p.add(vec2(0, -1.2)), .65, this.ink, .6 + .4 * Math.sin(time * 6));
         if (!this.ai && this.canHurdle())
         {
             const key = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[this.index];
@@ -806,7 +781,7 @@ class Lineman extends Body
     {
         super(pos, ink);
         this.home = pos.copy();
-        this.label = label;     // the tight end and running back upgrades block like linemen
+        this.label = label;     // the tight end and running back block like linemen
         this.trailMax = 10;
     }
     think()
@@ -840,7 +815,7 @@ class Lineman extends Body
     }
 }
 
-// the running back upgrade: picks up rushers beside the QB, then after the catch
+// the running back: picks up rushers beside the QB, then after the catch
 // runs ahead of the ball carrier and flattens the closest tackler, once a play
 class Back extends Lineman
 {
@@ -1011,7 +986,7 @@ class Cover extends Body
     }
 }
 
-// the extra WR upgrade: a CPU receiver who runs a deep route, a decoy with a corner of their own
+// the extra and slot WRs: CPU receivers who run a deep route, decoys with a corner of their own
 class Decoy extends Body
 {
     constructor(pos, ink)
@@ -1068,23 +1043,25 @@ function setupPlay()
     humans = qbIndex == 0 ? [qbPlayer, wrPlayer] : [wrPlayer, qbPlayer];
     qbPlayer.hasBall = true;
 
-    linemen = [-4, -2, 0, 2, 4].map(x => new Lineman(vec2(x * .95, los - .9)));
+    // team size fills the receiving spots first, in this order, then the line from the center out
+    const spots =
+    [
+        {key: 'wr1', label: 'WR', pos: vec2(side * 12, los - .9)},
+        {key: 'wr2', label: 'WR', pos: vec2(-side * 13, los - .9)},
+        {key: 'te',  label: 'TE', pos: vec2(-side * 5.8, los - .9)},
+        {key: 'rb',  label: 'RB', pos: vec2(-side * 2, los - 4.5)},
+        {key: 'wr3', label: 'WR', pos: vec2(side * 7.5, los - 1.6)},
+    ];
+    formation = spots.slice(0, teamSize - 1);
+    linemen = [0, -2, 2, -4, 4].slice(0, max(0, teamSize - 1 - spots.length)).map(x => new Lineman(vec2(x * .95, los - .9)));
     decoys = [];
-    formation = [{key: 'wr1', label: 'WR', pos: vec2(side * 12, los - .9)}];
-    if (upgrades.decoy)
-        formation.push({key: 'wr2', label: 'WR', pos: vec2(-side * 13, los - .9)});
-    if (upgrades.tightEnd)
-        formation.push({key: 'te', label: 'TE', pos: vec2(-side * 5.8, los - .9)});
-    if (upgrades.runningBack)
-        formation.push({key: 'rb', label: 'RB', pos: vec2(-side * 2, los - 4.5)});
-    qbRunning = false;
     passTo = undefined;
 
     callDefense(side);
     lineUp(formation[0]);
 
     if (numPlayers == 1)
-        humans[1].ai = {route: {name: '', points: [], next: 0}, called: false, runPlanned: false, runCalled: false, jukeTime: 0, reaction: rand(.15, .4)};
+        humans[1].ai = {route: {name: '', points: [], next: 0}, called: false, jukeTime: 0, reaction: rand(.15, .4)};
     if (canDrawRoutes())
         callPlay();
 
@@ -1092,34 +1069,20 @@ function setupPlay()
         b.trail = [b.pos.copy()];
     gameState = 'presnap';
     stateTimer.set(.4);
-
-    // 1P with you at WR: the CPU QB only runs it if you say so, before the snap
-    if (numPlayers == 1 && isCPU(qbIndex) && upgrades.qbRun)
-    {
-        gameState = 'askRun';
-        runChoice = 1;
-        stateTimer.set(.6); // a beat so a button mashed through the result banner doesn't answer blind
-    }
-}
-
-// yes: after the snap, your call is for the QB run instead of the pass, so you pick the moment
-function answerRun(yes)
-{
-    qb().ai.runPlanned = yes;
-    sndHut.play();
-    gameState = 'presnap';
-    stateTimer.set(.4);
 }
 
 function callDefense(side)
 {
-    // the defense matches the offense body for body: 7 against QB, WR and the line, plus one
-    // more for each extra player the cards add (see coverForSpot). The call splits the 7
-    // them between the rush and coverage, so a heavier rush always leaves fewer X's back there
-    const covers = randInt(2, 5), rush = 7 - covers;
+    // the defense matches the offense body for body: a man on every receiving spot (see coverForSpot),
+    // and one more for the QB and each lineman. The call splits those between the rush and deep help,
+    // so a heavier rush always leaves fewer X's back there. With no line to block, the lone rusher
+    // counts a beat before coming, like the backyard game
+    const spare = teamSize - formation.length;
+    const rush = spare < 2 ? 1 : randInt(max(1, Math.ceil(spare / 2)), spare);
+    const deep = spare - rush;
     defense = {zone: completions >= 2 && rand() < .5, side};
 
-    rushers = (rush >= 4 ? [-4.5, -1.5, 1.5, 4.5] : [-3, 0, 3]).map(x => new Rusher(vec2(x, los + .9)));
+    rushers = [[0], [-1.5, 1.5], [-3, 0, 3], [-4.5, -1.5, 1.5, 4.5]][min(rush, 4) - 1].map(x => new Rusher(vec2(x, los + .9), linemen.length ? 0 : 1.5));
     if (rush >= 5)
         rushers.push(new Rusher(vec2(-side * 3, los + 5), 1.2, 'LB')); // the 5th rusher blitzes a beat late
 
@@ -1127,28 +1090,28 @@ function callDefense(side)
     // In zone the CB bails to its spot instead
     const cbDepth = defense.zone ? 5 : tightCoverage() ? 1.1 : 3.5;
     coverage = [new Cover(vec2(side * 12, los + cbDepth), 'cb')];
-    if (covers >= 4)
+    if (deep >= 3)
         coverage.push(new Cover(vec2(-6, los + 12), 'safety', -1), new Cover(vec2(6, los + 12), 'safety', 1));
-    else
+    else if (deep >= 1)
         coverage.push(new Cover(vec2(side * 5, los + 12), 'safety'));
-    if (covers >= 3)
+    if (deep >= 2)
         coverage.push(new Cover(vec2(side * 10, los + 2), 'under'));
 
-    // every receiving spot has its own man: the corner on WR 1, plus one per card-added player
+    // every receiving spot has its own man: the corner on WR 1, plus one per CPU receiver
     coverage[0].spotKey = 'wr1';
     for (const f of formation.slice(1))
         coverage.push(coverForSpot(f));
 }
 
-// the extra WR brings a corner with them, the TE and RB a linebacker each
+// the extra and slot WRs bring a corner with them, the TE and RB a linebacker each
 function coverForSpot(f)
 {
-    const c = new Cover(vec2(f.pos.x, los + (f.key == 'rb' ? 4.5 : 3.5)), f.key == 'wr2' ? 'cb' : 'lb');
+    const c = new Cover(vec2(f.pos.x, los + (f.key == 'rb' ? 4.5 : 3.5)), f.key.startsWith('wr') ? 'cb' : 'lb');
     c.spotKey = f.key;
     return c;
 }
 
-// put the receiver at one of the formation's spots, and the CPU's upgrade players at the others:
+// put the receiver at one of the formation's spots, and the CPU's receivers at the others:
 // a WR spot runs a deep decoy route, the TE blocks on the line, the RB blocks beside the QB
 function lineUp(spot)
 {
@@ -1165,6 +1128,7 @@ function lineUp(spot)
         const ink = SPOT_INK[f.key] ?? PLAYER_INK[1]; // you moved off WR 1: the CPU there wears the P2 color
         const b = f.key == 'te' ? new Lineman(f.pos.copy(), ink, 'TE') : f.key == 'rb' ? new Back(f.pos.copy(), ink) : new Decoy(f.pos.copy(), ink);
         b.spot = f;
+        if (f.key == 'wr3') b.num = '4';
         (b instanceof Lineman ? linemen : decoys).push(b);
     }
 
@@ -1189,7 +1153,7 @@ const canPickSpot = () => gameState == 'presnap' && numPlayers == 1 && isCPU(qbI
 function pickSpot(tapPos)
 {
     if (!canPickSpot()) return false;
-    let spot = formation[[1, 2, 3, 4].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
+    let spot = formation[[1, 2, 3, 4, 5].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
     if (!spot && tapPos)
     {
         const p = screenToWorld(tapPos);
@@ -1205,11 +1169,11 @@ function pickSpot(tapPos)
     return true;
 }
 
-// who's at each formation spot: the WR (on WR 1 unless you moved them) or a card player
+// who's at each formation spot: the WR (on WR 1 unless you moved them) or a CPU receiver
 const occupant = (f) => [...decoys, ...linemen].find(b => b.spot == f) ?? wr();
 const receivers = () => formation.map(occupant);
 
-// 1P at QB with card players out there: before the snap, tap one (or press their number) to make
+// 1P at QB with CPU receivers out there: before the snap, tap one (or press their number) to make
 // them the target, so the play's throw goes to them. A tap in the open snaps
 const canPickTarget = () => canDrawRoute() && formation.length > 1;
 const showTarget = () => canPickTarget() || gameState == 'live' && numPlayers == 1 && !isCPU(qbIndex) && qb().hasBall && formation.length > 1;
@@ -1218,7 +1182,7 @@ function pickTarget(tapPos)
 {
     if (!canPickTarget()) return false;
     const all = receivers();
-    let b = all[[1, 2, 3, 4].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
+    let b = all[[1, 2, 3, 4, 5].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n))];
     if (!b && tapPos)
     {
         const p = screenToWorld(tapPos);
@@ -1236,7 +1200,7 @@ function markTarget(b)
     return true;
 }
 
-// throwing to a card player: they trade places with the CPU WR, look and all, so the WR's catch and run
+// throwing to a CPU receiver: they trade places with the CPU WR, look and all, so the WR's catch and run
 // code plays them. Their defenders trade marks with them too
 function swapReceiver(b)
 {
@@ -1270,7 +1234,7 @@ function newDrive()
 function resetGame()
 {
     newDrive();
-    resetUpgrades();
+    stiffArmUsed = false;
     furthest = 0;
     longPass = longRec = 0;
     newRecords = new Set;
@@ -1293,86 +1257,15 @@ function showTitle()
     gameState = 'title';
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// upgrades: every UPGRADE_EVERY yards of the drive, pick 1 of 3 cards
-
-const UPGRADES =
-[
-    {key: 'decoy', name: 'EXTRA WR', tag: 'PERMANENT', max: 1,
-        lines: ['another receiver', 'runs a deep route', '+1 defender (a CB)']},
-    {key: 'stiffArm', name: 'STIFF ARM', tag: 'PERMANENT', max: 1,
-        lines: ['the ball carrier', 'shrugs off a tackle', '(once per first down)']},
-    {key: 'qbRun', name: 'QB RUN', tag: '1 USE', max: 9,
-        lines: ['your QB can tuck it', 'and run past the line', '(no throw that play)']},
-    {key: 'tightEnd', name: 'TIGHT END', tag: 'PERMANENT', max: 1,
-        lines: ['an extra blocker', 'on the end of the line', '+1 defender (an LB)']},
-    {key: 'runningBack', name: 'RUNNING BACK', tag: 'PERMANENT', max: 1,
-        lines: ['blocks by the QB, then', 'flattens a tackler', '+1 defender (an LB)']},
-];
-for (const u of UPGRADES)
-    u.count = () => upgrades[u.key];
-
-function resetUpgrades()
+// the title's team size: remembered, and the board behind the menu redraws to match
+function changeTeamSize(step)
 {
-    upgrades = {};
-    for (const u of UPGRADES)
-        upgrades[u.key] = 0;
-    nextUpgrade = UPGRADE_EVERY;
-    upgradeDue = false;
-    stiffArmUsed = false;
-}
-
-// between plays: a drive that just passed the next mark picks a card first
-function nextPlay()
-{
-    if (UPGRADE_ON_FIRST_DOWN)
-    {
-        if (!upgradeDue)
-            return setupPlay();
-        upgradeDue = false;
-    }
-    else
-    {
-        if (los - START_LOS < nextUpgrade)
-            return setupPlay();
-        nextUpgrade += UPGRADE_EVERY;
-    }
-    const pool = UPGRADES.filter(u => upgrades[u.key] < u.max);
-    cards = [];
-    while (cards.length < 3 && pool.length)
-        cards.push(pool.splice(randInt(pool.length), 1)[0]);
-    cardChoice = (cards.length - 1) >> 1; // the middle card, or the only one once the pool runs dry
-    gameState = 'upgrade';
-    stateTimer.set(.6); // a beat so a button mashed through the result banner doesn't pick blind
-    sndCatch.play();
-}
-
-function pickCard(i)
-{
-    ++upgrades[cards[i].key];
-    sndHut.play();
-    nextPlay(); // a huge gain can pass two marks at once
-}
-
-function upgradeSummary()
-{
-    return UPGRADES.filter(u => upgrades[u.key])
-        .map(u => u.name + (u.max > 1 && upgrades[u.key] > 1 ? ' x' + upgrades[u.key] : '') +
-            (u.key == 'stiffArm' && stiffArmUsed ? ' (used)' : '')).join('  ·  ');
-}
-
-// QB run: the QB crosses the line with the ball and the play becomes a run, with them as the ball carrier.
-// The roles flip for the run (every run reads wr() as the ball carrier), and endRun hands them the QB job back
-function startQBRun(q)
-{
-    --upgrades.qbRun;
-    qbRunning = true;
-    qbIndex = 1 - q.index;
-    catchY = los;
-    catchTime = time;
-    gameState = 'run';
-    sndHut.play(q.pos);
-    addEffect('QB RUN!', q.pos.add(vec2(0, 2)), q.ink, 1.8, true);
+    const size = clamp(teamSize + step, MIN_TEAM, MAX_TEAM);
+    if (size == teamSize) return;
+    teamSize = saveData.teamSize = size;
+    writeSaveData('chalkTalk', saveData);
+    sndJuke.play();
+    showTitle();
 }
 
 // stiff arm: the tackler bounces off and hits the turf, the ball carrier keeps going
@@ -1394,13 +1287,6 @@ function callForBall(receiver)
     // 1P with you at WR: the CPU QB throws on the next frame
     qb().ai.called = true;
     addEffect('HEY!', receiver.pos.add(vec2(0, 1.6)), receiver.ink, 1.2);
-}
-
-function callForRun(receiver)
-{
-    // 1P with you at WR, QB run picked before the snap: the CPU QB tucks it and runs for the line
-    qb().ai.runCalled = true;
-    addEffect('RUN IT!', receiver.pos.add(vec2(0, 1.6)), receiver.ink, 1.2);
 }
 
 function snap()
@@ -1533,26 +1419,21 @@ function endRun(how)
     const gained = round(w.pos.y - los), after = round(w.pos.y - catchY);
     los = w.pos.y;
     furthest = max(furthest, round(los - START_LOS));
-    if (!qbRunning)
-    {
-        if (!isCPU(qbIndex)) longPass = max(longPass, gained);
-        if (!isCPU(w.index)) longRec = max(longRec, gained);
-    }
+    if (!isCPU(qbIndex)) longPass = max(longPass, gained);
+    if (!isCPU(w.index)) longRec = max(longRec, gained);
     saveRecords();
     const converted = firstDown - los < .5;
     if (converted)
     {
         down = 1;
         firstDown = los + 10;
-        upgradeDue = UPGRADE_ON_FIRST_DOWN;
         stiffArmUsed = false;
         addEffect('FIRST DOWN!', w.pos.add(vec2(0, 3.4)), INK_FIRST, 1.4);
     }
     else if (++down > 4)
         return endDrive('TURNOVER ON DOWNS', 'stopped ' + toGo() + ' YDS short on 4th down');
-    const takes = qbRunning ? playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' stay' : ' stays') + ' at QB' :
-        playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' take' : ' takes') + ' over at QB';
-    const yac = qbRunning ? 'QB RUN · ' : after > 0 ? after + ' after the catch · ' : '';
+    const takes = playerName(w.index) + (numPlayers == 1 && w.index == 0 ? ' take' : ' takes') + ' over at QB';
+    const yac = after > 0 ? after + ' after the catch · ' : '';
     showResult(how + '  ' + (gained >= 0 ? '+' : '') + gained + ' YDS', yac + (converted ? 'FIRST DOWN! ' : downAndDistance() + ' — ') + takes, INK_GREEN);
     qbIndex = w.index;
 }
@@ -1888,7 +1769,7 @@ function drawBoard()
             markerText('draw my route!', cpu.pos.add(vec2(0, -1.6)), .75, cpu.ink, .6 + .4 * Math.sin(time * 6));
     }
 
-    // the card players' routes too, when you're the QB throwing to them
+    // the other CPU receivers' routes too, when you're the QB throwing to them
     if (cpu?.ai && !cpu.isQB() && (gameState == 'presnap' || gameState == 'live'))
         for (const b of receivers())
         {
@@ -1955,12 +1836,8 @@ function drawHUD()
         const role = i == qbIndex ? 'QB' : 'WR';
         screenText(playerName(i) + ' ' + role, W - pad, pad + s * .4 + i * s * 1.2, s, PLAYER_INK[i], 'right');
     }
-    const held = upgradeSummary();
-    if (held)
-        screenText(held, W - pad, pad + s * 2.8, s * .7, INK_GREEN, 'right', .85);
-    const nextText = UPGRADE_ON_FIRST_DOWN ? 'upgrade every first down' :
-        'next upgrade in ' + max(0, round(START_LOS + nextUpgrade - los)) + ' YDS';
-    screenText(nextText, W - pad, pad + s * (held ? 3.7 : 2.8), s * .65, INK, 'right', .55);
+    screenText('STIFF ARM' + (stiffArmUsed ? ' (used)' : ''), W - pad, pad + s * 2.8, s * .7, INK_GREEN, 'right', stiffArmUsed ? .45 : .85);
+    screenText(teamSize + ' ON ' + teamSize, W - pad, pad + s * 3.7, s * .65, INK, 'right', .55);
 
     const midX = W / 2;
     const blink = .6 + .4 * Math.sin(time * 6);
@@ -1971,7 +1848,7 @@ function drawHUD()
         const how = usedTouch ? 'tap' : numPlayers == 1 ? 'SPACE' : PLAYER_KEYS[who];
         const prompt = numPlayers == 2 || qbI == 0 ?
             (canDrawRoute() ? playCall.name + '  ·  ' : '') + playerName(qbI) + ' (QB): ' + how + ' to call HUT!' :
-            'YOU (WR): ' + how + ' to snap, ' + how + ' again to call for the ' + (humans[1].ai.runPlanned ? 'QB run' : 'ball');
+            'YOU (WR): ' + how + ' to snap, ' + how + ' again to call for the ball';
         screenText(prompt, midX, H * .16 + s * 1.6, s * .9, PLAYER_INK[who], 'center', blink);
         if (canDrawRoute() && formation.length > 1)
         {
@@ -1992,7 +1869,7 @@ function drawHUD()
                 markerText(i + 1 + '', f.pos.add(vec2(0, -1.3)), .7, INK_GREEN, yours ? .5 : .9);
             });
         }
-        if (plays == 0 && !humans[1].ai?.route.drawn) // the card gets out of the way of a route being drawn
+        if (plays == 0 && !humans[1].ai?.route.drawn) // the help card gets out of the way of a route being drawn
         {
             const lines = numPlayers == 1 ?
             [
@@ -2075,8 +1952,8 @@ function drawTitle()
     screenText('PAPER FOOTBALL', midX, H * .22, s * 3.2, INK, 'center');
 
     // two hand-drawn option boxes, side by side so a tap on either half picks one
+    const {boxW, boxH, boxY, rowY} = titleLayout();
     const options = [['1 PLAYER', 'you + a CPU teammate'], ['2 PLAYERS', 'P1 WASD  ·  P2 ARROWS']];
-    const boxW = min(W * .4, s * 13), boxH = s * 4.2, boxY = H * .55;
     options.forEach(([label, sub], i) =>
     {
         const x = midX + (i ? 1 : -1) * (boxW / 2 + s * .6);
@@ -2086,9 +1963,27 @@ function drawTitle()
         screenText(sub, x, boxY + s * 1.05, s * .75, ink, 'center', picked ? .85 : .45);
     });
 
-    const how = usedTouch ? 'tap a box to play' : '1 / 2 or ← → to pick   ·   SPACE / ENTER to play';
-    screenText(how, midX, boxY + boxH / 2 + s * 1.6, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
+    // team size: - and + boxes either side, a tap on either half of the row steps it
+    screenText(teamSize + ' ON ' + teamSize, midX, rowY - s * .35, s * 1.4, INK, 'center');
+    screenText('players per team', midX, rowY + s * .75, s * .65, INK, 'center', .6);
+    [['-', MIN_TEAM], ['+', MAX_TEAM]].forEach(([mark, limit], i) =>
+    {
+        const x = midX + (i ? 1 : -1) * s * 5, live = teamSize != limit;
+        markerBox(x, rowY, s * 2, s * 2, INK, live, s, 20 + i * 7);
+        screenText(mark, x, rowY, s * 1.4, INK, 'center', live ? 1 : .3);
+    });
+
+    const how = usedTouch ? 'tap a box to play   ·   tap - / + for team size' : '1 / 2 or ← → to pick   ·   ↑ ↓ team size   ·   SPACE / ENTER to play';
+    screenText(how, midX, rowY + s * 2.4, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
     screenText('HIGH SCORE ' + saveData.best + ' YDS   ·   LONGEST PASS ' + saveData.longPass + '   ·   LONGEST REC ' + saveData.longRec, midX, H - s * 1.5, s * .8, INK, 'center', .6);
+}
+
+// where the title's mode boxes and team size row sit, shared by drawing and tapping
+function titleLayout()
+{
+    const W = mainCanvasSize.x, H = mainCanvasSize.y, s = min(W, H) / 22;
+    const boxH = s * 4.2, boxY = H * .5;
+    return {s, boxW: min(W * .4, s * 13), boxH, boxY, rowY: boxY + boxH / 2 + s * 2};
 }
 
 // a hand-drawn screen-space box around (x, y), bolder when picked
@@ -2106,73 +2001,6 @@ function markerBox(x, y, w, h, ink, picked, s, seed)
     ctx.lineTo(l + wob(9), t + wob(10) + s * .3); // a marker box never quite closes
     ctx.stroke();
     ctx.restore();
-}
-
-// the upgrade pick: three cards side by side, a tap on each third of the screen picks one
-function drawCards()
-{
-    const W = mainCanvasSize.x, H = mainCanvasSize.y;
-    const s = min(W, H) / 22, midX = W / 2;
-
-    const card = ctxBegin(BOARD, 0);
-    card.globalAlpha = .88;
-    card.fillRect(0, 0, W, H);
-    card.restore();
-
-    screenText(round(los - START_LOS) + ' YARDS!', midX, H * .14, s * 2.2, INK_GREEN, 'center');
-    screenText('pick an upgrade for this drive', midX, H * .14 + s * 1.8, s * .95, INK, 'center', .7);
-
-    const boxW = min(W * .3, s * 9), boxH = s * 9, boxY = H * .52, gap = min(W * .02, s * .8);
-    cards.forEach((c, i) =>
-    {
-        const x = midX + (i - (cards.length - 1) / 2) * (boxW + gap);
-        const picked = cardChoice == i, alpha = picked ? 1 : .55;
-        const fit = min(1, boxW / (s * 9)); // narrow screens shrink the card text with the card
-        markerBox(x, boxY, boxW, boxH, INK_GREEN, picked, s, i * 13);
-        screenText(i + 1 + '', x - boxW / 2 + s * .7, boxY - boxH / 2 + s * .8, s * .8 * fit, INK, 'left', alpha * .6);
-        screenText(c.name, x, boxY - s * 2.6, s * 1.25 * fit, INK_GREEN, 'center', alpha);
-        c.lines.forEach((l, j) => screenText(l, x, boxY - s * .8 + j * s * .95 * fit, s * .72 * fit, INK, 'center', alpha));
-        const have = c.count();
-        screenText(c.tag + (have ? '  ·  have ' + have : ''), x, boxY + boxH / 2 - s * .9, s * .65 * fit, INK, 'center', alpha * .7);
-    });
-
-    if (stateTimer.elapsed())
-    {
-        const how = usedTouch ? 'tap a card' : '1 / 2 / 3 or ← → to pick   ·   SPACE / ENTER to take it';
-        screenText(how, midX, boxY + boxH / 2 + s * 1.4, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
-    }
-}
-
-// before the snap, 1P at WR with a QB run card: spend it this play or save it
-function drawAskRun()
-{
-    const W = mainCanvasSize.x, H = mainCanvasSize.y;
-    const s = min(W, H) / 22, midX = W / 2;
-
-    const card = ctxBegin(BOARD, 0);
-    card.globalAlpha = .88;
-    card.fillRect(0, 0, W, H);
-    card.restore();
-
-    screenText('USE QB RUN?', midX, H * .3, s * 2.2, INK_GREEN, 'center');
-    screenText(downAndDistance() + '  ·  ' + upgrades.qbRun + ' left', midX, H * .3 + s * 1.8, s * .95, INK, 'center', .7);
-
-    const boxW = min(W * .3, s * 7), boxH = s * 4, boxY = H * .55, gap = min(W * .02, s * .8);
-    [['YES', 'call it after the snap'], ['NO', 'pass play as usual']].forEach(([name, line], i) =>
-    {
-        const x = midX + (i - .5) * (boxW + gap);
-        const picked = runChoice == i, alpha = picked ? 1 : .55;
-        const fit = min(1, boxW / (s * 7));
-        markerBox(x, boxY, boxW, boxH, INK_GREEN, picked, s, i * 13);
-        screenText(name, x, boxY - s * .6, s * 1.25 * fit, INK_GREEN, 'center', alpha);
-        screenText(line, x, boxY + s * .8, s * .65 * fit, INK, 'center', alpha);
-    });
-
-    if (stateTimer.elapsed())
-    {
-        const how = usedTouch ? 'tap yes or no' : 'Y / N or ← → to pick   ·   SPACE / ENTER to answer';
-        screenText(how, midX, boxY + boxH / 2 + s * 1.4, s * .85, INK_GREEN, 'center', .6 + .4 * Math.sin(time * 6));
-    }
 }
 
 // where across the screen (0 to 1) a mouse click or tap landed this frame, -1 if none
@@ -2203,10 +2031,15 @@ function gameUpdate()
 
     if (gameState == 'title')
     {
-        if (['ArrowLeft', 'ArrowUp', 'KeyA', 'KeyW'].some(k => keyWasPressed(k))) titleChoice = max(0, titleChoice - 1);
-        if (['ArrowRight', 'ArrowDown', 'KeyD', 'KeyS'].some(k => keyWasPressed(k))) titleChoice = min(1, titleChoice + 1);
+        if (['ArrowLeft', 'KeyA'].some(k => keyWasPressed(k))) titleChoice = 0;
+        if (['ArrowRight', 'KeyD'].some(k => keyWasPressed(k))) titleChoice = 1;
+        const {s, rowY} = titleLayout();
+        const onRow = tapPos && abs(tapPos.y - rowY) < s * 1.4;
         const digit = [1, 2].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n));
-        if (digit >= 0) startGame(digit);
+        if (['ArrowUp', 'KeyW', 'Equal', 'NumpadAdd'].some(k => keyWasPressed(k))) changeTeamSize(1);
+        else if (['ArrowDown', 'KeyS', 'Minus', 'NumpadSubtract'].some(k => keyWasPressed(k))) changeTeamSize(-1);
+        else if (onRow) changeTeamSize(half ? 1 : -1);
+        else if (digit >= 0) startGame(digit);
         else if (tapX >= 0) startGame(min(1, tapX * 2 | 0));
         else if (anyPress) startGame(titleChoice);
     }
@@ -2218,25 +2051,7 @@ function gameUpdate()
         snap();
     }
     else if (gameState == 'result' && stateTimer.elapsed())
-        nextPlay();
-    else if (gameState == 'upgrade' && stateTimer.elapsed())
-    {
-        if (['ArrowLeft', 'ArrowUp', 'KeyA', 'KeyW'].some(k => keyWasPressed(k))) cardChoice = max(0, cardChoice - 1);
-        if (['ArrowRight', 'ArrowDown', 'KeyD', 'KeyS'].some(k => keyWasPressed(k))) cardChoice = min(cards.length - 1, cardChoice + 1);
-        const digit = [1, 2, 3].findIndex(n => keyWasPressed('Digit' + n) || keyWasPressed('Numpad' + n));
-        if (digit >= 0) pickCard(digit);
-        else if (tapX >= 0) pickCard(min(cards.length - 1, tapX * cards.length | 0));
-        else if (anyPress) pickCard(cardChoice);
-    }
-    else if (gameState == 'askRun' && stateTimer.elapsed())
-    {
-        if (['ArrowLeft', 'ArrowUp', 'KeyA', 'KeyW'].some(k => keyWasPressed(k))) runChoice = 0;
-        if (['ArrowRight', 'ArrowDown', 'KeyD', 'KeyS'].some(k => keyWasPressed(k))) runChoice = 1;
-        if (keyWasPressed('KeyY') || keyWasPressed('Digit1') || keyWasPressed('Numpad1')) answerRun(true);
-        else if (keyWasPressed('KeyN') || keyWasPressed('Digit2') || keyWasPressed('Numpad2')) answerRun(false);
-        else if (tapX >= 0) answerRun(half == 0);
-        else if (anyPress) answerRun(runChoice == 0);
-    }
+        setupPlay();
     else if (gameState == 'over' && stateTimer.elapsed())
     {
         if (keyWasPressed('Escape') || half == 1) showTitle();
@@ -2273,7 +2088,7 @@ function gameUpdatePost()
     {
         const w = wr(), tucked = time - catchTime > TACKLE_GRACE && time - stiffArmAt > .4;
         const d = tucked && !w.airborne() && defenders().find(d => !d.stun && d.pos.distance(w.pos) < BODY_R * 2 + .1);
-        if (d && upgrades.stiffArm && !stiffArmUsed)
+        if (d && !stiffArmUsed) // every receiver gets one stiff arm per first down
             stiffArm(w, d);
         else if (d) tackle();
         else if (tucked && abs(w.pos.x) > FIELD_HALF - BODY_R - .05)
@@ -2295,10 +2110,6 @@ function gameRenderPost()
     renderEffects();
     if (gameState == 'title')
         drawTitle();
-    else if (gameState == 'upgrade')
-        drawCards();
-    else if (gameState == 'askRun')
-        drawAskRun();
     else
         drawHUD();
 }
