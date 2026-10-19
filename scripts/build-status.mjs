@@ -52,6 +52,8 @@ function readBrief(slug) {
     name,
     tagline,
     rank: parseInt(field('Rank').replace('#', ''), 10) || null,
+    // "**Rank:** Prototype" marks a game that started as a prototype and isn't ranked yet.
+    prototype: /prototype/i.test(field('Rank')),
     genre: field('Genre'),
     family: field('Art family'),
     habit: field('Audience habit').replace(/\s*\(.*\)$/, ''),

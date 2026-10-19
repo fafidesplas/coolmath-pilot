@@ -261,7 +261,7 @@ function renderCard(g) {
   <article class="card">
     ${g.mechanic ? `<img class="mechanic" src="games/${esc(g.slug)}/mechanic.svg" alt="How ${esc(g.name)} plays" loading="lazy">` : ''}
     <div class="card-head">
-      <span class="rank">#${g.rank ?? ''}</span>
+      ${g.rank ? `<span class="rank">#${g.rank}</span>` : `<span class="rank" title="${g.prototype ? 'Prototype, not ranked yet' : 'Not ranked yet'}">${g.prototype ? 'Proto' : '—'}</span>`}
       <div>
         <h2>${esc(g.name)}</h2>
         <p class="tagline">${esc(g.tagline)}</p>
@@ -286,7 +286,7 @@ function renderCard(g) {
       <span class="links">
         <a href="${esc(repoPath('blob', `games/${g.slug}/CLAUDE.md`))}" target="_blank" rel="noopener">Brief</a>
         ${g.gdd ? `<a href="${esc(repoPath('blob', `games/${g.slug}/GDD.md`))}" target="_blank" rel="noopener">GDD</a>` : ''}
-        ${state.data.repoUrl ? `<a href="${esc(repoPath('commits', `games/${g.slug}`))}" target="_blank" rel="noopener">Historial</a>` : ''}
+        ${state.data.repoUrl ? `<a href="${esc(repoPath('commits', `games/${g.slug}`))}" target="_blank" rel="noopener">History</a>` : ''}
       </span>
     </div>
   </article>`;

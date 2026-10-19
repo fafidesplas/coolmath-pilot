@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Fire Brigade: walk into a door and the axe chops it; near the fire the hose sprays it out as the tank drains. Loop 5 s. -->
+  <rect width="480" height="270" fill="#1e1a36"/>
+  <circle cx="432" cy="30" r="12" fill="#ead4aa" stroke="#181425" stroke-width="3"/>
+  <rect y="210" width="480" height="60" fill="#262b44"/>
+
+  <!-- water tank gauge -->
+  <rect x="20" y="16" width="130" height="28" rx="7" fill="#262b44" stroke="#181425" stroke-width="3"/>
+  <path d="M34 22 C30 29 28 32 28 34 A6 6 0 0 0 40 34 C40 32 38 29 34 22 Z" fill="#2ce8f5" stroke="#181425" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="48" y="25" width="90" height="10" fill="#3a4466" stroke="#181425" stroke-width="2"/>
+  <rect x="48" y="25" width="90" height="10" fill="#0099db">
+    <animate attributeName="width" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.48;0.76;0.9;0.95;1" values="90;90;30;30;90;90"/>
+  </rect>
+
+  <!-- building cross-section, one floor -->
+  <rect x="30" y="58" width="420" height="152" fill="#4a2a26" stroke="#181425" stroke-width="4"/>
+  <rect x="44" y="72" width="392" height="118" fill="#6b5a4a" stroke="#181425" stroke-width="3"/>
+  <rect x="300" y="100" width="120" height="90" fill="#181425" opacity="0.3"/>
+  <rect x="300" y="100" width="120" height="90" fill="#f77622" opacity="0.25">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.48;0.76;0.9;0.95;1" values="0.25;0.25;0;0;0.25;0.25"/>
+  </rect>
+  <rect x="30" y="190" width="420" height="20" fill="#5a6988" stroke="#181425" stroke-width="3"/>
+  <rect x="200" y="72" width="16" height="66" fill="#3a4466" stroke="#181425" stroke-width="3"/>
+
+  <!-- door: shakes on each chop, then breaks -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.2;0.21;0.23;0.28;0.29;0.31;1" values="0 0;0 0;3 0;0 0;0 0;3 0;0 0;0 0"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.33;0.34;0.9;0.96;1" values="1;1;0;0;1;1"/>
+    <rect x="200" y="138" width="16" height="52" fill="#b86f50" stroke="#181425" stroke-width="3"/>
+    <circle cx="211" cy="166" r="2" fill="#feae34"/>
+  </g>
+
+  <!-- door splinters -->
+  <g fill="#b86f50" stroke="#181425" stroke-width="2" opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.33;0.34;0.42;0.43;1" values="0;0;1;0;0;0"/>
+    <rect x="204" y="150" width="7" height="7">
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.33;0.42;1" values="0 0;0 0;22 -26;22 -26"/>
+    </rect>
+    <rect x="206" y="168" width="7" height="7">
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.33;0.42;1" values="0 0;0 0;28 4;28 4"/>
+    </rect>
+  </g>
+
+  <!-- fire: shrinks to nothing under the spray -->
+  <g transform="translate(352 190)">
+    <g>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.48;0.76;0.9;0.95;1" values="1;1;0;0;1;1"/>
+      <g>
+        <animateTransform attributeName="transform" type="scale" dur="0.25s" repeatCount="indefinite"
+          values="1 1;1.08 0.9;1 1"/>
+        <g stroke="#181425" stroke-width="3" stroke-linejoin="round">
+          <path d="M-46 0 C-50 -10 -42 -16 -40 -26 C-34 -18 -28 -14 -30 0 Z" fill="#f77622"/>
+          <path d="M28 0 C24 -10 32 -18 34 -28 C40 -20 46 -12 42 0 Z" fill="#f77622"/>
+          <path d="M-16 0 C-20 -16 -10 -24 -8 -36 C-2 -28 2 -32 0 -46 C14 -32 20 -18 16 0 Z" fill="#e43b44"/>
+        </g>
+        <path d="M-9 0 C-11 -10 -4 -16 -1 -24 C4 -14 9 -9 8 0 Z" fill="#fee761"/>
+        <path d="M-42 0 C-43 -6 -40 -10 -38 -14 C-35 -9 -33 -5 -34 0 Z" fill="#feae34"/>
+        <path d="M32 0 C31 -6 34 -11 35 -15 C38 -9 40 -5 38 0 Z" fill="#feae34"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- steam puffs as the fire goes out -->
+  <g fill="#c0cbdc" stroke="#181425" stroke-width="2" opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.72;0.75;0.86;0.87;1" values="0;0;0.9;0;0;0"/>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.72;0.86;1" values="0 0;0 0;0 -30;0 -30"/>
+    <circle cx="340" cy="176" r="7"/>
+    <circle cx="358" cy="170" r="9"/>
+  </g>
+
+  <!-- water drops arcing from the nozzle -->
+  <g opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.47;0.48;0.76;0.77;1" values="0;0;1;1;0;0"/>
+    <g fill="#2ce8f5" stroke="#124e89" stroke-width="1.5">
+      <circle r="3.5"><animateMotion dur="0.5s" repeatCount="indefinite" path="M294 160 Q322 132 352 176"/></circle>
+      <circle r="3.5"><animateMotion dur="0.5s" begin="0.125s" repeatCount="indefinite" path="M294 160 Q312 140 324 180"/></circle>
+      <circle r="3.5"><animateMotion dur="0.5s" begin="0.25s" repeatCount="indefinite" path="M294 160 Q336 124 384 180"/></circle>
+      <circle r="3.5"><animateMotion dur="0.5s" begin="0.375s" repeatCount="indefinite" path="M294 160 Q326 136 360 184"/></circle>
+    </g>
+  </g>
+
+  <!-- firefighter: walks to the door, chops, walks on, sprays -->
+  <g transform="translate(110 190)">
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.02;0.16;0.36;0.46;0.88;0.9;1" values="110 190;110 190;176 190;176 190;272 190;272 190;110 190;110 190"/>
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.86;0.88;0.92;0.96;1" values="1;1;0;0;1;1"/>
+    <g stroke="#181425" stroke-width="3" stroke-linejoin="round">
+      <rect x="-9" y="-16" width="7" height="16" fill="#3a4466"/>
+      <rect x="2" y="-16" width="7" height="16" fill="#3a4466"/>
+      <rect x="-18" y="-37" width="8" height="18" rx="2" fill="#c0cbdc"/>
+      <rect x="-12" y="-38" width="24" height="24" rx="4" fill="#e43b44"/>
+      <rect x="-10" y="-24" width="20" height="4" fill="#fee761" stroke="none"/>
+      <rect x="10" y="-31" width="12" height="6" fill="#5a6988"/>
+      <circle cx="2" cy="-46" r="8" fill="#e4a672"/>
+      <path d="M-9 -51 A10 10 0 0 1 11 -51 Z" fill="#feae34"/>
+      <rect x="-13" y="-53" width="26" height="4" rx="2" fill="#feae34"/>
+    </g>
+    <circle cx="6" cy="-45" r="1.8" fill="#181425"/>
+
+    <!-- axe swings twice into the door -->
+    <g transform="translate(12 -30)" opacity="0">
+      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.159;0.16;0.34;0.341;1" values="0;0;1;1;0;0"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.16;0.2;0.25;0.29;0.34;1" values="-40;-40;70;-40;70;-40;-40"/>
+        <g stroke="#181425" stroke-width="2" stroke-linejoin="round">
+          <rect x="-2" y="-22" width="4" height="22" fill="#b86f50"/>
+          <path d="M2 -24 L12 -28 L12 -14 L2 -17 Z" fill="#c0cbdc"/>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- fire out: check badge -->
+  <g transform="translate(352 128)">
+    <g>
+      <animateTransform attributeName="transform" type="scale" dur="5s" repeatCount="indefinite"
+        keyTimes="0;0.76;0.8;0.83;0.86;0.88;1" values="0;0;1.25;1;1;0;0"/>
+      <circle r="15" fill="#feae34" stroke="#181425" stroke-width="3"/>
+      <path d="M-7 0 L-2 6 L8 -6" fill="none" stroke="#181425" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <rect x="100" y="224" width="280" height="34" rx="17" fill="#ffffff" stroke="#181425" stroke-width="3"/>
+  <text x="240" y="247" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#181425">Chop in, hose every fire out</text>
+</svg>

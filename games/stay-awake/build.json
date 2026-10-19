@@ -1,0 +1,6 @@
+{
+    "title": "Stay Awake",
+    "name": "stayAwake",
+    "engine": "dist/littlejs.js",
+    "sources": ["templates/gameFx.js", "game.js"]
+}
