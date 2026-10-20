@@ -1,0 +1,20 @@
+{
+    "title": "Gambit Defense",
+    "name": "chessDefense",
+    "engine": "dist/littlejs.js",
+    "sources": [
+        "templates/gameFx.js",
+        "constants.js",
+        "levels.js",
+        "levels/*.js",
+        "board.js",
+        "sfxData.js",
+        "fx.js",
+        "enemies.js",
+        "towers.js",
+        "upgrades.js",
+        "signatures.js",
+        "ui.js",
+        "game.js"
+    ]
+}

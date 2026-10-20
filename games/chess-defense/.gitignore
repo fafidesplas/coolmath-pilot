@@ -1,0 +1,5 @@
+build/
+*.zip
+node_modules/
+# Raw recordings (sound library). The game plays the copies embedded in sfxData.js.
+sfx/
