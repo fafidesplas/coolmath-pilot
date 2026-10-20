@@ -1,5 +1,9 @@
 # Vending Machine Sim — devlog
 
+## 2026-10-20 — GDD draft (phase 1b)
+- Answered the phase 1a questions and wrote `GDD.md` (Status: Draft): guided first day, locations as levels with 1–3 stars, run autosave, seeded RNG, max price $99, 48 px targets, Retro Pixel kept with 6 key UI colors.
+- Next: critical review of the GDD (phase 1c), then a teammate review for approval.
+
 ## 2026-10-19 — Moved into coolmath-pilot
 - Moved from the prototype-city repo into `games/vending-machine-sim/`, with its git history.
 - Current state: playable LittleJS prototype with 7 locations, 14 items in 3 brands, morning news and an upgrade-card shop. No game shell, saving format, analytics or GDD yet.
