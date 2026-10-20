@@ -1,5 +1,9 @@
 # Chess Defense — devlog
 
+## 2026-10-20 — Into the GDD phase
+- Picked as one of three prototypes to take forward (with Vending Machine Sim and Stay Awake); stage set to `gdd`.
+- Next: phase 1a of `PHASES.md`, the open questions, then a draft `GDD.md`.
+
 ## 2026-10-20 — Moved into coolmath-pilot
 - Copied from the LittleJS-AI playground (`examples/chessDefense`) without its git history; added this brief, `mechanic.svg`, devlog and meta for the dashboard.
 - Fixed loading: the engine (`dist/littlejs.js`, 1.18.26) and `templates/gameFx.js` now live in this folder instead of two folders up. Added `build.mjs`, `package.json` and `.gitignore` like the other prototypes; the raw `.wav` files in `sfx/` stay out of git.
