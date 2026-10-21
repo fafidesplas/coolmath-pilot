@@ -61,14 +61,21 @@ function hrDrawPlayer(p, eyeNudge = 0)
     const pos = vec2(p.x, p.y - (1 - sy) * HR_PSIZE / 2);
     drawRect(pos, size, p.color);
     drawText(p.letter, pos.add(vec2(-.1 * p.dir, -.1 * sy)), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
-    hrDrawEye(pos.add(vec2((.2 + eyeNudge) * (p.dir || 1), size.y / 2 - .06)), p.eye);
+    hrDrawEye(pos.add(vec2((.2 + eyeNudge) * (p.dir || 1), size.y / 2 - .06)), p.eye, .5, hrBlinkOpen(p.blinkT));
 }
 
+// how open the eye is during a blink: 1 open, 0 shut; t is seconds into the blink, -1 when not blinking
+const HR_BLINK_T = .16;
+function hrBlinkOpen(t) { return t < 0 ? 1 : clamp(Math.abs(1 - 2 * t / HR_BLINK_T)); }
+
 // one big googly eye, sticking out past the top corner, with a loose pupil and no outline
-function hrDrawEye(center, eye, d = .5)
+function hrDrawEye(center, eye, d = .5, open = 1)
 {
-    drawCircle(center, d, HR_WHITE);
-    drawCircle(center.add(vec2(eye.x, eye.y).scale(d / .5)), d * .42, HR_INK);
+    drawEllipse(center, vec2(d, d * max(open, .12)), HR_WHITE);
+    if (open > .5)
+        drawEllipse(center.add(vec2(eye.x, eye.y * open).scale(d / .5)), vec2(d * .42, d * .42 * open), HR_INK);
+    else
+        drawRect(center, vec2(d * .7, d * .1), HR_INK);   // shut: a thin ink lid line
 }
 
 function hrDrawGhost(pos)

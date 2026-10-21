@@ -13,7 +13,7 @@ function hrMakePlayer(index)
         color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
         x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
-        falls: 0, finished: false};
+        falls: 0, finished: false, blinkIn: rand(1, 4), blinkT: -1};
     p.pupilKick = (vx, vy) => { p.eye.vx += vx * 8; p.eye.vy += vy * 8; };
     return p;
 }
@@ -62,6 +62,14 @@ function hrPlayerStep(p, input)
     if (!p.grounded && !p.cling && !p.finished) p.trail.push(vec2(p.x, p.y));
     else if (p.trail.length) p.trail.shift();
     if (p.trail.length > 8) p.trail.shift();
+
+    // blink every 2.5-5 s, now and then twice in a row
+    if ((p.blinkIn -= timeDelta) <= 0)
+    {
+        p.blinkT = 0;
+        p.blinkIn = rand() < .2 ? .3 : rand(2.5, 5);
+    }
+    if (p.blinkT >= 0 && (p.blinkT += timeDelta) > HR_BLINK_T) p.blinkT = -1;
 
     // pupil: lags behind motion and swings back, which carries most of the character
     const e = p.eye, dt = timeDelta;

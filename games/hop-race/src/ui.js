@@ -404,8 +404,11 @@ function hrDrawTitle(W, H, u)
     hrRect(x, ground - sh / 2 - hop * 50 * u, sw, sh, HR_BLUE);
     hrText('A', x - 6 * u, ground - sh * .42 - hop * 50 * u, 26 * u, HR_WHITE);
     const ex = x + 14 * u, ey = ground - sh - hop * 50 * u + 4 * u;
-    drawCircle(vec2(ex, ey), 30 * u, HR_WHITE, 0, BLACK, false, true);
-    drawCircle(vec2(ex + 3 * u, ey + (hop > .5 ? -4 : 4) * u), 13 * u, HR_INK, 0, BLACK, false, true);
+    const open = hrBlinkOpen(timeReal % 3.4);
+    drawEllipse(vec2(ex, ey), vec2(30 * u, 30 * u * max(open, .12)), HR_WHITE, 0, 0, BLACK, false, true);
+    if (open > .5)
+        drawEllipse(vec2(ex + 3 * u, ey + (hop > .5 ? -4 : 4) * u * open), vec2(13 * u, 13 * u * open), HR_INK, 0, 0, BLACK, false, true);
+    else hrRect(ex, ey, 21 * u, 3 * u, HR_INK);
 }
 
 function hrDrawHud(W, H, u)
