@@ -4,7 +4,7 @@
 - Landing squeeze: the player holds flat for a moment, then springs back with a small stretch (0.36 s). Harder landings squeeze more. Before, it decayed in about 6 frames and you could hardly see it.
 - Eyes blink every 2.5–5 s, sometimes twice, on their own timer per player.
 - Flag trigger box runs from the pole base to the pennant tip; no slow-mo on finish (it dropped the frame rate).
-- Finish flag is now a waving checkered flag (6 × 4 cells), F1-style, in place of the white pennant. Same footprint, so the trigger box still fits.
+- Finish flag is now a waving checkered flag (6 × 4 cells), F1-style, in place of the white pennant. Same footprint, so the trigger box still fits. No outline; every cell waves, white ones included.
 - Idle glance: after 5 s standing still, the pupil darts left, right, left, right, then rests in the middle and repeats. Any press or movement stops it.
 - Next: more feel notes, real par/expert times, then a teammate plays it cold.
 

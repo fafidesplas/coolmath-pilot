@@ -50,10 +50,12 @@ function hrDrawFlag()
     const cell = (x0, x1, y0, y1) => [corner(x0, y0), corner(x1, y0), corner(x1, y1), corner(x0, y1)];
     const pos = vec2(f.x + .07, f.y + 3);
     drawRect(vec2(f.x, f.y + 1.5), vec2(.14, 3), HR_INK);
-    drawPoly(cell(0, w, 0, -h), HR_WHITE, .06, HR_INK, pos);
     for (let i = 0; i < cols; i++)
     for (let j = 0; j < rows; j++)
-        if ((i + j) % 2) drawPoly(cell(i * cw, (i + 1) * cw, -j * ch, -(j + 1) * ch), HR_INK, 0, HR_INK, pos);
+    {
+        const c = (i + j) % 2 ? HR_INK : HR_WHITE;
+        drawPoly(cell(i * cw, (i + 1) * cw, -j * ch, -(j + 1) * ch), c, 0, c, pos);
+    }
 }
 
 function hrDrawPlayer(p, eyeNudge = 0)
