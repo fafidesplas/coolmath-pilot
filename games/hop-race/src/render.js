@@ -64,10 +64,10 @@ function hrDrawPlayer(p, eyeNudge = 0)
     hrDrawEye(pos.add(vec2((.2 + eyeNudge) * (p.dir || 1), size.y / 2 - .06)), p.eye);
 }
 
-// one big googly eye, sticking out past the top corner, with a loose pupil
+// one big googly eye, sticking out past the top corner, with a loose pupil and no outline
 function hrDrawEye(center, eye, d = .5)
 {
-    drawCircle(center, d, HR_WHITE, .045, HR_INK);
+    drawCircle(center, d, HR_WHITE);
     drawCircle(center.add(vec2(eye.x, eye.y).scale(d / .5)), d * .42, HR_INK);
 }
 

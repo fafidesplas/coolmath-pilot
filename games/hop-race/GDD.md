@@ -205,14 +205,14 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Palette:** 6 colors in all, at most 4 on screen at once. Phase shares Hop's yellow, which also makes yellow the "home" color of the title and menus.
   | Hex | Role |
   |---|---|
-  | `#1D1A22` | Ink: every solid, googly eye rims and pupils, text, HUD, aim dots, power bar, launcher, rope |
+  | `#1D1A22` | Ink: every solid, googly eye pupils, text, HUD, aim dots, power bar, launcher, rope |
   | `#FFFFFF` | Player 2 (and P2's rockets, blasts, drops and gas), flag pennant, ice hatching, buttons, hook tip |
   | `#2E5BFF` | Player 1 (and P1's rockets, blasts, drops and gas) |
   | `#FFC94A` | Background, World 1 Hop and World 4 Phase; title and menus |
   | `#FF8C69` | Background, World 2 Rocket |
   | `#7FD1C7` | Background, World 3 Grapple |
 - **Key visuals:**
-  - **Players:** flat squares with no outline. Each has one big googly eye (about 60 % of the square's width) that sticks out past its top corner: a white ball with a thin ink rim and an ink pupil. The pupil is loose: it lags behind and swings with the player's motion (charging, launch, landing, sliding), which carries most of the character. P1 is blue with a white **A**; P2 is white with an ink **L**. They differ in lightness and letter, never only in hue.
+  - **Players:** flat squares with no outline. Each has one big googly eye (about 60 % of the square's width) that sticks out past its top corner: a plain white ball with no outline and an ink pupil. The pupil is loose: it lags behind and swings with the player's motion (charging, launch, landing, sliding), which carries most of the character. P1 is blue with a white **A**; P2 is white with an ink **L**. They differ in lightness and letter, never only in hue.
   - **Level pieces:** solid ink shapes; each element is told apart by its silhouette (see §5): hatched top for ice, sawtooth face for grip walls, bumpy top for sticky floors, hollow for no-grip, bars for gates.
   - **Phase:** liquid is solid drops in the player's color; gas is hollow rings in the player's color, so liquid and gas never look alike.
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
@@ -308,6 +308,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — The googly eye loses its ink rim: a plain white ball with an ink pupil.
 - 2026-10-21 — Slice build: the level box's side edges act as plain walls; levels keep the top 1.5 u clear for the HUD; `src/config.js` and `src/player.js` added to the module list. Hop's top jump speed is 20 u/s (was 25).
 - 2026-10-21 — Approved by the owner; the team agreed to skip the peer review. Phase 2 (vertical slice) starts. The art family question in §14 stays open.
 - 2026-10-21 — Phase controls: one press cycles solid → liquid → gas → solid, with no holding; liquid reaches solid only through gas. Fire pits removed; grates (solid stands, liquid drips through, gas rises through) arrive at Phase 6. Tutorial prompt, level outline, audio, art and data format updated.

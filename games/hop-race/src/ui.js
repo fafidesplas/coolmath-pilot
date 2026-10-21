@@ -404,7 +404,7 @@ function hrDrawTitle(W, H, u)
     hrRect(x, ground - sh / 2 - hop * 50 * u, sw, sh, HR_BLUE);
     hrText('A', x - 6 * u, ground - sh * .42 - hop * 50 * u, 26 * u, HR_WHITE);
     const ex = x + 14 * u, ey = ground - sh - hop * 50 * u + 4 * u;
-    drawCircle(vec2(ex, ey), 30 * u, HR_WHITE, 3 * u, HR_INK, false, true);
+    drawCircle(vec2(ex, ey), 30 * u, HR_WHITE, 0, BLACK, false, true);
     drawCircle(vec2(ex + 3 * u, ey + (hop > .5 ? -4 : 4) * u), 13 * u, HR_INK, 0, BLACK, false, true);
 }
 
