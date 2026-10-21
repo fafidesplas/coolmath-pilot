@@ -1,0 +1,16 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #2B2238;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+canvas {
+  display: block;
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  outline: none;
+}
