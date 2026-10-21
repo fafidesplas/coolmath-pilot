@@ -4,7 +4,7 @@
 
 ![How Hop Race plays](mechanic.svg)
 
-**Rank:** Prototype · **Genre:** One-button race · **Art family:** Night Neon · **Audience habit:** Coolmath nostalgia (fans of two-players-one-keyboard games)
+**Rank:** Prototype · **Genre:** One-button race · **Art family:** Toybox Flat (the prototype looks Night Neon; changed in the GDD) · **Audience habit:** Coolmath nostalgia (fans of two-players-one-keyboard games)
 
 @../../STANDARDS.md
 @../../PHASES.md
