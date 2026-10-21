@@ -7,10 +7,11 @@
 
 const hrHex = hex => new Color().setHex(hex);
 
-// GDD §9: 6 colors in all, at most 4 on screen at once
+// GDD §9: 7 colors in all, at most 5 on screen at once
 const HR_INK    = hrHex('#1D1A22');
 const HR_WHITE  = hrHex('#FFFFFF');
 const HR_BLUE   = hrHex('#2E5BFF');
+const HR_RED    = hrHex('#E5262B');
 const HR_YELLOW = hrHex('#FFC94A');
 const HR_CORAL  = hrHex('#FF8C69');
 const HR_TEAL   = hrHex('#7FD1C7');

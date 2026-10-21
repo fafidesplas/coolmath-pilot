@@ -10,7 +10,7 @@ let hrPlayers = [];
 function hrMakePlayer(index)
 {
     const p = {index, letter: index ? 'L' : 'A',
-        color: index ? HR_WHITE : HR_BLUE, letterColor: index ? HR_INK : HR_WHITE,
+        color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
         x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
         falls: 0, finished: false};

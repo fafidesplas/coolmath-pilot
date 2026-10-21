@@ -448,7 +448,7 @@ function hrDrawHud(W, H, u)
 // world-space tutorial prompt above the start, level 1 of each world only
 function hrDrawPrompt()
 {
-    if (!hrRun || !hrRun.prompt || hrScreen != 'playing') return;
+    if (!hrRun || !hrRun.prompt || hrScreen != 'playing' || (hrMatch && hrMatch.countdown > 0)) return;
     const s = hrLevel.start;
     drawText(hrLevelDef().prompt, vec2(s.x + 1.5, s.y + 3), .9, HR_INK.scale(1, hrRun.prompt), 0, BLACK, 'left', HR_FONT, HR_FONT_STYLE);
 }

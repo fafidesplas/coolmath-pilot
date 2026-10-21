@@ -46,7 +46,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - A launcher spins around you all the time at 3 rad/s. Each shot reverses the spin direction.
 - **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid. Firing gives you a small recoil of 4 u/s backwards.
 - **Blast:** radius 4 u, pushes **only the player who fired it** away from its center at up to 30 u/s (falling off with distance). Top speed 27 u/s. Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
-- **Whose blast is it:** rockets, blast rings and splash particles take their owner's color (P1 blue, P2 white), so in Versus it is always obvious whose shot is whose.
+- **Whose blast is it:** rockets, blast rings and splash particles take their owner's color (P1 blue, P2 red), so in Versus it is always obvious whose shot is whose.
 - **Buttons and gates** (from level 3): a blast within 2.5 u of a button presses it; its gate slides up into the ceiling and stays open. In Versus a gate opened by either player is open for both.
 - **Ice floor** (from level 4): ground friction drops to 0.6/s, so a blast sends you gliding.
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
@@ -95,7 +95,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Element | Behavior | First appears | Shape/icon (not color alone) |
 |---|---|---|---|
 | Player 1 | The racer, controlled by A / left half | Hop 1 | Blue square, no outline, big googly eye, white letter **A** |
-| Player 2 | The racer, controlled by L / right half | Versus | White square, no outline, big googly eye, dark letter **L** |
+| Player 2 | The racer, controlled by L / right half | Versus | Red square, no outline, big googly eye, white letter **L** |
 | Ghost | Your best run on this level, replayed; no collision | Solo, after first finish | Hollow outline square, no eye, 40 % alpha |
 | Hat | Cosmetic, unlocked by stars | Title screen | Small ink shapes on top of the square (§7) |
 | Aim dots | Preview of the jump (Hop) | Hop 1 | Small ink squares fading along the arc |
@@ -202,24 +202,25 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ## 9. Art direction
 - **Family:** Two-tone minimal. It is outside the three art families in the README (closest to Toybox Flat with everything removed), so the team must agree; see §14. Mockups: the "D" frames on the Hop Race Art Direction canvas.
 - **Rule:** each screen has one flat background color, and everything solid is one dark ink. No outlines on level pieces, no shading, textures, gradients or decoration. The players are the only other color, so the eye always finds them.
-- **Palette:** 6 colors in all, at most 4 on screen at once. Phase shares Hop's yellow, which also makes yellow the "home" color of the title and menus.
+- **Palette:** 7 colors in all, at most 5 on screen at once (one more than the 4–6 in `STANDARDS.md`; see §14). Phase shares Hop's yellow, which also makes yellow the "home" color of the title and menus.
   | Hex | Role |
   |---|---|
   | `#1D1A22` | Ink: every solid, googly eye pupils, text, HUD, aim dots, power bar, launcher, rope |
-  | `#FFFFFF` | Player 2 (and P2's rockets, blasts, drops and gas), flag pennant, ice hatching, buttons, hook tip |
+  | `#FFFFFF` | Googly eyes, player letters, flag pennant, ice hatching, buttons, hook tip, confetti |
   | `#2E5BFF` | Player 1 (and P1's rockets, blasts, drops and gas) |
+  | `#E5262B` | Player 2 (and P2's rockets, blasts, drops and gas) |
   | `#FFC94A` | Background, World 1 Hop and World 4 Phase; title and menus |
   | `#FF8C69` | Background, World 2 Rocket |
   | `#7FD1C7` | Background, World 3 Grapple |
 - **Key visuals:**
-  - **Players:** flat squares with no outline. Each has one big googly eye (about 60 % of the square's width) that sticks out past its top corner: a plain white ball with no outline and an ink pupil. The pupil is loose: it lags behind and swings with the player's motion (charging, launch, landing, sliding), which carries most of the character. P1 is blue with a white **A**; P2 is white with an ink **L**. They differ in lightness and letter, never only in hue.
+  - **Players:** flat squares with no outline. Each has one big googly eye (about 60 % of the square's width) that sticks out past its top corner: a plain white ball with no outline and an ink pupil. The pupil is loose: it lags behind and swings with the player's motion (charging, launch, landing, sliding), which carries most of the character. P1 is blue with a white **A**; P2 is red with a white **L**. They differ in hue and letter, never in color alone: the letter is always there, and blue and red stay apart for the common types of color blindness (red reads as a dark brown). P2 can't be white (the eye would blend into the body) or any other palette color (each is a world background or the level ink).
   - **Level pieces:** solid ink shapes; each element is told apart by its silhouette (see §5): hatched top for ice, sawtooth face for grip walls, bumpy top for sticky floors, hollow for no-grip, bars for gates.
   - **Phase:** liquid is solid drops in the player's color; gas is hollow rings in the player's color, so liquid and gas never look alike.
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
 - **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a 0.2 s slow-mo on finish; one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
-- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one white square character with a letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and white rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
+- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one red square character with a white letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and red rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
 
 ## 10. Audio
 | Sound | When | Character |
@@ -305,9 +306,11 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Lower the rocket blast about 20 % when Rocket is ported; keep the aim sweep and charge time. | Pao | Hop done, Rocket open |
 | Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
+| P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — P2 changes from white to red (`#E5262B`) with a white L, because the outline-free white eye vanished on a white body. Palette is 7 colors; players differ in hue and letter.
 - 2026-10-21 — The googly eye loses its ink rim: a plain white ball with an ink pupil.
 - 2026-10-21 — Slice build: the level box's side edges act as plain walls; levels keep the top 1.5 u clear for the HUD; `src/config.js` and `src/player.js` added to the module list. Hop's top jump speed is 20 u/s (was 25).
 - 2026-10-21 — Approved by the owner; the team agreed to skip the peer review. Phase 2 (vertical slice) starts. The art family question in §14 stays open.
