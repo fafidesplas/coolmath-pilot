@@ -10,7 +10,7 @@
   1. **One button, instantly understood.** Every action in every mode is hold, press or release of a single input. Nothing else to learn.
   2. **Short and snappy.** A level is 8–20 s, a restart under a second, a rematch one press away.
   3. **Same button, new meaning.** Each mode reinterprets the button so the fourth world feels as fresh as the first.
-- **Player:** Coolmath regulars on a school Chromebook or home laptop, mostly alone (solo is the main path), sometimes two friends sharing one keyboard or one tablet.
+- **Player:** Coolmath regulars on a school Chromebook or home laptop, mostly alone (solo is the main path), sometimes two friends sharing one keyboard or one tablet. **Ages:** the core is about 13–24 (teens and young adults at school or on a break, matching Coolmath's biggest group, 18–24); the floor is about 9–10, so younger kids can still finish the early levels. One button and a tutorial first level keep it open to the young end; expert times, 3 stars and the ghost give the older end a skill ceiling. **Tone:** playful but never babyish; text short and dry ("Nice." over "Yay, great job!!").
 - **Session:** one level 8–20 s solo; a versus match (first to 3) about 1–2 min; a typical visit 10–15 min.
 - **Hook:** beating your own ghost by a few tenths, chasing the 3rd star, and "one more round" against a friend.
 
@@ -270,9 +270,11 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Sand `wor
 | Par/expert times: set by hand or by a replay bot? | By hand from designer runs (expert ×1.1, par ×1.6), checked by a teammate in phase 3. | Pao | Open |
 | Jump and blast ranges in 24–30 u levels | Lower Hop's top jump speed and the rocket blast about 20 % in the slice; keep the aim sweep and charge time. | Pao | Open |
 | P2 orange vs fire orange in Sand | Fire uses flicker and a flame shape so it never reads as a player; recheck in the slice. | Pao | Open |
-| Sand finish needs 40 of 49 grains: too strict for kids? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
+| Sand finish needs 40 of 49 grains: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
+| Art direction: the Toybox Flat mockup looks too close to an existing pastel one-button game | Explore two directions before settling §9: sleek wind-up toys (charging winds the key) and a dusk storybook look (no outlines, layered silhouettes). A look outside the three art families needs team agreement. | Pao + team | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Player line names the age range (core 13–24, floor 9–10) and the tone. Art direction reopened as an open question.
 - 2026-10-21 — Owner review: art family changed to Toybox Flat (new palette, visuals and prompts). Levels shrink to one 24–30 u screen with a fixed camera that always shows the whole level, so players are drawn bigger; landscape only from 4:3 to 21:9, with a rotate screen in portrait. Falling sends you back to the level's start, no checkpoints. One finish rule for Hop, Rocket and Grapple: touch the flag's trigger box. New elements: ice (Hop 5, Rocket 4) and sticky floor (Rocket 7). Hop stays precise (no landing momentum). Hats and cosmetics added to Later.
 - 2026-10-21 — First draft from the brief and the phase 1a answers: 4 modes as worlds of 10, solo time trial with ghost as the main path, Versus on any level, all levels unlocked behind one switchable rule, no daily, LittleJS kept.
