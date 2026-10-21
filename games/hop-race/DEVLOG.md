@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-21 — GDD owner review and art direction
+- Owner review applied: smaller one-screen levels with a fixed camera, landscape only, falls send you back to the start, ice and sticky floors, one flag trigger box. GDD now names the age range (core 13–24) and tone.
+- Art direction settled after trying six looks on the "Hop Race Art Direction" canvas: two-tone minimal (look D). One flat background color per world, solid dark level pieces, players as flat squares with no outline and one big googly eye. The Toybox Flat mockup was too close to an existing game.
+- Next: critical review pass (1c); team agrees on the new art family; a teammate reviews the GDD for approval.
+
 ## 2026-10-21 — GDD first draft
 - Phase 1a questions answered; wrote `GDD.md` (Status: Draft).
 - Decisions: 4 modes as worlds of 10 levels (Hop = Classic + Wall Jump, Rocket, Grapple, Sand = Flow + Flow 2); Orbit and Rocket (pits) cut. Solo time trial with stars and a ghost is the main path; 2-player Versus on any level. All levels unlocked behind one switchable rule. No daily. LittleJS kept.
