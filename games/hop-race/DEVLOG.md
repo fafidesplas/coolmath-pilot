@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-10-21 — Slice gate passed, Rocket world built
+- Gate: Fafi's partner played the Hop slice cold and had fun, so stage is now `content`. Her note: player-to-player collision might be exciting. Recorded as an open question in GDD §14; no change yet.
+- Rocket mode ported from the prototype (`src/modes/rocket.js`): spinning launcher, press to fire, blast pushes only its owner, rockets in the owner's color pass through players. Blast 24 u/s, top speed 22 u/s (−20 % for the smaller levels).
+- New level pieces, drawn as GDD §5 says: ice (white hatched top), sticky floor (bumpy top, stops you dead, blasts at 50 %), gates (bars, dotted line to the button) and buttons (white target, check mark when pressed). Gates and buttons live in `src/level.js`, so later worlds can use them.
+- 10 Rocket levels in `levels/rocket.js`. A random-press bot finished every level; win rates fall from 90 % (2-1) to 30 % (2-10), and no run got past a gate without its button.
+- Par/expert are placeholders (the bot's best times, 1–4 s, are not human times).
+- Next: play the Rocket world and send notes; set par/expert from your runs; Hop 4–10.
+
 ## 2026-10-21 — Feel loop: landing squeeze, blink, checkered flag
 - Landing squeeze: the player holds flat for a moment, then springs back with a small stretch (0.36 s). Harder landings squeeze more. Before, it decayed in about 6 frames and you could hardly see it.
 - Eyes blink every 2.5–5 s, sometimes twice, on their own timer per player.

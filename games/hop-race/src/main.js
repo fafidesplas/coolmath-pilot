@@ -22,6 +22,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     hrWorld = world; hrLevelIndex = index; hrVersus = versus;
     const def = hrLevelDef();
     hrLoadLevel(def);
+    hrMode().clear?.();
     hrCameraReset();
     clearParticles();
     hrPlayers = versus ? [hrMakePlayer(0), hrMakePlayer(1)] : [hrMakePlayer(0)];
@@ -81,7 +82,7 @@ function hrEmit(type, p)
 {
     const tut = hrIsTutorial();
     if (type == 'hold' && tut) hrTutorial('step01');
-    if (type == 'jump')
+    if (type == 'jump' || type == 'fire')
     {
         if (tut) hrTutorial('step02');
         if (hrRun.prompt) hrRun.promptFade = true;   // the prompt fades after the first successful action
@@ -168,7 +169,12 @@ function gameUpdate()
     hrInputEnd(racing, hrVersus);
     hrUiContinue();
 
-    if (hrScreen == 'playing') hrPlayUpdate(racing);
+    if (hrScreen == 'playing')
+    {
+        hrGatesUpdate();
+        hrMode().update?.();
+        hrPlayUpdate(racing);
+    }
 }
 
 function hrPlayUpdate(racing)
@@ -237,6 +243,7 @@ function gameRender()
     hrDrawBackground();
     if (!hrInWorld()) return;
     hrDrawLevel();
+    hrMode().drawWorld?.();
     if (!hrVersus && hrRun && hrSave.settings.ghost)
         hrDrawGhost(hrGhostPos(hrRun.started || hrFinishT >= 0 ? hrRun.frames : 0));
     hrPlayers.forEach(p => hrMode().draw(p));

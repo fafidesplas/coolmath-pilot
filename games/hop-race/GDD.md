@@ -44,10 +44,10 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 
 ### 3.3 Rocket
 - A launcher spins around you all the time at 3 rad/s. Each shot reverses the spin direction.
-- **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid. Firing gives you a small recoil of 4 u/s backwards.
-- **Blast:** radius 4 u, pushes **only the player who fired it** away from its center at up to 30 u/s (falling off with distance). Top speed 27 u/s. Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
+- **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid or button; it passes through players. Firing gives you a small recoil of 4 u/s backwards. You can fire in the air too.
+- **Blast:** radius 4 u, pushes **only the player who fired it** away from its center at up to 24 u/s (falling off with distance; the prototype's 30 less 20 %). Top speed 22 u/s (was 27). Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
 - **Whose blast is it:** rockets, blast rings and splash particles take their owner's color (P1 blue, P2 red), so in Versus it is always obvious whose shot is whose.
-- **Buttons and gates** (from level 3): a blast within 2.5 u of a button presses it; its gate slides up into the ceiling and stays open. In Versus a gate opened by either player is open for both.
+- **Buttons and gates** (from level 3): a rocket that hits a button, or a blast within 2.5 u of it, presses it; its gate slides up into the ceiling and stays open. Gate levels have a thin ceiling just under the HUD, so the only way past a gate is its button. In Versus a gate opened by either player is open for both.
 - **Ice floor** (from level 4): ground friction drops to 0.6/s, so a blast sends you gliding.
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
 
@@ -145,7 +145,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   9. **Slide and Climb:** an ice ledge that ends at a pit, then a grip shaft up to the flag.
   10. **The Gauntlet:** a gap, an ice landing, a low ceiling and a grip shaft in one run.
 - **Other worlds (outline; full level lists in phase 3):**
-  - **Rocket:** 1 flat floor, blast yourself forward · 2 hop a ledge with a downward blast · 3 first button and gate · 4 first ice floor, blasts send you gliding · 5 a button reached by a bank shot · 6 first pits · 7 first sticky floor · 8–10 combinations (the prototype's level, cut down to fit, ≈ 8).
+  - **Rocket (built):** 1 **Blast Off**: flat floor with two low bumps; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
   - **Grapple:** 1 one pillar over a short pit · 2 two pillars · 3 release timing for distance · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5).
   - **Phase:** 1 melt and pour down one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4 first gas: rise past a wall · 5 freeze out of gas to land on a ledge · 6 first grate · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
 - **Level data format:** one JS file per world in `levels/` (e.g. `levels/hop.js`) that adds to a global, because the game must run from `file://` where `fetch` of JSON and ES modules are blocked. Keep the top 1.5 u of the level clear near the right edge and the center: the HUD sits there when the window is exactly 16:9 and the margin is too thin for it. Coordinates are centered on the level box: a `size: 24` level spans x −12…12 and y −6.75…6.75.
@@ -303,13 +303,15 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | 3–4 players on one keyboard? | Not in v1: many keyboards can't register 3–4 held keys at once, and touch quarters are too small. Revisit with a ghosting test. | Pao | Later |
 | Mouse in Versus: let a mouse click count as P1 so a mouse + L pair works? | Yes, cheap and removes the "Versus needs a keyboard" caveat. | Pao | Open |
 | Par/expert times: set by hand or by a replay bot? | By hand from designer runs (expert ×1.1, par ×1.6), checked by a teammate in phase 3. | Pao | Open |
-| Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Lower the rocket blast about 20 % when Rocket is ported; keep the aim sweep and charge time. | Pao | Hop done, Rocket open |
+| Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Rocket blast is 24 u/s, top speed 22 u/s (both −20 %); keep the aim sweep and charge time. | Pao | Hop and Rocket done |
+| Player-to-player collision? A cold playtester (Hop, 2026-10-21) said bumping into the other player might be exciting | Recorded only, no change yet. Today players pass through each other (§3.1) and rockets push only their owner (§13 Cut), so Versus stays a pure race. If it is tried, make it Versus-only and light (a bump that trades some speed, no pushing off ledges) and playtest it against the pinning problem. | Pao | Open |
 | Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Rocket world built: 10 levels listed in §6 (replacing the outline). Blast 24 u/s, top speed 22 u/s. Rockets pass through players and explode on buttons. Gate levels get a thin ceiling under the HUD. New open question: player-to-player collision.
 - 2026-10-21 — Idle glance: after 5 s standing still, the pupil looks left and right furtively in a loop.
 - 2026-10-21 — The finish flag is a waving checkered flag, F1-style, instead of a white pennant. Same size, so the trigger box is unchanged.
 - 2026-10-21 — Landing squeeze is longer (0.36 s: hold flat, then a small spring back) and deeper on harder landings, so it reads on screen.

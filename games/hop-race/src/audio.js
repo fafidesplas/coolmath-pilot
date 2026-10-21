@@ -20,6 +20,9 @@ function hrAudioInit()
         beepLow:   new SoundGenerator({frequency: 330, release: .15, volume: .35}),
         beepHigh:  new SoundGenerator({frequency: 660, release: .3, volume: .4}),
         click:     new SoundGenerator({frequency: 900, release: .03, volume: .25}),
+        fire:      new SoundGenerator({frequency: 500, release: .12, slide: -.4, noise: 3, volume: .3}),
+        boom:      new SoundGenerator({frequency: 90, release: .35, slide: -.3, noise: 12, bitCrush: .2, volume: .5}),
+        goo:       new SoundGenerator({frequency: 140, release: .2, slide: -.6, tremolo: .5, repeatTime: .05, volume: .4}),
     };
     hrApplySound();
 }

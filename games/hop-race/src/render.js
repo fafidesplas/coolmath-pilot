@@ -18,16 +18,70 @@ function hrDrawBackground()
 function hrDrawLevel()
 {
     const L = hrLevel, hw = L.w / 2, hh = L.h / 2, far = 60;
+    for (const g of L.gates) hrDrawGate(g);
     for (const s of L.solids)
     {
-        if (s.edge) continue;
+        if (s.edge || s.gate) continue;
         // solids that touch the level box edge are drawn on to the screen edge
         const l = s.l <= -hw + .01 ? s.l - far : s.l, r = s.r >= hw - .01 ? s.r + far : s.r;
         const top = s.top >= hh - .01 ? s.top + far : s.top;
         drawRect(vec2((l + r) / 2, (top + s.bottom) / 2), vec2(r - l, top - s.bottom), HR_INK);
         if (s.grip) hrDrawSawtooth(s);
+        if (s.ice) hrDrawIce(s);
+        if (s.sticky) hrDrawSticky(s);
     }
     hrDrawFlag();
+}
+
+// icy floor: a white hatched stripe along the top
+function hrDrawIce(s)
+{
+    const y = s.top - .2, h = .16, step = .45, lean = .16;
+    for (let x = s.l + .12; x + .2 + lean < s.r; x += step)
+        drawPoly([vec2(x, -h / 2), vec2(x + .2, -h / 2), vec2(x + .2 + lean, h / 2), vec2(x + lean, h / 2)],
+            HR_WHITE, 0, HR_WHITE, vec2(0, y));
+}
+
+// sticky floor: a bumpy, rounded top edge
+function hrDrawSticky(s)
+{
+    const n = max(2, Math.round((s.r - s.l) / .5)), step = (s.r - s.l) / n;
+    for (let i = 0; i < n; i++)
+        drawCircle(vec2(s.l + step * (i + .5), s.top), step * 1.1, HR_INK);
+}
+
+// gate: dark bars with the background between, a dotted line to its button; button: a white target
+// on a dark mount that becomes a white check mark once pressed
+function hrDrawGate(g)
+{
+    const s = g.solid, b = g.button, top = min(s.top, hrLevel.h / 2 + 30);
+    if (s.top - s.bottom > .05)
+    {
+        const h = top - s.bottom, n = max(2, Math.round((s.r - s.l) / .35));
+        for (let i = 0; i < n; i++)
+        {
+            const x = s.l + (s.r - s.l) * (i + .5) / n;
+            drawRect(vec2(x, s.bottom + h / 2), vec2(.16, h), HR_INK);
+        }
+        drawRect(vec2((s.l + s.r) / 2, s.bottom + .12), vec2(s.r - s.l, .24), HR_INK);
+        // dotted link from the button to the gate's foot
+        const from = vec2(b.x, b.y), to = vec2((s.l + s.r) / 2, s.bottom + .3), d = to.distance(from);
+        for (let t = .9; t < d - .3; t += .45)
+            drawRect(from.lerp(to, t / d), vec2(.1), HR_INK.scale(1, .45));
+    }
+    drawRect(vec2(b.x, b.y), vec2(1.1), HR_INK);
+    if (!g.pressed)
+    {
+        const pulse = 1 + .06 * Math.sin(time * 6);
+        drawCircle(vec2(b.x, b.y), .8 * pulse, HR_WHITE);
+        drawCircle(vec2(b.x, b.y), .5 * pulse, HR_INK);
+        drawCircle(vec2(b.x, b.y), .24 * pulse, HR_WHITE);
+    }
+    else
+    {
+        drawLine(vec2(b.x - .3, b.y), vec2(b.x - .08, b.y - .24), .15, HR_WHITE);
+        drawLine(vec2(b.x - .08, b.y - .24), vec2(b.x + .3, b.y + .26), .15, HR_WHITE);
+    }
 }
 
 // grip walls: a sawtooth face on both sides
@@ -103,6 +157,20 @@ function hrDust(x, y)
     const c = HR_INK.scale(1, .7), e = HR_INK.scale(1, 0);
     new ParticleEmitter(vec2(x, y), 0, .6, .05, 30, PI, undefined, c, c, e, e,
         .35, .16, .04, .06, 0, .9, 1, .2, PI, .1, .3);
+}
+
+// white sparkle while sliding on ice
+function hrSparkle(x, y)
+{
+    new ParticleEmitter(vec2(x, y), 0, .6, .05, 40, PI, undefined,
+        HR_WHITE, HR_WHITE, HR_WHITE.scale(1, 0), HR_WHITE.scale(1, 0), .3, .14, .02, .02, 0, .9, 1, 0, PI, .1, .5);
+}
+
+// rocket blast: a splash in the owner's color
+function hrBlastFx(pos, color)
+{
+    new ParticleEmitter(pos, 0, .4, .1, 300, PI, undefined, color, color, color.scale(1, 0), color.scale(1, 0),
+        .45, .22, .06, .3, 0, .9, 1, .1, PI, .1, .4);
 }
 
 // white confetti on finish
