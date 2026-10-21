@@ -19,11 +19,22 @@ function hrLandSquash(p)
 // total vertical squash (0 square, + flatter, - taller)
 function hrSquashY(p) { return min(.6, p.squash + hrLandSquash(p) + p.crouch); }
 
+// idle glance: after 5 s standing still the pupil darts left and right, holds, then rests in the middle
+const HR_IDLE_T = 5;
+const HR_GLANCES = [[-1, .7], [1, .7], [-1, .35], [1, .35], [0, 1.4]];   // [screen side, seconds held]
+function hrGlance(t)
+{
+    t %= HR_GLANCES.reduce((sum, g) => sum + g[1], 0);
+    for (const [side, hold] of HR_GLANCES)
+        if ((t -= hold) < 0) return side;
+    return 0;
+}
+
 function hrMakePlayer(index)
 {
     const p = {index, letter: index ? 'L' : 'A',
         color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
-        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, land: 0, landT: -1, trail: [],
+        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, land: 0, landT: -1, idleT: 0, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
         falls: 0, finished: false, blinkIn: rand(1, 4), blinkT: -1};
     p.pupilKick = (vx, vy) => { p.eye.vx += vx * 8; p.eye.vy += vy * 8; };
@@ -40,6 +51,7 @@ function hrResetPlayer(p)
     p.down = false;
     p.squash = p.crouch = 0;
     p.landT = -1;
+    p.idleT = 0;
     p.trail = [];
     p.eye.x = p.eye.y = p.eye.vx = p.eye.vy = 0;
     hrMode().reset(p);
@@ -85,10 +97,18 @@ function hrPlayerStep(p, input)
     }
     if (p.blinkT >= 0 && (p.blinkT += timeDelta) > HR_BLINK_T) p.blinkT = -1;
 
+    const still = (p.grounded || p.cling) && !p.down && !p.finished && !p.vx && !p.vy;
+    p.idleT = still ? p.idleT + timeDelta : 0;
+
     // pupil: lags behind motion and swings back, which carries most of the character
     const e = p.eye, dt = timeDelta;
-    const tx = clamp(-p.vx * .006, -.12, .12) + (p.dir || 1) * .04;
-    const ty = clamp(-p.vy * .006, -.12, .12) - (p.down ? .03 : 0);
+    let tx = clamp(-p.vx * .006, -.12, .12) + (p.dir || 1) * .04;
+    let ty = clamp(-p.vy * .006, -.12, .12) - (p.down ? .03 : 0);
+    if (p.idleT > HR_IDLE_T)
+    {
+        const side = hrGlance(p.idleT - HR_IDLE_T);
+        if (side) { tx = side * .13; ty = -.03; }   // a little low, which reads as shifty
+    }
     e.vx += ((tx - e.x) * 260 - e.vx * 9) * dt;
     e.vy += ((ty - e.y) * 260 - e.vy * 9) * dt;
     e.x += e.vx * dt; e.y += e.vy * dt;
