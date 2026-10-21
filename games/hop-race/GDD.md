@@ -101,7 +101,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Aim dots | Preview of the jump (Hop) | Hop 1 | Small ink squares fading along the arc |
 | Power bar | Charge level while holding (Hop) | Hop 1 | Thin ink outline above the player, filling with ink |
 | Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
-| Flag | The goal; touch its trigger box | Hop 1 | Dark pole with a white pennant |
+| Flag | The goal; touch its trigger box | Hop 1 | Dark pole with a waving checkered flag (6 × 4 ink and white cells, F1-style) |
 | Plain wall | Solid; bounces you back in Hop | Hop 4 | Solid dark block, straight sides |
 | Icy floor | You slide after landing (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 6 | Block hanging from the top |
@@ -117,7 +117,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | No-grip surface | The hook bounces off; it does not stick | Grapple 6 | Hollow block (dark outline, background inside) |
 | Slab | Tilted platform in Phase | Phase 1 | Thin tilted dark bar |
 | Grate | Solid stands on it; liquid drips through; gas rises through | Phase 6 | Thin ink bars with even gaps, no dotted link (unlike a gate) |
-| Hanging flag | Flag on the underside of a ceiling slab | Phase 7 | Upside-down pole and pennant |
+| Hanging flag | Flag on the underside of a ceiling slab | Phase 7 | Upside-down pole and checkered flag |
 
 ## 6. Level design
 - **Structure:** 4 worlds of 10 levels, one per mode, 40 levels in v1. Every level is a single 16:9 screen (24–30 u wide), holds 3–5 obstacles, and takes 8–20 s solo for a first clean run.
@@ -206,7 +206,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   | Hex | Role |
   |---|---|
   | `#1D1A22` | Ink: every solid, googly eye pupils, text, HUD, aim dots, power bar, launcher, rope |
-  | `#FFFFFF` | Googly eyes, player letters, flag pennant, ice hatching, buttons, hook tip, confetti |
+  | `#FFFFFF` | Googly eyes, player letters, checkered flag cells, ice hatching, buttons, hook tip, confetti |
   | `#2E5BFF` | Player 1 (and P1's rockets, blasts, drops and gas) |
   | `#E5262B` | Player 2 (and P2's rockets, blasts, drops and gas) |
   | `#FFC94A` | Background, World 1 Hop and World 4 Phase; title and menus |
@@ -220,7 +220,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
 - **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; each eye blinks every 2.5–5 s (sometimes twice), on its own timer so P1 and P2 never blink in sync; squash down toward the floor while charging, deeper the more power is charged (up to 45 % flatter at full charge), on landing, a short squeeze (held flat for a moment, deeper on harder landings, then a small spring back past square), stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a stretch pop on finish (no slow-mo: it dropped the frame rate); one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
-- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one red square character with a white letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and red rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
+- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one red square character with a white letter L, no outlines, each with one big googly eye, dotted square aim trail, black-and-white checkered racing flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and red rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
 
 ## 10. Audio
 | Sound | When | Character |
@@ -310,6 +310,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — The finish flag is a waving checkered flag, F1-style, instead of a white pennant. Same size, so the trigger box is unchanged.
 - 2026-10-21 — Landing squeeze is longer (0.36 s: hold flat, then a small spring back) and deeper on harder landings, so it reads on screen.
 - 2026-10-21 — Players' eyes blink every 2.5–5 s, now and then twice in a row.
 - 2026-10-21 — Flag trigger box now spans the pole to the pennant tip instead of centering on the pole. The 0.2 s finish slow-mo is replaced by a stretch pop, because slowing the engine dropped the frame rate to 20 fps.

@@ -42,11 +42,18 @@ function hrDrawSawtooth(s)
         }
 }
 
+// checkered finish flag: 6 x 4 cells, waving more toward the free end
 function hrDrawFlag()
 {
-    const f = hrLevel.flag, wave = Math.sin(time * 4) * .08;
+    const f = hrLevel.flag, w = 1.3, h = .88, cols = 6, rows = 4, cw = w / cols, ch = h / rows;
+    const corner = (x, y) => vec2(x, y + Math.sin(time * 4 - x * 2.5) * .1 * x / w);
+    const cell = (x0, x1, y0, y1) => [corner(x0, y0), corner(x1, y0), corner(x1, y1), corner(x0, y1)];
+    const pos = vec2(f.x + .07, f.y + 3);
     drawRect(vec2(f.x, f.y + 1.5), vec2(.14, 3), HR_INK);
-    drawPoly([vec2(0, 0), vec2(1.3, -.45 + wave), vec2(0, -.9)], HR_WHITE, 0, HR_INK, vec2(f.x + .07, f.y + 3));
+    drawPoly(cell(0, w, 0, -h), HR_WHITE, .06, HR_INK, pos);
+    for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++)
+        if ((i + j) % 2) drawPoly(cell(i * cw, (i + 1) * cw, -j * ch, -(j + 1) * ch), HR_INK, 0, HR_INK, pos);
 }
 
 function hrDrawPlayer(p, eyeNudge = 0)

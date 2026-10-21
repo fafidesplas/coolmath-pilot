@@ -1,9 +1,10 @@
 # Hop Race — devlog
 
-## 2026-10-21 — Feel loop: landing squeeze, blink, flag box
+## 2026-10-21 — Feel loop: landing squeeze, blink, checkered flag
 - Landing squeeze: the player holds flat for a moment, then springs back with a small stretch (0.36 s). Harder landings squeeze more. Before, it decayed in about 6 frames and you could hardly see it.
 - Eyes blink every 2.5–5 s, sometimes twice, on their own timer per player.
 - Flag trigger box runs from the pole base to the pennant tip; no slow-mo on finish (it dropped the frame rate).
+- Finish flag is now a waving checkered flag (6 × 4 cells), F1-style, in place of the white pennant. Same footprint, so the trigger box still fits.
 - Next: more feel notes, real par/expert times, then a teammate plays it cold.
 
 ## 2026-10-21 — Vertical slice: Hop 1–3 with the full shell
