@@ -41,18 +41,18 @@
 - **Forgiveness:** coyote time 80 ms, jump buffer 100 ms.
 - **Stacking:** a robot can stand on the other robot's head. The bottom robot can still walk and carries the top one. Robots never push each other sideways by walking; they bump and stop.
 - **Field riding:** a robot held up by a field (upward magnet force and vertical speed under 60 px/s) counts as standing, so it can jump off the field.
-- **Hover damping:** any body pushed upward by a field loses 8% of its vertical speed per step, so it settles at the hover point in about 0.3 s instead of bouncing.
+- **Hover damping:** any body pushed upward by a field loses 8% of its vertical speed per step while it is falling, so it settles at the hover point instead of bouncing, without slowing a launch or a jump.
 
 ### 3.4 Magnet powers
 - **Plus (red, +)** pulls metal towards itself. **Minus (blue, −)** pushes metal away from itself.
 - A power is active while its key is held (2-player) or while it is toggled on (solo, see 3.9).
-- **Aim:** 4 directions, **fixed at the moment the power turns on**. Up or down held at that moment aims the field up or down; otherwise it points the way the robot faces. While the power stays on, a sideways field turns with the robot when it turns around, but up and down never change the aim, so the up key keeps jumping. To aim again, release (or toggle off) and press again. Co-op and solo use the same rule.
+- **Aim:** 4 directions, **fixed at the moment the power turns on**. Up or down held at that moment aims the field up or down; otherwise it points the way the robot faces. While the power stays on, the robot keeps facing its field (it walks backwards if needed) and up and down never change the aim, so the up key keeps jumping. To aim again, release (or toggle off) and press again. Co-op and solo use the same rule.
 - **Up-aim grace:** up and the power key count as "aim up" when pressed within **150 ms** of each other, in either order. If up came first and started a jump, the jump is cancelled as long as it began under 150 ms ago and the robot has risen less than 12 px: the robot snaps back to the ground. To the player, "W+F" always aims up and never hops.
 - **Force direction is radial:** along the line between the robot's center and the target's center. Plus pulls targets towards its center; Minus pushes them straight away from it. So Minus walking under a hovering crate steers it diagonally, and a target near the edge of the cone is pushed at an angle.
-- **Cone:** range **160 px (4 tiles)**, half-angle **30°**, from the robot's center. A target is affected when its center is inside the cone and the line from the robot to it is not blocked by a solid, non-metal tile. Fields do not pass through walls.
+- **Cone:** range **160 px (4 tiles)**, half-angle **30°**, from the robot's center. A target is affected when its center is inside the cone and the line from the robot to its center, or to any of its corners, is not blocked by a solid, non-metal tile. Fields do not pass through walls, but a crate resting on a ledge can still be reached from beside the ledge.
 - **Strength:** acceleration **3000 px/s²** on the target, constant out to 120 px, then fading linearly to 0 at 160 px. Velocity caused by magnets is capped at 480 px/s.
 - **Every metal thing in the cone is affected,** not only the nearest.
-- **Plus stops things at contact.** A pulled crate ends up pressed against Plus. If Plus walks, the crate comes along (carrying). Pulling something that rests under Plus has no effect. Turning around while carrying swings the field away, so the crate drops: that is the way to put it down.
+- **Plus stops things at contact.** A pulled crate ends up pressed against Plus. If Plus walks, the crate comes along (carrying). Pulling something that rests under Plus has no effect. To put a carried crate down, let go of the power.
 - **The other robot is metal.** Plus pulls Minus; Minus pushes Plus.
 - **Shield rule:** a robot whose own power is on is **immune to its twin's field** (it glows with a thin shield ring while its power is on). This stops the "both fields on each other" combo from flying forever. Fixed plates still move a robot that uses its own power on them. A side effect, kept on purpose: a robot riding its twin's field drops the moment it turns its own power on, which is how players let go mid-air. A Scrapyard level teaches it.
 - **Launch:** Minus aiming up with Plus above it lifts Plus. With gravity at 2000, Plus rises and hovers where the force equals gravity, about **133 px (3.3 tiles)** above Minus. Plus can jump off the field for 2.5 more tiles, so the full launch reaches about 6 tiles.
@@ -73,7 +73,7 @@
 - **Water** and **spikes** reset **both** robots to the last checkpoint (or to the level start), with a 400 ms poof-and-rebuild. No lives, no fail screen.
 - **Checkpoints** are flags. One touch from either robot activates the flag for both, and the robots respawn side by side at it. Only levels with a co-op par over 60 s get checkpoints; shorter levels reset to the start.
 - A hazard reset moves only the robots. Crates, platforms, spring plates and collected bolts stay as they are. **R** restarts the whole level from scratch in under 1 s, so a stuck state is always one key away.
-- Crates are solid on spikes and can be used to cover them.
+- Spikes are not solid: a robot touching one (from above or from the side) resets, and a crate simply sits over them, covering them.
 
 ### 3.7 Bolts, exit, completion
 - **3 bolts** per level. Either robot collects a bolt by touching it. Bolts collected stay collected through hazard resets, but not through R.
@@ -144,7 +144,7 @@
 - **Stars:** see 3.8. Bolts are placed to reward an extra idea or a small detour, never a precision trick.
 - **First 10 levels (Workshop):**
   1. **Hello, Twins** — no metal. Keycap prompts float over each robot. Two easy paths of steps and short jumps lead to the shared exit, which needs both robots. One bolt sits on a ledge too high for a single jump: stand on your twin's head to grab it (optional).
-  2. **Pull** — a crate sits at the bottom of a pit 2 tiles deep, where walking can't get it out. Plus pulls it up and out to make a step up a ledge for both robots. Power keycap prompt appears near the crate.
+  2. **Pull** — a crate sits on the far side of a strip of spikes, where walking can't reach it. Plus pulls it across the spikes, and it becomes the step up a ledge for both robots. Power keycap prompt appears near the crate. (A crate at the bottom of a pit can't be pulled out from the edge: with a 30° cone the field loses it before it clears the rim.)
   3. **Push** — a crate sits on a high shelf across a gap, out of walking reach. Minus pushes it off from a distance so it drops into a pit and becomes a bridge.
   4. **Hold the Door** — a magnetic door. One robot holds the lock plate while the other walks through, then holds the far-side plate for the first.
   5. **Your Lock, My Lock** — two parallel corridors to the exit, one closed by a + door and one by a − door. Plus opens the + door so Minus can go through; Minus then opens the − door from its side so Plus can follow.
@@ -178,7 +178,7 @@
 }
 ```
 
-  Tile characters: `.` empty, `#` solid, `M` fixed metal plate, `~` water, `^` spikes. `par` holds the co-op and solo par times in seconds, filled in from the two solution recordings. A recording is `{ "v": 1, "level": "w1l04", "mode": "coop", "frames": N, "inputs": [[step, key, down], …] }`, where `step` is the 120 Hz simulation step. Door `lock` is `"any"`, `"plus"` or `"minus"`. Platform `rail` is `"h"` or `"v"`, with `from`/`to` in tiles along that axis.
+  Tile characters: `.` empty, `#` solid, `M` fixed metal plate, `~` water, `^` spikes. `par` holds the co-op and solo par times in seconds, filled in from the two solution recordings. A recording is `{ "v": 1, "level": "w1l04", "mode": "coop", "frames": N, "inputs": [[step, bits], …] }`: the controller bitmask, stored only when it changes, where `step` is the 120 Hz simulation step. Door `lock` is `"any"`, `"plus"` or `"minus"`. Platform `rail` is `"h"` or `"v"`, with `from`/`to` in tiles along that axis.
 
 ## 7. Progression and retention
 - **Unlocks:** finishing a level unlocks the next. A world unlocks when the previous world's level 10 is finished. No star gates, so no one gets stuck behind a wall of stars.
@@ -273,7 +273,7 @@ Power and switch counts are sent once per attempt with a value, not per press, t
 
 ## 12. Tech plan
 - **Stack:** vanilla Canvas 2D, ES modules, no build step, following `STANDARDS.md`.
-- **Modules (`src/`):** `main.js` (boot, loop), `game.js` (screen state machine), `physics.js` (fixed step, AABB vs tiles and bodies, carrying), `magnet.js` (cones, line of sight, forces, fixed-plate self-move), `entities.js` (robots, crates, platforms, doors, springs), `levels.js` (loader for `levels/`), `render.js` (offscreen tile layers, robots, fields, particles), `input.js` (keyboard, touch buttons, solo switching, key-test overlay), `ui.js` (screens, HUD, paint shop), `audio.js` (WebAudio synth), `save.js`, `analytics.js` (GameAnalytics wrapper, console log in development).
+- **Modules (`src/`):** `main.js` (boot), `game.js` (frame loop, screens, HUD, event glue), `sim.js` (the deterministic world: robots, crates, doors, hazards, exit; no DOM), `physics.js` (axis sweeps against tiles, gates and bodies), `magnet.js` (cones, line of sight, forces, shield, fixed-plate self-move), `level.js` (level parser), `render.js` (pre-rendered tile layer, robots, metal, fields), `fx.js` (pooled particles, shake, squash springs), `input.js` (keyboard, touch buttons, key-test overlay), `audio.js` (WebAudio synth), `record.js` (input recordings), `save.js`, `analytics.js` (GameAnalytics stub, console log). `tools/simtest.mjs` runs the mechanics checks and the solution bots in Node.
 - **Simulation:** fixed 120 Hz step, deterministic, no allocations in the step (pooled particles and contact lists).
 - **Save keys:** `cm_magnet-twins_save` → `{ v: 1, stars: { "w1l01": [1,1,0] }, best: { coop: { "w1l01": 31.2 }, solo: {} }, equip: { plus: {hat, pattern}, minus: {hat, pattern} }, mode: "coop" }` and `cm_magnet-twins_settings` → `{ v: 1, music: false, sfx: true }`. Reads in `try/catch`, broken data resets to defaults.
 - **Testing hook:** `window.game` with `screen`, `level`, `score`, `mode`, `start()`, `restart()`, `win()` (debug only).
@@ -300,6 +300,7 @@ Power and switch counts are sent once per attempt with a value, not per press, t
 | Is a 3rd progression tier for mode acceptable for cross-game comparison? | Yes; the first two tiers match `STANDARDS.md` | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Changes found while building the vertical slice: spikes are not solid (crates sit over them); facing locks while the power is on, and a carried crate is put down by letting go; hover damping only while falling, so launches and jumps keep their height; line of sight to a box's center or any corner; recordings store controller bitmasks; level 2 uses spikes instead of a pit (a pit can't be emptied with a 30° cone); module list updated to the real code.
 - 2026-10-21 — Second review pass: up-aim grace window (W+F aims up without a hop), radial force direction, levels 2 and 3 redesigned so walking can't bypass the power, solo par from its own recording, documented two intended side effects (dropping off a field by turning your power on, turning around drops a carried crate). Status set to In review.
 - 2026-10-21 — Phase 1c review applied: shield rule (a robot using its power ignores its twin's field) to stop infinite flight; lock plates kept out of reach of their door, and closing doors push robots out; levels 1, 5 and 6 redesigned so they are solvable; aim fixed when the power turns on (same rule in co-op and solo, up keeps jumping); solution recordings per level and mode, with par = recording × 1.25; riders add no mass; slow crate pushing (80 px/s); touch buttons in CSS px (min 56); hover damping; 3-key load rule; chain platform moved to world 3; 1P/2P start playing at once; crate respawn waits for a clear spot; checkpoints only for levels with par over 60 s.
 - 2026-10-21 — First draft from the brief and the phase 1a answers (4-direction aim, fixed plates move the robot, solo power toggle, constant field force at 120 Hz fixed step, robot stacking, shared checkpoints, world elements, solo par ×1.5, 1P/2P on the title, paint shop without body colors, weekly challenge moved to Later, keyboard-first exception, vanilla Canvas).

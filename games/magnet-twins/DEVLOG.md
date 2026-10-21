@@ -1,5 +1,15 @@
 # Magnet Twins — devlog
 
+## 2026-10-21 — Vertical slice, first playable
+- Started phase 2 before Pao's GDD approval, by Fafi's decision, so the GDD review and the slice run in parallel.
+- Deterministic 120 Hz sim with no DOM (`src/sim.js`, `physics.js`, `magnet.js`): run, jump, stacking, carrying, crate pushing, 4-way fields with the shield rule, aim grace window, fixed plates, doors with lock plates, spikes, bolts, exit for two.
+- One level, `w1l01` "Workshop Shift": pull the crate across the spikes, use it as a step, hold the door for each other, launch for the high bolt.
+- Full shell: title (1P/2P start at once), level select, HUD, pause with controls card, restart, level complete with stars, saving, sound effects and hums, GameAnalytics stub logging to the console, `window.game`.
+- Debug: `?keytest`, `?level=sandbox`, `?hz=144`, `?record`, `?replay=coop|solo`.
+- `node tools/simtest.mjs` checks the mechanics against the GDD numbers and replays the bot solutions (co-op 13.5 s, solo 13.7 s). Both reach the exit and replay identically.
+- Design changes found while building are in the GDD changelog. The biggest: the level 2 pit couldn't work with a 30° cone, so it now uses spikes.
+- Not yet checked in a real browser (the agent sandbox can't run one). Next: play it, test `?keytest` on a Chromebook, then the 2c feel loop.
+
 ## 2026-10-21 — GDD ready for review
 - Second critical review pass applied: up-aim grace window, radial field force, levels 2 and 3 can no longer be solved without powers, solo par from the solo recording.
 - `GDD.md` status set to In review.

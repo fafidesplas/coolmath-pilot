@@ -1,0 +1,41 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #2B2238;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+canvas {
+  display: block;
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  outline: none;
+}
+#touch.hidden { display: none; }
+#touch .pad {
+  position: fixed;
+  bottom: 16px;
+  display: flex;
+  gap: 14px;
+}
+#touch .left { left: 16px; }
+#touch .right { right: 16px; }
+/* Sized in CSS px, not scaled with the canvas: never under 56 px (GDD 4). */
+#touch button {
+  width: 64px;
+  height: 64px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 50%;
+  border: 4px solid #2B2238;
+  background: rgba(255, 241, 220, 0.85);
+  color: #2B2238;
+  font: 800 24px system-ui, sans-serif;
+  touch-action: none;
+  box-shadow: 0 5px 0 #2B2238;
+}
+#touch button.power { background: rgba(255, 197, 49, 0.9); }
+#touch button.on { transform: translateY(4px); box-shadow: 0 1px 0 #2B2238; }

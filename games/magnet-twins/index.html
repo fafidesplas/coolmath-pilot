@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Magnet Twins</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game" tabindex="0" aria-label="Magnet Twins"></canvas>
+  <div id="touch" class="hidden">
+    <div class="pad left">
+      <button data-k="L" aria-label="Left">◀</button>
+      <button data-k="R" aria-label="Right">▶</button>
+    </div>
+    <div class="pad right">
+      <button data-k="S" aria-label="Swap robot">⇄</button>
+      <button data-k="P" aria-label="Power (drag up or down to aim)" class="power">⦿</button>
+      <button data-k="U" aria-label="Jump">▲</button>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
