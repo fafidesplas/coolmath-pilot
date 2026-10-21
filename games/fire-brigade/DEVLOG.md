@@ -1,5 +1,10 @@
 # Fire Brigade — devlog
 
+## 2026-10-21 — First GDD draft
+- Wrote `GDD.md` (Status: Draft) from the prototype and the brief, with the tuning numbers taken from `game.js`.
+- Decided: 20 authored levels in 2 worlds (Apartments, Mall), no fail state with stars from % saved, touch controls for solo and 2P, no daily challenge.
+- Next: critical review (phase 1c), settle the open questions (the 0% backstop, keeping LittleJS), then a teammate's approval.
+
 ## 2026-10-19 — Moved into coolmath-pilot
 - Moved from the prototype-city repo with its full git history; added the brief (`CLAUDE.md`) and `mechanic.svg`.
 - Current state: playable LittleJS prototype with two buildings (Apartments, Shopping Mall), solo and 2P co-op, keyboard only.
