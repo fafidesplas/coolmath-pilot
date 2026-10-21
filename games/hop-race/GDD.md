@@ -58,18 +58,20 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Walls** stop you dead (no bounce).
 
 ### 3.5 Phase (solid, liquid, gas; merges the prototype's Flow and Flow 2)
-You are a block of matter made of 7 × 7 = 49 drops. The button switches you between three visible states:
+You are a block of matter made of 7 × 7 = 49 drops. **Each press switches you to the next state, always in the same order: solid → liquid → gas → solid.** There is no holding in Phase.
 
-| State | Looks like | How it moves | Hold the button | Let go |
-|---|---|---|---|---|
-| **Solid** | A square | Falls; sticks to slopes under about 42° | Melt into liquid | — |
-| **Liquid** | 49 drops in your color | Pours downhill (drop gravity 30 u/s²), slides on slabs, heaps on itself | Keep flowing | Drops pull together and freeze into a solid when 85 % have gathered, or after 2.5 s with whatever has gathered. Press again before it freezes to keep flowing. |
-| **Gas** | Hollow rings in your color | Rises (20 u/s² up) and slides along ceilings almost without friction | Keep rising | Condense into a solid in 0.5 s, then fall as a square |
+| State | Looks like | How it moves | Press |
+|---|---|---|---|
+| **Solid** | A square | Falls; sticks to slopes under about 42° | Melt into liquid at once; the drops keep the square's speed |
+| **Liquid** | 49 drops in your color | Pours downhill (drop gravity 30 u/s²), slides on slabs, heaps on itself | Evaporate into gas at once; the drops become rings and start to rise |
+| **Gas** | Hollow rings in your color | Rises (20 u/s² up) and slides along ceilings almost without friction | Condense into a solid: the rings pull together for 0.5 s, then pack into a square that falls |
 
-- **Fire pit** (from level 6): liquid that touches fire turns into gas. Fire is the only way to become gas. A solid square that falls into the pit drops through it and goes back to the start.
+- **Liquid can't freeze directly:** to stop pouring, you press twice (liquid → gas → solid), so you rise a little before you freeze and drop. Timing that hop is the world's core skill.
+- **Press timing:** presses closer than 0.15 s apart are ignored, so a double tap never skips a state by accident; presses during the 0.5 s condense are ignored too.
+- **Grate** (from level 6): ink bars with gaps. A solid stands on it and is blocked by it; liquid drips through it; gas rises through it. Choosing the right state for each grate is the second half of the world.
 - **Losing drops:** drops that fall off a slab are gone, and the solid square shrinks to match. Under 12 drops, or gas that floats out of the top of the level, and you go back to the start with all 49.
 - **Finish:** at least 40 drops touching the flag, in any state (a whole square touching it counts all its drops; liquid drops and gas rings count one each). Arriving with fewer than 40 sends you back to the start, so care beats speed.
-- **Change from the prototype:** the prototype's gas condenses through a visible liquid phase before freezing, and pressing during that turns it back to sand. Both are cut: gas only ever becomes solid.
+- **Change from the prototype:** the prototype used hold to crumble and release to pack, and gas came only from fire pits. Both are replaced by the press cycle; fire pits are gone because gas is reachable anywhere, and grates take their place.
 
 ### 3.6 Camera and screen
 - **Fixed camera:** the camera frames the whole level box plus a 0.5 u margin and never moves or zooms during play. The only camera motion is screen shake. Players always see the flag and every obstacle.
@@ -113,7 +115,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Hook anchor surface | Any solid; hanging pillars are the usual target | Grapple 1 | Pillars hang from the ceiling |
 | No-grip surface | The hook bounces off; it does not stick | Grapple 6 | Hollow block (dark outline, background inside) |
 | Slab | Tilted platform in Phase | Phase 1 | Thin tilted dark bar |
-| Fire pit | Turns liquid into gas | Phase 6 | Dark pit with flickering white flame triangles |
+| Grate | Solid stands on it; liquid drips through; gas rises through | Phase 6 | Thin ink bars with even gaps, no dotted link (unlike a gate) |
 | Hanging flag | Flag on the underside of a ceiling slab | Phase 7 | Upside-down pole and pennant |
 
 ## 6. Level design
@@ -121,8 +123,8 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - **World 1 — Hop:** charge and aim, gaps, walls, ice, ducking, then grip walls.
   - **World 2 — Rocket:** blast yourself around, buttons and gates, ice, pits, then sticky floors.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
-  - **World 4 — Phase:** melt and pour down slopes without losing drops, freeze to stop, then fire and gas to reach hanging flags.
-- **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold… release!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Hold to melt. Let go to freeze." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
+  - **World 4 — Phase:** melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
+- **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold… release!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Press to melt." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
 - **Stars (solo only):**
@@ -144,7 +146,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket:** 1 flat floor, blast yourself forward · 2 hop a ledge with a downward blast · 3 first button and gate · 4 first ice floor, blasts send you gliding · 5 a button reached by a bank shot · 6 first pits · 7 first sticky floor · 8–10 combinations (the prototype's level, cut down to fit, ≈ 8).
   - **Grapple:** 1 one pillar over a short pit · 2 two pillars · 3 release timing for distance · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5).
-  - **Phase:** 1 one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4–5 longer runs with falls, freeze to stop on a ledge · 6 first fire pit · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
+  - **Phase:** 1 melt and pour down one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4 first gas: rise past a wall · 5 freeze out of gas to land on a ledge · 6 first grate · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
 - **Level data format:** one JS file per world in `levels/` (e.g. `levels/hop.js`) that adds to a global, because the game must run from `file://` where `fetch` of JSON and ES modules are blocked. Coordinates are centered on the level box: a `size: 24` level spans x −12…12 and y −6.75…6.75.
   ```js
   HR_LEVELS.hop = [
@@ -159,7 +161,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       ],
       slabs: [],                           // Phase only: [x0, y0, x1, y1] top surface ends
       gates: [],                           // Rocket only: {solid: {l, r, top, bottom}, button: {x, y}}
-      fire: null,                          // Phase only: {x0, x1, y}
+      grates: [],                          // Phase only: {l, r, top, bottom}
       flag: {x: 10, y: -4},                // pole foot; {x, y, hang: true, dir: -1} for a hanging flag
       prompt: 'Hold… release!',            // level 1 of each world only
       par: 8.0, expert: 5.0,               // seconds
@@ -203,7 +205,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   | Hex | Role |
   |---|---|
   | `#1D1A22` | Ink: every solid, googly eye rims and pupils, text, HUD, aim dots, power bar, launcher, rope |
-  | `#FFFFFF` | Player 2 (and P2's rockets, blasts, drops and gas), flag pennant, ice hatching, flames, buttons, hook tip |
+  | `#FFFFFF` | Player 2 (and P2's rockets, blasts, drops and gas), flag pennant, ice hatching, buttons, hook tip |
   | `#2E5BFF` | Player 1 (and P1's rockets, blasts, drops and gas) |
   | `#FFC94A` | Background, World 1 Hop and World 4 Phase; title and menus |
   | `#FF8C69` | Background, World 2 Rocket |
@@ -215,8 +217,8 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
-- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt; flame flicker; white confetti and a 0.2 s slow-mo on finish; one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
-- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one white square character with a letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and white rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, white flames in a pit, hollow rings of gas rising" (Phase).
+- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a 0.2 s slow-mo on finish; one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
+- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one white square character with a letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and white rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
 
 ## 10. Audio
 | Sound | When | Character |
@@ -230,8 +232,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 | Rocket fire / hook fire | Press in Rocket / Grapple | Short noisy whoosh |
 | Explosion | Rocket blast | Noisy pop with shake |
 | Hook stick | Hook hits a solid | Short click |
-| Melt / freeze | Phase hold / square re-forms | Soft pour / crisp click |
-| Evaporate / condense | Liquid enters fire / gas becomes solid | Whoomph / falling tone |
+| Melt / evaporate / freeze | Each press in Phase | Soft pour / airy whoosh / crisp click |
 | Countdown | 3-2-1-GO in Versus | Two low beeps, one high |
 | Finish | Reaching the flag | Win jingle (existing) |
 | Star | Each star popping in | Rising chime per star |
@@ -272,7 +273,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 - **Ghost:** recording and replay both start at the player's first input, the same moment the timer starts. Record the player's position (and Phase's center) every 2nd frame, quantized to 0.01 u, as an Int16 array; at 20 s that is ~600 samples, under 3 KB per level as base64. Replay interpolates. No dependence on deterministic physics.
 - **Save keys:** `cm_hop-race_save` = `{v: 1, levels: {"hop-01": {stars, bestMs}}, hats: {p1, p2}, settings: {sfx, music, ghost}}`; ghosts in `cm_hop-race_ghost_<levelId>`. Unlocked hats are computed from the star total, not stored. All reads wrapped in `try/catch`; a broken save resets to defaults. Saved after every level complete, hat change and settings change.
 - **Testing hook:** `window.game` with `screen`, `level` (id), `mode`, `versus`, `score` (time or wins), and `start(levelId)`, `restart()`, `win()` (debug only, stripped from release). `screen` uses the standard values `'title' | 'levels' | 'playing' | 'complete'` plus `'modes'` (counts as `levels`), `'hats'` (counts as `title`), `'paused'` and `'rotate'` (count as `playing`), `'round'` and `'match'` (count as `complete`).
-- **Riskiest piece:** turning 6 hand-tuned one-level modes into 40 smaller, data-driven levels without breaking their feel, especially Phase (drop physics tuned to specific slab angles, a flag position computed from the last slab, and the new gas-to-solid rule) and the jump and blast ranges in a smaller box. Prove it in the slice: load the prototype's levels from data at their old size (`size: 42`) and confirm each plays the same, then retune ranges for 24–30 u levels and build Hop 1–3.
+- **Riskiest piece:** turning 6 hand-tuned one-level modes into 40 smaller, data-driven levels without breaking their feel, especially Phase (drop physics tuned to specific slab angles, a flag position computed from the last slab, the new press cycle and grates) and the jump and blast ranges in a smaller box. Prove it in the slice: load the prototype's levels from data at their old size (`size: 42`) and confirm each plays the same, then retune ranges for 24–30 u levels and build Hop 1–3.
 
 ## 13. Scope
 - **v1:** 4 worlds (Hop, Rocket, Grapple, Phase) × 10 levels; solo time trial with stars and ghost; 8 hats unlocked by stars; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
@@ -284,7 +285,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
   - **Rocket Jump (pits)** as a separate mode: its pits become an element in the Rocket world.
   - **Separate Wall Jump and Flow 2 modes:** merged into Hop and Phase as elements, which gives those worlds a second half.
   - **Rockets pushing the other player:** cut so one player can't pin the other; Versus is a pure race, and color-coded blasts keep it readable.
-  - **Phase's in-between states:** gas no longer passes through a visible liquid phase, and "press while gas" is gone; only solid, liquid and gas exist.
+  - **Hold and release in Phase, and fire pits:** Phase is one press per state change (solid → liquid → gas → solid). Fire pits are gone because gas is reachable anywhere; grates replace them.
   - **Daily challenge:** not part of this game.
   - **Checkpoints:** levels are small enough that falling back to the start is fair.
   - **Dynamic camera zoom and scrolling levels:** every level fits the screen, so the camera stays fixed and players are drawn bigger.
@@ -306,6 +307,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Phase controls: one press cycles solid → liquid → gas → solid, with no holding; liquid reaches solid only through gas. Fire pits removed; grates (solid stands, liquid drips through, gas rises through) arrive at Phase 6. Tutorial prompt, level outline, audio, art and data format updated.
 - 2026-10-21 — Second review pass: 0.6 s input lock and fresh press on results screens; stuck nudge in every mode based on progress toward the flag; Phase pockets added to the dead-end check; testable Phase cut criterion; world-level label in the HUD; Phase finish counts drops in any state; Play goes to the first level under 3 stars; ghost starts at first input; HUD buttons excluded from touch halves.
 - 2026-10-21 — Review pass (1c) applied. Play starts the next level in one click; Levels and Hats buttons on the title. World 4 renamed Phase, with three visible states (solid, liquid, gas) in a state table; gas only becomes solid. Hop no-dead-ends rule plus a stuck nudge after 8 s. Versus players spawn on the same point and never affect each other; rockets push only their owner, with color-coded blasts. 8 hats unlocked by stars in v1. Cut line: Phase can slip to an update. Launcher, rope, hook, aim dots and power bar defined. Per-world tutorial prompts. Palette down to 6 colors (Phase shares Hop's yellow). `window.game` screens, analytics edge cases, canvas DPR and wall bounces specified. Finish pulse is one soft flash.
 - 2026-10-21 — Players lose their outlines and get one big googly eye each, with a loose pupil that swings with motion. The round-eye vs bar-eye difference is gone; letters and lightness tell the players apart.
