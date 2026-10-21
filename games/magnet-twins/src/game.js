@@ -118,8 +118,9 @@ export class Game {
       this.canvas.style.cursor = this.hover ? 'pointer' : 'default';
     });
     this.canvas.addEventListener('pointerup', e => {
+      // Buttons are rebuilt every frame, so match by key, not by object.
       const b = hit(toView(e));
-      if (b && b === this.pressed) this.activate(b);
+      if (b && this.pressed && b.key === this.pressed.key) this.activate(b);
       this.pressed = null;
     });
     this.canvas.addEventListener('contextmenu', e => e.preventDefault());
@@ -463,12 +464,13 @@ export class Game {
   }
 
   addButton(b) {
+    b.key = b.key || b.label;
     this.buttons.push(b);
     const ctx = this.ctx;
     const idx = this.buttons.length - 1;
-    const hot = this.hover && this.hover.x === b.x && this.hover.y === b.y;
+    const hot = this.hover && this.hover.key === b.key;
     const focused = this.focus === idx;
-    const down = this.pressed && this.pressed.x === b.x && this.pressed.y === b.y;
+    const down = this.pressed && this.pressed.key === b.key;
     const lift = b.disabled ? 0 : down ? 1 : hot || focused ? -3 : 0;
     ctx.save();
     ctx.translate(0, lift);
@@ -535,7 +537,7 @@ export class Game {
       action: () => { this.setMode('coop'); this.startLevel(this.nextLevel(), 'coop'); } });
     this.addButton({ x: 500, y: cy + 140, w: 280, h: 72, label: 'LEVELS', size: 30, action: () => { this.screen = 'levels'; this.focus = -1; } });
     this.addButton({ x: VIEW_W - 250, y: 28, w: 220, h: 56, size: 22,
-      label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
+      key: 'sound', label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
 
     text(ctx, '2 players: WASD + F   and   Arrows + /', VIEW_W / 2, VIEW_H - 58, 22, C.ink, 'center', 700);
     text(ctx, '1 player: TAB swaps robots', VIEW_W / 2, VIEW_H - 28, 22, C.ink, 'center', 700);
@@ -553,7 +555,7 @@ export class Game {
     this.drawBackdrop();
     this.addButton({ x: 30, y: 26, w: 150, h: 60, label: '‹ BACK', size: 24, action: () => { this.screen = 'title'; this.focus = -1; } });
     this.addButton({ x: VIEW_W - 290, y: 26, w: 260, h: 60, size: 22,
-      label: this.mode === 'solo' ? 'MODE: 1 PLAYER' : 'MODE: 2 PLAYERS',
+      key: 'mode', label: this.mode === 'solo' ? 'MODE: 1 PLAYER' : 'MODE: 2 PLAYERS',
       color: this.mode === 'solo' ? '#F6C3BE' : '#BFD6F5',
       action: () => this.setMode(this.mode === 'solo' ? 'coop' : 'solo') });
 
@@ -585,7 +587,7 @@ export class Game {
       const isNext = level === next;
       const bounce = isNext ? Math.abs(Math.sin(t * 4)) * -6 : 0;
       this.addButton({
-        x, y: y + bounce, w: 130, h: 130, r: 22, color: isNext ? '#FFE9A8' : '#fff', isDefault: isNext,
+        key: `level:${level.id}`, x, y: y + bounce, w: 130, h: 130, r: 22, color: isNext ? '#FFE9A8' : '#fff', isDefault: isNext,
         action: () => this.startLevel(level, this.mode),
         draw: (c, b) => {
           text(c, String(i + 1), b.x + 65, b.y + 52, 48);
@@ -714,9 +716,9 @@ export class Game {
       drawKeycap(ctx, 'TAB', 1020, 41);
     }
 
-    const pause = { hud: true, x: 1124, y: 14, w: 52, h: 52, r: 26, action: () => this.pause(true),
+    const pause = { key: 'hud:pause', hud: true, x: 1124, y: 14, w: 52, h: 52, r: 26, action: () => this.pause(true),
       draw: (c, b) => { c.fillStyle = C.ink; c.fillRect(b.x + 18, b.y + 15, 6, 22); c.fillRect(b.x + 29, b.y + 15, 6, 22); } };
-    const restart = { hud: true, x: 1196, y: 14, w: 52, h: 52, r: 26, action: () => this.restart(),
+    const restart = { key: 'hud:restart', hud: true, x: 1196, y: 14, w: 52, h: 52, r: 26, action: () => this.restart(),
       draw: (c, b) => {
         c.strokeStyle = C.ink; c.lineWidth = 4.5; c.lineCap = 'round';
         c.beginPath(); c.arc(b.x + 26, b.y + 26, 12, -0.3, Math.PI * 1.55); c.stroke();
