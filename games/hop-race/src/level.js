@@ -25,8 +25,8 @@ function hrLoadLevel(def)
     hrLevel = {def, w, h, killY, solids,
         start: vec2(def.start.x, def.start.y),
         flag: {x: f.x, y: f.y, hang: !!f.hang, dir: f.dir || 1},
-        // GDD §3.1: trigger box 1.5 u wide x 3 u tall around the pole
-        flagBox: {pos: vec2(f.x, f.hang ? f.y - 1.5 : f.y + 1.5), size: vec2(1.5, 3)},
+        // GDD §3.1: trigger box from the pole to the pennant tip, 3 u tall
+        flagBox: {pos: vec2(f.x + (f.dir || 1) * .65, f.hang ? f.y - 1.5 : f.y + 1.5), size: vec2(1.44, 3)},
     };
 }
 

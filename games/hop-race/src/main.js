@@ -10,7 +10,6 @@ let hrRun = null;      // solo attempt: timer, ghost, nudge, tutorial prompt
 let hrMatch = null;    // versus match: wins, countdown, round time
 let hrResult = null;   // last solo finish, shown on the level complete screen
 let hrFinishT = -1;    // real seconds since the finish line, -1 while racing
-let hrSlowUntil = 0;
 const hrTutorialSent = {};
 
 function hrLevelDef() { return hrLevelsOf(hrWorld)[hrLevelIndex]; }
@@ -32,7 +31,6 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
         promptSeen: hrRun && !newLevel ? hrRun.promptSeen : false};
     if (hrRun.promptSeen) hrRun.prompt = 0;
     hrFinishT = -1;
-    setTimeScale(1);
     if (versus)
     {
         if (!keepMatch)
@@ -107,8 +105,8 @@ function hrFinishFx(p)
     addScreenShake(.15, .25);
     hrPulse = 1;
     hrFinishT = 0;
-    hrSlowUntil = timeReal + .2;
-    setTimeScale(.3);
+    p.squash = -.35;   // stretch pop on the finish
+    p.pupilKick(0, .3);
 }
 
 function hrSoloFinish(p)
@@ -179,7 +177,7 @@ function hrPlayUpdate(racing)
     {
         hrPlayers.forEach(p => hrPlayerStep(p, {down: false, pressed: false, released: false}));
         hrFinishT += timeDelta;
-        if (hrFinishT > .25)
+        if (hrFinishT > .5)
         {
             if (!hrVersus) hrGo('complete');
             else hrGo(hrMatch.wins[hrMatch.winner] >= 3 ? 'match' : 'round');
@@ -231,7 +229,6 @@ function hrPlayUpdate(racing)
 
 function gameUpdatePost()
 {
-    if (hrSlowUntil && timeReal > hrSlowUntil) { hrSlowUntil = 0; setTimeScale(1); }
     hrCameraFit();
 }
 
