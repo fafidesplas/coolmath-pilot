@@ -114,3 +114,33 @@ export function applyFields(w) {
     }
   }
 }
+
+// What a field would reach if it turned on now with this aim (aim preview).
+// Writes target centers into out as x, y pairs.
+export function previewTargets(w, r, aim, out) {
+  out.length = 0;
+  const o = fieldOrigin(r);
+  const dir = aim === 'up' ? { x: 0, y: -1 } : aim === 'down' ? { x: 0, y: 1 } : { x: r.facing, y: 0 };
+  for (const b of w.bodies) {
+    if (b === r || b.sunk > 0 || b.hidden) continue;
+    const d = coneDist(o, dir, b.x + b.w / 2, b.y + b.h / 2);
+    if (d >= 0 && canSeeBox(w.tiles, o, b)) out.push(b.x + b.w / 2, b.y + b.h / 2);
+  }
+  for (const p of w.plates) {
+    if (p.gate.lock !== 'any' && p.gate.lock !== r.pol) continue;
+    const d = coneDist(o, dir, p.x, p.y);
+    if (d >= 0 && clearLine(w.tiles, o.x, o.y, p.x, p.y)) out.push(p.x, p.y);
+  }
+  let best = -1, bx = 0, by = 0;
+  const tx0 = Math.max(0, Math.floor((o.x - MAGNET.range) / T)), tx1 = Math.min(COLS - 1, Math.floor((o.x + MAGNET.range) / T));
+  const ty0 = Math.max(0, Math.floor((o.y - MAGNET.range) / T)), ty1 = Math.min(ROWS - 1, Math.floor((o.y + MAGNET.range) / T));
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+    if (tileAt(w.tiles, tx, ty) !== TILE.METAL) continue;
+    const cx = (tx + 0.5) * T, cy = (ty + 0.5) * T;
+    const d = coneDist(o, dir, cx, cy);
+    if (d < 0 || (best >= 0 && d >= best) || !clearLine(w.tiles, o.x, o.y, cx, cy)) continue;
+    best = d; bx = cx; by = cy;
+  }
+  if (best >= 0) out.push(bx, by);
+  return out;
+}

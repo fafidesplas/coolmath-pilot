@@ -1,5 +1,11 @@
 # Magnet Twins — devlog
 
+## 2026-10-21 — Feel loop 1: aim preview
+- First playtest (Fafi): the slice works, but choosing the field direction felt unclear, especially aiming down.
+- Fixed the menu buttons ignoring mouse clicks.
+- Added the aim preview: a dashed ghost cone and arrow show where the field would go while the power is off, and targets in reach get a pulsing ring.
+- Next: more feel notes from playtesting.
+
 ## 2026-10-21 — Vertical slice, first playable
 - Started phase 2 before Pao's GDD approval, by Fafi's decision, so the GDD review and the slice run in parallel.
 - Deterministic 120 Hz sim with no DOM (`src/sim.js`, `physics.js`, `magnet.js`): run, jump, stacking, carrying, crate pushing, 4-way fields with the shield rule, aim grace window, fixed plates, doors with lock plates, spikes, bolts, exit for two.

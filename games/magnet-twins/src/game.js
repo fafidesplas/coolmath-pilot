@@ -1,6 +1,6 @@
 // Screen flow (GDD 8), the frame loop, and the glue between sim, input, render,
 // sound, saving and analytics.
-import { VIEW_W, VIEW_H, HUD_H, STEP, MAX_FRAME_DT, COLORS as C, T } from './config.js';
+import { VIEW_W, VIEW_H, HUD_H, STEP, MAX_FRAME_DT, COLORS as C, B } from './config.js';
 import { Sim } from './sim.js';
 import { Input, KEY_LABELS } from './input.js';
 import { Sound } from './audio.js';
@@ -8,12 +8,14 @@ import { FX, drawHex } from './fx.js';
 import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
+import { previewTargets } from './magnet.js';
 import {
-  renderTiles, drawRobot, drawField, drawCrate, drawGate, drawPlate, drawExit, drawBolt,
+  renderTiles, drawRobot, drawField, drawAimPreview, drawCrate, drawGate, drawPlate, drawExit, drawBolt,
   drawKeycap, rrect, text, FONT,
 } from './render.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
 
+const previewHits = [];
 const fmt = s => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
 const easeOutBack = k => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;
 
@@ -627,6 +629,17 @@ export class Game {
 
     for (const b of sim.bolts) if (!b.got) drawBolt(ctx, b, t);
     for (const c of sim.crates) if (c.sunk === 0) drawCrate(ctx, lx(c), ly(c));
+
+    // Aim preview while the power is off (the controlled robots only).
+    if (!sim.done && !this.replay) {
+      sim.robots.forEach((r, i) => {
+        if (r.power || r.hidden || (this.mode === 'solo' && sim.active !== i)) return;
+        const held = sim.prev[i];
+        const aim = held & (B.U | B.AU) ? 'up' : held & (B.D | B.AD) ? 'down' : 'side';
+        previewTargets(sim, r, aim, previewHits);
+        drawAimPreview(ctx, r.pol, aim, r.facing, lx(r) + r.w / 2, ly(r) + r.h / 2, previewHits, t);
+      });
+    }
 
     // Fields under the robots, robots on top.
     for (const r of sim.robots) {

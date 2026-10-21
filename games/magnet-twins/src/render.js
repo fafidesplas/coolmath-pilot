@@ -219,6 +219,51 @@ export function drawField(ctx, r, ox, oy, t) {
   ctx.restore();
 }
 
+// Ghost cone shown while the power is off: where the field would go right now,
+// with a pulsing ring on everything it would reach.
+export function drawAimPreview(ctx, pol, aim, facing, ox, oy, targets, t) {
+  const color = pol === 'plus' ? C.plus : C.minus;
+  const ang = aim === 'up' ? -Math.PI / 2 : aim === 'down' ? Math.PI / 2 : facing > 0 ? 0 : Math.PI;
+  const h = MAGNET.halfAngle, R = MAGNET.range;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([7, 7]);
+  ctx.lineDashOffset = -t * 20;
+  ctx.beginPath();
+  ctx.moveTo(ox + Math.cos(ang - h) * 26, oy + Math.sin(ang - h) * 26);
+  ctx.arc(ox, oy, R, ang - h, ang + h);
+  ctx.lineTo(ox + Math.cos(ang + h) * 26, oy + Math.sin(ang + h) * 26);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // arrow just outside the body
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = color;
+  ctx.strokeStyle = C.ink;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  const ax = ox + Math.cos(ang) * 34, ay = oy + Math.sin(ang) * 34;
+  const px = -Math.sin(ang), py = Math.cos(ang);
+  ctx.beginPath();
+  ctx.moveTo(ax + Math.cos(ang) * 9, ay + Math.sin(ang) * 9);
+  ctx.lineTo(ax + px * 7, ay + py * 7);
+  ctx.lineTo(ax - px * 7, ay - py * 7);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  const pulse = 1 + Math.sin(t * 8) * 0.08;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.7;
+  ctx.setLineDash([5, 5]);
+  for (let i = 0; i < targets.length; i += 2) {
+    ctx.beginPath(); ctx.arc(targets[i], targets[i + 1], 26 * pulse, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // ---- Metal and level objects ----------------------------------------------------
 
 export function drawCrate(ctx, x, y, s = 40) {
