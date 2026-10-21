@@ -16,6 +16,7 @@ const HR_HOP = {
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
     clingSlide: 3,      // top slide speed down a grip wall (u/s)
     clingAccel: 12,
+    crouch:    .45,     // how much flatter the player gets at full charge
 };
 
 const HR_MODES = {};
@@ -49,6 +50,7 @@ HR_MODES.hop = {
                 const before = p.charge;
                 p.t += dt;
                 p.charge = min(1, p.charge + dt / H.chargeT);
+                p.crouch = H.crouch * p.charge;   // squash toward the floor, deeper with more power
                 if (floor(before * 8) != floor(p.charge * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
             }
             else if (p.down)
@@ -59,6 +61,7 @@ HR_MODES.hop = {
                 p.grounded = false;
                 p.cling = 0;
                 p.squash = -.3;
+                p.crouch = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
@@ -145,7 +148,8 @@ HR_MODES.hop = {
             drawRect(vec2(x, y), vec2(.16), HR_INK.scale(1, 1 - i / 45));
         }
         // power bar: thin ink outline above the player, filling with ink
-        const bar = vec2(p.x, p.y + 1.05), w = 1.1;
+        const top = p.y + HR_PSIZE * (.5 - p.squash - p.crouch);   // follows the squashed top
+        const bar = vec2(p.x, top + .65), w = 1.1;
         drawRect(bar, vec2(w + .1, .26), HR_INK);
         drawRect(bar, vec2(w, .16), hrWorldBg());
         drawRect(vec2(bar.x - w / 2 + w * p.charge / 2, bar.y), vec2(w * p.charge, .16), HR_INK);

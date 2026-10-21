@@ -7,6 +7,7 @@
 - Shell: title, mode select (Solo/Versus, Hop live, other worlds "Soon"), level select, HUD with timer and best, pause, restart, level complete with count-up and stars, settings (sound, music, ghost), rotate screen, pause on hidden tab.
 - Solo: timer and ghost start at first input, stars, saving, stuck nudge after 8 s. Versus: same spawn, touch halves or A/L, 3-2-1-GO, round and match results, first to 3.
 - `window.game` hook and GameAnalytics stubs that log every event to the console (`[GA] ...`).
+- Owner notes: the googly eye has no outline; P2 is red instead of white (the eye vanished on white); the Hop 1 prompt reads "Hold A then release to Jump!"; the player squashes toward the floor while charging, deeper with more power.
 - Next: play it (feel loop, 2c), set real par/expert times, then a teammate plays it cold.
 
 ## 2026-10-21 — GDD approved, vertical slice starts

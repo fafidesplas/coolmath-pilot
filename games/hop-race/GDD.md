@@ -125,7 +125,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - **World 2 — Rocket:** blast yourself around, buttons and gates, ice, pits, then sticky floors.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
   - **World 4 — Phase:** melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
-- **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold… release!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Press to melt." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
+- **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold A then release to Jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Press to melt." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
 - **Stars (solo only):**
@@ -134,7 +134,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - 3★: finish under the **expert** time.
   - Par and expert are set per level in the content phase: expert ≈ the designer's best clean run × 1.1, par ≈ × 1.6. Falling only costs time.
 - **First 10 levels (World 1 — Hop):**
-  1. **First Hop:** flat ground, one 3 u gap, flag on the far side. Prompt: "Hold… release!"
+  1. **First Hop:** flat ground, one 3 u gap, flag on the far side. Prompt: "Hold A then release to Jump!"
   2. **Stepping Stones:** three gaps getting wider (3, 4, 5 u) between low platforms.
   3. **Up We Go:** a staircase of three rising platforms, the last one floating over a pit; needs steeper aims.
   4. **The Wall:** a 4 u wall in the middle; jump too flat and it bounces you back.
@@ -164,7 +164,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       gates: [],                           // Rocket only: {solid: {l, r, top, bottom}, button: {x, y}}
       grates: [],                          // Phase only: {l, r, top, bottom}
       flag: {x: 10, y: -4},                // pole foot; {x, y, hang: true, dir: -1} for a hanging flag
-      prompt: 'Hold… release!',            // level 1 of each world only
+      prompt: 'Hold A then release to Jump!', // level 1 of each world only
       par: 8.0, expert: 5.0,               // seconds
     },
   ];
@@ -219,7 +219,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
-- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a 0.2 s slow-mo on finish; one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
+- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; squash down toward the floor while charging, deeper the more power is charged (up to 45 % flatter at full charge), squash on land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a 0.2 s slow-mo on finish; one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
 - **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one red square character with a white letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and red rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
 
 ## 10. Audio
@@ -310,6 +310,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Hop 1 prompt is now "Hold A then release to Jump!". In Hop the player squashes down toward the floor while charging, deeper with more power.
 - 2026-10-21 — P2 changes from white to red (`#E5262B`) with a white L, because the outline-free white eye vanished on a white body. Palette is 7 colors; players differ in hue and letter.
 - 2026-10-21 — The googly eye loses its ink rim: a plain white ball with an ink pupil.
 - 2026-10-21 — Slice build: the level box's side edges act as plain walls; levels keep the top 1.5 u clear for the HUD; `src/config.js` and `src/player.js` added to the module list. Hop's top jump speed is 20 u/s (was 25).

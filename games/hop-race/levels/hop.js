@@ -16,7 +16,7 @@ HR_LEVELS.hop = [
             {l: 1.5, r: 13, top: -3.5},
         ],
         flag: {x: 9, y: -3.5},
-        prompt: 'Hold… release!',
+        prompt: 'Hold A then release to Jump!',
         par: 6.0, expert: 3.5,
     },
     {
