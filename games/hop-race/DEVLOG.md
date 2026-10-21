@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-21 — GDD approved, vertical slice starts
+- GDD set to Approved; the team agreed to skip the peer review. Stage is now `slice`.
+- Build plan (2a) agreed: classic-script modules in `src/`, Hop levels 1–3 in `levels/hop.js`, prototype kept in `prototype/` as the tuning reference.
+- Next: scaffold the new structure, then port Hop and check it plays the same as the prototype.
+
 ## 2026-10-21 — GDD owner review and art direction
 - Owner review applied: smaller one-screen levels with a fixed camera, landscape only, falls send you back to the start, ice and sticky floors, one flag trigger box. GDD now names the age range (core 13–24) and tone.
 - Art direction settled after trying six looks on the "Hop Race Art Direction" canvas: two-tone minimal (look D). One flat background color per world, solid dark level pieces, players as flat squares with no outline and one big googly eye. The Toybox Flat mockup was too close to an existing game.

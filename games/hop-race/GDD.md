@@ -1,7 +1,7 @@
 # Hop Race — Game design document
 
-**Status:** Draft
-**Owner:** Pao · **Reviewed by:** — · **Last updated:** 2026-10-21
+**Status:** Approved
+**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-21
 
 > One button, four meanings: hold and release to hop, blast, swing or melt your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
@@ -307,6 +307,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Approved by the owner; the team agreed to skip the peer review. Phase 2 (vertical slice) starts. The art family question in §14 stays open.
 - 2026-10-21 — Phase controls: one press cycles solid → liquid → gas → solid, with no holding; liquid reaches solid only through gas. Fire pits removed; grates (solid stands, liquid drips through, gas rises through) arrive at Phase 6. Tutorial prompt, level outline, audio, art and data format updated.
 - 2026-10-21 — Second review pass: 0.6 s input lock and fresh press on results screens; stuck nudge in every mode based on progress toward the flag; Phase pockets added to the dead-end check; testable Phase cut criterion; world-level label in the HUD; Phase finish counts drops in any state; Play goes to the first level under 3 stars; ghost starts at first input; HUD buttons excluded from touch halves.
 - 2026-10-21 — Review pass (1c) applied. Play starts the next level in one click; Levels and Hats buttons on the title. World 4 renamed Phase, with three visible states (solid, liquid, gas) in a state table; gas only becomes solid. Hop no-dead-ends rule plus a stuck nudge after 8 s. Versus players spawn on the same point and never affect each other; rockets push only their owner, with color-coded blasts. 8 hats unlocked by stars in v1. Cut line: Phase can slip to an update. Launcher, rope, hook, aim dots and power bar defined. Per-world tutorial prompts. Palette down to 6 colors (Phase shares Hop's yellow). `window.game` screens, analytics edge cases, canvas DPR and wall bounces specified. Finish pulse is one soft flash.
