@@ -82,8 +82,8 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 ## 5. Game elements
 | Element | Behavior | First appears | Shape/icon (not color alone) |
 |---|---|---|---|
-| Player 1 | The racer, controlled by A / left half | Hop 1 | Square, letter **A** on the body, round eye |
-| Player 2 | The racer, controlled by L / right half | Versus | Square, letter **L** on the body, bar eye |
+| Player 1 | The racer, controlled by A / left half | Hop 1 | Blue square, no outline, big googly eye, white letter **A** |
+| Player 2 | The racer, controlled by L / right half | Versus | White square, no outline, big googly eye, dark letter **L** |
 | Ghost | Your best run on this level, replayed; no collision | Solo, after first finish | Hollow outline square, no eye, 40 % alpha |
 | Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
 | Flag | The goal; touch its trigger box | Hop 1 | Dark pole with a white pennant |
@@ -183,7 +183,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Palette:** 4 colors on screen at once, 7 across the game (one background per world).
   | Hex | Role |
   |---|---|
-  | `#1D1A22` | Ink: every solid, outlines on players, text, HUD, aim dots |
+  | `#1D1A22` | Ink: every solid, googly eye rims and pupils, text, HUD, aim dots |
   | `#FFFFFF` | Player 2, flag pennant, ice hatching, flames, gas, rockets, buttons |
   | `#2E5BFF` | Player 1 |
   | `#FFC94A` | Background, World 1 Hop (also title and menus) |
@@ -191,14 +191,14 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   | `#7FD1C7` | Background, World 3 Grapple |
   | `#A9C97E` | Background, World 4 Sand (mid green so white and blue sand grains both stand out) |
 - **Key visuals:**
-  - **Players:** squares with a 4 px ink outline. P1 is blue with a round white eye and a white **A**; P2 is white with a bar ink eye and an ink **L**. They differ in lightness, eye shape and letter, never only in hue.
+  - **Players:** flat squares with no outline. Each has one big googly eye (about 60 % of the square's width) that sticks out past its top corner: a white ball with a thin ink rim and an ink pupil. The pupil is loose: it lags behind and swings with the player's motion (charging, launch, landing, sliding), which carries most of the character. P1 is blue with a white **A**; P2 is white with an ink **L**. They differ in lightness and letter, never only in hue.
   - **Level pieces:** solid ink shapes; each element is told apart by its silhouette (see §5): hatched top for ice, sawtooth face for grip walls, bumpy top for sticky floors, hollow for no-grip, bars for gates.
   - **Sand:** grains in the player's color; gas as small white circles.
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
-- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; white blast ring and short screen shake for rockets; small shake when a hook sticks; grain spray on crumble; flame flicker; white confetti and a 0.2 s slow-mo on finish; background color pulses lighter for one frame on finish; star pop; count-up time; eased slide-in for every panel; button press bounce.
-- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one white square character with a letter L, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "white rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), green with "square crumbling into a stream of grains on tilted black bars, white flames in a pit" (Sand).
+- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; white blast ring and short screen shake for rockets; small shake when a hook sticks; grain spray on crumble; flame flicker; white confetti and a 0.2 s slow-mo on finish; background color pulses lighter for one frame on finish; star pop; count-up time; eased slide-in for every panel; button press bounce.
+- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one white square character with a letter L, no outlines, each with one big googly eye, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "white rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), green with "square crumbling into a stream of grains on tilted black bars, white flames in a pit" (Sand).
 
 ## 10. Audio
 | Sound | When | Character |
@@ -281,6 +281,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Sand `wor
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Players lose their outlines and get one big googly eye each, with a loose pupil that swings with motion. The round-eye vs bar-eye difference is gone; letters and lightness tell the players apart.
 - 2026-10-21 — Art direction is now two-tone minimal: one background color per world, solid dark level pieces, players the only other color. P2 changes from orange to white. Element shapes in §5 and the Versus HUD in §8 updated to match.
 - 2026-10-21 — Player line names the age range (core 13–24, floor 9–10) and the tone. Art direction reopened as an open question.
 - 2026-10-21 — Owner review: art family changed to Toybox Flat (new palette, visuals and prompts). Levels shrink to one 24–30 u screen with a fixed camera that always shows the whole level, so players are drawn bigger; landscape only from 4:3 to 21:9, with a rotate screen in portrait. Falling sends you back to the level's start, no checkpoints. One finish rule for Hop, Rocket and Grapple: touch the flag's trigger box. New elements: ice (Hop 5, Rocket 4) and sticky floor (Rocket 7). Hop stays precise (no landing momentum). Hats and cosmetics added to Later.
