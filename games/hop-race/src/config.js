@@ -37,7 +37,8 @@ const HR_MARGIN = .5;    // camera margin around the level box (u)
 // GDD §7: every unlock check goes through isUnlocked(); switch the rule to gate later
 const HR_UNLOCK_RULE = 'all';   // 'all' | 'linear' | 'stars'
 
-function hrLevelsOf(worldIndex) { return HR_LEVELS[HR_WORLDS[worldIndex].id] || []; }
+// levels marked draft: true are hidden everywhere (level select, Play, window.game.start)
+function hrLevelsOf(worldIndex) { return (HR_LEVELS[HR_WORLDS[worldIndex].id] || []).filter(l => !l.draft); }
 
 function isUnlocked(worldIndex, levelIndex)
 {

@@ -4,6 +4,7 @@
     Gates are {solid: {l, r, top, bottom}, button: {x, y}}. Gate levels have a thin ceiling just under
     the HUD (top 1.5 u stays clear), so the only way past a gate is its button.
     par / expert are placeholders from simulated runs; set them from designer runs.
+    Levels 4-10 are drafts (draft: true): hidden until 1-3 have been played and the mode is tuned.
 */
 
 'use strict';
@@ -50,6 +51,7 @@ HR_LEVELS.rocket = [
         par: 9.0, expert: 5.0,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-04', name: 'Glide',
         size: 28,
         start: {x: -12, y: -4},
@@ -63,6 +65,7 @@ HR_LEVELS.rocket = [
         par: 9.0, expert: 5.0,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-05', name: 'Around the Corner',
         size: 26,
         start: {x: -10.5, y: -4},
@@ -80,6 +83,7 @@ HR_LEVELS.rocket = [
         par: 10.0, expert: 6.0,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-06', name: 'Mind the Gap',
         size: 28,
         start: {x: -12, y: -4},
@@ -94,6 +98,7 @@ HR_LEVELS.rocket = [
         par: 10.0, expert: 6.0,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-07', name: 'Sticky Situation',
         size: 28,
         start: {x: -12, y: -4},
@@ -108,6 +113,7 @@ HR_LEVELS.rocket = [
         par: 11.0, expert: 6.5,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-08', name: 'Gatehouse',
         size: 28,
         start: {x: -12, y: -4},
@@ -125,6 +131,7 @@ HR_LEVELS.rocket = [
         par: 12.0, expert: 7.0,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-09', name: 'Goo Hop',
         size: 30,
         start: {x: -13, y: -4},
@@ -139,6 +146,7 @@ HR_LEVELS.rocket = [
         par: 13.0, expert: 7.5,
     },
     {
+        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-10', name: 'The Works',
         size: 30,
         start: {x: -13, y: -4},

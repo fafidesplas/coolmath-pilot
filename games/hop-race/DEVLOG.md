@@ -6,7 +6,8 @@
 - New level pieces, drawn as GDD §5 says: ice (white hatched top), sticky floor (bumpy top, stops you dead, blasts at 50 %), gates (bars, dotted line to the button) and buttons (white target, check mark when pressed). Gates and buttons live in `src/level.js`, so later worlds can use them.
 - 10 Rocket levels in `levels/rocket.js`. A random-press bot finished every level; win rates fall from 90 % (2-1) to 30 % (2-10), and no run got past a gate without its button.
 - Par/expert are placeholders (the bot's best times, 1–4 s, are not human times).
-- Next: play the Rocket world and send notes; set par/expert from your runs; Hop 4–10.
+- Rocket 4–10 are now hidden drafts (`draft: true` in `levels/rocket.js`, filtered in `hrLevelsOf`). 2-1 to 2-3 are the Rocket slice: tune the mode on them first, then rework 4–10 against the final numbers and remove the flags.
+- Next: play 2-1 to 2-3 and send notes; set par/expert from your runs; Hop 4–10.
 
 ## 2026-10-21 — Feel loop: landing squeeze, blink, checkered flag
 - Landing squeeze: the player holds flat for a moment, then springs back with a small stretch (0.36 s). Harder landings squeeze more. Before, it decayed in about 6 frames and you could hardly see it.
