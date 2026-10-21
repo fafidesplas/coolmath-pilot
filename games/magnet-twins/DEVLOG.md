@@ -1,5 +1,10 @@
 # Magnet Twins — devlog
 
+## 2026-10-21 — GDD ready for review
+- Second critical review pass applied: up-aim grace window, radial field force, levels 2 and 3 can no longer be solved without powers, solo par from the solo recording.
+- `GDD.md` status set to In review.
+- Next: Pao reads the GDD; once approved, set Approved and stage "slice", then phase 2a build plan.
+
 ## 2026-10-21 — GDD critical review applied
 - Phase 1c review: fixed three game-breaking issues (infinite flight with both fields, doors a single robot could open for itself, levels 1, 5 and 6 unsolvable as written) and eleven smaller ones. Full list in the GDD changelog.
 - New tools committed to the design: per-level co-op and solo solution recordings, replayed to prove every level is solvable and to set par times.
