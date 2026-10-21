@@ -6,6 +6,7 @@
 - Flag trigger box runs from the pole base to the pennant tip; no slow-mo on finish (it dropped the frame rate).
 - Finish flag is now a waving checkered flag (6 × 4 cells), F1-style, in place of the white pennant. Same footprint, so the trigger box still fits. No outline; every cell waves, white ones included.
 - Idle glance: after 5 s standing still, the pupil darts left, right, left, right, then rests in the middle and repeats. Any press or movement stops it.
+- Restart icon: the ring is an open arc whose tail ends in a flat cut, instead of a full circle with a background-colored patch over it.
 - Next: more feel notes, real par/expert times, then a teammate plays it cold.
 
 ## 2026-10-21 — Vertical slice: Hop 1–3 with the full shell

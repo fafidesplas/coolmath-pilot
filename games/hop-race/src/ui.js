@@ -255,8 +255,19 @@ function hrIcon(icon, x, y, s, c)
     }
     else if (icon == 'restart')
     {
-        drawCircle(vec2(x, y), s * .48, CLEAR_WHITE, s * .12, c, false, true);
-        hrRect(x + s * .14, y - s * .22, s * .2, s * .16, hrScreenBg());   // gap in the ring
+        // open ring, clockwise from a flat-cut tail at 75 deg to the arrowhead at the top
+        const ro = s * .3, ri = s * .18, a0 = 75 * PI / 180, a1 = 378 * PI / 180, pts = [];
+        for (let i = 0; i <= 24; i++)
+        {
+            const a = a0 + (a1 - a0) * i / 24;
+            pts.push(vec2(Math.sin(a) * ro, Math.cos(a) * ro));   // screen-space polygons are y up
+        }
+        for (let i = 24; i >= 0; i--)
+        {
+            const a = a0 + (a1 - a0) * i / 24;
+            pts.push(vec2(Math.sin(a) * ri, Math.cos(a) * ri));
+        }
+        drawPoly(pts, c, 0, c, vec2(x, y), 0, false, true);
         drawPoly([vec2(0, -s * .17), vec2(s * .2, 0), vec2(0, s * .17)], c, 0, c, vec2(x + s * .06, y - s * .24), 0, false, true);
     }
     else if (icon == 'back')
