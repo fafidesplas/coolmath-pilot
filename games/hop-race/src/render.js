@@ -57,7 +57,7 @@ function hrDrawPlayer(p, eyeNudge = 0)
         const k = (i + 1) / (p.trail.length + 1);
         drawRect(p.trail[i], vec2(HR_PSIZE * k * .7), p.color.scale(1, k * .3));
     }
-    const sx = 1 + p.squash + p.crouch * .6, sy = 1 - p.squash - p.crouch, size = vec2(HR_PSIZE * sx, HR_PSIZE * sy);
+    const land = hrLandSquash(p), sx = 1 + p.squash + land + p.crouch * .6, sy = 1 - hrSquashY(p), size = vec2(HR_PSIZE * sx, HR_PSIZE * sy);
     const pos = vec2(p.x, p.y - (1 - sy) * HR_PSIZE / 2);
     drawRect(pos, size, p.color);
     drawText(p.letter, pos.add(vec2(-.1 * p.dir, -.1 * sy)), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);

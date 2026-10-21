@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-21 — Feel loop: landing squeeze, blink, flag box
+- Landing squeeze: the player holds flat for a moment, then springs back with a small stretch (0.36 s). Harder landings squeeze more. Before, it decayed in about 6 frames and you could hardly see it.
+- Eyes blink every 2.5–5 s, sometimes twice, on their own timer per player.
+- Flag trigger box runs from the pole base to the pennant tip; no slow-mo on finish (it dropped the frame rate).
+- Next: more feel notes, real par/expert times, then a teammate plays it cold.
+
 ## 2026-10-21 — Vertical slice: Hop 1–3 with the full shell
 - New structure: classic-script modules in `src/`, Hop levels in `levels/hop.js`. The old `game.js` moved to `prototype/` as the tuning reference.
 - Hop ported and checked against the prototype: same inputs give the same positions frame for frame (Wall Jump exact; Classic exact until the first fall, which now goes back to the start as the GDD says). Then the top jump speed was lowered from 25 to 20 u/s for 24–30 u levels.

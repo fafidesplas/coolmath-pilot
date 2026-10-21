@@ -7,11 +7,23 @@
 
 let hrPlayers = [];
 
+// landing squeeze: flattens on impact, springs back past square into a small stretch, then settles
+const HR_LAND_T = .36;
+function hrLandSquash(p)
+{
+    if (p.landT < 0) return 0;
+    const k = p.landT / HR_LAND_T, hold = .35;   // first 35 %: hold flat and ease back up
+    return p.land * (k < hold ? 1 - (k / hold) ** 2 : -.25 * Math.sin(PI * (k - hold) / (1 - hold)));
+}
+
+// total vertical squash (0 square, + flatter, - taller)
+function hrSquashY(p) { return min(.6, p.squash + hrLandSquash(p) + p.crouch); }
+
 function hrMakePlayer(index)
 {
     const p = {index, letter: index ? 'L' : 'A',
         color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
-        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, trail: [],
+        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, land: 0, landT: -1, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
         falls: 0, finished: false, blinkIn: rand(1, 4), blinkT: -1};
     p.pupilKick = (vx, vy) => { p.eye.vx += vx * 8; p.eye.vy += vy * 8; };
@@ -27,6 +39,7 @@ function hrResetPlayer(p)
     p.vx = p.vy = 0;
     p.down = false;
     p.squash = p.crouch = 0;
+    p.landT = -1;
     p.trail = [];
     p.eye.x = p.eye.y = p.eye.vx = p.eye.vy = 0;
     hrMode().reset(p);
@@ -56,6 +69,7 @@ function hrPlayerStep(p, input)
         }
     }
     p.squash *= .85;
+    if (p.landT >= 0 && (p.landT += timeDelta) > HR_LAND_T) p.landT = -1;
     if (!p.down) p.crouch *= .7;
 
     // trail while airborne

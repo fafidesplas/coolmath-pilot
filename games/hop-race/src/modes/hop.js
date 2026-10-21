@@ -61,6 +61,7 @@ HR_MODES.hop = {
                 p.grounded = false;
                 p.cling = 0;
                 p.squash = -.3;
+                p.landT = -1;   // the launch stretch replaces any landing squeeze
                 p.crouch = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
@@ -118,8 +119,9 @@ HR_MODES.hop = {
                     p.cling = 0;
                     p.dir = 1;
                     p.pupilKick(0, max(-.3, p.vy * .015));
+                    p.land = min(.35, .12 + -p.vy * .012);   // harder landings squeeze more
+                    p.landT = 0;
                     p.vx = p.vy = 0;
-                    p.squash = .35;
                     p.t = p.charge = 0;
                     hrSfx.land.play();
                     hrDust(p.x, p.y - HR_PSIZE / 2);
@@ -148,7 +150,7 @@ HR_MODES.hop = {
             drawRect(vec2(x, y), vec2(.16), HR_INK.scale(1, 1 - i / 45));
         }
         // power bar: thin ink outline above the player, filling with ink
-        const top = p.y + HR_PSIZE * (.5 - p.squash - p.crouch);   // follows the squashed top
+        const top = p.y + HR_PSIZE * (.5 - hrSquashY(p));   // follows the squashed top
         const bar = vec2(p.x, top + .65), w = 1.1;
         drawRect(bar, vec2(w + .1, .26), HR_INK);
         drawRect(bar, vec2(w, .16), hrWorldBg());
