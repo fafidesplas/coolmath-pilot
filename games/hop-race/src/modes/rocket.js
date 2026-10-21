@@ -1,6 +1,6 @@
 /*
     HOP RACE - World 2, Rocket (GDD §3.3). A launcher spins around you; press to fire.
-    The blast pushes only the player who fired it. Ported from the prototype's Rocket Jump
+    The blast pushes every player in range; a rocket explodes on the other player. Ported from the prototype's Rocket Jump
     (prototype/game.js rcRocketStep, rcMotion, rcExplode, rcRocketsUpdate).
 */
 
@@ -54,7 +54,10 @@ HR_MODES.rocket = {
                 const btn = hrLevel.gates.find(g => !g.pressed &&
                     isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(g.button.x, g.button.y), vec2(1.1)));
                 const hit = hrLevel.solids.some(s => r.x > s.l && r.x < s.r && r.y > s.bottom && r.y < s.top);
-                if (btn || hit) { this.explode(r); return false; }
+                // your own rocket flies through you; the other player's explodes on you
+                const hitPlayer = hrPlayers.some(p => p != r.owner && !p.finished &&
+                    isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(p.x, p.y), vec2(HR_PSIZE)));
+                if (btn || hit || hitPlayer) { this.explode(r); return false; }
             }
             return true;
         });
@@ -62,15 +65,16 @@ HR_MODES.rocket = {
 
     explode(r)
     {
-        const R = HR_ROCKET, c = vec2(r.x, r.y), p = r.owner;
-        hrBlasts.push({x: r.x, y: r.y, age: 0, color: p.color});
+        const R = HR_ROCKET, c = vec2(r.x, r.y), owner = r.owner;
+        hrBlasts.push({x: r.x, y: r.y, age: 0, color: owner.color});
         for (const g of hrLevel.gates)
             if (!g.pressed && c.distance(vec2(g.button.x, g.button.y)) < R.switchRadius) hrPressGate(g);
 
-        // GDD §3.3: the blast pushes only its owner
-        const off = vec2(p.x, p.y).subtract(c), d = off.length();
-        if (d < R.radius && !p.finished)
+        // GDD §3.3: the blast pushes every player in range, the one who fired it and the other one
+        for (const p of hrPlayers)
         {
+            const off = vec2(p.x, p.y).subtract(c), d = off.length();
+            if (d >= R.radius || p.finished) continue;
             const dir = d > .01 ? off.scale(1 / d) : vec2(0, 1);
             const k = (1 - d / R.radius) * (p.grounded && p.floor && p.floor.sticky ? R.stickyPush : 1);
             p.vx += dir.x * R.power * k;
@@ -86,7 +90,7 @@ HR_MODES.rocket = {
         }
         hrSfx.boom.play(c);
         addScreenShake(.2, .2);
-        hrBlastFx(c, p.color);
+        hrBlastFx(c, owner.color);
     },
 
     step(p, input)

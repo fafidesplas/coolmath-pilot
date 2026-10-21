@@ -27,7 +27,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 ### 3.1 Shared rules (all modes)
 - **Start:** players start grounded at the level's `start` point. In Versus both spawn on exactly the same point; P2 is drawn behind P1, with its eye nudged so both eyes show, until they separate.
 - **Level box edges:** the left and right edges of the level box act as plain walls, so a bounce can never carry a player off screen.
-- **No contact between players:** players pass through each other and never affect each other in any mode. Versus is a pure race.
+- **No contact between players:** players pass through each other. The one exception is Rocket, where blasts push every player in range (3.3).
 - **Falling:** dropping below the kill line (1 u under the level's bottom edge) sends you back to the level's start with zero speed. The timer keeps running; nothing else is lost. In Versus the other player keeps racing. There are no checkpoints: levels are short enough that a restart from the start is fair.
 - **Finish (Hop, Rocket, Grapple):** touch the flag's trigger box, which runs from the pole to the pennant tip (1.44 u wide) and from the ground to the top of the pole (3 u). Grounding is not needed. Phase has its own rule (3.5). Solo: the timer stops. Versus: the first player to finish wins the round.
 - **Timer (solo):** starts at your first input, not when the level appears, so reading the level is free. Shown as seconds with one decimal; stored in ms.
@@ -44,9 +44,9 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 
 ### 3.3 Rocket
 - A launcher spins around you all the time at 3 rad/s. Each shot reverses the spin direction.
-- **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid or button; it passes through players. Firing gives you a small recoil of 4 u/s backwards. You can fire in the air too.
-- **Blast:** radius 4 u, pushes **only the player who fired it** away from its center at up to 24 u/s (falling off with distance; the prototype's 30 less 20 %). Top speed 22 u/s (was 27). Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
-- **Whose blast is it:** rockets, blast rings and splash particles take their owner's color (P1 blue, P2 red), so in Versus it is always obvious whose shot is whose.
+- **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid, button or the other player; your own rocket flies through you. Firing gives you a small recoil of 4 u/s backwards. You can fire in the air too.
+- **Blast:** radius 4 u, pushes **every player in range** (the one who fired it and the other one) away from its center at up to 24 u/s (falling off with distance; the prototype's 30 less 20 %). Top speed 22 u/s (was 27). Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
+- **Whose blast is it:** rockets, blast rings and splash particles take their owner's color (P1 blue, P2 red), so in Versus it is always obvious whose shot is whose. Being blasted by the other player can knock you off a ledge or into a pit; watch for one player pinning the other in playtests.
 - **Buttons and gates** (from level 3): a rocket that hits a button, or a blast within 2.5 u of it, presses it; its gate slides up into the ceiling and stays open. Gate levels have a thin ceiling just under the HUD, so the only way past a gate is its button. In Versus a gate opened by either player is open for both.
 - **Ice floor** (from level 4): ground friction drops to 0.6/s, so a blast sends you gliding.
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
@@ -107,7 +107,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 6 | Block hanging from the top |
 | Grip wall | You cling to it and slide down (Hop) | Hop 7 | Dark block with a sawtooth face |
 | Launcher | Spins around you; aims rockets and the hook | Rocket 1, Grapple 1 | Short ink barrel circling the player |
-| Rocket and blast | Pushes only its owner | Rocket 1 | Small capsule, ring and splash particles in the owner's color |
+| Rocket and blast | Pushes every player in range; explodes on the other player | Rocket 1 | Small capsule, ring and splash particles in the owner's color |
 | Rocket button | A blast near it opens its gate | Rocket 3 | White target on a dark mount; becomes a white check mark when pressed |
 | Gate | Solid until its button is pressed, then slides up | Rocket 3 | Barred block (dark bars, background between), linked to its button by a dotted line |
 | Pit | No floor; falling in sends you back to the start | Hop 1 (gaps), Rocket 6 | Gap in the floor |
@@ -286,7 +286,6 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
   - **Orbit:** disorienting to play; its rotating-exit idea doesn't fit the left-to-right race.
   - **Rocket Jump (pits)** as a separate mode: its pits become an element in the Rocket world.
   - **Separate Wall Jump and Flow 2 modes:** merged into Hop and Phase as elements, which gives those worlds a second half.
-  - **Rockets pushing the other player:** cut so one player can't pin the other; Versus is a pure race, and color-coded blasts keep it readable.
   - **Hold and release in Phase, and fire pits:** Phase is one press per state change (solid → liquid → gas → solid). Fire pits are gone because gas is reachable anywhere; grates replace them.
   - **Daily challenge:** not part of this game.
   - **Checkpoints:** levels are small enough that falling back to the start is fair.
@@ -304,13 +303,14 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Mouse in Versus: let a mouse click count as P1 so a mouse + L pair works? | Yes, cheap and removes the "Versus needs a keyboard" caveat. | Pao | Open |
 | Par/expert times: set by hand or by a replay bot? | By hand from designer runs (expert ×1.1, par ×1.6), checked by a teammate in phase 3. | Pao | Open |
 | Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Rocket blast is 24 u/s, top speed 22 u/s (both −20 %); keep the aim sweep and charge time. | Pao | Hop and Rocket done |
-| Player-to-player collision? A cold playtester (Hop, 2026-10-21) said bumping into the other player might be exciting | Recorded only, no change yet. Today players pass through each other (§3.1) and rockets push only their owner (§13 Cut), so Versus stays a pure race. If it is tried, make it Versus-only and light (a bump that trades some speed, no pushing off ledges) and playtest it against the pinning problem. | Pao | Open |
+| Player-to-player collision? A cold playtester (Hop, 2026-10-21) said bumping into the other player might be exciting | Recorded only, no change to bodies yet: players still pass through each other (§3.1). Rocket blasts now push both players (3.3), which tests some of this idea. If it is tried, make it Versus-only and light (a bump that trades some speed, no pushing off ledges) and playtest it against the pinning problem. | Pao | Open |
 | Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Owner decision: rocket blasts push every player in range, and a rocket explodes on the other player (as in the prototype). Removed from the Cut list; watch for pinning in Versus playtests.
 - 2026-10-21 — Rocket 4–10 hidden as drafts (`draft: true`); 1–3 are the Rocket slice to tune the mode first.
 - 2026-10-21 — Rocket world built: 10 levels listed in §6 (replacing the outline). Blast 24 u/s, top speed 22 u/s. Rockets pass through players and explode on buttons. Gate levels get a thin ceiling under the HUD. New open question: player-to-player collision.
 - 2026-10-21 — Idle glance: after 5 s standing still, the pupil looks left and right furtively in a loop.
