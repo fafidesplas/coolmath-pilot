@@ -71,17 +71,20 @@ Gaps against `STANDARDS.md` and decisions for the GDD:
 
 ## Working on the code
 - **Run:** open `index.html` directly, or serve the folder (`python3 -m http.server`) and load `http://localhost:8000`. Prefer HTTP when driving it from an agent browser; `file://` previews can render only a static snapshot.
-- **Syntax check:** `node --check game.js` (there is no test suite or linter).
-- **Release zip (only when shipping):** copy `littlejs.release.js` from the LittleJS plugin's `dist/` into `./dist/`, then `npm install && npm run build`. Output is `build/index.html` plus `hopRace.zip` (both gitignored). Confirm the build log says it used the release engine, not the debug one.
-- **`game.js`** is the whole game. Everything is global and prefixed `rc` / `RC_` to avoid colliding with LittleJS globals.
+- **Syntax check:** `for f in src/*.js src/modes/*.js levels/*.js; do node --check $f; done` (there is no test suite or linter).
+- **Release zip (only when shipping):** copy `littlejs.release.js` from the LittleJS plugin's `dist/` into `./dist/`, then `npm install && npm run build`. Output is `build/index.html` plus `hopRace.zip` (both gitignored). Confirm the build log says it used the release engine, not the debug one. `build.json` lists the sources in the same order as `index.html`; keep the two in sync.
+- **Layout:** classic scripts (not ES modules, so `file://` works), loaded in order by `index.html`. All globals are prefixed `hr` / `HR_` to avoid colliding with LittleJS globals.
+  - `src/config.js` palette, `HR_WORLDS`, `HR_LEVELS`, `isUnlocked()` · `src/save.js` · `src/analytics.js` (console stubs) · `src/audio.js` · `src/input.js` · `src/camera.js` · `src/level.js` · `src/player.js` · `src/ghost.js` · `src/render.js` · `src/ui.js` · `src/main.js`
+  - `src/modes/<world>.js` adds `HR_MODES.<world> = {reset(p), step(p, input), draw(p)}`. Input is `{down, pressed, released}`; modes never read devices.
+  - `levels/<world>.js` adds `HR_LEVELS.<world> = [...]` in the GDD §6 format.
+- **State machine:** `hrScreen` is `title | modes | levels | settings | playing | paused | complete | round | match`. `hrStartLevel(world, index, versus)` loads and starts a level. Each screen lists its buttons in `hrUiButtons()`, which drives hit tests, keyboard focus and drawing.
+- **Testing hook:** `window.game` (`screen`, `level`, `mode`, `versus`, `score`, `start(levelId, versus)`, `restart()`, `win()`). For frame-exact tests, set `hrGo('title')` so the engine stops stepping players, then call `hrPlayerStep(p, {down, pressed, released})` yourself.
+- **Prototype:** `prototype/index.html` + `prototype/game.js` is the original six-mode game, kept as the tuning reference until Rocket, Grapple and Phase are ported (phase 3). Don't add features to it. The Hop port matched it frame for frame (Classic and Wall Jump levels at size 42, same inputs).
 - **Vendored:** `dist/littlejs.js`, `build.mjs` and `templates/` come from the LittleJS plugin (`linguist-vendored` in `.gitattributes`). Don't edit or review them.
-- **State machine:** `rcState` is `menu` | `play` | `win` (and `frozen`, set from the console when headless-testing so the engine stops stepping players).
-- **Modes** live in `RC_MODES`. Each has `name`, `desc`, optional `hint`, `solids` (`[left, right, top, bottom?]`), and either `wallCling` or a `type` (`rocket`, `grapple`, `flow`, `orbit`) with its own extras (`gates`, `slabs`, `fire`, `flag`). A new entry shows up in the menu; `hidden: true` keeps it out. `rcStart(i)` loads mode `i` by its index in `RC_MODES` (Orbit is `rcStart(7)`).
-- **Per-frame flow:** `gameUpdate` calls `rcStep(p)` per player, which dispatches to `rcRocketStep`, `rcGrappleStep`, `rcFlowStep` or `rcOrbitStep`; Classic and Wall Jump run in `rcStep` itself. Win is `rcFinished(p)`. Tuning constants are grouped per mode in `RC_ROCKET`, `RC_GRAPPLE`, `RC_SAND` and `RC_ORBIT`.
-- **LittleJS gotchas:** circle/ellipse sizes are diameters, `ParticleEmitter` speed is per frame, `Color.scale(scale, alphaScale)` scales alpha separately; `keyIsDown`/`keyWasPressed` take `KeyboardEvent.code` strings (`'KeyA'`). A hidden tab may not run the engine loop: set `rcState = 'frozen'` and call the step functions yourself, overriding `window.keyIsDown` to simulate input.
+- **LittleJS gotchas:** circle/ellipse sizes are diameters, `ParticleEmitter` speed is per frame, `Color.scale(scale, alphaScale)` scales alpha separately; `keyIsDown`/`keyWasPressed` take `KeyboardEvent.code` strings (`'KeyA'`). WebGL is off (`setGLEnable(false)`) so world, HUD and menus draw in call order on one 2D canvas; screen-space polygons are y up while screen-space rects and text are y down.
 
 ## Prototype status
-Began in its own repo (onebutton-twoplayer-game) and was moved here with its git history. It is playable now from `index.html`. There is no `GDD.md` yet, so nothing here is approved design: this brief describes what the code does.
+Began in its own repo (onebutton-twoplayer-game) and was moved here with its git history. The prototype is playable from `prototype/index.html`. `GDD.md` is Approved (2026-10-21) and is the source of truth for the design; the sections above describe the prototype as it was built.
 
 ## How to start
-Don't add features. The next step is phase 1 of `../../PHASES.md`: write `GDD.md` that describes the game as built and decides what changes (the gaps above, which modes ship, solo play, shell, v1 scope), and get it Approved by a teammate. New work starts only after that.
+Phase 2 (vertical slice) of `../../PHASES.md`: Hop levels 1–3 with the full shell, as `GDD.md` §13 describes. Check `DEVLOG.md` for where it stands.

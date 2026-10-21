@@ -1,5 +1,14 @@
 # Hop Race — devlog
 
+## 2026-10-21 — Vertical slice: Hop 1–3 with the full shell
+- New structure: classic-script modules in `src/`, Hop levels in `levels/hop.js`. The old `game.js` moved to `prototype/` as the tuning reference.
+- Hop ported and checked against the prototype: same inputs give the same positions frame for frame (Wall Jump exact; Classic exact until the first fall, which now goes back to the start as the GDD says). Then the top jump speed was lowered from 25 to 20 u/s for 24–30 u levels.
+- Hop 1–3 built (First Hop, Stepping Stones, Up We Go) with placeholder par/expert times.
+- Shell: title, mode select (Solo/Versus, Hop live, other worlds "Soon"), level select, HUD with timer and best, pause, restart, level complete with count-up and stars, settings (sound, music, ghost), rotate screen, pause on hidden tab.
+- Solo: timer and ghost start at first input, stars, saving, stuck nudge after 8 s. Versus: same spawn, touch halves or A/L, 3-2-1-GO, round and match results, first to 3.
+- `window.game` hook and GameAnalytics stubs that log every event to the console (`[GA] ...`).
+- Next: play it (feel loop, 2c), set real par/expert times, then a teammate plays it cold.
+
 ## 2026-10-21 — GDD approved, vertical slice starts
 - GDD set to Approved; the team agreed to skip the peer review. Stage is now `slice`.
 - Build plan (2a) agreed: classic-script modules in `src/`, Hop levels 1–3 in `levels/hop.js`, prototype kept in `prototype/` as the tuning reference.
