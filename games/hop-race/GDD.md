@@ -85,20 +85,20 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Player 1 | The racer, controlled by A / left half | Hop 1 | Square, letter **A** on the body, round eye |
 | Player 2 | The racer, controlled by L / right half | Versus | Square, letter **L** on the body, bar eye |
 | Ghost | Your best run on this level, replayed; no collision | Solo, after first finish | Hollow outline square, no eye, 40 % alpha |
-| Platform | Solid; you stand on its top | Hop 1 | Flat block, thick dark outline, soft drop shadow |
-| Flag | The goal; touch its trigger box | Hop 1 | Pole with a pennant and checker line |
-| Plain wall | Solid; bounces you back in Hop | Hop 4 | Flat block, smooth sides |
-| Icy floor | You slide after landing (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Pale block with white diagonal shine streaks |
+| Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
+| Flag | The goal; touch its trigger box | Hop 1 | Dark pole with a white pennant |
+| Plain wall | Solid; bounces you back in Hop | Hop 4 | Solid dark block, straight sides |
+| Icy floor | You slide after landing (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 6 | Block hanging from the top |
-| Grip wall | You cling to it and slide down (Hop) | Hop 7 | Block with a dark zigzag stripe on its sides |
-| Rocket button | A blast near it opens its gate | Rocket 3 | Round target icon; turns to a check mark when pressed |
-| Gate | Solid until its button is pressed, then slides up | Rocket 3 | Block with vertical bars, linked to its button by a dotted line |
+| Grip wall | You cling to it and slide down (Hop) | Hop 7 | Dark block with a sawtooth face |
+| Rocket button | A blast near it opens its gate | Rocket 3 | White target on a dark mount; becomes a white check mark when pressed |
+| Gate | Solid until its button is pressed, then slides up | Rocket 3 | Barred block (dark bars, background between), linked to its button by a dotted line |
 | Pit | No floor; falling in sends you back to the start | Hop 1 (gaps), Rocket 6 | Gap in the floor |
-| Sticky floor | Stops you dead; blasts push you at 50 % (Rocket) | Rocket 7 | Dark goo drips hanging along the top edge; player squashes flat on it |
+| Sticky floor | Stops you dead; blasts push you at 50 % (Rocket) | Rocket 7 | Dark block with a bumpy, rounded top edge; player squashes flat on it |
 | Hook anchor surface | Any solid; hanging pillars are the usual target | Grapple 1 | Pillars hang from the ceiling |
-| No-grip surface | The hook bounces off; it does not stick | Grapple 6 | Block with diagonal hatching |
-| Slab | Tilted platform in Sand | Sand 1 | Thin tilted bar with a dark outline |
-| Fire pit | Turns sand into gas | Sand 6 | Flickering flame triangles |
+| No-grip surface | The hook bounces off; it does not stick | Grapple 6 | Hollow block (dark outline, background inside) |
+| Slab | Tilted platform in Sand | Sand 1 | Thin tilted dark bar |
+| Fire pit | Turns sand into gas | Sand 6 | Dark pit with flickering white flame triangles |
 | Hanging flag | Flag on the underside of a ceiling slab | Sand 7 | Upside-down pole and pennant |
 
 ## 6. Level design
@@ -171,27 +171,34 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Mode select:** Solo / Versus toggle at the top. Four world cards, each with an animated mini schematic of its button meaning, name and star total.
 - **Level select:** 10 tiles per world in 2 rows of 5, each with number, stars and best time; the next level without 3★ is highlighted. Versus uses the same grid without stars.
 - **Playing HUD (solo):** timer top center, ghost's best time under it, pause and restart buttons top right. The mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
-- **Playing HUD (Versus):** P1 panel top left, P2 panel top right, each with key letter, color and three score pips. A 3-2-1-GO countdown before each round; input is ignored until GO.
+- **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; pause and restart move to top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
 - **Pause:** Resume, Restart, Levels, Settings. The game pauses itself when the tab is hidden.
 - **Level complete:** time counts up, then stars pop in one by one, "New best!" if it is one, Next / Retry / Menu. Next is the default action (Space/Enter).
 - **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any key. **Match result:** big winner, Rematch (swaps start sides) / Levels / Menu.
 - **Rotate screen:** a phone icon turning sideways and "Rotate your device". The game resumes where it was when the window is landscape again.
 
 ## 9. Art direction
-- **Family:** Toybox Flat (changed from the prototype's Night Neon look; the brief is updated to match).
-- **Palette:**
+- **Family:** Two-tone minimal. It is outside the three art families in the README (closest to Toybox Flat with everything removed), so the team must agree; see §14. Mockups: the "D" frames on the Hop Race Art Direction canvas.
+- **Rule:** each screen has one flat background color, and everything solid is one dark ink. No outlines on level pieces, no shading, textures, gradients or decoration. The players are the only other color, so the eye always finds them.
+- **Palette:** 4 colors on screen at once, 7 across the game (one background per world).
   | Hex | Role |
   |---|---|
-  | `#FFF3DC` | Background (warm cream) |
-  | `#2B2A3A` | Outlines, eyes, letters, text, sticky goo, grip zigzags |
-  | `#5CC8B4` | Platforms, slabs, walls (ice is this tint lightened, with white shine streaks) |
-  | `#3D8BF2` | Player 1 |
-  | `#FF8A3D` | Player 2, fire |
-  | `#FFD23F` | Flag, stars, buttons, rockets, UI highlights |
-  White is used for highlights, ice shine, the players' inner squares and UI panels.
-- **Key visuals:** bright flat shapes with thick dark outlines (0.08 u) and soft drop shadows offset down-right. The background is the cream color with a few flat paper-cut hills and clouds, pre-rendered once to an offscreen canvas. Players are flat squares with a white inner square, eye and key letter, a faint trail and squash and stretch. Dotted aim arcs and chunky power bars. Sand drawn as small outlined circles. Everything drawn in code; no image files. Rocket blasts stay cartoon puffs and rings, never weapon-like.
-- **Juice list:** squash on charge and land, stretch on launch; dust puffs on landing; ice sparkle while sliding; goo splat on sticky floors; trail while airborne; charge ticks with rising pitch; blast ring and short screen shake for rockets; small shake when a hook sticks; grain spray on crumble; flame flicker and gas shimmer; flag confetti and a 0.2 s slow-mo on finish; star pop with sparkles; count-up time; eased slide-in for every panel; button press bounce.
-- **Concept art prompts:** *"Toybox-flat one-button racing game, warm cream background with flat paper-cut hills and clouds, teal toy-block platforms with thick dark outlines and soft drop shadows, two chunky square characters (blue with letter A, orange with letter L) mid-hop with dotted arc trails, yellow pennant flag, bright flat vector, 16:9."* Per world: add "spinning toy rocket launcher, cartoon blast puffs, pale icy floor with shine streaks, dark goo floor" (Rocket), "grappling hook rope to pillars hanging from the ceiling" (Grapple), "square crumbling into a stream of sand on tilted slabs, small fire pit with rising gas" (Sand).
+  | `#1D1A22` | Ink: every solid, outlines on players, text, HUD, aim dots |
+  | `#FFFFFF` | Player 2, flag pennant, ice hatching, flames, gas, rockets, buttons |
+  | `#2E5BFF` | Player 1 |
+  | `#FFC94A` | Background, World 1 Hop (also title and menus) |
+  | `#FF8C69` | Background, World 2 Rocket |
+  | `#7FD1C7` | Background, World 3 Grapple |
+  | `#A9C97E` | Background, World 4 Sand (mid green so white and blue sand grains both stand out) |
+- **Key visuals:**
+  - **Players:** squares with a 4 px ink outline. P1 is blue with a round white eye and a white **A**; P2 is white with a bar ink eye and an ink **L**. They differ in lightness, eye shape and letter, never only in hue.
+  - **Level pieces:** solid ink shapes; each element is told apart by its silhouette (see §5): hatched top for ice, sawtooth face for grip walls, bumpy top for sticky floors, hollow for no-grip, bars for gates.
+  - **Sand:** grains in the player's color; gas as small white circles.
+  - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
+  - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
+  - Everything is drawn with engine rectangles and polygons; no image files.
+- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Squash on charge and land, stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; white blast ring and short screen shake for rockets; small shake when a hook sticks; grain spray on crumble; flame flicker; white confetti and a 0.2 s slow-mo on finish; background color pulses lighter for one frame on finish; star pop; count-up time; eased slide-in for every panel; button press bounce.
+- **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one white square character with a letter L, dotted square aim trail, white pennant flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "white rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), green with "square crumbling into a stream of grains on tilted black bars, white flames in a pit" (Sand).
 
 ## 10. Audio
 | Sound | When | Character |
@@ -269,12 +276,12 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Sand `wor
 | Mouse in Versus: let a mouse click count as P1 so a mouse + L pair works? | Yes, cheap and removes the "keyboard only" caveat. | Pao | Open |
 | Par/expert times: set by hand or by a replay bot? | By hand from designer runs (expert ×1.1, par ×1.6), checked by a teammate in phase 3. | Pao | Open |
 | Jump and blast ranges in 24–30 u levels | Lower Hop's top jump speed and the rocket blast about 20 % in the slice; keep the aim sweep and charge time. | Pao | Open |
-| P2 orange vs fire orange in Sand | Fire uses flicker and a flame shape so it never reads as a player; recheck in the slice. | Pao | Open |
 | Sand finish needs 40 of 49 grains: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
-| Art direction: the Toybox Flat mockup looks too close to an existing pastel one-button game | Explore two directions before settling §9: sleek wind-up toys (charging winds the key) and a dusk storybook look (no outlines, layered silhouettes). A look outside the three art families needs team agreement. | Pao + team | Open |
+| Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys and dusk storybook. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Art direction is now two-tone minimal: one background color per world, solid dark level pieces, players the only other color. P2 changes from orange to white. Element shapes in §5 and the Versus HUD in §8 updated to match.
 - 2026-10-21 — Player line names the age range (core 13–24, floor 9–10) and the tone. Art direction reopened as an open question.
 - 2026-10-21 — Owner review: art family changed to Toybox Flat (new palette, visuals and prompts). Levels shrink to one 24–30 u screen with a fixed camera that always shows the whole level, so players are drawn bigger; landscape only from 4:3 to 21:9, with a rotate screen in portrait. Falling sends you back to the level's start, no checkpoints. One finish rule for Hop, Rocket and Grapple: touch the flag's trigger box. New elements: ice (Hop 5, Rocket 4) and sticky floor (Rocket 7). Hop stays precise (no landing momentum). Hats and cosmetics added to Later.
 - 2026-10-21 — First draft from the brief and the phase 1a answers: 4 modes as worlds of 10, solo time trial with ghost as the main path, Versus on any level, all levels unlocked behind one switchable rule, no daily, LittleJS kept.
