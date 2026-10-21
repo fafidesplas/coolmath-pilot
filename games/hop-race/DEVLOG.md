@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-21 — GDD first draft
+- Phase 1a questions answered; wrote `GDD.md` (Status: Draft).
+- Decisions: 4 modes as worlds of 10 levels (Hop = Classic + Wall Jump, Rocket, Grapple, Sand = Flow + Flow 2); Orbit and Rocket (pits) cut. Solo time trial with stars and a ghost is the main path; 2-player Versus on any level. All levels unlocked behind one switchable rule. No daily. LittleJS kept.
+- Next: critical review pass (1c), then a teammate reviews for approval.
+
 ## 2026-10-19 — Moved into coolmath-pilot
 - Moved from its own repo (onebutton-twoplayer-game) with its git history; added this brief, `mechanic.svg`, devlog and meta for the dashboard.
 - Current state: playable LittleJS prototype, 2 players with one key each, six modes in the menu (Classic, Wall Jump, Rocket Jump, Grappling Hook, Flow, Flow 2); keyboard only, no shell, saving or analytics.
