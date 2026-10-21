@@ -1,6 +1,6 @@
 # Flip Runner — Game design document
 
-**Status:** Draft
+**Status:** In review
 **Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-21
 
 > A little runner dashes on by itself; one tap flips gravity and sends it arcing to the ceiling and back. Read the corridor, time the flip, thread the gaps.
@@ -24,28 +24,29 @@
 ### 3.1 Space and scale
 - Design resolution 1280×720. The HUD takes the top 80 px; the playfield is 1280×640.
 - Levels are strips of **40 px tiles, 16 rows tall** and as many columns as needed (a 40 s level at 8 tiles/s is about 320 columns).
-- The camera scrolls horizontally only, with the runner at **30% of the screen width** from the left, so 22 tiles (2.8 s at base speed) of what is coming are visible.
+- The camera scrolls horizontally only, with the runner at **30% of the screen width** from the left, so 22 tiles (2.8 s at base speed) of what is coming are visible. At higher speeds the camera leads more, easing the runner back to 22% of the width at 540 px/s, so the look-ahead time stays above 1.6 s.
 
 ### 3.2 Simulation
 - Fixed step at **120 Hz** with an accumulator (frame `dt` capped at 0.05 s). Deterministic for the same inputs, so levels can be checked by a solver and replayed.
 - The runner is an axis-aligned box swept against the tiles and moving blocks, per axis.
 
 ### 3.3 The runner
-- **Hitbox:** 28 × 32 px. Drawn about 40 × 40 px with squash and stretch.
+- **Hitbox:** 24 × 28 px, smaller than the drawing (about 40 × 40 px with squash and stretch), so grazes don't kill.
 - **Forward speed:** constant per level, set by the world: **320 px/s** (8 tiles/s) in world 1, 350 in world 2, 380 in world 3, 400 in world 4. Speed pads change it inside a level (3.5).
 - **Gravity:** **5000 px/s²**, pointing down or up. Max vertical speed 1600 px/s.
 - **Flip:** gravity reverses and the runner gets a 150 px/s kick towards the new surface so the arc starts at once. Crossing a standard 6-tile corridor (208 px of travel) takes **about 0.29 s** and covers about 2.3 tiles forward. Taller rooms mean longer flips (12 tiles: about 0.42 s).
+- **Auto-step:** a rise of exactly 1 tile in the surface the runner is on (floor, or ceiling when gravity is up) is climbed automatically with a quick hop, no input. Only walls of 2 tiles or more stop the runner, and they are drawn with a warning edge.
 - **Only from a surface:** a flip needs the runner to be standing (floor, ceiling, platform or moving block, whichever is "down" right now). No mid-air flips.
 - **Forgiveness:** a tap is **buffered for 100 ms** (a tap just before landing flips on touchdown), and **coyote time is 60 ms** (a tap just after running off an edge still flips).
-- **Input:** the flip is processed on key down / pointer down, never on release. Input events are queued with the step they arrive in, so latency is at most one step (8 ms) plus the frame.
+- **Input:** the flip is processed on key down / pointer down, never on release. Holding a key or a finger does not repeat the flip (keyboard auto-repeat is ignored): one press, one flip. Input events are queued with the step they arrive in, so latency is at most one step (8 ms) plus the frame.
 
 ### 3.4 Death
 - The runner dies when it:
-  - touches **spikes**;
+  - touches **spikes** (their deadly area starts 6 px inside the drawn triangle);
   - leaves the playfield through the top or bottom (an open gap);
-  - **runs into a wall face** head-on (any solid that stops forward motion), with a corner forgiveness of 10 px: hitting the very top or bottom 10 px of a wall nudges the runner over or under it instead;
+  - **runs into a wall face** of 2 tiles or more head-on, with a corner forgiveness of 10 px: hitting the very top or bottom 10 px of a wall nudges the runner over or under it instead (1-tile rises are auto-stepped, 3.3);
   - is **crushed** between a moving block and another solid.
-- Death: a crunch, the runner bursts into pieces, a short shake, then it rebuilds at the last flag. **Back to running in 0.35 s.**
+- Death: a crunch, the runner bursts into pieces, a short shake and a soft vignette (never a full-screen flash: deaths repeat a lot), then it rebuilds at the last flag. **Back to running in 0.35 s.**
 - No lives and no game over in levels. The level's death counter goes up by one.
 
 ### 3.5 Obstacles and objects
@@ -53,7 +54,7 @@
 - **Spikes:** on floors (pointing up) or ceilings (pointing down), and on block faces.
 - **Platforms:** solid islands in the middle of a room; the runner can land on their top (gravity down) or their underside (gravity up).
 - **Moving blocks (world 2):** solid blocks that slide back and forth along a straight path with an eased motion and a fixed period (2–4 s). They can be ridden. They only kill by crushing, and their path is drawn as a dotted rail so it is always visible.
-- **Speed pads (world 3):** chevrons on a surface. **Fast pad** (»): speed × 1.35. **Slow pad** («): speed × 0.75. The new speed lasts until the next pad or the next checkpoint respawn (which resets to the level speed).
+- **Speed pads (world 3):** chevrons on a surface. **Fast pad** (»): speed × 1.35. **Slow pad** («): speed × 0.75. The new speed lasts until the next pad. A respawn restores the speed saved at the flag (3.6).
 - **No-flip zones (world 3):** a hatched band across the screen with a crossed-out flip icon. Taps inside are ignored; a tap in the last 100 ms before the zone ends is buffered and fires at its exit.
 - **Gravity switches (world 4):** a round pad with an arrow. Touching it flips gravity without a tap, in the arrow's direction. A switch can be passed through from either side and fires once per pass.
 - **Stars:** 3 per level, placed on the risky route (3.7).
@@ -61,7 +62,7 @@
 - **Goal gate:** a big striped arch at the end. Running through it completes the level.
 
 ### 3.6 Checkpoints and restart
-- On death, the runner respawns at the last flag, on the surface the flag stands on, with gravity pointing at that surface and the level speed.
+- **Every retry of a section is identical.** When a flag activates it saves a snapshot: the runner's speed and gravity, and the phase of every moving block. On death everything is restored from that snapshot, so the section always plays the same way and can be learned. The runner respawns on the surface the flag stands on.
 - **R** restarts the level from the start (under 1 s).
 
 ### 3.7 Stars and rating
@@ -147,9 +148,10 @@
   Tile characters: `.` empty, `#` solid, `^` floor spikes, `v` ceiling spikes, `>` and `<` wall spikes. `gravity` is 1 (down) or −1 (up).
 
 ## 7. Progression and retention
+- **Completed levels:** a finished level shows a check badge on its tile, and the results screen shows a COMPLETE ribbon, even with 0 stars. (This deviates from the "1–3 stars" in `STANDARDS.md` on purpose: here the stars are the collectibles.)
 - **Unlocks:** finishing a level unlocks the next. A world unlocks when the previous world's level 10 is finished.
-- **Endless mode:** unlocked by finishing world 1. Chunks of 5–10 s (40–80 columns), each tagged with a tier 1–4, are chained by a seeded random generator. Chunks start and end on a shared neutral seam (floor at row 13, ceiling at row 2, 4 safe columns), so any chunk follows any other. One life. Speed starts at 320 px/s and rises 2% every 30 s; the tier mix shifts towards harder chunks with distance. Score = distance in meters (1 tile = 1 m). Best distance is saved.
-- **Daily run:** the same endless run for everyone that day, seeded by the date (`YYYYMMDD`). One scored attempt per day (extra attempts are practice), a streak counter for consecutive days, and a copyable result line, for example:
+- **Endless mode:** unlocked by finishing world 1. Chunks of 5–10 s (40–80 columns), each tagged with a tier 1–4, are chained by a seeded random generator. Chunks start and end on a shared neutral seam (floor at row 13, ceiling at row 2, 4 safe columns), so any chunk follows any other. One life. Speed starts at 320 px/s and rises 2% every 30 s up to a cap of 520 px/s; after that only the tier mix keeps getting harder. Score = distance in meters (1 tile = 1 m). Best distance is saved.
+- **Daily run:** the same endless run for everyone that day, seeded by the date (`YYYYMMDD`). Three scored attempts per day, and the best one counts (later attempts are practice), a streak counter for consecutive days, and a copyable result line with the best attempt, for example:
   `Flip Runner Daily #142 · 1,284 m · 🟩🟩🟨🟧 · 🔥3`
   (one square per tier reached, then the streak). No social APIs.
 - **Skins:** 12 body colors and 12 scarf patterns, unlocked automatically at total star counts (item *k* of 24 unlocks at round(*k* × 4.8) stars, the last at 115 of 120). No currency. The scarf always trails against the run and droops towards gravity, whatever the skin.
@@ -189,7 +191,7 @@
   - Scarf whips around on every flip.
   - Speed lines while on a fast pad; a little puff on slow pads.
   - Star: pop, sparkle burst, flies to its HUD slot; banking at a flag makes the slots shine.
-  - Death: crunch, runner bursts into pieces, 6 px shake for 0.2 s, quick white flash, rebuild pop at the flag.
+  - Death: crunch, runner bursts into pieces, 6 px shake for 0.2 s, soft vignette pulse, rebuild pop at the flag.
   - Checkpoint: flag whips up with confetti.
   - Goal: runner leaps through the arch, confetti, results count-up, the death count stamps in.
 - **Concept art prompts** (updated from the brief):
@@ -224,7 +226,8 @@ Music: yes, one short synthesized loop per world (16 bars, upbeat, tempo matched
 | `Complete:world0N:level0M` | Goal reached | Stars banked this run (0–3) |
 | `Fail:world0N:level0M` | Player restarts with R / button, or quits to the menu | Seconds played |
 | `level:deaths` | On Complete and on Fail | Deaths this attempt |
-| `death:spikes` / `death:gap` / `death:wall` / `death:crush` | Each death | Seconds into the level |
+| `death:spikes` / `death:gap` / `death:wall` / `death:crush` | On Complete and on Fail, one per type that happened | Deaths of that type this attempt |
+| `quit:spikes` / `quit:gap` / `quit:wall` / `quit:crush` | On Fail | — (the type of the last death before giving up) |
 | `checkpoint:<n>` | Flag *n* passed for the first time in an attempt | — |
 | `tutorial:step01` | First flip ever | — |
 | `tutorial:step02` | First checkpoint ever | — |
@@ -235,12 +238,13 @@ Music: yes, one short synthesized loop per world (16 bars, upbeat, tempo matched
 | `ui:restart` | R or restart button | — |
 | `settings:music:off` / `settings:sfx:off` | Toggle switched off | — |
 
-**Question the data must answer:** which obstacle causes the most quits (the last `death:<type>` before each Fail), and how many retries a level takes before players finish or leave (`level:deaths` on Complete vs Fail, per level).
+**Question the data must answer:** which obstacle causes the most quits (`quit:<type>`), and how many retries a level takes before players finish or leave (`level:deaths` on Complete vs Fail, per level).
 
 ## 12. Tech plan
 - **Stack:** vanilla Canvas 2D, ES modules, no build step, following `STANDARDS.md`. Useful code from Magnet Twins (fixed-step loop, input recording, save, analytics stub, sound synth, particles) is **copied** into this folder, not imported.
 - **Modules (`src/`):** `main.js` (boot), `game.js` (loop, screens, HUD), `sim.js` (deterministic runner world: movement, flips, deaths, stars, flags; no DOM), `level.js` (parser), `chunks.js` (endless and daily chain from a seed), `render.js` (strip cache, runner and scarf, objects, parallax), `fx.js`, `input.js` (keys and pointer to a flip queue), `audio.js`, `record.js`, `save.js`, `analytics.js`.
 - **Solver (`tools/`):** a one-button game can be searched. From each standing state the solver tries "flip now" or "wait one step", with memoization on (column, gravity, y, speed), and reports whether the level is beatable, the tightest flip window on the easiest route, and which stars are reachable. It runs in Node on the same `sim.js`. A level is not done until the solver passes it and the tightest window is at least 120 ms.
+- **Level editor (phase 3, debug only):** paint tiles, place objects and flags, scrub a playtest from any column, run the solver with one click, and export the level module. 40 levels of ~320 columns plus 30 chunks can't be maintained as hand-typed text.
 - **Save keys:** `cm_flip-runner_save` → `{ v: 1, stars: { "w1l01": [1,0,1] }, best: { "w1l01": { time, deaths } }, endless: { best }, daily: { last, streak, best }, skin, tut }` and `cm_flip-runner_settings` → `{ v: 1, music: false, sfx: true }`. Reads in `try/catch`.
 - **Testing hook:** `window.game` with `screen`, `level`, `score`, `start()`, `restart()`, `win()` (debug only).
 - **Riskiest piece:** input latency and the feel of the flip on a Chromebook trackpad. Prove it first in phase 2 with the bare runner on a test corridor, measuring time from input event to the first frame that shows the flip.
@@ -263,4 +267,5 @@ Music: yes, one short synthesized loop per world (16 bars, upbeat, tempo matched
 | Should endless chunks be hand-made only, or also cut from levels? | Hand-made with the level editor, 30 chunks for v1 (8 per tier, 6 neutral) | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Phase 1c review applied: flag snapshots make every retry identical (mover phases, speed, gravity); 1-tile rises are auto-stepped, only walls of 2+ tiles kill; death events sent as counts per attempt plus `quit:<type>` on Fail; forgiving hitboxes (runner 24×28, spikes 6 px inset); daily counts the best of 3 attempts; no full-screen death flash; level editor planned for phase 3; endless speed capped at 520 px/s; check badge and COMPLETE ribbon for 0-star finishes; camera leads more at high speed; holding a key never repeats a flip. Status set to In review.
 - 2026-10-21 — First draft from the brief and the phase 1a answers (gravity flip at 5000 px/s² taking ~0.29 s, 100 ms buffer and 60 ms coyote, collectible stars are the rating and are banked at flags, 320–400 px/s with the camera at 30%, free geometry, gravity switches instead of portals in world 4, endless and daily built from chunks, skins unlocked by stars, a level 1 no one can fail, deterministic sim with a one-button solver).
