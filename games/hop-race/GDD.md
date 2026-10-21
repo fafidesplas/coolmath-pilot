@@ -30,7 +30,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Falling:** dropping below the kill line (1 u under the level's bottom edge) sends you back to the level's start with zero speed. The timer keeps running; nothing else is lost. In Versus the other player keeps racing. There are no checkpoints: levels are short enough that a restart from the start is fair.
 - **Finish (Hop, Rocket, Grapple):** touch the flag's trigger box, 1.5 u wide × 3 u tall around the pole. Grounding is not needed. Phase has its own rule (3.5). Solo: the timer stops. Versus: the first player to finish wins the round.
 - **Timer (solo):** starts at your first input, not when the level appears, so reading the level is free. Shown as seconds with one decimal; stored in ms.
-- **Stuck nudge (solo):** after 8 s grounded with no input, a small "R to restart" fades in near the restart button. It disappears on the next input.
+- **Stuck nudge (solo):** after 8 s without getting closer to the flag (your best distance to it has not improved), in any mode, a small "R to restart" fades in near the restart button. It disappears as soon as you get closer again.
 
 ### 3.2 Hop (merges the prototype's Classic and Wall Jump)
 - **Hold** (only while grounded or clinging): power charges from 0 to full in 1.1 s; the aim angle sweeps between 18° and 80° at 2.6 rad/s (a full up-down cycle ≈ 2.4 s). A dotted arc previews the jump and a power bar above the player fills.
@@ -68,7 +68,7 @@ You are a block of matter made of 7 × 7 = 49 drops. The button switches you bet
 
 - **Fire pit** (from level 6): liquid that touches fire turns into gas. Fire is the only way to become gas. A solid square that falls into the pit drops through it and goes back to the start.
 - **Losing drops:** drops that fall off a slab are gone, and the solid square shrinks to match. Under 12 drops, or gas that floats out of the top of the level, and you go back to the start with all 49.
-- **Finish:** at least 40 drops touching the flag (a whole square touching it counts all its drops). Arriving with fewer than 40 sends you back to the start, so care beats speed.
+- **Finish:** at least 40 drops touching the flag, in any state (a whole square touching it counts all its drops; liquid drops and gas rings count one each). Arriving with fewer than 40 sends you back to the start, so care beats speed.
 - **Change from the prototype:** the prototype's gas condenses through a visible liquid phase before freezing, and pressing during that turns it back to sand. Both are cut: gas only ever becomes solid.
 
 ### 3.6 Camera and screen
@@ -80,7 +80,7 @@ You are a block of matter made of 7 × 7 = 49 drops. The button switches you bet
 | Action | Mouse / touch | Keyboard |
 |---|---|---|
 | The button (solo) | Click or tap anywhere in the play area except the HUD buttons | Space, A or L |
-| The button (Versus) | Touch: P1 = left half, P2 = right half | P1 `A`, P2 `L` |
+| The button (Versus) | Touch: P1 = left half, P2 = right half (taps on the HUD buttons never count) | P1 `A`, P2 `L` |
 | Pause | Pause button (top right, 56 px) | P or Esc |
 | Restart level (solo) / restart round without a point (Versus) | Restart button (top right, 56 px) | R |
 | Menu navigation | Click / tap | Arrows + Enter or Space |
@@ -123,7 +123,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
   - **World 4 — Phase:** melt and pour down slopes without losing drops, freeze to stop, then fire and gas to reach hanging flags.
 - **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold… release!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Hold to melt. Let go to freeze." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
-- **No dead ends (Hop):** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. The phase 3 level tool checks this by simulating jumps from every standable spot; the stuck nudge (3.1) is the safety net.
+- **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
 - **Stars (solo only):**
   - 1★: finish the level.
@@ -144,7 +144,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket:** 1 flat floor, blast yourself forward · 2 hop a ledge with a downward blast · 3 first button and gate · 4 first ice floor, blasts send you gliding · 5 a button reached by a bank shot · 6 first pits · 7 first sticky floor · 8–10 combinations (the prototype's level, cut down to fit, ≈ 8).
   - **Grapple:** 1 one pillar over a short pit · 2 two pillars · 3 release timing for distance · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5).
-  - **Phase:** 1 one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4–5 longer runs with drops, freeze to stop on a ledge · 6 first fire pit · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
+  - **Phase:** 1 one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4–5 longer runs with falls, freeze to stop on a ledge · 6 first fire pit · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
 - **Level data format:** one JS file per world in `levels/` (e.g. `levels/hop.js`) that adds to a global, because the game must run from `file://` where `fetch` of JSON and ES modules are blocked. Coordinates are centered on the level box: a `size: 24` level spans x −12…12 and y −6.75…6.75.
   ```js
   HR_LEVELS.hop = [
@@ -177,22 +177,23 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 
 ## 8. Screens and UI flow
 ```
-Title ──Play──▶ Playing (next unfinished level) ──▶ Level complete ──Next/Retry/Menu
+Title ──Play──▶ Playing (first level under 3★) ──▶ Level complete ──Next/Retry/Menu
   ├─Levels──▶ Mode select (Solo | Versus) ──▶ Level select ──▶ Playing ⇄ Pause
   ├─Hats
   └─Settings
 Versus: Mode select (Versus tab) ──▶ Level select ──▶ Race ──▶ Round result ──▶ … ──▶ Match result (Rematch / Levels / Menu)
 Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ```
-- **Title:** logo with an idle hopping square, a big **Play** button, then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: Play starts the next unfinished solo level (Hop 1 for a new player).
+- **Title:** logo with an idle hopping square, a big **Play** button, then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: Play starts the first level with fewer than 3 stars, in world and level order (Hop 1 for a new player, and Hop 1 again once every level has 3 stars).
 - **Mode select:** Solo / Versus toggle at the top. Four world cards, each with an animated mini schematic of its button meaning, name and star total.
 - **Level select:** 10 tiles per world in 2 rows of 5, each with number, stars and best time; the next level without 3★ is highlighted. Versus uses the same grid without stars.
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with their star cost; tap one to put it on P1 or P2.
-- **Playing HUD (solo):** timer top center, ghost's best time under it, pause and restart buttons top right. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
-- **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; pause and restart move to top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
+- **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
+- **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; the world-level label, pause and restart sit top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
 - **Pause:** Resume, Restart, Levels, Settings. The game pauses itself when the tab is hidden.
 - **Level complete:** time counts up, then stars pop in one by one, "New best!" if it is one, a new hat if one unlocked, Next / Retry / Menu. Next is the default action (Space/Enter).
-- **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any key. **Match result:** big winner, Rematch / Levels / Menu.
+- **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any fresh key press after the input lock. **Match result:** big winner, Rematch / Levels / Menu.
+- **Results input lock:** on the level complete, round result and match result screens, input is ignored for the first 0.6 s, and a button held down from gameplay must be released and pressed again before it counts. A player mashing across the finish line never skips their result.
 - **Rotate screen:** a phone icon turning sideways and "Rotate your device". The game resumes where it was when the window is landscape again.
 
 ## 9. Art direction
@@ -268,14 +269,14 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 - **Modules:** split `game.js` during the slice into classic scripts (not ES modules, so `file://` works), all globals prefixed `hr`/`HR_`: `src/main.js` (engine init, state machine), `src/modes/hop.js`, `rocket.js`, `grapple.js`, `phase.js`, `src/level.js` (load level data, solids, gates, flag), `src/camera.js` (fit the level box to the window, aspect handling, rotate screen), `src/input.js` (one-button abstraction over keys and Pointer Events, touch halves), `src/render.js`, `src/ui.js` (screens, HUD), `src/hats.js`, `src/ghost.js`, `src/save.js`, `src/audio.js`, `src/analytics.js`. Levels in `levels/<world>.js`.
 - **Simulation:** LittleJS fixed 60 Hz step, which also makes it frame-rate independent. Each mode exposes `step(player, input)` and `draw(player)`; input is a per-player `{down, pressed, released}` read once per frame, so modes never touch the keyboard directly.
 - **Canvas and camera:** the canvas fills the window at `devicePixelRatio` capped at 2 and is resized on every window resize. On level load and on every resize, the camera is set to the level center with the scale that fits the level box plus margin. No per-frame camera logic beyond shake.
-- **Ghost:** record the player's position (and Phase's center) every 2nd frame, quantized to 0.01 u, as an Int16 array; at 20 s that is ~600 samples, under 3 KB per level as base64. Replay interpolates. No dependence on deterministic physics.
+- **Ghost:** recording and replay both start at the player's first input, the same moment the timer starts. Record the player's position (and Phase's center) every 2nd frame, quantized to 0.01 u, as an Int16 array; at 20 s that is ~600 samples, under 3 KB per level as base64. Replay interpolates. No dependence on deterministic physics.
 - **Save keys:** `cm_hop-race_save` = `{v: 1, levels: {"hop-01": {stars, bestMs}}, hats: {p1, p2}, settings: {sfx, music, ghost}}`; ghosts in `cm_hop-race_ghost_<levelId>`. Unlocked hats are computed from the star total, not stored. All reads wrapped in `try/catch`; a broken save resets to defaults. Saved after every level complete, hat change and settings change.
 - **Testing hook:** `window.game` with `screen`, `level` (id), `mode`, `versus`, `score` (time or wins), and `start(levelId)`, `restart()`, `win()` (debug only, stripped from release). `screen` uses the standard values `'title' | 'levels' | 'playing' | 'complete'` plus `'modes'` (counts as `levels`), `'hats'` (counts as `title`), `'paused'` and `'rotate'` (count as `playing`), `'round'` and `'match'` (count as `complete`).
 - **Riskiest piece:** turning 6 hand-tuned one-level modes into 40 smaller, data-driven levels without breaking their feel, especially Phase (drop physics tuned to specific slab angles, a flag position computed from the last slab, and the new gas-to-solid rule) and the jump and blast ranges in a smaller box. Prove it in the slice: load the prototype's levels from data at their old size (`size: 42`) and confirm each plays the same, then retune ranges for 24–30 u levels and build Hop 1–3.
 
 ## 13. Scope
 - **v1:** 4 worlds (Hop, Rocket, Grapple, Phase) × 10 levels; solo time trial with stars and ghost; 8 hats unlocked by stars; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
-- **Build order and cut line:** worlds are built Hop → Rocket → Grapple → Phase. If Phase doesn't feel right by the time World 3's content is done, v1 ships with three worlds (30 levels, hats rebalanced to 90 stars) and Phase follows in an update.
+- **Build order and cut line:** worlds are built Hop → Rocket → Grapple → Phase. When World 3's content is done, Phase levels 1–3 must be built and played cold by someone who didn't make them, who finishes them without help. If not, v1 ships with three worlds (30 levels, hats rebalanced to 90 stars) and Phase follows in an update. Pao and a teammate make the call together.
 - **Vertical slice (phase 2):** Hop levels 1–3 from data, solo with timer, stars and ghost, Versus on the same levels, full shell, saving, analytics stubs logging to the console.
 - **Later:** 3–4 player Versus (needs a keyboard ghosting test first); CPU opponent; more modes on the one-button idea; best-of-N options for Versus; more hats; 12 levels per world if players want more; star gates if the data shows players skip around too much.
 - **Cut:**
@@ -305,6 +306,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-21 — Second review pass: 0.6 s input lock and fresh press on results screens; stuck nudge in every mode based on progress toward the flag; Phase pockets added to the dead-end check; testable Phase cut criterion; world-level label in the HUD; Phase finish counts drops in any state; Play goes to the first level under 3 stars; ghost starts at first input; HUD buttons excluded from touch halves.
 - 2026-10-21 — Review pass (1c) applied. Play starts the next level in one click; Levels and Hats buttons on the title. World 4 renamed Phase, with three visible states (solid, liquid, gas) in a state table; gas only becomes solid. Hop no-dead-ends rule plus a stuck nudge after 8 s. Versus players spawn on the same point and never affect each other; rockets push only their owner, with color-coded blasts. 8 hats unlocked by stars in v1. Cut line: Phase can slip to an update. Launcher, rope, hook, aim dots and power bar defined. Per-world tutorial prompts. Palette down to 6 colors (Phase shares Hop's yellow). `window.game` screens, analytics edge cases, canvas DPR and wall bounces specified. Finish pulse is one soft flash.
 - 2026-10-21 — Players lose their outlines and get one big googly eye each, with a loose pupil that swings with motion. The round-eye vs bar-eye difference is gone; letters and lightness tell the players apart.
 - 2026-10-21 — Art direction is now two-tone minimal: one background color per world, solid dark level pieces, players the only other color. P2 changes from orange to white. Element shapes in §5 and the Versus HUD in §8 updated to match.
