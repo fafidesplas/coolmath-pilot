@@ -52,7 +52,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
 
 ### 3.4 Grapple
-- Same spinning launcher (3 rad/s); it freezes while the hook is out, and as in Rocket each shot reverses its spin, so after a swing it sweeps back toward the way you are flying. A faint dotted sight line shows where the hook will go while it is ready.
+- Same spinning launcher (3 rad/s); it freezes while the hook is out and keeps its direction when the rope is cut (as in the prototype). Reversing the spin on each shot, as in Rocket, is behind a switch (`HR_GRAPPLE.reverseSpin`) and off while the prototype's feel is tested; see §14. A faint dotted sight line shows where the hook will go while it is ready.
 - **Press** to fire the hook (55 u/s, no range limit). It sticks to the first solid it touches, except no-grip surfaces (from level 6), which it bounces off. A hook that leaves the level is lost (0.3 s cooldown).
 - **Hold** to reel in: you accelerate toward the anchor at 95 u/s² up to 26 u/s along the rope; any speed you already had is kept. Sideways speed is damped (1.2/s) so you don't orbit. Within 1.1 u of the anchor you hang there.
 - **Release** cuts the rope. You keep your speed (top speed 32 u/s). This is the skill: let go at the right moment to fly.
@@ -309,9 +309,11 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
+| Grapple launcher: reverse the spin on each shot (as in Rocket)? | Without it, after letting go the launcher swings backward and the next pillar is rarely in reach before you fall: a bot catches the second pillar of 3-2 in 0 of 169 hold pairs (49 with reversal); 3-2 can only be crossed in one long fling. Play both; if no reversal stays, rework 3-2. | Pao | Testing no reversal |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Grapple launcher no longer reverses its spin on each shot (owner wants to try the prototype's feel); the reversal stays behind `HR_GRAPPLE.reverseSpin`. Open question added in §14.
 - 2026-10-22 — Grapple 1–3 built (Swing By, Two Pillars, Let Go). The launcher reverses its spin on each shot, as in Rocket; without it, catching the next pillar after a release needed most of a full turn. The top of the level box is closed in Grapple. A dotted sight line shows the hook's path. Levels can place their tutorial prompt (`promptAt`).
 - 2026-10-21 — Owner decision: rocket blasts push every player in range, and a rocket explodes on the other player (as in the prototype). Removed from the Cut list; watch for pinning in Versus playtests.
 - 2026-10-21 — Rocket 4–10 hidden as drafts (`draft: true`); 1–3 are the Rocket slice to tune the mode first.

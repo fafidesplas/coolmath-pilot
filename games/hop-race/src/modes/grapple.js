@@ -8,7 +8,8 @@
 
 const HR_GRAPPLE = {
     gravity:   42,
-    spin:      3,       // launcher rotation (rad/s); it freezes while the hook is out, and each shot reverses it
+    spin:      3,       // launcher rotation (rad/s); it freezes while the hook is out
+    reverseSpin: false, // true: each shot reverses the spin, as in Rocket (tried 2026-10-22; off while testing the prototype's feel)
     speed:     55,      // hook flight speed (u/s), no range limit
     cooldown:  .12,
     missCooldown: .3,   // after a hook leaves the level
@@ -50,7 +51,7 @@ HR_MODES.grapple = {
             const d = vec2(Math.cos(p.aimA), Math.sin(p.aimA));
             p.hook = {fly: true, x: p.x, y: p.y, dx: d.x, dy: d.y};
             p.cool = G.cooldown;
-            p.spinDir = -p.spinDir;   // as in Rocket, each shot reverses the spin, so after a swing it sweeps back forward
+            if (G.reverseSpin) p.spinDir = -p.spinDir;
             hrSfx.fire.play();
         }
         p.down = input.down;
