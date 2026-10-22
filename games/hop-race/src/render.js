@@ -30,8 +30,10 @@ function hrDrawLevel()
             drawRect(vec2((l + r) / 2, 0), vec2(r - l, 2 * (hh + far)), HR_INK);
             continue;
         }
-        // solids that touch the level box edge are drawn on to the screen edge
-        const l = s.l <= -hw + .01 ? s.l - far : s.l, r = s.r >= hw - .01 ? s.r + far : s.r;
+        // solids that touch the level box edge are drawn on to the screen edge; floating ones (ceilings)
+        // stop at the side wall's outer face instead of crossing it
+        const side = s.bottom < -hh ? far : HR_MARGIN;
+        const l = s.l <= -hw + .01 ? -hw - side : s.l, r = s.r >= hw - .01 ? hw + side : s.r;
         const top = s.top >= hh - .01 ? s.top + far : s.top;
         drawRect(vec2((l + r) / 2, (top + s.bottom) / 2), vec2(r - l, top - s.bottom), HR_INK);
         if (s.grip) hrDrawSawtooth(s);

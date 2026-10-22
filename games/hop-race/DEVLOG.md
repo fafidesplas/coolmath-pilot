@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Grapple: no soft lock past the flag
+- Owner found it: land to the right of the flag in 3-1 or 3-3 and nothing to the left is in hook reach (the wall and floor only pull you along them), so you were stuck. Both levels now have a thin ceiling under the HUD from x 2.5 to the right wall. 3-2 doesn't need one: its second pillar is in reach from past the flag.
+- Bot check: started past the flag and hooking only the ceiling, it reached the flag in 44 of 108 tries (3-1) and 71 of 108 (3-3); the rest overshot into the pit, which costs time but isn't a lock. First-swing results are unchanged.
+- Drawing: ceilings that touch the box edge now stop at the side wall instead of crossing it to the screen edge (also tidies Rocket 2-3's ceiling). Floors still run off screen.
+- The 3-1 prompt moved to the center; since the flag moved to x 7 it ran into the flag.
+
 ## 2026-10-22 — Side walls are visible
 - The level box's left and right walls, which already collided, now draw as ink walls in every world. They are 0.5 u thick (the camera margin): at 16:9 they reach the screen edge, and on wider screens the background shows past them, so the pause and restart buttons stay on the background. Drawn all the way out, the walls hid both buttons.
 - Next: unchanged (play Grapple 3-1 to 3-3).
