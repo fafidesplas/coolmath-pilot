@@ -1,6 +1,6 @@
 // Screen flow (GDD 8), the frame loop, and the glue between sim, input, render,
 // sound, saving and analytics. Button and panel code adapted from Magnet Twins.
-import { VIEW_W, VIEW_H, HUD_H, STEP, MAX_FRAME_DT, HZ, T, ROWS, COLORS as C, WORLD_COLORS, RUNNER, CAMERA } from './config.js';
+import { VIEW_W, VIEW_H, HUD_H, STEP, MAX_FRAME_DT, T, ROWS, COLORS as C, WORLD_COLORS, RUNNER, CAMERA, NEAR_MISS, SPIKE_H, SPIKE_INSET } from './config.js';
 import { Sim, bankedCount } from './sim.js';
 import { Input } from './input.js';
 import { Sound } from './audio.js';
@@ -9,7 +9,7 @@ import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
 import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawFlag, drawGoal, drawLevelStar, rrect, text } from './render.js';
-import { isSolid } from './level.js';
+import { isSolid, tileAt, TILE } from './level.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
 
 const fmt = s => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
@@ -24,6 +24,7 @@ export class Game {
     this.settings = loadSettings();
     this.sound = new Sound();
     this.sound.setEnabled(this.settings.sfx);
+    this.sound.musicOn = this.settings.music;
     this.fx = new FX();
     this.input = new Input(code => this.onKey(code));
     this.scarf = new Scarf();
@@ -162,6 +163,7 @@ export class Game {
     this.chain = 0; this.lastFlipT = -9;
     this.hintT = -9; this.hintIdx = 0;
     this.flagsPassed = new Set();
+    this.closeCalls = 0; this.lastClose = -9; this.dustT = 0; this.ghostT = 0;
     const s = this.sim.s;
     this.prevX = s.x; this.prevY = s.y;
     this.cam = this.cameraTarget();
@@ -211,6 +213,7 @@ export class Game {
   pause(on) {
     if (this.screen !== 'playing' || !this.sim || this.sim.s.done || this.paused === on) return;
     this.paused = on;
+    if (on) this.sound.stopMusic(); else this.sound.startMusic();
     this.focus = on ? 0 : -1;
     this.input.accepting = !on && !this.replay;
     this.input.clear();
@@ -284,6 +287,32 @@ export class Game {
     else bits = this.input.sample();
     if (this.recorder) this.recorder.push(bits);
     this.sim.step(bits);
+    if (!this.sim.s.dead && !this.sim.s.done) this.checkClose();
+  }
+
+  // A close call: passing within NEAR_MISS px of a spike's deadly area.
+  checkClose() {
+    const s = this.sim.s, lv = this.sim.lv, m = NEAR_MISS;
+    if (this.t - this.lastClose < 0.4) return;
+    const x0 = s.x - m, x1 = s.x + RUNNER.w + m, y0 = s.y - m, y1 = s.y + RUNNER.h + m;
+    for (let ty = Math.floor(y0 / T); ty <= Math.floor(y1 / T); ty++) {
+      for (let tx = Math.floor(x0 / T); tx <= Math.floor(x1 / T); tx++) {
+        const t = tileAt(lv, tx, ty);
+        if (t !== TILE.SPIKE_UP && t !== TILE.SPIKE_DOWN) continue;
+        const sx0 = tx * T + SPIKE_INSET, sx1 = tx * T + T - SPIKE_INSET;
+        const sy0 = t === TILE.SPIKE_UP ? ty * T + T - SPIKE_H + SPIKE_INSET : ty * T;
+        const sy1 = t === TILE.SPIKE_UP ? ty * T + T : ty * T + SPIKE_H - SPIKE_INSET;
+        if (x1 > sx0 && x0 < sx1 && y1 > sy0 && y0 < sy1) {
+          this.lastClose = this.t;
+          this.closeCalls++;
+          this.sound.play('close');
+          const cx = s.x + RUNNER.w / 2, cy = s.y + RUNNER.h / 2;
+          this.fx.spawn({ x: cx, y: cy - s.g * 46, vy: -s.g * 60, g: 0, type: 'text', label: 'CLOSE!', size: 26, color: C.star, life: 0.6 });
+          this.fx.burst(cx, cy, 10, C.star, 220, 'spark', 0.3, 3, 0);
+          return;
+        }
+      }
+    }
   }
 
   cameraTarget() {
@@ -304,6 +333,17 @@ export class Game {
     const x = this.prevX + (s.x - this.prevX) * a, y = this.prevY + (s.y - this.prevY) * a;
     this.view = { x: x + RUNNER.w / 2, y: y + RUNNER.h / 2 + this.hop };
     if (!s.dead) this.scarf.update(this.view.x - 10, this.view.y - s.g * 2, s.g, dt);
+    if (!s.dead && !s.done && !this.paused) {
+      this.dustT -= dt; this.ghostT -= dt;
+      if (s.grounded && this.dustT <= 0) {
+        this.dustT = 0.05;
+        this.fx.spawn({ x: this.view.x - 8, y: this.view.y + s.g * 15, vx: -60 - this.fx.rnd() * 60, vy: -s.g * (20 + this.fx.rnd() * 30), color: 'rgba(43,34,56,0.25)', type: 'puff', life: 0.25, size: 3 + this.fx.rnd() * 2, g: 0 });
+      }
+      if (!s.grounded && this.ghostT <= 0) {
+        this.ghostT = 0.016;
+        this.fx.spawn({ x: this.view.x, y: this.view.y, color: C.runner, type: 'ghost', life: 0.16, size: 17, g: 0 });
+      }
+    }
 
     // Level 1 hints: "TAP!" right when a flip is needed
     const hints = this.sim.lv.hints;
@@ -397,7 +437,7 @@ export class Game {
     GA.progression('Complete', pos.world, pos.level, bankedCount(s));
     this.sendDeathCounts();
 
-    this.result = { run, merged: this.save.stars[level.id], time: this.sim.time, deaths: s.deaths, best, shownAt: 0 };
+    this.result = { run, merged: this.save.stars[level.id], time: this.sim.time, deaths: s.deaths, best, close: this.closeCalls, shownAt: 0 };
     this.sound.play('goal');
     const gx = this.sim.lv.goal + 35;
     this.fx.burst(gx, 5 * T, 40, C.star, 420, 'confetti', 1.3, 5, 600);
@@ -506,7 +546,16 @@ export class Game {
     this.addButton({ x: VIEW_W / 2 + 130, y: 378, w: 200, h: 62, label: 'ENDLESS', disabled: true, draw: lockedNote, action: () => {} });
     this.addButton({ key: 'sound', x: VIEW_W - 250, y: 28, w: 220, h: 56, size: 22,
       label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
+    this.addButton({ key: 'music', x: VIEW_W - 250, y: 96, w: 220, h: 56, size: 22,
+      label: this.settings.music ? 'MUSIC: ON' : 'MUSIC: OFF', action: () => this.toggleMusic() });
     text(ctx, 'Daily and Endless open after the Lab', VIEW_W / 2 + 115, 456, 16, '#6B7894', 'center', 700);
+  }
+
+  toggleMusic() {
+    this.settings.music = !this.settings.music;
+    this.sound.setMusic(this.settings.music);
+    storeSettings(this.settings);
+    if (!this.settings.music) GA.design('settings:music:off');
   }
 
   toggleSfx() {
@@ -571,7 +620,7 @@ export class Game {
     const cam = Math.round(this.cam);
     ctx.save();
     ctx.translate(sx, HUD_H + sy);
-    drawBackdrop(ctx, this.backdrop, this.colors, cam);
+    drawBackdrop(ctx, this.backdrop, this.colors, cam, this.t, this.sim.s.speed);
     this.strips.draw(ctx, cam);
 
     ctx.save();
@@ -705,7 +754,7 @@ export class Game {
     }
 
     const shown = r.time * Math.min(1, Math.max(0, e - 0.3) / 0.8);
-    text(ctx, `TIME  ${fmt(shown)}`, VIEW_W / 2, y + 200, 26, C.ink, 'center', 800);
+    text(ctx, `TIME  ${fmt(shown)}   ·   CLOSE CALLS  ${r.close}`, VIEW_W / 2, y + 200, 24, C.ink, 'center', 800);
 
     // The death count stamps in big: dying a lot is part of the fun.
     const da = 1.5;

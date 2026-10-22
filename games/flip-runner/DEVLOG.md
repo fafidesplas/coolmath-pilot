@@ -1,5 +1,14 @@
 # Flip Runner — devlog
 
+## 2026-10-22 — Feel loop 1: faster, denser, louder
+- First playtest (Fafi): "too slow and bland".
+- Speed 320 → 440 px/s, gravity 5000 → 7000 with a stronger kick: a corridor flip now takes ~0.22 s.
+- Rebuilt `w1l01` denser: 33 flips in 28 s (was 22 in 33 s); the solver's tightest window is 300 ms. A star that needed a 25 ms window was moved.
+- Music: a synthesized 4-bar loop (kick, snare, hats, bass, arpeggio) on by default, with its own toggle.
+- Speed feel: speed lines, a fast parallax layer of pillars with blinking lights, running dust, afterimages during flips.
+- Close calls: "CLOSE!" pop, sparks and a ping when passing within 10 px of a spike; counted on the results screen.
+- Next: play it again.
+
 ## 2026-10-21 — Vertical slice, first playable
 - Started phase 2 before Pao's GDD approval, by Fafi's decision, as with Magnet Twins.
 - Deterministic 120 Hz runner (`src/sim.js`, no DOM): gravity flip with 100 ms buffer and 60 ms coyote, auto-step on 1-tile rises, corner forgiveness, forgiving spikes, deaths (spikes, gap, wall), flag snapshots so every retry is identical, stars banked at flags.

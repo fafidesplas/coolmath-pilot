@@ -3,7 +3,7 @@
 import { SAVE_KEY, SETTINGS_KEY } from './config.js';
 
 const SAVE_DEFAULT = () => ({ v: 1, stars: {}, done: {}, best: {}, endless: { best: 0 }, daily: { last: '', streak: 0, best: 0 }, skin: 0, tut: {} });
-const SETTINGS_DEFAULT = () => ({ v: 1, music: false, sfx: true });
+const SETTINGS_DEFAULT = () => ({ v: 1, music: true, sfx: true });
 
 function read(key, fallback) {
   try {

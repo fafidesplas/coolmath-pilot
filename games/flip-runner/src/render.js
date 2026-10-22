@@ -155,13 +155,37 @@ export function renderBackdrop(colors, pixelScale) {
   return { far: make(0.5, 7, true), near: make(0.7, 31, false) };
 }
 
-export function drawBackdrop(ctx, bg, colors, camX) {
+export function drawBackdrop(ctx, bg, colors, camX, t, speed) {
   ctx.fillStyle = colors.bg;
   ctx.fillRect(0, 0, VIEW_W, ROWS * T);
   for (const [layer, k] of [[bg.far, 0.2], [bg.near, 0.45]]) {
     const off = -((camX * k) % VIEW_W);
     ctx.drawImage(layer, off, 0, VIEW_W, ROWS * T);
     ctx.drawImage(layer, off + VIEW_W, 0, VIEW_W, ROWS * T);
+  }
+  // Fast layer: lab pillars with blinking lights
+  const gap = 360, off = -((camX * 0.75) % gap);
+  for (let x = off - gap; x < VIEW_W + gap; x += gap) {
+    ctx.fillStyle = 'rgba(43,34,56,0.07)';
+    ctx.fillRect(x, 0, 30, ROWS * T);
+    const id = Math.round((x - off) / gap + camX * 0.75 / gap);
+    for (let j = 0; j < 4; j++) {
+      const on = Math.sin(t * 4 + id * 1.7 + j * 2.1) > 0.2;
+      ctx.fillStyle = on ? 'rgba(255,197,49,0.75)' : 'rgba(43,34,56,0.12)';
+      ctx.beginPath(); ctx.arc(x + 15, 130 + j * 110, 5, 0, 7); ctx.fill();
+    }
+  }
+  // Speed lines, faster than the world
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 16; i++) {
+    const h1 = ((i * 7919) % 1000) / 1000, h2 = ((i * 104729) % 1000) / 1000;
+    const len = 60 + h2 * 140;
+    const span = VIEW_W + len + 200;
+    const x = VIEW_W + 100 - ((t * speed * 1.7 + h2 * span * 3) % span);
+    const y = 40 + h1 * (ROWS * T - 80);
+    ctx.lineWidth = 2 + h2 * 3;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
   }
 }
 

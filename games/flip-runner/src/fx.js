@@ -21,7 +21,7 @@ export class FX {
       q.on = true; q.x = o.x; q.y = o.y; q.vx = o.vx || 0; q.vy = o.vy || 0;
       q.life = q.max = o.life || 0.5; q.size = o.size || 4; q.color = o.color || COLORS.ink;
       q.type = o.type || 'dot'; q.g = o.g ?? 600; q.rot = this.rnd() * 6.28; q.spin = (this.rnd() - 0.5) * 12;
-      q.tx = o.tx; q.ty = o.ty;
+      q.tx = o.tx; q.ty = o.ty; q.label = o.label;
       return q;
     }
     return null;
@@ -102,6 +102,17 @@ export class FX {
         ctx.beginPath(); ctx.arc(q.x, q.y, q.size + k * 40, 0, Math.PI * 2); ctx.stroke();
       } else if (q.type === 'fly') {
         drawStarShape(ctx, q.x, q.y, 13, COLORS.star);
+      } else if (q.type === 'text') {
+        const k = 1 - q.life / q.max;
+        ctx.font = `900 ${q.size}px system-ui, sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.save(); ctx.translate(q.x, q.y); ctx.scale(1 + Math.max(0, 0.3 - k) * 2, 1 + Math.max(0, 0.3 - k) * 2);
+        ctx.lineJoin = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = COLORS.ink; ctx.strokeText(q.label, 0, 0);
+        ctx.fillStyle = q.color; ctx.fillText(q.label, 0, 0);
+        ctx.restore();
+      } else if (q.type === 'ghost') {
+        ctx.globalAlpha = a * 0.35;
+        ctx.beginPath(); ctx.arc(q.x, q.y, q.size, 0, Math.PI * 2); ctx.fill();
       } else if (q.type === 'piece') {
         ctx.save();
         ctx.translate(q.x, q.y); ctx.rotate(q.rot);

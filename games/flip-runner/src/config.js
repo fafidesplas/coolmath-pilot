@@ -12,9 +12,9 @@ export const MAX_FRAME_DT = 0.05;
 
 export const RUNNER = {
   w: 24, h: 28,
-  gravity: 5000,
-  maxVy: 1600,
-  kick: 150,                    // initial push towards the new surface
+  gravity: 7000,
+  maxVy: 2000,
+  kick: 250,                    // initial push towards the new surface
   bufferSteps: Math.round(0.10 * HZ),
   coyoteSteps: Math.round(0.06 * HZ),
   cornerForgive: 10,
@@ -25,7 +25,10 @@ export const SPIKE_H = 22;      // drawn spike height
 export const RESPAWN_STEPS = Math.round(0.35 * HZ);
 export const LAND_EVENT_SPEED = 300;
 
-export const CAMERA = { lead: 0.30, leadFast: 0.22, fastSpeed: 540 };
+export const CAMERA = { lead: 0.30, leadFast: 0.22, fastSpeed: 700 };
+
+export const WORLD_SPEED = [440, 470, 500, 530];
+export const NEAR_MISS = 10;   // px around a spike's deadly area that counts as a close call
 
 export const COLORS = {
   ink: '#2B2238',

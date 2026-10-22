@@ -2,31 +2,40 @@
 //   node tools/build-slice.mjs
 import { writeFileSync } from 'node:fs';
 
-const COLS = 285;
+const COLS = 330;
 // Per column: first open row (top) and first floor row (bottom). Base corridor: rows 5–10 open.
 const col = Array.from({ length: COLS }, () => ({ top: 5, bottom: 11, fs: false, cs: false, floorGap: false, ceilGap: false, solid: [] }));
 const span = (a, b, f) => { for (let c = a; c <= b; c++) f(col[c]); };
+const fs = (a, b) => span(a, b, c => { c.fs = true; });
+const cs = (a, b) => span(a, b, c => { c.cs = true; });
 
-span(34, 37, c => { c.fs = true; });                        // floor spikes: flip up
-span(50, 53, c => { c.cs = true; });                        // ceiling spikes: flip down
-span(62, 67, c => { c.floorGap = true; });                  // floor gap: be on the ceiling
-span(72, 75, c => { c.cs = true; });
-span(82, 112, c => { c.top = 2; });                         // tall room
-span(88, 92, c => { c.fs = true; });
-span(100, 104, c => { c.cs = true; });
-span(116, 118, c => { c.fs = true; });                      // ping pong
-span(126, 128, c => { c.cs = true; });
-span(136, 138, c => { c.fs = true; });
-span(146, 148, c => { c.cs = true; });
-span(162, 170, c => { c.ceilGap = true; });                 // open ceiling: don't flip
-span(178, 183, c => { c.floorGap = true; });                // floor gap: be on the ceiling
-span(195, 214, c => { c.top = 7; c.bottom = 10; });         // squeeze (1-tile step up on the floor)
-span(200, 201, c => { c.fs = true; });
-span(206, 207, c => { c.cs = true; });
-span(211, 212, c => { c.fs = true; });
-span(229, 241, c => { c.fs = true; });                      // islands
+// Warm-up: one obstacle every ~0.8 s
+fs(14, 16); cs(23, 25); fs(31, 34);
+span(40, 45, c => { c.floorGap = true; });                 // stay on the ceiling over the gap
+cs(50, 52); fs(58, 60);
+span(66, 71, c => { c.ceilGap = true; });                  // open ceiling: be on the floor
+fs(74, 76);
+cs(86, 88);
+// Tall room
+span(92, 129, c => { c.top = 2; });
+fs(96, 99); cs(108, 111); fs(118, 121);
+// Fast ping pong
+fs(136, 137); cs(142, 143); fs(148, 149); cs(154, 155);
+// Thread the needle: floor gap, then an open ceiling right after
+span(168, 175, c => { c.floorGap = true; });
+span(176, 181, c => { c.ceilGap = true; });
+fs(186, 187);
+// Squeeze (1-tile step up on the floor), quick short flips
+span(194, 214, c => { c.top = 7; c.bottom = 10; });
+fs(198, 198); cs(202, 202); fs(206, 206); cs(210, 210);
+// Islands
+fs(228, 241);
 span(232, 241, c => { c.solid.push(7, 8); });
-span(238, 250, c => { c.cs = true; });
+cs(240, 252);
+// Finale zigzag
+fs(258, 259); cs(263, 264); fs(268, 269); cs(273, 274);
+span(280, 285, c => { c.floorGap = true; });
+cs(290, 292); fs(297, 298);
 
 const rows = [];
 for (let r = 0; r < 16; r++) {
@@ -46,18 +55,18 @@ for (let r = 0; r < 16; r++) {
 const level = {
   id: 'w1l01',
   name: 'First Flip',
-  speed: 320,
+  speed: 440,
   start: { x: 3, y: 10, gravity: 1 },
   tiles: rows,
   objects: [
-    { type: 'hint', x: 30 }, { type: 'hint', x: 46 }, { type: 'hint', x: 58 }, { type: 'hint', x: 69 },
-    { type: 'star', x: 64, y: 5 },
-    { type: 'star', x: 95, y: 6 },
+    { type: 'hint', x: 6 }, { type: 'hint', x: 17 }, { type: 'hint', x: 25 },
+    { type: 'star', x: 42, y: 5 },
+    { type: 'star', x: 105, y: 2 },
     { type: 'star', x: 236, y: 6 },
-    { type: 'flag', x: 78, y: 10 },
-    { type: 'flag', x: 155, y: 10 },
-    { type: 'flag', x: 222, y: 10 },
-    { type: 'goal', x: 270 },
+    { type: 'flag', x: 80, y: 10 },
+    { type: 'flag', x: 162, y: 10 },
+    { type: 'flag', x: 220, y: 10 },
+    { type: 'goal', x: 315 },
   ],
 };
 

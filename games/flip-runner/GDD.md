@@ -24,7 +24,7 @@
 ### 3.1 Space and scale
 - Design resolution 1280×720. The HUD takes the top 80 px; the playfield is 1280×640.
 - Levels are strips of **40 px tiles, 16 rows tall** and as many columns as needed (a 40 s level at 8 tiles/s is about 320 columns).
-- The camera scrolls horizontally only, with the runner at **30% of the screen width** from the left, so 22 tiles (2.8 s at base speed) of what is coming are visible. At higher speeds the camera leads more, easing the runner back to 22% of the width at 540 px/s, so the look-ahead time stays above 1.6 s.
+- The camera scrolls horizontally only, with the runner at **30% of the screen width** from the left, so 22 tiles (2 s at world 1 speed) of what is coming are visible. At higher speeds the camera leads more, easing the runner back to 22% of the width at 700 px/s, so the look-ahead time stays above 1.4 s.
 
 ### 3.2 Simulation
 - Fixed step at **120 Hz** with an accumulator (frame `dt` capped at 0.05 s). Deterministic for the same inputs, so levels can be checked by a solver and replayed.
@@ -32,9 +32,9 @@
 
 ### 3.3 The runner
 - **Hitbox:** 24 × 28 px, smaller than the drawing (about 40 × 40 px with squash and stretch), so grazes don't kill.
-- **Forward speed:** constant per level, set by the world: **320 px/s** (8 tiles/s) in world 1, 350 in world 2, 380 in world 3, 400 in world 4. Speed pads change it inside a level (3.5).
-- **Gravity:** **5000 px/s²**, pointing down or up. Max vertical speed 1600 px/s.
-- **Flip:** gravity reverses and the runner gets a 150 px/s kick towards the new surface so the arc starts at once. Crossing a standard 6-tile corridor (212 px of travel) takes **about 0.27 s** (measured in the sim, kick included) and covers about 2.2 tiles forward. Taller rooms mean longer flips (12 tiles: about 0.42 s).
+- **Forward speed:** constant per level, set by the world: **440 px/s** (11 tiles/s) in world 1, 470 in world 2, 500 in world 3, 530 in world 4. Speed pads change it inside a level (3.5).
+- **Gravity:** **7000 px/s²**, pointing down or up. Max vertical speed 2000 px/s.
+- **Flip:** gravity reverses and the runner gets a 250 px/s kick towards the new surface so the arc starts at once. Crossing a standard 6-tile corridor (212 px of travel) takes **about 0.22 s** (measured in the sim) and covers about 2.3 tiles forward. Taller rooms mean longer flips (9 tiles: about 0.28 s).
 - **Auto-step:** a rise of exactly 1 tile in the surface the runner is on (floor, or ceiling when gravity is up) is climbed automatically with a quick hop, no input. Only walls of 2 tiles or more stop the runner, and they are drawn with a warning edge.
 - **Only from a surface:** a flip needs the runner to be standing (floor, ceiling, platform or moving block, whichever is "down" right now). No mid-air flips.
 - **Forgiveness:** a tap is **buffered for 100 ms** (a tap just before landing flips on touchdown), and **coyote time is 60 ms** (a tap just after running off an edge still flips).
@@ -106,6 +106,7 @@
   - **World 3 — Sky Factory (21–30):** speed pads (21), then no-flip zones (24), then both.
   - **World 4 — Space Station (31–40):** gravity switches, then everything together.
 - **Teaching order:** each element first appears with no other danger nearby and a generous window, then with a twist (on the ceiling, at speed, in a tall room), then combined with older elements.
+- **Density:** something to react to every 0.6–1 s; no empty stretch longer than about 1.5 s after the first 2 s of a level.
 - **Difficulty curve:** a level gets harder with shorter windows between flips, taller rooms (longer flips to plan ahead), flips that must happen in the middle of a sequence, higher speed, and stars placed off the safe route. Each world starts easier than the end of the last. The first level of each world has no star off the safe route.
 - **Fair-play rules:** every obstacle is visible for at least 1.2 s before it must be acted on; no blind drops (the landing surface is always on screen); no flip needs a window shorter than 120 ms (checked by the solver).
 - **Stars:** placed where grabbing one needs a riskier flip or an extra flip, never a frame-perfect one.
@@ -150,7 +151,7 @@
 ## 7. Progression and retention
 - **Completed levels:** a finished level shows a check badge on its tile, and the results screen shows a COMPLETE ribbon, even with 0 stars. (This deviates from the "1–3 stars" in `STANDARDS.md` on purpose: here the stars are the collectibles.)
 - **Unlocks:** finishing a level unlocks the next. A world unlocks when the previous world's level 10 is finished.
-- **Endless mode:** unlocked by finishing world 1. Chunks of 5–10 s (40–80 columns), each tagged with a tier 1–4, are chained by a seeded random generator. Chunks start and end on a shared neutral seam (floor at row 13, ceiling at row 2, 4 safe columns), so any chunk follows any other. One life. Speed starts at 320 px/s and rises 2% every 30 s up to a cap of 520 px/s; after that only the tier mix keeps getting harder. Score = distance in meters (1 tile = 1 m). Best distance is saved.
+- **Endless mode:** unlocked by finishing world 1. Chunks of 5–10 s (40–80 columns), each tagged with a tier 1–4, are chained by a seeded random generator. Chunks start and end on a shared neutral seam (floor at row 13, ceiling at row 2, 4 safe columns), so any chunk follows any other. One life. Speed starts at 440 px/s and rises 2% every 30 s up to a cap of 680 px/s; after that only the tier mix keeps getting harder. Score = distance in meters (1 tile = 1 m). Best distance is saved.
 - **Daily run:** the same endless run for everyone that day, seeded by the date (`YYYYMMDD`). Three scored attempts per day, and the best one counts (later attempts are practice), a streak counter for consecutive days, and a copyable result line with the best attempt, for example:
   `Flip Runner Daily #142 · 1,284 m · 🟩🟩🟨🟧 · 🔥3`
   (one square per tier reached, then the streak). No social APIs.
@@ -189,7 +190,9 @@
 - **Juice list:**
   - Flip: stretch along the gravity axis at take-off, a curved motion trail, squash and dust on landing.
   - Scarf whips around on every flip.
-  - Speed lines while on a fast pad; a little puff on slow pads.
+  - Speed lines streaking past faster than the world, a fast parallax layer of pillars with blinking lights, running dust; extra lines on a fast pad.
+  - Afterimages trailing the runner during every flip.
+  - **Close call:** passing within 10 px of a spike's deadly area pops a "CLOSE!" with sparks and a ping; the results screen counts them.
   - Star: pop, sparkle burst, flies to its HUD slot; banking at a flag makes the slots shine.
   - Death: crunch, runner bursts into pieces, 6 px shake for 0.2 s, soft vignette pulse, rebuild pop at the flag.
   - Checkpoint: flag whips up with confetti.
@@ -217,7 +220,9 @@
 | Stamp | Stars and deaths on results | Stamp thump |
 | UI | Buttons | Soft click |
 
-Music: yes, one short synthesized loop per world (16 bars, upbeat, tempo matched to the world speed), **off by default**. Sound effects on by default; both toggles persist.
+Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, bass and arpeggio at ~132 BPM, tempo matched to the world speed), **on by default**: in a runner the music carries the rhythm, and it is tiny because it is generated. Music and sound effects have separate toggles, both persist.
+
+| Close call | Passing within 10 px of a spike | Bright double ping |
 
 ## 11. GameAnalytics
 | Event id | When it fires | Value |
@@ -267,6 +272,7 @@ Music: yes, one short synthesized loop per world (16 bars, upbeat, tempo matched
 | Should endless chunks be hand-made only, or also cut from levels? | Hand-made with the level editor, 30 chunks for v1 (8 per tier, 6 neutral) | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Feel loop 1 ("too slow and bland"): world speeds 440–530 px/s (+37%), gravity 7000 and a 250 px/s kick (flip ~0.22 s), denser levels (something every 0.6–1 s), music on by default, speed lines, pillars, afterimages, running dust, and close calls with a counter on the results.
 - 2026-10-21 — Vertical slice built: flip measured at ~0.27 s across a 6-tile corridor (kick included); solver picks the widest window per flip.
 - 2026-10-21 — Phase 1c review applied: flag snapshots make every retry identical (mover phases, speed, gravity); 1-tile rises are auto-stepped, only walls of 2+ tiles kill; death events sent as counts per attempt plus `quit:<type>` on Fail; forgiving hitboxes (runner 24×28, spikes 6 px inset); daily counts the best of 3 attempts; no full-screen death flash; level editor planned for phase 3; endless speed capped at 520 px/s; check badge and COMPLETE ribbon for 0-star finishes; camera leads more at high speed; holding a key never repeats a flip. Status set to In review.
 - 2026-10-21 — First draft from the brief and the phase 1a answers (gravity flip at 5000 px/s² taking ~0.29 s, 100 ms buffer and 60 ms coyote, collectible stars are the rating and are banked at flags, 320–400 px/s with the camera at 30%, free geometry, gravity switches instead of portals in world 4, endless and daily built from chunks, skins unlocked by stars, a level 1 no one can fail, deterministic sim with a one-button solver).

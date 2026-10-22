@@ -31,7 +31,7 @@ function world(data) {
   w.run(1, () => true);
   while (!w.s.grounded && steps < 200) { w.run(1); steps++; }
   const t = (steps + 1) / HZ;
-  ok(Math.abs(t - 0.29) < 0.03 && w.s.g === -1, `corridor flip takes ${(t * 1000).toFixed(0)} ms (want ~290)`);
+  ok(Math.abs(t - 0.215) < 0.03 && w.s.g === -1, `corridor flip takes ${(t * 1000).toFixed(0)} ms (want ~215)`);
 }
 
 { // Buffer: a tap 80 ms before landing flips on touchdown
