@@ -333,18 +333,153 @@ function hrDrawCard(b, w, h, focused)
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
-// animated mini schematic of the world's button meaning
+// screen-space line, circle and polygon (polygon points given y down like everything else here)
+const hrSLine = (x0, y0, x1, y1, t, c) => drawLine(vec2(x0, y0), vec2(x1, y1), t, c, vec2(), 0, false, true);
+const hrSCircle = (x, y, d, c, lw = 0, lc = BLACK) => drawCircle(vec2(x, y), d, c, lw, lc, false, true);
+const hrSPoly = (pts, c) => drawPoly(pts.map(([px, py]) => vec2(px, -py)), c, 0, c, vec2(), 0, false, true);
+const hrSmooth = k => clamp(k) * clamp(k) * (3 - 2 * clamp(k));
+
+// animated mini schematic of the world's button meaning, on a floor at y + w * .3
 function hrDrawSchematic(world, x, y, w)
 {
-    const u = hrUnit(), k = (timeReal % 1.6) / 1.6, s = 26 * u;
-    hrRect(x, y + w * .3, w, 8 * u, HR_INK);
+    const u = hrUnit(), s = min(26 * u, w * .18), gy = y + w * .3 - 4 * u;   // gy: top of the floor
+    const id = HR_WORLDS[world].id;
+    if (id == 'rocket') return hrSchemRocket(x, y, w, u, s, gy);
+    if (id == 'grapple') return hrSchemGrapple(x, y, w, u, s, gy);
+    if (id == 'phase') return hrSchemPhase(x, y, w, u, s, gy);
+    if (id == 'climb') return hrSchemClimb(x, y, w, u, s, gy);
+
+    // Hop: squash while charging, the dotted aim arc, then the hop
+    const k = (timeReal % 2) / 2, x0 = x - w * .35, arc = t => gy - s / 2 - Math.sin(t * PI) * w * .32;
+    hrRect(x, gy + 4 * u, w, 8 * u, HR_INK);
+    const charge = clamp(k / .35);
     for (let i = 0; i < 7; i++)
+        hrRect(x0 + i / 6 * w * .7, arc(i / 6), 6 * u, 6 * u, HR_INK.scale(1, k < .35 ? .6 * charge : .6));
+    if (k < .35)
     {
-        const t = i / 6;
-        hrRect(x - w * .35 + t * w * .7, y + w * .26 - s / 2 - Math.sin(t * PI) * w * .32, 6 * u, 6 * u, HR_INK.scale(1, .6));
+        const sw = s * (1 + charge * .35), sh = s * (1 - charge * .35);
+        hrRect(x0, gy - sh / 2, sw, sh, HR_BLUE);
     }
-    const hx = x - w * .35 + k * w * .7, hy = y + w * .26 - s / 2 - Math.sin(k * PI) * w * .32;
-    hrRect(hx, hy, s, s, HR_BLUE);
+    else
+    {
+        const t = clamp((k - .35) / .5);
+        hrRect(x0 + t * w * .7, arc(t), s, s, HR_BLUE);
+    }
+}
+
+// Rocket: the launcher spins around the square; a press blasts at its feet and throws it up and over
+function hrSchemRocket(x, y, w, u, s, gy)
+{
+    const k = (timeReal % 2.2) / 2.2, fire = .4, x0 = x - w * .25, x1 = x + w * .3;
+    hrRect(x, gy + 4 * u, w, 8 * u, HR_INK);
+    let px = x0, py = gy - s / 2;
+    if (k >= fire)
+    {
+        const t = clamp((k - fire) / .45);
+        px = lerp(x0, x1, t); py = gy - s / 2 - Math.sin(t * PI) * w * .42;
+    }
+    if (k >= fire && k < fire + .35)
+    {
+        // blast ring in the owner's color, where the launcher pointed (down and back)
+        const t = (k - fire) / .35, e = 1 - (1 - t) * (1 - t);
+        hrSCircle(x0 - s * .55, gy, s * (.6 + 2.4 * e), CLEAR_WHITE, (1 - t) * 6 * u + u, HR_BLUE.scale(1, 1 - t));
+    }
+    hrRect(px, py, s, s, HR_BLUE);
+    const a = 3 * PI / 4 + (k - fire) * 2 * PI * 1.3;   // clockwise; points down and back at the press
+    drawRect(vec2(px + Math.cos(a) * s * .78, py + Math.sin(a) * s * .78), vec2(s * .62, s * .25), HR_BLUE, a, false, true);
+}
+
+// Grapple: hook the ceiling, swing across the gap on the rope, let go and fly to the far ledge
+function hrSchemGrapple(x, y, w, u, s, gy)
+{
+    const k = (timeReal % 2.4) / 2.4, ay = y - w * .42;
+    hrRect(x, ay - 4 * u, w, 8 * u, HR_INK);   // ceiling
+    hrRect(x - w * .38, gy + 4 * u, w * .24, 8 * u, HR_INK);   // ledges either side of the gap
+    hrRect(x + w * .38, gy + 4 * u, w * .24, 8 * u, HR_INK);
+    const ax = x - w * .02, x0 = x - w * .38, y0 = gy - s / 2, R = Math.hypot(x0 - ax, y0 - ay);
+    const th0 = Math.atan2(x0 - ax, y0 - ay), swingAt = (t => th0 * Math.cos(t * PI * .78));
+    const onRope = th => [ax + Math.sin(th) * R, ay + Math.cos(th) * R];
+    let px = x0, py = y0, tip = null;
+    if (k < .15) tip = [lerp(x0, ax, k / .15), lerp(y0, ay, k / .15)];
+    else if (k < .6) { [px, py] = onRope(swingAt(hrSmooth((k - .15) / .45) * .92 + (k - .15) / .45 * .08)); tip = [ax, ay]; }
+    else
+    {
+        // released: a curve from the release point up and over to the far ledge
+        const [rx, ry] = onRope(swingAt(1)), lx = x + w * .38, ly = y0, t = clamp((k - .6) / .25);
+        const cx = (rx + lx) / 2 + w * .05, cy = min(ry, ly) - w * .22;
+        px = (1 - t) ** 2 * rx + 2 * (1 - t) * t * cx + t * t * lx;
+        py = (1 - t) ** 2 * ry + 2 * (1 - t) * t * cy + t * t * ly;
+    }
+    if (tip)
+    {
+        hrSLine(px, py, tip[0], tip[1], 3 * u, HR_INK);
+        hrSCircle(tip[0], tip[1], s * .42, HR_INK);
+        hrSCircle(tip[0], tip[1], s * .22, HR_WHITE);
+    }
+    hrRect(px, py, s, s, HR_BLUE);
+}
+
+// Phase: solid -> melts into a puddle -> rises as rings of gas -> condenses into a square that falls back
+function hrSchemPhase(x, y, w, u, s, gy)
+{
+    const k = (timeReal % 3.2) / 3.2, d = s / 3, top = y - w * .3;
+    hrRect(x, gy + 4 * u, w, 8 * u, HR_INK);
+    const grid = (i, cy) => [x + (i % 3 - 1) * d, cy + (floor(i / 3) - 1) * d];
+    const puddle = i => [x + (i - 4) * d * 1.15, gy - d * .55];
+    const cloud = i => [x + (i - 4) * d * 1.3 + Math.sin(timeReal * 3 + i * 1.7) * d * .3,
+        top + Math.sin(timeReal * 2.3 + i * 2.1) * d * .5 + (i % 2) * d * .8];
+    if (k < .2) return hrRect(x, gy - s / 2, s, s, HR_BLUE);
+    if (k >= .82)
+    {
+        // the packed square falls and lands with a squash
+        const t = (k - .82) / .12, land = t >= 1, sq = land ? .3 * (1 - (k - .94) / .06) : 0;
+        const sh = s * (1 - sq), cy = land ? gy - sh / 2 : lerp(top, gy - s / 2, t * t);
+        return hrRect(x, cy, s * (1 + sq), sh, HR_BLUE);
+    }
+    for (let i = 0; i < 9; i++)
+    {
+        let p, gas = k >= .42;
+        if (k < .42) { const t = hrSmooth((k - .2) / .18), a = grid(i, gy - s / 2), b = puddle(i); p = [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; }
+        else if (k < .72) { const t = 1 - (1 - (k - .42) / .3) ** 2, a = puddle(i), b = cloud(i); p = [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; }
+        else { const t = hrSmooth((k - .72) / .1), a = cloud(i), b = grid(i, top); p = [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; }
+        if (gas) hrSCircle(p[0], p[1], d * (k < .72 ? 1.7 : lerp(1.7, 1.1, (k - .72) / .1)), CLEAR_WHITE, 2.5 * u, HR_BLUE);
+        else hrSCircle(p[0], p[1], d * 1.4, HR_BLUE);
+    }
+}
+
+// Climb: the arm turns clockwise until its head sticks to the step, then the body levers up and over onto it
+function hrSchemClimb(x, y, w, u, s, gy)
+{
+    const k = (timeReal % 2.6) / 2.6, ty = gy - w * .24, L = w * .34;
+    hrRect(x, gy + 4 * u, w, 8 * u, HR_INK);
+    hrRect(x + w * .28, (ty + gy) / 2, w * .44, gy - ty, HR_INK);   // the step
+    const P = [x + w * .1, ty];   // where the head sticks
+    const by0 = gy - s / 2, bx0 = P[0] - Math.sqrt(L * L - (P[1] - by0) ** 2);
+    const phiP = Math.atan2(P[1] - by0, P[0] - bx0);
+    const beta0 = Math.atan2(by0 - P[1], bx0 - P[0]), beta1 = 2 * PI + Math.atan2(-s / 2, Math.sqrt(L * L - s * s / 4));
+    let bx = bx0, by = by0, hx, hy, ang = 0, stuck = k >= .35;
+    if (!stuck)
+    {
+        const phi = lerp(-PI + .3, phiP, hrSmooth(k / .35));   // clockwise (screen y down) over the top, toward the step
+        hx = bx + Math.cos(phi) * L; hy = by + Math.sin(phi) * L;
+    }
+    else
+    {
+        const t = hrSmooth((k - .35) / .4), beta = lerp(beta0, beta1, t);
+        bx = P[0] + Math.cos(beta) * L; by = P[1] + Math.sin(beta) * L;
+        ang = t * PI / 2;   // a quarter turn, so it lands flat
+        [hx, hy] = P;
+    }
+    hrSLine(bx, by, hx, hy, 4 * u, HR_INK);
+    if (stuck)
+    {
+        // suction cup: a half disc, flat side on the step
+        const r = s * .26, pts = [];
+        for (let i = 0; i <= 10; i++) pts.push([hx + Math.cos(PI + i / 10 * PI) * r, hy + Math.sin(PI + i / 10 * PI) * r]);
+        hrSPoly(pts, HR_INK);
+    }
+    else hrSCircle(hx, hy, s * .4, HR_INK);
+    drawRect(vec2(bx, by), vec2(s), HR_BLUE, ang, false, true);
 }
 
 function hrDrawTile(b, w, h, focused)

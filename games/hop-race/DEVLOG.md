@@ -1,5 +1,15 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Mode select: one schematic per world
+- Owner noticed: every world card showed the same hop animation. Each card now loops its own button meaning, drawn with the world's own pieces:
+  - Hop: squashes while the aim arc fades in, then hops along it.
+  - Rocket: the launcher spins; at the press it points down and back, a blast ring goes off at the feet and throws the square up and over.
+  - Grapple: the hook flies to the ceiling, the square swings across the gap on the rope, lets go and lands on the far ledge.
+  - Phase: solid square, melts into a puddle, rises as gas rings, condenses at the top and falls back as a square (a seamless loop).
+  - Climb: the arm turns clockwise over the top until its head sticks to a step as a suction cup, then levers the body up onto it.
+- Checked with a contact sheet of each loop at 8 times, and the mode select at 1280×720 and 800×450.
+- Next: unchanged (play 4-1 to 4-3).
+
 ## 2026-10-22 — Title: Play 1P and Play 2P
 - Owner asked: two Play buttons on the title instead of one, both going to the last level played instead of Hop 1.
 - **Play 1P** starts it solo and **Play 2P** starts it as a versus race. The last level started (solo or versus) is saved as `last` in `cm_hop-race_save`. A new player with no `last` still gets the first level under 3 stars. Play 1P has keyboard focus.
