@@ -7,7 +7,7 @@
 
 const HR_SAVE_KEY = 'cm_hop-race_save';
 const HR_GHOST_KEY = 'cm_hop-race_ghost_';
-const hrSaveDefaults = () => ({v: 1, levels: {}, hats: {p1: null, p2: null},
+const hrSaveDefaults = () => ({v: 1, levels: {}, last: null, hats: {p1: null, p2: null},
     settings: {sfx: true, music: false, ghost: true}});
 
 let hrSave = hrSaveDefaults();
@@ -20,6 +20,14 @@ function hrSaveLoad()
 }
 
 function hrSaveWrite() { writeSaveData(HR_SAVE_KEY, hrSave); }
+
+// the last level started, solo or versus, where Play 1P / 2P go back to
+function hrSaveLast(id)
+{
+    if (hrSave.last == id) return;
+    hrSave.last = id;
+    hrSaveWrite();
+}
 
 function hrSaveLevel(id)
 {

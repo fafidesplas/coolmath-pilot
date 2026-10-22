@@ -21,6 +21,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     const newLevel = world != hrWorld || index != hrLevelIndex || versus != hrVersus || !hrRun;
     hrWorld = world; hrLevelIndex = index; hrVersus = versus;
     const def = hrLevelDef();
+    hrSaveLast(def.id);
     hrLoadLevel(def);
     hrMode().clear?.();
     hrCameraReset();

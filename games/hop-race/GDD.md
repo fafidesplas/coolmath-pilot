@@ -201,14 +201,14 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 
 ## 8. Screens and UI flow
 ```
-Title ──Play──▶ Playing (first level under 3★) ──▶ Level complete ──Next/Retry/Menu
+Title ──Play 1P / Play 2P──▶ Playing / Race (last level played) ──▶ Level complete ──Next/Retry/Menu
   ├─Levels──▶ Mode select (Solo | Versus) ──▶ Level select ──▶ Playing ⇄ Pause
   ├─Hats
   └─Settings
 Versus: Mode select (Versus tab) ──▶ Level select ──▶ Race ──▶ Round result ──▶ … ──▶ Match result (Rematch / Levels / Menu)
 Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ```
-- **Title:** logo with an idle hopping square, a big **Play** button, then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: Play starts the first level with fewer than 3 stars, in world and level order (Hop 1 for a new player, and Hop 1 again once every level has 3 stars).
+- **Title:** logo with an idle hopping square, two big buttons, **Play 1P** (solo) and **Play 2P** (versus), then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: both Play buttons go to the last level played, solo or versus (saved as `last`). With no level played yet, they start the first level with fewer than 3 stars, in world and level order (Hop 1 for a new player).
 - **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and star total.
 - **Level select:** 10 tiles per world in 2 rows of 5, each with number, stars and best time; the next level without 3★ is highlighted. Versus uses the same grid without stars.
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with their star cost; tap one to put it on P1 or P2.
@@ -294,7 +294,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 - **Simulation:** LittleJS fixed 60 Hz step, which also makes it frame-rate independent. Each mode exposes `step(player, input)` and `draw(player)`; input is a per-player `{down, pressed, released}` read once per frame, so modes never touch the keyboard directly.
 - **Canvas and camera:** the canvas fills the window at `devicePixelRatio` capped at 2 and is resized on every window resize. On level load and on every resize, the camera is set to the level center with the scale that fits the level box plus margin. No per-frame camera logic beyond shake.
 - **Ghost:** recording and replay both start at the player's first input, the same moment the timer starts. Record the player's position (and Phase's center) every 2nd frame, quantized to 0.01 u, as an Int16 array; at 20 s that is ~600 samples, under 3 KB per level as base64. Replay interpolates. No dependence on deterministic physics.
-- **Save keys:** `cm_hop-race_save` = `{v: 1, levels: {"hop-01": {stars, bestMs}}, hats: {p1, p2}, settings: {sfx, music, ghost}}`; ghosts in `cm_hop-race_ghost_<levelId>`. Unlocked hats are computed from the star total, not stored. All reads wrapped in `try/catch`; a broken save resets to defaults. Saved after every level complete, hat change and settings change.
+- **Save keys:** `cm_hop-race_save` = `{v: 1, levels: {"hop-01": {stars, bestMs}}, last: "hop-01", hats: {p1, p2}, settings: {sfx, music, ghost}}`; ghosts in `cm_hop-race_ghost_<levelId>`. Unlocked hats are computed from the star total, not stored. All reads wrapped in `try/catch`; a broken save resets to defaults. Saved after every level complete, hat change and settings change, and when a different level starts (`last`).
 - **Testing hook:** `window.game` with `screen`, `level` (id), `mode`, `versus`, `score` (time or wins), and `start(levelId)`, `restart()`, `win()` (debug only, stripped from release). `screen` uses the standard values `'title' | 'levels' | 'playing' | 'complete'` plus `'modes'` (counts as `levels`), `'hats'` (counts as `title`), `'paused'` and `'rotate'` (count as `playing`), `'round'` and `'match'` (count as `complete`).
 - **Riskiest piece:** turning 6 hand-tuned one-level modes into 40 smaller, data-driven levels without breaking their feel, especially Phase (drop physics tuned to specific slab angles, a flag position computed from the last slab, the new press cycle and grates) and the jump and blast ranges in a smaller box. Prove it in the slice: load the prototype's levels from data at their old size (`size: 42`) and confirm each plays the same, then retune ranges for 24–30 u levels and build Hop 1–3.
 
@@ -350,6 +350,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Title: **Play** becomes **Play 1P** and **Play 2P**. Both go to the last level played (new save field `last`) instead of the first level under 3 stars, which is now only the fallback for a new player.
 - 2026-10-22 — Phase built (`src/modes/phase.js`) with levels 1–3: Melt, Switchback, Spill. Level 3 is "stop before the edge": the first use of the liquid → gas → solid hop. The flag's counting box reaches 1 u below the pole's foot. Built numbers in §3.5.
 - 2026-10-22 — Climb: after letting go, the arm coasts to a stop in 0.3 s (`HR_CLIMB.coastTime`) instead of stopping dead; a coasting head sticks to the first surface it touches. Holding is unchanged.
 - 2026-10-22 — Climb 4 Hang Time removed: ceiling hanging wasn't fun or useful. Climb is back to 3 levels.

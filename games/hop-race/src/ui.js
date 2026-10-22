@@ -55,7 +55,10 @@ function hrUiButtons()
 
     if (hrScreen == 'title')
     {
-        add({id: 'play', x: W / 2, y: H * .6, w: 340 * u, h: 110 * u, label: 'Play', big: true, focus: true, act: hrPlay});
+        add({id: 'play1', x: W / 2 - 170 * u, y: H * .6, w: 310 * u, h: 110 * u, label: 'Play 1P', big: true, focus: true,
+            act: () => hrPlay(false)});
+        add({id: 'play2', x: W / 2 + 170 * u, y: H * .6, w: 310 * u, h: 110 * u, label: 'Play 2P', big: true,
+            act: () => hrPlay(true)});
         add({id: 'levels', x: W / 2 - 115 * u, y: H * .8, w: 210 * u, h: 72 * u, label: 'Levels', act: () => hrGo('modes')});
         add({id: 'settings', x: W / 2 + 115 * u, y: H * .8, w: 210 * u, h: 72 * u, label: 'Settings', act: () => hrOpenSettings('title')});
     }
@@ -126,13 +129,16 @@ function hrUiButtons()
     return list;
 }
 
-function hrPlay()
+function hrPlay(versus)
 {
-    // Play starts the first level with fewer than 3 stars, in world and level order
+    // Play 1P / 2P go back to the last level played (solo or versus); a new player starts at
+    // the first level with fewer than 3 stars, in world and level order
+    const last = hrFindLevel(hrSave.last);
+    if (last && isUnlocked(last.world, last.index)) return hrStartLevel(last.world, last.index, versus);
     for (let w = 0; w < HR_WORLDS.length; w++)
         for (let i = 0; i < hrLevelsOf(w).length; i++)
-            if (isUnlocked(w, i) && hrSaveLevel(hrLevelsOf(w)[i].id).stars < 3) return hrStartLevel(w, i, false);
-    hrStartLevel(0, 0, false);
+            if (isUnlocked(w, i) && hrSaveLevel(hrLevelsOf(w)[i].id).stars < 3) return hrStartLevel(w, i, versus);
+    hrStartLevel(0, 0, versus);
 }
 
 function hrNextLevel(world)

@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Title: Play 1P and Play 2P
+- Owner asked: two Play buttons on the title instead of one, both going to the last level played instead of Hop 1.
+- **Play 1P** starts it solo and **Play 2P** starts it as a versus race. The last level started (solo or versus) is saved as `last` in `cm_hop-race_save`. A new player with no `last` still gets the first level under 3 stars. Play 1P has keyboard focus.
+- Headless check: a new save goes to hop-01. After phase-02, 1P goes to phase-02 solo and 2P to phase-02 versus. After a versus race on rocket-02, 1P goes to rocket-02, and it still does after a reload. The title fits at 1280×720 and 800×450.
+- GDD §8, §12 and changelog updated.
+- Next: unchanged (play 4-1 to 4-3).
+
 ## 2026-10-22 — Phase: the eye no longer jumps through slabs
 - Owner noticed: as gas (or liquid), the eye could jump through a slab. It was drawn at the center of all the drops, so when the drops split around a slab or wrapped around its end, that center landed inside the slab or on its far side.
 - The eye now rides one drop (the square's middle one, or the drop nearest the eye if that one is lost) and sits at the center of the drops within 3 drop sizes of it. Drops can't pass through a slab, so the eye can't either. As gas it no longer floats 0.25 u up into the ceiling it presses against.
