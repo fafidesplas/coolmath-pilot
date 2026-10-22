@@ -252,7 +252,7 @@ function gameRender()
     {
         const p = hrPlayers[i], other = hrPlayers[1 - i];
         const nudge = i == 1 && other && Math.hypot(p.x - other.x, p.y - other.y) < .4 ? -.45 : 0;
-        hrDrawPlayer(p, nudge);
+        hrMode().drawPlayer ? hrMode().drawPlayer(p, nudge) : hrDrawPlayer(p, nudge);
     }
     hrDrawPrompt();
 }
@@ -282,6 +282,7 @@ window.game = {
         if (!hrVersus && !hrRun.started) { hrRun.started = true; hrGaProgress('Start', hrWorld, hrLevelIndex); }
         p.x = hrLevel.flag.x; p.y = hrLevel.flag.y + HR_PSIZE / 2;
         p.vx = p.vy = 0; p.grounded = true;
+        hrMode().warp?.(p);
     },
 };
 

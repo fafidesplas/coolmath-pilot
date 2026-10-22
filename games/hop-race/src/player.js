@@ -57,6 +57,16 @@ function hrResetPlayer(p)
     hrMode().reset(p);
 }
 
+// back to the start with zero speed (also used by modes with their own ways to lose, like Phase)
+function hrRespawn(p, down)
+{
+    hrSfx.fall.play();
+    p.falls++;
+    hrResetPlayer(p);
+    p.down = down;   // a held button must be released and pressed again
+    hrEmit('fall', p);
+}
+
 // one fixed step for one player; input is {down, pressed, released}
 function hrPlayerStep(p, input)
 {
@@ -65,15 +75,8 @@ function hrPlayerStep(p, input)
         hrMode().step(p, input);
 
         // GDD §3.1: falling sends you back to the start with zero speed, the timer keeps running
-        if (p.y < hrLevel.killY)
-        {
-            hrSfx.fall.play();
-            p.falls++;
-            hrResetPlayer(p);
-            p.down = input.down;   // a held button must be released and pressed again
-            hrEmit('fall', p);
-        }
-        else if (hrTouchingFlag(p.x, p.y))
+        if (p.y < hrLevel.killY) hrRespawn(p, input.down);
+        else if (hrMode().finished ? hrMode().finished(p) : hrTouchingFlag(p.x, p.y))
         {
             p.finished = true;
             p.down = false;

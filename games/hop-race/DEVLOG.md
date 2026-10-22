@@ -1,5 +1,14 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Phase: World 4 prototype, levels 1–3
+- New mode `src/modes/phase.js`, ported from the prototype's Flow with the GDD's press cycle: each press goes solid → liquid → gas → solid. Presses under 0.15 s apart and presses while condensing are ignored. The drop physics (pour, heap, friction) is the prototype's. Gas rises and drifts. Condensing pulls the rings together for 0.5 s, then packs them into a square that falls. Drops below the kill line are lost; under 12 drops, or gas floating off the top, sends you back to the start. Finish: 40 drops touching the flag.
+- Drawing: tilted ink slabs; a tilted square with its letter and eye while solid; filled drops while liquid; hollow rings while gas. The eye floats with the drops. Splash on melt, puff on evaporate, a click and a stretch on freeze. New sounds: melt, evaporate, freeze.
+- Shared hooks (game folder only): `hrRespawn()` in `player.js`; optional mode hooks `finished(p)`, `drawPlayer(p, nudge)` and `warp(p)` (used by `window.game.win()`).
+- Levels: 4-1 Melt (one slope), 4-2 Switchback (three slopes), 4-3 Spill (stop before the edge, hop across the pit, melt again). Headless bot (Chrome): 4-1 3.3 s and 4-2 10.9 s with one press. 4-3: one press always falls in; the hop works when you evaporate up to 1.5 u before the edge or up to 1.7 u past it (0.4–0.6 s); best 6.8 s. No errors in Solo or Versus.
+- Finding: the flag box ended at the pole's foot, but on a slope the drops pool below it, so only 17 counted. Phase now counts 1 u lower.
+- Par/expert are placeholders from bot times.
+- Next: play 4-1 to 4-3. Does a cold player find the double press in 4-3 with only the hint "Press: next state"? (GDD §14.) Then 4-4 first gas.
+
 ## 2026-10-22 — Climb: the arm coasts after letting go
 - Owner asked: the arm should ease to a stop after release instead of stopping dead, to see if walls get easier to climb without making holding the answer.
 - `HR_CLIMB.coastTime` (0.3 s): after release the arm slows evenly from 10 rad/s to 0 in 18 frames, turning about 85° more. A coasting head doesn't lever the body: on touch it stops and the cup sticks, so you can fling it onto a wall. `coastTime = 0` brings back the dead stop. Holding works exactly as before.

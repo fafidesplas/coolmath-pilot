@@ -22,6 +22,9 @@ function hrAudioInit()
         click:     new SoundGenerator({frequency: 900, release: .03, volume: .25}),
         fire:      new SoundGenerator({frequency: 500, release: .12, slide: -.4, noise: 3, volume: .3}),
         boom:      new SoundGenerator({frequency: 90, release: .35, slide: -.3, noise: 12, bitCrush: .2, volume: .5}),
+        melt:      new SoundGenerator({frequency: 220, release: .25, slide: -.5, noise: 1, volume: .4}),
+        evaporate: new SoundGenerator({frequency: 500, attack: .05, release: .3, slide: .4, noise: 8, volume: .25}),
+        freeze:    new SoundGenerator({frequency: 1400, release: .05, slide: -.2, volume: .35}),
         goo:       new SoundGenerator({frequency: 140, release: .2, slide: -.6, tremolo: .5, repeatTime: .05, volume: .4}),
     };
     hrApplySound();

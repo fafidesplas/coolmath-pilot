@@ -15,6 +15,7 @@
         "src/modes/rocket.js",
         "src/modes/grapple.js",
         "src/modes/climb.js",
+        "src/modes/phase.js",
         "src/player.js",
         "src/ghost.js",
         "src/render.js",
@@ -23,6 +24,7 @@
         "levels/rocket.js",
         "levels/grapple.js",
         "levels/climb.js",
+        "levels/phase.js",
         "src/main.js"
     ]
 }
