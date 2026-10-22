@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb: 5-4 Hang Time removed
+- Owner played it: ceiling hanging isn't worth it. Level removed; Climb is 3 levels again. The pendulum-hang idea is dropped (GDD §14). The suction cup still sticks to ceilings, and its new look stays.
+- Next: unchanged (play 5-1 to 5-3: is the suction cup fun, is the 5-3 pit fair).
+
 ## 2026-10-22 — Climb: suction-cup look, 5-4 Hang Time
 - Stuck head drawn as a suction cup: an ink half disc whose flat side sits flush on the surface, with a thin white lip so the seal reads against ink, and a quick squash on landing. On a corner it snaps to the face it is more over, so it never sits at a slant. Checked in the browser on a ceiling, a wall face, a tooth top and a corner.
 - 5-4 Hang Time (owner request, a level to test ceiling sticking): 9 u pit with a pillar, under a 1 u ceiling slab 4.5 u over the floor (a slab, not a block to the top, so the HUD stays off ink). Random play 183/200, best 3.5 s; holding alone fails.
