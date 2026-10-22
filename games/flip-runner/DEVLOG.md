@@ -1,5 +1,11 @@
 # Flip Runner — devlog
 
+## 2026-10-22 — GDD rewritten around forms
+- The forms prototype played better than flip-only, so the GDD now builds the game on three forms switched by portals: Flip (world 1), Glider (world 2), Twin (world 3), all mixed in world 4.
+- Moving blocks move to level 15, speed pads to 25; no-flip zones are cut. Analytics add `quit:form:<form>`; the HUD shows the current form.
+- GDD status stays In review: Pao needs to read the new design.
+- Next: Pao reviews; then turn the prototype into world 2 and 3 openers.
+
 ## 2026-10-22 — Twin lane fix
 - Playtest (Fafi): twins only worked when entering the top lane. Entering from the floor put you in the bottom lane, and the twin also spawned there, on top of you.
 - Twin portals now list both lanes; the twin always takes the lane you are not in. Regression test added for both entries.

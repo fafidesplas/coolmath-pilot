@@ -194,6 +194,7 @@ export class Game {
     GA.progression('Fail', pos.world, pos.level, Math.round(this.sim.time));
     this.sendDeathCounts();
     if (this.sim.s.lastDeath) GA.design(`quit:${this.sim.s.lastDeath}`);
+    GA.design(`quit:form:${this.sim.s.form}`);
   }
 
   restart() {
@@ -698,6 +699,11 @@ export class Game {
       else if (v === 1) { ctx.globalAlpha = 0.6 + Math.sin(t * 10) * 0.4; drawStarShape(ctx, sl.x, sl.y, 15, C.star); ctx.globalAlpha = 1; }
       else drawStarShape(ctx, sl.x, sl.y, 15, saved[i] ? 'rgba(255,197,49,0.55)' : '#5C5470', 1, true);
     }
+
+    // Current form badge
+    const fst = FORM_STYLE[s.form];
+    rrect(ctx, 1030, 58, 72, 18, 9); ctx.fillStyle = fst.color; ctx.fill();
+    text(ctx, fst.label, 1066, 67.5, 12, '#fff', 'center', 900);
 
     // Progress bar with flag marks
     const bx = 610, bw = 300, by = 40;
