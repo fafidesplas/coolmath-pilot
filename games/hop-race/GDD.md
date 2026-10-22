@@ -1,7 +1,7 @@
 # Hop Race — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-21
+**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-22
 
 > One button, four meanings: hold and release to hop, blast, swing or melt your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
@@ -52,11 +52,12 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
 
 ### 3.4 Grapple
-- Same spinning launcher (3 rad/s); it freezes while the hook is out.
+- Same spinning launcher (3 rad/s); it freezes while the hook is out, and as in Rocket each shot reverses its spin, so after a swing it sweeps back toward the way you are flying. A faint dotted sight line shows where the hook will go while it is ready.
 - **Press** to fire the hook (55 u/s, no range limit). It sticks to the first solid it touches, except no-grip surfaces (from level 6), which it bounces off. A hook that leaves the level is lost (0.3 s cooldown).
 - **Hold** to reel in: you accelerate toward the anchor at 95 u/s² up to 26 u/s along the rope; any speed you already had is kept. Sideways speed is damped (1.2/s) so you don't orbit. Within 1.1 u of the anchor you hang there.
 - **Release** cuts the rope. You keep your speed (top speed 32 u/s). This is the skill: let go at the right moment to fly.
 - **Walls** stop you dead (no bounce).
+- **Closed top:** the top edge of the level box stops you like a ceiling, so a hard swing never flies off the screen. The hook can't stick to it; a hook that flies past it is lost.
 
 ### 3.5 Phase (solid, liquid, gas; merges the prototype's Flow and Flow 2)
 You are a block of matter made of 7 × 7 = 49 drops. **Each press switches you to the next state, always in the same order: solid → liquid → gas → solid.** There is no holding in Phase.
@@ -146,7 +147,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   10. **The Gauntlet:** a gap, an ice landing, a low ceiling and a grip shaft in one run.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket (built; 4–10 are drafts, hidden until 1–3 are played and the mode is tuned):** 1 **Blast Off**: flat floor with two low bumps; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
-  - **Grapple:** 1 one pillar over a short pit · 2 two pillars · 3 release timing for distance · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5).
+  - **Grapple (1–3 built; 4–10 still an outline):** 1 **Swing By**: one pillar over a 3 u pit's far edge; prompt "Hold to reel in. Let go to fly." (placed under the pillar) · 2 **Two Pillars**: a 14 u pit, swing from one pillar to the next · 3 **Let Go**: one pillar, an 8 u pit; the later you let go, the farther you fly · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5). Pillars hang from the top of the level box and stay out of the HUD (x −2.5…2.5 at the top center, and the top right).
   - **Phase:** 1 melt and pour down one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4 first gas: rise past a wall · 5 freeze out of gas to land on a ledge · 6 first grate · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
 - **Level data format:** one JS file per world in `levels/` (e.g. `levels/hop.js`) that adds to a global, because the game must run from `file://` where `fetch` of JSON and ES modules are blocked. Keep the top 1.5 u of the level clear near the right edge and the center: the HUD sits there when the window is exactly 16:9 and the margin is too thin for it. Coordinates are centered on the level box: a `size: 24` level spans x −12…12 and y −6.75…6.75.
   ```js
@@ -165,6 +166,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       grates: [],                          // Phase only: {l, r, top, bottom}
       flag: {x: 10, y: -4},                // pole foot; {x, y, hang: true, dir: -1} for a hanging flag
       prompt: 'Hold A then release to Jump!', // level 1 of each world only
+      // promptAt: {x, y},                 // optional: where the prompt sits (default: above the start)
       par: 8.0, expert: 5.0,               // seconds
     },
   ];
@@ -302,7 +304,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | 3–4 players on one keyboard? | Not in v1: many keyboards can't register 3–4 held keys at once, and touch quarters are too small. Revisit with a ghosting test. | Pao | Later |
 | Mouse in Versus: let a mouse click count as P1 so a mouse + L pair works? | Yes, cheap and removes the "Versus needs a keyboard" caveat. | Pao | Open |
 | Par/expert times: set by hand or by a replay bot? | By hand from designer runs (expert ×1.1, par ×1.6), checked by a teammate in phase 3. | Pao | Open |
-| Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Rocket blast is 24 u/s, top speed 22 u/s (both −20 %); keep the aim sweep and charge time. | Pao | Hop and Rocket done |
+| Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Rocket blast is 24 u/s, top speed 22 u/s (both −20 %); keep the aim sweep and charge time. Grapple keeps the prototype's numbers (hook 55, reel 95 u/s² up to 26 u/s, top 32 u/s); the levels are sized to them. | Pao | Hop, Rocket, Grapple done |
 | Player-to-player collision? A cold playtester (Hop, 2026-10-21) said bumping into the other player might be exciting | Recorded only, no change to bodies yet: players still pass through each other (§3.1). Rocket blasts now push both players (3.3), which tests some of this idea. If it is tried, make it Versus-only and light (a bump that trades some speed, no pushing off ledges) and playtest it against the pinning problem. | Pao | Open |
 | Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
@@ -310,6 +312,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Grapple 1–3 built (Swing By, Two Pillars, Let Go). The launcher reverses its spin on each shot, as in Rocket; without it, catching the next pillar after a release needed most of a full turn. The top of the level box is closed in Grapple. A dotted sight line shows the hook's path. Levels can place their tutorial prompt (`promptAt`).
 - 2026-10-21 — Owner decision: rocket blasts push every player in range, and a rocket explodes on the other player (as in the prototype). Removed from the Cut list; watch for pinning in Versus playtests.
 - 2026-10-21 — Rocket 4–10 hidden as drafts (`draft: true`); 1–3 are the Rocket slice to tune the mode first.
 - 2026-10-21 — Rocket world built: 10 levels listed in §6 (replacing the outline). Blast 24 u/s, top speed 22 u/s. Rockets pass through players and explode on buttons. Gate levels get a thin ceiling under the HUD. New open question: player-to-player collision.

@@ -13,12 +13,14 @@
         "src/level.js",
         "src/modes/hop.js",
         "src/modes/rocket.js",
+        "src/modes/grapple.js",
         "src/player.js",
         "src/ghost.js",
         "src/render.js",
         "src/ui.js",
         "levels/hop.js",
         "levels/rocket.js",
+        "levels/grapple.js",
         "src/main.js"
     ]
 }
