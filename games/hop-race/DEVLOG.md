@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Phase: the eye no longer jumps through slabs
+- Owner noticed: as gas (or liquid), the eye could jump through a slab. It was drawn at the center of all the drops, so when the drops split around a slab or wrapped around its end, that center landed inside the slab or on its far side.
+- The eye now rides one drop (the square's middle one, or the drop nearest the eye if that one is lost) and sits at the center of the drops within 3 drop sizes of it. Drops can't pass through a slab, so the eye can't either. As gas it no longer floats 0.25 u up into the ceiling it presses against.
+- Condensing pulls the rings toward the eye, and the square packs at the eye. Before packing, it is pushed out of the level from the eye's side. Before this change, a square that packed under a slab could pop up through it.
+- Headless check (4-2, gas wrapping around the middle slab): the old center was inside the slab for 16 and 8 frames in two runs. The new eye was never inside, and squares packed under the slab stayed under it.
+- Next: unchanged (play 4-1 to 4-3).
+
 ## 2026-10-22 — Phase: World 4 prototype, levels 1–3
 - New mode `src/modes/phase.js`, ported from the prototype's Flow with the GDD's press cycle: each press goes solid → liquid → gas → solid. Presses under 0.15 s apart and presses while condensing are ignored. The drop physics (pour, heap, friction) is the prototype's. Gas rises and drifts. Condensing pulls the rings together for 0.5 s, then packs them into a square that falls. Drops below the kill line are lost; under 12 drops, or gas floating off the top, sends you back to the start. Finish: 40 drops touching the flag.
 - Drawing: tilted ink slabs; a tilted square with its letter and eye while solid; filled drops while liquid; hollow rings while gas. The eye floats with the drops. Splash on melt, puff on evaporate, a click and a stretch on freeze. New sounds: melt, evaporate, freeze.

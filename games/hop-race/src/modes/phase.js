@@ -28,6 +28,7 @@ const HR_PHASE = {
     winDrops:   40,     // drops that must touch the flag (49 to start)
     minDrops:   12,     // fewer than this and you go back to the start
     gasTop:     1,      // gas whose center floats this far above the level box has escaped (u)
+    eyeNear:    3,      // the eye sits at the center of the drops this close to its own drop (in drop sizes)
 };
 const HR_DROP_D = HR_PSIZE / HR_PHASE.n;   // drop diameter = grid spacing in the square
 
@@ -83,6 +84,28 @@ function hrPhaseDropOut(q, fric)
     }
 }
 
+// where the eye floats while liquid or gas: it rides one drop (the square's middle one, or the nearest
+// one if that drop is lost) at the center of its near neighbors. The center of all the drops would jump
+// through a slab when the drops split around it; a drop can't pass through a slab, so the eye can't either.
+function hrPhaseEye(p)
+{
+    const parts = p.parts, R = HR_PHASE.eyeNear * HR_DROP_D;
+    if (!parts.includes(p.eyeQ))
+    {
+        let best = Infinity;
+        for (const q of parts)
+        {
+            const d = (q.x - p.ex) ** 2 + (q.y - p.ey) ** 2;
+            if (d < best) { best = d; p.eyeQ = q; }
+        }
+    }
+    const a = p.eyeQ;
+    let x = 0, y = 0, n = 0;
+    for (const q of parts)
+        if ((q.x - a.x) ** 2 + (q.y - a.y) ** 2 < R * R) { x += q.x; y += q.y; n++; }
+    p.ex = x / n; p.ey = y / n;
+}
+
 function hrPhaseSize(p) { return Math.sqrt(p.drops) * HR_DROP_D; }   // the square shrinks as drops are lost
 
 function hrPhaseSquareHits(p)
@@ -125,6 +148,7 @@ HR_MODES.phase = {
         p.ang = 0;
         p.asleep = false;
         p.condT = -1;
+        p.eyeQ = null;
         p.grounded = true;
         p.dir = 1;
     },
@@ -160,6 +184,7 @@ HR_MODES.phase = {
             let x = 0, y = 0, vx = 0, vy = 0;
             for (const q of p.parts) { x += q.x; y += q.y; vx += q.vx; vy += q.vy; }
             p.x = x / n; p.y = y / n; p.vx = vx / n; p.vy = vy / n;
+            hrPhaseEye(p);
             if (p.state == 'gas' && p.y > hrLevel.h / 2 + P.gasTop) return hrRespawn(p, input.down);   // drifted off into the sky
         }
         // reached the flag with too few drops to ever finish
@@ -184,6 +209,8 @@ HR_MODES.phase = {
                 p.parts.push({x: p.x + ox * ca - oy * sa, y: p.y + ox * sa + oy * ca,
                     vx: p.vx + rand(-.4, .4), vy: p.vy + rand(-.2, .2)});
             }
+            p.eyeQ = p.parts[floor(p.drops / 2)];   // the eye rides the middle drop
+            hrPhaseEye(p);
             p.state = 'liquid';
             p.asleep = false;
             hrSfx.melt.play(pos);
@@ -211,33 +238,43 @@ HR_MODES.phase = {
     condense(p, dt)
     {
         const P = HR_PHASE, n = p.parts.length, damp = Math.exp(-6 * dt);
-        let mx = 0, my = 0, vx = 0, vy = 0;
-        for (const q of p.parts) { mx += q.x / n; my += q.y / n; vx += q.vx / n; vy += q.vy / n; }
+        const mx = p.ex, my = p.ey;
+        let vx = 0, vy = 0;
+        for (const q of p.parts) { vx += q.vx / n; vy += q.vy / n; }
         for (const q of p.parts)
         {
-            // keep the common motion, lose the spread, pull toward the center
+            // keep the common motion, lose the spread, pull toward the eye (never across a slab)
             q.vx = vx + (q.vx - vx) * damp + (mx - q.x) * P.condensePull * dt;
             q.vy = vy + (q.vy - vy) * damp + (my - q.y) * P.condensePull * dt;
         }
     },
 
-    // the rings pack into a square at their center, which then falls
+    // the rings pack into a square at the eye, which then falls
     pack(p)
     {
         const n = p.parts.length;
-        p.x = p.y = p.vx = p.vy = 0;
-        for (const q of p.parts) { p.x += q.x / n; p.y += q.y / n; p.vx += q.vx / n; p.vy += q.vy / n; }
+        p.x = p.ex; p.y = p.ey; p.vx = p.vy = 0;
+        for (const q of p.parts) { p.vx += q.vx / n; p.vy += q.vy / n; }
         p.vx *= .5; p.vy = min(0, p.vy * .5);
         p.drops = n;
         p.parts = [];
         p.state = 'solid';
         p.condT = -1;
+        p.eyeQ = null;
         p.asleep = false;
         p.ang = 0;
         p.squash = -.25;
         hrSfx.freeze.play(vec2(p.x, p.y));
         p.pupilKick(0, .25);
-        // packed against a ceiling or a wall, the square would start inside it: move it out
+        // packed against a ceiling or a wall, the square would start inside it: move it out. First as a ball
+        // from the eye, which is never inside the level, so a square under a slab moves down, not up through it
+        const h = hrPhaseSize(p) / 2;
+        for (let i = 0; i < 4; i++)
+            for (const b of hrPhaseBoxes)
+            {
+                const hit = hrPhasePush(b, p.x, p.y, h);
+                if (hit) { p.x += hit.nx * hit.d; p.y += hit.ny * hit.d; }
+            }
         for (let i = 0; i < 40 && hrPhaseSquareHits(p); i++) this.square(p, 0, true);
     },
 
@@ -361,12 +398,13 @@ HR_MODES.phase = {
         const D = HR_DROP_D, c = vec2(p.x, p.y), open = hrBlinkOpen(p.blinkT);
         if (p.state != 'solid')
         {
-            const k = p.condT >= 0 ? p.condT / HR_PHASE.condenseT : 0;
+            const k = p.condT >= 0 ? p.condT / HR_PHASE.condenseT : 0, e = vec2(p.ex, p.ey);
             for (const q of p.parts)
                 if (p.state == 'gas') drawCircle(vec2(q.x, q.y), D * lerp(2.2, 1.2, k), p.color.scale(1, 0), .045, p.color);
                 else drawCircle(vec2(q.x, q.y), D * 1.6, p.color);
-            if (k > 0) hrPhaseQuad(c, vec2(1, 0), vec2(0, 1), hrPhaseSize(p) * k, hrPhaseSize(p) * k, p.color.scale(1, k * .8));
-            hrDrawEye(c.add(vec2(eyeNudge, .25)), p.eye, .4, open);   // the eye floats along with the drops
+            if (k > 0) hrPhaseQuad(e, vec2(1, 0), vec2(0, 1), hrPhaseSize(p) * k, hrPhaseSize(p) * k, p.color.scale(1, k * .8));
+            // the eye floats above a puddle, but not up into the ceiling a gas presses against
+            hrDrawEye(e.add(vec2(eyeNudge, p.state == 'gas' ? -.05 : .25)), p.eye, .4, open);
             return;
         }
         const size = hrPhaseSize(p), sx = 1 + p.squash, sy = 1 - p.squash;
