@@ -1,11 +1,12 @@
 /*
     HOP RACE - Lab world, Climb (GDD §3.7). A stiff arm with a round head sticks out of the player.
-    Hold to whip it around clockwise, let go to stop it where it is. Inspired by Getting Over It.
+    Hold to whip it around clockwise, let go and it coasts to a stop. Inspired by Getting Over It.
 
     The arm is always solid: the head never passes through anything. Wherever the arm would push the
     head into a solid, the body is pushed the other way instead, so a fast strike on the ground pops you
     up and forward (the head's friction on the surface turns the swing into a shove).
-    Let go and the arm freezes at its angle, and the head becomes a suction cup: as soon as it touches
+    Let go and the arm coasts to a stop (or stops on the first surface it touches), and the head becomes
+    a suction cup: as soon as it touches
     any surface (floor, wall or ceiling) it sticks and holds your whole weight, so you can perch on the
     arm, hang from a wall or dangle under a ceiling. It lets go only when you hold again.
 */
@@ -17,6 +18,7 @@ const HR_CLIMB = {
     arm:        2,      // body center to head center (u)
     headR:      .24,    // head radius (u)
     spin:       10,     // arm turn speed while held (rad/s); the head moves at spin × arm u/s
+    coastTime:  .3,     // after letting go, the arm slows from full spin to a stop in this time (s); 0: it stops dead
     friction:   100,    // head friction on surfaces while turning (high: the head never slips, so a strike levers the body)
     maxSpeed:   20,     // speed cap for the body (u/s)
     ground:     8,      // ground friction for the body (1/s)
@@ -83,6 +85,7 @@ HR_MODES.climb = {
         p.dir = 1;
         p.aimA = PI * .6;   // arm up and a little back
         p.pin = null;       // {x, y, nx, ny}: where the head sticks to a surface while the arm is frozen
+        p.armW = 0;         // arm turn speed (rad/s): spin while held, slowing to 0 after letting go
         p.strikeT = 0;
     },
 
@@ -114,13 +117,17 @@ HR_MODES.climb = {
         const C = HR_CLIMB, x0 = p.x, y0 = p.y, a0 = p.aimA, head0 = this.head(p);
         p.vy -= C.gravity * h;
         p.x += p.vx * h; p.y += p.vy * h;
-        if (turning) p.aimA -= C.spin * h;
+        if (turning) p.armW = C.spin;
+        else p.armW = C.coastTime > 0 ? max(0, p.armW - C.spin / C.coastTime * h) : 0;
+        const moving = p.armW > 0;
+        p.aimA -= p.armW * h;
 
-        let grounded = this.solve(p, turning, head0);
-        if (turning && this.jammed(p))
+        let grounded = this.solve(p, moving, head0);
+        if (moving && !p.pin && this.jammed(p))
         {
-            // the arm is wedged: it can't turn this substep
+            // the arm is wedged: it can't turn this substep (a coasting arm stops for good)
             p.x = x0 + p.vx * h; p.y = y0 + p.vy * h; p.aimA = a0;
+            if (!turning) p.armW = 0;
             grounded = this.solve(p, false, head0);
         }
 
@@ -157,7 +164,7 @@ HR_MODES.climb = {
                 {
                     const nx = out.x / pen, ny = out.y / pen;
                     p.x += out.x; p.y += out.y;
-                    if (turning)
+                    if (turning && p.down)
                     {
                         // friction: the head's slide along the surface shoves the body the other way
                         let tx = hd.x + out.x - head0.x, ty = hd.y + out.y - head0.y;
@@ -173,7 +180,7 @@ HR_MODES.climb = {
                             hrEmit('fire', p);
                         }
                     }
-                    else if (!p.down) this.stick(p, hd.x + out.x, hd.y + out.y);   // the arm is frozen: the head sticks here
+                    else if (!p.down) this.stick(p, hd.x + out.x, hd.y + out.y);   // stopped or coasting: the head sticks here
                 }
                 else if (!p.down && C.suction && hrClimbTouching(hd.x, hd.y)) this.stick(p, hd.x, hd.y);
             }
@@ -191,6 +198,7 @@ HR_MODES.climb = {
         const nx = side ? sign(c.nx) : 0, ny = side ? 0 : sign(c.ny);
         const sx = side ? (nx > 0 ? s.r : s.l) : clamp(x, s.l, s.r), sy = side ? clamp(y, s.bottom, s.top) : (ny > 0 ? s.top : s.bottom);
         p.pin = {x, y, nx, ny, sx, sy, age: 0};
+        p.armW = 0;
         hrSfx.click.play(vec2(x, y), .7, .5);   // a low thwop
         p.pupilKick(0, -.1);
     },

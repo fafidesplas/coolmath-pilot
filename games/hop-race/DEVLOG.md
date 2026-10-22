@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb: the arm coasts after letting go
+- Owner asked: the arm should ease to a stop after release instead of stopping dead, to see if walls get easier to climb without making holding the answer.
+- `HR_CLIMB.coastTime` (0.3 s): after release the arm slows evenly from 10 rad/s to 0 in 18 frames, turning about 85° more. A coasting head doesn't lever the body: on touch it stops and the cup sticks, so you can fling it onto a wall. `coastTime = 0` brings back the dead stop. Holding works exactly as before.
+- Bot check (new random hold/release bot, 200 runs, so numbers differ from earlier entries; compare rows, not with older logs): 5-2 111 → 181 finishes (falls 2.8 → 1.1); 5-3 7 → 112 (best 8.4 → 4.5 s, falls 3.4 → 1.8). With 0.5 s: 5-2 190, 5-3 134. Holding alone still fails 5-2 and 5-3 at every setting. Head never deeper than 0.02 u in a solid.
+- Next: play 5-3 and tune `coastTime` (0.15 is subtler, 0.5 is floatier). If the wall gets too easy, shrink the teeth back.
+
 ## 2026-10-22 — Climb: 5-4 Hang Time removed
 - Owner played it: ceiling hanging isn't worth it. Level removed; Climb is 3 levels again. The pendulum-hang idea is dropped (GDD §14). The suction cup still sticks to ceilings, and its new look stays.
 - Next: unchanged (play 5-1 to 5-3: is the suction cup fun, is the 5-3 pit fair).

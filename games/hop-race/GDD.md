@@ -84,7 +84,7 @@ You are a block of matter made of 7 × 7 = 49 drops. **Each press switches you t
 
 ### 3.7 Climb (Lab world, feel test; inspired by Getting Over It)
 - A stiff **arm** sticks out of the player: 2 u from the body's center to a round **head** (radius 0.24 u). The player has no other way to move.
-- **Hold** to whip the arm **clockwise** at 10 rad/s (the head moves at 20 u/s). **Let go** and the arm stops dead at its angle. The arm's length never changes.
+- **Hold** to whip the arm **clockwise** at 10 rad/s (the head moves at 20 u/s). **Let go** and the arm **coasts**: it slows evenly from full spin to a stop in 0.3 s (about 85° more turn, `HR_CLIMB.coastTime`; 0 makes it stop dead). A coasting head doesn't strike: the moment it touches a surface the arm stops and the cup sticks, so you can fling it onto a wall. The arm's length never changes.
 - **The arm is always solid.** The head never passes through anything. Wherever turning the arm would push the head into a solid, the body is pushed the other way instead.
 - **Strikes pop you:** while turning, the head doesn't slip on the surface it hits, so a strike levers the body around it. From standing, one swing into the floor pops you about 4.8 u up and 4 u forward. A strike on a wall shoves you away from it and up.
 - **Suction cup while stopped:** with the button up, the head is a plunger. As soon as it touches any surface (floor, wall, tooth or ceiling, within 0.05 u) it sticks and holds your whole weight in any direction: perch on the arm, hang from a wall face, dangle under a ceiling, or catch a ledge by letting go as you fly past it. It lets go only when you hold again. `HR_CLIMB.suction = false` brings back the earlier grip, which peeled off when gravity pulled it away from the surface.
