@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Side walls are visible
+- The level box's left and right walls, which already collided, now draw as ink walls in every world. They are 0.5 u thick (the camera margin): at 16:9 they reach the screen edge, and on wider screens the background shows past them, so the pause and restart buttons stay on the background. Drawn all the way out, the walls hid both buttons.
+- Next: unchanged (play Grapple 3-1 to 3-3).
+
 ## 2026-10-22 — Grapple: try the launcher without spin reversal
 - The launcher keeps spinning the same way after a shot, as in the prototype. The reversal is still there behind `HR_GRAPPLE.reverseSpin` (set it to `true` in `src/modes/grapple.js` to compare).
 - Bot check: 3-1 and 3-3 are unchanged (one swing each). 3-2 changes a lot: after the first swing the launcher sweeps backward and the bot never catches the second pillar in mid-air. It finishes 20 of 169 hold pairs (49 with reversal), each with one long fling from the first pillar (hold about 0.53 s) or a second shot fired from standing, so 3-2 plays like 3-3.

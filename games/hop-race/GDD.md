@@ -26,7 +26,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 
 ### 3.1 Shared rules (all modes)
 - **Start:** players start grounded at the level's `start` point. In Versus both spawn on exactly the same point; P2 is drawn behind P1, with its eye nudged so both eyes show, until they separate.
-- **Level box edges:** the left and right edges of the level box act as plain walls, so a bounce can never carry a player off screen.
+- **Level box edges:** the left and right edges of the level box act as plain walls, so a bounce can never carry a player off screen. They are drawn as ink walls 0.5 u thick (the camera margin), so on screens wider than 16:9 the background shows past them and the HUD buttons never sit on ink.
 - **No contact between players:** players pass through each other. The one exception is Rocket, where blasts push every player in range (3.3).
 - **Falling:** dropping below the kill line (1 u under the level's bottom edge) sends you back to the level's start with zero speed. The timer keeps running; nothing else is lost. In Versus the other player keeps racing. There are no checkpoints: levels are short enough that a restart from the start is fair.
 - **Finish (Hop, Rocket, Grapple):** touch the flag's trigger box, which runs from the pole to the pennant tip (1.44 u wide) and from the ground to the top of the pole (3 u). Grounding is not needed. Phase has its own rule (3.5). Solo: the timer stops. Versus: the first player to finish wins the round.
@@ -313,6 +313,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — The level box's side walls are drawn (0.5 u ink walls); before, they collided but were invisible.
 - 2026-10-22 — Grapple launcher no longer reverses its spin on each shot (owner wants to try the prototype's feel); the reversal stays behind `HR_GRAPPLE.reverseSpin`. Open question added in §14.
 - 2026-10-22 — Grapple 1–3 built (Swing By, Two Pillars, Let Go). The launcher reverses its spin on each shot, as in Rocket; without it, catching the next pillar after a release needed most of a full turn. The top of the level box is closed in Grapple. A dotted sight line shows the hook's path. Levels can place their tutorial prompt (`promptAt`).
 - 2026-10-21 — Owner decision: rocket blasts push every player in range, and a rocket explodes on the other player (as in the prototype). Removed from the Cut list; watch for pinning in Versus playtests.

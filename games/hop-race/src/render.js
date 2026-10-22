@@ -21,7 +21,15 @@ function hrDrawLevel()
     for (const g of L.gates) hrDrawGate(g);
     for (const s of L.solids)
     {
-        if (s.edge || s.gate) continue;
+        if (s.gate) continue;
+        if (s.edge)
+        {
+            // the level box's side walls, as thick as the camera margin, so on wide screens the HUD
+            // buttons beyond them stay on the background
+            const l = s.l < 0 ? s.r - HR_MARGIN : s.l, r = s.r > 0 ? s.l + HR_MARGIN : s.r;
+            drawRect(vec2((l + r) / 2, 0), vec2(r - l, 2 * (hh + far)), HR_INK);
+            continue;
+        }
         // solids that touch the level box edge are drawn on to the screen edge
         const l = s.l <= -hw + .01 ? s.l - far : s.l, r = s.r >= hw - .01 ? s.r + far : s.r;
         const top = s.top >= hh - .01 ? s.top + far : s.top;
