@@ -20,6 +20,9 @@ export const RUNNER = {
   cornerForgive: 10,
 };
 
+// Forms (prototype): glider climbs or dives at this share of the forward speed.
+export const GLIDE = 0.85;
+
 export const SPIKE_INSET = 6;   // deadly area starts this far inside the drawn spike
 export const SPIKE_H = 22;      // drawn spike height
 export const RESPAWN_STEPS = Math.round(0.35 * HZ);

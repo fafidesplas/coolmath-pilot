@@ -17,14 +17,16 @@ export function parseLevel(data) {
     }
   });
 
-  const lv = { id: data.id, cols, tiles, speed: data.speed, stars: [], flags: [], hints: [], goal: cols * T };
+  const lv = { id: data.id, cols, tiles, speed: data.speed, stars: [], flags: [], hints: [], portals: [], goal: cols * T };
   for (const o of data.objects || []) {
     if (o.type === 'star') lv.stars.push({ x: (o.x + 0.5) * T, y: (o.y + 0.5) * T });
     else if (o.type === 'flag') lv.flags.push({ x: o.x * T, ty: o.y });
     else if (o.type === 'goal') lv.goal = o.x * T;
-    else if (o.type === 'hint') lv.hints.push({ x: o.x * T });
+    else if (o.type === 'hint') lv.hints.push({ x: o.x * T, label: o.label || 'TAP!' });
+    else if (o.type === 'portal') lv.portals.push({ x: o.x * T, form: o.form, lane: o.lane ?? null });
   }
   lv.flags.sort((a, b) => a.x - b.x);
+  lv.portals.sort((a, b) => a.x - b.x);
   lv.start = data.start;
   return lv;
 }

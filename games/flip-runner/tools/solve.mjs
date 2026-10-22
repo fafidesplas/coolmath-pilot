@@ -11,7 +11,8 @@ const keyOf = s => {
   let mask = 0;
   for (let i = 0; i < s.stars.length; i++) if (s.stars[i]) mask |= 1 << i;
   const coyote = Math.min(s.step - s.lastGround, RUNNER.coyoteSteps + 1);
-  return `${s.g}|${Math.round(s.y * 2)}|${Math.round(s.vy)}|${coyote}|${mask}`;
+  const b = s.b2 ? `${Math.round(s.b2.y * 2)}|${Math.round(s.b2.vy)}|${Math.min(s.step - s.b2.lastGround, RUNNER.coyoteSteps + 1)}` : '';
+  return `${s.form}|${s.g}|${Math.round(s.y * 2)}|${Math.round(s.vy)}|${coyote}|${mask}|${b}`;
 };
 
 export function solve(data, { maxSteps = 120 * 180 } = {}) {
@@ -24,10 +25,13 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
     const next = new Map();
     for (const node of layer) {
       node.kids = [null, null];
-      const canFlip = node.s.grounded || (node.s.step + 1) - node.s.lastGround <= RUNNER.coyoteSteps;
-      for (const press of canFlip ? [false, true] : [false]) {
-        const s = cloneState(node.s);
-        advance(lv, s, press);
+      // Action 1 is "press" in flip and twin form, "hold" in glider form.
+      const ns = node.s, glider = ns.form === 'glider';
+      const can = b => b.grounded || (ns.step + 1) - b.lastGround <= RUNNER.coyoteSteps;
+      const canAct = glider || (can(ns) && (!ns.b2 || can(ns.b2)));
+      for (const press of canAct ? [false, true] : [false]) {
+        const s = cloneState(ns);
+        advance(lv, s, press ? (glider ? 2 : 1) : 0);
         if (s.dead > 0) continue;
         if (s.done) { const g = { s, parent: node, press, kids: [] }; goals.push(g); node.kids[press ? 1 : 0] = g; continue; }
         const k = keyOf(s);
@@ -51,7 +55,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
 
   // Build a route that flips in the middle of the widest good window each time,
   // and measure that window. Waiting through a stretch is preferred when it works.
-  const presses = [], windows = [];
+  const presses = [], windows = [], holds = [];
   let n = all[0][0];
   while (!n.s.done) {
     if (!n.kids[1]) { n = n.kids[0]; continue; }
@@ -69,8 +73,11 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
     }
     if (bestA < 0) throw new Error('solver lost the route');
     const pick = chain[bestA + (bestLen >> 1)];
-    presses.push(pick.s.step);
-    windows.push({ step: pick.s.step, col: Math.floor((pick.s.x + RUNNER.w) / 40), ms: Math.round(bestLen / HZ * 1000) });
+    if (pick.s.form === 'glider') holds.push(pick.s.step);
+    else {
+      presses.push(pick.s.step);
+      windows.push({ step: pick.s.step, col: Math.floor((pick.s.x + RUNNER.w) / 40), ms: Math.round(bestLen / HZ * 1000) });
+    }
     n = pick.kids[1];
   }
 
@@ -79,6 +86,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
     stars: bankedCount(n.s),
     time: n.s.step / HZ,
     presses,
+    holds,
     frames: n.s.step,
     tightestMs: Math.min(...windows.map(w => w.ms)),
     windows,
@@ -89,6 +97,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
 export function framesOf(result) {
   const f = new Array(result.frames).fill(0);
   for (const p of result.presses) f[p] = 1;
+  for (const p of result.holds) f[p] = 2;
   return f;
 }
 

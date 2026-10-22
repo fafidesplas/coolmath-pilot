@@ -8,7 +8,7 @@ import { FX, drawStarShape } from './fx.js';
 import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
-import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawFlag, drawGoal, drawLevelStar, rrect, text } from './render.js';
+import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawGlider, drawPortal, FORM_STYLE, drawFlag, drawGoal, drawLevelStar, rrect, text } from './render.js';
 import { isSolid, tileAt, TILE } from './level.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
 
@@ -28,6 +28,7 @@ export class Game {
     this.fx = new FX();
     this.input = new Input(code => this.onKey(code));
     this.scarf = new Scarf();
+    this.scarf2 = new Scarf();
 
     this.screen = 'title';
     this.paused = false;
@@ -91,8 +92,8 @@ export class Game {
       this.mouse = p;
       this.pressed = hit(p);
       if (this.pressed) { this.canvas.setPointerCapture(e.pointerId); return; }
-      // Tap anywhere in the playfield flips (never on the HUD).
-      if (this.live() && p.y > HUD_H) this.input.press();
+      // Tap anywhere in the playfield flips (never on the HUD); holding counts for glider form.
+      if (this.live() && p.y > HUD_H) { this.input.press(); this.input.pointerHeld = true; }
       else if (this.screen === 'title' && p.y > 470) this.titleTap();
     });
     this.canvas.addEventListener('pointermove', e => {
@@ -102,6 +103,7 @@ export class Game {
       this.canvas.style.cursor = this.hover ? 'pointer' : 'default';
     });
     this.canvas.addEventListener('pointerup', e => {
+      this.input.pointerHeld = false;
       // Buttons are rebuilt every frame, so match by key, not by object.
       const b = hit(toView(e));
       if (b && this.pressed && b.key === this.pressed.key) this.activate(b);
@@ -332,6 +334,10 @@ export class Game {
     const a = Math.min(1, this.acc / STEP);
     const x = this.prevX + (s.x - this.prevX) * a, y = this.prevY + (s.y - this.prevY) * a;
     this.view = { x: x + RUNNER.w / 2, y: y + RUNNER.h / 2 + this.hop };
+    if (s.b2) {
+      this.view2 = { x: this.view.x, y: s.b2.y + RUNNER.h / 2 };
+      if (!s.dead) this.scarf2.update(this.view2.x - 10, this.view2.y - s.g * 2, s.g, dt);
+    }
     if (!s.dead) this.scarf.update(this.view.x - 10, this.view.y - s.g * 2, s.g, dt);
     if (!s.dead && !s.done && !this.paused) {
       this.dustT -= dt; this.ghostT -= dt;
@@ -339,15 +345,15 @@ export class Game {
         this.dustT = 0.05;
         this.fx.spawn({ x: this.view.x - 8, y: this.view.y + s.g * 15, vx: -60 - this.fx.rnd() * 60, vy: -s.g * (20 + this.fx.rnd() * 30), color: 'rgba(43,34,56,0.25)', type: 'puff', life: 0.25, size: 3 + this.fx.rnd() * 2, g: 0 });
       }
-      if (!s.grounded && this.ghostT <= 0) {
+      if ((!s.grounded || s.form === 'glider') && this.ghostT <= 0) {
         this.ghostT = 0.016;
-        this.fx.spawn({ x: this.view.x, y: this.view.y, color: C.runner, type: 'ghost', life: 0.16, size: 17, g: 0 });
+        this.fx.spawn({ x: this.view.x, y: this.view.y, color: FORM_STYLE[s.form].color, type: 'ghost', life: s.form === 'glider' ? 0.3 : 0.16, size: s.form === 'glider' ? 9 : 17, g: 0 });
       }
     }
 
     // Level 1 hints: "TAP!" right when a flip is needed
     const hints = this.sim.lv.hints;
-    while (this.hintIdx < hints.length && s.x >= hints[this.hintIdx].x) { this.hintIdx++; this.hintT = this.t; this.sound.play('tap'); }
+    while (this.hintIdx < hints.length && s.x >= hints[this.hintIdx].x) { this.hintLabel = hints[this.hintIdx].label; this.hintIdx++; this.hintT = this.t; this.sound.play('tap'); }
   }
 
   handleEvents() {
@@ -387,6 +393,7 @@ export class Game {
           this.prevX = s.x; this.prevY = s.y;
           this.flipK = s.g;
           this.scarf.reset(s.x + RUNNER.w / 2 - 8, s.y + RUNNER.h / 2);
+          if (s.b2) this.scarf2.reset(s.b2.x + RUNNER.w / 2 - 8, s.b2.y + RUNNER.h / 2);
           fx.kick('runner', 0.5, 1.5);
           fx.spawn({ x: s.x + RUNNER.w / 2, y: s.y + RUNNER.h / 2, type: 'ring', color: C.runner, life: 0.35, size: 8, g: 0 });
           break;
@@ -406,6 +413,14 @@ export class Game {
           if (!this.flagsPassed.has(e.i) && !this.replay) { this.flagsPassed.add(e.i); GA.design(`checkpoint:${e.i + 1}`); }
           if (!this.save.tut.flag && !this.replay) { this.save.tut.flag = true; storeSave(this.save); GA.design('tutorial:step02'); }
           break;
+        case 'form': {
+          const st = FORM_STYLE[e.form];
+          snd.play('checkpoint');
+          fx.burst(s.x + RUNNER.w / 2, s.y + RUNNER.h / 2, 26, st.color, 340, 'confetti', 0.8, 4, 0);
+          fx.spawn({ x: s.x + RUNNER.w / 2 + 40, y: s.y - 40, vy: -40, g: 0, type: 'text', label: st.label + '!', size: 30, color: st.color, life: 0.8 });
+          if (s.b2) this.scarf2.reset(s.b2.x + RUNNER.w / 2 - 8, s.b2.y + RUNNER.h / 2);
+          break;
+        }
         case 'goal': this.onComplete(); break;
       }
     }
@@ -627,20 +642,29 @@ export class Game {
     ctx.translate(-cam, 0);
     lv.flags.forEach((f, i) => { if (f.x > cam - 60 && f.x < cam + VIEW_W + 60) { const p = this.flagSurface(i); drawFlag(ctx, f.x, p.y, p.g, i <= s.flag, t); } });
     if (lv.goal > cam - 120 && lv.goal < cam + VIEW_W + 120) drawGoal(ctx, lv.goal, t);
+    lv.portals.forEach((p, i) => { if (i > s.portal && p.x > cam - 60 && p.x < cam + VIEW_W + 60) drawPortal(ctx, p.x, p.form, t); });
     const saved = this.save.stars[this.level.id] || [0, 0, 0];
     lv.stars.forEach((st, i) => { if (s.stars[i] === 0 && st.x > cam - 40 && st.x < cam + VIEW_W + 40) drawLevelStar(ctx, st.x, st.y, t, saved[i]); });
 
     if (!s.dead) {
-      this.scarf.draw(ctx, 0);
       const sq = this.fx.squash.runner;
-      drawRunner(ctx, this.view.x, this.view.y, this.flipK, { sx: sq.sx, sy: sq.sy, t, running: s.grounded, blink: (t % 3.7) < 0.1 });
+      if (s.form === 'glider') {
+        drawGlider(ctx, this.view.x, this.view.y, Math.atan2(s.vy, s.speed), t, FORM_STYLE.glider.color);
+      } else {
+        this.scarf.draw(ctx, 0);
+        drawRunner(ctx, this.view.x, this.view.y, this.flipK, { sx: sq.sx, sy: sq.sy, t, running: s.grounded, blink: (t % 3.7) < 0.1 });
+        if (s.b2 && this.view2) {
+          this.scarf2.draw(ctx, 0, C.runner);
+          drawRunner(ctx, this.view2.x, this.view2.y, this.flipK, { sx: sq.sx, sy: sq.sy, t, running: s.b2.grounded, color: FORM_STYLE.twin.color, blink: (t % 4.1) < 0.1 });
+        }
+      }
       // Level 1 tap cue
       if (t - this.hintT < 0.7) {
         const k = (t - this.hintT) / 0.7;
         const py = this.view.y - s.g * (62 + k * 10);
         ctx.globalAlpha = 1 - k * k;
-        rrect(ctx, this.view.x - 46, py - 22, 92, 44, 14); ctx.fillStyle = C.star; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
-        text(ctx, 'TAP!', this.view.x, py + 1, 26, C.ink, 'center', 900);
+        rrect(ctx, this.view.x - 62, py - 22, 124, 44, 14); ctx.fillStyle = C.star; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+        text(ctx, this.hintLabel || 'TAP!', this.view.x, py + 1, 26, C.ink, 'center', 900);
         ctx.globalAlpha = 1;
       }
     }
@@ -725,7 +749,7 @@ export class Game {
     this.addButton({ x: bx, y: y + 110, w: bw, h: 64, label: 'RESUME', color: C.star, size: 26, action: () => this.pause(false) });
     this.addButton({ x: bx, y: y + 190, w: bw, h: 64, label: 'RESTART', size: 26, action: () => this.restart() });
     this.addButton({ x: bx, y: y + 270, w: bw, h: 64, label: 'MENU', size: 26, action: () => this.toMenu('levels') });
-    text(ctx, 'Tap, click or Space to flip', VIEW_W / 2, y + 385, 18, '#6B7894', 'center', 700);
+    text(ctx, 'Tap or Space to flip  ·  hold to glide', VIEW_W / 2, y + 385, 18, '#6B7894', 'center', 700);
   }
 
   drawComplete() {

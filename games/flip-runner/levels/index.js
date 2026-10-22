@@ -1,9 +1,10 @@
 // World list for the level select. The vertical slice has one real level;
 // the other slots show as locked.
 import w1l01 from './w1l01.js';
+import proto from './proto.js';
 
 export const WORLDS = [
-  { name: 'Lab', levels: [w1l01] },
+  { name: 'Lab', levels: [w1l01, proto] },   // proto: forms prototype, not a final level
   { name: 'Caves', levels: [] },
   { name: 'Sky Factory', levels: [] },
   { name: 'Space Station', levels: [] },

@@ -8,6 +8,7 @@ import { HZ, RUNNER } from '../src/config.js';
 import { encodeRecording, decodeRecording } from '../src/record.js';
 import { solve, framesOf } from './solve.mjs';
 import w1l01 from '../levels/w1l01.js';
+import proto from '../levels/proto.js';
 
 const WRITE = process.argv.includes('--write');
 let failed = 0;
@@ -95,9 +96,33 @@ function world(data) {
   ok(w2.s.stars[0] === 0, 'a star grabbed after the flag goes back on death');
 }
 
+{ // Glider: hold climbs, release dives, surfaces can be slid along
+  const data = corridor(120, gr => { for (let r = 1; r < 5; r++) for (let c = 10; c < 120; c++) gr[r][c] = '.'; for (let r = 11; r < 15; r++) for (let c = 10; c < 120; c++) gr[r][c] = '.'; });
+  data.objects = [{ type: 'portal', x: 10, form: 'glider' }];
+  const w = world(data);
+  w.run(150);
+  const y0 = w.s.y;
+  w.run(40, () => 2);
+  ok(w.s.form === 'glider' && w.s.y < y0 - 80, `holding climbs (${(y0 - w.s.y).toFixed(0)} px up)`);
+  w.run(200, () => 2);
+  ok(w.s.deaths === 0 && w.s.y <= 41, 'climbing into the ceiling slides along it');
+  w.run(120);
+  ok(w.s.y > 300 && w.s.deaths === 0, 'releasing dives');
+}
+
+{ // Twin: one press flips both, only when both have their feet down
+  const data = corridor(160, gr => { for (let c = 10; c < 160; c++) { gr[5][c] = '#'; gr[1][c] = '.'; gr[2][c] = '.'; gr[3][c] = '.'; } });
+  data.objects = [{ type: 'portal', x: 12, form: 'twin', lane: 2 }];
+  const w = world(data);
+  w.run(200);
+  ok(w.s.form === 'twin' && w.s.b2 && w.s.b2.grounded, 'second runner appears standing in its lane');
+  w.run(1, () => 1); w.run(60);
+  ok(w.s.g === -1 && w.s.b2.g === -1 && w.s.deaths === 0, 'one press flips both twins');
+}
+
 // --- Levels: solver + recorded solutions -----------------------------------------
 
-for (const data of [w1l01]) {
+for (const data of [w1l01, proto]) {
   const r = solve(data);
   ok(r.ok, `${data.id} is beatable (${r.ok ? `${r.stars}/3 stars, ${r.time.toFixed(1)} s, ${r.presses.length} flips` : 'no route'})`);
   if (!r.ok) continue;
@@ -111,7 +136,7 @@ for (const data of [w1l01]) {
   const rec = JSON.parse(readFileSync(file, 'utf8'));
   const replay = () => {
     const lv = parseLevel(data), s = initialState(lv);
-    for (const b of decodeRecording(rec)) advance(lv, s, b === 1);
+    for (const b of decodeRecording(rec)) advance(lv, s, b);
     return s;
   };
   const a = replay(), b = replay();

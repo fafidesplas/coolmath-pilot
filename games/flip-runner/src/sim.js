@@ -1,7 +1,7 @@
 // The deterministic runner world (GDD 3). No DOM: the same code runs in the
 // browser, in tools/simtest.mjs and in the solver. All mutable state lives in
 // one plain object so the solver can clone it cheaply.
-import { T, ROWS, HZ, STEP, RUNNER, SPIKE_INSET, SPIKE_H, RESPAWN_STEPS, LAND_EVENT_SPEED } from './config.js';
+import { T, ROWS, HZ, STEP, RUNNER, SPIKE_INSET, SPIKE_H, RESPAWN_STEPS, LAND_EVENT_SPEED, GLIDE } from './config.js';
 import { parseLevel, tileAt, isSolid, TILE } from './level.js';
 
 const EPS = 0.01;
@@ -19,13 +19,19 @@ export function initialState(lv) {
     grounded: true, lastGround: 0, buffer: -99,
     dead: 0, done: false, deaths: 0, deathTypes: { spikes: 0, gap: 0, wall: 0 }, lastDeath: null,
     stars: lv.stars.map(() => 0),       // 0 free, 1 held (not banked yet), 2 banked
-    flag: -1, snap: { x: p.x, y: p.y, g: p.g, speed: lv.speed },
-    flips: 0,
+    flag: -1, flips: 0,
+    form: 'flip', portal: -1, b2: null,     // b2: the second runner in twin form
+    snap: null,
   };
 }
 
+const copyB2 = b => (b ? { ...b } : null);
+function snapshot(s, x, y, g) {
+  return { x, y, g, speed: s.speed, form: s.form, portal: s.portal, b2: copyB2(s.b2) };
+}
+
 export function cloneState(s) {
-  return { ...s, deathTypes: { ...s.deathTypes }, stars: s.stars.slice(), snap: { ...s.snap } };
+  return { ...s, deathTypes: { ...s.deathTypes }, stars: s.stars.slice(), b2: copyB2(s.b2), snap: s.snap && { ...s.snap, b2: copyB2(s.snap.b2) } };
 }
 
 function boxFree(lv, x, y) {
@@ -125,70 +131,120 @@ function bank(s, emit) {
   if (n && emit) emit('bank', { n });
 }
 
-function die(s, type, emit) {
+function die(s, b, type, emit) {
   s.dead = RESPAWN_STEPS;
   s.deaths++;
   s.deathTypes[type]++;
   s.lastDeath = type;
   for (let i = 0; i < s.stars.length; i++) if (s.stars[i] === 1) s.stars[i] = 0;   // unbanked stars go back
-  if (emit) emit('death', { kind: type, x: s.x + R.w / 2, y: s.y + R.h / 2 });
+  if (emit) emit('death', { kind: type, x: b.x + R.w / 2, y: b.y + R.h / 2 });
 }
 
-// One 120 Hz step. press = a flip was pressed during this step.
-export function advance(lv, s, press, emit = null) {
-  if (s.done) return;
-  s.step++;
-  if (s.dead > 0) {
-    if (--s.dead === 0) {
-      const p = s.snap;
-      s.x = p.x; s.y = p.y; s.g = p.g; s.speed = p.speed;
-      s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99;
-      if (emit) emit('respawn', {});
-    }
-    return;
+// Twin form: the second runner appears in its lane, standing on the surface gravity points at.
+function spawnTwin(lv, s, lane) {
+  const col = Math.floor((s.x + R.w / 2) / T);
+  let r = lane;
+  while (r > 0 && r < ROWS - 1 && !isSolid(lv, col, r + s.g)) r += s.g;
+  const y = s.g > 0 ? (r + 1) * T - R.h : r * T;
+  return { x: s.x, y, vy: 0, g: s.g, grounded: true, lastGround: s.step };
+}
+
+function setForm(lv, s, p, emit) {
+  s.form = p.form;
+  s.lane = p.lane;
+  s.b2 = p.form === 'twin' ? spawnTwin(lv, s, p.lane) : null;
+  if (emit) emit('form', { form: p.form });
+}
+
+// Vertical move for one body; returns true if it now stands on its surface.
+function settle(lv, b, step, emit, who) {
+  const wasGrounded = b.grounded;
+  const vy = b.vy;
+  const hit = moveY(lv, b, b.vy * STEP);
+  b.grounded = hit && Math.sign(vy) === b.g;
+  if (hit) b.vy = 0;
+  if (b.grounded) {
+    b.lastGround = step;
+    if (!wasGrounded && Math.abs(vy) > LAND_EVENT_SPEED && emit) emit('land', { g: b.g, speed: Math.abs(vy), who });
   }
+}
 
-  if (press) s.buffer = s.step;
-  const canFlip = s.grounded || s.step - s.lastGround <= R.coyoteSteps;
-  if (s.step - s.buffer <= R.bufferSteps && canFlip) {
-    s.g = -s.g;
-    s.vy = s.g * R.kick;
-    s.grounded = false;
-    s.lastGround = -99;
-    s.buffer = -99;
-    s.flips++;
-    if (emit) emit('flip', { g: s.g, flips: s.flips });
-  }
+function fall(b) {
+  b.vy += b.g * R.gravity * STEP;
+  if (b.vy > R.maxVy) b.vy = R.maxVy;
+  if (b.vy < -R.maxVy) b.vy = -R.maxVy;
+}
 
-  s.vy += s.g * R.gravity * STEP;
-  if (s.vy > R.maxVy) s.vy = R.maxVy;
-  if (s.vy < -R.maxVy) s.vy = -R.maxVy;
-
-  const wall = moveX(lv, s, s.speed * STEP, emit);
-  if (wall) { die(s, wall, emit); return; }
-
-  const wasGrounded = s.grounded;
-  const vy = s.vy;
-  const hit = moveY(lv, s, s.vy * STEP);
-  s.grounded = hit && Math.sign(vy) === s.g;
-  if (hit) s.vy = 0;
-  if (s.grounded) {
-    s.lastGround = s.step;
-    if (!wasGrounded && Math.abs(vy) > LAND_EVENT_SPEED && emit) emit('land', { g: s.g, speed: Math.abs(vy) });
-  }
-
-  const hz = hazard(lv, s);
-  if (hz) { die(s, hz, emit); return; }
-
-  const cx = s.x + R.w / 2, cy = s.y + R.h / 2;
+function grabStars(lv, s, b, emit) {
   for (let i = 0; i < lv.stars.length; i++) {
     if (s.stars[i] !== 0) continue;
     const st = lv.stars[i];
-    const nx = Math.max(s.x, Math.min(st.x, s.x + R.w)), ny = Math.max(s.y, Math.min(st.y, s.y + R.h));
+    const nx = Math.max(b.x, Math.min(st.x, b.x + R.w)), ny = Math.max(b.y, Math.min(st.y, b.y + R.h));
     if ((nx - st.x) ** 2 + (ny - st.y) ** 2 < 16 * 16) {
       s.stars[i] = 1;
       if (emit) emit('star', { i, x: st.x, y: st.y });
     }
+  }
+}
+
+// One 120 Hz step. bits: 1 = a press happened this step, 2 = the button is held.
+export function advance(lv, s, bits, emit = null) {
+  if (s.done) return;
+  if (!s.snap) s.snap = snapshot(s, s.x, s.y, s.g);
+  s.step++;
+  if (s.dead > 0) {
+    if (--s.dead === 0) {
+      const p = s.snap;
+      s.x = p.x; s.y = p.y; s.g = p.g; s.speed = p.speed; s.form = p.form; s.portal = p.portal; s.b2 = copyB2(p.b2);
+      s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99;
+      if (s.b2) { s.b2.lastGround = s.step; s.b2.vy = 0; }
+      if (emit) emit('respawn', {});
+    }
+    return;
+  }
+  const press = (bits & 1) !== 0, held = (bits & 2) !== 0;
+  const b2 = s.b2;
+
+  if (s.form === 'glider') {
+    // Hold to climb, release to dive, at a fixed angle. Surfaces can be slid along.
+    s.g = held ? -1 : 1;
+    s.vy = s.g * GLIDE * s.speed;
+  } else {
+    if (press) s.buffer = s.step;
+    const can = b => b.grounded || s.step - b.lastGround <= R.coyoteSteps;
+    // Twins flip together, and only when both have their feet down.
+    if (s.step - s.buffer <= R.bufferSteps && can(s) && (!b2 || can(b2))) {
+      s.g = -s.g;
+      s.vy = s.g * R.kick;
+      s.grounded = false; s.lastGround = -99; s.buffer = -99;
+      if (b2) { b2.g = s.g; b2.vy = s.g * R.kick; b2.grounded = false; b2.lastGround = -99; }
+      s.flips++;
+      if (emit) emit('flip', { g: s.g, flips: s.flips });
+    }
+    fall(s);
+    if (b2) fall(b2);
+  }
+
+  const dx = s.speed * STEP;
+  const wall = moveX(lv, s, dx, emit);
+  if (wall) { die(s, s, wall, emit); return; }
+  if (b2) { const w2 = moveX(lv, b2, dx, emit); if (w2) { die(s, b2, w2, emit); return; } }
+
+  settle(lv, s, s.step, emit, 0);
+  if (b2) settle(lv, b2, s.step, emit, 1);
+
+  const hz = hazard(lv, s);
+  if (hz) { die(s, s, hz, emit); return; }
+  if (b2) { const h2 = hazard(lv, b2); if (h2) { die(s, b2, h2, emit); return; } }
+
+  grabStars(lv, s, s, emit);
+  if (b2) grabStars(lv, s, b2, emit);
+
+  const cx = s.x + R.w / 2;
+  for (let i = s.portal + 1; i < lv.portals.length; i++) {
+    if (cx < lv.portals[i].x) break;
+    s.portal = i;
+    setForm(lv, s, lv.portals[i], emit);
   }
 
   for (let i = s.flag + 1; i < lv.flags.length; i++) {
@@ -197,7 +253,8 @@ export function advance(lv, s, press, emit = null) {
     s.flag = i;
     const g = isSolid(lv, Math.floor(f.x / T), f.ty + 1) ? 1 : -1;
     const p = standingAt(Math.floor(f.x / T), f.ty, g);
-    s.snap = { x: p.x, y: p.y, g, speed: s.speed };
+    s.snap = snapshot(s, p.x, p.y, g);
+    if (s.b2) s.snap.b2 = spawnTwin(lv, { x: p.x, g, step: s.step }, s.lane);
     bank(s, emit);
     if (emit) emit('flag', { i, x: f.x });
   }
@@ -221,9 +278,9 @@ export class Sim {
     this.emit = (type, d) => this.events.push({ type, ...d });
   }
   get time() { return this.s.step / HZ; }
-  // bits: 1 if a flip was pressed during this step (the input queues one press per step)
+  // bits: 1 = a press this step (the input queues one press per step), 2 = held
   step(bits) {
-    advance(this.lv, this.s, (bits & 1) === 1, this.emit);
+    advance(this.lv, this.s, bits, this.emit);
   }
   forceWin() {
     if (this.s.done) return;

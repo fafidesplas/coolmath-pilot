@@ -1,5 +1,14 @@
 # Flip Runner — devlog
 
+## 2026-10-22 — Forms prototype
+- Fafi wants more varied mechanics. Prototyping "forms" switched by portals, all on the same single button:
+  - **Flip**: tap flips gravity (the current game).
+  - **Glider**: hold to climb, release to dive, at a fixed angle; surfaces can be slid along, wall faces kill.
+  - **Twin**: a second runner appears in a parallel lane; one tap flips both, only when both have their feet down.
+- New level `proto` (Lab 2 in the level select, ~29 s): Flip warm-up → Glider room with pillars → Flip → Twin lanes → Flip. Solver: 3/3 stars, tightest window 300 ms.
+- Input now also sends a "held" bit; recordings and the solver handle holds.
+- The GDD is not updated yet: if the prototype works, the next step is rewriting the worlds around forms.
+
 ## 2026-10-22 — Feel loop 1: faster, denser, louder
 - First playtest (Fafi): "too slow and bland".
 - Speed 320 → 440 px/s, gravity 5000 → 7000 with a stronger kick: a corridor flip now takes ~0.22 s.

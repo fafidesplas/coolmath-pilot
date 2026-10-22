@@ -212,10 +212,10 @@ export class Scarf {
       b.x -= dx * f; b.y -= dy * f;
     }
   }
-  draw(ctx, offX) {
+  draw(ctx, offX, scarfColor = C.scarf) {
     if (!this.p.length) return;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (const [w, color] of [[11, C.ink], [6, C.scarf]]) {
+    for (const [w, color] of [[11, C.ink], [6, scarfColor]]) {
       ctx.lineWidth = w; ctx.strokeStyle = color;
       ctx.beginPath();
       this.p.forEach((q, i) => (i ? ctx.lineTo(q.x - offX, q.y) : ctx.moveTo(q.x - offX, q.y)));
@@ -252,6 +252,47 @@ export function drawRunner(ctx, x, y, flip, opt = {}) {
   // determined brow
   ctx.strokeStyle = C.ink; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(14, -9); ctx.stroke();
+  ctx.restore();
+}
+
+// Glider form: a dart that points where it is going.
+export function drawGlider(ctx, x, y, angle, t, color = C.runner) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(22, 0); ctx.lineTo(-16, -15); ctx.quadraticCurveTo(-8, 0, -16, 15); ctx.closePath();
+  ctx.fillStyle = color; ctx.fill();
+  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.ellipse(4, -2, 5, 5.5, 0, 0, 7); ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(6, -2, 2.5, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+export const FORM_STYLE = {
+  flip: { color: C.runner, label: 'FLIP' },
+  glider: { color: '#9B6BFF', label: 'GLIDE' },
+  twin: { color: '#FF8A3D', label: 'TWIN' },
+};
+
+// A portal: a glowing band across the playfield with the form's name top and bottom.
+export function drawPortal(ctx, x, form, t) {
+  const st = FORM_STYLE[form];
+  ctx.save();
+  ctx.globalAlpha = 0.18 + Math.sin(t * 6) * 0.05;
+  ctx.fillStyle = st.color;
+  ctx.fillRect(x - 18, 0, 36, ROWS * T);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = st.color; ctx.lineWidth = 4;
+  ctx.setLineDash([12, 10]); ctx.lineDashOffset = -t * 60;
+  ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ROWS * T); ctx.stroke();
+  ctx.setLineDash([]);
+  for (const y of [T * 0.9, ROWS * T - T * 0.9]) {
+    rrect(ctx, x - 42, y - 16, 84, 32, 10);
+    ctx.fillStyle = st.color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+    text(ctx, st.label, x, y + 1, 16, '#fff', 'center', 900, 4);
+  }
   ctx.restore();
 }
 
