@@ -1,5 +1,14 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb: first Lab world (feel test)
+- New mode, inspired by Getting Over It (`src/modes/climb.js`): a 2 u arm with a round head. Hold to turn it clockwise, let go to stop. The head sticks to any solid it hits; turning while it's stuck levers the body around it (a wheel on flat ground, a walk up a wall). Letting go while stuck holds you still. If the body would hit a solid, the head comes loose. In the air the body grips walls and slides down slowly, which is what makes a sheer wall climbable.
+- 3 levels in `levels/climb.js`: 5-1 Roll Along, 5-2 Boulders (2.5 u pit, rocks stepping up), 5-3 The Wall (9 u sheer wall).
+- Switch to try: `HR_CLIMB.letGo = true` makes release while stuck let go of the head, so you fly on with the lever's speed (a fling).
+- Bot check (headless, same frame count as the browser: 5-3 in 8.567 s): holding all the time finishes all three (5.3, 6.5, 8.6 s). 200 random hold/release runs per level: with the default, every run finishes and the only falls are in 5-2's pit; with `letGo`, 100 % / 86 % / 64 % finish, with many more falls. A 3 u pit can't be crossed with the default and can with `letGo`. Takeaway: with the default these levels show the motion but don't test skill yet.
+- GDD: §3.7 Climb, §13.1 Lab worlds (pitch → 3-level feel test → keep, grow or cut), open questions in §14. The mode select now fits 5 cards; Lab worlds get a "LAB" tag and a star total out of their own levels.
+- Par/expert are placeholders.
+- Next: play 5-1 to 5-3 both ways (`letGo` off and on) and decide what release should mean; then keep, grow or cut.
+
 ## 2026-10-22 — Grapple: no soft lock past the flag
 - Owner found it: land to the right of the flag in 3-1 or 3-3 and nothing to the left is in hook reach (the wall and floor only pull you along them), so you were stuck. Both levels now have a thin ceiling under the HUD from x 2.5 to the right wall. 3-2 doesn't need one: its second pillar is in reach from past the flag.
 - Bot check: started past the flag and hooking only the ceiling, it reached the flag in 44 of 108 tries (3-1) and 71 of 108 (3-3); the rest overshot into the pit, which costs time but isn't a lock. First-swing results are unchanged.

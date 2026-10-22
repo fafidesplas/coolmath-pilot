@@ -5,6 +5,8 @@
 
 > One button, four meanings: hold and release to hop, blast, swing or melt your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
+**Still finding the fun.** The four core worlds are the v1 plan, but new button meanings keep getting tried as **Lab worlds**: a short feel test (§13.1) that is then kept, grown into a full world, or cut. Climb (§3.7) is the first.
+
 ## 1. Summary
 - **Pillars**
   1. **One button, instantly understood.** Every action in every mode is hold, press or release of a single input. Nothing else to learn.
@@ -80,6 +82,16 @@ You are a block of matter made of 7 × 7 = 49 drops. **Each press switches you t
 - **Any landscape size:** the level box is fitted to the window at any aspect ratio from 4:3 to 21:9. Space outside the box shows the level's background (solids that touch the box edge are drawn on to the screen edge), never black bars.
 - **Portrait:** when the window is taller than it is wide, the game pauses behind a "Rotate your device" screen with a rotating phone icon.
 
+### 3.7 Climb (Lab world, feel test; inspired by Getting Over It)
+- A stiff **arm** sticks out of the player: 2 u from the body's center to a round **head** (radius 0.24 u). The player has no other way to move.
+- **Hold** to turn the arm **clockwise**; let go to stop it. Always clockwise, and its length never changes, so on flat ground it rolls you to the right like a wheel. That is accepted for the feel test.
+- **Head free:** the body falls (gravity 42 u/s²), lands and collides as in the other modes (ground friction 8/s, top speed 16 u/s), and the arm turns around it at 8 rad/s. When the head runs into any solid, it **sticks** there.
+- **Head stuck:** the head is a fixed point and the body sits at arm's length from it. Turning the arm (at 4 rad/s, slower because it is lifting you) swings the body around the head: on the floor that vaults you up and over it, and against a wall it lifts you up the face. Letting go holds you still where you are, so you can rest anywhere the head has stuck.
+- **Letting go of the head:** if the body would run into a solid, the head comes loose and the arm turns on freely; it can't stick again until it is clear of every solid. You keep the speed the lever gave you. A switch (`HR_CLIMB.letGo`) tries the other meaning of release: letting go while stuck frees the head and you fly on with that speed, so release becomes a fling as in Grapple. It is off by default (see §14).
+- **Body grip:** in the air, a body touching a wall grips it and slides down at up to 2.5 u/s. This is what makes a sheer wall climbable: stick the head high, lever up, grip while the arm comes back around, repeat.
+- **Draw:** the arm is a thick ink line to a round ink head; a white dot on the head shows it is stuck.
+- **Numbers to tune** live in `HR_CLIMB` (`src/modes/climb.js`).
+
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
 |---|---|---|
@@ -117,6 +129,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Hook anchor surface | Any solid; hanging pillars are the usual target | Grapple 1 | Pillars hang from the ceiling |
 | No-grip surface | The hook bounces off; it does not stick | Grapple 6 | Hollow block (dark outline, background inside) |
 | Slab | Tilted platform in Phase | Phase 1 | Thin tilted dark bar |
+| Arm and head | Turns while held; the head sticks to solids and levers the body (Climb) | Climb 1 | Thick ink line to a round ink head; white dot while stuck |
 | Grate | Solid stands on it; liquid drips through; gas rises through | Phase 6 | Thin ink bars with even gaps, no dotted link (unlike a gate) |
 | Hanging flag | Flag on the underside of a ceiling slab | Phase 7 | Upside-down pole and checkered flag |
 
@@ -126,6 +139,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - **World 2 — Rocket:** blast yourself around, buttons and gates, ice, pits, then sticky floors.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
   - **World 4 — Phase:** melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
+  - **Lab worlds** (§13.1) come after the core four, with 3 levels each, and are not part of the 40.
 - **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold A then release to Jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Press to melt." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
@@ -148,6 +162,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket (built; 4–10 are drafts, hidden until 1–3 are played and the mode is tuned):** 1 **Blast Off**: flat floor with two low bumps; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
   - **Grapple (1–3 built; 4–10 still an outline):** 1 **Swing By**: one pillar over a 3 u pit's far edge; prompt "Hold to reel in. Let go to fly." (placed under the pillar) · 2 **Two Pillars**: a 14 u pit, swing from one pillar to the next · 3 **Let Go**: one pillar, an 8 u pit; the later you let go, the farther you fly · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5). Pillars hang from the top of the level box and stay out of the HUD (x −2.5…2.5 at the top center, and the top right). Where floor runs past the flag with no pillar in reach (1 and 3), a thin ceiling under the HUD runs from x 2.5 to the right wall, so a player who overshoots can hook it and swing back (otherwise only the wall and floor are in reach, and you were stuck).
+  - **Climb (Lab, 3 levels, `levels/climb.js`):** 1 **Roll Along**: flat floor, a 1 u step, then a 2.5 u step to the flag; prompt "Hold to turn your arm." · 2 **Boulders**: a 2.5 u pit, then rocks stepping up 1.5 u at a time · 3 **The Wall**: a sheer 9 u wall with the flag on top. Bot check: holding the button the whole time finishes all three (5.3 s, 6.5 s, 8.6 s). Random holds and releases finish every run with the head holding you still (falls into the pit only in 2), and 64–100 % of runs with `letGo` on, with many more falls. In other words, with the default, these levels are a demo of the motion, not a test of skill yet; §14 has the open question.
   - **Phase:** 1 melt and pour down one gentle slope to the flag · 2 a switchback · 3 edges where drops spill · 4 first gas: rise past a wall · 5 freeze out of gas to land on a ledge · 6 first grate · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
 - **Level data format:** one JS file per world in `levels/` (e.g. `levels/hop.js`) that adds to a global, because the game must run from `file://` where `fetch` of JSON and ES modules are blocked. Keep the top 1.5 u of the level clear near the right edge and the center: the HUD sits there when the window is exactly 16:9 and the margin is too thin for it. Coordinates are centered on the level box: a `size: 24` level spans x −12…12 and y −6.75…6.75.
   ```js
@@ -190,7 +205,7 @@ Versus: Mode select (Versus tab) ──▶ Level select ──▶ Race ──▶
 Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ```
 - **Title:** logo with an idle hopping square, a big **Play** button, then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: Play starts the first level with fewer than 3 stars, in world and level order (Hop 1 for a new player, and Hop 1 again once every level has 3 stars).
-- **Mode select:** Solo / Versus toggle at the top. Four world cards, each with an animated mini schematic of its button meaning, name and star total.
+- **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and star total.
 - **Level select:** 10 tiles per world in 2 rows of 5, each with number, stars and best time; the next level without 3★ is highlighted. Versus uses the same grid without stars.
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with their star cost; tap one to put it on P1 or P2.
 - **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
@@ -246,7 +261,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 All synthesized with ZzFX through `SoundGenerator`. Sound on by default, toggle persists. **Music:** none in v1; the music toggle exists (off) for later.
 
 ## 11. GameAnalytics
-Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `world04`. Levels `level01`–`level10`.
+Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `world04`; Lab worlds take the next ids (Climb `world05`). Levels `level01`–`level10`.
 
 | Event id | When it fires | Value |
 |---|---|---|
@@ -258,7 +273,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | `tutorial:step02` | First jump in Hop 1 | — |
 | `tutorial:step03` | First landing in Hop 1 | — |
 | `tutorial:done` | Hop 1 finished | Time in ms |
-| `mode:<hop\|rocket\|grapple\|phase>:<solo\|versus>` | A level or match starts | — |
+| `mode:<hop\|rocket\|grapple\|phase\|climb>:<solo\|versus>` | A level or match starts | — |
 | `versus:round:<p1\|p2>` | A Versus round is won | Round time in ms |
 | `versus:match:<p1\|p2>` | A Versus match is won | Rounds played |
 | `player:respawn:<mode>` | With each solo Complete or Fail | Falls back to the start in that attempt |
@@ -283,6 +298,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 - **v1:** 4 worlds (Hop, Rocket, Grapple, Phase) × 10 levels; solo time trial with stars and ghost; 8 hats unlocked by stars; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
 - **Build order and cut line:** worlds are built Hop → Rocket → Grapple → Phase. When World 3's content is done, Phase levels 1–3 must be built and played cold by someone who didn't make them, who finishes them without help. If not, v1 ships with three worlds (30 levels, hats rebalanced to 90 stars) and Phase follows in an update. Pao and a teammate make the call together.
 - **Vertical slice (phase 2):** Hop levels 1–3 from data, solo with timer, stars and ghost, Versus on the same levels, full shell, saving, analytics stubs logging to the console.
+- **Lab worlds:** see 13.1. They don't change the v1 list above until one graduates.
 - **Later:** 3–4 player Versus (needs a keyboard ghosting test first); CPU opponent; more modes on the one-button idea; best-of-N options for Versus; more hats; 12 levels per world if players want more; star gates if the data shows players skip around too much.
 - **Cut:**
   - **Orbit:** disorienting to play; its rotating-exit idea doesn't fit the left-to-right race.
@@ -297,6 +313,15 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
   - **Reduce-motion setting:** not in v1; the finish pulse is kept to one soft flash instead.
   - **Flow grain-count debug text:** removed (`RC_SAND.debug` off).
 
+### 13.1 Lab worlds (finding the fun)
+New physics and new meanings for the button keep being tried while the core worlds are built. Each one goes through the same short loop, so trying an idea is cheap and cutting one is normal:
+1. **Pitch:** a few lines in chat or a short §3.x entry: what hold/press/release means, what levels it wants.
+2. **Feel test:** the mode in `src/modes/<id>.js` and **3 levels** in `levels/<id>.js`, listed in `HR_WORLDS` with `lab: true`. The menu shows it after the core worlds with a "LAB" tag; its star total counts only its own levels. Its GDD section says "Lab world, feel test". Uncertain choices go behind a switch in the mode's tuning object, so both versions can be played.
+3. **Call:** the owner plays it (and a teammate cold, if possible) and decides: **keep** as a Lab world for now, **grow** it into a full world (10 levels, its own background color if the palette allows, §6 outline, hats rebalanced, and it joins the v1 list in §13 by owner and teammate decision), or **cut** it (remove its files and world entry, and move it to Cut below with the reason).
+- Lab worlds are kept to one 16:9 screen with the fixed camera like every other world, and they follow §3.1 (start, falling, flag, Versus).
+- Lab stars don't count toward hats until the world graduates, so cutting one never takes a hat away.
+- **Current Lab worlds:** Climb (§3.7), feel test, 3 levels, built 2026-10-22.
+
 ## 14. Open questions
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
@@ -310,9 +335,12 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
 | Grapple launcher: reverse the spin on each shot (as in Rocket)? | Without it, after letting go the launcher swings backward and the next pillar is rarely in reach before you fall: in 3-2 a bot never catches the second pillar in mid-air. It finishes 20 of 169 hold pairs (49 with reversal), each with one long fling from the first pillar or a second shot fired from standing. Play both; if no reversal stays, rework 3-2. | Pao | Testing no reversal |
+| Climb: what should letting go do while the head is stuck? | Two versions behind `HR_CLIMB.letGo`. Off (default, the owner's pitch): you stop and hang where you are. It's safe and restful, but on flat ground a release changes nothing, so a bot that just holds finishes every level and random play never fails outside the 2.5 u pit; a 3 u pit becomes impossible. On: you let go of the head and fly on with the lever's speed. That adds a skill (release at the right moment to fling across a gap) and lets 3 u pits be crossed, at the cost of more falls. Play both on Climb 1–3 before building more levels. | Pao | Open |
+| Climb: keep, grow or cut? (§13.1) | Decide after playing Climb 1–3. If it is kept, the next step is levels that need the release (gaps, overhangs where hanging still matters) rather than more height. | Pao | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Lab worlds (§13.1): a way to keep trying new button meanings with a 3-level feel test, then keep, grow or cut. First one: Climb (§3.7), a clockwise-turning arm whose head sticks to solids, inspired by Getting Over It, with 3 levels (Roll Along, Boulders, The Wall). The mode select shows one card per world, Lab ones tagged "LAB". Analytics: Climb is `world05`.
 - 2026-10-22 — Grapple 1 and 3 get a ceiling over the right side, so overshooting the flag is no longer a soft lock. Ceilings that touch the box edge stop at the side wall when drawn.
 - 2026-10-22 — The level box's side walls are drawn (0.5 u ink walls); before, they collided but were invisible.
 - 2026-10-22 — Grapple launcher no longer reverses its spin on each shot (owner wants to try the prototype's feel); the reversal stays behind `HR_GRAPPLE.reverseSpin`. Open question added in §14.

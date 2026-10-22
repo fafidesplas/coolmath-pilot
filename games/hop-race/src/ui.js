@@ -66,8 +66,8 @@ function hrUiButtons()
             act: () => hrMenuVersus = false});
         add({id: 'versus', x: W / 2 + 100 * u, y: H * .12, w: 190 * u, h: 64 * u, label: 'Versus', on: hrMenuVersus,
             act: () => hrMenuVersus = true});
-        const cw = min(250 * u, W / 4.6), gap = cw * 1.12;
-        HR_WORLDS.forEach((w, i) => add({id: 'world' + i, card: i, x: W / 2 + (i - 1.5) * gap, y: H * .56, w: cw, h: 330 * u,
+        const n = HR_WORLDS.length, cw = min(250 * u, W / (n + 1.2)), gap = cw * 1.12;
+        HR_WORLDS.forEach((w, i) => add({id: 'world' + i, card: i, x: W / 2 + (i - (n - 1) / 2) * gap, y: H * .56, w: cw, h: 330 * u,
             enabled: hrLevelsOf(i).length > 0, focus: i == hrMenuWorld,
             act: () => { hrMenuWorld = i; hrGo('levels'); }}));
     }
@@ -312,13 +312,14 @@ function hrDrawCard(b, w, h, focused)
     hrRect(b.x, b.y, w, h, live ? HR_INK : HR_INK.scale(1, .25));
     hrRect(b.x, b.y, w - 14 * u, h - 14 * u, live ? world.bg : world.bg.scale(1, .5));
     hrText(world.name, b.x, b.y + h * .26, 40 * u, HR_INK);
+    if (world.lab) hrText('LAB', b.x, b.y - h * .39, 20 * u, HR_INK);   // a feel test, not a finished world
     if (live)
     {
         const stars = hrLevelsOf(b.card).reduce((n, l) => n + hrSaveLevel(l.id).stars, 0);
         if (!hrMenuVersus)
         {
             hrStar(b.x - 38 * u, b.y + h * .4, 13 * u, HR_INK);
-            hrText(`${stars}/${HR_LEVELS_PER_WORLD * 3}`, b.x - 18 * u, b.y + h * .4, 24 * u, HR_INK, 'left');
+            hrText(`${stars}/${(world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD) * 3}`, b.x - 18 * u, b.y + h * .4, 24 * u, HR_INK, 'left');
         }
         hrDrawSchematic(b.card, b.x, b.y - h * .12, w * .7);
     }
