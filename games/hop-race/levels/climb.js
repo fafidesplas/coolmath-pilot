@@ -18,7 +18,7 @@ HR_LEVELS.climb = [
             {l: 4, r: 13, top: -1.5},  // a higher one
         ],
         flag: {x: 9, y: -1.5},
-        prompt: 'Hold to turn your arm.',
+        prompt: 'Hold to swing. Let go to stop.',
         par: 12.0, expert: 7.0,
     },
     {
@@ -27,7 +27,7 @@ HR_LEVELS.climb = [
         start: {x: -11, y: -5},
         solids: [
             {l: -14, r: -5, top: -5},
-            {l: -2.5, r: 0.5, top: -4},   // past a 2.5 u pit, the rocks step up
+            {l: -1.5, r: 0.5, top: -4},   // past a 3.5 u pit (too wide to roll across: holding falls in), the rocks step up
             {l: 0.5, r: 3.5, top: -2.5},
             {l: 3.5, r: 6, top: -1},
             {l: 6, r: 14, top: .5},
@@ -41,7 +41,7 @@ HR_LEVELS.climb = [
         start: {x: -12, y: -6},
         solids: [
             {l: -15, r: 15, top: -6},
-            {l: 1, r: 15, top: 3},   // a sheer 9 u wall: stick the head high, lever up, grip, repeat
+            {l: 1, r: 15, top: 3},   // a sheer 9 u wall: grip it, whip the arm into it to pop up, let go to grip higher
         ],
         flag: {x: 8, y: 3},
         par: 16.0, expert: 10.0,

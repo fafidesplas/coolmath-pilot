@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb: strikes pop you, letting go stops the arm
+- Owner notes: too easy (holding alone reached every flag), and with `letGo` on the arm passed through the ground.
+- New model (`src/modes/climb.js`): hold whips the arm clockwise at 10 rad/s; let go and it stops dead at its angle. The arm is always solid: when it would push the head into a solid, the body is pushed instead, and the head doesn't slip on the surface while turning, so a strike levers you. One swing from standing pops you about 4.8 u up and 4 u forward. A stopped head grips what it touches (perch on the arm, hang on a wall, catch a ledge by letting go). It lets go when you hold again or when gravity pulls it off. If the arm is wedged it can't turn, instead of phasing. Removed: the slow stuck lever, the `letGo` switch, the head passing through solids, and the body's wall grip.
+- Fixed while testing: the jam fallback made the head grip while the button was held, which could lock you in 5-2's pit.
+- 5-2's pit is now 3.5 u, so holding blindly falls in. 5-1 prompt: "Hold to swing. Let go to stop."
+- Bot check (200 random hold/release runs per level): 5-1 200 finish (holding alone also wins, 7.9 s); 5-2 198 finish, about 1.8 falls per run; 5-3 10 finish, best 16.1 s, and holding alone stalls at the foot of the wall. Over 450 runs, neither the head nor the body ended a frame inside a solid. Friction tried at 1.2, 3 and 6: the wall can't be climbed below full friction.
+- Next: play 5-1 to 5-3. If 5-3 is too hard, add a ledge or lower the wall (GDD §14). Tuning knobs: `spin` and `arm` in `HR_CLIMB`.
+
 ## 2026-10-22 — Climb: first Lab world (feel test)
 - New mode, inspired by Getting Over It (`src/modes/climb.js`): a 2 u arm with a round head. Hold to turn it clockwise, let go to stop. The head sticks to any solid it hits; turning while it's stuck levers the body around it (a wheel on flat ground, a walk up a wall). Letting go while stuck holds you still. If the body would hit a solid, the head comes loose. In the air the body grips walls and slides down slowly, which is what makes a sheer wall climbable.
 - 3 levels in `levels/climb.js`: 5-1 Roll Along, 5-2 Boulders (2.5 u pit, rocks stepping up), 5-3 The Wall (9 u sheer wall).
