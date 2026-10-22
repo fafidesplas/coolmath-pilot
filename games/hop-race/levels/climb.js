@@ -1,7 +1,7 @@
 /*
     HOP RACE - Lab world, Climb (GDD §3.7, §6, §13.1). Coordinates are centered on the level box:
     a size 24 level spans x -12..12 and y -6.75..6.75. Solids are {l, r, top, bottom?}.
-    A feel test: three levels to find out whether turning the arm is fun, not a finished world.
+    A feel test to find out whether turning the arm is fun, not a finished world.
     par / expert are placeholders from simulated runs; set them from designer runs.
 */
 
@@ -61,5 +61,18 @@ HR_LEVELS.climb = [
         ],
         flag: {x: 8, y: 3},
         par: 16.0, expert: 10.0,
+    },
+    {
+        id: 'climb-04', name: 'Hang Time',
+        size: 26,
+        start: {x: -11, y: -5},
+        solids: [
+            {l: -14, r: -5, top: -5},
+            {l: 4, r: 14, top: -5},
+            {l: -1.5, r: -.5, top: -5},   // a pillar in the 9 u pit: drop from the ceiling and strike it
+            {l: -13, r: 13, top: .5, bottom: -.5},   // ceiling slab 4.5 u over the floor: let go near it and the head sticks
+        ],
+        flag: {x: 9, y: -5},
+        par: 14.0, expert: 8.0,
     },
 ];

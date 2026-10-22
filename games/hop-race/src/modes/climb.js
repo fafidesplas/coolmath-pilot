@@ -23,6 +23,7 @@ const HR_CLIMB = {
     substeps:   4,      // so a fast head never skips a thin solid
     suction:    true,   // true: a stopped head sticks on touch and never peels off; false: it peels off when pulled away (2026-10-22 grip)
     suckReach:  .05,    // a stopped head this close to a surface (u) counts as touching it
+    cupR:       .34,    // radius of the suction cup drawn while stuck (u)
 };
 
 // push-out from one solid for a circle at (x, y): {d, nx, ny}, d < 0 inside the solid
@@ -93,6 +94,7 @@ HR_MODES.climb = {
         p.down = input.down;
         if (p.down) p.pin = null;
         p.strikeT = max(0, p.strikeT - timeDelta);
+        if (p.pin) p.pin.age += timeDelta;
         let grounded = false;
         for (let i = 0; i < C.substeps; i++) grounded = this.sub(p, input.down, h) || grounded;
         if (grounded && !p.grounded && vy0 < -6)
@@ -171,18 +173,24 @@ HR_MODES.climb = {
                             hrEmit('fire', p);
                         }
                     }
-                    else if (!p.down) this.stick(p, hd.x + out.x, hd.y + out.y, nx, ny);   // the arm is frozen: the head sticks here
+                    else if (!p.down) this.stick(p, hd.x + out.x, hd.y + out.y);   // the arm is frozen: the head sticks here
                 }
-                else if (!p.down && C.suction && hrClimbTouching(hd.x, hd.y)) this.stick(p, hd.x, hd.y, 0, 0);
+                else if (!p.down && C.suction && hrClimbTouching(hd.x, hd.y)) this.stick(p, hd.x, hd.y);
             }
             grounded = hrClimbBodyOut(p) || grounded;
         }
         return grounded;
     },
 
-    stick(p, x, y, nx, ny)
+    // the head sticks at (x, y): remember the face under it (of the nearest solid) so the cup can sit flush
+    // on it; on a corner it takes the face it is more over, so the cup never sits at a slant
+    stick(p, x, y)
     {
-        p.pin = {x, y, nx, ny};
+        const s = hrLevel.solids.reduce((a, b) => hrClimbPush(x, y, b).d < hrClimbPush(x, y, a).d ? b : a);
+        const c = hrClimbPush(x, y, s), side = abs(c.nx) > abs(c.ny);
+        const nx = side ? sign(c.nx) : 0, ny = side ? 0 : sign(c.ny);
+        const sx = side ? (nx > 0 ? s.r : s.l) : clamp(x, s.l, s.r), sy = side ? clamp(y, s.bottom, s.top) : (ny > 0 ? s.top : s.bottom);
+        p.pin = {x, y, nx, ny, sx, sy, age: 0};
         hrSfx.click.play(vec2(x, y), .7, .5);   // a low thwop
         p.pupilKick(0, -.1);
     },
@@ -193,13 +201,29 @@ HR_MODES.climb = {
         return Math.hypot(out.x, out.y) > .02 || hrLevel.solids.some(s => hrOverlapSolid(p.x, p.y, s, .02));
     },
 
-    // the arm: an ink bar from the body to a round ink head; a white dot on the head while it sticks
+    // the arm: an ink bar from the body to a round ink head. While stuck, the head becomes a suction cup:
+    // an ink half disc with its flat side flush on the surface and a white lip, landing with a quick squash
     draw(p)
     {
         if (p.finished) return;
-        const C = HR_CLIMB, pos = vec2(p.x, p.y), hd = this.head(p), tip = vec2(hd.x, hd.y);
-        drawLine(pos, tip, .14, HR_INK);
-        drawCircle(tip, C.headR * 2, HR_INK);
-        if (p.pin) drawCircle(tip, C.headR * .8, HR_WHITE);
+        const C = HR_CLIMB, pos = vec2(p.x, p.y), hd = this.head(p);
+        if (!p.pin)
+        {
+            drawLine(pos, vec2(hd.x, hd.y), .14, HR_INK);
+            drawCircle(vec2(hd.x, hd.y), C.headR * 2, HR_INK);
+            return;
+        }
+        const pin = p.pin, k = min(1, pin.age / .15), wide = 1 + .35 * (1 - k), deep = 1 - .45 * (1 - k);
+        const base = vec2(pin.sx, pin.sy), n = vec2(pin.nx, pin.ny), t = vec2(-pin.ny, pin.nx);
+        const points = [];
+        for (let i = 0; i <= 12; i++)
+        {
+            const a = PI * i / 12;
+            points.push(t.scale(Math.cos(a) * C.cupR * wide).add(n.scale(Math.sin(a) * C.cupR * deep)));
+        }
+        drawLine(pos, base.add(n.scale(C.cupR * deep)), .14, HR_INK);
+        drawPoly(points, HR_INK, 0, HR_INK, base);
+        // white lip along the flat side, so the seal reads against an ink surface
+        drawRect(base.add(n.scale(.05)), vec2(C.cupR * 2 * wide, .07), HR_WHITE, -Math.atan2(t.y, t.x));
     },
 };
