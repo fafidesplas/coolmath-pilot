@@ -50,7 +50,10 @@ export default {
       "type": "portal",
       "x": 199,
       "form": "twin",
-      "lane": 11
+      "lanes": [
+        3,
+        11
+      ]
     },
     {
       "type": "hint",

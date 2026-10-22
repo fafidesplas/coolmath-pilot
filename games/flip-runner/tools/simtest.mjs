@@ -112,12 +112,24 @@ function world(data) {
 
 { // Twin: one press flips both, only when both have their feet down
   const data = corridor(160, gr => { for (let c = 10; c < 160; c++) { gr[5][c] = '#'; gr[1][c] = '.'; gr[2][c] = '.'; gr[3][c] = '.'; } });
-  data.objects = [{ type: 'portal', x: 12, form: 'twin', lane: 2 }];
+  data.objects = [{ type: 'portal', x: 12, form: 'twin', lanes: [2, 8] }];
   const w = world(data);
   w.run(200);
   ok(w.s.form === 'twin' && w.s.b2 && w.s.b2.grounded, 'second runner appears standing in its lane');
   w.run(1, () => 1); w.run(60);
   ok(w.s.g === -1 && w.s.b2.g === -1 && w.s.deaths === 0, 'one press flips both twins');
+}
+
+{ // Twin: the second runner always takes the other lane, whichever one you enter
+  const data = proto;
+  const lv = parseLevel(data);
+  for (const [label, g] of [['ceiling', -1], ['floor', 1]]) {
+    const s = initialState(lv);
+    s.x = 193 * 40; s.g = g; s.y = g > 0 ? 11 * 40 - 28 : 40; s.vy = 0; s.grounded = true;
+    for (let i = 0; i < 200 && s.form !== 'twin'; i++) advance(lv, s, 0);
+    const laneOf = y => (y + 14 < 6 * 40 ? 'top' : 'bottom');
+    ok(s.b2 && laneOf(s.y) !== laneOf(s.b2.y), `entering on the ${label}: twins in different lanes (${laneOf(s.y)} / ${s.b2 && laneOf(s.b2.y)})`);
+  }
 }
 
 // --- Levels: solver + recorded solutions -----------------------------------------

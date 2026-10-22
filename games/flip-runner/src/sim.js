@@ -140,7 +140,13 @@ function die(s, b, type, emit) {
   if (emit) emit('death', { kind: type, x: b.x + R.w / 2, y: b.y + R.h / 2 });
 }
 
-// Twin form: the second runner appears in its lane, standing on the surface gravity points at.
+// Twin form: the second runner appears in the lane the first one is NOT in,
+// standing on the surface gravity points at.
+function twinLane(s, lanes) {
+  const row = (s.y + R.h / 2) / T;
+  return Math.abs(row - lanes[0]) > Math.abs(row - lanes[1]) ? lanes[0] : lanes[1];
+}
+
 function spawnTwin(lv, s, lane) {
   const col = Math.floor((s.x + R.w / 2) / T);
   let r = lane;
@@ -151,8 +157,8 @@ function spawnTwin(lv, s, lane) {
 
 function setForm(lv, s, p, emit) {
   s.form = p.form;
-  s.lane = p.lane;
-  s.b2 = p.form === 'twin' ? spawnTwin(lv, s, p.lane) : null;
+  s.lane = p.form === 'twin' ? twinLane(s, p.lanes) : null;
+  s.b2 = p.form === 'twin' ? spawnTwin(lv, s, s.lane) : null;
   if (emit) emit('form', { form: p.form });
 }
 

@@ -1,5 +1,9 @@
 # Flip Runner — devlog
 
+## 2026-10-22 — Twin lane fix
+- Playtest (Fafi): twins only worked when entering the top lane. Entering from the floor put you in the bottom lane, and the twin also spawned there, on top of you.
+- Twin portals now list both lanes; the twin always takes the lane you are not in. Regression test added for both entries.
+
 ## 2026-10-22 — Forms prototype
 - Fafi wants more varied mechanics. Prototyping "forms" switched by portals, all on the same single button:
   - **Flip**: tap flips gravity (the current game).

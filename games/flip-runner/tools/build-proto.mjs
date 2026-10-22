@@ -54,7 +54,7 @@ const level = {
     { type: 'portal', x: 70, form: 'glider' },
     { type: 'hint', x: 68, label: 'HOLD!' },
     { type: 'portal', x: 152, form: 'flip' },
-    { type: 'portal', x: 199, form: 'twin', lane: 11 },
+    { type: 'portal', x: 199, form: 'twin', lanes: [3, 11] },
     { type: 'hint', x: 197, label: 'TWINS!' },
     { type: 'portal', x: 281, form: 'flip' },
     { type: 'flag', x: 66, y: 10 },
