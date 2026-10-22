@@ -7,6 +7,21 @@
 
 'use strict';
 
+// teeth on a wall face: ledges of varied size from a fixed seed, so the level is the same every attempt
+// (best times, the ghost and Versus all need that). face: the wall's x; side: -1 sticks out to the left.
+function hrClimbTeeth(seed, face, side, from, to, opt = {})
+{
+    const {depth = [.5, 1.1], tall = [.3, .6], gap = [2, 3.2]} = opt;
+    const rnd = (a, b) => a + (b - a) * ((seed = seed * 16807 % 2147483647) / 2147483647);
+    const teeth = [];
+    for (let y = from + rnd(...gap) * .5; y < to; y += rnd(...gap))
+    {
+        const d = rnd(...depth), t = rnd(...tall);
+        teeth.push(side < 0 ? {l: face - d, r: face, top: y, bottom: y - t} : {l: face, r: face + d, top: y, bottom: y - t});
+    }
+    return teeth;
+}
+
 HR_LEVELS.climb = [
     {
         id: 'climb-01', name: 'Roll Along',
@@ -40,10 +55,9 @@ HR_LEVELS.climb = [
         size: 28,
         start: {x: -12, y: -6},
         solids: [
-            {l: -15, r: 15, top: -6},
-            {l: 1, r: 15, top: 3},   // a 9 u wall: strike a tooth to pop up, let go to grip the next one
-            {l: .6, r: 1, top: -2, bottom: -2.4},   // teeth: small ledges on the wall face, 3 u apart
-            {l: .6, r: 1, top: 1, bottom: .6},
+            {l: -15, r: -2.5, top: -6},   // ends 3.5 u short of the wall: blind swinging off the teeth drops you in
+            {l: 1, r: 15, top: 3},   // a 9 u wall: strike a tooth to pop up, or stick to the face and whip
+            ...hrClimbTeeth(102947, 1, -1, -6, 2),   // 0.8 × 0.4 at y -4.5, 1.0 × 0.4 at -1.7, 0.6 × 0.5 at 0.4
         ],
         flag: {x: 8, y: 3},
         par: 16.0, expert: 10.0,

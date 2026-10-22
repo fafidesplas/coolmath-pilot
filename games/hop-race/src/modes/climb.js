@@ -5,9 +5,9 @@
     The arm is always solid: the head never passes through anything. Wherever the arm would push the
     head into a solid, the body is pushed the other way instead, so a fast strike on the ground pops you
     up and forward (the head's friction on the surface turns the swing into a shove).
-    Let go and the arm freezes at its angle; if the head is touching a surface (or touches one later),
-    it grips it, so you can perch on the arm or hang from a wall. It lets go when you hold again, or
-    when gravity pulls it away from the surface (hanging under a ceiling).
+    Let go and the arm freezes at its angle, and the head becomes a suction cup: as soon as it touches
+    any surface (floor, wall or ceiling) it sticks and holds your whole weight, so you can perch on the
+    arm, hang from a wall or dangle under a ceiling. It lets go only when you hold again.
 */
 
 'use strict';
@@ -21,6 +21,8 @@ const HR_CLIMB = {
     maxSpeed:   20,     // speed cap for the body (u/s)
     ground:     8,      // ground friction for the body (1/s)
     substeps:   4,      // so a fast head never skips a thin solid
+    suction:    true,   // true: a stopped head sticks on touch and never peels off; false: it peels off when pulled away (2026-10-22 grip)
+    suckReach:  .05,    // a stopped head this close to a surface (u) counts as touching it
 };
 
 // push-out from one solid for a circle at (x, y): {d, nx, ny}, d < 0 inside the solid
@@ -51,6 +53,12 @@ function hrClimbHeadOut(x, y)
     return {x: ox, y: oy};
 }
 
+function hrClimbTouching(x, y)
+{
+    const r = HR_CLIMB.headR + HR_CLIMB.suckReach;
+    return hrLevel.solids.some(s => hrClimbPush(x, y, s).d < r);
+}
+
 // push the body square out of every solid; returns true if a solid pushed it up (it stands on it)
 function hrClimbBodyOut(p)
 {
@@ -73,7 +81,7 @@ HR_MODES.climb = {
         p.grounded = true;
         p.dir = 1;
         p.aimA = PI * .6;   // arm up and a little back
-        p.pin = null;       // {x, y, nx, ny}: where the head grips a surface while the arm is frozen
+        p.pin = null;       // {x, y, nx, ny}: where the head sticks to a surface while the arm is frozen
         p.strikeT = 0;
     },
 
@@ -135,9 +143,9 @@ HR_MODES.climb = {
             const hd = this.head(p);
             if (p.pin)
             {
-                // gripping: the head stays put unless the body pulls it off the surface
+                // stuck: the head stays put (without suction it peels off when pulled away from the surface)
                 const dx = hd.x - p.pin.x, dy = hd.y - p.pin.y;
-                if (dx * p.pin.nx + dy * p.pin.ny > .02) p.pin = null;
+                if (!C.suction && dx * p.pin.nx + dy * p.pin.ny > .02) p.pin = null;
                 else { p.x -= dx; p.y -= dy; }
             }
             else
@@ -163,12 +171,20 @@ HR_MODES.climb = {
                             hrEmit('fire', p);
                         }
                     }
-                    else if (!p.down) p.pin = {x: hd.x + out.x, y: hd.y + out.y, nx, ny};   // the arm is frozen: the head grips here
+                    else if (!p.down) this.stick(p, hd.x + out.x, hd.y + out.y, nx, ny);   // the arm is frozen: the head sticks here
                 }
+                else if (!p.down && C.suction && hrClimbTouching(hd.x, hd.y)) this.stick(p, hd.x, hd.y, 0, 0);
             }
             grounded = hrClimbBodyOut(p) || grounded;
         }
         return grounded;
+    },
+
+    stick(p, x, y, nx, ny)
+    {
+        p.pin = {x, y, nx, ny};
+        hrSfx.click.play(vec2(x, y), .7, .5);   // a low thwop
+        p.pupilKick(0, -.1);
     },
 
     jammed(p)
@@ -177,7 +193,7 @@ HR_MODES.climb = {
         return Math.hypot(out.x, out.y) > .02 || hrLevel.solids.some(s => hrOverlapSolid(p.x, p.y, s, .02));
     },
 
-    // the arm: an ink bar from the body to a round ink head; a white dot on the head while it grips
+    // the arm: an ink bar from the body to a round ink head; a white dot on the head while it sticks
     draw(p)
     {
         if (p.finished) return;

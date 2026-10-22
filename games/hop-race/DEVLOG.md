@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb: suction-cup head, varied teeth, pit at the wall
+- Owner asked: when the button is up, the head acts like a plunger that sticks to any surface and holds your weight; bigger, randomized teeth so holding alone can't win.
+- Suction (`HR_CLIMB.suction`, on): a stopped head sticks on touch (within 0.05 u) to floors, walls, teeth and ceilings and never peels off; only holding again releases it. Low "thwop" on stick. `suction = false` brings back the earlier grip, which peeled off when pulled away.
+- Teeth: `hrClimbTeeth(seed, face, side, from, to)` in `levels/climb.js` makes ledges of varied size (0.5–1.1 u deep, 0.3–0.6 u tall, 2–3.2 u apart) from a fixed seed, so the wall is the same every attempt (best times, ghost, Versus).
+- Finding: bigger teeth alone made holding win on 58 of 60 seeds (big ledges give blind strikes more to pop off). A pit at the foot of the wall fixed it: with a 3.5 u pit, holding alone failed on all 40 seeds. Picked seed 102947 (3 teeth): holding alone fails, all 10 single-release runs fail, 71 % of random runs finish.
+- Bot check: 5-1 200/200 (holding alone also wins); 5-2 200/200 with about 2 falls per run; 5-3 157/200, best 4.1 s, about 5 falls per run. Holding alone fails 5-2 and 5-3. The random bot finishes 5-3 the same with or without suction (137 vs 136 of 200), so a human has to judge it.
+- Next: play 5-3. Is the suction cup fun, and is the pit too punishing?
+
 ## 2026-10-22 — Climb 3: teeth on the wall
 - Owner: 5-3 far too difficult. Added two teeth to the wall face (0.4 × 0.4 u ledges at heights −2 and 1, 3 u apart) to strike and grip.
 - Bot check (300 random runs per layout): no teeth 5 %; 0.4 u teeth at −2 and 1: 61 %, and holding alone fails. Wider (0.6–1 u) or closer teeth went to 85–99 %, but holding alone won again, so they were left out. In the level: 138 of 200 random runs finish, best 4.2 s.
