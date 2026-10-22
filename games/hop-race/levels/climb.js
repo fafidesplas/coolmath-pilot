@@ -41,7 +41,9 @@ HR_LEVELS.climb = [
         start: {x: -12, y: -6},
         solids: [
             {l: -15, r: 15, top: -6},
-            {l: 1, r: 15, top: 3},   // a sheer 9 u wall: grip it, whip the arm into it to pop up, let go to grip higher
+            {l: 1, r: 15, top: 3},   // a 9 u wall: strike a tooth to pop up, let go to grip the next one
+            {l: .6, r: 1, top: -2, bottom: -2.4},   // teeth: small ledges on the wall face, 3 u apart
+            {l: .6, r: 1, top: 1, bottom: .6},
         ],
         flag: {x: 8, y: 3},
         par: 16.0, expert: 10.0,

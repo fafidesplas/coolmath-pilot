@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb 3: teeth on the wall
+- Owner: 5-3 far too difficult. Added two teeth to the wall face (0.4 × 0.4 u ledges at heights −2 and 1, 3 u apart) to strike and grip.
+- Bot check (300 random runs per layout): no teeth 5 %; 0.4 u teeth at −2 and 1: 61 %, and holding alone fails. Wider (0.6–1 u) or closer teeth went to 85–99 %, but holding alone won again, so they were left out. In the level: 138 of 200 random runs finish, best 4.2 s.
+- Next: play 5-3 again. If it's still too hard, deepen the teeth to 0.6 u (holding alone may then win).
+
 ## 2026-10-22 — Climb: strikes pop you, letting go stops the arm
 - Owner notes: too easy (holding alone reached every flag), and with `letGo` on the arm passed through the ground.
 - New model (`src/modes/climb.js`): hold whips the arm clockwise at 10 rad/s; let go and it stops dead at its angle. The arm is always solid: when it would push the head into a solid, the body is pushed instead, and the head doesn't slip on the surface while turning, so a strike levers you. One swing from standing pops you about 4.8 u up and 4 u forward. A stopped head grips what it touches (perch on the arm, hang on a wall, catch a ledge by letting go). It lets go when you hold again or when gravity pulls it off. If the arm is wedged it can't turn, instead of phasing. Removed: the slow stuck lever, the `letGo` switch, the head passing through solids, and the body's wall grip.
