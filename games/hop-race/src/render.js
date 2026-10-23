@@ -138,7 +138,7 @@ function hrDrawPlayer(p, eyeNudge = 0)
     else drawRect(pos, size, p.color);
     const shear = y => vec2(lean * (y + hy) / size.y, y);   // offset of a point y above the center, following the lean
     drawText(p.letter, pos.add(shear(-.1 * sy)).add(vec2(-.1 * p.dir, 0)), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
-    hrDrawEye(pos.add(shear(hy - .06)).add(vec2((.2 + eyeNudge) * (p.dir || 1), 0)), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+    hrDrawEye(pos.add(shear(hy - .06 - p.eyeDrop)).add(vec2((.2 + eyeNudge) * (p.dir || 1), 0)), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
 }
 
 // how open the eye is during a blink: 1 open, 0 shut; t is seconds into the blink, -1 when not blinking

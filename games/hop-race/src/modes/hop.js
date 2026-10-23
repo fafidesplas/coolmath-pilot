@@ -23,9 +23,10 @@ const HR_HOP = {
     crouch:    .45,     // how much flatter the player gets at full charge
     lungeCrouch: .2,    // past full charge, the squash eases to this as the aim drops flat (.2: 0.64 u tall)...
     lungePitch: .6,     // past full charge, the charge ticks keep climbing to this much more pitch at the flattest aim (full charge is 2x)
-    pinch:     .47,     // ...while the sides squeeze in by this much (.47 with .2: 0.52 u wide)...
+    pinch:     .57,     // ...while the sides squeeze in by this much (.57 with .2: 0.44 u wide)...
     lean:      .25,     // ...how far its top leans forward, into the hop, at the flattest aim (u)...
-    squint:    .35,     // ...and how much the eye narrows then
+    squint:    .35,     // ...how much the eye narrows then...
+    eyeDrop:   .08,     // ...and how far it sits lower (u)
 };
 
 const HR_MODES = {};
@@ -66,6 +67,7 @@ HR_MODES.hop = {
                 p.pinch = H.pinch * flat;
                 p.lean = H.lean * flat;
                 p.squint = H.squint * flat;
+                p.eyeDrop = H.eyeDrop * flat;
                 p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll hop
                 // ticks rise with power, then keep rising past full charge as the aim drops into the flat lunge
                 // (and fall back when it swings up again)
@@ -80,7 +82,7 @@ HR_MODES.hop = {
                 p.cling = 0;
                 p.squash = -.3;
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
-                p.crouch = p.pinch = p.lean = p.squint = 0;
+                p.crouch = p.pinch = p.lean = p.squint = p.eyeDrop = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
