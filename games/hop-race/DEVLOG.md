@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Versus: each round is a random level of the world
+- Owner: Versus shouldn't repeat the same level every round. The level you pick starts the match; each next round draws a random level from the same world (`hrNextVersusLevel` in `src/main.js`), with no repeats until every unlocked level of the world has come up, and never the same level twice in a row. Restart (R) keeps the round's level. Rematch starts a new match on a random level too. The editor's play-test stays on its level.
+- Checked in Chrome through 24 rounds each: Hop goes through all 10 levels before any repeats; Rocket (3 levels) and Climb (3) cycle with no back-to-back repeat. No console errors.
+
 ## 2026-10-23 — First levels saved from the editor
 - The owner's first real saves (Chrome file access works): 1-6's ceiling bottom −2 → −1.5 (2.5 u over the gap; its comment updated by hand), 2-1 Blast Off's two low bumps → one block at x −1…1 up to y 0, 2-3 Knock Knock's gate button (−3, 2.5) → (−10.5, 4.5).
 - Bot on 1-6: finishes, no dead ends, 5.7 s; the hop under the ceiling now takes 72 of 163 hold lengths (60 before). Rocket has no bot: 2-1 and 2-3 are unchecked until played.

@@ -38,9 +38,10 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     {
         if (!keepMatch)
         {
-            hrMatch = {wins: [0, 0], rounds: 0};
+            hrMatch = {wins: [0, 0], rounds: 0, played: []};
             hrGaDesign(`mode:${HR_WORLDS[world].id}:versus`);
         }
+        if (!hrMatch.played.includes(index)) hrMatch.played.push(index);
         hrMatch.countdown = 2.4;
         hrMatch.frames = 0;
         hrMatch.winner = -1;
@@ -54,6 +55,20 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
         hrGaDesign(`mode:${HR_WORLDS[world].id}:solo`);
     }
     hrGo('playing');
+}
+
+// versus: the next round's level, random within the world; no repeats until every unlocked level was played
+function hrNextVersusLevel()
+{
+    if (hrEditDef) return hrLevelIndex;   // the editor's level stays put
+    const all = hrLevelsOf(hrWorld).map((l, i) => i).filter(i => isUnlocked(hrWorld, i));
+    let left = all.filter(i => !hrMatch.played.includes(i));
+    if (!left.length)
+    {
+        hrMatch.played = [];
+        left = all.length > 1 ? all.filter(i => i != hrLevelIndex) : all;
+    }
+    return left[randInt(left.length)];
 }
 
 // solo: an attempt that sent Start and did not finish counts as a Fail when it is left

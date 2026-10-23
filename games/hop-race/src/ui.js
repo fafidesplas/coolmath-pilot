@@ -122,7 +122,7 @@ function hrUiButtons()
     else if (hrScreen == 'match')
     {
         const acts = [['Menu', () => hrGo('title')], ['Levels', hrToLevels],
-            ['Rematch', () => hrStartLevel(hrWorld, hrLevelIndex, true)]];
+            ['Rematch', () => hrStartLevel(hrWorld, hrNextVersusLevel(), true)]];
         acts.forEach(([label, act], i) => add({id: label, x: W / 2 + (i - 1) * 230 * u, y: H * .78, w: 210 * u, h: 76 * u,
             label, act, big: i == 2, focus: i == 2}));
     }
@@ -222,7 +222,7 @@ function hrUiContinue()
 {
     if (hrScreen != 'round' || hrScreenT < .6) return;
     if (hrScreenT > 1.5 || hrAnyPressed() || hrTaps.some(t => !t.used))
-        hrStartLevel(hrWorld, hrLevelIndex, true, true);
+        hrStartLevel(hrWorld, hrNextVersusLevel(), true, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

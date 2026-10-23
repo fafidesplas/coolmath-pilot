@@ -216,7 +216,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; the world-level label, pause and restart sit top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
 - **Pause:** Resume, Restart, Levels, Settings. The game pauses itself when the tab is hidden.
 - **Level complete:** time counts up, then the gap to your old best pops in ("-0.3" or "+1.2") with the best under it, "New best!" if it is one (a first finish shows only the time), a new hat if one unlocked, Next / Retry / Menu. Next is the default action (Space/Enter).
-- **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any fresh key press after the input lock. **Match result:** big winner, Rematch / Levels / Menu.
+- **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any fresh key press after the input lock. The next round is a random level of the same world, with no repeats until every unlocked level of the world has been played (the picked level starts the match; restart keeps the round's level; Rematch starts on a random level). **Match result:** big winner, Rematch / Levels / Menu.
 - **Results input lock:** on the level complete, round result and match result screens, input is ignored for the first 0.6 s, and a button held down from gameplay must be released and pressed again before it counts. A player mashing across the finish line never skips their result.
 - **Rotate screen:** a phone icon turning sideways and "Rotate your device". The game resumes where it was when the window is landscape again.
 
@@ -353,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Versus rounds are random levels of the world instead of the same level every round; no repeats until the world has been played through.
 - 2026-10-23 — First levels made in the editor: 1-6's ceiling sits 2.5 u over the gap (was 2), 2-1 Blast Off has one 2 × 4 u block in the middle instead of two low bumps, and 2-3's gate button moved to the top left (-10.5, 4.5).
 - 2026-10-23 — Level editor (`tools/editor.js`, debug only): press E on any level to edit it in place, play-test it, check it with the bot (Hop) and save it straight into `levels/<world>.js`. Only edited levels change in the file; their comments and Climb's `hrClimbTeeth(...)` line are kept.
 - 2026-10-23 — Fixed: jumping from some floors teleported you to the floor's left side (and onto its face if it was grip, as on 1-9's top ledge). Rounding put your feet a hair inside the floor (1.4 − 0.4 = 0.9999999999999999), so takeoff treated it as a wall. Hop's wall check now ignores the floor you stand on, as Rocket's and Grapple's already did.
