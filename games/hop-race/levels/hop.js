@@ -71,7 +71,7 @@ HR_LEVELS.hop = [
         solids: [
             {l: -15, r: -5.5, top: -4},
             {l: 0, r: 5, top: -4},
-            {l: -9, r: -2.6, top: 20, bottom: -2},     // hangs from the top, 2 u over the gap
+            {l: -9, r: -2.6, top: 20, bottom: -1.5},   // hangs from the top, 2.5 u over the gap
             {l: 8, r: 15, top: -2},
         ],
         flag: {x: 11.5, y: -2},

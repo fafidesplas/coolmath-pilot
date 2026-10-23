@@ -9,13 +9,14 @@
     Use: serve the game over HTTP, open it, then in the console
         await import('./tools/hop-bot.js')   // or paste this file
         hopBot('hop-08')
-    It leaves the game on the title screen; reload afterwards.
+    It leaves the game on the title screen; reload afterwards. The level editor (tools/editor.js) runs it
+    from its Check button and marks the route and any dead ends on the level.
 */
 window.hopBot = function (levelId, opts = {})
 {
     const HOLD = opts.holdMax ?? 170, MIN = opts.holdMin ?? 8, WAITS = opts.waits ?? [0, 12, 30, 60];
     const THINK = opts.think ?? 30;   // a person pauses about 0.5 s before each hop: route cost, not time
-    window.game.start(levelId, false);
+    if (!opts.started) window.game.start(levelId, false);   // the level editor starts its own level first
     hrGo('title');   // the engine stops stepping players; we step them ourselves
     const saved = {hrEmit, hrDust, hrSparkle};
     hrEmit = () => {}; hrDust = () => {}; hrSparkle = () => {};
@@ -96,10 +97,11 @@ window.hopBot = function (levelId, opts = {})
         for (const [k, n] of nodes)
             if (!good.has(k) && n.edges.some(e => e.finish || e.dead || (e.to && good.has(e.to)))) { good.add(k); changed = true; }
     }
-    const deadEnds = [...nodes].filter(([k]) => !good.has(k)).map(([, n]) => `(${n.s.x.toFixed(1)}, ${n.s.y.toFixed(1)}${n.s.cling ? ' cling' : ''})`);
+    const deadNodes = [...nodes].filter(([k]) => !good.has(k)).map(([, n]) => n.s);
+    const deadEnds = deadNodes.map(s => `(${s.x.toFixed(1)}, ${s.y.toFixed(1)}${s.cling ? ' cling' : ''})`);
 
     // fastest route, with how many hold lengths (of HOLD) make each hop
-    const route = [];
+    const route = [], routeSpots = [];
     if (best)
     {
         let cur = {k: best.from, wait: best.wait, hold: best.hold, to: 'FLAG'};
@@ -110,6 +112,7 @@ window.hopBot = function (levelId, opts = {})
             const window = n.edges.filter(e => e.wait == cur.wait && (cur.to == 'FLAG' ? e.finish : e.node && solidOf(e.node) == target)).length;
             const to = cur.to == 'FLAG' ? 'flag' : (t => `(${t.x.toFixed(1)}, ${t.y.toFixed(1)}${t.cling ? ' cling' : ''})`)(nodes.get(cur.to).s);
             route.unshift(`${cur.wait ? 'wait ' + cur.wait + ' ' : ''}hold ${cur.hold} → ${to} [${window}/${HOLD - MIN + 1}]`);
+            routeSpots.unshift({x: n.s.x, y: n.s.y, holds: window});
             cur = n.prev && {k: n.prev.k, wait: n.prev.wait, hold: n.prev.hold, to: cur.k};
         }
     }
@@ -125,5 +128,7 @@ window.hopBot = function (levelId, opts = {})
         deadEnds,
         startHolds: {total: startEdges.length, dead: startEdges.filter(e => e.dead).length},
         route,
+        routeSpots,                                         // where each hop on the route starts
+        deadSpots: deadNodes.map(s => ({x: s.x, y: s.y})),
     };
 };

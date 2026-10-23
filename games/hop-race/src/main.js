@@ -11,8 +11,9 @@ let hrMatch = null;    // versus match: wins, countdown, round time
 let hrResult = null;   // last solo finish, shown on the level complete screen
 let hrFinishT = -1;    // real seconds since the finish line, -1 while racing
 const hrTutorialSent = {};
+let hrEditDef = null;  // the level open in the level editor (tools/editor.js, debug only), played in place of the list
 
-function hrLevelDef() { return hrLevelsOf(hrWorld)[hrLevelIndex]; }
+function hrLevelDef() { return hrEditDef || hrLevelsOf(hrWorld)[hrLevelIndex]; }
 function hrIsTutorial() { return !hrVersus && hrLevelDef().id == 'hop-01'; }
 
 // load a level and (re)start it; keepMatch keeps the versus score between rounds
@@ -49,6 +50,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     {
         hrMatch = null;
         hrGhostLoad(def.id);
+        if (hrEditDef) hrGhostPlay = null;   // an edited level may not match the saved ghost
         hrGaDesign(`mode:${HR_WORLDS[world].id}:solo`);
     }
     hrGo('playing');
@@ -113,6 +115,7 @@ function hrFinishFx(p)
 
 function hrSoloFinish(p)
 {
+    if (window.hrEditor?.testing) return hrEditor.finished(p, hrRunMs());   // a test run saves nothing
     const def = hrLevelDef(), ms = hrRunMs();
     const prev = hrSaveLevel(def.id);
     const best = hrSaveResult(def.id, ms);
@@ -154,6 +157,7 @@ function gameInit()
 
 function gameUpdate()
 {
+    if (window.hrEditor?.update()) return;   // the level editor has the frame
     hrInputBegin();
     hrUiAdvance(timeDelta);
     if (hrPulse > 0) hrPulse = max(0, hrPulse - timeDelta * 2);
@@ -254,6 +258,7 @@ function gameRender()
         hrMode().drawPlayer ? hrMode().drawPlayer(p, nudge) : hrDrawPlayer(p, nudge);
     }
     hrDrawPrompt();
+    window.hrEditor?.render();
 }
 
 function gameRenderPost() { hrUiRender(); }

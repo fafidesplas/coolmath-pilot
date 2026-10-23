@@ -15,8 +15,7 @@ HR_LEVELS.rocket = [
         start: {x: -9, y: -4},
         solids: [
             {l: -13, r: 13, top: -4},
-            {l: -2, r: 0, top: -3},
-            {l: 4, r: 5, top: -2.5},
+            {l: -1, r: 1, top: 0},
         ],
         flag: {x: 9, y: -4},
         prompt: 'Press to blast.',
@@ -42,7 +41,7 @@ HR_LEVELS.rocket = [
             {l: -14, r: 14, top: 5.4, bottom: 5},
         ],
         gates: [
-            {solid: {l: 3, r: 4, top: 5, bottom: -4}, button: {x: -3, y: 2.5}},
+            {solid: {l: 3, r: 4, top: 5, bottom: -4}, button: {x: -10.5, y: 4.5}},
         ],
         flag: {x: 11, y: -4},
     },

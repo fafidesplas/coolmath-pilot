@@ -1,5 +1,17 @@
 # Hop Race — devlog
 
+## 2026-10-23 — First levels saved from the editor
+- The owner's first real saves (Chrome file access works): 1-6's ceiling bottom −2 → −1.5 (2.5 u over the gap; its comment updated by hand), 2-1 Blast Off's two low bumps → one block at x −1…1 up to y 0, 2-3 Knock Knock's gate button (−3, 2.5) → (−10.5, 4.5).
+- Bot on 1-6: finishes, no dead ends, 5.7 s; the hop under the ceiling now takes 72 of 163 hold lengths (60 before). Rocket has no bot: 2-1 and 2-3 are unchecked until played.
+
+## 2026-10-23 — Level editor
+- Owner asked for one; chose in-game and debug only, saving straight into `levels/<world>.js`, all four worlds. New `tools/editor.js`, loaded by `index.html` after `main.js` and left out of `build.json`. Hooks in the game are no-ops without it: `hrEditDef` (the editor's level, played in place of the list), `window.hrEditor?.update()` / `render()` / `fitCamera()`, and a test run's finish saves no time or ghost.
+- Editing: select, drag, resize by edges, draw new solids, nudge with arrows, grip/ice/sticky/no-grip keys, floor/floating/hanging, solid ↔ gate (Rocket), duplicate, delete, level size, undo/redo, new and duplicated levels, drafts. The overlay shows a grid, the level box, the HUD's no-go spots, the kill line, the flag's box and the prompt. E plays the level from its start (Shift+E from the mouse), E comes back; finishing comes back with the time.
+- Saving uses Chrome's file access (the folder is remembered in IndexedDB). Only the edited levels' entries in the file are rewritten: comments stay on their lines (by each solid's place in the file), new levels go at the end of the list, and Climb's teeth stay one `...hrClimbTeeth(...)` line unless a tooth is edited (`hrClimbTeeth` marks its teeth with a hidden `_teeth`). `hrEditor.selfTest()` rewrites all 26 levels and compares: all match except 2-5 and 5-2, which write `.5` where the editor writes `0.5`.
+- Check (Hop) runs `tools/hop-bot.js` on the level as it is, draws the route as numbered hops and dead ends as red crosses. The bot now also returns `routeSpots` and `deadSpots`, and can run on a level that's already loaded.
+- Tested in Chrome (1512×806) with simulated mouse drags over several frames and a stand-in folder (the real folder picker is a permission prompt for the owner): move, undo, new solid, ice, edge resize, play-test and return, bot check, saving 1-8 + Climb 3 + a new level (only the edited lines changed; all three files still parse), a second save of the same level, an edited tooth written out as numbers, and a Rocket gate. Fixed along the way: comments kept their original spacing, a failed save of the remembered folder could hang, and an edited tooth's comment repeated on every tooth.
+- Not done: deleting a level (remove it from the file by hand), Phase (rejected), a hanging flag toggle.
+
 ## 2026-10-23 — Fix: takeoff teleported you onto the wall
 - Owner, on 1-9's top ledge: jumping teleported the player back onto the grip wall. Cause: standing on a top at y 1, your center is 1 + 0.4 = 1.4, and 1.4 − 0.4 = 0.9999999999999999, so on the takeoff frame Hop's wall check found your feet inside the floor, pushed you out its left side, and the grip face caught you. Reproduced: every hold from x 7.8 ended at x 6.6, clinging.
 - Fix: Hop's wall check uses the slightly short box (`hrOverlapSolid(..., .1)`) that Rocket and Grapple already used "so the floor we rest on doesn't count".

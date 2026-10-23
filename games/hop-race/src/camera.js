@@ -19,6 +19,7 @@ function hrCameraReset() { cameraPos = vec2(0, 0); }
 // every frame in gameUpdatePost, so a resize is picked up at once
 function hrCameraFit()
 {
+    if (window.hrEditor?.fitCamera()) return;   // the level editor leaves room for its panel
     const w = hrLevel ? hrLevel.w : 24, h = hrLevel ? hrLevel.h : 13.5;
     cameraScale = min(mainCanvasSize.x / (w + 2 * HR_MARGIN), mainCanvasSize.y / (h + 2 * HR_MARGIN));
 }

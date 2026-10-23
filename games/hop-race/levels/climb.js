@@ -11,6 +11,7 @@
 function hrClimbTeeth(seed, face, side, from, to, opt = {})
 {
     const {depth = [.5, 1.1], tall = [.3, .6], gap = [2, 3.2]} = opt;
+    const call = {seed, face, side, from, to, opt};
     const rnd = (a, b) => a + (b - a) * ((seed = seed * 16807 % 2147483647) / 2147483647);
     const teeth = [];
     for (let y = from + rnd(...gap) * .5; y < to; y += rnd(...gap))
@@ -18,6 +19,9 @@ function hrClimbTeeth(seed, face, side, from, to, opt = {})
         const d = rnd(...depth), t = rnd(...tall);
         teeth.push(side < 0 ? {l: face - d, r: face, top: y, bottom: y - t} : {l: face, r: face + d, top: y, bottom: y - t});
     }
+    // hidden marker so the level editor (tools/editor.js) writes this call back instead of the teeth
+    call.n = teeth.length;
+    teeth.forEach(t => Object.defineProperty(t, '_teeth', {value: call, writable: true}));
     return teeth;
 }
 
