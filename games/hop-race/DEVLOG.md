@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Title shows the worlds
+- A cold playtester never realized there were worlds besides Hop: they were behind "Levels". The title now has a row of the four world cards (same as Mode select) under the Play buttons, labeled "or pick a world"; a card starts that world's next level, solo. Play 1P / Play 2P are unchanged, so it's still one click to playing. The Levels button is gone, Settings is a small button top right, the title is a bit smaller and the idle hopping square was removed to make room. GDD §8 updated.
+- Checked in Chrome at 1568×762 as a mockup first, which the owner approved.
+- Level select and Mode select are now only reached from Pause ▶ Levels, so there's no way from the title to pick a specific level or a Versus level. Next: decide on Versus from the cards, and whether Hop's yellow card (outline only on the yellow title) needs a fill.
+
 ## 2026-10-23 — Hop: no bigger eye on high hops
 - Owner: the eye growing on the \ was too much. Removed `HR_HOP.eyeGrow`; the eye keeps its size and just looks up along the aim. The eye still stays put on a backward lean, so it doesn't cover the letter.
 

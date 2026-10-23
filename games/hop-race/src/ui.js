@@ -54,12 +54,17 @@ function hrUiButtons()
 
     if (hrScreen == 'title')
     {
-        add({id: 'play1', x: W / 2 - 170 * u, y: H * .6, w: 310 * u, h: 110 * u, label: 'Play 1P', big: true, focus: true,
+        add({id: 'play1', x: W / 2 - 170 * u, y: H * .38, w: 310 * u, h: 100 * u, label: 'Play 1P', big: true, focus: true,
             act: () => hrPlay(false)});
-        add({id: 'play2', x: W / 2 + 170 * u, y: H * .6, w: 310 * u, h: 110 * u, label: 'Play 2P', big: true,
+        add({id: 'play2', x: W / 2 + 170 * u, y: H * .38, w: 310 * u, h: 100 * u, label: 'Play 2P', big: true,
             act: () => hrPlay(true)});
-        add({id: 'levels', x: W / 2 - 115 * u, y: H * .8, w: 210 * u, h: 72 * u, label: 'Levels', act: () => hrGo('modes')});
-        add({id: 'settings', x: W / 2 + 115 * u, y: H * .8, w: 210 * u, h: 72 * u, label: 'Settings', act: () => hrOpenSettings('title')});
+        // the worlds are on the title so new players see them; a card starts that world's next level (solo)
+        const shown = HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden);
+        const n = shown.length, cw = min(200 * u, W / (n + 1.2)), gap = cw * 1.12;
+        shown.forEach((i, k) => add({id: 'world' + i, card: i, x: W / 2 + (k - (n - 1) / 2) * gap, y: H * .72, w: cw, h: 250 * u,
+            enabled: hrLevelsOf(i).length > 0,
+            act: () => hrStartLevel(i, hrNextLevel(i), false)}));
+        add({id: 'settings', x: W - 110 * u, y: 50 * u, w: 180 * u, h: 56 * u, label: 'Settings', act: () => hrOpenSettings('title')});
     }
     else if (hrScreen == 'modes')
     {
@@ -539,21 +544,8 @@ function hrUiRender()
 
 function hrDrawTitle(W, H, u)
 {
-    hrText('HOP RACE', W / 2, H * .2, 120 * u);
-    // idle hopping square
-    const k = (timeReal % 1.1) / 1.1, s = 56 * u, ground = H * .46;
-    const hop = Math.sin(k * PI), squash = k < .12 ? (1 - k / .12) * .25 : 0;
-    const x = W / 2 + Math.sin(timeReal * .9) * 170 * u, y = ground - s / 2 - hop * 50 * u;
-    hrRect(W / 2, ground + 4 * u, 460 * u, 8 * u, HR_INK);
-    const sw = s * (1 + squash), sh = s * (1 - squash);
-    hrRect(x, ground - sh / 2 - hop * 50 * u, sw, sh, HR_BLUE);
-    hrText('A', x - 6 * u, ground - sh * .42 - hop * 50 * u, 26 * u, HR_WHITE);
-    const ex = x + 14 * u, ey = ground - sh - hop * 50 * u + 4 * u;
-    const open = hrBlinkOpen(timeReal % 3.4);
-    drawEllipse(vec2(ex, ey), vec2(30 * u, 30 * u * max(open, .12)), HR_WHITE, 0, 0, BLACK, false, true);
-    if (open > .5)
-        drawEllipse(vec2(ex + 3 * u, ey + (hop > .5 ? -4 : 4) * u * open), vec2(13 * u, 13 * u * open), HR_INK, 0, 0, BLACK, false, true);
-    else hrRect(ex, ey, 21 * u, 3 * u, HR_INK);
+    hrText('HOP RACE', W / 2, H * .14, 100 * u);
+    hrText('or pick a world', W / 2, H * .52, 26 * u, HR_INK.scale(1, .6));
 }
 
 function hrDrawHud(W, H, u)

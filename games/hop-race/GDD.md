@@ -200,13 +200,14 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 ## 8. Screens and UI flow
 ```
 Title ──Play 1P / Play 2P──▶ Playing / Race (last level played) ──▶ Level complete ──Next/Retry/Menu
-  ├─Levels──▶ Mode select (Solo | Versus) ──▶ Level select ──▶ Playing ⇄ Pause
+  ├─World card──▶ Playing (that world's next level, solo)
+  ├─Pause ▶ Levels──▶ Level select ⇄ Mode select (Solo | Versus) ──▶ Playing ⇄ Pause
   ├─Hats
   └─Settings
 Versus: Mode select (Versus tab) ──▶ Level select ──▶ Race ──▶ Round result ──▶ … ──▶ Match result (Rematch / Levels / Menu)
 Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ```
-- **Title:** logo with an idle hopping square, two big buttons, **Play 1P** (solo) and **Play 2P** (versus), then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: both Play buttons go to the last level played, solo or versus (saved as `last`). With no level played yet, they start the first level not finished yet, in world and level order (Hop 1 for a new player).
+- **Title:** logo, two big buttons, **Play 1P** (solo) and **Play 2P** (versus), then a row of world cards under "or pick a world" (the same cards as Mode select); a card starts that world's next level, solo. **Settings** (sound on/off, music on/off, show ghost on/off) is a small button top right; **Hats** is not built. The world row replaced the Levels button because a cold playtester never found the worlds after Hop (2026-10-23). One click from title to playing: both Play buttons go to the last level played, solo or versus (saved as `last`). With no level played yet, they start the first level not finished yet, in world and level order (Hop 1 for a new player).
 - **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and levels finished (solo only).
 - **Level select:** 10 tiles per world in 2 rows of 5, each with its number and best time; the first level not finished yet is highlighted. Versus uses the same grid without times.
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with the number of levels needed; tap one to put it on P1 or P2.
@@ -352,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Title: the world cards are on the title under the Play buttons (a card starts that world's next level, solo), replacing the Levels button, after a playtester never found the worlds after Hop. The idle hopping square is gone; Settings moved to the top right.
 - 2026-10-23 — Hop: charging toward a high hop leans back (\), the mirror of the flat lunge's /. (A bigger eye with it was tried and dropped: too much.)
 - 2026-10-23 — Hop: a lunge flies in its / pose and eases back to square over the jump.
 - 2026-10-23 — Hop: the lunge pose is narrower (0.44 u wide) and its eye sits 0.08 u lower.
