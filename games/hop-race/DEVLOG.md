@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: the eye shows the aim
+- Owner asked to hint the direction with the eye. While you charge, Hop sets `p.look` to the aim direction and the pupil springs toward it, to the edge of the eye (`hrPlayerStep` in `src/player.js`; other modes don't set it). It follows the sweep, and faces left when you charge on a wall that's on your right.
+- Checked in Chrome on 1-2 with frame-stepped holds: the pupil's angle stays within 2° of the aim from 25° to 80° and back. No console errors.
+- Next: play it and judge whether the eye is readable at speed in versus, where both players charge at once.
+
 ## 2026-10-23 — Hop: no aim arrow, no power bar
 - Owner asked to remove both. While you charge, nothing is drawn around the player now (`HR_MODES.hop.draw` is empty); the squash and the side squeeze are the only feedback for power and aim. GDD §3.2, §5 and the palette line updated.
 - Next: play 1-1 cold and check a new player can still read when to release.

@@ -50,6 +50,7 @@ function hrResetPlayer(p)
     p.vx = p.vy = 0;
     p.down = false;
     p.squash = p.crouch = p.pinch = 0;
+    p.look = undefined;
     p.landT = -1;
     p.idleT = 0;
     p.trail = [];
@@ -107,6 +108,7 @@ function hrPlayerStep(p, input)
     const e = p.eye, dt = timeDelta;
     let tx = clamp(-p.vx * .006, -.12, .12) + (p.dir || 1) * .04;
     let ty = clamp(-p.vy * .006, -.12, .12) - (p.down ? .03 : 0);
+    if (p.down && p.look) { tx = p.look.x * .13; ty = p.look.y * .13; }   // a mode can aim the eye while you hold
     if (p.idleT > HR_IDLE_T)
     {
         const side = hrGlance(p.idleT - HR_IDLE_T);

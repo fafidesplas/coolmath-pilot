@@ -60,6 +60,7 @@ HR_MODES.hop = {
                 const a = this.aim(p), flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
                 p.crouch = H.crouch * p.charge * (1 - flat);
                 p.pinch = H.pinch * flat;
+                p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll hop
                 if (floor(before * 8) != floor(p.charge * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
             }
             else if (p.down)
