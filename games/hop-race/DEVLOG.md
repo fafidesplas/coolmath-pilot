@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Grapple: the launcher turns clockwise
+- Owner decision: Grapple's launcher turns clockwise like Rocket's, and firing doesn't reverse it (`reverseSpin` stays off). It still starts pointing up and forward and freezes while the hook is out.
+- Bot check (Chrome, 200 random hold/release runs per level, same seeds both ways), clockwise vs the old counterclockwise: 3-1 81 vs 74 finishes (best 1.1 vs 1.4 s); 3-2 55 vs 41 (best 1.3 vs 1.7 s); 3-3 57 vs 38 (best 1.3 vs 1.5 s). Falls per run about the same or lower. Holding alone fails every level both ways. No errors.
+- So clockwise doesn't make 3-2 worse; the GDD §14 question on reversal is closed. Bot times are not human times.
+- Next: unchanged (play 4-1 to 4-3), plus a replay of 3-1 to 3-3 to feel the new direction.
+
 ## 2026-10-22 — Rocket: the launcher always turns clockwise
 - Owner decision: firing no longer reverses the launcher. It always turns clockwise at 3 rad/s (before, it started counterclockwise and flipped on every shot). The mode select schematic already turned clockwise.
 - It still starts pointing down and back, so a press right away blasts you up and forward. After a shot you now wait for the launcher to come round again instead of it swinging back toward where it was.

@@ -8,8 +8,8 @@
 
 const HR_GRAPPLE = {
     gravity:   42,
-    spin:      3,       // launcher rotation (rad/s); it freezes while the hook is out
-    reverseSpin: false, // true: each shot reverses the spin, as in Rocket (tried 2026-10-22; off while testing the prototype's feel)
+    spin:      3,       // launcher rotation (rad/s), clockwise as in Rocket; it freezes while the hook is out
+    reverseSpin: false, // true: each shot reverses the spin (tried 2026-10-22; off by owner decision)
     speed:     55,      // hook flight speed (u/s), no range limit
     cooldown:  .12,
     missCooldown: .3,   // after a hook leaves the level
@@ -37,7 +37,7 @@ HR_MODES.grapple = {
     step(p, input)
     {
         const G = HR_GRAPPLE, dt = timeDelta, solids = hrLevel.solids;
-        if (!p.hook) p.aimA += G.spin * p.spinDir * dt;
+        if (!p.hook) p.aimA -= G.spin * p.spinDir * dt;   // y is up, so a falling angle turns clockwise
         p.cool = max(0, p.cool - dt);
 
         if (!input.down && p.hook)
