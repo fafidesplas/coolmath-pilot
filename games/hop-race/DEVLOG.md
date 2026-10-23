@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: no aim arrow, no power bar
+- Owner asked to remove both. While you charge, nothing is drawn around the player now (`HR_MODES.hop.draw` is empty); the squash and the side squeeze are the only feedback for power and aim. GDD §3.2, §5 and the palette line updated.
+- Next: play 1-1 cold and check a new player can still read when to release.
+
 ## 2026-10-23 — Hop: side squeeze for flat hops
 - Owner asked for a third part to the charge animation. Holding past full charge sweeps the aim back down toward a long, flat hop, so the squash toward the floor now turns into a squeeze from the sides as the aim drops: at the flattest aim (18°) the player is 35 % narrower and about 17 % taller (`HR_HOP.pinch`, new `p.pinch`). Before full charge nothing changes. GDD §5 juice list updated.
 - Checked in Chrome on 1-2 with frame-stepped holds: the player is 1.27 × 0.55 at full charge and highest aim, square at about 50°, and 0.65 × 1.17 at the flattest aim. No console errors.
