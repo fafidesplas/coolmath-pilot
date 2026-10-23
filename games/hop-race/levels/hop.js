@@ -42,6 +42,7 @@ HR_LEVELS.hop = [
         flag: {x: 10.5, y: 2},
     },
     {
+        // NEEDS IMPROVEMENT (owner, 2026-10-23): see GDD §14
         id: 'hop-04', name: 'The Wall',
         size: 26,
         start: {x: -10.5, y: -4},

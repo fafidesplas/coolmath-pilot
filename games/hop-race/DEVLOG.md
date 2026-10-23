@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop 1-4 marked "needs improvement"
+- Owner flagged 1-4 The Wall as needing improvement. Marked in GDD §14 (open question) and with a comment on the level in `levels/hop.js`. No change to the level yet.
+- Next: note what's wrong with it, then rework it.
+
 ## 2026-10-23 — Hop: lean back into the lunge
 - Owner asked for the lunge pose to lean back like a \. With the side squeeze, the top of the player now slides back away from the hop while the bottom stays planted: a parallelogram, up to 0.25 u at the flattest aim (`HR_HOP.lean`, `p.lean`). The letter and the eye follow the lean. The player is drawn with `drawPoly` only while it leans, and with `drawRect` otherwise.
 - Checked in Chrome on 1-2, frozen at 2.3 s of hold (flattest aim): it reads as a \ with the eye on the leaning top. No console errors.
