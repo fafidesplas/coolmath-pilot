@@ -169,16 +169,14 @@ HR_MODES.hop = {
     {
         if (!(p.grounded || p.cling) || !p.down) return;
         const a = this.aim(p);
-        // trajectory preview: small ink squares fading along the arc
-        for (let i = 1; i < 40; i++)
-        {
-            const t = i * .06;
-            const x = p.x + a.vx * t;
-            const y = p.y + a.vy * t - .5 * HR_HOP.gravity * t * t;
-            if (y < hrLevel.killY) break;
-            if (hrLevel.solids.some(s => hrOverlapSolid(x, y, s))) break;
-            drawRect(vec2(x, y), vec2(.16), HR_INK.scale(1, 1 - i / 45));
-        }
+        // launch arrow: a short ink arrow off the player along the launch direction, a little longer with power.
+        // Only the direction shows, not the arc, so where you land stays a surprise. It starts 1.3 u out so
+        // it clears the power bar at every aim angle
+        const d = vec2(a.vx, a.vy).normalize(), n = vec2(-d.y, d.x);
+        const tail = vec2(p.x, p.y).add(d.scale(1.3));
+        const tip = tail.add(d.scale(.5 + .4 * p.charge)), neck = tip.subtract(d.scale(.3));
+        drawLine(tail, neck, .14, HR_INK);
+        drawPoly([tip, neck.add(n.scale(.2)), neck.subtract(n.scale(.2))], HR_INK);
         // power bar: thin ink outline above the player, filling with ink
         const top = p.y + HR_PSIZE * (.5 - hrSquashY(p));   // follows the squashed top
         const bar = vec2(p.x, top + .65), w = 1.1;

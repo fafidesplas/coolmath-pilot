@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: launch arrow instead of the arc
+- Player feedback: the full dotted arc telegraphed where you land and took the thrill away. While you charge, Hop now shows a short ink arrow along the launch direction instead (`HR_MODES.hop.draw`). It is 0.5–0.9 u long, growing with power, and starts 1.3 u from the player's center so it clears the power bar at every aim angle (18°–80°). GDD §3.2 and §5 updated.
+- Checked in Chrome on 1-2: the arrow draws and sweeps with the aim, and there are no console errors. The mode-select card's schematic still shows a dotted arc, as an illustration of the hop.
+- Next: playtest whether the jumps (especially 1-6 Low Ceiling and the wall levels) are still readable without the arc.
+
 ## 2026-10-23 — Climb 4 draft from the editor
 - Owner added `climb-04` (draft, "New Level", size 26): a start ledge on the left (top 3), a safe pit floor across the middle (top −3.25), a floating block (x 1…4, y −0.25…3), the flag ledge on the right (top 3.75, flag at x 10.25) and a post on it past the flag (x 11.75…13.5, up to 8.75). Not named yet; not checked with a bot.
 

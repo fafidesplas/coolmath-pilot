@@ -36,7 +36,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Stuck nudge (solo):** after 8 s without getting closer to the flag (your best distance to it has not improved), in any mode, a small "R to restart" fades in near the restart button. It disappears as soon as you get closer again.
 
 ### 3.2 Hop (merges the prototype's Classic and Wall Jump)
-- **Hold** (only while grounded or clinging): power charges from 0 to full in 1.1 s; the aim angle sweeps between 18° and 80° at 2.6 rad/s (a full up-down cycle ≈ 2.4 s). A dotted arc previews the jump and a power bar above the player fills.
+- **Hold** (only while grounded or clinging): power charges from 0 to full in 1.1 s; the aim angle sweeps between 18° and 80° at 2.6 rad/s (a full up-down cycle ≈ 2.4 s). A short ink arrow shows the launch direction (not the arc, so where you land stays a surprise) and a power bar above the player fills.
 - **Release:** jump at 9 u/s (no charge) up to 20 u/s (full charge; the prototype used 25 in its 42 u level) along the aim angle, in the facing direction.
 - **You only move by jumping.** Landing stops you dead (no sliding), except on ice. On the ground you face right, except against a grip wall on your right, where you face away from it. Hop stays precise on purpose: you land where you aimed.
 - **Plain walls bounce:** hitting one mid-air reverses your horizontal speed at 35 %.
@@ -117,7 +117,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Player 2 | The racer, controlled by L / right half | Versus | Red square, no outline, big googly eye, white letter **L** |
 | Ghost | Your best run on this level, replayed; no collision | Solo, after first finish | Hollow outline square, no eye, 40 % alpha |
 | Hat | Cosmetic, unlocked by levels finished | Title screen | Small ink shapes on top of the square (§7) |
-| Aim dots | Preview of the jump (Hop) | Hop 1 | Small ink squares fading along the arc |
+| Aim arrow | Launch direction of the jump (Hop) | Hop 1 | Short ink arrow 1.3 u out from the player, 0.5–0.9 u long, growing with power |
 | Power bar | Charge level while holding (Hop) | Hop 1 | Thin ink outline above the player, filling with ink |
 | Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
 | Flag | The goal; touch its trigger box | Hop 1 | Dark pole with a waving checkered flag (6 × 4 ink and white cells, F1-style) |
@@ -353,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Hop: the dotted arc that previewed the whole jump is replaced by a short arrow along the launch direction (player feedback: seeing where you land took the thrill away). It grows a little with power and sits 1.3 u out so it clears the power bar.
 - 2026-10-23 — HUD pause and restart buttons are ink discs with the icon and rim in the background color, so they stay visible over ink (levels such as Rocket 2-4 Rapid Fire and the Climb 4 draft run walls up under them).
 - 2026-10-23 — Rocket: new level Rapid Fire (`rocket-11`, made in the editor from the owner's sketch), live as 2-4: blast up a tall left wall, then over a tower to the flag.
 - 2026-10-23 — Climb 4-3 The Wall: the lower tooth sits at y −5 (was −4.5).
