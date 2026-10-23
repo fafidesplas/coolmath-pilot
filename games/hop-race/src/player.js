@@ -16,8 +16,8 @@ function hrLandSquash(p)
     return p.land * (k < hold ? 1 - (k / hold) ** 2 : -.25 * Math.sin(PI * (k - hold) / (1 - hold)));
 }
 
-// total vertical squash (0 square, + flatter, - taller)
-function hrSquashY(p) { return min(.6, p.squash + hrLandSquash(p) + p.crouch); }
+// total vertical squash (0 square, + flatter, - taller); a pinch from the sides makes you a little taller
+function hrSquashY(p) { return min(.6, p.squash + hrLandSquash(p) + p.crouch - p.pinch * .5); }
 
 // idle glance: after 5 s standing still the pupil darts left and right, holds, then rests in the middle
 const HR_IDLE_T = 5;
@@ -34,7 +34,7 @@ function hrMakePlayer(index)
 {
     const p = {index, letter: index ? 'L' : 'A',
         color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
-        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, land: 0, landT: -1, idleT: 0, trail: [],
+        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, pinch: 0, land: 0, landT: -1, idleT: 0, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
         falls: 0, finished: false, blinkIn: rand(1, 4), blinkT: -1};
     p.pupilKick = (vx, vy) => { p.eye.vx += vx * 8; p.eye.vy += vy * 8; };
@@ -49,7 +49,7 @@ function hrResetPlayer(p)
     p.y = hrLevel.start.y + HR_PSIZE / 2;
     p.vx = p.vy = 0;
     p.down = false;
-    p.squash = p.crouch = 0;
+    p.squash = p.crouch = p.pinch = 0;
     p.landT = -1;
     p.idleT = 0;
     p.trail = [];
@@ -85,7 +85,7 @@ function hrPlayerStep(p, input)
     }
     p.squash *= .85;
     if (p.landT >= 0 && (p.landT += timeDelta) > HR_LAND_T) p.landT = -1;
-    if (!p.down) p.crouch *= .7;
+    if (!p.down) { p.crouch *= .7; p.pinch *= .7; }
 
     // trail while airborne
     if (!p.grounded && !p.cling && !p.finished) p.trail.push(vec2(p.x, p.y));

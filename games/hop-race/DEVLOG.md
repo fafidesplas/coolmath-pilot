@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: side squeeze for flat hops
+- Owner asked for a third part to the charge animation. Holding past full charge sweeps the aim back down toward a long, flat hop, so the squash toward the floor now turns into a squeeze from the sides as the aim drops: at the flattest aim (18°) the player is 35 % narrower and about 17 % taller (`HR_HOP.pinch`, new `p.pinch`). Before full charge nothing changes. GDD §5 juice list updated.
+- Checked in Chrome on 1-2 with frame-stepped holds: the player is 1.27 × 0.55 at full charge and highest aim, square at about 50°, and 0.65 × 1.17 at the flattest aim. No console errors.
+- Next: play it and judge whether the squeeze reads as "long and flat", and whether 0.35 is the right amount.
+
 ## 2026-10-23 — Hop: launch arrow instead of the arc
 - Player feedback: the full dotted arc telegraphed where you land and took the thrill away. While you charge, Hop now shows a short ink arrow along the launch direction instead (`HR_MODES.hop.draw`). It is 0.5–0.9 u long, growing with power, and starts 1.3 u from the player's center so it clears the power bar at every aim angle (18°–80°). GDD §3.2 and §5 updated.
 - Checked in Chrome on 1-2: the arrow draws and sweeps with the aim, and there are no console errors. The mode-select card's schematic still shows a dotted arc, as an illustration of the hop.

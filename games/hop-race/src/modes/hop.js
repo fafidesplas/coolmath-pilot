@@ -21,6 +21,7 @@ const HR_HOP = {
     iceMin:    2,       // ...if it was over 2 u/s; slower landings stop dead
     iceFriction: .8,    // sliding on ice slows you at this rate (1/s)
     crouch:    .45,     // how much flatter the player gets at full charge
+    pinch:     .35,     // past full charge, how much narrower (and a little taller) the player gets as the aim drops flat
 };
 
 const HR_MODES = {};
@@ -54,7 +55,11 @@ HR_MODES.hop = {
                 const before = p.charge;
                 p.t += dt;
                 p.charge = min(1, p.charge + dt / H.chargeT);
-                p.crouch = H.crouch * p.charge;   // squash toward the floor, deeper with more power
+                // squash toward the floor, deeper with more power; past full charge, as the aim sweeps back down
+                // toward a long flat hop, the squash turns into a squeeze from the sides
+                const a = this.aim(p), flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
+                p.crouch = H.crouch * p.charge * (1 - flat);
+                p.pinch = H.pinch * flat;
                 if (floor(before * 8) != floor(p.charge * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
             }
             else if (p.down)
@@ -66,7 +71,7 @@ HR_MODES.hop = {
                 p.cling = 0;
                 p.squash = -.3;
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
-                p.crouch = 0;
+                p.crouch = p.pinch = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
