@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Phase rejected and hidden
+- Owner decision: Phase feels very weak. It is hidden, not deleted: `hidden: true` on its `HR_WORLDS` entry makes `hrLevelsOf()` return no levels, so it has no card on the mode select and Play 1P / 2P and `window.game.start` can't reach it (a save whose `last` is a Phase level falls back to the first unfinished level). `src/modes/phase.js` and `levels/phase.js` stay loaded.
+- The HUD's world number now skips hidden worlds (`hrWorldNumber`), so Climb reads "4-1". GA ids are unchanged (Climb is still `world05`).
+- GDD: v1 is three worlds, 30 levels; Phase is listed under §13 Rejected modes with §3.5 kept for reference; hat thresholds need a rebalance to 30 (§14).
+- Next: play 2-1 to 2-3 and 3-1 to 3-3 with the new clockwise launchers; decide Climb (keep, grow or cut).
+
 ## 2026-10-22 — Grapple: the launcher turns clockwise
 - Owner decision: Grapple's launcher turns clockwise like Rocket's, and firing doesn't reverse it (`reverseSpin` stays off). It still starts pointing up and forward and freezes while the hook is out.
 - Bot check (Chrome, 200 random hold/release runs per level, same seeds both ways), clockwise vs the old counterclockwise: 3-1 81 vs 74 finishes (best 1.1 vs 1.4 s); 3-2 55 vs 41 (best 1.3 vs 1.7 s); 3-3 57 vs 38 (best 1.3 vs 1.5 s). Falls per run about the same or lower. Holding alone fails every level both ways. No errors.

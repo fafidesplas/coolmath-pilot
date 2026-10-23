@@ -3,15 +3,15 @@
 **Status:** Approved
 **Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-22
 
-> One button, four meanings: hold and release to hop, blast, swing or melt your way to the flag, alone against your ghost or against a friend on the same keyboard.
+> One button, three meanings: hold and release to hop, blast or swing your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
-**Still finding the fun.** The four core worlds are the v1 plan, but new button meanings keep getting tried as **Lab worlds**: a short feel test (§13.1) that is then kept, grown into a full world, or cut. Climb (§3.7) is the first.
+**Still finding the fun.** The three core worlds are the v1 plan (Phase, the fourth, was rejected: §13), but new button meanings keep getting tried as **Lab worlds**: a short feel test (§13.1) that is then kept, grown into a full world, or cut. Climb (§3.7) is the first.
 
 ## 1. Summary
 - **Pillars**
   1. **One button, instantly understood.** Every action in every mode is hold, press or release of a single input. Nothing else to learn.
   2. **Short and snappy.** A level is 8–20 s, a restart under a second, a rematch one press away.
-  3. **Same button, new meaning.** Each mode reinterprets the button so the fourth world feels as fresh as the first.
+  3. **Same button, new meaning.** Each mode reinterprets the button so the third world feels as fresh as the first.
 - **Player:** Coolmath regulars on a school Chromebook or home laptop, mostly alone (solo is the main path), sometimes two friends sharing one keyboard or one tablet. **Ages:** the core is about 13–24 (teens and young adults at school or on a break, matching Coolmath's biggest group, 18–24); the floor is about 9–10, so younger kids can still finish the early levels. One button and a tutorial first level keep it open to the young end; best times and the ghost give the older end a skill ceiling. **Tone:** playful but never babyish; text short and dry ("Nice." over "Yay, great job!!").
 - **Session:** one level 8–20 s solo; a versus match (first to 3) about 1–2 min; a typical visit 10–15 min.
 - **Hook:** beating your own ghost by a few tenths, shaving a best time down, and "one more round" against a friend.
@@ -62,7 +62,9 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Walls** stop you dead (no bounce).
 - **Closed top:** the top edge of the level box stops you like a ceiling, so a hard swing never flies off the screen. The hook can't stick to it; a hook that flies past it is lost.
 
-### 3.5 Phase (solid, liquid, gas; merges the prototype's Flow and Flow 2)
+### 3.5 Phase (solid, liquid, gas; merges the prototype's Flow and Flow 2) — rejected
+> **Rejected 2026-10-22** (see §13 Rejected modes). Hidden in the game; kept below for reference.
+
 You are a block of matter made of 7 × 7 = 49 drops. **Each press switches you to the next state, always in the same order: solid → liquid → gas → solid.** There is no holding in Phase.
 
 | State | Looks like | How it moves | Press |
@@ -139,12 +141,12 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Hanging flag | Flag on the underside of a ceiling slab | Phase 7 | Upside-down pole and checkered flag |
 
 ## 6. Level design
-- **Structure:** 4 worlds of 10 levels, one per mode, 40 levels in v1. Every level is a single 16:9 screen (24–30 u wide), holds 3–5 obstacles, and takes 8–20 s solo for a first clean run.
+- **Structure:** 3 worlds of 10 levels, one per mode, 30 levels in v1. Every level is a single 16:9 screen (24–30 u wide), holds 3–5 obstacles, and takes 8–20 s solo for a first clean run.
   - **World 1 — Hop:** charge and aim, gaps, walls, ice, ducking, then grip walls.
   - **World 2 — Rocket:** blast yourself around, buttons and gates, ice, pits, then sticky floors.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
-  - **World 4 — Phase:** melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
-  - **Lab worlds** (§13.1) come after the core four, with 3 levels each, and are not part of the 40.
+  - ~~**World 4 — Phase:**~~ rejected (§13). Was: melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
+  - **Lab worlds** (§13.1) come after the core three, with 3 levels each, and are not part of the 30.
 - **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold A then release to Jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Press to melt." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
@@ -164,7 +166,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - **Rocket (built; 4–10 are drafts, hidden until 1–3 are played and the mode is tuned):** 1 **Blast Off**: flat floor with two low bumps; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
   - **Grapple (1–3 built; 4–10 still an outline):** 1 **Swing By**: one pillar over a 3 u pit's far edge; prompt "Hold to reel in. Let go to fly." (placed under the pillar) · 2 **Two Pillars**: a 14 u pit, swing from one pillar to the next · 3 **Let Go**: one pillar, an 8 u pit; the later you let go, the farther you fly · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5). Pillars hang from the top of the level box and stay out of the HUD (x −2.5…2.5 at the top center, and the top right). Where floor runs past the flag with no pillar in reach (1 and 3), a thin ceiling under the HUD runs from x 2.5 to the right wall, so a player who overshoots can hook it and swing back (otherwise only the wall and floor are in reach, and you were stuck).
   - **Climb (Lab, 3 levels, `levels/climb.js`):** 1 **Roll Along**: flat floor, a 1 u step, then a 2.5 u step to the flag; prompt "Hold to swing. Let go to stop." · 2 **Boulders**: a 3.5 u pit (holding blindly falls in), then rocks stepping up 1.5 u at a time · 3 **The Wall**: a 9 u wall with the flag on top, a 3.5 u pit at its foot, and three **teeth** of varied size on its face (0.8 × 0.4 u at y −4.5, 1.0 × 0.4 at −1.7, 0.6 × 0.5 at 0.4), made by `hrClimbTeeth` from a fixed seed. Bot check, 200 random hold/release runs per level: 1 finishes every run (holding alone: 7.9 s); 2 finishes all 200, with about 2 falls per run; 3 finishes 157 (best 4.1 s, about 5 falls per run). Holding alone fails 2 and 3. Over 450 runs, neither the head nor the body ended a frame inside a solid deeper than 0.02 u.
-  - **Phase (1–3 built in `levels/phase.js`; 4–10 still an outline):** 1 **Melt**: one gentle slope (16°) from wall to wall, flag in the low corner where the drops pool; nothing can spill; prompt "Press to melt." · 2 **Switchback**: three slopes, right, left, right, so the pour turns twice before it pools at the flag; nothing can spill · 3 **Spill**: the start slope ends at an edge over a 3.5 u pit, with the flag slope beyond it. A pour alone spills into the pit; stop before the edge (press twice: liquid → gas → solid), hop across as gas, land as a square, then melt again. Bot check: evaporating while the pour's center is between 1.5 u before the edge and 1.7 u past it works (about 0.4–0.6 s, depending on how fast you condense); too early, and the square lands back on the start slope to try again. Simulated times: 1 3.3 s, 2 10.9 s (no faster way), 3 best 6.8 s · 4 first gas: rise past a wall · 5 freeze out of gas to land on a ledge · 6 first grate · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
+  - **Phase (rejected, hidden; 1–3 built in `levels/phase.js`, kept for reference):** 1 **Melt**: one gentle slope (16°) from wall to wall, flag in the low corner where the drops pool; nothing can spill; prompt "Press to melt." · 2 **Switchback**: three slopes, right, left, right, so the pour turns twice before it pools at the flag; nothing can spill · 3 **Spill**: the start slope ends at an edge over a 3.5 u pit, with the flag slope beyond it. A pour alone spills into the pit; stop before the edge (press twice: liquid → gas → solid), hop across as gas, land as a square, then melt again. Bot check: evaporating while the pour's center is between 1.5 u before the edge and 1.7 u past it works (about 0.4–0.6 s, depending on how fast you condense); too early, and the square lands back on the start slope to try again. Simulated times: 1 3.3 s, 2 10.9 s (no faster way), 3 best 6.8 s · 4 first gas: rise past a wall · 5 freeze out of gas to land on a ledge · 6 first grate · 7 first hanging flag (prototype Flow 2, cut down, ≈ 7) · 8–10 combinations.
 - **Level data format:** one JS file per world in `levels/` (e.g. `levels/hop.js`) that adds to a global, because the game must run from `file://` where `fetch` of JSON and ES modules are blocked. Keep the top 1.5 u of the level clear near the right edge and the center: the HUD sits there when the window is exactly 16:9 and the margin is too thin for it. Coordinates are centered on the level box: a `size: 24` level spans x −12…12 and y −6.75…6.75.
   ```js
   HR_LEVELS.hop = [
@@ -205,7 +207,7 @@ Versus: Mode select (Versus tab) ──▶ Level select ──▶ Race ──▶
 Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ```
 - **Title:** logo with an idle hopping square, two big buttons, **Play 1P** (solo) and **Play 2P** (versus), then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: both Play buttons go to the last level played, solo or versus (saved as `last`). With no level played yet, they start the first level not finished yet, in world and level order (Hop 1 for a new player).
-- **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and levels finished (solo only).
+- **Mode select:** Solo / Versus toggle at the top. One card per world (the three core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and levels finished (solo only).
 - **Level select:** 10 tiles per world in 2 rows of 5, each with its number and best time; the first level not finished yet is highlighted. Versus uses the same grid without times.
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with the number of levels needed; tap one to put it on P1 or P2.
 - **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
@@ -260,7 +262,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 All synthesized with ZzFX through `SoundGenerator`. Sound on by default, toggle persists. **Music:** none in v1; the music toggle exists (off) for later.
 
 ## 11. GameAnalytics
-Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `world04`; Lab worlds take the next ids (Climb `world05`). Levels `level01`–`level10`.
+Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `world04` (rejected; the id stays reserved and unused); Lab worlds take the next ids (Climb `world05`). The HUD numbers worlds as shown, so Climb's levels read "4-1" even though its id is `world05`. Levels `level01`–`level10`.
 
 | Event id | When it fires | Value |
 |---|---|---|
@@ -293,8 +295,8 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 - **Riskiest piece:** turning 6 hand-tuned one-level modes into 40 smaller, data-driven levels without breaking their feel, especially Phase (drop physics tuned to specific slab angles, a flag position computed from the last slab, the new press cycle and grates) and the jump and blast ranges in a smaller box. Prove it in the slice: load the prototype's levels from data at their old size (`size: 42`) and confirm each plays the same, then retune ranges for 24–30 u levels and build Hop 1–3.
 
 ## 13. Scope
-- **v1:** 4 worlds (Hop, Rocket, Grapple, Phase) × 10 levels; solo time trial with best times and ghost; 8 hats unlocked by levels finished; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
-- **Build order and cut line:** worlds are built Hop → Rocket → Grapple → Phase. When World 3's content is done, Phase levels 1–3 must be built and played cold by someone who didn't make them, who finishes them without help. If not, v1 ships with three worlds (30 levels, hats rebalanced to 30 levels) and Phase follows in an update. Pao and a teammate make the call together.
+- **v1:** 3 worlds (Hop, Rocket, Grapple) × 10 levels; solo time trial with best times and ghost; 8 hats unlocked by levels finished; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
+- **Build order:** worlds are built Hop → Rocket → Grapple. Phase was the fourth and has been rejected (below), so v1 ships with three worlds (30 levels, hats rebalanced to 30 levels, §14).
 - **Vertical slice (phase 2):** Hop levels 1–3 from data, solo with timer, best times and ghost, Versus on the same levels, full shell, saving, analytics stubs logging to the console.
 - **Lab worlds:** see 13.1. They don't change the v1 list above until one graduates.
 - **Later:** 3–4 player Versus (needs a keyboard ghosting test first); CPU opponent; more modes on the one-button idea; best-of-N options for Versus; more hats; 12 levels per world if players want more; unlock gates (`'linear'`) if the data shows players skip around too much.
@@ -310,6 +312,8 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
   - **Momentum in Hop landings:** Hop stays precise (land where you aim); momentum lives in Rocket, Grapple, Phase and on ice.
   - **Reduce-motion setting:** not in v1; the finish pulse is kept to one soft flash instead.
   - **Flow grain-count debug text:** removed (`RC_SAND.debug` off).
+- **Rejected modes:** built and played, then dropped. A rejected mode is hidden in the game (`hidden: true` in `HR_WORLDS`: no card, no levels, not reachable from Play or `window.game.start`), but its code, levels and GDD section stay for reference.
+  - **Phase** (§3.5, rejected 2026-10-22): the owner played levels 1–3 and found it "very weak". Built: the press cycle (solid → liquid → gas → solid), drop physics from the prototype's Flow, and levels Melt, Switchback and Spill. `src/modes/phase.js` and `levels/phase.js` are kept; GA id `world04` stays reserved.
 
 ### 13.1 Lab worlds (finding the fun)
 New physics and new meanings for the button keep being tried while the core worlds are built. Each one goes through the same short loop, so trying an idea is cheap and cutting one is normal:
@@ -323,15 +327,16 @@ New physics and new meanings for the button keep being tried while the core worl
 ## 14. Open questions
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| World 4's name: "Phase" is a working name | Keep "Phase" (short, says solid/liquid/gas); alternatives "Matter", "Melt". | Pao | Open |
+| World 4's name: "Phase" is a working name | Moot: Phase is rejected (§13). | Pao | Closed |
+| Hats: thresholds assume 40 core levels (3 … 40), but v1 now has 30 | Rebalance to 30 when hats are built, e.g. 3, 5, 8, 11, 15, 20, 25, 30. | Pao | Open |
 | 3–4 players on one keyboard? | Not in v1: many keyboards can't register 3–4 held keys at once, and touch quarters are too small. Revisit with a ghosting test. | Pao | Later |
 | Mouse in Versus: let a mouse click count as P1 so a mouse + L pair works? | Yes, cheap and removes the "Versus needs a keyboard" caveat. | Pao | Open |
 | Hats now unlock by levels finished, so they reward finishing, not speed. Should any reward speed? | Not now: the ghost and the gap to your best already reward speed. If the data shows players stop replaying, try one hat per world for beating a time shown only after you finish the whole world. | Pao | Open |
 | Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Rocket blast is 24 u/s, top speed 22 u/s (both −20 %); keep the aim sweep and charge time. Grapple keeps the prototype's numbers (hook 55, reel 95 u/s² up to 26 u/s, top 32 u/s); the levels are sized to them. | Pao | Hop, Rocket, Grapple done |
 | Player-to-player collision? A cold playtester (Hop, 2026-10-21) said bumping into the other player might be exciting | Recorded only, no change to bodies yet: players still pass through each other (§3.1). Rocket blasts now push both players (3.3), which tests some of this idea. If it is tried, make it Versus-only and light (a bump that trades some speed, no pushing off ledges) and playtest it against the pinning problem. | Pao | Open |
-| Phase 3 needs the double press (liquid → gas → solid), but only level 1 shows a prompt; from level 2 the hint "Press: next state" is all there is | Play it cold first. If players don't find the hop, give level 3 a prompt too ("Press twice to stop."), as a second teaching level of the world. | Pao | Open |
-| Phase 1 and 2 are a single press and then watching (2 takes 11 s with no faster way) | Fine as the feel test of the liquid; if 2 drags, shorten its slopes. Pressing again mid-pour turns you to gas, which floats off the open top and back to the start. | Pao | Open |
-| Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
+| Phase 3 needs the double press (liquid → gas → solid), but only level 1 shows a prompt; from level 2 the hint "Press: next state" is all there is | Play it cold first. If players don't find the hop, give level 3 a prompt too ("Press twice to stop."), as a second teaching level of the world. | Pao | Moot (Phase rejected) |
+| Phase 1 and 2 are a single press and then watching (2 takes 11 s with no faster way) | Fine as the feel test of the liquid; if 2 drags, shorten its slopes. Pressing again mid-pour turns you to gas, which floats off the open top and back to the start. | Pao | Moot (Phase rejected) |
+| Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Moot (Phase rejected) |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
 | Grapple launcher: reverse the spin on each shot? | Without it, after letting go the launcher swings backward and the next pillar is rarely in reach before you fall: in 3-2 a bot never catches the second pillar in mid-air. It finishes 20 of 169 hold pairs (49 with reversal), each with one long fling from the first pillar or a second shot fired from standing. Play both; if no reversal stays, rework 3-2. | Pao | Decided 2026-10-22 (owner): no reversal, and the launcher turns clockwise. Clockwise didn't make 3-2 worse: a random bot finishes 55 of 200 runs (41 counterclockwise). |
@@ -344,6 +349,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Phase rejected (owner: "very weak"). Hidden in the game with `hidden: true` in `HR_WORLDS`; code, levels and §3.5 kept for reference. v1 is three worlds, 30 levels. The HUD numbers worlds as shown (Climb is now "4-x"). New §13 list, Rejected modes; hat thresholds to rebalance (§14).
 - 2026-10-22 — Grapple: the launcher turns clockwise, like Rocket's; no reversal on firing (owner decision, §14 closed).
 - 2026-10-22 — Rocket: the launcher always turns clockwise; firing no longer reverses it (owner decision).
 - 2026-10-22 — Rocket gets Grapple's dotted sight line: it runs along the launcher's aim to the first solid or unpressed button, and hides during the cooldown.

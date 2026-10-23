@@ -68,8 +68,9 @@ function hrUiButtons()
             act: () => hrMenuVersus = false});
         add({id: 'versus', x: W / 2 + 100 * u, y: H * .12, w: 190 * u, h: 64 * u, label: 'Versus', on: hrMenuVersus,
             act: () => hrMenuVersus = true});
-        const n = HR_WORLDS.length, cw = min(250 * u, W / (n + 1.2)), gap = cw * 1.12;
-        HR_WORLDS.forEach((w, i) => add({id: 'world' + i, card: i, x: W / 2 + (i - (n - 1) / 2) * gap, y: H * .56, w: cw, h: 330 * u,
+        const shown = HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden);
+        const n = shown.length, cw = min(250 * u, W / (n + 1.2)), gap = cw * 1.12;
+        shown.forEach((i, k) => add({id: 'world' + i, card: i, x: W / 2 + (k - (n - 1) / 2) * gap, y: H * .56, w: cw, h: 330 * u,
             enabled: hrLevelsOf(i).length > 0, focus: i == hrMenuWorld,
             act: () => { hrMenuWorld = i; hrGo('levels'); }}));
     }
@@ -549,7 +550,7 @@ function hrDrawTitle(W, H, u)
 function hrDrawHud(W, H, u)
 {
     const top = hrButtonSize(56) * .8;
-    const label = `${hrWorld + 1}-${hrLevelIndex + 1}`;
+    const label = `${hrWorldNumber(hrWorld)}-${hrLevelIndex + 1}`;
     if (hrVersus)
     {
         hrText(label, W / 2 - hrButtonSize(56) * 1.6, top, 30 * u, HR_INK, 'right');

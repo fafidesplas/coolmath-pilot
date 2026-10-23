@@ -20,11 +20,12 @@ const HR_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const HR_FONT_STYLE = '800';
 
 // GDD §11 world ids; `ready` worlds have levels in levels/<id>.js
+// hidden worlds (GDD §13 Rejected) keep their code but have no levels anywhere
 const HR_WORLDS = [
     {id: 'hop',     name: 'Hop',     ga: 'world01', bg: HR_YELLOW, hint: 'Hold: charge · Release: hop'},
     {id: 'rocket',  name: 'Rocket',  ga: 'world02', bg: HR_CORAL,  hint: 'Press: blast'},
     {id: 'grapple', name: 'Grapple', ga: 'world03', bg: HR_TEAL,   hint: 'Hold: reel in · Release: fly'},
-    {id: 'phase',   name: 'Phase',   ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state'},
+    {id: 'phase',   name: 'Phase',   ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state', hidden: true},
     // Lab worlds (GDD §13.1): feel tests of new button meanings, 3 levels each; kept, grown or cut after play
     {id: 'climb',   name: 'Climb',   ga: 'world05', bg: HR_CORAL,  hint: 'Hold: swing · Release: stop', lab: true},
 ];
@@ -39,8 +40,15 @@ const HR_MARGIN = .5;    // camera margin around the level box (u)
 // GDD §7: every unlock check goes through isUnlocked(); switch the rule to gate later
 const HR_UNLOCK_RULE = 'all';   // 'all' | 'linear'
 
-// levels marked draft: true are hidden everywhere (level select, Play, window.game.start)
-function hrLevelsOf(worldIndex) { return (HR_LEVELS[HR_WORLDS[worldIndex].id] || []).filter(l => !l.draft); }
+// levels marked draft: true, and every level of a hidden world, are hidden everywhere (level select, Play, window.game.start)
+function hrLevelsOf(worldIndex)
+{
+    const world = HR_WORLDS[worldIndex];
+    return world.hidden ? [] : (HR_LEVELS[world.id] || []).filter(l => !l.draft);
+}
+
+// the world's number as players see it (1-based, hidden worlds skipped)
+function hrWorldNumber(worldIndex) { return HR_WORLDS.slice(0, worldIndex + 1).filter(w => !w.hidden).length; }
 
 function isUnlocked(worldIndex, levelIndex)
 {
