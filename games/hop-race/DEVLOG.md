@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Rocket 2-1: lower block, flag further right
+- Owner edit: Blast Off's middle block is 3 u tall (top y 0 → −1) and the flag moved from x 9 to 10.25. Owner playtest: very easy to clear, as a first Rocket level should be.
+
 ## 2026-10-23 — Versus: each round is a random level of the world
 - Owner: Versus shouldn't repeat the same level every round. The level you pick starts the match; each next round draws a random level from the same world (`hrNextVersusLevel` in `src/main.js`), with no repeats until every unlocked level of the world has come up, and never the same level twice in a row. Restart (R) keeps the round's level. Rematch starts a new match on a random level too. The editor's play-test stays on its level.
 - Checked in Chrome through 24 rounds each: Hop goes through all 10 levels before any repeats; Rocket (3 levels) and Climb (3) cycle with no back-to-back repeat. No console errors.

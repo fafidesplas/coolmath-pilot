@@ -353,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Rocket 2-1 Blast Off: the middle block is 3 u tall (was 4) and the flag is at x 10.25 (was 9).
 - 2026-10-23 — Versus rounds are random levels of the world instead of the same level every round; no repeats until the world has been played through.
 - 2026-10-23 — First levels made in the editor: 1-6's ceiling sits 2.5 u over the gap (was 2), 2-1 Blast Off has one 2 × 4 u block in the middle instead of two low bumps, and 2-3's gate button moved to the top left (-10.5, 4.5).
 - 2026-10-23 — Level editor (`tools/editor.js`, debug only): press E on any level to edit it in place, play-test it, check it with the bot (Hop) and save it straight into `levels/<world>.js`. Only edited levels change in the file; their comments and Climb's `hrClimbTeeth(...)` line are kept.

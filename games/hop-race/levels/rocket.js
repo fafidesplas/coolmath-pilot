@@ -15,9 +15,9 @@ HR_LEVELS.rocket = [
         start: {x: -9, y: -4},
         solids: [
             {l: -13, r: 13, top: -4},
-            {l: -1, r: 1, top: 0},
+            {l: -1, r: 1, top: -1},
         ],
-        flag: {x: 9, y: -4},
+        flag: {x: 10.25, y: -4},
         prompt: 'Press to blast.',
     },
     {
