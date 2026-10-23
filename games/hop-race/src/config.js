@@ -26,8 +26,8 @@ const HR_WORLDS = [
     {id: 'rocket',  name: 'Rocket',  ga: 'world02', bg: HR_CORAL,  hint: 'Press: blast'},
     {id: 'grapple', name: 'Grapple', ga: 'world03', bg: HR_TEAL,   hint: 'Hold: reel in · Release: fly'},
     {id: 'phase',   name: 'Phase',   ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state', hidden: true},
-    // Lab worlds (GDD §13.1): feel tests of new button meanings, 3 levels each; kept, grown or cut after play
-    {id: 'climb',   name: 'Climb',   ga: 'world05', bg: HR_CORAL,  hint: 'Hold: swing · Release: stop', lab: true},
+    {id: 'climb',   name: 'Climb',   ga: 'world05', bg: HR_CORAL,  hint: 'Hold: swing · Release: stop'},   // grew from a Lab world
+    // Lab worlds (GDD §13.1) go here with lab: true: feel tests of new button meanings, 3 levels each
 ];
 const HR_LEVELS_PER_WORLD = 10;
 

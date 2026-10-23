@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Climb grows into World 4
+- Owner decision: Climb is a core world, replacing the rejected Phase. `lab: true` is off its `HR_WORLDS` entry, so the card loses the "LAB" tag and shows "x/10 done" like the other worlds; 4–10 show as not built yet. Its GA id stays `world05`; the HUD already reads "4-x".
+- GDD: v1 is four worlds, 40 levels, so the hat thresholds (3 … 40) stand and the rebalance question is closed. New §14 question: Climb shares Rocket's coral; keep it or move it to yellow.
+- Next: outline Climb 4–10 (levels that need the release: gaps, overhangs), then build them.
+
 ## 2026-10-22 — Phase rejected and hidden
 - Owner decision: Phase feels very weak. It is hidden, not deleted: `hidden: true` on its `HR_WORLDS` entry makes `hrLevelsOf()` return no levels, so it has no card on the mode select and Play 1P / 2P and `window.game.start` can't reach it (a save whose `last` is a Phase level falls back to the first unfinished level). `src/modes/phase.js` and `levels/phase.js` stay loaded.
 - The HUD's world number now skips hidden worlds (`hrWorldNumber`), so Climb reads "4-1". GA ids are unchanged (Climb is still `world05`).
