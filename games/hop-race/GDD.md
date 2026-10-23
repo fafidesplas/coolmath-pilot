@@ -353,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Climb 4-3 The Wall: the lower tooth sits at y −5 (was −4.5).
 - 2026-10-23 — Climb (testing): on a wall, quick presses no longer peel the cup off. A press under 0.2 s creeps the arm around the stuck cup at 2 rad/s, levering the body; a longer hold peels and whips. Floors and ceilings peel on any press, as before.
 - 2026-10-23 — Climb 4-3 The Wall: the wall is 7 u (was 9) with two teeth (was three), flag at (12, 1). Grapple 3-3 Let Go: the ceiling past the flag is higher (y 7.1–7.9) and starts at the pillar (x −5).
 - 2026-10-23 — Rocket 2-1 Blast Off: the middle block is 3 u tall (was 4) and the flag is at x 10.25 (was 9).

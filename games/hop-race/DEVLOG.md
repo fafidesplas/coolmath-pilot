@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Climb 4-3: lower tooth moved down
+- Owner edit: 4-3 The Wall's lower tooth is 0.5 u lower (top y −4.5 → −5). Not re-checked with a bot.
+
 ## 2026-10-23 — Climb: soft touch on walls (testing)
 - Owner asked: quick presses shouldn't detach the arm from a wall, to reward a soft touch where slow and steady can win. While the cup is stuck to a wall face, a press creeps the arm around the cup at `HR_CLIMB.creep` 2 rad/s, levering the body (on a wall to your right, up and in); only a hold past `HR_CLIMB.peelTime` 0.2 s peels it off and whips at full speed. If creeping would push the body into a solid, the arm holds. `peelTime = 0` brings back peel-on-press.
 - Walls only. First tried on every surface: the cup then also held on the floor, so a player who only tapped never moved (0 of 30 tap-only runs left the start).
