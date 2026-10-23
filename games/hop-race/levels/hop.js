@@ -1,7 +1,6 @@
 /*
     HOP RACE - World 1, Hop (GDD §6). Coordinates are centered on the level box:
     a size 24 level spans x -12..12 and y -6.75..6.75. Solids are {l, r, top, bottom?, grip?, ice?}.
-    par / expert are placeholders from simulated runs; set them from designer runs in phase 3.
 */
 
 'use strict';
@@ -17,7 +16,6 @@ HR_LEVELS.hop = [
         ],
         flag: {x: 9, y: -3.5},
         prompt: 'Hold A then release to Jump!',
-        par: 6.0, expert: 3.5,
     },
     {
         id: 'hop-02', name: 'Stepping Stones',
@@ -30,7 +28,6 @@ HR_LEVELS.hop = [
             {l: 9.5, r: 15, top: -3.5},
         ],
         flag: {x: 12, y: -3.5},
-        par: 8.0, expert: 5.0,
     },
     {
         id: 'hop-03', name: 'Up We Go',
@@ -43,6 +40,5 @@ HR_LEVELS.hop = [
             {l: 6, r: 14, top: 2, bottom: 1},
         ],
         flag: {x: 10.5, y: 2},
-        par: 8.0, expert: 5.0,
     },
 ];

@@ -2,7 +2,6 @@
     HOP RACE - Lab world, Climb (GDD §3.7, §6, §13.1). Coordinates are centered on the level box:
     a size 24 level spans x -12..12 and y -6.75..6.75. Solids are {l, r, top, bottom?}.
     A feel test to find out whether turning the arm is fun, not a finished world.
-    par / expert are placeholders from simulated runs; set them from designer runs.
 */
 
 'use strict';
@@ -34,7 +33,6 @@ HR_LEVELS.climb = [
         ],
         flag: {x: 9, y: -1.5},
         prompt: 'Hold to swing. Let go to stop.',
-        par: 12.0, expert: 7.0,
     },
     {
         id: 'climb-02', name: 'Boulders',
@@ -48,7 +46,6 @@ HR_LEVELS.climb = [
             {l: 6, r: 14, top: .5},
         ],
         flag: {x: 10, y: .5},
-        par: 14.0, expert: 8.0,
     },
     {
         id: 'climb-03', name: 'The Wall',
@@ -60,6 +57,5 @@ HR_LEVELS.climb = [
             ...hrClimbTeeth(102947, 1, -1, -6, 2),   // 0.8 × 0.4 at y -4.5, 1.0 × 0.4 at -1.7, 0.6 × 0.5 at 0.4
         ],
         flag: {x: 8, y: 3},
-        par: 16.0, expert: 10.0,
     },
 ];

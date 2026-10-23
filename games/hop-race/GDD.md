@@ -12,14 +12,14 @@
   1. **One button, instantly understood.** Every action in every mode is hold, press or release of a single input. Nothing else to learn.
   2. **Short and snappy.** A level is 8–20 s, a restart under a second, a rematch one press away.
   3. **Same button, new meaning.** Each mode reinterprets the button so the fourth world feels as fresh as the first.
-- **Player:** Coolmath regulars on a school Chromebook or home laptop, mostly alone (solo is the main path), sometimes two friends sharing one keyboard or one tablet. **Ages:** the core is about 13–24 (teens and young adults at school or on a break, matching Coolmath's biggest group, 18–24); the floor is about 9–10, so younger kids can still finish the early levels. One button and a tutorial first level keep it open to the young end; expert times, 3 stars and the ghost give the older end a skill ceiling. **Tone:** playful but never babyish; text short and dry ("Nice." over "Yay, great job!!").
+- **Player:** Coolmath regulars on a school Chromebook or home laptop, mostly alone (solo is the main path), sometimes two friends sharing one keyboard or one tablet. **Ages:** the core is about 13–24 (teens and young adults at school or on a break, matching Coolmath's biggest group, 18–24); the floor is about 9–10, so younger kids can still finish the early levels. One button and a tutorial first level keep it open to the young end; best times and the ghost give the older end a skill ceiling. **Tone:** playful but never babyish; text short and dry ("Nice." over "Yay, great job!!").
 - **Session:** one level 8–20 s solo; a versus match (first to 3) about 1–2 min; a typical visit 10–15 min.
-- **Hook:** beating your own ghost by a few tenths, chasing the 3rd star for the next hat, and "one more round" against a friend.
+- **Hook:** beating your own ghost by a few tenths, shaving a best time down, and "one more round" against a friend.
 
 ## 2. Core loop
 - **Moment (seconds):** hold to charge or aim → release (or press) to act → land, cling, swing or settle → read the next obstacle.
-- **Level (minutes):** pick a level → race your ghost to the flag → see time and stars → Retry for a better time or Next.
-- **Meta (days):** earn stars across 4 worlds × 10 levels to unlock hats; bring a friend for Versus on any level.
+- **Level (minutes):** pick a level → race your ghost to the flag → see your time and the gap to your best → Retry for a better time or Next.
+- **Meta (days):** finish levels across 4 worlds × 10 levels to unlock hats and lower your best times; bring a friend for Versus on any level.
 
 ## 3. Mechanics
 Units: positions and speeds are in world units (u). Each level is a 16:9 box from 24 × 13.5 u to 30 × 16.9 u, and the camera always shows the whole level (3.6). At 1280×720 that makes 1 u ≈ 43–53 px, so the 0.8 u player square is 34–43 px on screen (the prototype's 42 u wide view drew it at 24 px). The engine updates at a fixed 60 Hz. Gravity is 42 u/s² unless a mode says otherwise.
@@ -113,7 +113,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Player 1 | The racer, controlled by A / left half | Hop 1 | Blue square, no outline, big googly eye, white letter **A** |
 | Player 2 | The racer, controlled by L / right half | Versus | Red square, no outline, big googly eye, white letter **L** |
 | Ghost | Your best run on this level, replayed; no collision | Solo, after first finish | Hollow outline square, no eye, 40 % alpha |
-| Hat | Cosmetic, unlocked by stars | Title screen | Small ink shapes on top of the square (§7) |
+| Hat | Cosmetic, unlocked by levels finished | Title screen | Small ink shapes on top of the square (§7) |
 | Aim dots | Preview of the jump (Hop) | Hop 1 | Small ink squares fading along the arc |
 | Power bar | Charge level while holding (Hop) | Hop 1 | Thin ink outline above the player, filling with ink |
 | Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
@@ -147,11 +147,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 - **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold A then release to Jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Phase "Press to melt." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
-- **Stars (solo only):**
-  - 1★: finish the level.
-  - 2★: finish under the **par** time.
-  - 3★: finish under the **expert** time.
-  - Par and expert are set per level in the content phase: expert ≈ the designer's best clean run × 1.1, par ≈ × 1.6. Falling only costs time.
+- **Times, not stars (solo only):** a level is scored only by its time. There are no stars, par or expert times: the target is your own best time, which the ghost replays. Falling only costs time.
 - **First 10 levels (World 1 — Hop):**
   1. **First Hop:** flat ground, one 3 u gap, flag on the far side. Prompt: "Hold A then release to Jump!"
   2. **Stepping Stones:** three gaps getting wider (3, 4, 5 u) between low platforms.
@@ -186,15 +182,14 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       flag: {x: 10, y: -4},                // pole foot; {x, y, hang: true, dir: -1} for a hanging flag
       prompt: 'Hold A then release to Jump!', // level 1 of each world only
       // promptAt: {x, y},                 // optional: where the prompt sits (default: above the start)
-      par: 8.0, expert: 5.0,               // seconds
     },
   ];
   ```
 
 ## 7. Progression and retention
-- **Unlocks:** every world and every level is open from the start. All unlock checks go through one function, `isUnlocked(world, level)`, driven by a single setting `UNLOCK_RULE = 'all'` (with `'linear'` and `'stars'` ready to switch on later), so gating can be added without touching screens.
-- **Stars and best times** are saved per level and shown on the level select. Each world shows its star total (out of 30).
-- **Hats:** 8 hats unlock at star totals 5, 15, 30, 45, 60, 80, 100 and 120 (120 = every star). Each is a few ink shapes drawn in code (cap, top hat, crown, propeller, party hat, beanie, viking horns, halo). P1 and P2 each pick a hat on the Hats screen; hats show in solo, Versus and on the ghost. A new hat is announced on the level complete screen.
+- **Unlocks:** every world and every level is open from the start. All unlock checks go through one function, `isUnlocked(world, level)`, driven by a single setting `UNLOCK_RULE = 'all'` (with `'linear'`, finish the level before, ready to switch on later), so gating can be added without touching screens.
+- **Best times** are saved per level and shown on the level select. Each world shows how many of its levels you have finished (e.g. "4/10 done").
+- **Hats:** 8 hats unlock at 3, 6, 10, 15, 20, 25, 32 and 40 core levels finished (40 = every level; Lab levels don't count). Each is a few ink shapes drawn in code (cap, top hat, crown, propeller, party hat, beanie, viking horns, halo). P1 and P2 each pick a hat on the Hats screen; hats show in solo, Versus and on the ghost. A new hat is announced on the level complete screen.
 - **Ghost:** your best run on each level replays as a hollow outline. It updates whenever you beat your time. A settings toggle hides it.
 - **Versus:** a win counter per match (first to 3). Nothing saved for Versus.
 - **No daily challenge.**
@@ -208,14 +203,14 @@ Title ──Play 1P / Play 2P──▶ Playing / Race (last level played) ──
 Versus: Mode select (Versus tab) ──▶ Level select ──▶ Race ──▶ Round result ──▶ … ──▶ Match result (Rematch / Levels / Menu)
 Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ```
-- **Title:** logo with an idle hopping square, two big buttons, **Play 1P** (solo) and **Play 2P** (versus), then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: both Play buttons go to the last level played, solo or versus (saved as `last`). With no level played yet, they start the first level with fewer than 3 stars, in world and level order (Hop 1 for a new player).
-- **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and star total.
-- **Level select:** 10 tiles per world in 2 rows of 5, each with number, stars and best time; the next level without 3★ is highlighted. Versus uses the same grid without stars.
-- **Hats:** a grid of the 8 hats, locked ones shown as outlines with their star cost; tap one to put it on P1 or P2.
+- **Title:** logo with an idle hopping square, two big buttons, **Play 1P** (solo) and **Play 2P** (versus), then **Levels**, **Hats** and **Settings** (sound on/off, music on/off, show ghost on/off). One click from title to playing: both Play buttons go to the last level played, solo or versus (saved as `last`). With no level played yet, they start the first level not finished yet, in world and level order (Hop 1 for a new player).
+- **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and levels finished (solo only).
+- **Level select:** 10 tiles per world in 2 rows of 5, each with its number and best time; the first level not finished yet is highlighted. Versus uses the same grid without times.
+- **Hats:** a grid of the 8 hats, locked ones shown as outlines with the number of levels needed; tap one to put it on P1 or P2.
 - **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
 - **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; the world-level label, pause and restart sit top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
 - **Pause:** Resume, Restart, Levels, Settings. The game pauses itself when the tab is hidden.
-- **Level complete:** time counts up, then stars pop in one by one, "New best!" if it is one, a new hat if one unlocked, Next / Retry / Menu. Next is the default action (Space/Enter).
+- **Level complete:** time counts up, then the gap to your old best pops in ("-0.3" or "+1.2") with the best under it, "New best!" if it is one (a first finish shows only the time), a new hat if one unlocked, Next / Retry / Menu. Next is the default action (Space/Enter).
 - **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any fresh key press after the input lock. **Match result:** big winner, Rematch / Levels / Menu.
 - **Results input lock:** on the level complete, round result and match result screens, input is ignored for the first 0.6 s, and a button held down from gameplay must be released and pressed again before it counts. A player mashing across the finish line never skips their result.
 - **Rotate screen:** a phone icon turning sideways and "Rotate your device". The game resumes where it was when the window is landscape again.
@@ -240,7 +235,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
-- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; each eye blinks every 2.5–5 s (sometimes twice), on its own timer so P1 and P2 never blink in sync; after 5 s standing still, the pupil darts left and right furtively, then rests in the middle and repeats, until the player moves or charges; squash down toward the floor while charging, deeper the more power is charged (up to 45 % flatter at full charge), on landing, a short squeeze (held flat for a moment, deeper on harder landings, then a small spring back past square), stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a stretch pop on finish (no slow-mo: it dropped the frame rate); one soft, lighter pulse of the background on finish (never repeated or strobing); star pop; count-up time; eased slide-in for every panel; button press bounce.
+- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; each eye blinks every 2.5–5 s (sometimes twice), on its own timer so P1 and P2 never blink in sync; after 5 s standing still, the pupil darts left and right furtively, then rests in the middle and repeats, until the player moves or charges; squash down toward the floor while charging, deeper the more power is charged (up to 45 % flatter at full charge), on landing, a short squeeze (held flat for a moment, deeper on harder landings, then a small spring back past square), stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a stretch pop on finish (no slow-mo: it dropped the frame rate); one soft, lighter pulse of the background on finish (never repeated or strobing); count-up time and gap pop; eased slide-in for every panel; button press bounce.
 - **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one red square character with a white letter L, no outlines, each with one big googly eye, dotted square aim trail, black-and-white checkered racing flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and red rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
 
 ## 10. Audio
@@ -258,7 +253,6 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 | Melt / evaporate / freeze | Each press in Phase | Soft pour / airy whoosh / crisp click |
 | Countdown | 3-2-1-GO in Versus | Two low beeps, one high |
 | Finish | Reaching the flag | Win jingle (existing) |
-| Star | Each star popping in | Rising chime per star |
 | New best / new hat | Beating your best time / unlocking a hat | Short fanfare |
 | UI click | Any button | Tiny click |
 
@@ -270,9 +264,8 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | Event id | When it fires | Value |
 |---|---|---|
 | Progression `Start:world0N:level0M` | Solo level starts (first input) | — |
-| Progression `Complete:world0N:level0M` | Solo level finished | Time in ms (score; lower is better); stars as a design event below |
+| Progression `Complete:world0N:level0M` | Solo level finished | Time in ms (score; lower is better) |
 | Progression `Fail:world0N:level0M` | Solo level left by restart or quit before finishing, only if `Start` was sent for this attempt | Time played in ms |
-| `level:stars:<1-3>` | With every Complete | Stars |
 | `tutorial:step01` | First hold in Hop 1 | — |
 | `tutorial:step02` | First jump in Hop 1 | — |
 | `tutorial:step03` | First landing in Hop 1 | — |
@@ -281,7 +274,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | `versus:round:<p1\|p2>` | A Versus round is won | Round time in ms |
 | `versus:match:<p1\|p2>` | A Versus match is won | Rounds played |
 | `player:respawn:<mode>` | With each solo Complete or Fail | Falls back to the start in that attempt |
-| `hat:unlock:<name>` | A hat unlocks | Star total |
+| `hat:unlock:<name>` | A hat unlocks | Levels finished |
 | `ui:restart` | Restart pressed | — |
 | `ui:nudge` | The stuck nudge appears | — |
 | `settings:sfx:off` / `settings:music:off` | Toggle switched off | — |
@@ -294,16 +287,16 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 - **Simulation:** LittleJS fixed 60 Hz step, which also makes it frame-rate independent. Each mode exposes `step(player, input)` and `draw(player)`; input is a per-player `{down, pressed, released}` read once per frame, so modes never touch the keyboard directly.
 - **Canvas and camera:** the canvas fills the window at `devicePixelRatio` capped at 2 and is resized on every window resize. On level load and on every resize, the camera is set to the level center with the scale that fits the level box plus margin. No per-frame camera logic beyond shake.
 - **Ghost:** recording and replay both start at the player's first input, the same moment the timer starts. Record the player's position (and Phase's center) every 2nd frame, quantized to 0.01 u, as an Int16 array; at 20 s that is ~600 samples, under 3 KB per level as base64. Replay interpolates. No dependence on deterministic physics.
-- **Save keys:** `cm_hop-race_save` = `{v: 1, levels: {"hop-01": {stars, bestMs}}, last: "hop-01", hats: {p1, p2}, settings: {sfx, music, ghost}}`; ghosts in `cm_hop-race_ghost_<levelId>`. Unlocked hats are computed from the star total, not stored. All reads wrapped in `try/catch`; a broken save resets to defaults. Saved after every level complete, hat change and settings change, and when a different level starts (`last`).
+- **Save keys:** `cm_hop-race_save` = `{v: 1, levels: {"hop-01": {bestMs}}, last: "hop-01", hats: {p1, p2}, settings: {sfx, music, ghost}}`; ghosts in `cm_hop-race_ghost_<levelId>`. Unlocked hats are computed from the levels finished, not stored. Older saves may still hold a `stars` field per level; it is ignored. All reads wrapped in `try/catch`; a broken save resets to defaults. Saved after every level complete, hat change and settings change, and when a different level starts (`last`).
 - **Testing hook:** `window.game` with `screen`, `level` (id), `mode`, `versus`, `score` (time or wins), and `start(levelId)`, `restart()`, `win()` (debug only, stripped from release). `screen` uses the standard values `'title' | 'levels' | 'playing' | 'complete'` plus `'modes'` (counts as `levels`), `'hats'` (counts as `title`), `'paused'` and `'rotate'` (count as `playing`), `'round'` and `'match'` (count as `complete`).
 - **Riskiest piece:** turning 6 hand-tuned one-level modes into 40 smaller, data-driven levels without breaking their feel, especially Phase (drop physics tuned to specific slab angles, a flag position computed from the last slab, the new press cycle and grates) and the jump and blast ranges in a smaller box. Prove it in the slice: load the prototype's levels from data at their old size (`size: 42`) and confirm each plays the same, then retune ranges for 24–30 u levels and build Hop 1–3.
 
 ## 13. Scope
-- **v1:** 4 worlds (Hop, Rocket, Grapple, Phase) × 10 levels; solo time trial with stars and ghost; 8 hats unlocked by stars; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
-- **Build order and cut line:** worlds are built Hop → Rocket → Grapple → Phase. When World 3's content is done, Phase levels 1–3 must be built and played cold by someone who didn't make them, who finishes them without help. If not, v1 ships with three worlds (30 levels, hats rebalanced to 90 stars) and Phase follows in an update. Pao and a teammate make the call together.
-- **Vertical slice (phase 2):** Hop levels 1–3 from data, solo with timer, stars and ghost, Versus on the same levels, full shell, saving, analytics stubs logging to the console.
+- **v1:** 4 worlds (Hop, Rocket, Grapple, Phase) × 10 levels; solo time trial with best times and ghost; 8 hats unlocked by levels finished; 2-player Versus on any level; full shell (title, mode select, level select, hats, pause, restart, complete, settings, rotate screen); mouse, keyboard and touch; any landscape aspect from 4:3 to 21:9; saving; GameAnalytics; `window.game`.
+- **Build order and cut line:** worlds are built Hop → Rocket → Grapple → Phase. When World 3's content is done, Phase levels 1–3 must be built and played cold by someone who didn't make them, who finishes them without help. If not, v1 ships with three worlds (30 levels, hats rebalanced to 30 levels) and Phase follows in an update. Pao and a teammate make the call together.
+- **Vertical slice (phase 2):** Hop levels 1–3 from data, solo with timer, best times and ghost, Versus on the same levels, full shell, saving, analytics stubs logging to the console.
 - **Lab worlds:** see 13.1. They don't change the v1 list above until one graduates.
-- **Later:** 3–4 player Versus (needs a keyboard ghosting test first); CPU opponent; more modes on the one-button idea; best-of-N options for Versus; more hats; 12 levels per world if players want more; star gates if the data shows players skip around too much.
+- **Later:** 3–4 player Versus (needs a keyboard ghosting test first); CPU opponent; more modes on the one-button idea; best-of-N options for Versus; more hats; 12 levels per world if players want more; unlock gates (`'linear'`) if the data shows players skip around too much.
 - **Cut:**
   - **Orbit:** disorienting to play; its rotating-exit idea doesn't fit the left-to-right race.
   - **Rocket Jump (pits)** as a separate mode: its pits become an element in the Rocket world.
@@ -320,10 +313,10 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 ### 13.1 Lab worlds (finding the fun)
 New physics and new meanings for the button keep being tried while the core worlds are built. Each one goes through the same short loop, so trying an idea is cheap and cutting one is normal:
 1. **Pitch:** a few lines in chat or a short §3.x entry: what hold/press/release means, what levels it wants.
-2. **Feel test:** the mode in `src/modes/<id>.js` and **3 levels** in `levels/<id>.js`, listed in `HR_WORLDS` with `lab: true`. The menu shows it after the core worlds with a "LAB" tag; its star total counts only its own levels. Its GDD section says "Lab world, feel test". Uncertain choices go behind a switch in the mode's tuning object, so both versions can be played.
+2. **Feel test:** the mode in `src/modes/<id>.js` and **3 levels** in `levels/<id>.js`, listed in `HR_WORLDS` with `lab: true`. The menu shows it after the core worlds with a "LAB" tag; its "done" count counts only its own levels. Its GDD section says "Lab world, feel test". Uncertain choices go behind a switch in the mode's tuning object, so both versions can be played.
 3. **Call:** the owner plays it (and a teammate cold, if possible) and decides: **keep** as a Lab world for now, **grow** it into a full world (10 levels, its own background color if the palette allows, §6 outline, hats rebalanced, and it joins the v1 list in §13 by owner and teammate decision), or **cut** it (remove its files and world entry, and move it to Cut below with the reason).
 - Lab worlds are kept to one 16:9 screen with the fixed camera like every other world, and they follow §3.1 (start, falling, flag, Versus).
-- Lab stars don't count toward hats until the world graduates, so cutting one never takes a hat away.
+- Lab levels don't count toward hats until the world graduates, so cutting one never takes a hat away.
 - **Current Lab worlds:** Climb (§3.7), feel test, 3 levels, built 2026-10-22.
 
 ## 14. Open questions
@@ -332,7 +325,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | World 4's name: "Phase" is a working name | Keep "Phase" (short, says solid/liquid/gas); alternatives "Matter", "Melt". | Pao | Open |
 | 3–4 players on one keyboard? | Not in v1: many keyboards can't register 3–4 held keys at once, and touch quarters are too small. Revisit with a ghosting test. | Pao | Later |
 | Mouse in Versus: let a mouse click count as P1 so a mouse + L pair works? | Yes, cheap and removes the "Versus needs a keyboard" caveat. | Pao | Open |
-| Par/expert times: set by hand or by a replay bot? | By hand from designer runs (expert ×1.1, par ×1.6), checked by a teammate in phase 3. | Pao | Open |
+| Hats now unlock by levels finished, so they reward finishing, not speed. Should any reward speed? | Not now: the ghost and the gap to your best already reward speed. If the data shows players stop replaying, try one hat per world for beating a time shown only after you finish the whole world. | Pao | Open |
 | Jump and blast ranges in 24–30 u levels | Hop's top jump speed is now 20 u/s (−20 %). Rocket blast is 24 u/s, top speed 22 u/s (both −20 %); keep the aim sweep and charge time. Grapple keeps the prototype's numbers (hook 55, reel 95 u/s² up to 26 u/s, top 32 u/s); the levels are sized to them. | Pao | Hop, Rocket, Grapple done |
 | Player-to-player collision? A cold playtester (Hop, 2026-10-21) said bumping into the other player might be exciting | Recorded only, no change to bodies yet: players still pass through each other (§3.1). Rocket blasts now push both players (3.3), which tests some of this idea. If it is tried, make it Versus-only and light (a bump that trades some speed, no pushing off ledges) and playtest it against the pinning problem. | Pao | Open |
 | Phase 3 needs the double press (liquid → gas → solid), but only level 1 shows a prompt; from level 2 the hint "Press: next state" is all there is | Play it cold first. If players don't find the hop, give level 3 a prompt too ("Press twice to stop."), as a second teaching level of the world. | Pao | Open |
@@ -343,13 +336,14 @@ New physics and new meanings for the button keep being tried while the core worl
 | Grapple launcher: reverse the spin on each shot (as in Rocket)? | Without it, after letting go the launcher swings backward and the next pillar is rarely in reach before you fall: in 3-2 a bot never catches the second pillar in mid-air. It finishes 20 of 169 hold pairs (49 with reversal), each with one long fling from the first pillar or a second shot fired from standing. Play both; if no reversal stays, rework 3-2. | Pao | Testing no reversal |
 | Climb: what should letting go do? | Decided 2026-10-22 (owner): letting go stops the arm, and a stopped head grips what it touches. Now testing a coast (the arm slows to a stop in 0.3 s, and a coasting head sticks on touch): random play finishes 5-3 far more often (112 vs 7 of 200 with a new bot), and holding alone still fails 5-2 and 5-3. Set `coastTime` to 0 for the dead stop. The first version (the head stuck to everything and turning levered you slowly) was too easy: holding finished every level. Its `letGo` switch, which let the head pass through solids after release, is gone. | Pao | Testing coast |
 | Climb 3: is a 9 u sheer wall too hard? | Yes (owner, 2026-10-22). Teeth on the wall face fixed it. Bigger teeth alone made it worse: holding alone won on 58 of 60 random layouts, because big ledges give blind strikes more to pop off. A 3.5 u pit at the foot of the wall fixed that: holding alone failed on all 40 layouts tried, so the teeth can be bigger and varied. | Pao | Done |
-| Climb: teeth re-rolled on every attempt? | No: each level's teeth come from a fixed seed. Re-rolling would break best times, stars, the ghost and Versus fairness. If variety is wanted, a "new wall" daily or per-match seed shared by both players could work later. | Pao | Open |
+| Climb: teeth re-rolled on every attempt? | No: each level's teeth come from a fixed seed. Re-rolling would break best times, the ghost and Versus fairness. If variety is wanted, a "new wall" daily or per-match seed shared by both players could work later. | Pao | Open |
 | Climb: can a ceiling be a route, not just a rest? | No, and not pursued. A test level (Climb 4 Hang Time, 2026-10-22) showed a ceiling hang is only a rest: whipping from it levers you backward or drops you, and no layout needed it. The owner cut the level ("ceiling sucks"). The pendulum-hang idea is dropped with it. The suction cup still sticks to ceilings; no level uses one. | Pao | Done |
 | Climb: is the suction cup worth keeping? | Random play finishes 5-3 just as often with it (137 of 200) as without it (136 of 200), so its value only shows with a player who uses it on purpose. Play it and compare with `HR_CLIMB.suction = false`. | Pao | Open |
 | Climb: keep, grow or cut? (§13.1) | Decide after playing Climb 1–3. If it is kept, the next step is levels that need the release (gaps, overhangs where hanging still matters) rather than more height. | Pao | Open |
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Stars removed (owner decision): levels are scored by time only. Par and expert times are gone from the level data. The level complete screen shows the time and the gap to your old best; tiles show the best time; world cards show levels finished. Hats unlock by core levels finished (3 to 40). The `level:stars` event and the star chime are gone. The unlock rule `'stars'` is removed; `'linear'` now means "finish the level before".
 - 2026-10-22 — Title: **Play** becomes **Play 1P** and **Play 2P**. Both go to the last level played (new save field `last`) instead of the first level under 3 stars, which is now only the fallback for a new player.
 - 2026-10-22 — Phase built (`src/modes/phase.js`) with levels 1–3: Melt, Switchback, Spill. Level 3 is "stop before the edge": the first use of the liquid → gas → solid hop. The flag's counting box reaches 1 u below the pole's foot. Built numbers in §3.5.
 - 2026-10-22 — Climb: after letting go, the arm coasts to a stop in 0.3 s (`HR_CLIMB.coastTime`) instead of stopping dead; a coasting head sticks to the first surface it touches. Holding is unchanged.

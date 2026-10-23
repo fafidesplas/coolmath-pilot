@@ -32,21 +32,14 @@ function hrSaveLast(id)
 function hrSaveLevel(id)
 {
     const l = hrSave.levels[id];
-    return {stars: l && l.stars > 0 ? min(3, l.stars | 0) : 0, bestMs: l && l.bestMs > 0 ? l.bestMs : 0};
-}
-
-function hrStarTotal()
-{
-    let n = 0;
-    for (const id in hrSave.levels) n += hrSaveLevel(id).stars;
-    return n;
+    return {bestMs: l && l.bestMs > 0 ? l.bestMs : 0};
 }
 
 // returns true if this is a new best time
-function hrSaveResult(id, stars, ms)
+function hrSaveResult(id, ms)
 {
     const old = hrSaveLevel(id), best = !old.bestMs || ms < old.bestMs;
-    hrSave.levels[id] = {stars: max(old.stars, stars), bestMs: best ? ms : old.bestMs};
+    hrSave.levels[id] = {bestMs: best ? ms : old.bestMs};
     hrSaveWrite();
     return best;
 }

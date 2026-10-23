@@ -1,5 +1,15 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Stars removed: times only
+- Owner decision: no star system; a level is scored only by its time. The target is your own best, which the ghost already replays.
+- Level data: `par` and `expert` removed from all levels. Save: each level stores only `bestMs` (an old `stars` field is ignored, so existing saves keep their times).
+- Level complete: the time counts up, then the gap to your old best pops in ("-2.0" with "Old best 8.3", or "+1.2" with "Best 6.3"). A first finish shows only the time. The fanfare for a new best plays at 0.9 s instead of after the stars.
+- Level select: tiles show the best time; a tile with no time shows its number centered. The highlight and the Play fallback go to the first level not finished yet. World cards show levels finished ("1/10 done") instead of a star total.
+- Unlock rule: `'stars'` removed; `'linear'` now means "finish the level before". GA: `level:stars` removed.
+- GDD: hats (not built yet) now unlock at 3, 6, 10, 15, 20, 25, 32 and 40 core levels finished. New open question in §14: should any hat reward speed?
+- Headless check (Chrome, 1280×720 and 800×450): first finish, new best and slower run on 1-1 all show the right gap and save the right best; Play with no `last` goes to 1-2 after 1-1 is finished. No script errors.
+- Next: unchanged (play 4-1 to 4-3).
+
 ## 2026-10-22 — Mode select: one schematic per world
 - Owner noticed: every world card showed the same hop animation. Each card now loops its own button meaning, drawn with the world's own pieces:
   - Hop: squashes while the aim arc fades in, then hops along it.

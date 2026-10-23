@@ -3,7 +3,6 @@
     a size 24 level spans x -12..12 and y -6.75..6.75. Solids are {l, r, top, bottom?, ice?, sticky?}.
     Gates are {solid: {l, r, top, bottom}, button: {x, y}}. Gate levels have a thin ceiling just under
     the HUD (top 1.5 u stays clear), so the only way past a gate is its button.
-    par / expert are placeholders from simulated runs; set them from designer runs.
     Levels 4-10 are drafts (draft: true): hidden until 1-3 have been played and the mode is tuned.
 */
 
@@ -21,7 +20,6 @@ HR_LEVELS.rocket = [
         ],
         flag: {x: 9, y: -4},
         prompt: 'Press to blast.',
-        par: 7.0, expert: 4.0,
     },
     {
         id: 'rocket-02', name: 'Step Up',
@@ -33,7 +31,6 @@ HR_LEVELS.rocket = [
             {l: 1, r: 14, top: 1},
         ],
         flag: {x: 10, y: 1},
-        par: 8.0, expert: 4.5,
     },
     {
         id: 'rocket-03', name: 'Knock Knock',
@@ -48,7 +45,6 @@ HR_LEVELS.rocket = [
             {solid: {l: 3, r: 4, top: 5, bottom: -4}, button: {x: -3, y: 2.5}},
         ],
         flag: {x: 11, y: -4},
-        par: 9.0, expert: 5.0,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -62,7 +58,6 @@ HR_LEVELS.rocket = [
             {l: 7.5, r: 15, top: -3},
         ],
         flag: {x: 12, y: -3},
-        par: 9.0, expert: 5.0,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -80,7 +75,6 @@ HR_LEVELS.rocket = [
             {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 3.9, y: 1.8}},
         ],
         flag: {x: 11, y: -4},
-        par: 10.0, expert: 6.0,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -95,7 +89,6 @@ HR_LEVELS.rocket = [
             {l: 9, r: 15, top: -4},
         ],
         flag: {x: 12, y: -4},
-        par: 10.0, expert: 6.0,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -110,7 +103,6 @@ HR_LEVELS.rocket = [
             {l: 5, r: 8.5, top: -5, sticky: true},
         ],
         flag: {x: 12, y: -1.5},
-        par: 11.0, expert: 6.5,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -128,7 +120,6 @@ HR_LEVELS.rocket = [
             {solid: {l: 3, r: 4, top: 5, bottom: -4}, button: {x: -1, y: 3}},
         ],
         flag: {x: 13, y: -2},
-        par: 12.0, expert: 7.0,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -143,7 +134,6 @@ HR_LEVELS.rocket = [
             {l: 11, r: 16, top: 1},
         ],
         flag: {x: 13.5, y: 1},
-        par: 13.0, expert: 7.5,
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -164,6 +154,5 @@ HR_LEVELS.rocket = [
             {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 3.9, y: 1.8}},
         ],
         flag: {x: 14.3, y: -2},
-        par: 15.0, expert: 9.0,
     },
 ];

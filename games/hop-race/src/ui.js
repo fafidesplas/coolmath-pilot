@@ -30,10 +30,9 @@ function hrUiAdvance(dt)
     hrScreenT += dt;
     if (hrScreen == 'complete')
     {
-        // a rising chime per star as it pops in, then a fanfare for a new best
+        // a fanfare for a new best, once the time has counted up and the gap shows
         const r = hrResult;
-        while (r.chimes < r.stars && hrScreenT >= .8 + r.chimes * .25) hrSfx.star.play(undefined, 1, 1 + r.chimes++ * .25);
-        if (r.best && !r.fanfare && hrScreenT >= 1.6) { r.fanfare = true; hrSfx.fanfare.play(); }
+        if (r.best && !r.fanfare && hrScreenT >= .9) { r.fanfare = true; hrSfx.fanfare.play(); }
     }
     if (hrPress && (hrPress.t += dt) > .09)
     {
@@ -132,19 +131,19 @@ function hrUiButtons()
 function hrPlay(versus)
 {
     // Play 1P / 2P go back to the last level played (solo or versus); a new player starts at
-    // the first level with fewer than 3 stars, in world and level order
+    // the first level not finished yet, in world and level order
     const last = hrFindLevel(hrSave.last);
     if (last && isUnlocked(last.world, last.index)) return hrStartLevel(last.world, last.index, versus);
     for (let w = 0; w < HR_WORLDS.length; w++)
         for (let i = 0; i < hrLevelsOf(w).length; i++)
-            if (isUnlocked(w, i) && hrSaveLevel(hrLevelsOf(w)[i].id).stars < 3) return hrStartLevel(w, i, versus);
+            if (isUnlocked(w, i) && !hrSaveLevel(hrLevelsOf(w)[i].id).bestMs) return hrStartLevel(w, i, versus);
     hrStartLevel(0, 0, versus);
 }
 
 function hrNextLevel(world)
 {
     for (let i = 0; i < hrLevelsOf(world).length; i++)
-        if (isUnlocked(world, i) && hrSaveLevel(hrLevelsOf(world)[i].id).stars < 3) return i;
+        if (isUnlocked(world, i) && !hrSaveLevel(hrLevelsOf(world)[i].id).bestMs) return i;
     return -1;
 }
 
@@ -241,17 +240,6 @@ function hrOutline(x, y, w, h, t, c)
     hrRect(x - w / 2 + t / 2, y, t, h, c); hrRect(x + w / 2 - t / 2, y, t, h, c);
 }
 
-function hrStar(x, y, r, c)
-{
-    const pts = [];
-    for (let i = 0; i < 10; i++)
-    {
-        const a = i * PI / 5, k = i % 2 ? r * .45 : r;
-        pts.push(vec2(Math.sin(a) * k, Math.cos(a) * k));   // screen-space polygons are y up
-    }
-    drawPoly(pts, c, 0, c, vec2(x, y), 0, false, true);
-}
-
 function hrIcon(icon, x, y, s, c)
 {
     if (icon == 'pause')
@@ -321,12 +309,9 @@ function hrDrawCard(b, w, h, focused)
     if (world.lab) hrText('LAB', b.x, b.y - h * .39, 20 * u, HR_INK);   // a feel test, not a finished world
     if (live)
     {
-        const stars = hrLevelsOf(b.card).reduce((n, l) => n + hrSaveLevel(l.id).stars, 0);
+        const done = hrLevelsOf(b.card).filter(l => hrSaveLevel(l.id).bestMs).length;
         if (!hrMenuVersus)
-        {
-            hrStar(b.x - 38 * u, b.y + h * .4, 13 * u, HR_INK);
-            hrText(`${stars}/${(world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD) * 3}`, b.x - 18 * u, b.y + h * .4, 24 * u, HR_INK, 'left');
-        }
+            hrText(`${done}/${world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK);
         hrDrawSchematic(b.card, b.x, b.y - h * .12, w * .7);
     }
     else hrText('Soon', b.x, b.y - h * .1, 28 * u, HR_INK.scale(1, .5));
@@ -495,12 +480,9 @@ function hrDrawTile(b, w, h, focused)
     }
     hrRect(b.x, b.y, w, h, HR_INK);
     if (next && !hrMenuVersus) hrOutline(b.x, b.y, w + 16 * u, h + 16 * u, 4 * u, HR_INK.scale(1, .5 + .5 * Math.sin(timeReal * 5)));
-    hrText(String(b.tile + 1), b.x, b.y - h * .17, 46 * u, HR_YELLOW);
-    if (!hrMenuVersus)
-    {
-        for (let i = 0; i < 3; i++) hrStar(b.x + (i - 1) * 30 * u, b.y + h * .16, 12 * u, i < rec.stars ? HR_YELLOW : HR_YELLOW.scale(1, .25));
-        if (rec.bestMs) hrText(hrFmt(rec.bestMs), b.x, b.y + h * .36, 20 * u, HR_YELLOW);
-    }
+    const timed = !hrMenuVersus && rec.bestMs;   // the number moves up to make room for the best time
+    hrText(String(b.tile + 1), b.x, b.y - (timed ? h * .12 : 0), 46 * u, HR_YELLOW);
+    if (timed) hrText(hrFmt(rec.bestMs), b.x, b.y + h * .27, 24 * u, HR_YELLOW);
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
@@ -615,18 +597,15 @@ function hrDrawComplete(W, H, u, y0)
 {
     const r = hrResult, t = hrScreenT;
     hrText(r.best ? 'New best!' : 'Nice.', W / 2, H * .17 + y0, 60 * u);
-    // time counts up, then the stars pop in one by one
+    // time counts up, then the gap to the old best pops in
     const shown = r.ms * hrEaseOut((t - .15) / .6);
     hrText(hrFmt(shown), W / 2, H * .34 + y0, 96 * u);
-    for (let i = 0; i < 3; i++)
+    if (r.prevMs)
     {
-        const at = .8 + i * .25, k = clamp((t - at) / .25), got = i < r.stars;
-        const pop = got ? hrEaseBack(k) : 1;
-        hrStar(W / 2 + (i - 1) * 100 * u, H * .55 + y0, 40 * u * max(.01, pop), got && k > 0 ? HR_INK : HR_INK.scale(1, .2));
+        const gap = r.ms - r.prevMs, pop = hrEaseBack(clamp((t - .8) / .25));
+        hrText(`${gap < 0 ? '-' : '+'}${hrFmt(Math.abs(gap))}`, W / 2, H * .52 + y0, 44 * u * max(.01, pop), HR_INK);
+        hrText(`${r.best ? 'Old best' : 'Best'} ${hrFmt(r.best ? r.prevMs : r.bestMs)}`, W / 2, H * .64 + y0, 24 * u, HR_INK.scale(1, .7));
     }
-    const def = hrLevelDef();
-    hrText(`Best ${hrFmt(r.bestMs)}   ·   2★ ${def.par.toFixed(1)}   ·   3★ ${def.expert.toFixed(1)}`, W / 2, H * .67 + y0, 24 * u,
-        HR_INK.scale(1, .7));
 }
 
 function hrDrawRound(W, H, u, y0)

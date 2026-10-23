@@ -5,7 +5,6 @@
     they stay out of the HUD's spots (x -2.5..2.5 at the top center, and the top right).
     Where floor runs past the flag with no pillar in reach, a thin ceiling under the HUD (top 1.5 u clear) gives
     the hook something to grab, so a player who overshoots can swing back.
-    par / expert are placeholders from simulated runs; set them from designer runs.
 */
 
 'use strict';
@@ -24,7 +23,6 @@ HR_LEVELS.grapple = [
         flag: {x: 7, y: -4},
         prompt: 'Hold to reel in. Let go to fly.',
         promptAt: {x: 0, y: -1.5},   // under the pillar, which would hide ink text at the default height
-        par: 7.0, expert: 4.0,
     },
     {
         id: 'grapple-02', name: 'Two Pillars',
@@ -37,7 +35,6 @@ HR_LEVELS.grapple = [
             {l: 3, r: 4.5, top: 9, bottom: 2},
         ],
         flag: {x: 10.5, y: -4},
-        par: 8.0, expert: 4.5,
     },
     {
         id: 'grapple-03', name: 'Let Go',
@@ -50,6 +47,5 @@ HR_LEVELS.grapple = [
             {l: 2.5, r: 15, top: 6.375, bottom: 5.875},   // ceiling: something to hook if you end up past the flag
         ],
         flag: {x: 10, y: -4},
-        par: 8.0, expert: 4.5,
     },
 ];

@@ -3,7 +3,6 @@
     a size 24 level spans x -12..12 and y -6.75..6.75. Solids are {l, r, top, bottom?}.
     Slabs are tilted bars [x0, y0, x1, y1]: the left and right ends of the top surface, 0.5 u thick.
     The flag stands on a slab; hrSlabY gives the slab's top at x, so the pole's foot sits on it.
-    par / expert are placeholders from simulated runs; set them from designer runs.
 */
 
 'use strict';
@@ -26,7 +25,6 @@ HR_LEVELS.phase = [
         flag: {x: 10.55, y: hrSlabY(HR_PHASE_SLABS.melt[0], 10.55)},   // its box reaches the corner where the drops pool
         prompt: 'Press to melt.',
         promptAt: {x: -4, y: 4},
-        par: 5.5, expert: 3.6,
     },
     {
         id: 'phase-02', name: 'Switchback',
@@ -35,7 +33,6 @@ HR_LEVELS.phase = [
         solids: [],
         slabs: HR_PHASE_SLABS.switch,
         flag: {x: 11.55, y: hrSlabY(HR_PHASE_SLABS.switch[2], 11.55)},
-        par: 17.5, expert: 12.0,
     },
     {
         id: 'phase-03', name: 'Spill',
@@ -44,6 +41,5 @@ HR_LEVELS.phase = [
         solids: [],
         slabs: HR_PHASE_SLABS.spill,
         flag: {x: 12.55, y: hrSlabY(HR_PHASE_SLABS.spill[1], 12.55)},
-        par: 11.0, expert: 7.5,
     },
 ];

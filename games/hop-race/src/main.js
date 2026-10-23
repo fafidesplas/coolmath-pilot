@@ -113,14 +113,12 @@ function hrFinishFx(p)
 
 function hrSoloFinish(p)
 {
-    const def = hrLevelDef(), ms = hrRunMs(), sec = ms / 1000;
-    const stars = sec < def.expert ? 3 : sec < def.par ? 2 : 1;
+    const def = hrLevelDef(), ms = hrRunMs();
     const prev = hrSaveLevel(def.id);
-    const best = hrSaveResult(def.id, stars, ms);
+    const best = hrSaveResult(def.id, ms);
     if (best) hrGhostSave(def.id);
-    hrResult = {ms, stars, best: best && prev.bestMs > 0, bestMs: best ? ms : prev.bestMs, chimes: 0, fanfare: false};
+    hrResult = {ms, best: best && prev.bestMs > 0, bestMs: best ? ms : prev.bestMs, prevMs: prev.bestMs, fanfare: false};
     hrGaProgress('Complete', hrWorld, hrLevelIndex, ms);
-    hrGaDesign('level:stars:' + stars, stars);
     hrGaDesign(`player:respawn:${HR_WORLDS[hrWorld].id}`, p.falls);
     if (hrIsTutorial()) hrTutorial('done', ms);
     hrRun.started = false;
