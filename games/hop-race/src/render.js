@@ -132,13 +132,13 @@ function hrDrawPlayer(p, eyeNudge = 0)
     }
     const land = hrLandSquash(p), sx = 1 + p.squash + land + p.crouch * .6 - p.pinch, sy = 1 - hrSquashY(p), size = vec2(HR_PSIZE * sx, HR_PSIZE * sy);
     const pos = vec2(p.x, p.y - (1 - sy) * HR_PSIZE / 2);
-    // lean: the top slides back away from the facing side while the bottom stays planted (a \ when facing right)
-    const lean = -p.lean * (p.dir || 1), hx = size.x / 2, hy = size.y / 2;
+    // lean: the top slides forward toward the facing side while the bottom stays planted (a / when facing right)
+    const lean = p.lean * (p.dir || 1), hx = size.x / 2, hy = size.y / 2;
     if (lean) drawPoly([vec2(-hx, -hy), vec2(hx, -hy), vec2(hx + lean, hy), vec2(-hx + lean, hy)], p.color, 0, p.color, pos);
     else drawRect(pos, size, p.color);
     const shear = y => vec2(lean * (y + hy) / size.y, y);   // offset of a point y above the center, following the lean
     drawText(p.letter, pos.add(shear(-.1 * sy)).add(vec2(-.1 * p.dir, 0)), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
-    hrDrawEye(pos.add(shear(hy - .06)).add(vec2((.2 + eyeNudge) * (p.dir || 1), 0)), p.eye, .5, hrBlinkOpen(p.blinkT));
+    hrDrawEye(pos.add(shear(hy - .06)).add(vec2((.2 + eyeNudge) * (p.dir || 1), 0)), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
 }
 
 // how open the eye is during a blink: 1 open, 0 shut; t is seconds into the blink, -1 when not blinking

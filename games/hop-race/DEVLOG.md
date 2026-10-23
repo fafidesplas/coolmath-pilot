@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: lunge leans forward and squints
+- Owner asked to flip the lean to a / (forward, into the hop) and make the eye squint a little. The top now slides toward the facing side, and the eye narrows to 65 % open at the flattest aim (`HR_HOP.squint` .35, `p.squint`), easing back when you let go. A blink still closes it fully.
+- Checked in Chrome on 1-2, frozen at 2.3 s of hold: a / with a narrowed eye on the leading top corner. No console errors.
+- Next: play it and judge both amounts.
+
 ## 2026-10-23 — Hop 1-4 marked "needs improvement"
 - Owner flagged 1-4 The Wall as needing improvement. Marked in GDD §14 (open question) and with a comment on the level in `levels/hop.js`. No change to the level yet.
 - Next: note what's wrong with it, then rework it.

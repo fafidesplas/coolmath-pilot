@@ -34,7 +34,7 @@ function hrMakePlayer(index)
 {
     const p = {index, letter: index ? 'L' : 'A',
         color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
-        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, pinch: 0, lean: 0, land: 0, landT: -1, idleT: 0, trail: [],
+        x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, pinch: 0, lean: 0, squint: 0, land: 0, landT: -1, idleT: 0, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
         falls: 0, finished: false, blinkIn: rand(1, 4), blinkT: -1};
     p.pupilKick = (vx, vy) => { p.eye.vx += vx * 8; p.eye.vy += vy * 8; };
@@ -49,7 +49,7 @@ function hrResetPlayer(p)
     p.y = hrLevel.start.y + HR_PSIZE / 2;
     p.vx = p.vy = 0;
     p.down = false;
-    p.squash = p.crouch = p.pinch = p.lean = 0;
+    p.squash = p.crouch = p.pinch = p.lean = p.squint = 0;
     p.look = undefined;
     p.landT = -1;
     p.idleT = 0;
@@ -86,7 +86,7 @@ function hrPlayerStep(p, input)
     }
     p.squash *= .85;
     if (p.landT >= 0 && (p.landT += timeDelta) > HR_LAND_T) p.landT = -1;
-    if (!p.down) { p.crouch *= .7; p.pinch *= .7; p.lean *= .7; }
+    if (!p.down) { p.crouch *= .7; p.pinch *= .7; p.lean *= .7; p.squint *= .7; }
 
     // trail while airborne
     if (!p.grounded && !p.cling && !p.finished) p.trail.push(vec2(p.x, p.y));
