@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: high hops lean back
+- Owner asked for a \ for high hops, to mirror the / lunge. Answers to my questions: build it with power × aim height, 0.25 u like the /, no carry into the jump (the launch stretch stays), and a wide, bigger eye. While charging, the lean is now `HR_HOP.lean × lunge − HR_HOP.backLean × power × aim height`, so past full charge the \ turns smoothly into the / through square as the aim drops. The eye grows up to 15 % (`HR_HOP.eyeGrow`, `p.eyeGrow`) and stays put on a backward lean, because sliding back with the top put it over the letter.
+- Checked in Chrome on 1-2: the lean builds from 0 to −0.25 u by 1.22 s (full power, aim 80°); frozen there, it reads as a \ with the big eye on the front corner and the letter visible. No console errors.
+
 ## 2026-10-23 — Hop: lunge pose carries into the jump
 - Owner asked for the / pose to last into the jump and ease back to square. A release with any lunge in it now keeps the pose (`p.lunge`, `HR_MODES.hop.easeLunge`): held for the first 35 % (`HR_HOP.lungeKeep`) of the airtime back to launch height (at least 0.3 s), then eased to square. The launch stretch is scaled down by the lunge, so a full lunge doesn't stretch up. Landing, clinging, respawning and finishing end it.
 - Checked in Chrome on 1-2 with a frame-stepped full lunge: 0.44 × 0.64 with the lean until 0.10 s, square by 0.30 s (airtime 0.32 s). No console errors.

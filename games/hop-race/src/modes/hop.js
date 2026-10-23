@@ -27,6 +27,8 @@ const HR_HOP = {
     lean:      .25,     // ...how far its top leans forward, into the hop, at the flattest aim (u)...
     squint:    .35,     // ...how much the eye narrows then...
     eyeDrop:   .08,     // ...and how far it sits lower (u)
+    backLean:  .25,     // charging toward a high hop, the top leans back by up to this much (u), with power times aim height...
+    eyeGrow:   .15,     // ...and the eye opens up to this much bigger
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 };
 
@@ -66,7 +68,10 @@ HR_MODES.hop = {
                 const a = this.aim(p), flat = p.flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
                 p.crouch = H.crouch * p.charge * (1 - flat) + H.lungeCrouch * flat;
                 p.pinch = H.pinch * flat;
-                p.lean = H.lean * flat;
+                // high hops lean back (\), flat lunges lean forward (/); past full charge one turns into the other
+                const high = p.charge * smoothStep((a.angle - H.angleLo) / (H.angleHi - H.angleLo));
+                p.lean = H.lean * flat - H.backLean * high;
+                p.eyeGrow = H.eyeGrow * high;
                 p.squint = H.squint * flat;
                 p.eyeDrop = H.eyeDrop * flat;
                 p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll hop
@@ -84,9 +89,10 @@ HR_MODES.hop = {
                 p.squash = -.3 * (1 - p.flat);   // a flat lunge doesn't stretch up
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
                 // a lunge flies in its pose, easing back over the jump's airtime (to launch height, at least .3 s)
-                p.lunge = p.flat ? {crouch: p.crouch, pinch: p.pinch, lean: p.lean, squint: p.squint, eyeDrop: p.eyeDrop,
+                p.lunge = p.flat ? {crouch: p.crouch, pinch: p.pinch, lean: max(0, p.lean), squint: p.squint, eyeDrop: p.eyeDrop,
                     t: 0, T: max(.3, 2 * a.vy / H.gravity)} : undefined;
                 if (!p.lunge) p.crouch = p.pinch = p.lean = p.squint = p.eyeDrop = 0;
+                p.eyeGrow = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
