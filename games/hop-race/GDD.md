@@ -353,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Climb 4-3 The Wall: the wall is 7 u (was 9) with two teeth (was three), flag at (12, 1). Grapple 3-3 Let Go: the ceiling past the flag is higher (y 7.1–7.9) and starts at the pillar (x −5).
 - 2026-10-23 — Rocket 2-1 Blast Off: the middle block is 3 u tall (was 4) and the flag is at x 10.25 (was 9).
 - 2026-10-23 — Versus rounds are random levels of the world instead of the same level every round; no repeats until the world has been played through.
 - 2026-10-23 — First levels made in the editor: 1-6's ceiling sits 2.5 u over the gap (was 2), 2-1 Blast Off has one 2 × 4 u block in the middle instead of two low bumps, and 2-3's gate button moved to the top left (-10.5, 4.5).

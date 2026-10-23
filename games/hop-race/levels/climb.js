@@ -57,9 +57,10 @@ HR_LEVELS.climb = [
         start: {x: -12, y: -6},
         solids: [
             {l: -15, r: -2.5, top: -6},   // ends 3.5 u short of the wall: blind swinging off the teeth drops you in
-            {l: 1, r: 15, top: 3},   // a 9 u wall: strike a tooth to pop up, or stick to the face and whip
-            ...hrClimbTeeth(102947, 1, -1, -6, 2),   // 0.8 × 0.4 at y -4.5, 1.0 × 0.4 at -1.7, 0.6 × 0.5 at 0.4
+            {l: 1, r: 15, top: 1},   // a 7 u wall: strike a tooth to pop up, or stick to the face and whip
+            {l: 0.248, r: 1, top: -4.517, bottom: -4.907},   // teeth: 0.75 × 0.4 at y -4.5, 1.0 × 0.35 at -1.7
+            {l: 0.027, r: 1, top: -1.73, bottom: -2.088},
         ],
-        flag: {x: 8, y: 3},
+        flag: {x: 12, y: 1},
     },
 ];

@@ -44,7 +44,7 @@ HR_LEVELS.grapple = [
             {l: -15, r: -9, top: -4},
             {l: -1, r: 15, top: -4},
             {l: -6.5, r: -5, top: 9, bottom: 2},
-            {l: 2.5, r: 15, top: 6.375, bottom: 5.875},   // ceiling: something to hook if you end up past the flag
+            {l: -5, r: 14.5, top: 7.875, bottom: 7.125},   // ceiling: something to hook if you end up past the flag
         ],
         flag: {x: 10, y: -4},
     },

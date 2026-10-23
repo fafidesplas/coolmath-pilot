@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Climb 4-3 shorter wall, Grapple 3-3 higher ceiling
+- Owner edits in the level editor. 4-3 The Wall: the wall is 7 u (top y 3 → 1), the flag moved from (8, 3) to (12, 1), and the top tooth went with the lost height; the two lower teeth are now plain solids instead of the `hrClimbTeeth(102947, …)` line. 3-3 Let Go: the ceiling past the flag is higher and longer (x 2.5…15 at y 5.9–6.4 → x −5…14.5 at y 7.1–7.9).
+- Not re-checked with a bot: the 4-3 numbers logged earlier (holding alone fails, 157 of 200 random runs finish) were for the 9 u wall.
+
 ## 2026-10-23 — Rocket 2-1: lower block, flag further right
 - Owner edit: Blast Off's middle block is 3 u tall (top y 0 → −1) and the flag moved from x 9 to 10.25. Owner playtest: very easy to clear, as a first Rocket level should be.
 
