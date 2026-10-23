@@ -154,4 +154,17 @@ HR_LEVELS.rocket = [
         ],
         flag: {x: 14.3, y: -2},
     },
+    {
+        id: 'rocket-11', name: 'Rapid Fire',
+        size: 28,
+        start: {x: -1.5, y: -4.5},
+        solids: [
+            {l: -14.5, r: -5, top: 8},     // tall left wall
+            {l: -7.25, r: 0.5, top: -4.5},   // the pit floor you start on
+            {l: 0, r: 6, top: 4.25},         // the tower: too tall to blast over from the floor
+            {l: 4.75, r: 14.25, top: -2},    // flag ledge
+            {l: 10.5, r: 15.25, top: 8, bottom: -3.25},   // right wall hanging over the flag ledge
+        ],
+        flag: {x: 8.75, y: -2},
+    },
 ];
