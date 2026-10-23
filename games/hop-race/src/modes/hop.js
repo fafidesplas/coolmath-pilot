@@ -23,6 +23,7 @@ const HR_HOP = {
     crouch:    .45,     // how much flatter the player gets at full charge
     lungePitch: .6,     // past full charge, the charge ticks keep climbing to this much more pitch at the flattest aim (full charge is 2x)
     pinch:     .35,     // past full charge, how much narrower (and a little taller) the player gets as the aim drops flat
+    lean:      .25,     // ...and how far its top leans back, away from the hop, at the flattest aim (u)
 };
 
 const HR_MODES = {};
@@ -61,6 +62,7 @@ HR_MODES.hop = {
                 const a = this.aim(p), flat = p.flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
                 p.crouch = H.crouch * p.charge * (1 - flat);
                 p.pinch = H.pinch * flat;
+                p.lean = H.lean * flat;
                 p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll hop
                 // ticks rise with power, then keep rising past full charge as the aim drops into the flat lunge
                 // (and fall back when it swings up again)
@@ -75,7 +77,7 @@ HR_MODES.hop = {
                 p.cling = 0;
                 p.squash = -.3;
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
-                p.crouch = p.pinch = 0;
+                p.crouch = p.pinch = p.lean = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
