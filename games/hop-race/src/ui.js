@@ -100,8 +100,8 @@ function hrUiButtons()
     {
         const y = hud * .8;
         const x = hrVersus ? W / 2 + hud * .6 : W - hud * .8;
-        add({id: 'pause', x, y, w: hud, h: hud, icon: 'pause', act: () => hrGo('paused')});
-        add({id: 'restart', x: x - hud * 1.2, y, w: hud, h: hud, icon: 'restart', act: hrRestart});
+        add({id: 'pause', x, y, w: hud, h: hud, icon: 'pause', chip: true, act: () => hrGo('paused')});
+        add({id: 'restart', x: x - hud * 1.2, y, w: hud, h: hud, icon: 'restart', chip: true, act: hrRestart});
     }
     else if (hrScreen == 'paused')
     {
@@ -278,6 +278,15 @@ function hrDrawButton(b, i)
     const focused = i == hrFocus && b.enabled !== false;
     const s = pressed ? .9 : focused ? 1.05 : 1, w = b.w * s, h = b.h * s;
     const bg = hrScreenBg();
+    if (b.icon && b.chip)
+    {
+        // in-play HUD: an ink disc with the icon cut out in the background color and a background rim,
+        // so it reads over the background and over ink level pieces alike
+        drawCircle(vec2(b.x, b.y), w * .9, HR_INK, 3 * u, bg, false, true);
+        hrIcon(b.icon, b.x, b.y, w * .85, bg);
+        if (focused) hrRect(b.x, b.y + h * .6, w * .6, 4 * u, HR_INK);
+        return;
+    }
     if (b.icon)
     {
         hrIcon(b.icon, b.x, b.y, w, HR_INK);

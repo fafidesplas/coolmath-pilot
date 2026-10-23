@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — HUD buttons readable over ink
+- Owner: the pause and restart buttons must be visible against ink (Rapid Fire's right wall and the Climb 4 draft's post reach the top of the screen under them). They are now ink discs with the icon cut out in the world's background color and a 3 px background-colored rim (`chip: true` on the playing screen's buttons in `hrUiButtons`). Over the background they read as solid ink buttons, like the filled menu buttons; over ink the icon and rim show. Menu icon buttons (back) are unchanged.
+- Checked in Chrome on Rocket 2-1 with an ink rectangle drawn under the lower half of both buttons: both halves readable. The timer and level label are still plain ink text, so they would vanish over ink too.
+
 ## 2026-10-23 — Rocket draft: Over the Top (from the owner's sketch)
 - New hidden draft `rocket-11` "Over the Top" (size 28), drawn from the owner's sketch: start on a pit floor between two steps (left) and a tall tower (right); blast up the steps to a tall left wall, then arc right over the tower to the flag ledge. The left wall stops at y 6.3, under the HUD, so the pause button stays on the background (the sketch runs it to the top edge).
 - Random-press bot (presses every 0.1–0.8 s, 150 runs, 30 s cap; it now runs the shared rocket update each frame, which the first try forgot): 2-1 finishes 109, 2-3 66, Over the Top 2–4, slowest ~16–20 s. 134 runs reach the steps, 35 get high on the left wall, 23 pass over the tower. Tower height is the knob: top 4 → 4/150, 3 → 5, 2 → 21, 1 → 39.

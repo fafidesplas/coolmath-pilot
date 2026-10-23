@@ -212,7 +212,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Mode select:** Solo / Versus toggle at the top. One card per world (the four core worlds, then any Lab worlds, marked "LAB"), each with an animated mini schematic of its button meaning, name and levels finished (solo only).
 - **Level select:** 10 tiles per world in 2 rows of 5, each with its number and best time; the first level not finished yet is highlighted. Versus uses the same grid without times.
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with the number of levels needed; tap one to put it on P1 or P2.
-- **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
+- **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right, drawn as ink discs with the icon cut out in the world's background color and a thin background-colored rim, so they read over the background and over ink level pieces alike. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
 - **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; the world-level label, pause and restart sit top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
 - **Pause:** Resume, Restart, Levels, Settings. The game pauses itself when the tab is hidden.
 - **Level complete:** time counts up, then the gap to your old best pops in ("-0.3" or "+1.2") with the best under it, "New best!" if it is one (a first finish shows only the time), a new hat if one unlocked, Next / Retry / Menu. Next is the default action (Space/Enter).
@@ -353,6 +353,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — HUD pause and restart buttons are ink discs with the icon and rim in the background color, so they stay visible over ink (levels such as Rocket 2-4 Rapid Fire and the Climb 4 draft run walls up under them).
 - 2026-10-23 — Rocket: new level Rapid Fire (`rocket-11`, made in the editor from the owner's sketch), live as 2-4: blast up a tall left wall, then over a tower to the flag.
 - 2026-10-23 — Climb 4-3 The Wall: the lower tooth sits at y −5 (was −4.5).
 - 2026-10-23 — Climb (testing): on a wall, quick presses no longer peel the cup off. A press under 0.2 s creeps the arm around the stuck cup at 2 rad/s, levering the body; a longer hold peels and whips. Floors and ceilings peel on any press, as before.
