@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: no bigger eye on high hops
+- Owner: the eye growing on the \ was too much. Removed `HR_HOP.eyeGrow`; the eye keeps its size and just looks up along the aim. The eye still stays put on a backward lean, so it doesn't cover the letter.
+
 ## 2026-10-23 — Hop: high hops lean back
 - Owner asked for a \ for high hops, to mirror the / lunge. Answers to my questions: build it with power × aim height, 0.25 u like the /, no carry into the jump (the launch stretch stays), and a wide, bigger eye. While charging, the lean is now `HR_HOP.lean × lunge − HR_HOP.backLean × power × aim height`, so past full charge the \ turns smoothly into the / through square as the aim drops. The eye grows up to 15 % (`HR_HOP.eyeGrow`, `p.eyeGrow`) and stays put on a backward lean, because sliding back with the top put it over the letter.
 - Checked in Chrome on 1-2: the lean builds from 0 to −0.25 u by 1.22 s (full power, aim 80°); frozen there, it reads as a \ with the big eye on the front corner and the letter visible. No console errors.
