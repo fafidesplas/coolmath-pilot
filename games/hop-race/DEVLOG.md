@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: charge ticks follow the lunge
+- Owner asked for the audio ramp to cover the flat lunge too. The charge ticks used to stop at full charge. Now they count charge plus the lunge amount (the same value that drives the side squeeze), so past full charge they keep rising as the aim drops flat, from 2× to 2.6× the base pitch (`HR_HOP.lungePitch`), and step back down when the aim swings up again.
+- Checked in Chrome on 1-2 with a frame-stepped 4 s hold: 8 ticks to full charge (1.1 s), a pause while the aim is near the top, 7 rising ticks to the flattest aim (about 2.05 s), then falling ticks as the aim swings back up. The top step is capped so the turn doesn't tick twice. No console errors.
+- Next: listen to it. Judge whether the pause at the top of the aim reads as "high hop" or as the sound cutting out.
+
 ## 2026-10-23 — Hop: the eye shows the aim
 - Owner asked to hint the direction with the eye. While you charge, Hop sets `p.look` to the aim direction and the pupil springs toward it, to the edge of the eye (`hrPlayerStep` in `src/player.js`; other modes don't set it). It follows the sweep, and faces left when you charge on a wall that's on your right.
 - Checked in Chrome on 1-2 with frame-stepped holds: the pupil's angle stays within 2° of the aim from 25° to 80° and back. No console errors.

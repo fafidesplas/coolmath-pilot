@@ -21,6 +21,7 @@ const HR_HOP = {
     iceMin:    2,       // ...if it was over 2 u/s; slower landings stop dead
     iceFriction: .8,    // sliding on ice slows you at this rate (1/s)
     crouch:    .45,     // how much flatter the player gets at full charge
+    lungePitch: .6,     // past full charge, the charge ticks keep climbing to this much more pitch at the flattest aim (full charge is 2x)
     pinch:     .35,     // past full charge, how much narrower (and a little taller) the player gets as the aim drops flat
 };
 
@@ -32,7 +33,7 @@ HR_MODES.hop = {
         p.grounded = true;
         p.cling = 0;
         p.dir = 1;
-        p.t = p.charge = 0;
+        p.t = p.charge = p.flat = 0;
     },
 
     aim(p)
@@ -49,19 +50,21 @@ HR_MODES.hop = {
         const canCharge = p.grounded || p.cling;
         if (canCharge)
         {
-            if (input.down && !p.down) { p.t = 0; p.charge = 0; hrEmit('hold', p); }
+            if (input.down && !p.down) { p.t = 0; p.charge = p.flat = 0; hrEmit('hold', p); }
             if (input.down)
             {
-                const before = p.charge;
+                const before = p.charge + p.flat;
                 p.t += dt;
                 p.charge = min(1, p.charge + dt / H.chargeT);
                 // squash toward the floor, deeper with more power; past full charge, as the aim sweeps back down
                 // toward a long flat hop, the squash turns into a squeeze from the sides
-                const a = this.aim(p), flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
+                const a = this.aim(p), flat = p.flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
                 p.crouch = H.crouch * p.charge * (1 - flat);
                 p.pinch = H.pinch * flat;
                 p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll hop
-                if (floor(before * 8) != floor(p.charge * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
+                // ticks rise with power, then keep rising past full charge as the aim drops into the flat lunge
+                // (and fall back when it swings up again)
+                if (floor(min(before, 1.99) * 8) != floor(min(p.charge + flat, 1.99) * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge + flat * H.lungePitch);
             }
             else if (p.down)
             {

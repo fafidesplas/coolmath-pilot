@@ -244,7 +244,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 ## 10. Audio
 | Sound | When | Character |
 |---|---|---|
-| Charge tick | While holding, rising pitch with power | Soft blip |
+| Charge tick | While holding, rising pitch with power; in Hop, past full charge it keeps rising as the aim drops into the flat lunge (up to 2.6× the base pitch) and falls back as the aim swings up | Soft blip |
 | Jump | Hop release | Upward slide |
 | Land | Landing or clinging | Low thump |
 | Ice slide | Sliding on ice | Light scrape loop, fades with speed |
@@ -351,6 +351,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Hop: the charge ticks keep rising past full charge as the aim drops into the flat lunge, matching the side squeeze.
 - 2026-10-23 — Hop: while you charge, the googly pupil looks along the launch direction, the only hint for the aim now that the arrow is gone.
 - 2026-10-23 — Hop: the aim arrow and the power bar are removed; the player's squash (flatter with power) and the new side squeeze (as the aim drops flat past full charge) are the only charge feedback.
 - 2026-10-23 — Hop: the dotted arc that previewed the whole jump is replaced by a short arrow along the launch direction (player feedback: seeing where you land took the thrill away). It grows a little with power and sits 1.3 u out so it clears the power bar.
