@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Rocket: dotted sight line
+- Owner asked: an aim line on the Rocket launcher like Grapple's. Same look (faint ink dots 0.7 u apart, fading with distance, up to about 17 u). It stops at the first solid, gates included, or at an unpressed button, which is where the rocket would explode. Rockets fly straight, so the line is exact. It hides during the 0.1 s cooldown, the same as Grapple hides it while the hook is not ready.
+- It doesn't stop at the other player in Versus, so it doesn't point the other player out as a target.
+- Headless check (Chrome, 1280×720): 2-1 and 2-3 draw it with no errors; pointing into the floor shows no dots.
+- Next: unchanged (play 4-1 to 4-3).
+
 ## 2026-10-22 — Stars removed: times only
 - Owner decision: no star system; a level is scored only by its time. The target is your own best, which the ghost already replays.
 - Level data: `par` and `expert` removed from all levels. Save: each level stores only `bestMs` (an old `stars` field is ignored, so existing saves keep their times).

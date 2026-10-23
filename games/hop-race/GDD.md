@@ -46,6 +46,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 
 ### 3.3 Rocket
 - A launcher spins around you all the time at 3 rad/s. Each shot reverses the spin direction.
+- A faint dotted sight line, as in Grapple, shows the rocket's path up to where it would explode (the first solid or unpressed button). It hides during the 0.1 s cooldown. It doesn't stop at the other player.
 - **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid, button or the other player; your own rocket flies through you. Firing gives you a small recoil of 4 u/s backwards. You can fire in the air too.
 - **Blast:** radius 4 u, pushes **every player in range** (the one who fired it and the other one) away from its center at up to 24 u/s (falling off with distance; the prototype's 30 less 20 %). Top speed 22 u/s (was 27). Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
 - **Whose blast is it:** rockets, blast rings and splash particles take their owner's color (P1 blue, P2 red), so in Versus it is always obvious whose shot is whose. Being blasted by the other player can knock you off a ledge or into a pit; watch for one player pinning the other in playtests.
@@ -343,6 +344,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Rocket gets Grapple's dotted sight line: it runs along the launcher's aim to the first solid or unpressed button, and hides during the cooldown.
 - 2026-10-22 — Stars removed (owner decision): levels are scored by time only. Par and expert times are gone from the level data. The level complete screen shows the time and the gap to your old best; tiles show the best time; world cards show levels finished. Hats unlock by core levels finished (3 to 40). The `level:stars` event and the star chime are gone. The unlock rule `'stars'` is removed; `'linear'` now means "finish the level before".
 - 2026-10-22 — Title: **Play** becomes **Play 1P** and **Play 2P**. Both go to the last level played (new save field `last`) instead of the first level under 3 stars, which is now only the fallback for a new player.
 - 2026-10-22 — Phase built (`src/modes/phase.js`) with levels 1–3: Melt, Switchback, Spill. Level 3 is "stop before the edge": the first use of the liquid → gas → solid hop. The flag's counting box reaches 1 u below the pole's foot. Built numbers in §3.5.
