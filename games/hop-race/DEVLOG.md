@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Climb: soft touch on walls (testing)
+- Owner asked: quick presses shouldn't detach the arm from a wall, to reward a soft touch where slow and steady can win. While the cup is stuck to a wall face, a press creeps the arm around the cup at `HR_CLIMB.creep` 2 rad/s, levering the body (on a wall to your right, up and in); only a hold past `HR_CLIMB.peelTime` 0.2 s peels it off and whips at full speed. If creeping would push the body into a solid, the arm holds. `peelTime = 0` brings back peel-on-press.
+- Walls only. First tried on every surface: the cup then also held on the floor, so a player who only tapped never moved (0 of 30 tap-only runs left the start).
+- Measured on 4-3's wall (cup at y −3): taps creep the body from y −3 to −1.35, where it stands on the lower tooth; a steady hold peels at 0.2 s.
+- Bot (random hold/release 0.03–0.63 s, 100 runs): 4-1 100, 4-2 98, 4-3 86 finish (before: 100, 100, 87). Holding alone: finishes 4-1 in 7.9 s, fails 4-2 and the new 7 u 4-3.
+- Blind tapping (presses 0.03–0.17 s, 50 runs) got worse, not better: 40 / 20 / 9 finish (before: 50 / 50 / 46). Before, every tap was a small whip, so mashing climbed nearly every time; now blind taps creep until the body meets the wall and then stall until you hold. Bots can't tell whether deliberate creeping feels good: it needs a person.
+- Next: play 4-1 to 4-3. Things to judge: is the creep speed right, is 0.2 s a natural line between a tap and a hold, and does the stall when the body meets the wall read clearly.
+
 ## 2026-10-23 — Climb 4-3 shorter wall, Grapple 3-3 higher ceiling
 - Owner edits in the level editor. 4-3 The Wall: the wall is 7 u (top y 3 → 1), the flag moved from (8, 3) to (12, 1), and the top tooth went with the lost height; the two lower teeth are now plain solids instead of the `hrClimbTeeth(102947, …)` line. 3-3 Let Go: the ceiling past the flag is higher and longer (x 2.5…15 at y 5.9–6.4 → x −5…14.5 at y 7.1–7.9).
 - Not re-checked with a bot: the 4-3 numbers logged earlier (holding alone fails, 157 of 200 random runs finish) were for the 9 u wall.

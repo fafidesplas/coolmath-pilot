@@ -8,7 +8,8 @@
     Let go and the arm coasts to a stop (or stops on the first surface it touches), and the head becomes
     a suction cup: as soon as it touches
     any surface (floor, wall or ceiling) it sticks and holds your whole weight, so you can perch on the
-    arm, hang from a wall or dangle under a ceiling. It lets go only when you hold again.
+    arm, hang from a wall or dangle under a ceiling. Pressing while stuck to a wall turns the arm slowly around
+    the cup, levering the body (taps inch you along); only a hold longer than peelTime pulls the cup off.
 */
 
 'use strict';
@@ -26,6 +27,8 @@ const HR_CLIMB = {
     suction:    true,   // true: a stopped head sticks on touch and never peels off; false: it peels off when pulled away (2026-10-22 grip)
     suckReach:  .05,    // a stopped head this close to a surface (u) counts as touching it
     cupR:       .34,    // radius of the suction cup drawn while stuck (u)
+    peelTime:   .2,     // while stuck to a wall, a press shorter than this keeps the cup on; holding longer peels it off (s); 0: any press peels
+    creep:      2,      // while stuck to a wall and held, the arm turns this slowly around the cup, levering the body (rad/s); 0: it holds still
 };
 
 // push-out from one solid for a circle at (x, y): {d, nx, ny}, d < 0 inside the solid
@@ -95,9 +98,15 @@ HR_MODES.climb = {
     {
         const C = HR_CLIMB, h = timeDelta / C.substeps, vy0 = p.vy;
         p.down = input.down;
-        if (p.down) p.pin = null;
+        if (p.pin)
+        {
+            // on a wall a soft press creeps on the cup and only a hold past peelTime pulls it off;
+            // on a floor or ceiling any press pulls it off (taps there would lock you in place)
+            p.pin.age += timeDelta;
+            p.pin.held = p.down ? p.pin.held + timeDelta : 0;
+            if (p.pin.held > (p.pin.nx ? C.peelTime : 0)) p.pin = null;
+        }
         p.strikeT = max(0, p.strikeT - timeDelta);
-        if (p.pin) p.pin.age += timeDelta;
         let grounded = false;
         for (let i = 0; i < C.substeps; i++) grounded = this.sub(p, input.down, h) || grounded;
         if (grounded && !p.grounded && vy0 < -6)
@@ -117,13 +126,20 @@ HR_MODES.climb = {
         const C = HR_CLIMB, x0 = p.x, y0 = p.y, a0 = p.aimA, head0 = this.head(p);
         p.vy -= C.gravity * h;
         p.x += p.vx * h; p.y += p.vy * h;
-        if (turning) p.armW = C.spin;
+        if (p.pin) p.armW = turning ? C.creep : 0;
+        else if (turning) p.armW = C.spin;
         else p.armW = C.coastTime > 0 ? max(0, p.armW - C.spin / C.coastTime * h) : 0;
         const moving = p.armW > 0;
         p.aimA -= p.armW * h;
 
         let grounded = this.solve(p, moving, head0);
-        if (moving && !p.pin && this.jammed(p))
+        if (p.pin && moving && this.jammed(p))
+        {
+            // creeping would push the body into a solid: the arm holds where it was
+            p.x = x0; p.y = y0; p.vx = p.vy = 0; p.aimA = a0;
+            grounded = this.solve(p, false, head0);
+        }
+        else if (moving && !p.pin && this.jammed(p))
         {
             // the arm is wedged: it can't turn this substep (a coasting arm stops for good)
             p.x = x0 + p.vx * h; p.y = y0 + p.vy * h; p.aimA = a0;
@@ -197,7 +213,7 @@ HR_MODES.climb = {
         const c = hrClimbPush(x, y, s), side = abs(c.nx) > abs(c.ny);
         const nx = side ? sign(c.nx) : 0, ny = side ? 0 : sign(c.ny);
         const sx = side ? (nx > 0 ? s.r : s.l) : clamp(x, s.l, s.r), sy = side ? clamp(y, s.bottom, s.top) : (ny > 0 ? s.top : s.bottom);
-        p.pin = {x, y, nx, ny, sx, sy, age: 0};
+        p.pin = {x, y, nx, ny, sx, sy, age: 0, held: 0};
         p.armW = 0;
         hrSfx.click.play(vec2(x, y), .7, .5);   // a low thwop
         p.pupilKick(0, -.1);
