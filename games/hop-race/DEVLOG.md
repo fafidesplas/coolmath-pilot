@@ -3,7 +3,7 @@
 ## 2026-10-23 — Hop: lean back into the lunge
 - Owner asked for the lunge pose to lean back like a \. With the side squeeze, the top of the player now slides back away from the hop while the bottom stays planted: a parallelogram, up to 0.25 u at the flattest aim (`HR_HOP.lean`, `p.lean`). The letter and the eye follow the lean. The player is drawn with `drawPoly` only while it leans, and with `drawRect` otherwise.
 - Checked in Chrome on 1-2, frozen at 2.3 s of hold (flattest aim): it reads as a \ with the eye on the leaning top. No console errors.
-- Next: play it and judge the amount; whether it reads on a grip wall, where the lean points away from the wall, is untested.
+- Next: play it and judge the amount; on a grip wall the top leans back toward the wall, which is untested.
 
 ## 2026-10-23 — Hop: charge ticks follow the lunge
 - Owner asked for the audio ramp to cover the flat lunge too. The charge ticks used to stop at full charge. Now they count charge plus the lunge amount (the same value that drives the side squeeze), so past full charge they keep rising as the aim drops flat, from 2× to 2.6× the base pitch (`HR_HOP.lungePitch`), and step back down when the aim swings up again.
