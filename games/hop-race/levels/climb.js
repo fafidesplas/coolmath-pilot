@@ -63,4 +63,18 @@ HR_LEVELS.climb = [
         ],
         flag: {x: 12, y: 1},
     },
+    {
+        draft: true,
+        id: 'climb-04', name: 'New Level',
+        size: 26,
+        start: {x: -10, y: 3},
+        solids: [
+            {l: -14, r: -8.25, top: 3},
+            {l: 7.25, r: 14, top: 3.75},
+            {l: 1, r: 4, top: 3, bottom: -0.25},
+            {l: -11, r: 10, top: -3.25},
+            {l: 11.75, r: 13.5, top: 8.75, bottom: 3.25},
+        ],
+        flag: {x: 10.25, y: 3.75},
+    },
 ];

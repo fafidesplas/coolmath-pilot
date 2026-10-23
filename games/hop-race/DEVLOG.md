@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Climb 4 draft from the editor
+- Owner added `climb-04` (draft, "New Level", size 26): a start ledge on the left (top 3), a safe pit floor across the middle (top −3.25), a floating block (x 1…4, y −0.25…3), the flag ledge on the right (top 3.75, flag at x 10.25) and a post on it past the flag (x 11.75…13.5, up to 8.75). Not named yet; not checked with a bot.
+
 ## 2026-10-23 — HUD buttons readable over ink
 - Owner: the pause and restart buttons must be visible against ink (Rapid Fire's right wall and the Climb 4 draft's post reach the top of the screen under them). They are now ink discs with the icon cut out in the world's background color and a 3 px background-colored rim (`chip: true` on the playing screen's buttons in `hrUiButtons`). Over the background they read as solid ink buttons, like the filled menu buttons; over ink the icon and rim show. Menu icon buttons (back) are unchanged.
 - Checked in Chrome on Rocket 2-1 with an ink rectangle drawn under the lower half of both buttons: both halves readable. The timer and level label are still plain ink text, so they would vanish over ink too.
