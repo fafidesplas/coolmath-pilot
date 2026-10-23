@@ -19,7 +19,7 @@
 ## 2. Core loop
 - **Moment (seconds):** hold to charge or aim → release (or press) to act → land, cling, swing or settle → read the next obstacle.
 - **Level (minutes):** pick a level → race your ghost to the flag → see your time and the gap to your best → Retry for a better time or Next.
-- **Meta (days):** finish levels across 4 worlds × 10 levels to unlock hats and lower your best times; bring a friend for Versus on any level.
+- **Meta (days):** finish levels across 3 worlds × 10 levels to unlock hats and lower your best times; bring a friend for Versus on any level.
 
 ## 3. Mechanics
 Units: positions and speeds are in world units (u). Each level is a 16:9 box from 24 × 13.5 u to 30 × 16.9 u, and the camera always shows the whole level (3.6). At 1280×720 that makes 1 u ≈ 43–53 px, so the 0.8 u player square is 34–43 px on screen (the prototype's 42 u wide view drew it at 24 px). The engine updates at a fixed 60 Hz. Gravity is 42 u/s² unless a mode says otherwise.
