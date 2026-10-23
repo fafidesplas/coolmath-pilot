@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: lunge pose stays low
+- Owner asked for the lunge pose to be shorter than the normal square, about 0.64 u tall. Past full charge the squash now eases from 45 % to 20 % (`HR_HOP.lungeCrouch`) instead of to nothing, and the side pinch is 0.47, so the width stays 0.52 u. The pinch no longer makes the player taller (`hrSquashY`).
+- Checked in Chrome on 1-2 with a frame-stepped hold: 1.02 × 0.44 u at full charge and highest aim, 0.52 × 0.64 u at the flattest aim, with the / lean and squint. No console errors.
+
 ## 2026-10-23 — Hop: lunge leans forward and squints
 - Owner asked to flip the lean to a / (forward, into the hop) and make the eye squint a little. The top now slides toward the facing side, and the eye narrows to 65 % open at the flattest aim (`HR_HOP.squint` .35, `p.squint`), easing back when you let go. A blink still closes it fully.
 - Checked in Chrome on 1-2, frozen at 2.3 s of hold: a / with a narrowed eye on the leading top corner. No console errors.

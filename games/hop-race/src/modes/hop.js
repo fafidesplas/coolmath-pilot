@@ -21,8 +21,9 @@ const HR_HOP = {
     iceMin:    2,       // ...if it was over 2 u/s; slower landings stop dead
     iceFriction: .8,    // sliding on ice slows you at this rate (1/s)
     crouch:    .45,     // how much flatter the player gets at full charge
+    lungeCrouch: .2,    // past full charge, the squash eases to this as the aim drops flat (.2: 0.64 u tall)...
     lungePitch: .6,     // past full charge, the charge ticks keep climbing to this much more pitch at the flattest aim (full charge is 2x)
-    pinch:     .35,     // past full charge, how much narrower (and a little taller) the player gets as the aim drops flat
+    pinch:     .47,     // ...while the sides squeeze in by this much (.47 with .2: 0.52 u wide)...
     lean:      .25,     // ...how far its top leans forward, into the hop, at the flattest aim (u)...
     squint:    .35,     // ...and how much the eye narrows then
 };
@@ -61,7 +62,7 @@ HR_MODES.hop = {
                 // squash toward the floor, deeper with more power; past full charge, as the aim sweeps back down
                 // toward a long flat hop, the squash turns into a squeeze from the sides
                 const a = this.aim(p), flat = p.flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
-                p.crouch = H.crouch * p.charge * (1 - flat);
+                p.crouch = H.crouch * p.charge * (1 - flat) + H.lungeCrouch * flat;
                 p.pinch = H.pinch * flat;
                 p.lean = H.lean * flat;
                 p.squint = H.squint * flat;

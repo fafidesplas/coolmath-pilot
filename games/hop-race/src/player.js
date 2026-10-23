@@ -16,8 +16,8 @@ function hrLandSquash(p)
     return p.land * (k < hold ? 1 - (k / hold) ** 2 : -.25 * Math.sin(PI * (k - hold) / (1 - hold)));
 }
 
-// total vertical squash (0 square, + flatter, - taller); a pinch from the sides makes you a little taller
-function hrSquashY(p) { return min(.6, p.squash + hrLandSquash(p) + p.crouch - p.pinch * .5); }
+// total vertical squash (0 square, + flatter, - taller)
+function hrSquashY(p) { return min(.6, p.squash + hrLandSquash(p) + p.crouch); }
 
 // idle glance: after 5 s standing still the pupil darts left and right, holds, then rests in the middle
 const HR_IDLE_T = 5;
