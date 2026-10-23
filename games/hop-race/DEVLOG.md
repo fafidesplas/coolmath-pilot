@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Hop: lunge pose carries into the jump
+- Owner asked for the / pose to last into the jump and ease back to square. A release with any lunge in it now keeps the pose (`p.lunge`, `HR_MODES.hop.easeLunge`): held for the first 35 % (`HR_HOP.lungeKeep`) of the airtime back to launch height (at least 0.3 s), then eased to square. The launch stretch is scaled down by the lunge, so a full lunge doesn't stretch up. Landing, clinging, respawning and finishing end it.
+- Checked in Chrome on 1-2 with a frame-stepped full lunge: 0.44 × 0.64 with the lean until 0.10 s, square by 0.30 s (airtime 0.32 s). No console errors.
+- The airtime is to launch height, so a lunge off a ledge is square before it lands lower down.
+
 ## 2026-10-23 — Hop: narrower lunge, lower eye
 - Owner: the lunge pose should be narrower, height is good, and the eye a little lower. Pinch .47 → .57, so the pose is 0.44 × 0.64 u at the flattest aim. The eye drops up to 0.08 u (`HR_HOP.eyeDrop`, `p.eyeDrop`), still following the lean.
 - Checked in Chrome on 1-2, frozen at the flattest aim. No console errors.

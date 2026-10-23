@@ -27,6 +27,7 @@ const HR_HOP = {
     lean:      .25,     // ...how far its top leans forward, into the hop, at the flattest aim (u)...
     squint:    .35,     // ...how much the eye narrows then...
     eyeDrop:   .08,     // ...and how far it sits lower (u)
+    lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 };
 
 const HR_MODES = {};
@@ -80,9 +81,12 @@ HR_MODES.hop = {
                 p.x += p.dir * .02;           // step off the wall
                 p.grounded = false;
                 p.cling = 0;
-                p.squash = -.3;
+                p.squash = -.3 * (1 - p.flat);   // a flat lunge doesn't stretch up
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
-                p.crouch = p.pinch = p.lean = p.squint = p.eyeDrop = 0;
+                // a lunge flies in its pose, easing back over the jump's airtime (to launch height, at least .3 s)
+                p.lunge = p.flat ? {crouch: p.crouch, pinch: p.pinch, lean: p.lean, squint: p.squint, eyeDrop: p.eyeDrop,
+                    t: 0, T: max(.3, 2 * a.vy / H.gravity)} : undefined;
+                if (!p.lunge) p.crouch = p.pinch = p.lean = p.squint = p.eyeDrop = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
@@ -90,7 +94,9 @@ HR_MODES.hop = {
         }
         p.down = input.down && canCharge;
 
+        if (p.grounded || p.cling) p.lunge = undefined;
         if (p.grounded) return this.slide(p);
+        if (p.lunge) this.easeLunge(p);
 
         if (p.cling)
         {
@@ -157,6 +163,14 @@ HR_MODES.hop = {
                     p.vy = 0;
                 }
             }
+    },
+
+    // the lunge pose in flight: held for lungeKeep of the airtime, then eased back to square
+    easeLunge(p)
+    {
+        const L = p.lunge, k = 1 - smoothStep(clamp(((L.t += timeDelta) / L.T - HR_HOP.lungeKeep) / (1 - HR_HOP.lungeKeep)));
+        for (const key of ['crouch', 'pinch', 'lean', 'squint', 'eyeDrop']) p[key] = L[key] * k;
+        if (!k) p.lunge = undefined;
     },
 
     // grounded on ice with speed left: slide, stop at walls, drop off edges. You can charge while sliding
