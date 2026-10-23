@@ -45,7 +45,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Ceilings** stop upward motion; you keep your sideways speed.
 
 ### 3.3 Rocket
-- A launcher spins around you all the time at 3 rad/s. Each shot reverses the spin direction.
+- A launcher spins around you all the time at 3 rad/s, always clockwise. Firing doesn't change its direction.
 - A faint dotted sight line, as in Grapple, shows the rocket's path up to where it would explode (the first solid or unpressed button). It hides during the 0.1 s cooldown. It doesn't stop at the other player.
 - **Press** to fire (cooldown 0.1 s). The rocket flies at 38 u/s and explodes on any solid, button or the other player; your own rocket flies through you. Firing gives you a small recoil of 4 u/s backwards. You can fire in the air too.
 - **Blast:** radius 4 u, pushes **every player in range** (the one who fired it and the other one) away from its center at up to 24 u/s (falling off with distance; the prototype's 30 less 20 %). Top speed 22 u/s (was 27). Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
@@ -55,7 +55,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
 
 ### 3.4 Grapple
-- Same spinning launcher (3 rad/s); it freezes while the hook is out and keeps its direction when the rope is cut (as in the prototype). Reversing the spin on each shot, as in Rocket, is behind a switch (`HR_GRAPPLE.reverseSpin`) and off while the prototype's feel is tested; see §14. A faint dotted sight line shows where the hook will go while it is ready.
+- Same spinning launcher (3 rad/s); it freezes while the hook is out and keeps its direction when the rope is cut (as in the prototype). Reversing the spin on each shot is behind a switch (`HR_GRAPPLE.reverseSpin`) and off while the prototype's feel is tested; see §14. A faint dotted sight line shows where the hook will go while it is ready.
 - **Press** to fire the hook (55 u/s, no range limit). It sticks to the first solid it touches, except no-grip surfaces (from level 6), which it bounces off. A hook that leaves the level is lost (0.3 s cooldown).
 - **Hold** to reel in: you accelerate toward the anchor at 95 u/s² up to 26 u/s along the rope; any speed you already had is kept. Sideways speed is damped (1.2/s) so you don't orbit. Within 1.1 u of the anchor you hang there.
 - **Release** cuts the rope. You keep your speed (top speed 32 u/s). This is the skill: let go at the right moment to fly.
@@ -334,7 +334,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Phase finish needs 40 of 49 drops: too strict for the younger end (9–12)? | Keep 40; if playtests show frustration, drop to 35. | Pao | Open |
 | Art direction: two-tone minimal is outside the three art families | Owner chose it over Toybox Flat (too close to an existing pastel one-button game), wind-up toys, dusk storybook, paint daubs, broken-color painting and a garden world. The team agrees, then the README lists it as a fourth family or as a Toybox Flat variant. | Team | Open |
 | P2 red makes 7 colors, one over `STANDARDS.md`'s 4–6 | Keep: no palette color works for P2 (each is a world background or the ink), and white hid the eye. Teammate agrees or proposes a merge. | Team | Open |
-| Grapple launcher: reverse the spin on each shot (as in Rocket)? | Without it, after letting go the launcher swings backward and the next pillar is rarely in reach before you fall: in 3-2 a bot never catches the second pillar in mid-air. It finishes 20 of 169 hold pairs (49 with reversal), each with one long fling from the first pillar or a second shot fired from standing. Play both; if no reversal stays, rework 3-2. | Pao | Testing no reversal |
+| Grapple launcher: reverse the spin on each shot? | Without it, after letting go the launcher swings backward and the next pillar is rarely in reach before you fall: in 3-2 a bot never catches the second pillar in mid-air. It finishes 20 of 169 hold pairs (49 with reversal), each with one long fling from the first pillar or a second shot fired from standing. Play both; if no reversal stays, rework 3-2. | Pao | Testing no reversal |
 | Climb: what should letting go do? | Decided 2026-10-22 (owner): letting go stops the arm, and a stopped head grips what it touches. Now testing a coast (the arm slows to a stop in 0.3 s, and a coasting head sticks on touch): random play finishes 5-3 far more often (112 vs 7 of 200 with a new bot), and holding alone still fails 5-2 and 5-3. Set `coastTime` to 0 for the dead stop. The first version (the head stuck to everything and turning levered you slowly) was too easy: holding finished every level. Its `letGo` switch, which let the head pass through solids after release, is gone. | Pao | Testing coast |
 | Climb 3: is a 9 u sheer wall too hard? | Yes (owner, 2026-10-22). Teeth on the wall face fixed it. Bigger teeth alone made it worse: holding alone won on 58 of 60 random layouts, because big ledges give blind strikes more to pop off. A 3.5 u pit at the foot of the wall fixed that: holding alone failed on all 40 layouts tried, so the teeth can be bigger and varied. | Pao | Done |
 | Climb: teeth re-rolled on every attempt? | No: each level's teeth come from a fixed seed. Re-rolling would break best times, the ghost and Versus fairness. If variety is wanted, a "new wall" daily or per-match seed shared by both players could work later. | Pao | Open |
@@ -344,6 +344,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-22 — Rocket: the launcher always turns clockwise; firing no longer reverses it (owner decision).
 - 2026-10-22 — Rocket gets Grapple's dotted sight line: it runs along the launcher's aim to the first solid or unpressed button, and hides during the cooldown.
 - 2026-10-22 — Stars removed (owner decision): levels are scored by time only. Par and expert times are gone from the level data. The level complete screen shows the time and the gap to your old best; tiles show the best time; world cards show levels finished. Hats unlock by core levels finished (3 to 40). The `level:stars` event and the star chime are gone. The unlock rule `'stars'` is removed; `'linear'` now means "finish the level before".
 - 2026-10-22 — Title: **Play** becomes **Play 1P** and **Play 2P**. Both go to the last level played (new save field `last`) instead of the first level under 3 stars, which is now only the fallback for a new player.

@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-22 — Rocket: the launcher always turns clockwise
+- Owner decision: firing no longer reverses the launcher. It always turns clockwise at 3 rad/s (before, it started counterclockwise and flipped on every shot). The mode select schematic already turned clockwise.
+- It still starts pointing down and back, so a press right away blasts you up and forward. After a shot you now wait for the launcher to come round again instead of it swinging back toward where it was.
+- Rocket 1–3 aren't re-checked with a bot yet: aim windows after a shot change, so play 2-1 to 2-3 to see whether any chain of shots got harder.
+- Next: unchanged (play 4-1 to 4-3), plus a quick replay of 2-1 to 2-3.
+
 ## 2026-10-22 — Rocket: dotted sight line
 - Owner asked: an aim line on the Rocket launcher like Grapple's. Same look (faint ink dots 0.7 u apart, fading with distance, up to about 17 u). It stops at the first solid, gates included, or at an unpressed button, which is where the rocket would explode. Rockets fly straight, so the line is exact. It hides during the 0.1 s cooldown, the same as Grapple hides it while the hook is not ready.
 - It doesn't stop at the other player in Versus, so it doesn't point the other player out as a target.

@@ -8,7 +8,7 @@
 
 const HR_ROCKET = {
     gravity:   42,
-    spin:      3,       // launcher rotation (rad/s)
+    spin:      3,       // launcher rotation (rad/s), always clockwise
     speed:     38,      // rocket speed (u/s)
     cooldown:  .1,
     recoil:    4,       // kick opposite the firing direction (u/s)
@@ -31,7 +31,6 @@ HR_MODES.rocket = {
         p.floor = null;
         p.dir = 1;
         p.aimA = PI * 1.25;   // start pointing down-left, so the first press pushes you up and forward
-        p.spinDir = 1;
         p.cool = 0;
         hrRockets = hrRockets.filter(r => r.owner != p);
     },
@@ -96,14 +95,13 @@ HR_MODES.rocket = {
     step(p, input)
     {
         const R = HR_ROCKET, dt = timeDelta, solids = hrLevel.solids;
-        p.aimA += R.spin * p.spinDir * dt;
+        p.aimA -= R.spin * dt;   // y is up, so a falling angle turns clockwise
         p.cool = max(0, p.cool - dt);
         if (input.pressed && p.cool <= 0)
         {
             const d = vec2(Math.cos(p.aimA), Math.sin(p.aimA));
             hrRockets.push({x: p.x + d.x * .6, y: p.y + d.y * .6, vx: d.x * R.speed, vy: d.y * R.speed, owner: p});
             p.cool = R.cooldown;
-            p.spinDir = -p.spinDir;   // each shot reverses the launcher's rotation
             p.vx -= d.x * R.recoil;
             p.vy -= d.y * R.recoil;
             hrSfx.fire.play();
