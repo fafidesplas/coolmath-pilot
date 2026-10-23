@@ -164,7 +164,7 @@ HR_MODES.rocket = {
         p.crouch = p.floor && p.floor.sticky ? .25 : 0;   // flattened on sticky floors
     },
 
-    // launcher: a short ink barrel circling the player, faded while cooling down, with a faint dotted
+    // launcher: a short barrel in the player's color (so it shows against ink floors) circling the player, faded while cooling down, with a faint dotted
     // sight line (as in Grapple) to where the rocket would explode: the first solid or unpressed button
     draw(p)
     {
@@ -178,7 +178,7 @@ HR_MODES.rocket = {
                 if (hrLevel.gates.some(g => !g.pressed && isOverlapping(q, vec2(.1), vec2(g.button.x, g.button.y), vec2(1.1)))) break;
                 drawRect(q, vec2(.1), HR_INK.scale(1, max(.08, .45 - i * .018)));
             }
-        const c = HR_INK.scale(1, p.cool > 0 ? .4 : 1);
+        const c = p.color.scale(1, p.cool > 0 ? .4 : 1);
         drawRect(pos.add(d.scale(.78)), vec2(.5, .2), c, -p.aimA);
     },
 

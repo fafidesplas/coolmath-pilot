@@ -1,7 +1,7 @@
 # Hop Race — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-22
+**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-23
 
 > One button, four meanings: hold and release to hop, blast, swing or climb your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
@@ -38,10 +38,10 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 ### 3.2 Hop (merges the prototype's Classic and Wall Jump)
 - **Hold** (only while grounded or clinging): power charges from 0 to full in 1.1 s; the aim angle sweeps between 18° and 80° at 2.6 rad/s (a full up-down cycle ≈ 2.4 s). A dotted arc previews the jump and a power bar above the player fills.
 - **Release:** jump at 9 u/s (no charge) up to 20 u/s (full charge; the prototype used 25 in its 42 u level) along the aim angle, in the facing direction.
-- **You only move by jumping.** Landing stops you dead (no sliding), except on ice. On the ground you face right. Hop stays precise on purpose: you land where you aimed.
+- **You only move by jumping.** Landing stops you dead (no sliding), except on ice. On the ground you face right, except against a grip wall on your right, where you face away from it. Hop stays precise on purpose: you land where you aimed.
 - **Plain walls bounce:** hitting one mid-air reverses your horizontal speed at 35 %.
-- **Ice floor** (from level 5): landing on ice with more than 2 u/s of horizontal speed keeps 80 % of it, and you slide with a friction of 0.8/s. You can charge and jump while sliding; the jump replaces your slide speed. Sliding off an edge drops you. A steep, soft landing barely slides.
-- **Grip walls** (from level 7): hitting one mid-air makes you cling. You stop, turn to face away, and slide down at up to 3 u/s. Charge and jump off as normal. If the wall ends below you, you let go and fall.
+- **Ice floor** (from level 5): landing on ice with more than 2 u/s of horizontal speed keeps 80 % of it, and you slide with a friction of 0.8/s. You can charge and jump while sliding; the jump replaces your slide speed. Sliding off an edge drops you. A steep, soft landing barely slides. Built (`HR_HOP.iceKeep`, `iceMin`, `iceFriction`): walls stop a slide dead, and sliding onto a floor that isn't ice stops you dead.
+- **Grip walls** (from level 7): hitting one mid-air makes you cling. You stop, even if you hit it moving up fast (no riding up the wall), turn to face away, and slide down at up to 3 u/s, or at 0.5 u/s while you charge: holding grips the wall and slows the slide (`HR_HOP.clingChargeSlide`; 0 holds you still, 3 is no slower). Charge and jump off as normal. If the wall ends below you, you let go and fall. Landing at the foot of a grip wall turns you away from it, so a jump from there crosses the shaft.
 - **Ceilings** stop upward motion; you keep your sideways speed.
 
 ### 3.3 Rocket
@@ -125,13 +125,13 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Icy floor | You slide after landing (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 6 | Block hanging from the top |
 | Grip wall | You cling to it and slide down (Hop) | Hop 7 | Dark block with a sawtooth face |
-| Launcher | Spins around you; aims rockets and the hook | Rocket 1, Grapple 1 | Short ink barrel circling the player |
+| Launcher | Spins around you; aims rockets and the hook | Rocket 1, Grapple 1 | Short barrel in the player's color circling the player |
 | Rocket and blast | Pushes every player in range; explodes on the other player | Rocket 1 | Small capsule, ring and splash particles in the owner's color |
 | Rocket button | A blast near it opens its gate | Rocket 3 | White target on a dark mount; becomes a white check mark when pressed |
 | Gate | Solid until its button is pressed, then slides up | Rocket 3 | Barred block (dark bars, background between), linked to its button by a dotted line |
 | Pit | No floor; falling in sends you back to the start | Hop 1 (gaps), Rocket 6 | Gap in the floor |
 | Sticky floor | Stops you dead; blasts push you at 50 % (Rocket) | Rocket 7 | Dark block with a bumpy, rounded top edge; player squashes flat on it |
-| Hook and rope | Sticks to solids; reel in while held | Grapple 1 | Ink rope line with a small white hook tip |
+| Hook and rope | Sticks to solids; reel in while held | Grapple 1 | Rope line and hook in the player's color, with a small white hook tip |
 | Hook anchor surface | Any solid; hanging pillars are the usual target | Grapple 1 | Pillars hang from the ceiling |
 | No-grip surface | The hook bounces off; it does not stick | Grapple 6 | Hollow block (dark outline, background inside) |
 | Slab | Tilted platform in Phase | Phase 1 | Thin tilted dark bar |
@@ -152,17 +152,18 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
 - **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
 - **Times, not stars (solo only):** a level is scored only by its time. There are no stars, par or expert times: the target is your own best time, which the ghost replays. Falling only costs time.
-- **First 10 levels (World 1 — Hop):**
+- **World 1 — Hop (all 10 built in `levels/hop.js`):**
   1. **First Hop:** flat ground, one 3 u gap, flag on the far side. Prompt: "Hold A then release to Jump!"
   2. **Stepping Stones:** three gaps getting wider (3, 4, 5 u) between low platforms.
   3. **Up We Go:** a staircase of three rising platforms, the last one floating over a pit; needs steeper aims.
-  4. **The Wall:** a 4 u wall in the middle; jump too flat and it bounces you back.
-  5. **Thin Ice:** land on a long ice floor and slide to the flag; a wall at the end stops you safely. Steep landings slide less.
-  6. **Low Ceiling:** a hanging wall over a gap forces a low, flat jump under it.
-  7. **Grip:** a short shaft between two grip walls (3 u apart, 5 u tall) to an upper ledge; zigzag up.
-  8. **Which Wall?:** a plain wall and a grip wall side by side; one bounces, one clings.
-  9. **Slide and Climb:** an ice ledge that ends at a pit, then a grip shaft up to the flag.
-  10. **The Gauntlet:** a gap, an ice landing, a low ceiling and a grip shaft in one run.
+  4. **The Wall:** one long floor (no pits) with a 2 u wall to learn the bounce on, then a 4 u wall: jump too flat and it bounces you back. Clearing it takes a near-full, steep hop; landing on top of either wall is fine.
+  5. **Thin Ice:** hop from a high ledge over a pit onto a long ice floor; the slide carries you to a 1 u bump that stops it, then more ice slides you to the flag. Steep landings slide less.
+  6. **Low Ceiling:** a 5.5 u gap with a block hanging from the top 2 u over it, so a high arc bonks and drops into the pit; the gap needs a long hold that sweeps back down to a flat, strong jump. Then a 3 u gap up a 2 u step to the flag.
+  7. **Grip:** a shaft 3 u across between a hanging grip wall (hop in under it, 1.7 u of room) and the 5 u grip face of the flag's ledge; zigzag up.
+  8. **Which Wall?:** a cliff whose foot is plain and whose top half is grip, with a floating grip pillar 3 u in front of it. Jump at the cliff too low and the plain foot bounces you back; high enough and the grip half holds you, then zigzag between it and the pillar to the top.
+  9. **Slide and Climb:** a hop onto an ice ledge that slides you toward a 3.5 u pit; jump while sliding (the slide's speed carries a low hop across), under a hanging grip wall, then climb a grip shaft to the flag.
+  10. **The Gauntlet:** a gap, an ice landing that slides you under a low ceiling toward a 3 u gap, then a grip shaft (hop in under a hanging grip wall) to the flag.
+  - **Bot check** (`tools/hop-bot.js`: every hold length from every spot you can stand or cling): every level finishes and none has a dead end. Fastest bot runs, without the 0.5 s pause per hop a person needs: 1 3.6 s, 2 4.9, 3 6.6, 4 5.0, 5 3.7, 6 5.7, 7 6.0, 8 7.0, 9 6.1, 10 6.8. The tightest hops on the bot's route: 1-3 13 of 163 hold lengths, 1-4 (over the 4 u wall) 17, 1-9 10. Climbing is the only way up: with the grip walls turned plain, the bot can't finish 1-7 to 1-10.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket (built; 4–10 are drafts, hidden until 1–3 are played and the mode is tuned):** 1 **Blast Off**: flat floor with two low bumps; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
   - **Grapple (1–3 built; 4–10 still an outline):** 1 **Swing By**: one pillar over a 3 u pit's far edge; prompt "Hold to reel in. Let go to fly." (placed under the pillar) · 2 **Two Pillars**: a 14 u pit, swing from one pillar to the next · 3 **Let Go**: one pillar, an 8 u pit; the later you let go, the farther you fly · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5). Pillars hang from the top of the level box and stay out of the HUD (x −2.5…2.5 at the top center, and the top right). Where floor runs past the flag with no pillar in reach (1 and 3), a thin ceiling under the HUD runs from x 2.5 to the right wall, so a player who overshoots can hook it and swing back (otherwise only the wall and floor are in reach, and you were stuck).
@@ -225,10 +226,10 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Palette:** 7 colors in all, at most 5 on screen at once (one more than the 4–6 in `STANDARDS.md`; see §14). Climb shares Rocket's coral (§14). Yellow is Hop's and also the "home" color of the title and menus.
   | Hex | Role |
   |---|---|
-  | `#1D1A22` | Ink: every solid, googly eye pupils, text, HUD, aim dots, power bar, launcher, rope |
+  | `#1D1A22` | Ink: every solid, googly eye pupils, text, HUD, aim dots, power bar |
   | `#FFFFFF` | Googly eyes, player letters, checkered flag cells, ice hatching, buttons, hook tip, confetti |
-  | `#2E5BFF` | Player 1 (and P1's rockets, blasts, drops and gas) |
-  | `#E5262B` | Player 2 (and P2's rockets, blasts, drops and gas) |
+  | `#2E5BFF` | Player 1 (and P1's launcher, rockets, blasts, rope, hook, drops and gas) |
+  | `#E5262B` | Player 2 (and P2's launcher, rockets, blasts, rope, hook, drops and gas) |
   | `#FFC94A` | Background, World 1 Hop; title and menus |
   | `#FF8C69` | Background, World 2 Rocket and World 4 Climb |
   | `#7FD1C7` | Background, World 3 Grapple |
@@ -351,6 +352,13 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-10-23 — Fixed: jumping from some floors teleported you to the floor's left side (and onto its face if it was grip, as on 1-9's top ledge). Rounding put your feet a hair inside the floor (1.4 − 0.4 = 0.9999999999999999), so takeoff treated it as a wall. Hop's wall check now ignores the floor you stand on, as Rocket's and Grapple's already did.
+- 2026-10-23 — Grip walls: the slide while charging drops from 1.5 to 0.5 u/s (owner: climbing took too many wall jumps). From the 1-7 test cling, about 32 of 50 hold lengths climb (26 at 1.5).
+- 2026-10-23 — Grip walls stop you on contact, even moving up fast: a hard launch used to ride up the whole wall (owner: wall climbing should be the only way). You face away from a grip wall you land against, so a jump from its foot crosses the shaft instead of clinging straight back on. With grip walls turned plain, the bot can't finish 1-7 to 1-10.
+- 2026-10-23 — Grip walls: charging slows your slide to 1.5 u/s instead of stopping it (owner: holding still was too easy). From a cling in 1-7, 26 of 50 hold lengths climb (39 when holding still, 7 with the full 3 u/s slide), the earliest at 0.45 s. `HR_HOP.clingChargeSlide` replaces `gripWhileCharging`.
+- 2026-10-23 — Grip walls hold you still while you charge (owner: "I slide down before I can climb up"). Before, you slid at up to 3 u/s while charging, so only holds of 0.7–0.9 s gained height in a 3 u shaft (3 of 25 tried); now 13 of 25 cling higher from 0.3 s on, and 7 more land on top of the wall. Behind `HR_HOP.gripWhileCharging`.
+- 2026-10-23 — Hop 4–10 built (The Wall, Thin Ice, Low Ceiling, Grip, Which Wall?, Slide and Climb, The Gauntlet), all checked by a new bot (`tools/hop-bot.js`): every level finishes, no dead ends. Hop's ice is built (it was only drawn before): walls and non-ice floors stop a slide. Which Wall? changed from the outline: a cliff with a plain foot and a grip top half, plus a grip pillar to zigzag on, because bouncing off a plain wall (35 %) can't climb a shaft.
+- 2026-10-22 — Launcher, rope and hook take the player's color instead of ink, so they stay visible when they cross an ink floor or pillar (a launcher pointing down used to vanish into the floor). Rockets and blasts were already in the owner's color.
 - 2026-10-22 — Climb grows into World 4 (owner decision): v1 is Hop, Rocket, Grapple and Climb, 40 levels again, so the hat thresholds stand (§14 closed). Climb's "LAB" tag is gone and its levels count toward hats; 4–10 are still to outline. Its GA id stays `world05`. It keeps Rocket's coral for now (§14). No Lab worlds are running.
 - 2026-10-22 — Phase rejected (owner: "very weak"). Hidden in the game with `hidden: true` in `HR_WORLDS`; code, levels and §3.5 kept for reference. v1 is three worlds, 30 levels. The HUD numbers worlds as shown (Climb is now "4-x"). New §13 list, Rejected modes; hat thresholds to rebalance (§14).
 - 2026-10-22 — Grapple: the launcher turns clockwise, like Rocket's; no reversal on firing (owner decision, §14 closed).

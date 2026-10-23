@@ -1,5 +1,59 @@
 # Hop Race — devlog
 
+## 2026-10-23 — Fix: takeoff teleported you onto the wall
+- Owner, on 1-9's top ledge: jumping teleported the player back onto the grip wall. Cause: standing on a top at y 1, your center is 1 + 0.4 = 1.4, and 1.4 − 0.4 = 0.9999999999999999, so on the takeoff frame Hop's wall check found your feet inside the floor, pushed you out its left side, and the grip face caught you. Reproduced: every hold from x 7.8 ended at x 6.6, clinging.
+- Fix: Hop's wall check uses the slightly short box (`hrOverlapSolid(..., .1)`) that Rocket and Grapple already used "so the floor we rest on doesn't count".
+- Checks (Chrome): the same jumps now go forward. A jump from every standable spot in 1-1 to 1-10 (840, every 0.25 u): none is pushed backward on takeoff. Bot, all 10: all finish, no dead ends; 1-9 is 6.1 s (was 6.8, the glitch cost the bot time there); 1-7 to 1-10 still can't be finished with their grip walls turned plain.
+
+## 2026-10-23 — Grip walls: 0.5 u/s slide while charging
+- Owner: climbing took too much work (too many wall jumps). Of the options (steep aim on walls, ledge grab, keeping some upward speed, a slower slide, shorter climbs) the owner picked the slower slide: `HR_HOP.clingChargeSlide` 1.5 → 0.5 u/s. Earlier measurement from the 1-7 test cling: 32 of 50 hold lengths climb at 0.5 (26 at 1.5, 39 at 0).
+- Bot, 1-7 to 1-10: all finish, no dead ends (6.0, 7.0, 6.8, 6.8 s); with grip walls turned plain none can be finished.
+- Still open if climbs feel long: start the aim steep on walls, or a ledge grab near the top.
+
+## 2026-10-23 — No riding up grip walls
+- Owner: launching into a grip wall hard enough slid you up the whole wall. The cling kept your upward speed and only slowed it at 12 u/s², so arriving at 15 u/s carried you about 9 u. Now a cling stops you (upward speed 0), as GDD §3.2 already said.
+- That alone would trap you at the foot of a grip wall on your right: you always faced right on the ground, so every jump clung straight back on at floor height and dropped. Now landing against a grip wall turns you away from it (plain walls don't, so you can still hop over a bump you slid into).
+- Checks (Chrome): the highest cling from one jump off 1-7's shaft floor is y −0.2, under the ledge top (0); after sliding down to the foot of the right wall you face left. Bot, 1-7 to 1-10: all finish, no dead ends (6.4, 7.5, 7.6, 7.0 s); with every grip wall turned plain, none of the four can be finished, so climbing is the only way.
+- 1-7 and 1-9 need only one cling: cling to the far wall, then hop onto the top of the hanging grip wall. If they should take a real zigzag, the hanging walls can be made lower than the ledge.
+
+## 2026-10-23 — Grip walls: a slower slide while charging
+- Owner: holding still while charging was too easy. Now charging slows the slide to 1.5 u/s (half the normal 3) instead of stopping it: `HR_HOP.clingChargeSlide` (0 = hold still, 3 = no slower) replaces `gripWhileCharging`.
+- From a cling in 1-7, 50 hold lengths (0.05–2.5 s), holds that land higher or on top of the wall: 0 u/s 39 (from 0.30 s, best +2.4 u) · 0.5 32 · 1 29 · **1.5 26 (from 0.45 s, best +2.4 u)** · 2 18 (from 0.50 s, best +2.1 u) · 3 7 (from 0.65 s, best +1.1 u). If 1.5 still feels easy, 2 is the next step.
+- Bot, 1-7 to 1-10: all finish, no dead ends; 6.2, 7.1, 7.6 and 6.6 s. 1-1 to 1-6 have no grip walls.
+- Next: play 1-7 to 1-10 again.
+
+## 2026-10-23 — Grip walls hold you while you charge
+- Owner, playing 1-7: "I can't reliably climb the walls fast enough, I slide down before I can climb up." Measured from a cling 3 u across from the other wall (1-7), trying holds of 0.1–2.5 s: sliding while charging (3 u/s), only 0.7–0.9 s gained height (3 of 25, at most +0.9 u); longer holds slid off the wall. The aim starts flat and reaches steep only after about 1 s, so the slide ate the climb. The bot climbed because its timing is exact.
+- Now the wall holds you still while you hold the button; you slide only when you let go of it. Same test: 13 of 25 cling higher (+0.1 to +2 u, from 0.3 s), 7 more (0.8–1.4 s) land on top of the wall. Switch: `HR_HOP.gripWhileCharging` (false = the old slide).
+- Bot re-run, all 10 Hop levels: all finish, no dead ends. Changed: 1-7 5.8 s (was 6.6), 1-8 6.7 (7.4), 1-9 6.5 (7.6), 1-10 6.5 (6.7); the climbs in 1-7 and 1-8 now take 40–60 of 163 hold lengths.
+- Next: play 1-7 to 1-10 again with the grip.
+
+## 2026-10-23 — Hop 4–10 built, with a level bot
+- Hop's ice was drawn but did nothing: landing on it stopped you dead. Now it follows GDD §3.2: a landing over 2 u/s keeps 80 % of it, the slide slows at 0.8/s, you can charge while sliding, walls stop a slide, and sliding off an edge drops you (`HR_HOP.slide`).
+- New `tools/hop-bot.js` (debug only, not in `index.html`): from every spot you can stand or cling, tries every hold length (0.13–2.8 s, after waits of 0, 0.2, 0.5 and 1 s for slides) and follows each jump. It reports the fastest route (each hop costs a 0.5 s pause so it can't win by tapping), how many hold lengths make each hop, and dead ends.
+- Levels 4–10 as in GDD §6. Bot results (s is the bot's play time; "tightest" is the fewest hold lengths of 163 that make a hop on the route):
+
+  | Level | Bot | Hops | Tightest | Dead ends |
+  |---|---|---|---|---|
+  | 1-4 The Wall | 5.0 | 4 | 17 | 0 |
+  | 1-5 Thin Ice | 3.7 | 2 | 87* | 0 |
+  | 1-6 Low Ceiling | 5.7 | 5 | 60* | 0 |
+  | 1-7 Grip | 6.6 | 6 | 47 | 0 |
+  | 1-8 Which Wall? | 7.4 | 7 | 31 | 0 |
+  | 1-9 Slide and Climb | 7.6 | 6 | 9 | 0 |
+  | 1-10 The Gauntlet | 6.7 | 7 | 29 | 0 |
+
+  \* not counting the last hop: the bot finishes with a long leap at the flag box that only a few hold lengths make, but landing short of the flag and hopping again is easy.
+- Design changes found by the bot: Low Ceiling's gap went from 4 to 5.5 u and its ceiling from 2.2 to 2 u, because 88 of 163 hold lengths made it under. Which Wall?'s first version (a plain wall across a shaft from a grip wall) can't be finished: a 35 % bounce off a plain wall never climbs. It is now a cliff with a plain foot and a grip top half, with a grip pillar in front.
+- Found and kept: at the foot of a grip wall on your right, every jump goes into the wall and clings higher, because you always face right on the ground. It reads as the way a climb starts (GDD §3.2).
+- Checked in Chrome at 1512×750: all seven levels draw cleanly; the top 1.5 u stays clear for the HUD.
+- Next: play 1-4 to 1-10 cold. Bot times are not human times; the GDD's 8–20 s first clean run needs a person.
+
+## 2026-10-22 — Launcher, rope and hook in the player's color
+- Owner: the launcher disappeared when it pointed into the floor, because it was ink on ink. The barrel (Rocket and Grapple), the rope and the hook ring now use the player's color; the hook keeps its white center, and the barrel still fades while cooling down. Rockets and blasts were already in the owner's color. The dotted sight lines stay ink: they stop at the first solid, so they never sit on ink.
+- Checked in Chrome (1512×806): 2-1 Versus with both launchers pointing into the floor (blue and red both show); 3-1 with the hook stuck under the first pillar (rope and hook show). No console errors.
+- Next: unchanged (outline Climb 4–10).
+
 ## 2026-10-22 — Climb grows into World 4
 - Owner decision: Climb is a core world, replacing the rejected Phase. `lab: true` is off its `HR_WORLDS` entry, so the card loses the "LAB" tag and shows "x/10 done" like the other worlds; 4–10 show as not built yet. Its GA id stays `world05`; the HUD already reads "4-x".
 - GDD: v1 is four worlds, 40 levels, so the hat thresholds (3 … 40) stand and the rebalance question is closed. New §14 question: Climb shares Rocket's coral; keep it or move it to yellow.

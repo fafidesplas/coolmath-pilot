@@ -160,8 +160,9 @@ HR_MODES.grapple = {
         if (abs(p.vx) > 1) p.dir = sign(p.vx);
     },
 
-    // launcher: a short ink barrel circling the player, with a faint dotted sight line up to the first
-    // solid while the hook is ready; the rope is an ink line with a small white hook tip
+    // launcher: a short barrel circling the player, with a faint dotted sight line up to the first
+    // solid while the hook is ready; the rope is a line with a small white hook tip. Barrel, rope and
+    // hook take the player's color, so they show against ink floors and pillars
     draw(p)
     {
         if (p.finished) return;
@@ -169,8 +170,8 @@ HR_MODES.grapple = {
         if (p.hook)
         {
             const tip = vec2(p.hook.x, p.hook.y);
-            drawLine(pos, tip, .09, HR_INK);
-            drawCircle(tip, .32, HR_INK);
+            drawLine(pos, tip, .09, p.color);
+            drawCircle(tip, .32, p.color);
             drawCircle(tip, .18, HR_WHITE);
         }
         else if (p.cool <= 0)
@@ -180,7 +181,7 @@ HR_MODES.grapple = {
                 if (hrLevel.solids.some(s => q.x > s.l && q.x < s.r && q.y > s.bottom && q.y < s.top)) break;
                 drawRect(q, vec2(.1), HR_INK.scale(1, max(.08, .45 - i * .018)));
             }
-        const c = HR_INK.scale(1, p.cool > 0 && !p.hook ? .4 : 1);
+        const c = p.color.scale(1, p.cool > 0 && !p.hook ? .4 : 1);
         drawRect(pos.add(d.scale(.78)), vec2(.5, .2), c, -p.aimA);
     },
 };

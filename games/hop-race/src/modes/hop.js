@@ -16,6 +16,10 @@ const HR_HOP = {
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
     clingSlide: 3,      // top slide speed down a grip wall (u/s)
     clingAccel: 12,
+    clingChargeSlide: .5,      // slower slide while you charge on a grip wall (u/s): 0 holds you still, 3 is no slower
+    iceKeep:   .8,      // landing on ice keeps 80 % of your horizontal speed...
+    iceMin:    2,       // ...if it was over 2 u/s; slower landings stop dead
+    iceFriction: .8,    // sliding on ice slows you at this rate (1/s)
     crouch:    .45,     // how much flatter the player gets at full charge
 };
 
@@ -70,13 +74,13 @@ HR_MODES.hop = {
         }
         p.down = input.down && canCharge;
 
-        if (p.grounded) return;
+        if (p.grounded) return this.slide(p);
 
         if (p.cling)
         {
-            // slide slowly down the wall; let go if the wall ends
+            // slide slowly down the wall (slower while charging: the wall grips); let go if the wall ends
             p.vx = 0;
-            p.vy = max(-H.clingSlide, p.vy - H.clingAccel * dt);
+            p.vy = max(-(p.down ? H.clingChargeSlide : H.clingSlide), p.vy - H.clingAccel * dt);
             const px = p.x + p.cling * .06;
             if (!solids.some(s => hrOverlapSolid(px, p.y, s))) p.cling = 0;
         }
@@ -85,7 +89,7 @@ HR_MODES.hop = {
 
         p.x += p.vx * dt;
         for (const s of solids)
-            if (hrOverlapSolid(p.x, p.y, s))
+            if (hrOverlapSolid(p.x, p.y, s, .1))   // slightly short so the floor we take off from doesn't count
             {
                 const side = p.vx > 0 ? 1 : -1;
                 p.x = side > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
@@ -94,7 +98,7 @@ HR_MODES.hop = {
                     p.cling = side;
                     p.dir = -side;          // turn to face away from the wall
                     p.vx = 0;
-                    p.vy = max(p.vy, -H.clingSlide);
+                    p.vy = clamp(p.vy, -H.clingSlide, 0);   // you stop: no riding up the wall on a hard launch
                     p.t = p.charge = 0;
                     p.squash = .2;
                     p.pupilKick(side * .15, 0);
@@ -117,11 +121,15 @@ HR_MODES.hop = {
                     p.y = s.top + HR_PSIZE / 2;
                     p.grounded = true;
                     p.cling = 0;
-                    p.dir = 1;
+                    // you face right on the ground, but away from a grip wall you land against, so a jump
+                    // from its foot crosses the shaft instead of clinging back onto it
+                    p.dir = solids.some(o => o.grip && hrOverlapSolid(p.x + .05, p.y, o, .1)) ? -1 : 1;
                     p.pupilKick(0, max(-.3, p.vy * .015));
                     p.land = min(.35, .12 + -p.vy * .012);   // harder landings squeeze more
                     p.landT = 0;
-                    p.vx = p.vy = 0;
+                    // GDD §3.2: you land where you aimed, except on ice, which keeps most of a fast landing
+                    p.vx = s.ice && abs(p.vx) > H.iceMin ? p.vx * H.iceKeep : 0;
+                    p.vy = 0;
                     p.t = p.charge = 0;
                     hrSfx.land.play();
                     hrDust(p.x, p.y - HR_PSIZE / 2);
@@ -133,6 +141,28 @@ HR_MODES.hop = {
                     p.vy = 0;
                 }
             }
+    },
+
+    // grounded on ice with speed left: slide, stop at walls, drop off edges. You can charge while sliding
+    slide(p)
+    {
+        if (!p.vx) return;
+        const H = HR_HOP, dt = timeDelta, solids = hrLevel.solids, foot = p.y - HR_PSIZE / 2;
+        p.vx *= Math.exp(-H.iceFriction * dt);
+        if (abs(p.vx) < .05) return p.vx = 0;
+        p.x += p.vx * dt;
+        for (const s of solids)
+            if (hrOverlapSolid(p.x, p.y, s, .1))
+            {
+                p.x = p.vx > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;   // walls stop a slide
+                p.pupilKick(sign(p.vx) * .2, 0);
+                hrSfx.land.play(undefined, .5, 1.3);
+                return p.vx = 0;
+            }
+        const under = solids.filter(s => p.x + HR_PSIZE / 2 > s.l && p.x - HR_PSIZE / 2 < s.r && abs(s.top - foot) < .02);
+        if (!under.length) { p.grounded = false; p.vy = 0; return; }   // slid off the edge
+        if (!under.some(s => s.ice)) return p.vx = 0;                  // off the ice: stop dead
+        if (abs(p.vx) > 2 && rand() < .3) hrSparkle(p.x, foot);
     },
 
     draw(p)
