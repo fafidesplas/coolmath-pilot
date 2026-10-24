@@ -16,6 +16,9 @@ const MAX_SLOWDOWN = +new URLSearchParams(location.search).get('slowdown') || 1.
 // with no throttle the player's forward drag drops to this fraction, so boats coast a long way and
 // stopping (reverse or anchor) is the skill. 1 = no extra drift. Try others with ?coast=.6
 const COAST_DRAG = +new URLSearchParams(location.search).get('coast') || .3;
+// every boat's engine power is multiplied by this, which raises top speed by the same factor.
+// 1 = the speeds in boats.js. Try others with ?speed=1.2
+const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -111,7 +114,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
         { dragF:t.dragF/slowdown, dragS:t.dragS/slowdown, dragA:t.dragA/slowdown, kind, inertiaScale:k3*k*k });
     b.type = t;
     b.k = k; b.slowdown = slowdown; b.vs = k/slowdown;
-    b.power = t.power * k3*k / (slowdown*slowdown);
+    b.power = SPEED * t.power * k3*k / (slowdown*slowdown);
     b.turn = t.turn / (k*slowdown);
     b.wash = t.wash / (slowdown*slowdown);
     b.color = color || t.color;
