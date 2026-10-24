@@ -283,7 +283,7 @@ function boxUnion(a, b) { return { x0:Math.min(a.x0, b.x0), y0:Math.min(a.y0, b.
 // (more for small, quick boats); the slip may be off screen, an arrow at the edge points to it
 function cameraGoal()
 {
-    const lens = boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown;
+    const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.type.view || 1);
     const minW = boatSize(player) * lens, pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
     let box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);

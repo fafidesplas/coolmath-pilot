@@ -1,5 +1,9 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Jet ski camera zoomed out 3x
+- Owner: the jet ski's camera shows 3x more around it (27 boat lengths across instead of 9), so other boats come into view in time. New optional `view` field on a boat type multiplies its framing.
+- Next: play Way Down and see if the jet ski is still big enough on screen to control.
+
 ## 2026-10-24 — Jet ski in Way Down
 - Owner (level editor): Way Down is now container ship → tugboat → jet ski. Two traffic boats sail every turn at 0.6 speed: a Party Barge going back and forth on a short line, and a Sailboat on a long loop near the jet ski's start.
 - Next: give the jet ski a hint, and play it to see how the camera works with the smallest boat (see Concerns in the brief).
