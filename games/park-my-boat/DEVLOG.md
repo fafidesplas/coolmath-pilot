@@ -1,5 +1,11 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Foam trails along the sides of moving boats
+- Owner asked for foam on the sides of the boat, like a car's tire tracks when it drifts. Every moving boat (player, traffic, and boats that get shoved) now lays a foam streak along each side. The streaks drift outward and fade over 2.2 s, so a straight run leaves a V and a turn leaves curved tracks.
+- Sliding sideways puts more foam on the side that pushes the water, spreads that streak wider, and throws spray drops off it. The amount follows the boat's speed as a share of its own top speed, so a rowboat and a container ship both foam the same way. The stern rings are unchanged.
+- Checked in Chrome: rowboat straight and turning hard in Odd Couple, the container ship turning in Way Down. No console errors.
+- Next: owner checks the look and the amount of foam.
+
 ## 2026-10-24 — Fixed zoom in play, editor object list, smoother editor zoom
 - Owner: the player can no longer zoom. The mouse wheel did nothing else in play, so it's simply gone (with `zoomBias`); each boat gets the camera's set framing. The editor's zoom never carries into play: a play-test and every level start snap the camera to the boat's framing.
 - Editor: an Objects list in the panel shows every moored, loose and traffic boat, buoy, log, duck family, landmass, sand, dock and current, grouped by kind. Click a row to select and frame it; selecting on the canvas highlights its row.

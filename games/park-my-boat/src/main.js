@@ -65,7 +65,7 @@ let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip
 let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
 let anchor, judge, result;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
-let popups = [], drops = [], wakes = [];
+let popups = [], drops = [], wakes = [], foams = [];
 let shakeAmt = 0, steerHeld = false, motorTimer = 0, wakeTimer = 0;
 let buttons = [], hoverId;
 
@@ -165,7 +165,7 @@ function loadLevel(i)
     levelIndex = i;
     const L = level = LEVELS[i];
     bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
-    popups.length = drops.length = wakes.length = 0;
+    popups.length = drops.length = wakes.length = foams.length = 0;
     anchor = judge = result = intro = player = undefined;
     attempts = damages = ducksOffended = levelTime = 0;
     accs = [];
@@ -768,6 +768,41 @@ function stepWorld()
         wakes.push({ pos:b.toWorld(-b.type.L/2*b.k, 0), t:0, size:b.type.W*.7*b.k });
     }
     if (wakes.length > 120) wakes.splice(0, wakes.length - 120);
+    for (const b of bodies) if (b.type && !b.asleep) emitFoam(b);
+}
+
+// Foam streaks along both sides of a moving boat, like tire tracks: each side lays a trail of points
+// that drift outward and fade. Sliding sideways piles foam and spray on the side pushing the water.
+const FOAM_EVERY = .035, FOAM_LIFE = 2.2;
+function emitFoam(b)
+{
+    if ((b.foamT = (b.foamT || 0) - timeDelta) > 0) return;
+    b.foamT = FOAM_EVERY;
+    const c = currentAt(b.pos), f = b.forward();
+    const rx = b.vel.x - (c ? c.dx : 0), ry = b.vel.y - (c ? c.dy : 0);
+    const top = b.power * b.invMass / b.dragFull, sp = Math.hypot(rx, ry);
+    const side = (-rx*f.y + ry*f.x) / top;                    // sideways speed, + to port
+    const run = clamp((sp/top - .2) / .6, 0, 1), slide = clamp(Math.abs(side) / .3, 0, 1);
+    const L = b.type.L*b.k, W = b.type.W*b.k;
+    b.trails ||= [];
+    for (const s of [1, -1])
+    {
+        const leading = Math.sign(side) == s;
+        const a = Math.min(1, run*.6 + slide*(leading ? 1 : .25));
+        if (a < .06) { b.trails[s] = undefined; continue; }
+        if (!b.trails[s]) foams.push(b.trails[s] = []);
+        const n = vec2(-f.y*s, f.x*s), out = sp*(.12 + (leading ? slide*.18 : 0));
+        b.trails[s].push({ pos:b.toWorld(-L*.18, s*W*.5), vel:n.scale(out), n, t:0,
+            w:W*.16*(.5 + a)*rand(.75, 1.25), a });
+        // spray flung off the side when sliding hard
+        if (leading && slide > .35 && rand() < slide)
+            for (let i = rand(1, 3)|0; i--;)
+            {
+                const v = n.scale(sp*rand(.3, .8)).add(vec2(rx, ry).scale(rand(.2, .6)));
+                drops.push({ pos:b.toWorld(rand(-L*.4, L*.2), s*W*.55), vel:v, t:0, life:rand(.4, .9),
+                    size:W*rand(.06, .14), color:C_CREAM.scale(1, .8) });
+            }
+    }
 }
 
 function updateEffects()
@@ -784,6 +819,16 @@ function updateEffects()
     drops = drops.filter(d => d.t < d.life);
     for (const w of wakes) w.t += dt;
     wakes = wakes.filter(w => w.t < 1.2);
+    const slow = Math.exp(-dt*1.6);
+    for (const trail of foams)
+        for (const p of trail)
+        {
+            p.t += dt;
+            p.pos.x += p.vel.x*dt; p.pos.y += p.vel.y*dt;
+            p.vel = p.vel.scale(slow);
+        }
+    for (const trail of foams) while (trail.length && trail[0].t > FOAM_LIFE) trail.shift();
+    foams = foams.filter(trail => trail.length || bodies.some(b => b.trails?.includes(trail)));
     shakeAmt = Math.max(0, shakeAmt - dt*1.5);
 }
 
@@ -978,6 +1023,26 @@ function drawSlip()
     }
     else
         drawDashedRect(slip.pos, slip.w, slip.h, C_CREAM, lw, Math.max(.45*WU, slip.wid*.15));
+}
+
+// each trail as a ribbon of quads: a faint wide band under a brighter core, both widening and fading with age
+function drawFoam()
+{
+    for (const trail of foams)
+    {
+        if (trail.length < 2 || !trail.some(p => inView(p.pos, p.w*4))) continue;
+        for (const [wide, alpha] of [[2.4, .3], [1, .85]])
+        {
+            let prev;
+            for (const p of trail)
+            {
+                const k = p.t / FOAM_LIFE, hw = p.w*wide*(1 + k*1.5)/2;
+                const e = { l:p.pos.add(p.n.scale(hw)), r:p.pos.subtract(p.n.scale(hw)), a:p.a*alpha*(1 - k) };
+                if (prev) drawPoly([prev.l, e.l, e.r, prev.r], C_CREAM.scale(1, (prev.a + e.a)/2));
+                prev = e;
+            }
+        }
+    }
 }
 
 function drawWakes()
@@ -1204,6 +1269,7 @@ function gameRender()
     }
     drawCurrents();
     drawSlip();
+    drawFoam();
     drawWakes();
     drawBodies();
     drawAnchorRope();
