@@ -17,14 +17,17 @@ class Body
         this.world = circles.map(()=>vec2());
         this.mass = mass;
         this.invMass = 1/mass;
-        let inertia = 0, radius = 0;
+        // mass spread over the circles by area, so small tip circles don't count as much as big ones
+        let inertia = 0, area = 0, radius = 0;
         for (const c of circles)
         {
-            inertia += c.x*c.x + c.y*c.y + c.r*c.r/2;
+            const a = c.r*c.r;
+            inertia += a*(c.x*c.x + c.y*c.y + c.r*c.r/2);
+            area += a;
             radius = Math.max(radius, Math.hypot(c.x, c.y) + c.r);
         }
         // floor keeps tiny round things (ducks, buoys) from spinning wildly; boats scale it with their size
-        this.inertia = Math.max(.05 * (opts.inertiaScale ?? 1), inertia * mass / circles.length);
+        this.inertia = Math.max(.05 * (opts.inertiaScale ?? 1), inertia * mass / area);
         this.invInertia = 1/this.inertia;
         this.radius = radius;
         this.restitution = opts.restitution ?? .35;

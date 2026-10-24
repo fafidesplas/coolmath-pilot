@@ -94,10 +94,42 @@ function makeHull(kind, L, W)
     return hullRoundRect(l, w, w*.95, w*.6); // swan
 }
 
-// Collision circles along the keel (or a landmass's blob, scaled by k)
+// Collision circles along the keel (or a landmass's blob), scaled by k
 function hullCircles(t, k)
 {
-    return t.blob ? t.blob.map(([x, y, r]) => ({ x:x*k, y:y*k, r:r*k })) : makeCircles(t.L*k, t.W*k);
+    return t.circles.map(c => ({ x:c.x*k, y:c.y*k, r:c.r*k }));
+}
+
+// distance from (x, 0) on the keel to the nearest hull edge
+function keelClearance(pts, x)
+{
+    let best = Infinity;
+    for (let i = 0; i < pts.length; i++)
+    {
+        const a = pts[i], b = pts[(i+1) % pts.length], dx = b.x - a.x, dy = b.y - a.y;
+        const u = clamp(((x - a.x)*dx - a.y*dy) / (dx*dx + dy*dy), 0, 1);
+        best = Math.min(best, Math.hypot(a.x + u*dx - x, a.y + u*dy));
+    }
+    return best;
+}
+
+// Circles along the keel of a tapered hull: each as big as fits inside the hull (plus 5% of the
+// half-width), shrinking toward the bow and stern so the tips collide where they are drawn
+function fitCircles(pts, L, W)
+{
+    const l = L/2, over = .05*W/2, r = x => keelClearance(pts, x) + over;
+    // x + r(x) only grows toward the bow, so bisect for the circle that just reaches the tip
+    const reach = f => { let lo = 0, hi = l; for (let i = 0; i < 40; i++) { const m = (lo + hi)/2; f(m) < l ? lo = m : hi = m; } return lo; };
+    const bow = reach(x => x + r(x)), stern = -reach(x => x + r(-x));
+    const circles = [];
+    for (let x = bow; x > stern; )
+    {
+        circles.push({ x, y:0, r:r(x) });
+        const step = .8*r(x);
+        x -= Math.min(step, .8*r(x - step));
+    }
+    circles.push({ x:stern, y:0, r:r(stern) });
+    return circles;
 }
 
 function makeCircles(L, W)
@@ -116,6 +148,8 @@ for (const key in BOATS)
     t.key = key;
     t.hullPts = t.blob ? blobOutline(t.blob) : makeHull(t.hull, t.L, t.W);
     t.deckPts = t.hullPts.map(p => t.blob ? p.scale(.8) : vec2(p.x*.78, p.y*.68));
+    t.circles = t.blob ? t.blob.map(([x, y, r]) => ({ x, y, r })) :
+        t.hull == 'pointy' ? fitCircles(t.hullPts, t.L, t.W) : makeCircles(t.L, t.W);
 }
 
 // Deck decorations, drawn with a local-space painter (see render.js)

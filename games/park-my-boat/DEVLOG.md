@@ -1,5 +1,11 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Pointy hulls get tapered colliders
+- Owner: the collision circles on pointy hulls were full width all the way to the bow, so big ships collided 20-30 m past their drawn tips. Pointy hulls now get circles fitted to the hull (`fitCircles` in `src/boats.js`): each as big as fits inside the hull plus 5% of the half-width, shrinking toward the bow and stern. Cruise ship 18 -> 28 circles, bow circle 20 m -> 1.4 m.
+- Spin inertia now spreads the mass over the circles by area (`src/physics.js`), so the small tip circles don't make boats hard to turn. Small boats still come out up to 13% harder to turn.
+- Swan, Party Barge, Tugboat, logs and landmasses keep their colliders.
+- Next: play every level and check the bow bumps and the turning feel.
+
 ## 2026-10-24 — Bonus level hidden
 - Owner: hide the bonus for now, but keep it in the design. Continental Drift stays in `levels/levels.js` and in the brief, but the game leaves out `bonus: true` levels unless the URL has `?bonus`. Players see World 1's three levels only.
 - Next: write it into the GDD as a bonus level once the GDD exists.
