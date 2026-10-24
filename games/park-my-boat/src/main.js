@@ -26,6 +26,9 @@ const BIG_SHIP_LEEWAY = 1.15;
 const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3.5;
 // dropping anchor too fast spins the boat up to this (rad/s, divided by sqrt of its size) over this many seconds
 const ANCHOR_SPIN = 6, ANCHOR_SPIN_TIME = .3;
+// a cheat so buoys stay visible next to big ships: each buoy is at least this share of the current
+// boat's length (wide), growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
+const BUOY_SHARE = +new URLSearchParams(location.search).get('buoy') || 1/12;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -117,6 +120,29 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     return b;
 }
 
+// size (k), mass, spin and drag of a buoy; called again as it grows with the current boat
+function sizeBuoy(b, s)
+{
+    const slowdown = Math.pow(s, SLOWDOWN_CURVE);
+    b.k = s; b.slowdown = slowdown; b.vs = s/slowdown;
+    b.circles[0].r = b.radius = .45*s;
+    b.mass = .7*s*s*s; b.invMass = 1/b.mass;
+    b.inertia = Math.max(.05*s**5, b.mass*b.radius*b.radius/2); b.invInertia = 1/b.inertia;
+    b.dragA = .6/slowdown;
+}
+
+function growBuoys(dt)
+{
+    const goal = boatSize(player) * BUOY_SHARE / .9;
+    for (const b of bodies)
+    {
+        if (b.kind != 'buoy') continue;
+        const g = Math.max(b.baseK, goal);
+        if (Math.abs(b.k/g - 1) < 1e-3) continue;
+        sizeBuoy(b, Math.exp(Math.log(b.k) + (Math.log(g) - Math.log(b.k)) * Math.min(1, dt*2.2)));
+    }
+}
+
 function boatK(L, e) { return e.k ?? BOATS[e.boat].k; }
 
 function makeSlip(e, k)
@@ -184,9 +210,9 @@ function loadLevel(i)
     (L.traffic || []).forEach((t, n) => makeTraffic(t, n));
     for (const [bx, by, s=1] of L.buoys || [])
     {
-        const slowdown = Math.pow(s, SLOWDOWN_CURVE);
-        const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], .7*s*s*s, { kind:'buoy', restitution:.8, dragA:.6/slowdown, inertiaScale:s**5 });
-        b.k = s; b.slowdown = slowdown; b.vs = s/slowdown;
+        const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], 1, { kind:'buoy', restitution:.8 });
+        b.baseK = s;
+        sizeBuoy(b, s);
         bodies.push(b);
     }
     for (const [lx, ly, la] of L.logs || [])
@@ -211,6 +237,7 @@ function loadLevel(i)
     }
 
     startBoat(0);
+    growBuoys(Infinity);
     setScreen('playing');
     updateCamera(0, true);
     if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
@@ -383,7 +410,7 @@ function onHit(A, B, impact, p)
     if (kind == 'buoy')
     {
         sfx('bong', p, 1, rand(.9, 1.1) / Math.sqrt(other.k));
-        if (isPlayer) damages += 20 * Math.round(other.k*other.k);
+        if (isPlayer) damages += 20 * Math.round(other.baseK*other.baseK);
     }
     else if (kind == 'moored' || kind == 'drifter' || kind == 'traffic' || kind == 'player')
     {
@@ -717,6 +744,7 @@ function stepWorld()
     // ducks too small to see sleep: no AI, no physics, no quacks over a cruise ship
     const ducksAsleep = cam.wu > DUCK_SLEEP_WU;
     for (const b of bodies) b.asleep = ducksAsleep && b.kind == 'duck';
+    growBuoys(timeDelta);
     for (let s = 0; s < SUBSTEPS; s++)
     {
         controlPlayer(dt);

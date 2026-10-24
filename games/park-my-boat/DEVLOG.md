@@ -1,5 +1,10 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Buoys grow with big boats
+- Owner: buoys should stay visible next to the bigger boats. Each buoy is now at least 1/12 of the current boat's length wide (`BUOY_SHARE`; try others with `?buoy=`). When a bigger boat starts, it grows smoothly over about a second. Its collision size and mass grow with it, so what you see is what you hit. When a smaller boat comes next, it shrinks back, but never below its size in the level data. The damage bill still uses the level size.
+- Checked in Chrome: in Odd Couple the buoys go from 9 m wide with the rowboat to 25 m with the cruise ship, and the buoy is clearly visible. Mixed Nuts starts at 13 m with the mega yacht. No console errors.
+- Next: in Continental Drift the buoys grow to 2.5 km for the island and 250 km for the continent. Check whether that looks silly or right.
+
 ## 2026-10-24 — No more mooring springs
 - Owner: a start point is just a start point. Nothing is pulled back home anymore: boats waiting their turn in the chain, parked boats, moored boats and buoys all stay wherever a bump leaves them. A boat knocked off its start starts its turn from there.
 - Removed the `home` spring from `Body` and `moor()` from `src/main.js`. Moored boats now behave like drifters and slow down only by water drag. Buoys are free-floating and still bouncy.
