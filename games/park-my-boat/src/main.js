@@ -537,6 +537,7 @@ function makeTraffic(t, n)
     b.route = route;
     b.s = 0; b.dir = 1; b.done = false; b.wakeT = 0;
     b.cruise = t.speed ?? .6;
+    b.pace = t.pace; b.clock = 0;
     b.end = t.end || 'back';
     b.during = t.during;
 }
@@ -555,11 +556,20 @@ function driveTraffic(b, dt)
             if (b.dir > 0 && b.s > r.total - .6*L) { if (b.end == 'stop') b.done = true; else b.dir = -1; }
             else if (b.dir < 0 && b.s < .6*L) b.dir = 1;
         }
+        // on a loop with a pace (m/s), keep to a timetable: speed up when behind it, ease off when
+        // ahead, so boats sharing a loop stay evenly spaced instead of bunching up over time
+        let keep = 1;
+        if (b.pace && r.loop)
+        {
+            b.clock += dt;
+            const late = ((b.clock*b.pace - b.s) % r.total + 1.5*r.total) % r.total - r.total/2;
+            keep = clamp(1 + late/(10 + L), .5, 3);
+        }
         if (!b.done)
         {
             const target = routePoint(r, b.s + b.dir*1.5*L);
             const diff = wrapAngle(Math.atan2(target.y - b.pos.y, target.x - b.pos.x) - b.angle);
-            throttle = b.cruise * clamp(1.5 - Math.abs(diff), .35, 1);
+            throttle = Math.min(1, b.cruise * keep * clamp(1.5 - Math.abs(diff), .35, 1));
             rudder = clamp(diff*2.5, -1, 1);
         }
     }

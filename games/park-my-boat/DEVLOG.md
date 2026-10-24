@@ -1,5 +1,12 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Rush Hour
+- Owner (from an HTML sketch): new level 4, Rush Hour. The jet ski runs east down a 290 m channel to a slip at a quay. Three canals cross it at right angles, each packed with traffic on a loop that crosses the channel twice (north on one leg, south on the other): 6 rowboats + 6 swans at ~3 m/s, 3 party barges + 3 sailboats + 3 Zippys at ~4 m/s, 5 mega yachts + 5 tugboats at ~7 m/s. 20 m of sand between canals is where you stop and wait for a gap.
+- Two level helpers in `levels/levels.js`: `loopLane` (boats spaced evenly on a racetrack loop across a canal) and `sandAround` (sand everywhere in a box except a list of water rects). Traffic speeds are shares of each boat's top speed, picked so a whole lane moves at one pace.
+- Traffic gets an optional `pace` (m/s, loops only, also in the editor panel): each boat keeps to a timetable around its loop, speeding up to 3x its throttle when behind and easing off when ahead. Without it, boats sharing a loop drifted together within minutes (0.1 m/s differences add up).
+- The yachts can't U-turn in their 140 m canal, so the loop ends open into wide lagoons. In a 10-minute simulated run all 31 traffic boats stay at least 5 m off the sand, with one brief yacht-tug touch. Editor self-test: 4 levels, 0 problems.
+- Next: owner plays it; tune gaps and lane speeds so a run takes 30–60 s.
+
 ## 2026-10-24 — Jet ski camera zoomed out 3x
 - Owner: the jet ski's camera shows 3x more around it (27 boat lengths across instead of 9), so other boats come into view in time. New optional `view` field on a boat type multiplies its framing.
 - Next: play Way Down and see if the jet ski is still big enough on screen to control.

@@ -10,7 +10,8 @@
 // lands:   blob landmasses {x, y, k, circles: [[x, y, r]] in units of k (first one on the center), grass?}
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
 // traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
-//          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn)}
+//          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn),
+//          pace?: m/s, loops only: keeps to a timetable so boats sharing a loop stay evenly spaced}
 // the camera follows the boat and its slip
 
 // harbor basin: sand on the sides and bottom, a concrete quay along the top edge. The strips overlap
@@ -44,6 +45,49 @@ const HARBOR_ISLAND = harborIsland();
 
 // a boat at real size tied up nose-in under a pier edge
 function tiedUp(boat, x, top) { const t = BOATS[boat]; return { boat, x, y: top - t.L*t.k/2 - .35*t.k, a: PI/2 }; }
+
+// sand everywhere in the box [x0, y0, x1, y1] except the water rects [x0, y0, x1, y1]: columns of
+// sand, each one 1 m wider where its neighbor is sand too, so they overlap with no seam
+function sandAround(box, water)
+{
+    const xs = [...new Set([box[0], box[2], ...water.flatMap(w => [w[0], w[2]])])].sort((a, b) => a - b);
+    const cols = [];
+    for (let i = 0; i < xs.length - 1; i++)
+    {
+        const m = (xs[i] + xs[i + 1])/2, sand = [];
+        let y = box[1];
+        for (const [lo, hi] of water.filter(w => w[0] < m && m < w[2]).map(w => [w[1], w[3]]).sort((a, b) => a[0] - b[0]))
+        {
+            if (lo > y) sand.push([y, lo]);
+            y = Math.max(y, hi);
+        }
+        if (y < box[3]) sand.push([y, box[3]]);
+        cols.push({ x0: xs[i], x1: xs[i + 1], sand });
+    }
+    const sandAt = (c, y0, y1) => c && c.sand.some(([lo, hi]) => lo <= y0 && y1 <= hi);
+    return cols.flatMap((c, i) => c.sand.map(([y0, y1]) =>
+        [sandAt(cols[i - 1], y0, y1) ? c.x0 - 1 : c.x0, y0, sandAt(cols[i + 1], y0, y1) ? c.x1 + 1 : c.x1, y1]));
+}
+
+// traffic on one loop across a canal at x: north up the leg at x - d, south down the leg at x + d
+// (flip swaps them), turning around at y = +-Y, at pace m/s. boats: [[boat, speed], ...] spaced evenly
+// around the loop; speed is the share of each boat's top speed that comes closest to the pace.
+function loopLane(x, d, Y, flip, pace, boats)
+{
+    const T = 4*Y + 2*PI*d, n = boats.length, m = n*Math.ceil(T/(d/2)/n);
+    const at = s =>
+    {
+        let px, py;
+        if (s < 2*Y) { px = x - d; py = -Y + s; }
+        else if ((s -= 2*Y) < PI*d) { const a = PI - s/d; px = x + d*Math.cos(a); py = Y + d*Math.sin(a); }
+        else if ((s -= PI*d) < 2*Y) { px = x + d; py = Y - s; }
+        else { s -= 2*Y; const a = -s/d; px = x + d*Math.cos(a); py = -Y + d*Math.sin(a); }
+        return [+(flip ? 2*x - px : px).toFixed(1), +py.toFixed(1)];
+    };
+    const pts = Array.from({ length: m }, (_, i) => at(T*i/m));
+    return boats.map(([boat, speed], i) =>
+        ({ boat, path: [...pts.slice(i*m/n), ...pts.slice(0, i*m/n)], end: 'loop', speed, pace }));
+}
 
 const SCALE_LEVELS =
 [
@@ -95,6 +139,30 @@ const SCALE_LEVELS =
         ],
         ducks: [{ x: 780, y: 690, kids: 3 }],
         buoys: [[1000, 300, 5]],
+    },
+    {
+        // a channel east to the slip, crossed by three canals of looping traffic, bigger boats each time;
+        // sand between the canals is where you stop and wait for a gap. The yachts turn in wide lagoons.
+        name: 'Rush Hour',
+        land: sandAround([-1000, -1000, 2000, 1000],
+        [
+            [-25, -25, 20, 25], [-25, -15, 290, 15], [270, -30, 290, 30],    // start pool, channel, slip pool
+            [20, -80, 50, 80], [70, -115, 110, 115], [130, -380, 270, 380],  // the three canals
+            [118, -380, 360, -90], [118, 90, 360, 380],                      // lagoons at the ends of the third,
+            [40, -380, 360, -150], [40, 150, 360, 380],                      // wider past the second
+        ]),
+        docks: [{ x0: 290, y0: -40, x1: 305, y1: 40, quay: true }],
+        boats:
+        [
+            { boat: 'jetski', start: { x: -10, y: 0, a: 0 }, slip: { right: 290, y: 0, a: 0, pad: [1.4, 1] },
+              hint: 'Stop between the canals and wait for a gap.' },
+        ],
+        traffic:
+        [
+            ...loopLane(35, 8, 60, false, 3, Array(6).fill([['dinghy', .33], ['swan', .75]]).flat()),
+            ...loopLane(90, 12, 90, true, 4, Array(3).fill([['pontoon', .44], ['sailboat', .35], ['speedboat', .19]]).flat()),
+            ...loopLane(200, 40, 250, false, 7, Array(5).fill([['yacht', .12], ['tug', .18]]).flat()),
+        ],
     },
     {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a

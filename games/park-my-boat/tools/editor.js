@@ -1232,6 +1232,7 @@ window.pmbEditor = (() =>
         panel.append(field('boat', select(boatOptions(), () => t.boat, v => { t.boat = v; })),
             field('size k', input('number', () => t.k, v => { if (v === undefined) delete t.k; else t.k = v; }, { placeholder: `real size (${BOATS[t.boat].k})`, step: 'any' })),
             field('speed %', input('number', () => Math.round((t.speed ?? .6)*100), v => { t.speed = clamp((v ?? 60)/100, .05, 1); }, { step: 5, min: 5, max: 100 })),
+            field('pace m/s (loops)', input('number', () => t.pace, v => { if (v === undefined) delete t.pace; else t.pace = v; }, { placeholder: 'none', step: 'any', min: 0 })),
             field('at the end', select([['back', 'turn around (back and forth)'], ['loop', 'loop to the first point'], ['stop', 'stop']], () => t.end || 'back', v => { t.end = v; })));
         // the parking turns it moves during; all of them is the default (no during in the file)
         const turns = el('div', { className: 'row' });
