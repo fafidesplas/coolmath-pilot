@@ -102,6 +102,8 @@ class Body
         // springy squash after a hit
         this.squashVel += (-this.squash*220 - this.squashVel*12) * dt;
         this.squash += this.squashVel*dt;
+        // grinding against a dock adds a kick every frame; cap it so the hull never flips inside out
+        if (Math.abs(this.squash) > 2.5) { this.squash = clamp(this.squash, -2.5, 2.5); this.squashVel = 0; }
         this.sx = 1 - this.squash*.12;
         this.sy = 1 + this.squash*.12;
         this.hitCooldown -= dt;
