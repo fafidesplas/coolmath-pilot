@@ -21,14 +21,14 @@ A level is a chain of boats of wildly different sizes parked one after another i
 - **Boat physics:** each boat is a rigid body built from circles along its keel. Water drag is low along the keel and high sideways, so boats coast and drift. The rudder turns the boat more the faster it goes, plus a little prop wash at low speed. Reverse is weaker than forward. Every boat type has its own mass, power, turn rate and drag.
 - **Anchor:** Space, Enter or the anchor button. The anchor lands at the bow on a short rope with heavy drag. Dropping it at speed (over 2.5 u/s) spins the boat out ("SKRRRT!"). Press again to raise it before it settles.
 - **Judging:** when the boat is nearly still for 0.5 s (or after 3.5 s), every hull circle must be inside the slip. Accuracy = 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Nose-in or stern-in both count. Level accuracy is the average over its boats; 3 stars at 85%+, 2 at 60%+, else 1.
-- **Obstacles:** docks and pilings (static), moored boats (on springs, they wobble back home), loose drifting boats and logs (push them), buoys (springy tether, very bouncy), duck families (mother wanders and flees the player, ducklings follow in a line, a hit stuns and spins them), currents (zones that move the water itself).
+- **Obstacles:** docks and pilings (static), landmasses (static blobs of circles: islets, Pangaea), moored boats (on springs, they wobble back home), loose drifting boats and logs (push them), buoys (springy tether, very bouncy), duck families (mother wanders and flees the player, ducklings follow in a line, a hit stuns and spins them), currents (zones that move the water itself).
 - **Score extras (comedy):** a damage bill in dollars and a count of ducks offended, shown in the HUD and on the result screen. They don't affect stars.
 
 ## Boats (real size)
-Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m).
+Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, with their own slowdown (`tau` in `src/boats.js`) so they don't crawl.
 
 ## Levels
-- **World 1, Big & Small (3):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → paper boat), Mixed Nuts (mega yacht → bathtub → cruise ship → swan).
+- **World 1, Big & Small (4):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → paper boat), Mixed Nuts (mega yacht → bathtub → cruise ship → swan), Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step).
 - **World 2, Classic Marina (10):** the first prototype's one-boat levels at toy scale with a fixed camera: Baby Steps, Buoy Oh Buoy, Zippy, Swan Song, Party Barge, Long Story, Tug Life, Rip Current, Rubber Ducky, Mega Yacht. Candidates to cut or rework into chains.
 
 Data in `levels/levels.js`.

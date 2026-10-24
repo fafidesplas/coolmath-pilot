@@ -60,7 +60,7 @@ function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics sta
 // state
 
 let gameScreen = 'title', screenTime = 0, levelIndex = 0, level, isPaused = false;
-let player, bodies = [], rects = [], posts = [], currents = [], slip;
+let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip;
 let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
 let anchor, judge, result;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
@@ -99,8 +99,8 @@ function boatSize(b) { return b.type.L * b.k; }
 // tau = k^TIME_EXP, so every rate and force below is the toy-scale value converted to that size.
 function makeBoat(key, pos, angle, kind, color, k=1)
 {
-    const t = BOATS[key], tau = Math.pow(k, TIME_EXP), k3 = k*k*k;
-    const b = new Body(pos, angle, makeCircles(t.L*k, t.W*k), t.mass*k3,
+    const t = BOATS[key], tau = t.tau ?? Math.pow(k, TIME_EXP), k3 = k*k*k;
+    const b = new Body(pos, angle, hullCircles(t, k), t.mass*k3,
         { dragF:t.dragF/tau, dragS:t.dragS/tau, dragA:t.dragA/tau, kind, inertiaScale:k3*k*k });
     b.type = t;
     b.k = k; b.tau = tau; b.vs = k/tau;
@@ -149,11 +149,21 @@ function makeSlip(e, k)
     return { pos:vec2(x, y), a:s.a, len, wid, w, h, k };
 }
 
+// static landmass: circles [x, y, r] around (x, y), scaled by k; collides as round posts
+function addLand(m)
+{
+    const k = m.k, at = p => vec2(m.x + p.x*k, m.y + p.y*k);
+    for (const [x, y, r] of m.circles) posts.push({ x:m.x + x*k, y:m.y + y*k, r:r*k, land:true });
+    const outline = blobOutline(m.circles);
+    const pts = outline.map(at), r = Math.max(...outline.map(p => p.length()))*k;
+    lands.push({ pos:vec2(m.x, m.y), r, pts, grass: m.grass && outline.map(p => at(p.scale(.8))) });
+}
+
 function loadLevel(i)
 {
     levelIndex = i;
     const L = level = LEVELS[i];
-    bodies = []; rects = []; posts = []; currents = L.currents || [];
+    bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
     popups.length = drops.length = wakes.length = 0;
     anchor = judge = result = intro = player = undefined;
     attempts = damages = ducksOffended = levelTime = 0;
@@ -162,6 +172,7 @@ function loadLevel(i)
 
     for (const r of L.land) rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], land:true });
     for (const d of L.docks) rects.push({ ...d, dock:true });
+    for (const m of L.lands || []) addLand(m);
 
     // every boat of the level waits at its start, tied to a spring, until its turn
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
@@ -651,7 +662,7 @@ function stepWorld()
     if (thr > .1 && motorTimer <= 0)
     {
         motorTimer = (.13 - .06*thr) * player.tau;
-        sfx('putt', player.pos, .5 + thr*.5, 1.6 / Math.pow(boatSize(player), .25) + thr*.3);
+        sfx('putt', player.pos, .5 + thr*.5, Math.max(.25, 1.6 / Math.pow(boatSize(player), .25)) + thr*.3);
     }
     wakeTimer -= timeDelta;
     if (player.speed() > .7*player.vs && wakeTimer <= 0)
@@ -820,7 +831,7 @@ function gameUpdatePost() { useUiCamera(); }
 function drawWater()
 {
     const v = VIEW_RECT;
-    for (let s = .01; s < 1e4; s *= 10)
+    for (let s = .01; s < 1e7; s *= 10)
     {
         const g = .7*s / WU;
         if (g < .3 || g > 3) continue;
@@ -893,11 +904,11 @@ function drawAnchorRope()
 
 function drawBodies()
 {
-    for (const r of rects) if (r.land) drawLand(r);
+    drawLands();
     for (const r of rects) if (r.dock) drawDockShadow(r);
     for (const b of bodies) if (b.type && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
-    for (const p of posts) if (inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
+    for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
@@ -907,6 +918,18 @@ function drawBodies()
     }
     for (const b of bodies) if (b.type && b != player && inView(b.pos, b.radius*1.2)) drawBoat(b);
     drawBoat(player);
+}
+
+// sand rects and landmass blobs drawn as one shape: every outline first, then every fill on top,
+// so overlapping pieces never show a seam
+function drawLands()
+{
+    const shown = lands.filter(m => inView(m.pos, m.r));
+    for (const r of rects) if (r.land) fillRect(r, C_INK, undefined, LINE_W);
+    for (const m of shown) drawPoly(m.pts, C_INK, LINE_W*2, C_INK);
+    for (const r of rects) if (r.land) fillRect(r, C_SAND);
+    for (const m of shown) drawPoly(m.pts, C_SAND);
+    for (const m of shown) if (m.grass) drawPoly(m.grass, C_GRASS);
 }
 
 function drawDrops()

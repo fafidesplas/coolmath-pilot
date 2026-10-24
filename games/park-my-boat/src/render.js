@@ -55,10 +55,10 @@ function drawBoat(b)
     }
     const d = painter(b);
     d.poly(t.hullPts, b.color, true);
-    d.poly(t.deckPts, b.color.lerp(C_CREAM, .45));
+    d.poly(t.deckPts, t.deck || b.color.lerp(C_CREAM, .45));
     if (len < .8) return;
     BOAT_DECO[t.key](d, t, b);
-    if (b.kind == 'player' || b.kind == 'moored')
+    if (!t.blob && (b.kind == 'player' || b.kind == 'moored'))
         drawCaptain(d, t.captainX, b, Math.min(1, 2.5 / (b.k || 1)));
 }
 
@@ -131,9 +131,11 @@ function clipRect(r, grow=0)
     return { x0, y0, x1, y1 };
 }
 
-function fillRect(r, color, offset)
+// offset shifts the rect, grow pads it on every side
+function fillRect(r, color, offset, grow=0)
 {
-    const c = clipRect(offset ? { x0:r.x0 + offset.x, y0:r.y0 + offset.y, x1:r.x1 + offset.x, y1:r.y1 + offset.y } : r);
+    const o = offset || vec2();
+    const c = clipRect({ x0:r.x0 + o.x - grow, y0:r.y0 + o.y - grow, x1:r.x1 + o.x + grow, y1:r.y1 + o.y + grow });
     if (c) drawRect(vec2((c.x0 + c.x1)/2, (c.y0 + c.y1)/2), vec2(c.x1 - c.x0, c.y1 - c.y0), color);
     return c;
 }
@@ -146,12 +148,6 @@ function outlineRect(r, width, color)
     if (r.y1 <= c.y1) drawLine(vec2(c.x0, r.y1), vec2(c.x1, r.y1), width, color);
     if (r.x0 >= c.x0) drawLine(vec2(r.x0, c.y0), vec2(r.x0, c.y1), width, color);
     if (r.x1 <= c.x1) drawLine(vec2(r.x1, c.y0), vec2(r.x1, c.y1), width, color);
-}
-
-function drawLand(r)
-{
-    if (!fillRect(r, C_SAND)) return;
-    outlineRect(r, LINE_W, C_INK);
 }
 
 function drawDock(r)

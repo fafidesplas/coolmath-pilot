@@ -17,6 +17,7 @@ const C_SKIN   = rgb(.95, .76, .60);
 const C_NAVY   = rgb(.22, .29, .45);
 
 const C_STONE  = rgb(.85, .83, .78);       // concrete quays
+const C_GRASS  = rgb(.60, .80, .45);       // island and continent interiors
 
 // Hulls and decorations are drawn at toy size (L, W). k scales a boat to real size in meters,
 // so a cruise ship (k 30) is 300 m long and a paper boat (k .15) is 33 cm. Handling stays the
@@ -34,7 +35,32 @@ const BOATS =
     cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY,  captainX:3.3 },
     container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL, captainX:-4.1 },
     paper:     { name:'Paper Boat',   L:2.2, W:1.3,  k:.15, mass:.5,  power:2.6, reverse:.8, turn:1.6, wash:1.6, dragF:1.4, dragS:1.8, dragA:2,   hull:'paper',  color:C_CREAM, captainX:-.25 },
+    // landmasses: blob hulls made of circles [x, y, r], no keel to speak of. tau overrides the
+    // k^TIME_EXP slowdown, which would leave a continent crawling for minutes.
+    island:    { name:'Island',       L:10,  W:6,    k:3000, tau:3.2, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
+                 blob:[[0,0,2.6],[2.6,.6,1.9],[-2.7,-.5,2],[4,1.1,1],[-3.9,-.2,1.1],[.9,-1.5,1.4],[-1,1.7,1.3]] },
+    continent: { name:'Continent',    L:10,  W:7,    k:3e5,  tau:3.8, mass:16, power:36, reverse:.5, turn:.28, wash:.5,  dragF:.6,  dragS:1.1, dragA:1.6, hull:'blob', color:C_SAND, deck:C_GRASS,
+                 blob:[[0,0,3],[2.8,1,2.2],[-2.6,-.8,2.4],[4.2,-.6,.8],[-4.1,1,.9],[1.5,-2.2,1.3],[-1.2,2.3,1.2],[-2,-2.6,.8]] },
 };
+
+// Outline of a union of circles [x, y, r] seen from the origin: along each ray, the farthest
+// circle edge. The first circle must sit on the origin so every ray hits something.
+function blobOutline(circles, n=64)
+{
+    const pts = [];
+    for (let i = 0; i < n; i++)
+    {
+        const a = i/n*PI*2, dx = Math.cos(a), dy = Math.sin(a);
+        let far = 0;
+        for (const [x, y, r] of circles)
+        {
+            const b = x*dx + y*dy, disc = b*b - (x*x + y*y - r*r);
+            if (disc >= 0) far = Math.max(far, b + Math.sqrt(disc));
+        }
+        pts.push(vec2(dx*far, dy*far));
+    }
+    return pts;
+}
 
 // Rounded rectangle hull, front and back corner radii separate
 function hullRoundRect(l, w, rf, rb)
@@ -73,7 +99,12 @@ function makeHull(kind, L, W)
     return hullRoundRect(l, w, w*.9, w*.9); // tub
 }
 
-// Collision circles along the keel
+// Collision circles along the keel (or a landmass's blob, scaled by k)
+function hullCircles(t, k)
+{
+    return t.blob ? t.blob.map(([x, y, r]) => ({ x:x*k, y:y*k, r:r*k })) : makeCircles(t.L*k, t.W*k);
+}
+
 function makeCircles(L, W)
 {
     const r = W/2, span = Math.max(0, L - W);
@@ -88,8 +119,8 @@ for (const key in BOATS)
 {
     const t = BOATS[key];
     t.key = key;
-    t.hullPts = makeHull(t.hull, t.L, t.W);
-    t.deckPts = t.hullPts.map(p=>vec2(p.x*.78, p.y*.68));
+    t.hullPts = t.blob ? blobOutline(t.blob) : makeHull(t.hull, t.L, t.W);
+    t.deckPts = t.hullPts.map(p => t.blob ? p.scale(.8) : vec2(p.x*.78, p.y*.68));
 }
 
 // Deck decorations, drawn with a local-space painter (see render.js)
@@ -195,6 +226,31 @@ const BOAT_DECO =
         d.rect(-4.15, 0, .55, 1.3, C_CREAM, true);                  // bridge
         d.rect(-3.98, 0, .14, 1.1, rgb(.4,.7,.8));
         d.circle(-4.55, 0, .3, C_NAVY, true);                        // funnel
+    },
+    island(d, t, b)
+    {
+        d.circle(-.3, .2, 2.6, C_WOOD2, true);                       // volcano
+        d.circle(-.3, .2, 1, C_CORAL, true);
+        d.circle(-.3, .2, .45, C_SUNNY);
+        for (const [x, y] of [[2.6, .9], [3.4, -.2], [-2.8, -1.2], [-3.6, .3], [1.2, -1.6], [-1.2, 2]])
+        {
+            d.circle(x, y, 1.1, C_TEAL, true);                       // palm trees from above
+            d.circle(x, y, .3, C_WOOD2);
+        }
+        d.rect(2.3, 1.9, .7, .55, C_CORAL, true);                    // beach hut
+    },
+    continent(d, t, b)
+    {
+        for (const [x, y, s] of [[-1.8, .6, 1.4], [-.6, 1.4, 1.1], [-2.8, -.4, 1]])
+        {
+            d.poly([[x - s*.8, y - s*.5], [x + s*.8, y - s*.5], [x, y + s*.7]], C_WOOD2, true);    // mountains
+            d.poly([[x - s*.3, y + s*.29], [x + s*.3, y + s*.29], [x, y + s*.7]], C_CREAM);        // snowcaps
+        }
+        for (const [x, y, r] of [[2.4, 1.6, 1.4], [3.6, .4, 1], [-3.4, 1.6, .9], [1.4, -1.9, 1.1]])
+            d.circle(x, y, r, C_TEAL, true);                         // forests
+        d.circle(.9, .1, 1.2, C_WATER, true);                        // big lake
+        for (let i = 0; i < 4; i++)
+            d.rect(-1 + (i%2)*.42, -1.6 + Math.floor(i/2)*.42, .34, .34, C_CREAM, true);    // a city
     },
     paper(d, t)
     {
