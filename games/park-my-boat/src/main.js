@@ -50,6 +50,8 @@ function persist() { writeSaveData(SAVE_KEY, saveData); }
 
 function sfx(name, pos, volume=1, pitch=1)
 {
+    // silent while the level editor is open: it reloads the level (and its horn) on every drag
+    if (window.pmbEditor?.active) return;
     if (saveData.sound) SOUNDS[name].play(undefined, volume, pitch);
 }
 

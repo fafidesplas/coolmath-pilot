@@ -1092,7 +1092,7 @@ window.pmbEditor = (() =>
         const n = sel.i + 1;
         return {
             start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
-            traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic[sel.i]?.path.length}`,
+            traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic?.[sel.i]?.path.length}`,
             ducks: 'Duck family', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current',
         }[sel.kind];
     }

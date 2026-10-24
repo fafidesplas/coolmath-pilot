@@ -1,5 +1,9 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Editor: no sounds, and a selection crash fixed
+- Owner: boat sounds played while dragging in the editor (every edit reloads the level, which sounds the new boat's horn). `sfx()` is now silent while the editor is open; play-tests still have sound. Checked: 0 sounds during a 15-step drag, the horn plays when a play-test starts.
+- Fixed a bug from the traffic change: in a level with no traffic, selecting anything threw in the panel title (`def.traffic[...]` on a missing list), so the panel stopped drawing and drags didn't work. Checked by clicking every start, slip, moored boat, buoy, duck family, landmass and dock in all 4 levels (57 clicks): the panel draws in full each time, no console errors.
+
 ## 2026-10-24 — Traffic boats with drawn paths
 - Owner's choices: end behavior per boat, real physics, click-to-place points, and per-turn timing. New `traffic` in the level data: `{ boat, k?, path: [[x, y], ...], end: 'back' | 'loop' | 'stop', speed: share of top speed (default .6), during: [boat numbers] (default every turn) }`.
 - Each traffic boat is a normal body with the player's engine and rudder (`driveBoat`, now shared). It follows a Catmull-Rom curve through the points, aiming 1.5 boat lengths ahead and slowing for sharp turns. Outside its turns it cuts the engine and coasts to a stop where it is. Hits count on the damage bill like other boats; traffic leaves a wake and has a captain.
