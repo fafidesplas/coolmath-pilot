@@ -1,5 +1,10 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — No more mooring springs
+- Owner: a start point is just a start point. Nothing is pulled back home anymore: boats waiting their turn in the chain, parked boats, moored boats and buoys all stay wherever a bump leaves them. A boat knocked off its start starts its turn from there.
+- Removed the `home` spring from `Body` and `moor()` from `src/main.js`. Moored boats now behave like drifters and slow down only by water drag. Buoys are free-floating and still bouncy.
+- Next: play each level and check that nothing important drifts away (buoys especially), and that a knocked boat never starts in a bad spot.
+
 ## 2026-10-24 — Anchor spin-out no longer knocks big ships out of the slip
 - Owner: dropping anchor in the slip as a big ship spun it out of the slip. The spin-out now starts at zero at the speed limit and reaches full strength 3 units over it (`ANCHOR_SPIN` = 6 rad/s). It's divided by the square root of the boat's size and spun up over 0.3 s (`ANCHOR_SPIN_TIME`), not in one frame. It goes the way the boat is already turning (a random side only when it isn't turning), and the anchor lands on that side of the bow.
 - Measured, turn 0.6 s after the drop (before → after): rowboat just over the limit 63° → 1°, rowboat at top speed 149° → 74°; mega yacht just over 22° → 1°, at top speed → 8°; container ship at 5.3 units 43° → 3°, at top speed → 4°. Below the limit nothing changed.

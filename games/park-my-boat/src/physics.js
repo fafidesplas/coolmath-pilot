@@ -35,7 +35,6 @@ class Body
         this.k = 1;                    // size scale (boats set these; see makeBoat in main.js)
         this.slowdown = 1;             // bigger things react more slowly (see makeBoat in main.js)
         this.vs = 1;                   // speed scale, k / slowdown
-        this.home = undefined;         // mooring spring {pos, angle, k, kA}
         this.squash = 0;               // impact wobble, decays
         this.squashVel = 0;
         this.hitCooldown = 0;
@@ -89,14 +88,6 @@ class Body
         vs *= Math.max(0, 1 - this.dragS*dt);
         this.vel.set(wx + f.x*vf - f.y*vs, wy + f.y*vf + f.x*vs);
         this.angVel *= Math.max(0, 1 - this.dragA*dt);
-
-        if (this.home)
-        {
-            const h = this.home;
-            this.vel.x += ((h.pos.x - this.pos.x)*h.k - this.vel.x*h.k*.4) * dt;
-            this.vel.y += ((h.pos.y - this.pos.y)*h.k - this.vel.y*h.k*.4) * dt;
-            this.angVel += (wrapAngle(h.angle - this.angle)*h.kA - this.angVel*h.kA*.3) * dt;
-        }
 
         this.pos.x += this.vel.x*dt;
         this.pos.y += this.vel.y*dt;

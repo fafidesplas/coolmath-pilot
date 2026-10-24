@@ -117,12 +117,6 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     return b;
 }
 
-function moor(b, pos, angle)
-{
-    const s = 3 / (b.slowdown*b.slowdown);
-    b.home = { pos:pos.copy(), angle, k:s, kA:s };
-}
-
 function boatK(L, e) { return e.k ?? BOATS[e.boat].k; }
 
 function makeSlip(e, k)
@@ -179,20 +173,12 @@ function loadLevel(i)
     for (const d of L.docks) rects.push({ ...d, dock:true });
     for (const m of L.lands || []) addLand(m);
 
-    // every boat of the level waits at its start, tied to a spring, until its turn
+    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
-    fleet = L.boats.map(e =>
-    {
-        const b = makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e));
-        moor(b, b.pos, b.angle);
-        return b;
-    });
+    fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
 
     (L.moored || []).forEach((m, k) =>
-    {
-        const b = makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m));
-        moor(b, b.pos, m.a);
-    });
+        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
     for (const m of L.drifters || [])
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
     (L.traffic || []).forEach((t, n) => makeTraffic(t, n));
@@ -201,7 +187,6 @@ function loadLevel(i)
         const slowdown = Math.pow(s, SLOWDOWN_CURVE);
         const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], .7*s*s*s, { kind:'buoy', restitution:.8, dragA:.6/slowdown, inertiaScale:s**5 });
         b.k = s; b.slowdown = slowdown; b.vs = s/slowdown;
-        b.home = { pos:vec2(bx, by), angle:0, k:6/(slowdown*slowdown), kA:0 };
         bodies.push(b);
     }
     for (const [lx, ly, la] of L.logs || [])
@@ -231,7 +216,7 @@ function loadLevel(i)
     if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
 }
 
-// hand control to the next boat in the fleet; the one just parked stays tied up where it stopped
+// hand control to the next boat in the fleet; the one just parked stays where it stopped
 function startBoat(n)
 {
     const prev = player;
@@ -239,11 +224,9 @@ function startBoat(n)
     {
         prev.kind = 'moored';
         prev.dragF = prev.dragFull;
-        moor(prev, prev.pos, prev.angle);
     }
     player = fleet[n];
     player.kind = 'player';
-    player.home = undefined;
     slip = slips[n];
     boatIndex = n;
     anchor = judge = undefined;
