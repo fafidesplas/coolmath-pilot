@@ -1,5 +1,12 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Closer camera for big ships, arrow to an off-screen slip
+- Owner: the container ship was too far zoomed out. The camera no longer has to keep the slip in view. It follows the boat, a little ahead of where it's going (0.8 s of travel, at most a quarter of the view).
+- Ships of 50 m and longer (`BIG_SHIP_LENGTH`) now get 3.5 boat lengths across (`BIG_SHIP_VIEW`; try others with `?shipview=`), down from about 7.8. The container ship view went from about 3.2 km wide to 1.4 km. Smaller boats keep their old number of lengths (3 + 6 / slowdown).
+- When the middle of the slip is off screen, a yellow arrow at the edge of the play area points to it and shows the distance. It stays below the scale bar.
+- Checked in Chrome: container ship in Way Down (arrow with the slip up-left and straight up), mega yacht in Mixed Nuts. No console errors. Not checked: every level played through with the new framing.
+- Next: owner checks the zoom on each big ship.
+
 ## 2026-10-24 — Foam trails along the sides of moving boats
 - Owner asked for foam on the sides of the boat, like a car's tire tracks when it drifts. Every moving boat (player, traffic, and boats that get shoved) now lays a foam streak along each side. The streaks drift outward and fade over 2.2 s, so a straight run leaves a V and a turn leaves curved tracks.
 - Sliding sideways puts more foam on the side that pushes the water, spreads that streak wider, and throws spray drops off it. The amount follows the boat's speed as a share of its own top speed, so a rowboat and a container ship both foam the same way. The stern rings are unchanged.

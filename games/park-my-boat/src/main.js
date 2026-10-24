@@ -22,6 +22,8 @@ const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
 // boats at least this long (meters) get a slip this much bigger and this much more heading leeway
 const BIG_SHIP_LENGTH = 50;
 const BIG_SHIP_LEEWAY = 1.15;
+// the camera shows this many boat lengths across for big ships (smaller boats see more, see cameraGoal)
+const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3.5;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -265,14 +267,16 @@ function uiToWorld(p) { return cam.pos.add(p.subtract(UI_CENTER).scale(cam.wu));
 function boxAround(p, r) { return { x0:p.x - r, y0:p.y - r, x1:p.x + r, y1:p.y + r }; }
 function boxUnion(a, b) { return { x0:Math.min(a.x0, b.x0), y0:Math.min(a.y0, b.y0), x1:Math.max(a.x1, b.x1), y1:Math.max(a.y1, b.y1) }; }
 
-// frame the boat and its slip, never tighter than a few boat lengths (more for small, quick boats)
+// follow the boat a little ahead of where it is going, a set number of boat lengths across
+// (more for small, quick boats); the slip may be off screen, an arrow at the edge points to it
 function cameraGoal()
 {
-    let box = boxUnion(boxAround(player.pos, player.radius),
-        { x0:slip.pos.x - slip.w/2, y0:slip.pos.y - slip.h/2, x1:slip.pos.x + slip.w/2, y1:slip.pos.y + slip.h/2 });
+    const lens = boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown;
+    const minW = boatSize(player) * lens, pad = player.radius*.8;
+    const ahead = player.vel.scale(.8), max = minW*.25;
+    let box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
     // the size reveal: first show the boat just parked next to the new one
     if (intro && intro.prev && intro.t < intro.dur*.5) box = boxUnion(box, boxAround(intro.prev.pos, intro.prev.radius));
-    const minW = boatSize(player) * (3 + 6/player.slowdown), pad = player.radius*.8;
     const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);
     const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3));
     // centered in the play area below the HUD bar
@@ -1159,6 +1163,26 @@ function drawScaleBar()
     txt(fmtLen(m), x0 + len/2, y + .55, .5, C_INK);
 }
 
+// when the slip is off screen: an arrow at the edge of the play area pointing to it, with the distance
+function drawSlipArrow()
+{
+    if (gameScreen != 'playing' || !slip) return;
+    // shown until the middle of the slip is on screen
+    const half = viewHalfUi(), u = worldToUi(slip.pos);
+    const x0 = 20 - half.x, x1 = 20 + half.x, y0 = UI_CENTER.y - half.y, y1 = PLAY_TOP;
+    if (u.x > x0 && u.x < x1 && u.y > y0 && u.y < y1) return;
+    // where the line from the view center to the slip leaves the inset box
+    // (more room at the top, below the scale bar)
+    const m = 1.6, c = vec2(20, (y0 + y1)/2), d = u.subtract(c);
+    const t = Math.min((d.x > 0 ? x1 - m - c.x : c.x - x0 - m) / Math.abs(d.x || 1e-9),
+                       (d.y > 0 ? y1 - 3.4 - c.y : c.y - y0 - m) / Math.abs(d.y || 1e-9));
+    const a = Math.atan2(d.y, d.x), p = c.add(d.scale(t)).add(vec2(Math.cos(a), Math.sin(a)).scale(Math.sin(time*5)*.15));
+    const pt = (f, s) => p.add(vec2(Math.cos(a)*f - Math.sin(a)*s, Math.sin(a)*f + Math.cos(a)*s));
+    drawPoly([pt(1.1, 0), pt(-.7, .9), pt(-.35, 0), pt(-.7, -.9)], C_SUNNY, .14, C_INK);
+    const q = pt(-1.8, 0).subtract(vec2(0, .2));
+    txt(fmtLen(slip.pos.distance(player.pos)), q.x, q.y, .5, C_CREAM, 'center', .1, C_INK);
+}
+
 // a ring around the player when the boat is too small to spot
 function drawPlayerMarker()
 {
@@ -1281,6 +1305,7 @@ function gameRender()
     if (editing) return pmbEditor.renderUi();
     drawPopups();
     drawPlayerMarker();
+    drawSlipArrow();
     drawHud();
     drawIntro();
     if (gameScreen == 'complete') drawComplete();
