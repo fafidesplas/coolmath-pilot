@@ -20,21 +20,20 @@ const C_STONE  = rgb(.85, .83, .78);       // concrete quays
 const C_GRASS  = rgb(.60, .80, .45);       // island and continent interiors
 
 // Hulls and decorations are drawn at toy size (L, W). k scales a boat to real size in meters,
-// so a cruise ship (k 30) is 300 m long and a paper boat (k .15) is 33 cm. Handling stays the
+// so a cruise ship (k 30) is 300 m long and a swan pedalo (k 1.1) is 2.6 m. Handling stays the
 // same relative to the boat, then gets slower the bigger it is (see boatScale in main.js).
 const BOATS =
 {
+    jetski:    { name:'Jet Ski',      L:2.4, W:1.1,  k:1,   mass:.8,  power:7,   reverse:.3, turn:1.5, wash:2.6, dragF:.9,  dragS:1.2, dragA:2,   hull:'pointy', color:C_TEAL,  captainX:-.15 },
     dinghy:    { name:'Rowboat',      L:2.2, W:1.15, k:1.3, mass:1,   power:6,   reverse:.6, turn:1.1, wash:1.6, dragF:1.2, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL, captainX:-.35 },
     speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM, captainX:-.2 },
     swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM, captainX:-.45 },
     pontoon:   { name:'Party Barge',  L:4.6, W:2.4,  k:2,   mass:4,   power:12,  reverse:.6, turn:.55, wash:.9,  dragF:.8,  dragS:2.2, dragA:2.4, hull:'box',    color:C_SUNNY, captainX:-1.6 },
     sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM, captainX:-1.8 },
     tug:       { name:'Tugboat',      L:3.2, W:1.9,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'tug',    color:C_CORAL, captainX:-.9 },
-    bathtub:   { name:'Bathtub',      L:2.6, W:1.4,  k:.7,  mass:1.4, power:4,   reverse:.8, turn:1.2, wash:2,   dragF:1.3, dragS:1.3, dragA:1,   hull:'tub',    color:C_CREAM, captainX:-.1 },
     yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM, captainX:.6 },
     cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY,  captainX:3.3 },
     container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL, captainX:-4.1 },
-    paper:     { name:'Paper Boat',   L:2.2, W:1.3,  k:.15, mass:.5,  power:2.6, reverse:.8, turn:1.6, wash:1.6, dragF:1.4, dragS:1.8, dragA:2,   hull:'paper',  color:C_CREAM, captainX:-.25 },
     // landmasses: blob hulls made of circles [x, y, r], no keel to speak of
     island:    { name:'Island',       L:10,  W:6,    k:3000, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
                  blob:[[0,0,2.6],[2.6,.6,1.9],[-2.7,-.5,2],[4,1.1,1],[-3.9,-.2,1.1],[.9,-1.5,1.4],[-1,1.7,1.3]] },
@@ -90,12 +89,9 @@ function makeHull(kind, L, W)
             pts.push(vec2(half[i][0], -half[i][1]));
         return pts;
     }
-    if (kind == 'paper')
-        return [[l,0],[l*.55,w],[-l*.55,w],[-l,0],[-l*.55,-w],[l*.55,-w]].map(p=>vec2(p[0], p[1]));
     if (kind == 'box')  return hullRoundRect(l, w, .35, .35);
     if (kind == 'tug')  return hullRoundRect(l, w, w*.95, .4);
-    if (kind == 'swan') return hullRoundRect(l, w, w*.95, w*.6);
-    return hullRoundRect(l, w, w*.9, w*.9); // tub
+    return hullRoundRect(l, w, w*.95, w*.6); // swan
 }
 
 // Collision circles along the keel (or a landmass's blob, scaled by k)
@@ -125,6 +121,15 @@ for (const key in BOATS)
 // Deck decorations, drawn with a local-space painter (see render.js)
 const BOAT_DECO =
 {
+    jetski(d, t)
+    {
+        d.poly([[1.1,0],[.75,.3],[.45,.32],[.45,-.32],[.75,-.3]], C_CREAM, true);   // nose cowl
+        d.ellipse(-.4, 0, 1.2, .44, C_NAVY, true);                                  // seat
+        d.line(.35, .45, .35, -.45, .09, C_INK);                                     // handlebars
+        d.circle(.35, .45, .16, C_INK);
+        d.circle(.35, -.45, .16, C_INK);
+        d.rect(-1.15, 0, .16, .3, C_INK);                                           // jet nozzle
+    },
     dinghy(d, t)
     {
         d.line(.15, .45, .15, -.45, .1, C_WOOD2);               // bench
@@ -180,16 +185,6 @@ const BOAT_DECO =
         d.rect(.45, 0, .3, .9, rgb(.4,.7,.8));                      // windows
         d.circle(-.55, 0, .55, C_NAVY, true);                       // smokestack
         d.circle(-.55, 0, .25, C_INK);
-    },
-    bathtub(d, t)
-    {
-        d.ellipse(0, 0, 2.1, 1.05, rgb(.75,.9,.95));               // bath water
-        d.circle(.6, .25, .35, C_CREAM, true);                      // bubbles
-        d.circle(.85, -.15, .28, C_CREAM, true);
-        d.circle(-.6, .3, .25, C_CREAM, true);
-        d.rect(-1.25, 0, .25, .45, rgb(.75,.78,.82), true);         // faucet
-        d.circle(1.05, .35, .32, C_SUNNY, true);                    // rubber duck
-        d.poly([[1.18,.4],[1.36,.35],[1.18,.28]], C_CORAL);
     },
     yacht(d, t)
     {
@@ -250,12 +245,5 @@ const BOAT_DECO =
         d.circle(.9, .1, 1.2, C_WATER, true);                        // big lake
         for (let i = 0; i < 4; i++)
             d.rect(-1 + (i%2)*.42, -1.6 + Math.floor(i/2)*.42, .34, .34, C_CREAM, true);    // a city
-    },
-    paper(d, t)
-    {
-        d.line(-1.05, 0, 1.05, 0, .06, C_INK.scale(1, .35));         // center fold
-        d.poly([[-.6,0],[0,.5],[.6,0],[0,-.5]], C_CREAM, true);      // the tent fold
-        d.line(-.3, .25, .3, .25, .05, C_INK.scale(1, .25));         // newsprint
-        d.line(-.25, -.25, .25, -.25, .05, C_INK.scale(1, .25));
     },
 };

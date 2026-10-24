@@ -118,7 +118,7 @@ function drawLog(b)
     d.ellipse(l - w/2, 0, w*.7, w*.8, C_WOOD, true);
 }
 
-// Rects can be kilometers wide while the camera looks at a paper boat, so they are cut to the
+// Rects can be kilometers wide while the camera looks at a rowboat, so they are cut to the
 // view (VIEW_RECT, set by main.js) before drawing; outlines are drawn only on the real edges.
 let VIEW_RECT = { x0:-1e9, y0:-1e9, x1:1e9, y1:1e9 };
 

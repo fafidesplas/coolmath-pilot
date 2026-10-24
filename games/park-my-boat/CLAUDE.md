@@ -1,6 +1,6 @@
 # Park My Boat — game brief
 
-> Park a rowboat, then park a cruise ship right next to it while the camera zooms out like crazy. Boats from 33 cm to 400 m share one harbor. Steer in, stop, drop anchor. Physics does the comedy.
+> Park a rowboat, then park a cruise ship right next to it while the camera zooms out like crazy. Boats from 2.4 m to 400 m share one harbor. Steer in, stop, drop anchor. Physics does the comedy.
 
 ![How Park My Boat plays](mechanic.svg)
 
@@ -13,7 +13,7 @@
 Everyone knows how hard parallel parking is, and a boat has no brakes. The goal is clear at a glance: a dashed box with a ghost of your boat in it. A level takes 20–60 seconds, and a miss costs nothing but pride, so players retry for three stars. The jokes are visual (ducks spin, boats wobble, the captain's eyes pop) and work with the sound off.
 
 ## Core loop
-A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat → paper boat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop → drop anchor → the game waits for the boat to settle → inside the slip: 1–3 stars by accuracy; outside: "Not in the slip. Try again.", the anchor comes up.
+A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop → drop anchor → the game waits for the boat to settle → inside the slip: 1–3 stars by accuracy; outside: "Not in the slip. Try again.", the anchor comes up.
 
 ## Mechanics (what is built)
 - **Scale:** world units are meters. Each boat type is drawn at toy size and scaled by `k` to real size. Mass scales with k³, so big ships shove small boats and barely notice. Boats react slower the bigger they are (k^0.3 times slower, capped at 1.25x: `MAX_SLOWDOWN`, try others with `?slowdown=`), so big ships are a bit slower relative to their own length without dragging, and tiny boats are twitchy. All handling, anchor and judging numbers convert from the toy values the same way (`makeBoat` in `src/main.js`).
@@ -25,10 +25,11 @@ A level is a chain of boats of wildly different sizes parked one after another i
 - **Score extras:** a damage bill in dollars and a count of ducks hit, shown in the HUD and on the result screen. They don't affect stars.
 
 ## Boats (real size)
-Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles.
+Jet Ski (2.4 m, quick and slidey, almost no reverse), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, and for now they appear only in the hidden bonus level.
 
 ## Levels
-- **World 1, Big & Small (4):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → paper boat), Mixed Nuts (mega yacht → bathtub → cruise ship → swan), Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step).
+- **World 1, Big & Small (3):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat), Mixed Nuts (mega yacht → cruise ship → swan).
+- **Bonus (1, hidden for now):** Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step). Marked `bonus: true` in the data. Players don't see bonus levels. Load `index.html?bonus` to show them (the editor sees them that way too). When shown, they sit after the regular ones in level select on a "BONUS" card. PLAY never picks them as the next level, and the last regular level's NEXT button reads "BONUS".
 
 Data in `levels/levels.js`.
 
@@ -41,6 +42,15 @@ Not built yet. Candidates for the GDD and for new levels.
 - **More boat traffic:** built as `traffic` (see Obstacles); no level uses it yet. Still to try: a tug towing a barge.
 - **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
 - **More drift:** trying it now for every boat (see Boat physics). Next question: keep it global, or make it a trait of certain boats.
+
+## Stretch goals
+Not built and not in v1 scope. Two-player local modes on one keyboard, for the GDD to describe once the single-player game is done.
+- **Parking race (versus):** two players, each with a boat, race to park in the same harbor. The first boat judged inside its slip wins the round. Each player could get their own slip, or both could go for one slip and bump each other out of it. Bumping is allowed, and that is the fun.
+- **Tugboat co-op:** two players each drive a tugboat and push a big ship that has no engine (a cruise or container ship) into its slip together. Pushing on one end turns the ship, so the players have to work together. The ship is judged like a normal parking job.
+- **Open questions:**
+  - Controls: P1 uses WASD and drops the anchor with Space. P2 uses the arrows and drops the anchor with Right Shift or Enter, both right next to the arrow keys. L was the other option, but it is too far from the arrows. The mouse can only steer one boat. Some cheap keyboards can't register many keys at once, so test that.
+  - Camera: one shared view that frames both boats. In the race, both players should have boats of the same size.
+  - Stars: what counts as a score in versus mode.
 
 ## Level editor (debug only)
 `tools/editor.js`, loaded by `index.html` after `src/main.js`. The game's hooks are `window.pmbEditor?.` calls, so without the script they do nothing; remove the script tag for release.
@@ -60,7 +70,7 @@ Toybox Flat: flat fills, 0.1-unit ink outlines (#2B2D42), soft offset drop shado
 ZzFX through LittleJS `Sound`: motor putts (pitch by boat size), bonk, quack, buoy bong, splash, anchor chain, win jingle, fail womp, click. Sound toggle on the title.
 
 ## GameAnalytics
-Not wired. `track()` logs `progression Start/Complete/Fail` with `world01:levelNN` ids and accuracy as the score, plus `ui:restart` and `settings:sfx:off`, to the console.
+Not wired. `track()` logs `progression Start/Complete/Fail` with `world01:levelNN` ids (`bonus:levelNN` for bonus levels) and accuracy as the score, plus `ui:restart` and `settings:sfx:off`, to the console.
 
 ## Gaps against STANDARDS.md
 - No GDD yet (this started as a prototype on request).

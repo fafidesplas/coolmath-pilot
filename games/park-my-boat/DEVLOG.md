@@ -1,5 +1,24 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Bonus level hidden
+- Owner: hide the bonus for now, but keep it in the design. Continental Drift stays in `levels/levels.js` and in the brief, but the game leaves out `bonus: true` levels unless the URL has `?bonus`. Players see World 1's three levels only.
+- Next: write it into the GDD as a bonus level once the GDD exists.
+
+## 2026-10-24 — Islands and continents are a bonus level
+- Owner: the island and the continent are a bonus for now. Continental Drift is marked `bonus: true`, so World 1 is now Odd Couple, Way Down and Mixed Nuts.
+- Level select: bonus levels come after the regular ones on a light "BONUS" card. PLAY skips them when it picks the next level. After the last regular level, the NEXT button reads "BONUS". Analytics ids for bonus levels are `bonus:levelNN`.
+- Next: decide whether the bonus unlocks only after World 1, once levels are locked.
+
+## 2026-10-24 — Jet ski
+- Owner: new boat, the Jet Ski (`jetski`), 2.4 m long: smaller than the rowboat (2.9 m), bigger than the old bathtub (1.8 m). It is now the smallest boat.
+- Handling: light (mass 0.8) and quick (power 7). It slides a lot (sideways drag 1.2, about the same as Zippy) and turns well even when slow (wash 2.6, like jet steering). Reverse is very weak (0.3), so stopping takes the anchor or planning ahead. Teal hull with a cream nose cowl, navy seat, handlebars and a jet nozzle.
+- Not used in any level yet. Next: put it in a level (it can be picked in the editor) and tune how it feels.
+
+## 2026-10-24 — Bathtub and paper boat removed
+- Owner: removed the Bathtub and the Paper Boat, with their hulls (`tub`, `paper`) and deck decorations. The smallest boat is now the Swan Pedalo (2.6 m).
+- Way Down is now container ship → tugboat, and Mixed Nuts is mega yacht → cruise ship → swan. The title parade shows Zippy in place of the paper boat.
+- Next: play Way Down and Mixed Nuts. They are shorter now, so check that they still have enough going on. The ducks in Way Down sat by the paper boat's slip and may need to move.
+
 ## 2026-10-24 — Buoys grow with big boats
 - Owner: buoys should stay visible next to the bigger boats. Each buoy is now at least 1/12 of the current boat's length wide (`BUOY_SHARE`; try others with `?buoy=`). When a bigger boat starts, it grows smoothly over about a second. Its collision size and mass grow with it, so what you see is what you hit. When a smaller boat comes next, it shrinks back, but never below its size in the level data. The damage bill still uses the level size.
 - Checked in Chrome: in Odd Couple the buoys go from 9 m wide with the rowboat to 25 m with the cruise ship, and the buoy is clearly visible. Mixed Nuts starts at 13 m with the mega yacht. No console errors.

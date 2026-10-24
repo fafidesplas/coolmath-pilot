@@ -1,6 +1,6 @@
 'use strict';
 // Park My Boat: park a chain of boats of wildly different sizes in one harbor. Prototype.
-// World units are meters; the camera zooms from a 33 cm paper boat to a 400 m container ship.
+// World units are meters; the camera zooms from a 2.4 m jet ski to a 3000 km continent.
 // The UI (HUD, buttons, cards) is laid out in a fixed 40 x 22.5 box, drawn with its own camera.
 
 const UI_SIZE = vec2(40, 22.5);
@@ -264,8 +264,8 @@ function startBoat(n)
 
 function levelId()
 {
-    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world).length + 1;
-    return `world${String(level.world).padStart(2, '0')}:level${String(n).padStart(2, '0')}`;
+    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world && !l.bonus == !level.bonus).length + 1;
+    return `${level.bonus ? 'bonus' : 'world' + String(level.world).padStart(2, '0')}:level${String(n).padStart(2, '0')}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -869,7 +869,7 @@ function layoutButtons()
     }
     else if (gameScreen == 'levels')
     {
-        LEVELS.forEach((L, i) => button('level' + i, String(i+1), 8 + (i%5)*6, 15.4 - Math.floor(i/5)*4.8, 5.2, 4.3, { card:i }));
+        LEVELS.forEach((L, i) => button('level' + i, L.bonus ? 'BONUS' : String(i+1), 8 + (i%5)*6, 15.4 - Math.floor(i/5)*4.8, 5.2, 4.3, { card:i }));
         button('back', 'BACK', 20, 1.6, 6, 1.4, { small:true });
     }
     else if (gameScreen == 'playing')
@@ -887,8 +887,8 @@ function layoutButtons()
     }
     else if (gameScreen == 'complete')
     {
-        const last = levelIndex >= LEVELS.length - 1;
-        button('next', last ? 'THE END' : 'NEXT', 24.5, 6, 7, 2.2, { big:true });
+        const last = levelIndex >= LEVELS.length - 1, toBonus = !last && !level.bonus && LEVELS[levelIndex + 1].bonus;
+        button('next', last ? 'THE END' : toBonus ? 'BONUS' : 'NEXT', 24.5, 6, 7, 2.2, { big:true });
         button('retry', 'RETRY', 16, 6, 6, 2.2);
         button('menu', 'MENU', 20, 4, 4.5, 1.2, { small:true });
     }
@@ -905,7 +905,7 @@ function buttonAt(p)
 
 function nextLevelIndex()
 {
-    for (let i = 0; i < LEVELS.length; i++) if (!saveData.stars[i]) return i;
+    for (let i = 0; i < LEVELS.length; i++) if (!saveData.stars[i] && !LEVELS[i].bonus) return i;
     return 0;
 }
 
@@ -1164,8 +1164,8 @@ function drawLevelCard(b, hover)
 {
     const i = b.card, L = LEVELS[i], stars = saveData.stars[i] || 0, isNext = i == nextLevelIndex();
     const c = vec2(b.x, b.y + (hover ? .15 : 0));
-    drawPanel(c, b.w, b.h, isNext ? C_SUNNY : C_CREAM, .5);
-    txt(b.label, c.x, c.y + 1.15, 1.2, C_INK);
+    drawPanel(c, b.w, b.h, isNext ? C_SUNNY : L.bonus ? C_WATER2 : C_CREAM, .5);
+    txt(b.label, c.x, c.y + 1.15, L.bonus ? .8 : 1.2, C_INK);
     txt(L.name, c.x, c.y + .1, .48, C_INK);
     txt(L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
     for (let s = 0; s < 3; s++) drawStar(vec2(c.x - 1.15 + s*1.15, c.y - 1.45), .42, s < stars);
@@ -1264,7 +1264,7 @@ function drawTitle()
     const ship = { pos:vec2(((time*1.2) % 90) - 25, 2.6), angle:0, sx:1, sy:1, id:9, k:2.4, type:BOATS.cruise, color:BOATS.cruise.color, kind:'title' };
     drawBoatShadow(ship);
     drawBoat(ship);
-    ['dinghy', 'swan', 'tug', 'paper'].forEach((key, i) =>
+    ['dinghy', 'swan', 'tug', 'speedboat'].forEach((key, i) =>
     {
         const a = time*.4 + i*PI/2;
         const b = { pos:vec2(20 + Math.cos(a)*15, 11 + Math.sin(a)*7.5), angle:a + PI/2, sx:1, sy:1, id:i, type:BOATS[key], color:BOATS[key].color, kind:'title' };

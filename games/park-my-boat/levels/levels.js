@@ -68,13 +68,15 @@ const SCALE_LEVELS =
         [
             { boat: 'container', start: { x: 1450, y: 700, a: PI }, slip: { x: 700, top: 900, a: 0, pad: [.5, .25], fingers: 'none' },
               hint: 'Big ships take a long time to stop. Slow down early.' },
-            { boat: 'tug', start: { x: 380, y: 830, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
+            { boat: 'tug', start: { x: 382, y: 832, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'The tugboat can push other boats out of the way.' },
-            { boat: 'paper', start: { x: 418, y: 898.3, a: .9 }, slip: { x: 419, top: 900, a: PI/2 },
-              hint: 'Park the paper boat in the small slip.' },
         ],
         ducks: [{ x: 414, y: 896, kids: 2 }],
-        buoys: [[1200, 450, 6], [1200, 800, 6]],
+        traffic:
+        [
+            { boat: 'dinghy', path: [[400, 844], [416, 844], [1320, 460], [1060, 380], [560, 380], [950.2, 700]], end: 'back', speed: 0.6 },
+            { boat: 'yacht', path: [[1160, 620], [1015, 755], [1020, 885]], end: 'back', speed: 0.8, during: [1] },
+        ],
     },
     {
         name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
@@ -82,8 +84,6 @@ const SCALE_LEVELS =
         [
             { boat: 'yacht', start: { x: 950, y: 560, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
               hint: 'Start turning early.' },
-            { boat: 'bathtub', start: { x: 772, y: 692, a: 1.9 }, slip: { x: 767, top: 700, a: PI/2, pad: [1.1, .9] },
-              hint: 'Park the bathtub next to the yacht.' },
             { boat: 'cruise', start: { x: 1150, y: 450, a: PI }, slip: { x: 510, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay.' },
             { boat: 'swan', start: { x: 305, y: 692, a: 2.1 }, slip: { x: 300, top: 700, a: PI/2, pad: [1, .9] },
@@ -93,9 +93,9 @@ const SCALE_LEVELS =
         buoys: [[1000, 300, 5]],
     },
     {
-        // each boat 100x the last: the harbor is cut into a small island, the island parks in a bay
-        // next to it, the continent closes the gap in Pangaea thousands of km away
-        name: 'Continental Drift', land: HARBOR_ISLAND.land, docks: HARBOR_ISLAND.docks,
+        // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a
+        // bay next to it, the continent closes the gap in Pangaea thousands of km away
+        name: 'Continental Drift', bonus: true, land: HARBOR_ISLAND.land, docks: HARBOR_ISLAND.docks,
         boats:
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
@@ -124,4 +124,6 @@ const SCALE_LEVELS =
     },
 ];
 
-const LEVELS = SCALE_LEVELS.map(L => ({ ...L, world: 1 }));
+// bonus levels are hidden for now; ?bonus shows them after the regular ones
+const SHOW_BONUS = new URLSearchParams(location.search).has('bonus');
+const LEVELS = [...SCALE_LEVELS.filter(L => !L.bonus), ...(SHOW_BONUS ? SCALE_LEVELS.filter(L => L.bonus) : [])].map(L => ({ ...L, world: 1 }));
