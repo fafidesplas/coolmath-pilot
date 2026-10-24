@@ -24,6 +24,8 @@ const BIG_SHIP_LENGTH = 50;
 const BIG_SHIP_LEEWAY = 1.15;
 // the camera shows this many boat lengths across for big ships (smaller boats see more, see cameraGoal)
 const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3.5;
+// dropping anchor too fast spins the boat up to this (rad/s, divided by sqrt of its size) over this many seconds
+const ANCHOR_SPIN = 6, ANCHOR_SPIN_TIME = .3;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -570,8 +572,10 @@ function toggleAnchor()
         return;
     }
     const spd = player.speed() / player.vs;
-    // lands right at the bow, a hair off-center, so a boat still moving fast whips around it
-    anchor = { pos: bowPoint().add(player.forward().rotate(PI/2).scale(rand(-.15, .15)*k)), len: .5*k, t: 0 };
+    // lands right at the bow, a hair off-center toward the way the boat is turning (a random side if
+    // it isn't), so a boat still moving fast whips around it that way
+    const side = Math.abs(player.angVel) > .05 ? Math.sign(player.angVel) : rand() < .5 ? -1 : 1;
+    anchor = { pos: bowPoint().add(player.forward().rotate(PI/2).scale(side*rand(.03, .15)*k)), len: .5*k, t: 0, spin: 0 };
     judge = { t:0, settle:0 };
     attempts++;
     sfx('chain', anchor.pos);
@@ -582,13 +586,15 @@ function toggleAnchor()
         popup('Slow down before you drop anchor!', player.pos, C_SUNNY, .9, 1.6);
         shakeAmt = Math.max(shakeAmt, .25);
         player.hurtT = 1;
-        player.angVel += (rand() < .5 ? -1 : 1) * spd * 2 / player.slowdown;     // spin-out
+        // spin-out: grows from nothing at the limit, gentler for bigger boats, spun up in anchorForce
+        anchor.spin = side * ANCHOR_SPIN * Math.min(1, (spd - 2.5)/3) / Math.sqrt(k);
     }
 }
 
 function anchorForce(dt)
 {
     if (!anchor) return;
+    if (anchor.t < ANCHOR_SPIN_TIME) player.angVel += anchor.spin / ANCHOR_SPIN_TIME * dt;
     anchor.t += dt;
     const slowdown = player.slowdown;
     const bow = bowPoint(), dx = bow.x - anchor.pos.x, dy = bow.y - anchor.pos.y, d = Math.hypot(dx, dy);

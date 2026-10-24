@@ -1,8 +1,12 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Anchor spin-out no longer knocks big ships out of the slip
+- Owner: dropping anchor in the slip as a big ship spun it out of the slip. The spin-out now starts at zero at the speed limit and reaches full strength 3 units over it (`ANCHOR_SPIN` = 6 rad/s). It's divided by the square root of the boat's size and spun up over 0.3 s (`ANCHOR_SPIN_TIME`), not in one frame. It goes the way the boat is already turning (a random side only when it isn't turning), and the anchor lands on that side of the bow.
+- Measured, turn 0.6 s after the drop (before → after): rowboat just over the limit 63° → 1°, rowboat at top speed 149° → 74°; mega yacht just over 22° → 1°, at top speed → 8°; container ship at 5.3 units 43° → 3°, at top speed → 4°. Below the limit nothing changed.
+
 ## 2026-10-24 — Clearer message for dropping anchor too fast
 - Owner: "Too fast!" is now "Slow down before you drop anchor!" (slightly smaller text so it fits). Popups now stay on screen when the boat is near the edge.
-- Found while looking into the jerk on anchoring: above 2.5 speed units the boat gets an instant spin in a random direction (4 rad/s just over the limit, up to 13 for the rowboat, 8 for the container ship). Proposed: ramp it in with how far over the limit you are, spread over about 0.3 s, toward the side the anchor landed, smaller for big ships. Not changed yet.
+- Found while looking into the jerk on anchoring: above 2.5 speed units the boat got an instant spin in a random direction (4 rad/s just over the limit, up to 13 for the rowboat, 8 for the container ship).
 
 ## 2026-10-24 — Closer camera for big ships, arrow to an off-screen slip
 - Owner: the container ship was too far zoomed out. The camera no longer has to keep the slip in view. It follows the boat, a little ahead of where it's going (0.8 s of travel, at most a quarter of the view).
