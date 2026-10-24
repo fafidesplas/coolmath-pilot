@@ -32,6 +32,13 @@ Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins),
 
 Data in `levels/levels.js`.
 
+## Ideas to try in future levels
+Not built yet. Candidates for the GDD and for new levels.
+- **More crowded harbors:** tighter slips between more moored boats, so a parking job means threading a gap without bumping the neighbors.
+- **More boat traffic:** boats that move on their own (ferries on a route, speedboats crossing, a tug towing a barge) that you have to time your way around.
+- **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
+- **More drift:** boats keep much more of their momentum after you let go of forward or back, so they coast a long way without power and stopping becomes the skill. Could be a global feel change or a per-boat trait (lower forward drag, `dragF` in `src/boats.js`).
+
 ## Controls
 - Mouse: hold anywhere on the water and the boat steers toward the cursor; it backs up if the cursor is behind it. Farther cursor = more throttle. Click the anchor button to drop or raise the anchor. Wheel zooms out.
 - Keyboard: W/Up throttle, S/Down reverse, A/D or Left/Right rudder. Space/Enter anchor, R restart, P/Esc pause.
