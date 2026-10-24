@@ -11,11 +11,12 @@
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
 // the camera follows the boat and its slip
 
-// harbor basin: sand on the sides and bottom, a concrete quay along the top edge
+// harbor basin: sand on the sides and bottom, a concrete quay along the top edge. The strips overlap
+// instead of meeting edge to edge, which would leave a hairline seam.
 function basin(x0, y0, x1, top)
 {
     return {
-        land: [[x0-3000, y0-3000, x0, top+3000], [x1, y0-3000, x1+3000, top+3000], [x0, y0-3000, x1, y0], [x0, top+15, x1, top+3000]],
+        land: [[x0-3000, y0-3000, x0, top+3000], [x1, y0-3000, x1+3000, top+3000], [x0-3000, y0-3000, x1+3000, y0], [x0-3000, top+15, x1+3000, top+3000]],
         docks: [{ x0, y0:top, x1, y1:top+15, quay:true }],
     };
 }
@@ -50,7 +51,7 @@ const SCALE_LEVELS =
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box, then SPACE to drop anchor.' },
-            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 650, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
         moored: [tiedUp('speedboat', 120, 585), tiedUp('sailboat', 140, 585), tiedUp('speedboat', 160, 585)],
@@ -61,7 +62,7 @@ const SCALE_LEVELS =
         name: 'Way Down', ...basin(0, -20, 1700, 900),
         boats:
         [
-            { boat: 'container', start: { x: 1550, y: 700, a: PI }, slip: { x: 700, top: 900, a: 0, pad: [.5, .25], fingers: 'none' },
+            { boat: 'container', start: { x: 1450, y: 700, a: PI }, slip: { x: 700, top: 900, a: 0, pad: [.5, .25], fingers: 'none' },
               hint: 'Big ships take a long time to stop. Slow down early.' },
             { boat: 'tug', start: { x: 380, y: 830, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'The tugboat can push other boats out of the way.' },
@@ -75,16 +76,16 @@ const SCALE_LEVELS =
         name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
         boats:
         [
-            { boat: 'yacht', start: { x: 950, y: 560, a: PI }, slip: { x: 720, top: 700, a: PI/2, pad: [1.2, 1] },
+            { boat: 'yacht', start: { x: 950, y: 560, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
               hint: 'Start turning early.' },
-            { boat: 'bathtub', start: { x: 757, y: 692, a: 1.9 }, slip: { x: 752, top: 700, a: PI/2, pad: [1.1, .9] },
+            { boat: 'bathtub', start: { x: 772, y: 692, a: 1.9 }, slip: { x: 767, top: 700, a: PI/2, pad: [1.1, .9] },
               hint: 'Park the bathtub next to the yacht.' },
-            { boat: 'cruise', start: { x: 1150, y: 450, a: PI }, slip: { x: 500, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 1150, y: 450, a: PI }, slip: { x: 510, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay.' },
-            { boat: 'swan', start: { x: 330, y: 692, a: 2.1 }, slip: { x: 325, top: 700, a: PI/2, pad: [1, .9] },
+            { boat: 'swan', start: { x: 305, y: 692, a: 2.1 }, slip: { x: 300, top: 700, a: PI/2, pad: [1, .9] },
               hint: 'The swan pedalo turns very quickly.' },
         ],
-        ducks: [{ x: 765, y: 690, kids: 3 }],
+        ducks: [{ x: 780, y: 690, kids: 3 }],
         buoys: [[1000, 300, 5]],
     },
     {
@@ -95,7 +96,7 @@ const SCALE_LEVELS =
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Park the rowboat.' },
-            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 650, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay.' },
             { boat: 'island', start: { x: 95000, y: 1500, a: PI }, slip: { x: 36000, y: 0, a: 0, pad: [1.2, 1], fingers: 'none' },
               hint: 'Park the island in the bay.' },
@@ -106,12 +107,12 @@ const SCALE_LEVELS =
         [
             ...HARBOR_ISLAND.lands,
             // islets around the island's bay (k = 3 km), open to the east
-            { x: 39000, y: 18600, k: 3000, grass: true, circles: [[0, 0, 2.4], [-4, -.4, 2], [3.5, -.8, 1.8], [6.2, -.6, 1.7]] },
-            { x: 37500, y: -19200, k: 3000, grass: true, circles: [[0, 0, 2.6], [-3.6, .6, 2], [3.6, .9, 1.9], [6.5, 1.2, 1.6]] },
+            { x: 39000, y: 20400, k: 3000, grass: true, circles: [[0, 0, 2.4], [-4, -.4, 2], [3.5, -.8, 1.8], [6.2, -.6, 1.7]] },
+            { x: 37500, y: -21000, k: 3000, grass: true, circles: [[0, 0, 2.6], [-3.6, .6, 2], [3.6, .9, 1.9], [6.5, 1.2, 1.6]] },
             // Pangaea around the continent's slot (k = 300 km), open to the west
-            { x: 5.3e6, y: 5.9e6, k: 3e5, grass: true, circles: [[0, 0, 3.5], [-4, -.5, 3], [4, -1, 2.6], [7.5, -2.5, 2.5], [-7.5, -2, 2]] },
-            { x: 7.94e6, y: 3.5e6, k: 3e5, grass: true, circles: [[0, 0, 3], [0, -2.8, 2.6], [-.8, 3.4, 1.8]] },
-            { x: 5.3e6, y: 1.04e6, k: 3e5, grass: true, circles: [[0, 0, 3.6], [-4, .6, 3], [4, 1.2, 2.6], [7.5, 2.7, 2.5], [-7.5, 2.2, 2]] },
+            { x: 5.3e6, y: 6.11e6, k: 3e5, grass: true, circles: [[0, 0, 3.5], [-4, -.5, 3], [4, -1, 2.6], [7.5, -2.5, 2.5], [-7.5, -2, 2]] },
+            { x: 8.09e6, y: 3.5e6, k: 3e5, grass: true, circles: [[0, 0, 3], [0, -2.8, 2.6], [-.8, 3.4, 1.8]] },
+            { x: 5.3e6, y: .83e6, k: 3e5, grass: true, circles: [[0, 0, 3.6], [-4, .6, 3], [4, 1.2, 2.6], [7.5, 2.7, 2.5], [-7.5, 2.2, 2]] },
         ],
         moored: [tiedUp('speedboat', 120, 585), tiedUp('sailboat', 140, 585), tiedUp('speedboat', 160, 585)],
         buoys: [[300, 380, 5], [900, 380, 5]],

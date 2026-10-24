@@ -19,6 +19,9 @@ const COAST_DRAG = +new URLSearchParams(location.search).get('coast') || .3;
 // every boat's engine power is multiplied by this, which raises top speed by the same factor.
 // 1 = the speeds in boats.js. Try others with ?speed=1.2
 const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
+// boats at least this long (meters) get a slip this much bigger and this much more heading leeway
+const BIG_SHIP_LENGTH = 50;
+const BIG_SHIP_LEEWAY = 1.15;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -120,7 +123,8 @@ function boatK(L, e) { return e.k ?? BOATS[e.boat].k; }
 function makeSlip(e, k)
 {
     const t = BOATS[e.boat], s = e.slip, pad = s.pad || [1.4, 1];
-    const len = (t.L + pad[0])*k, wid = (t.W + pad[1])*k;
+    const leeway = t.L*k >= BIG_SHIP_LENGTH ? BIG_SHIP_LEEWAY : 1;
+    const len = (t.L + pad[0])*k*leeway, wid = (t.W + pad[1])*k*leeway;
     const vertical = Math.abs(Math.sin(s.a)) > .5;
     const w = vertical ? wid : len, h = vertical ? len : wid;
     const x = s.x ?? s.right - w/2, y = s.y ?? s.top - h/2;
@@ -142,7 +146,7 @@ function makeSlip(e, k)
             posts.push({ x:xo, y:y-wid/2-ft/2, r:pr }, { x:xo, y:y+wid/2+ft/2, r:pr });
         }
     }
-    return { pos:vec2(x, y), a:s.a, len, wid, w, h, k };
+    return { pos:vec2(x, y), a:s.a, len, wid, w, h, k, leeway };
 }
 
 // static landmass: circles [x, y, r] around (x, y), scaled by k; collides as round posts
@@ -525,7 +529,7 @@ function parkingScore()
     const posErr = player.pos.distance(slip.pos);
     const diff = Math.abs(wrapAngle(player.angle - slip.a));
     const angErr = Math.min(diff, PI - diff);       // nose in or stern in, both fine
-    return clamp(1 - .6*Math.min(1, posErr/(.8*player.k)) - .4*Math.min(1, angErr/.35), 0, 1);
+    return clamp(1 - .6*Math.min(1, posErr/(.8*player.k)) - .4*Math.min(1, angErr/(.35*slip.leeway)), 0, 1);
 }
 
 function updateJudge(dt)
