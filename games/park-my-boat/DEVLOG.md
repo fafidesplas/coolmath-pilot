@@ -1,4 +1,9 @@
-# Park My Boat — devlog
+# Dock All The Boats — devlog
+
+## 2026-10-24 — Renamed to Dock All The Boats
+- Owner: the game is now called Dock All The Boats. Changed the page title, the title screen (smaller type, 2.8 instead of 3.6, so the longer name fits), the brief and the code headers.
+- Kept the folder `games/park-my-boat/`, the save key `cm_park-my-boat_save` and the `pmbEditor` hooks, so saves and the dashboard link keep working.
+- Next: check the title screen at 800x450.
 
 ## 2026-10-24 — Pointy hulls get tapered colliders
 - Owner: the collision circles on pointy hulls were full width all the way to the bow, so big ships collided 20-30 m past their drawn tips. Pointy hulls now get circles fitted to the hull (`fitCircles` in `src/boats.js`): each as big as fits inside the hull plus 5% of the half-width, shrinking toward the bow and stern. Cruise ship 18 -> 28 circles, bow circle 20 m -> 1.4 m.

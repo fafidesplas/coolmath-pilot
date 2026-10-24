@@ -1,5 +1,5 @@
 'use strict';
-// Park My Boat: park a chain of boats of wildly different sizes in one harbor. Prototype.
+// Dock All The Boats: park a chain of boats of wildly different sizes in one harbor. Prototype.
 // World units are meters; the camera zooms from a 2.4 m jet ski to a 3000 km continent.
 // The UI (HUD, buttons, cards) is laid out in a fixed 40 x 22.5 box, drawn with its own camera.
 
@@ -1272,8 +1272,8 @@ function drawTitle()
         drawBoat(b);
     });
     const bob = Math.sin(time*2)*.2;
-    txt('PARK MY BOAT', 20.2, 15.1 + bob, 3.6, C_INK);
-    txt('PARK MY BOAT', 20, 15.4 + bob, 3.6, C_SUNNY, 'center', .25, C_INK);
+    txt('DOCK ALL THE BOATS', 20.2, 15.1 + bob, 2.8, C_INK);
+    txt('DOCK ALL THE BOATS', 20, 15.4 + bob, 2.8, C_SUNNY, 'center', .25, C_INK);
     txt('Park boats of every size.', 20, 12.7, .8, C_INK);
 }
 

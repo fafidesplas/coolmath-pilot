@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
-  <!-- Park My Boat: a dinghy curves across the water into a slip between two finger docks, stops, and drops anchor. Loop 5 s. -->
+  <!-- Dock All The Boats: a dinghy curves across the water into a slip between two finger docks, stops, and drops anchor. Loop 5 s. -->
   <rect width="480" height="270" fill="#8CD6D1"/>
   <g stroke="#A8E3DC" stroke-width="3" fill="none" stroke-linecap="round">
     <path d="M60 200 q8 -6 16 0"/><path d="M380 210 q8 -6 16 0"/><path d="M120 120 q8 -6 16 0"/><path d="M420 140 q8 -6 16 0"/>

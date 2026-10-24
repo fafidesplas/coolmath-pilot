@@ -1,5 +1,5 @@
 /*
-    PARK MY BOAT - level editor (debug tool). index.html loads it after main.js; every hook in the game
+    DOCK ALL THE BOATS - level editor (debug tool). index.html loads it after main.js; every hook in the game
     is a window.pmbEditor?. call, so without this file they do nothing.
 
     E on any screen opens the level you are on (or level 1); E again play-tests it from the first boat

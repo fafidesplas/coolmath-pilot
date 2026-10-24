@@ -1,8 +1,8 @@
-# Park My Boat — game brief
+# Dock All The Boats — game brief
 
 > Park a rowboat, then park a cruise ship right next to it while the camera zooms out like crazy. Boats from 2.4 m to 400 m share one harbor. Steer in, stop, drop anchor. Physics does the comedy.
 
-![How Park My Boat plays](mechanic.svg)
+![How Dock All The Boats plays](mechanic.svg)
 
 **Rank:** Prototype · **Genre:** Physics parking puzzle · **Art family:** Toybox Flat · **Audience habit:** Play at the desk
 
