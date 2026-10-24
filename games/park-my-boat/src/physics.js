@@ -23,7 +23,8 @@ class Body
             inertia += c.x*c.x + c.y*c.y + c.r*c.r/2;
             radius = Math.max(radius, Math.hypot(c.x, c.y) + c.r);
         }
-        this.inertia = Math.max(.05, inertia * mass / circles.length);
+        // floor keeps tiny round things (ducks, buoys) from spinning wildly; boats scale it with their size
+        this.inertia = Math.max(.05 * (opts.inertiaScale ?? 1), inertia * mass / circles.length);
         this.invInertia = 1/this.inertia;
         this.radius = radius;
         this.restitution = opts.restitution ?? .35;
@@ -31,6 +32,9 @@ class Body
         this.dragS = opts.dragS ?? 1.5;
         this.dragA = opts.dragA ?? 2;
         this.kind = opts.kind || 'thing';
+        this.k = 1;                    // size scale (boats set these; see makeBoat in main.js)
+        this.tau = 1;                  // time scale: bigger things react more slowly
+        this.vs = 1;                   // speed scale, k / tau
         this.home = undefined;         // mooring spring {pos, angle, k, kA}
         this.squash = 0;               // impact wobble, decays
         this.squashVel = 0;

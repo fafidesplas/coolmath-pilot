@@ -1,12 +1,14 @@
 'use strict';
-// Park My Boat: steer one boat into its slip, stop, drop anchor. Prototype.
+// Park My Boat: park a chain of boats of wildly different sizes in one harbor. Prototype.
+// World units are meters; the camera zooms from a 33 cm paper boat to a 400 m container ship.
+// The UI (HUD, buttons, cards) is laid out in a fixed 40 x 22.5 box, drawn with its own camera.
 
-const VIEW_SIZE = vec2(40, 22.5);
-const VIEW_CENTER = VIEW_SIZE.scale(.5);
-const PLAY_TOP = 21;                  // HUD bar above this line
-const RIGHT_PIER_X = 36.5;
+const UI_SIZE = vec2(40, 22.5);
+const UI_CENTER = UI_SIZE.scale(.5);
+const PLAY_TOP = 21;                  // HUD bar above this line (UI units)
 const SAVE_KEY = 'cm_park-my-boat_save';
 const SUBSTEPS = 2;
+const TIME_EXP = .3;                  // a boat k times bigger reacts k^TIME_EXP times slower
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
 const QUIPS =
@@ -34,6 +36,7 @@ const SOUNDS =
     fail:  new Sound([1,0,220,.02,.15,.45,1,1,-4,0,0,0,0,0,0,0,0,.6,.1]),
     click: new Sound([.6,0,800,0,0,.03,0,1]),
     putt:  new Sound([.35,.1,70,0,.02,.05,1,2,0,0,0,0,0,3]),
+    horn:  new Sound([.8,0,98,.08,.7,.35,2,1.5,0,0,0,0,0,0,0,0,0,.8,.1,.1]),
 };
 
 // ---------------------------------------------------------------------------
@@ -47,7 +50,7 @@ function persist() { writeSaveData(SAVE_KEY, saveData); }
 
 function sfx(name, pos, volume=1, pitch=1)
 {
-    if (saveData.sound) SOUNDS[name].play(pos, volume, pitch);
+    if (saveData.sound) SOUNDS[name].play(undefined, volume, pitch);
 }
 
 function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics stand-in for the prototype
@@ -55,13 +58,18 @@ function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics sta
 // ---------------------------------------------------------------------------
 // state
 
-let gameScreen = 'title', screenTime = 0, levelIndex = 0, isPaused = false;
+let gameScreen = 'title', screenTime = 0, levelIndex = 0, level, isPaused = false;
 let player, bodies = [], rects = [], posts = [], currents = [], slip;
+let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
 let anchor, judge, result;
-let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0;
+let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
 let popups = [], drops = [], wakes = [];
 let shakeAmt = 0, steerHeld = false, motorTimer = 0, wakeTimer = 0;
 let buttons = [], hoverId;
+
+// camera: pos in meters, wu = meters per UI unit
+const cam = { pos: UI_CENTER.copy(), wu: 1 };
+let zoomBias = 1;
 
 function pick(list) { return list[randInt(list.length)]; }
 
@@ -72,80 +80,117 @@ function setScreen(s)
     isPaused = false;
 }
 
+function fmtLen(m)
+{
+    if (m >= 1000) return `${+(m/1000).toPrecision(2)} km`;
+    if (m >= 1) return `${+m.toPrecision(m >= 10 ? 3 : 2)} m`;
+    return `${Math.round(m*100)} cm`;
+}
+
+function fmtMoney(n) { return '$' + n.toLocaleString('en-US'); }
+
 // ---------------------------------------------------------------------------
 // level setup
 
-function makeBoat(key, pos, angle, kind, color)
+function boatSize(b) { return b.type.L * b.k; }
+
+// k scales lengths; masses go with k^3 so big ships shrug off small ones. Time stretches by
+// tau = k^TIME_EXP, so every rate and force below is the toy-scale value converted to that size.
+function makeBoat(key, pos, angle, kind, color, k=1)
 {
-    const t = BOATS[key];
-    const b = new Body(pos, angle, makeCircles(t.L, t.W), t.mass, { dragF:t.dragF, dragS:t.dragS, dragA:t.dragA, kind });
+    const t = BOATS[key], tau = Math.pow(k, TIME_EXP), k3 = k*k*k;
+    const b = new Body(pos, angle, makeCircles(t.L*k, t.W*k), t.mass*k3,
+        { dragF:t.dragF/tau, dragS:t.dragS/tau, dragA:t.dragA/tau, kind, inertiaScale:k3*k*k });
     b.type = t;
+    b.k = k; b.tau = tau; b.vs = k/tau;
+    b.power = t.power * k3*k / (tau*tau);
+    b.turn = t.turn / (k*tau);
+    b.wash = t.wash / (tau*tau);
     b.color = color || t.color;
     b.hurtT = 0;
     bodies.push(b);
     return b;
 }
 
-function loadLevel(i)
+function moor(b, pos, angle)
 {
-    levelIndex = i;
-    const L = LEVELS[i], t = BOATS[L.boat];
-    bodies = []; rects = []; posts = []; currents = L.currents || [];
-    popups.length = drops.length = wakes.length = 0;
-    anchor = judge = result = undefined;
-    attempts = damages = ducksOffended = levelTime = 0;
-    steerHeld = false;
+    const s = 3 / (b.tau*b.tau);
+    b.home = { pos:pos.copy(), angle, k:s, kA:s };
+}
 
-    // shore all around, pier along the top
-    rects.push({ x0:-5, y0:-5, x1:.4, y1:30 }, { x0:39.6, y0:-5, x1:45, y1:30 }, { x0:-5, y0:-5, x1:45, y1:.4 });
-    rects.push({ x0:0, y0:PIER_TOP, x1:40, y1:PLAY_TOP + 2, dock:true });
-    if (L.rightPier)
-        rects.push({ x0:RIGHT_PIER_X, y0:.4, x1:40, y1:PIER_TOP, dock:true });
+function boatK(L, e) { return e.k ?? (L.toy ? 1 : BOATS[e.boat].k); }
 
-    // the slip and its finger docks
-    const s = L.slip, pad = s.pad || [1.4, 1];
-    const len = t.L + pad[0], wid = t.W + pad[1];
+function makeSlip(e, k)
+{
+    const t = BOATS[e.boat], s = e.slip, pad = s.pad || [1.4, 1];
+    const len = (t.L + pad[0])*k, wid = (t.W + pad[1])*k;
     const vertical = Math.abs(Math.sin(s.a)) > .5;
-    const x = s.x ?? RIGHT_PIER_X - len/2, y = s.y ?? PIER_TOP - len/2;
-    slip = { pos:vec2(x, y), a:s.a, len, wid, w: vertical ? wid : len, h: vertical ? len : wid };
+    const w = vertical ? wid : len, h = vertical ? len : wid;
+    const x = s.x ?? s.right - w/2, y = s.y ?? s.top - h/2;
     if (s.fingers != 'none')
     {
-        const ft = .5;
+        const ft = .5*k, pr = .32*k;
         if (vertical)
         {
             const yo = y - Math.sign(Math.sin(s.a)) * len/2;
-            rects.push({ x0:x-wid/2-ft, y0:y-len/2, x1:x-wid/2, y1:y+len/2, dock:true });
-            rects.push({ x0:x+wid/2, y0:y-len/2, x1:x+wid/2+ft, y1:y+len/2, dock:true });
-            posts.push({ x:x-wid/2-ft/2, y:yo, r:.32 }, { x:x+wid/2+ft/2, y:yo, r:.32 });
+            rects.push({ x0:x-wid/2-ft, y0:y-len/2, x1:x-wid/2, y1:y+len/2, dock:true, plank:.7*k });
+            rects.push({ x0:x+wid/2, y0:y-len/2, x1:x+wid/2+ft, y1:y+len/2, dock:true, plank:.7*k });
+            posts.push({ x:x-wid/2-ft/2, y:yo, r:pr }, { x:x+wid/2+ft/2, y:yo, r:pr });
         }
         else
         {
             const xo = x - Math.sign(Math.cos(s.a)) * len/2;
-            rects.push({ x0:x-len/2, y0:y-wid/2-ft, x1:x+len/2, y1:y-wid/2, dock:true });
-            rects.push({ x0:x-len/2, y0:y+wid/2, x1:x+len/2, y1:y+wid/2+ft, dock:true });
-            posts.push({ x:xo, y:y-wid/2-ft/2, r:.32 }, { x:xo, y:y+wid/2+ft/2, r:.32 });
+            rects.push({ x0:x-len/2, y0:y-wid/2-ft, x1:x+len/2, y1:y-wid/2, dock:true, plank:.7*k });
+            rects.push({ x0:x-len/2, y0:y+wid/2, x1:x+len/2, y1:y+wid/2+ft, dock:true, plank:.7*k });
+            posts.push({ x:xo, y:y-wid/2-ft/2, r:pr }, { x:xo, y:y+wid/2+ft/2, r:pr });
         }
     }
+    return { pos:vec2(x, y), a:s.a, len, wid, w, h, k };
+}
 
-    player = makeBoat(L.boat, vec2(L.start.x, L.start.y), L.start.a, 'player');
+function loadLevel(i)
+{
+    levelIndex = i;
+    const L = level = LEVELS[i];
+    bodies = []; rects = []; posts = []; currents = L.currents || [];
+    popups.length = drops.length = wakes.length = 0;
+    anchor = judge = result = intro = player = undefined;
+    attempts = damages = ducksOffended = levelTime = 0;
+    accs = [];
+    steerHeld = false;
+
+    for (const r of L.land) rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], land:true });
+    for (const d of L.docks) rects.push({ ...d, dock:true });
+
+    // every boat of the level waits at its start, tied to a spring, until its turn
+    slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
+    fleet = L.boats.map(e =>
+    {
+        const b = makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e));
+        moor(b, b.pos, b.angle);
+        return b;
+    });
 
     (L.moored || []).forEach((m, k) =>
     {
-        const b = makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length]);
-        b.home = { pos:vec2(m.x, m.y), angle:m.a, k:3, kA:3 };
+        const b = makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m));
+        moor(b, b.pos, m.a);
     });
     for (const m of L.drifters || [])
-        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL);
-    for (const [bx, by] of L.buoys || [])
+        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
+    for (const [bx, by, s=1] of L.buoys || [])
     {
-        const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45 }], .7, { kind:'buoy', restitution:.8, dragA:.6 });
-        b.home = { pos:vec2(bx, by), angle:0, k:6, kA:0 };
+        const tau = Math.pow(s, TIME_EXP);
+        const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], .7*s*s*s, { kind:'buoy', restitution:.8, dragA:.6/tau, inertiaScale:s**5 });
+        b.k = s; b.tau = tau; b.vs = s/tau;
+        b.home = { pos:vec2(bx, by), angle:0, k:6/(tau*tau), kA:0 };
         bodies.push(b);
     }
     for (const [lx, ly, la] of L.logs || [])
         bodies.push(new Body(vec2(lx, ly), la, makeCircles(2.4, .55), .9, { kind:'log', dragF:.4, dragS:1.2, dragA:1.2 }));
     for (const f of L.ducks || [])
     {
+        const box = L.duckBox || [f.x - 8, f.y - 5, f.x + 8, f.y + 5];
         let leader;
         for (let k = 0; k <= f.kids; k++)
         {
@@ -156,104 +201,210 @@ function loadLevel(i)
             d.stunT = 0;
             d.wanderT = 0;
             d.target = d.pos.copy();
+            d.box = box;
             bodies.push(d);
             leader = d;
         }
     }
 
+    startBoat(0);
     setScreen('playing');
+    updateCamera(0, true);
     track('progression', 'Start', levelId());
 }
 
-function levelId() { return `world01:level${String(levelIndex + 1).padStart(2, '0')}`; }
+// hand control to the next boat in the fleet; the one just parked stays tied up where it stopped
+function startBoat(n)
+{
+    const prev = player;
+    if (prev)
+    {
+        prev.kind = 'moored';
+        moor(prev, prev.pos, prev.angle);
+    }
+    player = fleet[n];
+    player.kind = 'player';
+    player.home = undefined;
+    slip = slips[n];
+    boatIndex = n;
+    anchor = judge = undefined;
+    boatTime = 0;
+    zoomBias = 1;
+    intro = fleet.length > 1 ? { t:0, prev, dur: prev ? 2.8 : 1.8 } : undefined;
+    if (intro) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
+}
+
+function levelId()
+{
+    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world).length + 1;
+    return `world${String(level.world).padStart(2, '0')}:level${String(n).padStart(2, '0')}`;
+}
+
+// ---------------------------------------------------------------------------
+// camera
+
+function uiScale() { return Math.min(mainCanvasSize.x / UI_SIZE.x, mainCanvasSize.y / UI_SIZE.y); }
+
+function worldToUi(p) { return UI_CENTER.add(p.subtract(cam.pos).scale(1/cam.wu)); }
+function uiToWorld(p) { return cam.pos.add(p.subtract(UI_CENTER).scale(cam.wu)); }
+
+function boxAround(p, r) { return { x0:p.x - r, y0:p.y - r, x1:p.x + r, y1:p.y + r }; }
+function boxUnion(a, b) { return { x0:Math.min(a.x0, b.x0), y0:Math.min(a.y0, b.y0), x1:Math.max(a.x1, b.x1), y1:Math.max(a.y1, b.y1) }; }
+
+// frame the boat and its slip, never tighter than a few boat lengths (more for small, quick boats)
+function cameraGoal()
+{
+    const v = level.view;
+    if (v) return { pos:vec2((v.x0 + v.x1)/2, (v.y0 + v.y1)/2), wu:Math.max((v.x1 - v.x0)/UI_SIZE.x, (v.y1 - v.y0)/UI_SIZE.y) };
+
+    let box = boxUnion(boxAround(player.pos, player.radius),
+        { x0:slip.pos.x - slip.w/2, y0:slip.pos.y - slip.h/2, x1:slip.pos.x + slip.w/2, y1:slip.pos.y + slip.h/2 });
+    // the size reveal: first show the boat just parked next to the new one
+    if (intro && intro.prev && intro.t < intro.dur*.5) box = boxUnion(box, boxAround(intro.prev.pos, intro.prev.radius));
+    const minW = boatSize(player) * (3 + 6/player.tau), pad = player.radius*.8;
+    const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);
+    const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3)) * zoomBias;
+    // centered in the play area below the HUD bar
+    return { pos:vec2((box.x0 + box.x1)/2, (box.y0 + box.y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
+}
+
+function updateCamera(dt, snap)
+{
+    const g = cameraGoal();
+    if (snap || level.view) { cam.pos = g.pos; cam.wu = g.wu; return; }
+    // while the goal is far, stay zoomed out enough to see it: big moves read as zoom out, pan, zoom in
+    const dist = cam.pos.distance(g.pos);
+    const wuGoal = Math.max(g.wu, dist / 14);
+    const lw = Math.log(cam.wu);
+    cam.wu = Math.exp(lw + (Math.log(wuGoal) - lw) * Math.min(1, dt*2.2));
+    // panning speed is relative to the zoom
+    const step = Math.min(dist * Math.min(1, dt*3), 30 * cam.wu * dt);
+    if (dist > 1e-9) cam.pos = cam.pos.add(g.pos.subtract(cam.pos).scale(step/dist));
+}
+
+function viewHalfUi() { return vec2(mainCanvasSize.x, mainCanvasSize.y).scale(.5 / uiScale()); }
+
+function useWorldCamera()
+{
+    WU = cam.wu;
+    LINE_W = .1*WU;
+    const shake = shakeAmt > 0 ? vec2(rand(-1, 1), rand(-1, 1)).scale(shakeAmt*WU) : vec2();
+    setCameraScale(uiScale() / WU);
+    setCameraPos(cam.pos.add(shake));
+    const h = viewHalfUi().scale(WU);
+    VIEW_RECT = { x0:cam.pos.x - h.x, y0:cam.pos.y - h.y, x1:cam.pos.x + h.x, y1:cam.pos.y + h.y };
+}
+
+function useUiCamera()
+{
+    WU = 1;
+    LINE_W = .1;
+    setCameraScale(uiScale());
+    setCameraPos(UI_CENTER);
+    VIEW_RECT = { x0:-1e9, y0:-1e9, x1:1e9, y1:1e9 };
+}
+
+function inView(p, r)
+{
+    const v = VIEW_RECT;
+    return p.x + r > v.x0 && p.x - r < v.x1 && p.y + r > v.y0 && p.y - r < v.y1;
+}
 
 // ---------------------------------------------------------------------------
 // effects
 
-function popup(text, pos, color=C_CREAM, size=.9)
+// pos in meters; lift and size in UI units so popups read the same at any zoom
+function popup(text, pos, color=C_CREAM, size=.9, lift=.8)
 {
-    popups.push({ text, pos:pos.copy(), t:0, color, size });
+    popups.push({ text, pos:pos.copy(), t:0, color, size, lift });
     if (popups.length > 12) popups.shift();
 }
 
-function splash(pos, n, speed=4)
+function splash(pos, n, speed=4, s=1)
 {
     for (let i = 0; i < n; i++)
     {
-        const a = rand(PI*2), v = rand(.3, 1)*speed;
-        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.3, .6), size:rand(.15, .35), color: i%3 ? C_CREAM : C_WATER2 });
+        const a = rand(PI*2), v = rand(.3, 1)*speed*s;
+        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.3, .6), size:rand(.15, .35)*s, color: i%3 ? C_CREAM : C_WATER2 });
     }
     if (drops.length > 160) drops.splice(0, drops.length - 160);
 }
 
-function confetti(pos)
+function confetti(pos, s=1)
 {
     const colors = [C_CORAL, C_SUNNY, C_TEAL, C_CREAM];
     for (let i = 0; i < 50; i++)
     {
-        const a = rand(PI*2), v = rand(3, 9);
-        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.8, 1.4), size:rand(.2, .4), color:colors[i%4], square:true });
+        const a = rand(PI*2), v = rand(3, 9)*s;
+        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.8, 1.4), size:rand(.2, .4)*s, color:colors[i%4], square:true });
     }
 }
 
+// mass at toy scale, so a cruise ship wobbles like the toy it is drawn as
+function toyMass(b) { return b.mass / (b.k*b.k*b.k); }
+
 function onHit(A, B, impact, p)
 {
-    if (impact < .6) return;
+    // impact speeds are judged relative to the size of what got hit
+    const vs = B ? Math.min(A.vs, B.vs) : A.vs;
+    if (impact / vs < .6) return;
     const isPlayer = A == player || B == player;
     const other = A == player ? B : A;
     for (const b of [A, B])
-        if (b) b.squashVel += impact * (b == player ? 1.2 : 2) / Math.sqrt(b.mass);
+        if (b) b.squashVel += Math.min(4, impact / b.vs) * (b == player ? 1.2 : 2) / Math.sqrt(toyMass(b));
 
+    const rel = impact / vs;
     const kind = !other ? 'dock' : other.kind;
     if (kind == 'duck')
     {
         const duck = other.kind == 'duck' ? other : (A.kind == 'duck' ? A : B);
-        if (duck.stunT <= 0 && (isPlayer || impact > 1.2))
+        if (duck.stunT <= 0 && (isPlayer || rel > 1.2))
         {
             duck.stunT = 1.5;
             duck.angVel += rand(-14, 14);
             sfx('quack', p, 1, rand(.9, 1.3) / Math.sqrt(duck.duckSize));
-            popup(pick(QUIPS.duck), p.add(vec2(0, .8)), C_SUNNY, .8);
+            popup(pick(QUIPS.duck), p, C_SUNNY, .8);
             if (isPlayer) { ducksOffended++; damages += 5; }
         }
         return;
     }
-    if (!isPlayer && impact < 1.5) return;
+    if (!isPlayer && rel < 1.5) return;
 
     const cool = isPlayer ? player : A;
-    splash(p, Math.min(14, impact*3), impact*1.2);
+    splash(p, Math.min(14, rel*3), Math.min(rel, 4)*1.2, B ? Math.max(A.k, B.k) : A.k);
     if (cool.hitCooldown > 0) return;
     cool.hitCooldown = .35;
 
     if (isPlayer)
     {
-        shakeAmt = Math.max(shakeAmt, Math.min(.5, impact*.07*Math.sqrt(player.mass)));
-        if (impact > 1.4) player.hurtT = .8;
+        const mine = impact / player.vs;
+        shakeAmt = Math.max(shakeAmt, Math.min(.5, mine*.07*Math.sqrt(player.type.mass)));
+        if (mine > 1.4) player.hurtT = .8;
     }
     if (kind == 'buoy')
     {
-        sfx('bong', p, 1, rand(.9, 1.1));
-        popup(pick(QUIPS.buoy), p.add(vec2(0, .8)));
-        if (isPlayer) damages += 20;
+        sfx('bong', p, 1, rand(.9, 1.1) / Math.sqrt(other.k));
+        popup(pick(QUIPS.buoy), p);
+        if (isPlayer) damages += 20 * Math.round(other.k*other.k);
     }
     else if (kind == 'moored' || kind == 'drifter' || kind == 'player')
     {
         sfx('bonk', p, 1, .8);
         if (other && other.hurtT !== undefined) other.hurtT = .8;
-        popup(pick(QUIPS.boat), (other || A).pos.add(vec2(0, 1.4)), C_CORAL);
+        popup(pick(QUIPS.boat), other ? other.pos : p, C_CORAL, .9, 1.4);
         if (isPlayer) damages += Math.round(impact * 60 * Math.sqrt(other.mass)) * 5;
     }
     else if (kind == 'log')
     {
         sfx('bonk', p, 1, .6);
-        popup(pick(QUIPS.log), p.add(vec2(0, .8)), C_WOOD);
+        popup(pick(QUIPS.log), p, C_WOOD);
         if (isPlayer) damages += 10;
     }
     else
     {
-        sfx('bonk', p, Math.min(1, impact/3), 1.2 - Math.min(.5, player.mass*.05));
-        if (impact > 1) popup(pick(QUIPS.dock), p.add(vec2(0, .8)));
-        if (isPlayer) damages += Math.round(impact * 8) * 5;
+        sfx('bonk', p, Math.min(1, rel/3), 1.2 - Math.min(.5, toyMass(cool)*.05));
+        if (rel > 1) popup(pick(QUIPS.dock), p);
+        if (isPlayer) damages += Math.max(1, Math.round(rel * 8 * Math.sqrt(player.mass))) * 5;
     }
 }
 
@@ -262,7 +413,7 @@ function onHit(A, B, impact, p)
 
 function controlPlayer(dt)
 {
-    const t = player.type;
+    const t = player.type, k = player.k;
     let throttle = 0, rudder = 0;
     const kd = keyDirection();
     if (kd.x || kd.y)
@@ -273,11 +424,12 @@ function controlPlayer(dt)
     else if (steerHeld && mouseIsDown(0))
     {
         // steer toward the cursor; if it is behind the boat, back up toward it
-        const tx = mousePos.x - player.pos.x, ty = mousePos.y - player.pos.y, dist = Math.hypot(tx, ty);
-        if (dist > t.W*.6)
+        const m = uiToWorld(mousePos);
+        const tx = m.x - player.pos.x, ty = m.y - player.pos.y, dist = Math.hypot(tx, ty);
+        if (dist > t.W*k*.6)
         {
             const want = Math.atan2(ty, tx), diff = wrapAngle(want - player.angle);
-            const power = clamp(dist/6, .3, 1);
+            const power = clamp(dist/(2.7*t.L*k), .3, 1);
             if (Math.abs(diff) < PI*.6)
             {
                 throttle = power * clamp(1.5 - Math.abs(diff), .35, 1);
@@ -290,44 +442,46 @@ function controlPlayer(dt)
             }
         }
     }
-    if (anchor) throttle = 0;
+    if (anchor || (intro && intro.t < intro.dur)) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;
 
     const f = player.forward();
-    const thrust = throttle * t.power * (throttle < 0 ? t.reverse : 1) * player.invMass;
+    const thrust = throttle * player.power * (throttle < 0 ? t.reverse : 1) * player.invMass;
     player.vel.x += f.x * thrust * dt;
     player.vel.y += f.y * thrust * dt;
     const vf = player.vel.x*f.x + player.vel.y*f.y;
-    player.angVel += rudder * (t.turn*vf + t.wash*throttle) * dt;
+    player.angVel += rudder * (player.turn*vf + player.wash*throttle) * dt;
 }
 
-function bowPoint() { return player.toWorld(player.type.L/2 - .25, 0); }
+function bowPoint() { return player.toWorld((player.type.L/2 - .25)*player.k, 0); }
 
 function toggleAnchor()
 {
     if (judge && judge.result) return;
+    if (intro && intro.t < intro.dur) return;
+    const k = player.k;
     if (anchor)
     {
         anchor = judge = undefined;
         sfx('chain', player.pos, 1, 1.3);
-        popup('Anchor up', player.pos.add(vec2(0, 1.5)), C_CREAM, .7);
+        popup('Anchor up', player.pos, C_CREAM, .7, 1.5);
         return;
     }
-    const spd = player.speed();
+    const spd = player.speed() / player.vs;
     // lands right at the bow, a hair off-center, so a boat still moving fast whips around it
-    anchor = { pos: bowPoint().add(player.forward().rotate(PI/2).scale(rand(-.15, .15))), len: .5, t: 0 };
+    anchor = { pos: bowPoint().add(player.forward().rotate(PI/2).scale(rand(-.15, .15)*k)), len: .5*k, t: 0 };
     judge = { t:0, settle:0 };
     attempts++;
     sfx('chain', anchor.pos);
     sfx('splash', anchor.pos, .8);
-    splash(anchor.pos, 12, 3);
+    splash(anchor.pos, 12, 3, k);
     if (spd > 2.5)
     {
-        popup(pick(QUIPS.fast), player.pos.add(vec2(0, 1.6)), C_SUNNY, 1.1);
+        popup(pick(QUIPS.fast), player.pos, C_SUNNY, 1.1, 1.6);
         shakeAmt = Math.max(shakeAmt, .25);
         player.hurtT = 1;
-        player.angVel += (rand() < .5 ? -1 : 1) * spd * 2;     // spin-out
+        player.angVel += (rand() < .5 ? -1 : 1) * spd * 2 / player.tau;     // spin-out
     }
 }
 
@@ -335,23 +489,24 @@ function anchorForce(dt)
 {
     if (!anchor) return;
     anchor.t += dt;
+    const tau = player.tau;
     const bow = bowPoint(), dx = bow.x - anchor.pos.x, dy = bow.y - anchor.pos.y, d = Math.hypot(dx, dy);
     if (d > anchor.len)
     {
         const nx = dx/d, ny = dy/d, bv = player.pointVel(bow);
         const vn = bv.x*nx + bv.y*ny, m = player.mass;
-        const f = -(d - anchor.len)*30*m - vn*3*m;
+        const f = -(d - anchor.len)*30/(tau*tau)*m - vn*3/tau*m;
         player.applyForce(nx*f, ny*f, bow, dt);
     }
     // the anchor drags on the bottom
-    player.vel = player.vel.scale(Math.max(0, 1 - .8*dt));
-    player.angVel *= Math.max(0, 1 - .9*dt);
+    player.vel = player.vel.scale(Math.max(0, 1 - .8/tau*dt));
+    player.angVel *= Math.max(0, 1 - .9/tau*dt);
 }
 
 // fraction-free test: every hull circle inside the slip (small tolerance)
 function boatInSlip()
 {
-    const c = Math.cos(slip.a), s = Math.sin(slip.a), tol = .15;
+    const c = Math.cos(slip.a), s = Math.sin(slip.a), tol = .15*player.k;
     for (let i = 0; i < player.circles.length; i++)
     {
         const p = player.world[i], r = player.circles[i].r;
@@ -368,7 +523,7 @@ function parkingScore()
     const posErr = player.pos.distance(slip.pos);
     const diff = Math.abs(wrapAngle(player.angle - slip.a));
     const angErr = Math.min(diff, PI - diff);       // nose in or stern in, both fine
-    return clamp(1 - .6*Math.min(1, posErr/.8) - .4*Math.min(1, angErr/.35), 0, 1);
+    return clamp(1 - .6*Math.min(1, posErr/(.8*player.k)) - .4*Math.min(1, angErr/.35), 0, 1);
 }
 
 function updateJudge(dt)
@@ -377,37 +532,39 @@ function updateJudge(dt)
     judge.t += dt;
     if (judge.result)
     {
-        if (judge.result == 'win' && judge.t > 1.4) showComplete();
-        if (judge.result == 'fail' && judge.t > 1.8) { anchor = judge = undefined; }
+        if (judge.result == 'win' && judge.t > 1.4)
+            boatIndex < fleet.length - 1 ? startBoat(boatIndex + 1) : showComplete();
+        else if (judge.result == 'fail' && judge.t > 1.8) { anchor = judge = undefined; }
         return;
     }
-    if (player.speed() < .25 && Math.abs(player.angVel) < .25) judge.settle += dt;
+    if (player.speed() < .25*player.vs && Math.abs(player.angVel) < .25/player.tau) judge.settle += dt;
     else judge.settle = 0;
-    if (judge.settle < .5 && judge.t < 3.5) return;
+    if (judge.settle < .5 && judge.t < 3.5*player.tau) return;
 
     judge.t = 0;
     if (boatInSlip())
     {
         const acc = parkingScore();
-        const stars = acc >= .85 ? 3 : acc >= .6 ? 2 : 1;
+        accs.push(acc);
         judge.result = 'win';
-        result = { acc, stars, quip: pick(QUIPS['star' + stars]) };
         sfx('win');
-        confetti(player.pos);
-        popup('PARKED!', player.pos.add(vec2(0, 2)), C_SUNNY, 1.6);
+        confetti(player.pos, player.k);
+        popup('PARKED!', player.pos, C_SUNNY, 1.6, 2);
     }
     else
     {
         judge.result = 'fail';
         sfx('fail');
-        popup(pick(QUIPS.fail), player.pos.add(vec2(0, 2)), C_CREAM, .8);
+        popup(pick(QUIPS.fail), player.pos, C_CREAM, .8, 2);
         track('progression', 'Fail', levelId());
     }
 }
 
 function showComplete()
 {
-    const i = levelIndex;
+    const i = levelIndex, acc = accs.reduce((a, b) => a + b, 0) / accs.length;
+    const stars = acc >= .85 ? 3 : acc >= .6 ? 2 : 1;
+    result = { acc, stars, quip: pick(QUIPS['star' + stars]) };
     result.isBest = result.stars > (saveData.stars[i] || 0) || result.acc > (saveData.best[i] || 0);
     saveData.stars[i] = Math.max(saveData.stars[i] || 0, result.stars);
     saveData.best[i] = Math.max(saveData.best[i] || 0, result.acc);
@@ -431,12 +588,13 @@ function updateDuck(d, dt)
     {
         d.wanderT -= dt;
         const away = d.pos.subtract(player.pos);
-        if (away.length() < 3.5)
+        if (away.length() < 2.4 + player.radius)
             d.target = d.pos.add(away.normalize(3));       // paddle away from the boat
         else if (d.wanderT <= 0)
         {
+            const b = d.box;
             d.wanderT = rand(3, 6);
-            d.target = vec2(clamp(d.pos.x + rand(-8, 8), 3, 37), clamp(d.pos.y + rand(-5, 5), 2, PIER_TOP - 2.5));
+            d.target = vec2(clamp(d.pos.x + rand(-8, 8), b[0], b[2]), clamp(d.pos.y + rand(-5, 5), b[1], b[3]));
         }
     }
     const tx = d.target.x - d.pos.x, ty = d.target.y - d.pos.y, dist = Math.hypot(tx, ty);
@@ -479,20 +637,20 @@ function stepWorld()
     }
     for (const b of bodies) if (b.hurtT > 0) b.hurtT -= timeDelta;
 
-    // motor putts and wake
+    // motor putts (deeper for bigger boats) and wake
     const t = player.type, thr = Math.abs(player.throttle);
     motorTimer -= timeDelta;
     if (thr > .1 && motorTimer <= 0)
     {
-        motorTimer = .13 - .06*thr;
-        sfx('putt', player.pos, .5 + thr*.5, 1.4 / Math.sqrt(t.mass) + thr*.3);
+        motorTimer = (.13 - .06*thr) * player.tau;
+        sfx('putt', player.pos, .5 + thr*.5, 1.6 / Math.pow(boatSize(player), .25) + thr*.3);
     }
     wakeTimer -= timeDelta;
-    if (player.speed() > .7 && wakeTimer <= 0)
+    if (player.speed() > .7*player.vs && wakeTimer <= 0)
     {
         wakeTimer = .07;
-        const stern = player.toWorld(-t.L/2, 0);
-        wakes.push({ pos:stern, t:0, size:t.W*.7 });
+        const stern = player.toWorld(-t.L/2*player.k, 0);
+        wakes.push({ pos:stern, t:0, size:t.W*.7*player.k });
         if (wakes.length > 70) wakes.shift();
     }
 }
@@ -515,7 +673,7 @@ function updateEffects()
 }
 
 // ---------------------------------------------------------------------------
-// buttons (laid out in world units, the view is always 40 x 22.5)
+// buttons (laid out in UI units, the 40 x 22.5 box)
 
 function button(id, label, x, y, w, h, opts={}) { buttons.push({ id, label, x, y, w, h, ...opts }); }
 
@@ -530,8 +688,8 @@ function layoutButtons()
     }
     else if (gameScreen == 'levels')
     {
-        LEVELS.forEach((L, i) => button('level' + i, String(i+1), 8 + (i%5)*6, 13.6 - Math.floor(i/5)*6.4, 5.2, 5.4, { card:i }));
-        button('back', 'BACK', 20, 2.2, 6, 1.6, { small:true });
+        LEVELS.forEach((L, i) => button('level' + i, String(i+1), 8 + (i%5)*6, 15.4 - Math.floor(i/5)*4.8, 5.2, 4.3, { card:i }));
+        button('back', 'BACK', 20, 1.6, 6, 1.4, { small:true });
     }
     else if (gameScreen == 'playing')
     {
@@ -590,10 +748,10 @@ function pressButton(id)
 
 function gameInit()
 {
-    setCanvasClearColor(C_SAND);
+    setCanvasClearColor(C_WATER);
     setFontDefault("'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', sans-serif");
     for (let i = 0; i < 46; i++)
-        ripples.push(vec2(rand(1, 39), rand(1, 20)));
+        ripples.push(vec2(rand(1, 39), rand(1, 21)));
 }
 
 const ripples = [];
@@ -622,35 +780,53 @@ function gameUpdate()
     {
         if (keyWasPressed('KeyP') || keyWasPressed('Escape')) isPaused = !isPaused;
         if (keyWasPressed('KeyR')) pressButton('restart');
+        // wheel zooms out to take in the whole harbor, Supreme Commander style
+        if (mouseWheel && !level.view) zoomBias = clamp(zoomBias * Math.pow(1.3, mouseWheel), .6, 80);
         if (!isPaused)
         {
             if (keyWasPressed('Space') || keyWasPressed('Enter')) toggleAnchor();
             levelTime += timeDelta;
+            if (intro)
+            {
+                intro.t += timeDelta;
+                if (intro.t > intro.dur + .4) intro = undefined;
+            }
+            else boatTime += timeDelta;
             stepWorld();
             updateJudge(timeDelta);
         }
     }
+    if (gameScreen == 'playing' || gameScreen == 'complete')
+        updateCamera(timeDelta);
+    else { cam.pos = UI_CENTER.copy(); cam.wu = 1; }
     updateEffects();
 }
 
-function gameUpdatePost()
-{
-    setCameraScale(Math.min(mainCanvasSize.x / VIEW_SIZE.x, mainCanvasSize.y / VIEW_SIZE.y));
-    const shake = shakeAmt > 0 ? vec2(rand(-1, 1), rand(-1, 1)).scale(shakeAmt) : vec2();
-    setCameraPos(VIEW_CENTER.add(shake));
-}
+function gameUpdatePost() { useUiCamera(); }
 
 // ---------------------------------------------------------------------------
-// rendering
+// rendering (world)
 
+// ripples come in octaves 10x apart, each visible while its glyphs are a readable size on screen,
+// so the water keeps its texture and shows the zoom at any scale
 function drawWater()
 {
-    drawRect(VIEW_CENTER, VIEW_SIZE, C_WATER);
-    for (let i = 0; i < ripples.length; i++)
+    const v = VIEW_RECT;
+    for (let s = .01; s < 1e4; s *= 10)
     {
-        const p = ripples[i], x = p.x + Math.sin(time*.5 + i)*.4;
-        drawLine(vec2(x - .35, p.y), vec2(x, p.y - .12), .08, C_WATER2);
-        drawLine(vec2(x, p.y - .12), vec2(x + .35, p.y), .08, C_WATER2);
+        const g = .7*s / WU;
+        if (g < .3 || g > 3) continue;
+        const color = C_WATER2.scale(1, clamp((g - .3)/.4, 0, 1) * clamp((3 - g)/1.5, 0, 1));
+        const tw = 40*s, th = 22*s, w = .08*s;
+        for (let tx = Math.floor(v.x0/tw); tx*tw < v.x1; tx++)
+        for (let ty = Math.floor(v.y0/th); ty*th < v.y1; ty++)
+        for (let i = 0; i < ripples.length; i++)
+        {
+            const p = ripples[i], x = tx*tw + (p.x + Math.sin(time*.5 + i)*.4)*s, y = ty*th + p.y*s;
+            if (x < v.x0 - s || x > v.x1 + s || y < v.y0 - s || y > v.y1 + s) continue;
+            drawLine(vec2(x - .35*s, y), vec2(x, y - .12*s), w, color);
+            drawLine(vec2(x, y - .12*s), vec2(x + .35*s, y), w, color);
+        }
     }
 }
 
@@ -675,17 +851,18 @@ function drawCurrents()
 function drawSlip()
 {
     const inside = boatInSlip(), pulse = .5 + .5*Math.sin(time*5);
+    const lw = Math.min(.14*WU, slip.wid*.08);
     // ghost of the boat where it should end up
-    const ghost = { pos:slip.pos, angle:slip.a, sx:1, sy:1 };
+    const ghost = { pos:slip.pos, angle:slip.a, sx:1, sy:1, k:player.k };
     painter(ghost).poly(player.type.hullPts, C_CREAM.scale(1, .22));
     if (inside)
     {
         drawPoly([vec2(slip.pos.x-slip.w/2, slip.pos.y-slip.h/2), vec2(slip.pos.x+slip.w/2, slip.pos.y-slip.h/2),
             vec2(slip.pos.x+slip.w/2, slip.pos.y+slip.h/2), vec2(slip.pos.x-slip.w/2, slip.pos.y+slip.h/2)],
-            C_CREAM.scale(1, .15 + .1*pulse), .16, C_CREAM);
+            C_CREAM.scale(1, .15 + .1*pulse), lw*1.15, C_CREAM);
     }
     else
-        drawDashedRect(slip.pos, slip.w, slip.h, C_CREAM, .14, .45);
+        drawDashedRect(slip.pos, slip.w, slip.h, C_CREAM, lw, Math.max(.45*WU, slip.wid*.15));
 }
 
 function drawWakes()
@@ -693,44 +870,35 @@ function drawWakes()
     for (const w of wakes)
     {
         const k = w.t / 1.2;
-        drawEllipse(w.pos, vec2(w.size*(1 + k*2.5)), C_CLEAR, 0, .09*(1 - k), C_CREAM.scale(1, .7*(1 - k)));
+        drawEllipse(w.pos, vec2(w.size*(1 + k*2.5)), C_CLEAR, 0, Math.min(.09*WU, w.size*.12)*(1 - k), C_CREAM.scale(1, .7*(1 - k)));
     }
 }
 
 function drawAnchorRope()
 {
     if (!anchor) return;
-    const drop = Math.min(1, anchor.t*4);
-    drawCircle(anchor.pos, 1.2*drop, C_WATER2.scale(1, .6));
-    drawAnchorGlyph(anchor.pos, .55, C_INK.scale(1, .5));
-    drawLine(bowPoint(), anchor.pos, .08, C_INK);
+    const drop = Math.min(1, anchor.t*4), k = player.k;
+    drawCircle(anchor.pos, 1.2*drop*k, C_WATER2.scale(1, .6));
+    drawAnchorGlyph(anchor.pos, .55*k, C_INK.scale(1, .5));
+    drawLine(bowPoint(), anchor.pos, Math.min(.08*WU, .08*k), C_INK);
 }
 
 function drawBodies()
 {
+    for (const r of rects) if (r.land) drawLand(r);
     for (const r of rects) if (r.dock) drawDockShadow(r);
-    for (const b of bodies) if (b.type) drawBoatShadow(b);
+    for (const b of bodies) if (b.type && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
-    for (const p of posts) drawPost(p);
+    for (const p of posts) if (inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     for (const b of bodies)
     {
+        if (!inView(b.pos, b.radius*1.5)) continue;
         if (b.kind == 'duck') drawDuck(b);
         else if (b.kind == 'buoy') drawBuoy(b);
         else if (b.kind == 'log') drawLog(b);
     }
-    for (const b of bodies) if (b.type && b != player) drawBoat(b);
+    for (const b of bodies) if (b.type && b != player && inView(b.pos, b.radius*1.2)) drawBoat(b);
     drawBoat(player);
-}
-
-function drawShore()
-{
-    const s = .4, c = C_SAND;
-    drawRect(vec2(20, s/2), vec2(40, s), c);
-    drawRect(vec2(s/2, 11), vec2(s, 22), c);
-    drawRect(vec2(40 - s/2, 11), vec2(s, 22), c);
-    drawLine(vec2(s, s), vec2(40 - s, s), LINE_W, C_INK);
-    drawLine(vec2(s, s), vec2(s, PIER_TOP), LINE_W, C_INK);
-    drawLine(vec2(40 - s, s), vec2(40 - s, PIER_TOP), LINE_W, C_INK);
 }
 
 function drawDrops()
@@ -738,18 +906,21 @@ function drawDrops()
     for (const d of drops)
     {
         const k = 1 - d.t / d.life;
-        if (d.square) drawRect(d.pos, vec2(d.size*k + .05), d.color, d.t*8);
-        else drawCircle(d.pos, d.size*k + .05, d.color);
+        if (d.square) drawRect(d.pos, vec2(d.size*k + .05*WU), d.color, d.t*8);
+        else drawCircle(d.pos, d.size*k + .05*WU, d.color);
     }
 }
+
+// ---------------------------------------------------------------------------
+// rendering (UI)
 
 function drawPopups()
 {
     for (const p of popups)
     {
         const pop = Math.min(1, p.t*8), s = p.size * (pop < 1 ? pop*1.3 : 1 + Math.max(0, .3 - (p.t - .12)*2));
-        const a = clamp((1.3 - p.t)*3, 0, 1);
-        txt(p.text, p.pos.x, p.pos.y + p.t*.8, s, p.color.scale(1, a), 'center', .14*s, C_INK.scale(1, a));
+        const a = clamp((1.3 - p.t)*3, 0, 1), u = worldToUi(p.pos);
+        txt(p.text, u.x, u.y + p.lift + p.t*.8, s, p.color.scale(1, a), 'center', .14*s, C_INK.scale(1, a));
     }
 }
 
@@ -758,7 +929,7 @@ function drawButton(b)
     const hover = hoverId == b.id, lift = hover ? .12 : 0;
     if (b.round)
     {
-        const inSlip = boatInSlip() && player.speed() < 1;
+        const inSlip = boatInSlip() && player.speed() < player.vs;
         const pulse = !anchor && inSlip ? 1 + Math.sin(time*8)*.06 : 1;
         const c = vec2(b.x, b.y + lift), d = b.w*pulse;
         drawCircle(c.add(vec2(.16, -.22)), d, C_SHADOW);
@@ -778,35 +949,86 @@ function drawLevelCard(b, hover)
     const i = b.card, L = LEVELS[i], stars = saveData.stars[i] || 0, isNext = i == nextLevelIndex();
     const c = vec2(b.x, b.y + (hover ? .15 : 0));
     drawPanel(c, b.w, b.h, isNext ? C_SUNNY : C_CREAM, .5);
-    txt(b.label, c.x, c.y + 1.4, 1.5, C_INK);
-    txt(L.name, c.x, c.y + .1, .5, C_INK);
-    txt(BOATS[L.boat].name, c.x, c.y - .6, .42, C_TEAL);
-    for (let s = 0; s < 3; s++) drawStar(vec2(c.x - 1.3 + s*1.3, c.y - 1.8), .5, s < stars);
+    txt(b.label, c.x, c.y + 1.15, 1.2, C_INK);
+    txt(L.name, c.x, c.y + .1, .48, C_INK);
+    txt(L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
+    for (let s = 0; s < 3; s++) drawStar(vec2(c.x - 1.15 + s*1.15, c.y - 1.45), .42, s < stars);
+}
+
+// map-style scale bar: a round length about 5 UI units long
+function drawScaleBar()
+{
+    const target = 5*cam.wu, p10 = Math.pow(10, Math.floor(Math.log10(target)));
+    const m = [5, 2, 1].map(x => x*p10).find(x => x <= target), len = m / cam.wu;
+    const x0 = 1, y = 19.7;
+    drawLine(vec2(x0, y), vec2(x0 + len, y), .14, C_INK);
+    drawLine(vec2(x0, y - .25), vec2(x0, y + .25), .14, C_INK);
+    drawLine(vec2(x0 + len, y - .25), vec2(x0 + len, y + .25), .14, C_INK);
+    txt(fmtLen(m), x0 + len/2, y + .55, .5, C_INK);
+}
+
+// a ring around the player when the boat is too small to spot
+function drawPlayerMarker()
+{
+    const len = boatSize(player) / cam.wu;
+    if (len > 1.2) return;
+    const u = worldToUi(player.pos), r = 1.1 + Math.sin(time*6)*.12;
+    drawCircle(u, r*2, C_CLEAR, .14, C_CORAL);
+    txt('YOU', u.x, u.y + r + .45, .5, C_CORAL, 'center', .08, C_INK);
+}
+
+function drawIntro()
+{
+    if (!intro) return;
+    const t = intro.t, out = intro.dur + .4;
+    const k = Math.min(1, t*4) * clamp((out - t)*4, 0, 1);
+    if (k <= 0) return;
+    // at the bottom: piers and the boat just parked are usually up top
+    const y = 3.2 - (1 - k)*5;
+    drawPanel(vec2(20, y), 17, 3.6, C_CREAM.scale(1, k), .6);
+    const ink = C_INK.scale(1, k), size = boatSize(player);
+    txt(`BOAT ${boatIndex + 1} OF ${fleet.length}`, 20, y + 1.05, .5, C_TEAL.scale(1, k));
+    txt(player.type.name.toUpperCase(), 20, y - .05, 1.3, C_CORAL.scale(1, k), 'center', .12, ink);
+    let line = fmtLen(size);
+    if (intro.prev)
+    {
+        const r = size / boatSize(intro.prev);
+        if (r >= 1.5) line += ` · ${Math.round(r)}x BIGGER`;
+        else if (r <= 1/1.5) line += ` · ${Math.round(1/r)}x SMALLER`;
+    }
+    txt(line, 20, y - 1.15, .6, ink);
 }
 
 function drawHud()
 {
-    const L = LEVELS[levelIndex];
-    drawRect(vec2(20, (PLAY_TOP + VIEW_SIZE.y)/2), vec2(40, VIEW_SIZE.y - PLAY_TOP), C_CREAM);
-    drawLine(vec2(0, PLAY_TOP), vec2(40, PLAY_TOP), LINE_W, C_INK);
+    const L = level, wide = viewHalfUi().x*2;
+    drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), C_CREAM);
+    drawLine(vec2(20 - wide/2, PLAY_TOP), vec2(20 + wide/2, PLAY_TOP), LINE_W, C_INK);
     txt(`${levelIndex + 1}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
-    txt(BOATS[L.boat].name, 10.5, 21.75, .55, C_TEAL, 'left');
-    if (damages) txt(`Damages: $${damages}`, 22, 21.75, .55, C_CORAL);
+    let boat = player.type.name;
+    if (!L.toy) boat += ` · ${fmtLen(boatSize(player))}`;
+    if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
+    txt(boat, 10, 21.75, .55, C_TEAL, 'left');
+    if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
+    if (!L.view) drawScaleBar();
 
-    // hint fades after a few seconds, comes back while idle
-    const a = clamp(6 - levelTime, 0, 1);
-    if (a > 0 && L.hint)
+    // hint fades after a few seconds
+    const hint = L.boats[boatIndex].hint || L.hint;
+    const a = intro || gameScreen != 'playing' ? 0 : clamp(6 - boatTime, 0, 1);
+    if (a > 0 && hint)
     {
-        drawPanel(vec2(20, 1.6), Math.min(36, L.hint.length*.33 + 2), 1.5, C_CREAM.scale(1, a), .5, false);
-        txt(L.hint, 20, 1.6, .58, C_INK.scale(1, a));
+        drawPanel(vec2(20, 1.6), Math.min(36, hint.length*.33 + 2), 1.5, C_CREAM.scale(1, a), .5, false);
+        txt(hint, 20, 1.6, .58, C_INK.scale(1, a));
     }
 }
 
 function drawTitle()
 {
-    drawWater();
-    // a little parade of boats doing donuts
-    ['dinghy', 'swan', 'tug', 'bathtub'].forEach((key, i) =>
+    // a cruise ship drifts past behind a little parade of boats doing donuts
+    const ship = { pos:vec2(((time*1.2) % 90) - 25, 2.6), angle:0, sx:1, sy:1, id:9, k:2.4, type:BOATS.cruise, color:BOATS.cruise.color, kind:'title' };
+    drawBoatShadow(ship);
+    drawBoat(ship);
+    ['dinghy', 'swan', 'tug', 'paper'].forEach((key, i) =>
     {
         const a = time*.4 + i*PI/2;
         const b = { pos:vec2(20 + Math.cos(a)*15, 11 + Math.sin(a)*7.5), angle:a + PI/2, sx:1, sy:1, id:i, type:BOATS[key], color:BOATS[key].color, kind:'title' };
@@ -816,15 +1038,15 @@ function drawTitle()
     const bob = Math.sin(time*2)*.2;
     txt('PARK MY BOAT', 20.2, 15.1 + bob, 3.6, C_INK);
     txt('PARK MY BOAT', 20, 15.4 + bob, 3.6, C_SUNNY, 'center', .25, C_INK);
-    txt('One boat. One spot. Zero brakes.', 20, 12.7, .8, C_INK);
+    txt('Tiny boats. Huge boats. Zero brakes.', 20, 12.7, .8, C_INK);
 }
 
 function drawComplete()
 {
-    drawRect(VIEW_CENTER, VIEW_SIZE, C_INK.scale(1, .35));
+    drawRect(UI_CENTER, UI_SIZE.scale(3), C_INK.scale(1, .35));
     const t = screenTime, k = Math.min(1, t*3), ease = 1 + 2.7*Math.pow(k - 1, 3) + 1.7*Math.pow(k - 1, 2);
     const c = vec2(20, 11.5);
-    drawPanel(c.add(vec2(0, (1 - ease)*-12)), 22, 17, C_CREAM, .8);
+    drawPanel(c.add(vec2(0, (1 - ease)*-12)), 24, 17, C_CREAM, .8);
     if (k < 1) return;
     txt('PARKED!', 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
     for (let s = 0; s < 3; s++)
@@ -836,34 +1058,40 @@ function drawComplete()
     }
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
     txt(`Accuracy ${shown}%`, 20, 11.6, 1, C_INK);
-    txt(`Anchor drops: ${attempts}    Damages: $${damages}    Ducks offended: ${ducksOffended}`, 20, 10.1, .55, C_TEAL);
-    txt(`"${result.quip}"`, 20, 8.6, .75, C_INK);
-    if (result.isBest) txt('NEW BEST!', 27.5, 16.2, .7, C_CORAL, 'center', 0);
+    txt(`Anchor drops: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks offended: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
+    if (accs.length > 1)
+        txt(level.boats.map((e, i) => `${BOATS[e.boat].name} ${Math.round(accs[i]*100)}%`).join('    '), 20, 9.3, .5, C_INK);
+    txt(`"${result.quip}"`, 20, 8.2, .75, C_INK);
+    if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
 }
 
 function gameRender()
 {
-    if (gameScreen == 'title') { drawTitle(); return; }
-    if (gameScreen == 'levels')
+    useWorldCamera();
+    drawWater();
+    if (gameScreen == 'title' || gameScreen == 'levels')
     {
-        drawWater();
-        txt('PICK A BOAT', 20, 19.4, 2, C_SUNNY, 'center', .16, C_INK);
+        useUiCamera();
+        if (gameScreen == 'title') drawTitle();
+        else txt('PICK A BOAT', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
         return;
     }
-    drawWater();
     drawCurrents();
     drawSlip();
     drawWakes();
     drawBodies();
     drawAnchorRope();
-    drawShore();
     drawDrops();
+
+    useUiCamera();
     drawPopups();
+    drawPlayerMarker();
     drawHud();
+    drawIntro();
     if (gameScreen == 'complete') drawComplete();
     if (isPaused)
     {
-        drawRect(VIEW_CENTER, VIEW_SIZE, C_INK.scale(1, .35));
+        drawRect(UI_CENTER, UI_SIZE.scale(3), C_INK.scale(1, .35));
         txt('PAUSED', 20, 16.4, 2, C_CREAM, 'center', .16, C_INK);
     }
 }
@@ -878,12 +1106,17 @@ window.game =
 {
     get screen() { return gameScreen; },
     get level() { return levelIndex; },
+    get boat() { return boatIndex; },
     get score() { return result ? Math.round(result.acc*100) : 0; },
     get player() { return player; },
+    get camera() { return { x:cam.pos.x, y:cam.pos.y, metersPerUi:cam.wu }; },
     start() { loadLevel(nextLevelIndex()); },
     restart() { loadLevel(levelIndex); },
+    load(i) { loadLevel(i); },
+    // debug: park the current boat perfectly
     win()
     {
+        if (intro) intro.t = intro.dur;
         player.pos = slip.pos.copy(); player.angle = slip.a; player.vel = vec2(); player.angVel = 0;
         player.updateWorld();
         if (!anchor) toggleAnchor();

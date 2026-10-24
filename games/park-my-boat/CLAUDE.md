@@ -1,6 +1,6 @@
 # Park My Boat — game brief
 
-> Every level is one boat and one empty slip. Steer it in, stop, drop anchor. Physics does the comedy.
+> Park a rowboat, then park a cruise ship right next to it while the camera zooms out like crazy. Boats from 33 cm to 400 m share one harbor. Steer in, stop, drop anchor. Physics does the comedy.
 
 ![How Park My Boat plays](mechanic.svg)
 
@@ -13,27 +13,32 @@
 Everyone knows how hard parallel parking is, and a boat has no brakes. The goal is clear at a glance: a dashed box with a ghost of your boat in it. A level takes 20–60 seconds, and a miss costs nothing but pride, so players retry for three stars. The jokes are visual (ducks spin, boats wobble, the captain's eyes pop) and work with the sound off.
 
 ## Core loop
-Level card → steer the boat across the marina → line it up in the slip → stop → drop anchor → the game waits for the boat to settle → inside the slip: 1–3 stars by accuracy; outside: a quip, the anchor comes up, try again.
+A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat → paper boat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop → drop anchor → the game waits for the boat to settle → inside the slip: 1–3 stars by accuracy; outside: a quip, the anchor comes up, try again.
 
 ## Mechanics (what is built)
+- **Scale:** world units are meters. Each boat type is drawn at toy size and scaled by `k` to real size. Mass scales with k³, so big ships shove small boats and barely notice. Time scales with k^0.3, so big ships are slower relative to their own length and tiny boats are twitchy. All handling, anchor and judging numbers convert from the toy values the same way (`makeBoat` in `src/main.js`).
+- **Camera:** frames the current boat and its slip, never closer than a few boat lengths. When a new boat starts, it first frames the boat just parked as well (the size reveal), then zooms in log space and pans at a speed relative to the zoom. Mouse wheel zooms further out (Supreme Commander style). A map-style scale bar shows the zoom; boats too small to see draw as dots, and the player gets a ring when tiny. Outlines, shadows, popups and the UI stay a constant size on screen.
 - **Boat physics:** each boat is a rigid body built from circles along its keel. Water drag is low along the keel and high sideways, so boats coast and drift. The rudder turns the boat more the faster it goes, plus a little prop wash at low speed. Reverse is weaker than forward. Every boat type has its own mass, power, turn rate and drag.
 - **Anchor:** Space, Enter or the anchor button. The anchor lands at the bow on a short rope with heavy drag. Dropping it at speed (over 2.5 u/s) spins the boat out ("SKRRRT!"). Press again to raise it before it settles.
-- **Judging:** when the boat is nearly still for 0.5 s (or after 3.5 s), every hull circle must be inside the slip. Accuracy = 60% position (0.8 units off = 0) + 40% angle (20° off = 0). Nose-in or stern-in both count. 3 stars at 85%+, 2 at 60%+, else 1.
+- **Judging:** when the boat is nearly still for 0.5 s (or after 3.5 s), every hull circle must be inside the slip. Accuracy = 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Nose-in or stern-in both count. Level accuracy is the average over its boats; 3 stars at 85%+, 2 at 60%+, else 1.
 - **Obstacles:** docks and pilings (static), moored boats (on springs, they wobble back home), loose drifting boats and logs (push them), buoys (springy tether, very bouncy), duck families (mother wanders and flees the player, ducklings follow in a line, a hit stuns and spins them), currents (zones that move the water itself).
 - **Score extras (comedy):** a damage bill in dollars and a count of ducks offended, shown in the HUD and on the result screen. They don't affect stars.
 
-## Boats
-Dinghy, Zippy (speedboat, drifts), Swan Pedalo (spins), Party Barge (wide, slow), Sailboat (long, strong keel), Tugboat (heavy, pushes things), Bathtub (no keel at all), Mega Yacht (8 units long, huge momentum).
+## Boats (real size)
+Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m).
 
-## Levels (10, one world)
-Baby Steps, Buoy Oh Buoy, Zippy, Swan Song, Party Barge (slip on a side pier), Long Story (current and logs), Tug Life (clear your own slip), Rip Current, Rubber Ducky, Mega Yacht (parallel parking). Data in `levels/levels.js`.
+## Levels
+- **World 1, Big & Small (3):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → paper boat), Mixed Nuts (mega yacht → bathtub → cruise ship → swan).
+- **World 2, Classic Marina (10):** the first prototype's one-boat levels at toy scale with a fixed camera: Baby Steps, Buoy Oh Buoy, Zippy, Swan Song, Party Barge, Long Story, Tug Life, Rip Current, Rubber Ducky, Mega Yacht. Candidates to cut or rework into chains.
+
+Data in `levels/levels.js`.
 
 ## Controls
-- Mouse: hold anywhere on the water and the boat steers toward the cursor; it backs up if the cursor is behind it. Farther cursor = more throttle. Click the anchor button to drop or raise the anchor.
+- Mouse: hold anywhere on the water and the boat steers toward the cursor; it backs up if the cursor is behind it. Farther cursor = more throttle. Click the anchor button to drop or raise the anchor. Wheel zooms out.
 - Keyboard: W/Up throttle, S/Down reverse, A/D or Left/Right rudder. Space/Enter anchor, R restart, P/Esc pause.
 
 ## Art direction
-Toybox Flat: flat fills, 0.1-unit ink outlines (#2B2D42), soft offset drop shadows. Palette: water teal #8CD6D1, wood #E8B873, coral #F2635F, sunny #FFCC47, cream #FFF7E5, teal #33949E. Everything is drawn in code with Canvas 2D (`setGLEnable(false)` so text and shapes draw in order). The view is a fixed 40 × 22.5 world units (1280 × 720 at 32 px per unit), letterboxed.
+Toybox Flat: flat fills, 0.1-unit ink outlines (#2B2D42), soft offset drop shadows. Palette: water teal #8CD6D1, wood #E8B873, coral #F2635F, sunny #FFCC47, cream #FFF7E5, teal #33949E. Everything is drawn in code with Canvas 2D (`setGLEnable(false)` so text and shapes draw in order). The UI is laid out in a fixed 40 × 22.5 box (1280 × 720 at 32 px per unit), letterboxed; the world camera is free and fills the window. Water ripples come in octaves 10x apart so the water keeps its texture at every zoom.
 
 ## Audio
 ZzFX through LittleJS `Sound`: motor putts (pitch by boat size), bonk, quack, buoy bong, splash, anchor chain, win jingle, fail womp, click. Sound toggle on the title.
