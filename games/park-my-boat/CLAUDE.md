@@ -42,6 +42,13 @@ Not built yet. Candidates for the GDD and for new levels.
 - **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
 - **More drift:** trying it now for every boat (see Boat physics). Next question: keep it global, or make it a trait of certain boats.
 
+## Level editor (debug only)
+`tools/editor.js`, loaded by `index.html` after `src/main.js`. The game's hooks are `window.pmbEditor?.` calls, so without the script they do nothing; remove the script tag for release.
+- **Open:** press `E` on any screen (or load `index.html?edit=2` for level 2). `E` play-tests from the first boat, `Shift+E` from the selected boat (earlier boats are parked for you), and `E` comes back. Test runs save no stars.
+- **Edit:** drag empty space to pan, wheel to zoom, click to select, drag to move. `[ ]` rotate 15° (Shift: 90°), arrows nudge, `D` duplicate, `Delete` remove, `Shift`+drag on empty space for new sand, drag a sand/dock/current edge to resize, `T` turns sand into a dock, then a quay. Slips under a pier slide along it (Shift moves them off). The panel has every field (boat type, size, hint, slip room and fingers, landmass circles…), the parking order, and buttons to add things. All keys are listed in the panel.
+- **Save (`⌘S`):** writes `levels/levels.js` in place through Chrome's file access (pick the `park-my-boat` or `levels` folder once; it is remembered). Only edited levels change. Inside them, every part you didn't touch keeps its exact text, comments and helper calls included (`...basin(...)`, `tiedUp(...)`, `...HARBOR_ISLAND.lands`); a part you touched is written out as plain numbers. New levels go at the end of the list. Levels are found in the file by name, so keep names unique.
+- **Check:** `await pmbEditor.selfTest()` in the console (over HTTP) rewrites every level and checks that unedited ones reproduce the file exactly and that each one written out in full loads back the same.
+
 ## Controls
 - Mouse: hold anywhere on the water and the boat steers toward the cursor; it backs up if the cursor is behind it. Farther cursor = more throttle. Click the anchor button to drop or raise the anchor. Wheel zooms out.
 - Keyboard: W/Up throttle, S/Down reverse, A/D or Left/Right rudder. Space/Enter anchor, R restart, P/Esc pause.

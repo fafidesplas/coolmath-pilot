@@ -222,7 +222,7 @@ function loadLevel(i)
     startBoat(0);
     setScreen('playing');
     updateCamera(0, true);
-    track('progression', 'Start', levelId());
+    if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
 }
 
 // hand control to the next boat in the fleet; the one just parked stays tied up where it stopped
@@ -572,10 +572,14 @@ function showComplete()
     const stars = acc >= .85 ? 3 : acc >= .6 ? 2 : 1;
     result = { acc, stars };
     result.isBest = result.stars > (saveData.stars[i] || 0) || result.acc > (saveData.best[i] || 0);
-    saveData.stars[i] = Math.max(saveData.stars[i] || 0, result.stars);
-    saveData.best[i] = Math.max(saveData.best[i] || 0, result.acc);
-    persist();
-    track('progression', 'Complete', levelId(), Math.round(result.acc*100));
+    // the level editor's test runs don't count
+    if (!window.pmbEditor?.testing)
+    {
+        saveData.stars[i] = Math.max(saveData.stars[i] || 0, result.stars);
+        saveData.best[i] = Math.max(saveData.best[i] || 0, result.acc);
+        persist();
+        track('progression', 'Complete', levelId(), Math.round(result.acc*100));
+    }
     setScreen('complete');
 }
 
@@ -771,6 +775,8 @@ const ripples = [];
 
 function gameUpdate()
 {
+    // the level editor (tools/editor.js, debug only) freezes the level and takes the input
+    if (window.pmbEditor?.update()) return;
     screenTime += timeDelta;
     layoutButtons();
     const hovered = buttonAt(mousePos);
@@ -1106,8 +1112,11 @@ function gameRender()
     drawBodies();
     drawAnchorRope();
     drawDrops();
+    const editing = window.pmbEditor?.active;
+    if (editing) pmbEditor.renderWorld();
 
     useUiCamera();
+    if (editing) return pmbEditor.renderUi();
     drawPopups();
     drawPlayerMarker();
     drawHud();
