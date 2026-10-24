@@ -20,6 +20,25 @@ function basin(x0, y0, x1, top)
     };
 }
 
+// the same harbor (water x 0..1400, quay at y 585) cut into the south coast of a grassy island,
+// open to the sea: straight sand jetties either side, round lobes of land around them
+function harborIsland()
+{
+    return {
+        land: [[-700, -600, 0, 1250], [1400, -600, 2100, 1250], [-700, 600, 2100, 1300]],
+        docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
+        lands:
+        [
+            { x: 700, y: 2600, k: 1000, grass: true, circles: [[0, 0, 1.9], [-1.6, .7, 1.3], [1.7, .9, 1.2], [-.6, 1.8, 1.1], [1, 1.7, .9]] },
+            { x: -1300, y: 1200, k: 1000, grass: true, circles: [[0, 0, 1.25], [-.7, .9, .8], [.1, -.9, .7]] },
+            { x: 2750, y: 1250, k: 1000, grass: true, circles: [[0, 0, 1.3], [.8, .7, .8], [-.1, -.9, .75]] },
+            { x: -350, y: -600, k: 350, circles: [[0, 0, 1]] },        // round jetty tips
+            { x: 1750, y: -600, k: 350, circles: [[0, 0, 1]] },
+        ],
+    };
+}
+const HARBOR_ISLAND = harborIsland();
+
 // a boat at real size tied up nose-in under a pier edge
 function tiedUp(boat, x, top) { const t = BOATS[boat]; return { boat, x, y: top - t.L*t.k/2 - .35*t.k, a: PI/2 }; }
 
@@ -69,9 +88,9 @@ const SCALE_LEVELS =
         buoys: [[1000, 300, 5]],
     },
     {
-        // each boat 100x the last: the harbor sits on a small island, the island parks in a bay
+        // each boat 100x the last: the harbor is cut into a small island, the island parks in a bay
         // next to it, the continent closes the gap in Pangaea thousands of km away
-        name: 'Continental Drift', ...basin(0, -20, 1400, 585),
+        name: 'Continental Drift', land: HARBOR_ISLAND.land, docks: HARBOR_ISLAND.docks,
         boats:
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
@@ -85,10 +104,7 @@ const SCALE_LEVELS =
         ],
         lands:
         [
-            // round off the corners and sides of the harbor's square of sand
-            ...[[-3000, -3020, 1800], [4400, -3020, 1800], [-3000, 3585, 1800], [4400, 3585, 1800],
-                [700, -3020, 2000], [700, 3585, 2200], [-3000, 280, 1900], [4400, 280, 2000]]
-                .map(([x, y, r]) => ({ x, y, k: r, circles: [[0, 0, 1]] })),
+            ...HARBOR_ISLAND.lands,
             // islets around the island's bay (k = 3 km), open to the east
             { x: 39000, y: 18600, k: 3000, grass: true, circles: [[0, 0, 2.4], [-4, -.4, 2], [3.5, -.8, 1.8], [6.2, -.6, 1.7]] },
             { x: 37500, y: -19200, k: 3000, grass: true, circles: [[0, 0, 2.6], [-3.6, .6, 2], [3.6, .9, 1.9], [6.5, 1.2, 1.6]] },
