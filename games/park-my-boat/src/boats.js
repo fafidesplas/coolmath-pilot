@@ -35,11 +35,10 @@ const BOATS =
     cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY,  captainX:3.3 },
     container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL, captainX:-4.1 },
     paper:     { name:'Paper Boat',   L:2.2, W:1.3,  k:.15, mass:.5,  power:2.6, reverse:.8, turn:1.6, wash:1.6, dragF:1.4, dragS:1.8, dragA:2,   hull:'paper',  color:C_CREAM, captainX:-.25 },
-    // landmasses: blob hulls made of circles [x, y, r], no keel to speak of. tau overrides the
-    // k^TIME_EXP slowdown, which would leave a continent crawling for minutes.
-    island:    { name:'Island',       L:10,  W:6,    k:3000, tau:3.2, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
+    // landmasses: blob hulls made of circles [x, y, r], no keel to speak of
+    island:    { name:'Island',       L:10,  W:6,    k:3000, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
                  blob:[[0,0,2.6],[2.6,.6,1.9],[-2.7,-.5,2],[4,1.1,1],[-3.9,-.2,1.1],[.9,-1.5,1.4],[-1,1.7,1.3]] },
-    continent: { name:'Continent',    L:10,  W:7,    k:3e5,  tau:3.8, mass:16, power:36, reverse:.5, turn:.28, wash:.5,  dragF:.6,  dragS:1.1, dragA:1.6, hull:'blob', color:C_SAND, deck:C_GRASS,
+    continent: { name:'Continent',    L:10,  W:7,    k:3e5,  mass:16, power:36, reverse:.5, turn:.28, wash:.5,  dragF:.6,  dragS:1.1, dragA:1.6, hull:'blob', color:C_SAND, deck:C_GRASS,
                  blob:[[0,0,3],[2.8,1,2.2],[-2.6,-.8,2.4],[4.2,-.6,.8],[-4.1,1,.9],[1.5,-2.2,1.3],[-1.2,2.3,1.2],[-2,-2.6,.8]] },
 };
 

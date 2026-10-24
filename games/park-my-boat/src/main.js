@@ -8,7 +8,9 @@ const UI_CENTER = UI_SIZE.scale(.5);
 const PLAY_TOP = 21;                  // HUD bar above this line (UI units)
 const SAVE_KEY = 'cm_park-my-boat_save';
 const SUBSTEPS = 2;
-const TIME_EXP = .3;                  // a boat k times bigger reacts k^TIME_EXP times slower
+const TIME_EXP = .3;                  // a boat k times bigger reacts k^TIME_EXP times slower...
+// ...up to this cap, so big ships still feel heavy but never sluggish. Try others with ?taumax=2.5
+const TAU_MAX = +new URLSearchParams(location.search).get('taumax') || 1.25;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -99,7 +101,7 @@ function boatSize(b) { return b.type.L * b.k; }
 // tau = k^TIME_EXP, so every rate and force below is the toy-scale value converted to that size.
 function makeBoat(key, pos, angle, kind, color, k=1)
 {
-    const t = BOATS[key], tau = t.tau ?? Math.pow(k, TIME_EXP), k3 = k*k*k;
+    const t = BOATS[key], tau = Math.min(Math.pow(k, TIME_EXP), TAU_MAX), k3 = k*k*k;
     const b = new Body(pos, angle, hullCircles(t, k), t.mass*k3,
         { dragF:t.dragF/tau, dragS:t.dragS/tau, dragA:t.dragA/tau, kind, inertiaScale:k3*k*k });
     b.type = t;
