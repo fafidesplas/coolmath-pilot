@@ -9,6 +9,7 @@ const PLAY_TOP = 21;                  // HUD bar above this line (UI units)
 const SAVE_KEY = 'cm_park-my-boat_save';
 const SUBSTEPS = 2;
 const TIME_EXP = .3;                  // a boat k times bigger reacts k^TIME_EXP times slower
+const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
 const QUIPS =
@@ -581,8 +582,10 @@ function updateDuck(d, dt)
     if (d.stunT > 0) { d.stunT -= dt; return; }
     if (d.leader)
     {
-        const f = d.leader.forward();
-        d.target = d.leader.pos.subtract(f.scale(.75 * d.leader.duckSize + .2));
+        // trail on a rope: aim for the point behind the leader on the line toward this duckling, so
+        // an idle leader turning in place never swings the target through its own body
+        const gap = .75 * d.leader.duckSize + .2, back = d.pos.subtract(d.leader.pos);
+        d.target = d.leader.pos.add(back.length() > 1e-3 ? back.normalize(gap) : d.leader.forward().scale(-gap));
     }
     else
     {
@@ -618,20 +621,25 @@ function currentAt(p)
 function stepWorld()
 {
     const dt = timeDelta / SUBSTEPS;
+    // ducks too small to see sleep: no AI, no physics, no quacks over a cruise ship
+    const ducksAsleep = cam.wu > DUCK_SLEEP_WU;
+    for (const b of bodies) b.asleep = ducksAsleep && b.kind == 'duck';
     for (let s = 0; s < SUBSTEPS; s++)
     {
         controlPlayer(dt);
         anchorForce(dt);
         for (const b of bodies)
         {
+            if (b.asleep) { b.vel.set(0, 0); b.angVel = b.stunT = 0; continue; }
             if (b.kind == 'duck') updateDuck(b, dt);
             const c = currentAt(b.pos);
             b.integrate(dt, c ? c.dx : 0, c ? c.dy : 0);
         }
         for (let i = 0; i < bodies.length; i++)
         {
+            if (bodies[i].asleep) continue;
             for (let k = i+1; k < bodies.length; k++)
-                collideBodies(bodies[i], bodies[k], onHit);
+                if (!bodies[k].asleep) collideBodies(bodies[i], bodies[k], onHit);
             collideStatics(bodies[i], rects, posts, onHit);
         }
     }
@@ -893,7 +901,7 @@ function drawBodies()
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
-        if (b.kind == 'duck') drawDuck(b);
+        if (b.kind == 'duck') { if (!b.asleep) drawDuck(b); }
         else if (b.kind == 'buoy') drawBuoy(b);
         else if (b.kind == 'log') drawLog(b);
     }
