@@ -70,12 +70,16 @@ const SCALE_LEVELS =
               hint: 'Big ships take a long time to stop. Slow down early.' },
             { boat: 'tug', start: { x: 382, y: 832, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'The tugboat can push other boats out of the way.' },
+            { boat: 'jetski', start: { x: 93.5, y: 616, a: PI/2 }, slip: { x: 291, y: 898, a: PI/2, pad: [1.4, 1] },
+              hint: '' },
         ],
         ducks: [{ x: 414, y: 896, kids: 2 }],
         traffic:
         [
             { boat: 'dinghy', path: [[400, 844], [416, 844], [1320, 460], [1060, 380], [560, 380], [950.2, 700]], end: 'back', speed: 0.6 },
             { boat: 'yacht', path: [[1160, 620], [1015, 755], [1020, 885]], end: 'back', speed: 0.8, during: [1] },
+            { boat: 'pontoon', path: [[170, 786], [219.6, 747]], end: 'back', speed: 0.6 },
+            { boat: 'sailboat', path: [[240, 706], [188, 700], [104, 724], [76, 786], [146, 846], [260, 832], [272, 748], [240, 704]], end: 'back', speed: 0.6 },
         ],
     },
     {

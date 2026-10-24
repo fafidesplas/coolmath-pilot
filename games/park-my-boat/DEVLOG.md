@@ -1,5 +1,9 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Jet ski in Way Down
+- Owner (level editor): Way Down is now container ship → tugboat → jet ski. Two traffic boats sail every turn at 0.6 speed: a Party Barge going back and forth on a short line, and a Sailboat on a long loop near the jet ski's start.
+- Next: give the jet ski a hint, and play it to see how the camera works with the smallest boat (see Concerns in the brief).
+
 ## 2026-10-24 — Renamed to Dock All The Boats
 - Owner: the game is now called Dock All The Boats. Changed the page title, the title screen (smaller type, 2.8 instead of 3.6, so the longer name fits), the brief and the code headers.
 - Kept the folder `games/park-my-boat/`, the save key `cm_park-my-boat_save` and the `pmbEditor` hooks, so saves and the dashboard link keep working.

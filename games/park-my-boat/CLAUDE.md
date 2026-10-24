@@ -28,7 +28,7 @@ A level is a chain of boats of wildly different sizes parked one after another i
 Jet Ski (2.4 m, quick and slidey, almost no reverse), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, and for now they appear only in the hidden bonus level.
 
 ## Levels
-- **World 1, Big & Small (3):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat), Mixed Nuts (mega yacht → cruise ship → swan).
+- **World 1, Big & Small (3):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → jet ski), Mixed Nuts (mega yacht → cruise ship → swan).
 - **Bonus (1, hidden for now):** Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step). Marked `bonus: true` in the data. Players don't see bonus levels. Load `index.html?bonus` to show them (the editor sees them that way too). When shown, they sit after the regular ones in level select on a "BONUS" card. PLAY never picks them as the next level, and the last regular level's NEXT button reads "BONUS".
 
 Data in `levels/levels.js`.
