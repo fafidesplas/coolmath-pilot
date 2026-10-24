@@ -46,12 +46,14 @@ function tiedUp(boat, x, top) { const t = BOATS[boat]; return { boat, x, y: top 
 const SCALE_LEVELS =
 [
     {
-        name: 'Odd Couple', ...basin(0, -20, 1400, 585),
+        name: 'Odd Couple',
+        land: [[-3000, -3020, 0, 3585], [1400, -3020, 4400, 3585], [-3000, 600, 4400, 3585]],
+        docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
         boats:
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box, then SPACE to drop anchor.' },
-            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 225, y: 210, a: PI*5/12 }, slip: { x: 680, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
         moored: [tiedUp('speedboat', 120, 585), tiedUp('sailboat', 140, 585), tiedUp('speedboat', 160, 585)],

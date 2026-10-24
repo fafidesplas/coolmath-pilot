@@ -1,5 +1,9 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Odd Couple edit from the editor
+- Owner's first save from the level editor into the real folder (it works). Odd Couple: the bottom sand strip is gone, so the harbor is open to the sea to the south, and the cruise ship starts at (225, 210) facing 75° instead of (1180, 470) facing left. `...basin(...)` was written out as `land` and `docks` because one of its strips changed.
+- Not replayed by hand yet.
+
 ## 2026-10-24 — Level editor
 - New debug-only level editor, modeled on Hop Race's: `tools/editor.js`, opened with `E` (or `?edit=<level number>`). Pan and zoom over the whole range (paper boat to Pangaea), select and drag boat starts, slips, moored and loose boats, buoys, logs, ducks, sand, docks, currents and landmasses; rotate, nudge, duplicate, delete, add from the panel; reorder the parking chain; undo/redo; new and duplicated levels. `E` play-tests (Shift+E from the selected boat), finishing a test returns to the editor with the result.
 - Save writes `levels/levels.js` through Chrome's file access. Unchanged parts of an edited level keep their exact text; changed parts are written as numbers (angles as PI fractions when they are, big numbers as `3.5e6`). Editing something that came from a helper (`...basin(...)`, `tiedUp(...)`, `HARBOR_ISLAND`) writes that part out in full; the helper itself is never changed.
