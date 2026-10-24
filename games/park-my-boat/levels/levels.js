@@ -51,7 +51,7 @@ const SCALE_LEVELS =
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box, then SPACE to drop anchor.' },
             { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 650, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
-              hint: 'Same rules. Slightly bigger boat. Mind the rowboat.' },
+              hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
         moored: [tiedUp('speedboat', 120, 585), tiedUp('sailboat', 140, 585), tiedUp('speedboat', 160, 585)],
         buoys: [[300, 380, 5], [900, 380, 5]],
@@ -62,11 +62,11 @@ const SCALE_LEVELS =
         boats:
         [
             { boat: 'container', start: { x: 1550, y: 700, a: PI }, slip: { x: 700, top: 900, a: 0, pad: [.5, .25], fingers: 'none' },
-              hint: 'Four hundred meters of boat. Let off early.' },
+              hint: 'Big ships take a long time to stop. Slow down early.' },
             { boat: 'tug', start: { x: 380, y: 830, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
-              hint: 'Tugboats push. Shove things out of your way.' },
+              hint: 'The tugboat can push other boats out of the way.' },
             { boat: 'paper', start: { x: 418, y: 898.3, a: .9 }, slip: { x: 419, top: 900, a: PI/2 },
-              hint: 'Tiny boat. Same rules. The ducks are huge now.' },
+              hint: 'Park the paper boat in the small slip.' },
         ],
         ducks: [{ x: 414, y: 896, kids: 2 }],
         buoys: [[1200, 450, 6], [1200, 800, 6]],
@@ -76,13 +76,13 @@ const SCALE_LEVELS =
         boats:
         [
             { boat: 'yacht', start: { x: 950, y: 560, a: PI }, slip: { x: 720, top: 700, a: PI/2, pad: [1.2, 1] },
-              hint: 'A mansion with a motor. Turn early.' },
+              hint: 'Start turning early.' },
             { boat: 'bathtub', start: { x: 757, y: 692, a: 1.9 }, slip: { x: 752, top: 700, a: PI/2, pad: [1.1, .9] },
-              hint: 'Bathtub. Right next to the yacht. Classy.' },
+              hint: 'Park the bathtub next to the yacht.' },
             { boat: 'cruise', start: { x: 1150, y: 450, a: PI }, slip: { x: 500, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
-              hint: 'Parallel park the cruise ship. Everyone is watching.' },
+              hint: 'Park the cruise ship along the quay.' },
             { boat: 'swan', start: { x: 330, y: 692, a: 2.1 }, slip: { x: 325, top: 700, a: PI/2, pad: [1, .9] },
-              hint: 'Pedal boats spin. A lot.' },
+              hint: 'The swan pedalo turns very quickly.' },
         ],
         ducks: [{ x: 765, y: 690, kids: 3 }],
         buoys: [[1000, 300, 5]],
@@ -94,13 +94,13 @@ const SCALE_LEVELS =
         boats:
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
-              hint: 'Rowboat first. Then things get bigger.' },
+              hint: 'Park the rowboat.' },
             { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 650, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
-              hint: 'Cruise ship. You have done this before.' },
+              hint: 'Park the cruise ship along the quay.' },
             { boat: 'island', start: { x: 95000, y: 1500, a: PI }, slip: { x: 36000, y: 0, a: 0, pad: [1.2, 1], fingers: 'none' },
-              hint: 'Islands float now. Just go with it.' },
+              hint: 'Park the island in the bay.' },
             { boat: 'continent', start: { x: -.5e6, y: 3.5e6, a: 0 }, slip: { x: 5e6, y: 3.5e6, a: 0, pad: [1.2, 1], fingers: 'none' },
-              hint: 'Pangaea is missing a piece.' },
+              hint: 'Park the continent in the gap.' },
         ],
         lands:
         [

@@ -13,16 +13,16 @@
 Everyone knows how hard parallel parking is, and a boat has no brakes. The goal is clear at a glance: a dashed box with a ghost of your boat in it. A level takes 20–60 seconds, and a miss costs nothing but pride, so players retry for three stars. The jokes are visual (ducks spin, boats wobble, the captain's eyes pop) and work with the sound off.
 
 ## Core loop
-A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat → paper boat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop → drop anchor → the game waits for the boat to settle → inside the slip: 1–3 stars by accuracy; outside: a quip, the anchor comes up, try again.
+A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat → paper boat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop → drop anchor → the game waits for the boat to settle → inside the slip: 1–3 stars by accuracy; outside: "Not in the slip. Try again.", the anchor comes up.
 
 ## Mechanics (what is built)
 - **Scale:** world units are meters. Each boat type is drawn at toy size and scaled by `k` to real size. Mass scales with k³, so big ships shove small boats and barely notice. Boats react slower the bigger they are (k^0.3 times slower, capped at 1.25x: `MAX_SLOWDOWN`, try others with `?slowdown=`), so big ships are a bit slower relative to their own length without dragging, and tiny boats are twitchy. All handling, anchor and judging numbers convert from the toy values the same way (`makeBoat` in `src/main.js`).
 - **Camera:** frames the current boat and its slip, never closer than a few boat lengths. When a new boat starts, it first frames the boat just parked as well (the size reveal), then zooms in log space and pans at a speed relative to the zoom. Mouse wheel zooms further out (Supreme Commander style). A map-style scale bar shows the zoom; boats too small to see draw as dots, and the player gets a ring when tiny. Outlines, shadows, popups and the UI stay a constant size on screen.
 - **Boat physics:** each boat is a rigid body built from circles along its keel. Water drag is low along the keel and high sideways, so boats coast and drift. Let go of the throttle and forward drag drops to 30% (`COAST_DRAG`, try others with `?coast=`), so boats glide about 3x farther and stopping with reverse or the anchor is the skill. The rudder turns the boat more the faster it goes, plus a little prop wash at low speed. Reverse is weaker than forward. Every boat type has its own mass, power, turn rate and drag; all engine power is multiplied by 1.5 (`SPEED`, try others with `?speed=`).
-- **Anchor:** Space, Enter or the anchor button. The anchor lands at the bow on a short rope with heavy drag. Dropping it at speed (over 2.5 u/s) spins the boat out ("SKRRRT!"). Press again to raise it before it settles.
+- **Anchor:** Space, Enter or the anchor button. The anchor lands at the bow on a short rope with heavy drag. Dropping it at speed (over 2.5 u/s) spins the boat out ("Too fast!"). Press again to raise it before it settles.
 - **Judging:** when the boat is nearly still for 0.5 s (or after 3.5 s), every hull circle must be inside the slip. Accuracy = 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Nose-in or stern-in both count. Level accuracy is the average over its boats; 3 stars at 85%+, 2 at 60%+, else 1.
 - **Obstacles:** docks and pilings (static), landmasses (static blobs of circles: islets, Pangaea), moored boats (on springs, they wobble back home), loose drifting boats and logs (push them), buoys (springy tether, very bouncy), duck families (mother wanders and flees the player, ducklings follow in a line, a hit stuns and spins them), currents (zones that move the water itself).
-- **Score extras (comedy):** a damage bill in dollars and a count of ducks offended, shown in the HUD and on the result screen. They don't affect stars.
+- **Score extras:** a damage bill in dollars and a count of ducks hit, shown in the HUD and on the result screen. They don't affect stars.
 
 ## Boats (real size)
 Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles.
@@ -31,6 +31,9 @@ Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins),
 - **World 1, Big & Small (4):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → paper boat), Mixed Nuts (mega yacht → bathtub → cruise ship → swan), Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step).
 
 Data in `levels/levels.js`.
+
+## Writing
+In-game text is plain and direct: instructions and results, no jokes or quips. The fun comes from the physics and the visuals.
 
 ## Ideas to try in future levels
 Not built yet. Candidates for the GDD and for new levels.

@@ -22,20 +22,6 @@ const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
-const QUIPS =
-{
-    dock:   ['BONK!', 'Oops!', 'My paint!', 'Insurance!', 'Ow.', 'That was the dock.'],
-    duck:   ['QUACK!', 'QUACK?!', 'Rude.', 'quack.', 'Watch it!'],
-    buoy:   ['BONG!', 'DONG!', 'BOING!'],
-    boat:   ['HEY!', 'My boat!', 'Watch it!', 'I just waxed that!', 'Sorry!'],
-    log:    ['THUNK.', 'Log!', 'Bonk.'],
-    fast:   ['SKRRRT!', 'WHOA!', 'Hold on!'],
-    fail:   ["That's not parking, that's littering.", 'Close! In a different zip code.', 'The boat is parked. Just not here.', 'Bold. Wrong, but bold.'],
-    star3:  ['Textbook!', 'The ducks are impressed.', 'Not a single wobble.'],
-    star2:  ['Solid parking.', 'Nobody saw that wobble.'],
-    star1:  ['Technically parked.', 'It counts. Barely.'],
-};
-
 const SOUNDS =
 {
     bonk:  new Sound([1.2,.05,140,0,.03,.12,1,2,-6,0,0,0,0,0,0,0,0,.7,.03]),
@@ -82,7 +68,6 @@ let buttons = [], hoverId;
 const cam = { pos: UI_CENTER.copy(), wu: 1 };
 let zoomBias = 1;
 
-function pick(list) { return list[randInt(list.length)]; }
 
 function setScreen(s)
 {
@@ -384,7 +369,6 @@ function onHit(A, B, impact, p)
             duck.stunT = 1.5;
             duck.angVel += rand(-14, 14);
             sfx('quack', p, 1, rand(.9, 1.3) / Math.sqrt(duck.duckSize));
-            popup(pick(QUIPS.duck), p, C_SUNNY, .8);
             if (isPlayer) { ducksOffended++; damages += 5; }
         }
         return;
@@ -405,26 +389,22 @@ function onHit(A, B, impact, p)
     if (kind == 'buoy')
     {
         sfx('bong', p, 1, rand(.9, 1.1) / Math.sqrt(other.k));
-        popup(pick(QUIPS.buoy), p);
         if (isPlayer) damages += 20 * Math.round(other.k*other.k);
     }
     else if (kind == 'moored' || kind == 'drifter' || kind == 'player')
     {
         sfx('bonk', p, 1, .8);
         if (other && other.hurtT !== undefined) other.hurtT = .8;
-        popup(pick(QUIPS.boat), other ? other.pos : p, C_CORAL, .9, 1.4);
         if (isPlayer) damages += Math.round(impact * 60 * Math.sqrt(other.mass)) * 5;
     }
     else if (kind == 'log')
     {
         sfx('bonk', p, 1, .6);
-        popup(pick(QUIPS.log), p, C_WOOD);
         if (isPlayer) damages += 10;
     }
     else
     {
         sfx('bonk', p, Math.min(1, rel/3), 1.2 - Math.min(.5, toyMass(cool)*.05));
-        if (rel > 1) popup(pick(QUIPS.dock), p);
         if (isPlayer) damages += Math.max(1, Math.round(rel * 8 * Math.sqrt(player.mass))) * 5;
     }
 }
@@ -500,7 +480,7 @@ function toggleAnchor()
     splash(anchor.pos, 12, 3, k);
     if (spd > 2.5)
     {
-        popup(pick(QUIPS.fast), player.pos, C_SUNNY, 1.1, 1.6);
+        popup('Too fast!', player.pos, C_SUNNY, 1.1, 1.6);
         shakeAmt = Math.max(shakeAmt, .25);
         player.hurtT = 1;
         player.angVel += (rand() < .5 ? -1 : 1) * spd * 2 / player.slowdown;     // spin-out
@@ -577,7 +557,7 @@ function updateJudge(dt)
     {
         judge.result = 'fail';
         sfx('fail');
-        popup(pick(QUIPS.fail), player.pos, C_CREAM, .8, 2);
+        popup('Not in the slip. Try again.', player.pos, C_CREAM, .8, 2);
         track('progression', 'Fail', levelId());
     }
 }
@@ -586,7 +566,7 @@ function showComplete()
 {
     const i = levelIndex, acc = accs.reduce((a, b) => a + b, 0) / accs.length;
     const stars = acc >= .85 ? 3 : acc >= .6 ? 2 : 1;
-    result = { acc, stars, quip: pick(QUIPS['star' + stars]) };
+    result = { acc, stars };
     result.isBest = result.stars > (saveData.stars[i] || 0) || result.acc > (saveData.best[i] || 0);
     saveData.stars[i] = Math.max(saveData.stars[i] || 0, result.stars);
     saveData.best[i] = Math.max(saveData.best[i] || 0, result.acc);
@@ -1079,7 +1059,7 @@ function drawTitle()
     const bob = Math.sin(time*2)*.2;
     txt('PARK MY BOAT', 20.2, 15.1 + bob, 3.6, C_INK);
     txt('PARK MY BOAT', 20, 15.4 + bob, 3.6, C_SUNNY, 'center', .25, C_INK);
-    txt('Tiny boats. Huge boats. Zero brakes.', 20, 12.7, .8, C_INK);
+    txt('Park boats of every size.', 20, 12.7, .8, C_INK);
 }
 
 function drawComplete()
@@ -1099,10 +1079,9 @@ function drawComplete()
     }
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
     txt(`Accuracy ${shown}%`, 20, 11.6, 1, C_INK);
-    txt(`Anchor drops: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks offended: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
+    txt(`Anchor drops: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks hit: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
     if (accs.length > 1)
         txt(level.boats.map((e, i) => `${BOATS[e.boat].name} ${Math.round(accs[i]*100)}%`).join('    '), 20, 9.3, .5, C_INK);
-    txt(`"${result.quip}"`, 20, 8.2, .75, C_INK);
     if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
 }
 
@@ -1114,7 +1093,7 @@ function gameRender()
     {
         useUiCamera();
         if (gameScreen == 'title') drawTitle();
-        else txt('PICK A BOAT', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
+        else txt('SELECT LEVEL', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
         return;
     }
     drawCurrents();
