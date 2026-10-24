@@ -190,6 +190,7 @@ function loadLevel(i)
     });
     for (const m of L.drifters || [])
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
+    (L.traffic || []).forEach((t, n) => makeTraffic(t, n));
     for (const [bx, by, s=1] of L.buoys || [])
     {
         const slowdown = Math.pow(s, SLOWDOWN_CURVE);
@@ -395,7 +396,7 @@ function onHit(A, B, impact, p)
         sfx('bong', p, 1, rand(.9, 1.1) / Math.sqrt(other.k));
         if (isPlayer) damages += 20 * Math.round(other.k*other.k);
     }
-    else if (kind == 'moored' || kind == 'drifter' || kind == 'player')
+    else if (kind == 'moored' || kind == 'drifter' || kind == 'traffic' || kind == 'player')
     {
         sfx('bonk', p, 1, .8);
         if (other && other.hurtT !== undefined) other.hurtT = .8;
@@ -451,13 +452,103 @@ function controlPlayer(dt)
     player.throttle = throttle;
     player.rudder = rudder;
     player.dragF = player.dragFull * (throttle ? 1 : COAST_DRAG);
+    driveBoat(player, throttle, rudder, dt);
+}
 
-    const f = player.forward();
-    const thrust = throttle * player.power * (throttle < 0 ? t.reverse : 1) * player.invMass;
-    player.vel.x += f.x * thrust * dt;
-    player.vel.y += f.y * thrust * dt;
-    const vf = player.vel.x*f.x + player.vel.y*f.y;
-    player.angVel += rudder * (player.turn*vf + player.wash*throttle) * dt;
+// engine and rudder: the rudder turns the boat more the faster it goes, plus a little prop wash
+function driveBoat(b, throttle, rudder, dt)
+{
+    const f = b.forward();
+    const thrust = throttle * b.power * (throttle < 0 ? b.type.reverse : 1) * b.invMass;
+    b.vel.x += f.x * thrust * dt;
+    b.vel.y += f.y * thrust * dt;
+    const vf = b.vel.x*f.x + b.vel.y*f.y;
+    b.angVel += rudder * (b.turn*vf + b.wash*throttle) * dt;
+}
+
+// ---------------------------------------------------------------------------
+// traffic: boats that drive a path on their own (traffic in levels.js). They are ordinary
+// bodies with an engine, so they can be shoved off course and steer back to the path.
+
+// a smooth curve through the points (Catmull-Rom), as a polyline with the distance along it
+function makeRoute(points, loop)
+{
+    const P = points.map(([x, y]) => vec2(x, y)), n = P.length;
+    const at = i => loop ? P[(i + n) % n] : P[clamp(i, 0, n - 1)];
+    const pts = [];
+    for (let i = 0; i < (loop ? n : n - 1); i++)
+    {
+        const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
+        const cr = (a, b, c, d, t) => .5*(2*b + (c - a)*t + (2*a - 5*b + 4*c - d)*t*t + (3*b - a - 3*c + d)*t*t*t);
+        for (let k = 0; k < 8; k++)
+            pts.push(vec2(cr(p0.x, p1.x, p2.x, p3.x, k/8), cr(p0.y, p1.y, p2.y, p3.y, k/8)));
+    }
+    pts.push(loop ? pts[0].copy() : P[n - 1].copy());
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distance(pts[i - 1]));
+    return { pts, cum, total: cum[cum.length - 1] || 1e-9, loop };
+}
+
+function routePoint(r, s)
+{
+    s = r.loop ? ((s % r.total) + r.total) % r.total : clamp(s, 0, r.total);
+    let lo = 0, hi = r.cum.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (r.cum[m] <= s) lo = m; else hi = m; }
+    return r.pts[lo].lerp(r.pts[hi], (s - r.cum[lo]) / (r.cum[hi] - r.cum[lo] || 1));
+}
+
+// distance along the route of its closest point to p, looking only within `reach` of s
+function routeProgress(r, p, s, reach)
+{
+    let best = s, bestD = Infinity;
+    for (let i = 0; i < r.pts.length - 1; i++)
+    {
+        let ds = Math.abs((r.cum[i] + r.cum[i + 1])/2 - s);
+        if (r.loop) ds = Math.min(ds, r.total - ds);
+        if (ds > reach) continue;
+        const a = r.pts[i], ab = r.pts[i + 1].subtract(a);
+        const t = clamp(p.subtract(a).dot(ab) / (ab.lengthSquared() || 1), 0, 1);
+        const d = p.distance(a.add(ab.scale(t)));
+        if (d < bestD) { bestD = d; best = r.cum[i] + t*(r.cum[i + 1] - r.cum[i]); }
+    }
+    return best;
+}
+
+function makeTraffic(t, n)
+{
+    const route = makeRoute(t.path, t.end == 'loop'), p = route.pts[0], q = route.pts[1];
+    const b = makeBoat(t.boat, p, Math.atan2(q.y - p.y, q.x - p.x), 'traffic', MOORED_COLORS[(n + 2) % MOORED_COLORS.length], boatK(level, t));
+    b.route = route;
+    b.s = 0; b.dir = 1; b.done = false; b.wakeT = 0;
+    b.cruise = t.speed ?? .6;
+    b.end = t.end || 'back';
+    b.during = t.during;
+}
+
+// aim at a point a little way ahead on the route; slow down for sharp turns. Outside its turns
+// (during) a boat cuts the engine and coasts to a stop where it is.
+function driveTraffic(b, dt)
+{
+    const r = b.route, L = boatSize(b);
+    let throttle = 0, rudder = 0;
+    if (!b.done && (!b.during || b.during.includes(boatIndex + 1)))
+    {
+        b.s = routeProgress(r, b.pos, b.s, 3*L);
+        if (!r.loop)
+        {
+            if (b.dir > 0 && b.s > r.total - .6*L) { if (b.end == 'stop') b.done = true; else b.dir = -1; }
+            else if (b.dir < 0 && b.s < .6*L) b.dir = 1;
+        }
+        if (!b.done)
+        {
+            const target = routePoint(r, b.s + b.dir*1.5*L);
+            const diff = wrapAngle(Math.atan2(target.y - b.pos.y, target.x - b.pos.x) - b.angle);
+            throttle = b.cruise * clamp(1.5 - Math.abs(diff), .35, 1);
+            rudder = clamp(diff*2.5, -1, 1);
+        }
+    }
+    b.throttle = throttle;
+    driveBoat(b, throttle, rudder, dt);
 }
 
 function bowPoint() { return player.toWorld((player.type.L/2 - .25)*player.k, 0); }
@@ -637,6 +728,7 @@ function stepWorld()
     {
         controlPlayer(dt);
         anchorForce(dt);
+        for (const b of bodies) if (b.kind == 'traffic') driveTraffic(b, dt);
         for (const b of bodies)
         {
             if (b.asleep) { b.vel.set(0, 0); b.angVel = b.stunT = 0; continue; }
@@ -668,8 +760,14 @@ function stepWorld()
         wakeTimer = .07;
         const stern = player.toWorld(-t.L/2*player.k, 0);
         wakes.push({ pos:stern, t:0, size:t.W*.7*player.k });
-        if (wakes.length > 70) wakes.shift();
     }
+    for (const b of bodies)
+    {
+        if (b.kind != 'traffic' || (b.wakeT -= timeDelta) > 0 || b.speed() < .7*b.vs) continue;
+        b.wakeT = .1;
+        wakes.push({ pos:b.toWorld(-b.type.L/2*b.k, 0), t:0, size:b.type.W*.7*b.k });
+    }
+    if (wakes.length > 120) wakes.splice(0, wakes.length - 120);
 }
 
 function updateEffects()

@@ -10,8 +10,9 @@
     the parts you did touch are written out as numbers.
 
     Mouse: drag empty space to pan, wheel to zoom, click to select, drag to move, drag an edge of a
-    selected sand / dock / current rect to resize, Shift+drag on empty space for new sand. Keys are
-    listed in the panel.
+    selected sand / dock / current rect to resize, Shift+drag on empty space for new sand. Traffic
+    boats: P with one selected, then click to add path points (P, Enter or Esc to finish); drag a
+    point to move it. Keys are listed in the panel.
 */
 
 'use strict';
@@ -30,7 +31,8 @@ window.pmbEditor = (() =>
     const owned = new WeakSet();
     function own(d) { if (owned.has(d)) return; for (const k of Object.keys(d)) if (d[k] && typeof d[k] == 'object') d[k] = structuredClone(d[k]); owned.add(d); }
     const fileName = new WeakMap();     // level -> its name in the file (missing: a new level, appended on save)
-    const ARRAYS = ['moored', 'drifters', 'buoys', 'logs', 'ducks', 'lands', 'currents'];
+    const ARRAYS = ['moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'lands', 'currents'];
+    let pathMode = null;            // index of the traffic boat whose path is being drawn (clicks add points)
 
     ///////////////////////////////////////////////////////////////////////////
     // undo snapshots: the level's data without the 'world' the game adds
@@ -43,8 +45,8 @@ window.pmbEditor = (() =>
     }
     function snapshot() { undo.push(cloneDef(def)); if (undo.length > 200) undo.shift(); redo = []; }
     function changed() { dirty.add(def); status = ''; load(); refreshPanel(); }
-    function doUndo() { if (!undo.length) return; redo.push(cloneDef(def)); restore(undo.pop()); sel = null; changed(); }
-    function doRedo() { if (!redo.length) return; undo.push(cloneDef(def)); restore(redo.pop()); sel = null; changed(); }
+    function doUndo() { if (!undo.length) return; redo.push(cloneDef(def)); restore(undo.pop()); sel = null; pathMode = null; changed(); }
+    function doRedo() { if (!redo.length) return; undo.push(cloneDef(def)); restore(redo.pop()); sel = null; pathMode = null; changed(); }
 
     ///////////////////////////////////////////////////////////////////////////
     // open, play, close
@@ -55,7 +57,7 @@ window.pmbEditor = (() =>
         def = LEVELS[li];
         own(def);
         if (!fileName.has(def) && !def._new) fileName.set(def, def.name);
-        sel = hover = drag = null;
+        sel = hover = drag = null; pathMode = null;
         undo = []; redo = [];
         ED.active = true; ED.testing = false;
         load();
@@ -157,7 +159,9 @@ window.pmbEditor = (() =>
     }
     const step = () => niceStep(.25 * cam.wu);
     const noSnap = () => keyIsDown('AltLeft') || keyIsDown('AltRight');
-    const snap = v => { const s = noSnap() ? step()/20 : step(); return Math.round(v / s) * s; };
+    // toPrecision drops float dust (442.40000000000003), so a value reads back exactly as it was saved
+    const clean = v => +v.toPrecision(15);
+    const snap = v => { const s = noSnap() ? step()/20 : step(); return clean(Math.round(v / s) * s); };
 
     ///////////////////////////////////////////////////////////////////////////
     // shapes of the level's things, for picking and outlines
@@ -179,6 +183,8 @@ window.pmbEditor = (() =>
             case 'start':   { const e = def.boats[i]; return boatShape(e.boat, boatK(def, e), e.start.x, e.start.y, e.start.a); }
             case 'slip':    { const b = slipBox(i); return rectShape(b.x0, b.y0, b.x1, b.y1); }
             case 'moored': case 'drifters': { const m = def[it.kind][i]; return boatShape(m.boat, boatK(def, m), m.x, m.y, m.a); }
+            case 'traffic': { const t = def.traffic[i], [a, b] = t.path; return boatShape(t.boat, boatK(def, t), a[0], a[1], Math.atan2(b[1] - a[1], b[0] - a[0])); }
+            case 'point':   { const q = def.traffic[i].path[it.j]; return { type: 'circle', c: vec2(q[0], q[1]), r: .3*cam.wu }; }
             case 'buoys':   { const b = def.buoys[i]; return { type: 'circle', c: vec2(b[0], b[1]), r: .45*(b[2] ?? 1) }; }
             case 'logs':    { const l = def.logs[i]; return orientedRect(l[0], l[1], l[2] || 0, 2.4, .55); }
             case 'ducks':   { const f = def.ducks[i]; return { type: 'circle', c: vec2(f.x - f.kids*.4, f.y), r: (f.kids + 1)*.4 + .4 }; }
@@ -216,16 +222,22 @@ window.pmbEditor = (() =>
     }
 
     // small things first, so they can be picked off the big things they sit on
-    const PICK_ORDER = ['start', 'moored', 'drifters', 'buoys', 'logs', 'ducks', 'slip', 'currents', 'docks', 'lands', 'land'];
+    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'currents', 'docks', 'lands', 'land'];
     function count(kind) { return kind == 'start' || kind == 'slip' ? def.boats.length : (def[kind] || []).length; }
+    // which traffic boat's path points are showing: the selected boat's, or its point's
+    const pathOf = () => sel?.kind == 'traffic' || sel?.kind == 'point' ? sel.i : null;
     function pick(p)
     {
+        const t = pathOf();
+        if (t !== null)
+            for (let j = def.traffic[t].path.length; j--;)
+                if (hit(shapeOf({ kind: 'point', i: t, j }), p)) return { kind: 'point', i: t, j };
         for (const kind of PICK_ORDER)
             for (let i = count(kind); i--;)
                 if (hit(shapeOf({ kind, i }), p)) return { kind, i };
         return null;
     }
-    const same = (a, b) => a && b && a.kind == b.kind && a.i == b.i;
+    const same = (a, b) => a && b && a.kind == b.kind && a.i == b.i && a.j == b.j;
     const isRect = it => it && ['land', 'docks', 'currents'].includes(it.kind);
 
     ///////////////////////////////////////////////////////////////////////////
@@ -253,6 +265,14 @@ window.pmbEditor = (() =>
             const f = Math.pow(1.25, mouseWheel);
             cam.wu = clamp(cam.wu * f, 1e-3, 1e6);
             cam.pos = p.subtract(mousePos.subtract(UI_CENTER).scale(cam.wu));
+        }
+        if (pathMode !== null && mouseWasPressed(0) && !overPanel())
+        {
+            snapshot();
+            const path = def.traffic[pathMode].path;
+            path.push([snap(p.x), snap(p.y)]);
+            sel = { kind: 'point', i: pathMode, j: path.length - 1 };
+            return changed();
         }
         if (mouseWasPressed(0) && !overPanel())
         {
@@ -317,6 +337,17 @@ window.pmbEditor = (() =>
     // a slip hanging from a pier edge (top or right) slides along it; Shift moves it off the pier too
     function move(it, dx, dy)
     {
+        moveRaw(it, dx, dy);
+        cleanAll(def);
+    }
+    function cleanAll(o)
+    {
+        for (const k of Object.keys(o))
+            if (typeof o[k] == 'number') o[k] = clean(o[k]);
+            else if (o[k] && typeof o[k] == 'object') cleanAll(o[k]);
+    }
+    function moveRaw(it, dx, dy)
+    {
         const shift = keyIsDown('ShiftLeft') || keyIsDown('ShiftRight');
         switch (it.kind)
         {
@@ -329,6 +360,8 @@ window.pmbEditor = (() =>
                 break;
             }
             case 'buoys': case 'logs': { const a = def[it.kind][it.i]; a[0] += dx; a[1] += dy; break; }
+            case 'traffic': for (const q of def.traffic[it.i].path) { q[0] += dx; q[1] += dy; } break;
+            case 'point': { const q = def.traffic[it.i].path[it.j]; q[0] += dx; q[1] += dy; break; }
             case 'land': { const r = def.land[it.i]; r[0] += dx; r[2] += dx; r[1] += dy; r[3] += dy; break; }
             case 'docks': case 'currents': { const r = def[it.kind][it.i]; r.x0 += dx; r.x1 += dx; r.y0 += dy; r.y1 += dy; break; }
             default: { const o = def[it.kind][it.i]; o.x += dx; o.y += dy; }
@@ -374,6 +407,7 @@ window.pmbEditor = (() =>
         }
         const list = def[kind] = def[kind] || [];
         if (kind == 'moored' || kind == 'drifters') list.push({ boat, x, y, a: 0 });
+        else if (kind == 'traffic') { const L = BOATS[boat].L*BOATS[boat].k; list.push({ boat, path: [[q(x - 3*L), y], [q(x + 3*L), y]], end: 'back', speed: .6 }); }
         else if (kind == 'buoys') list.push([x, y, Math.max(1, niceStep(w))]);
         else if (kind == 'logs') list.push([x, y, 0]);
         else if (kind == 'ducks') list.push({ x, y, kids: 3 });
@@ -387,7 +421,7 @@ window.pmbEditor = (() =>
 
     function duplicate()
     {
-        if (!sel || sel.kind == 'start' || sel.kind == 'slip') return;
+        if (!sel || sel.kind == 'start' || sel.kind == 'slip' || sel.kind == 'point') return;
         snapshot();
         const list = def[sel.kind], c = structuredClone(list[sel.i]), d = 4*step();
         list.push(c);
@@ -400,6 +434,15 @@ window.pmbEditor = (() =>
     {
         if (!sel) return;
         if (sel.kind == 'slip') { status = 'A slip belongs to its boat: delete the boat (its start) instead'; return refreshPanel(); }
+        if (sel.kind == 'point')
+        {
+            const path = def.traffic[sel.i].path;
+            if (path.length < 3) { status = 'A path needs at least two points'; return refreshPanel(); }
+            snapshot(); path.splice(sel.j, 1);
+            sel = { kind: 'point', i: sel.i, j: Math.min(sel.j, path.length - 1) };
+            return changed();
+        }
+        if (sel.kind == 'traffic') pathMode = null;
         if (sel.kind == 'start')
         {
             if (def.boats.length < 2) { status = 'A level needs at least one boat'; return refreshPanel(); }
@@ -428,6 +471,33 @@ window.pmbEditor = (() =>
             else { def.docks.splice(sel.i, 1); def.land.push([b.x0, b.y0, b.x1, b.y1]); sel = { kind: 'land', i: def.land.length - 1 }; }
         }
         changed();
+    }
+
+    // I: a new point halfway to the next one (or past the last, in the same direction)
+    function insertPoint()
+    {
+        if (sel?.kind != 'point') return;
+        const path = def.traffic[sel.i].path, a = path[sel.j];
+        const b = path[sel.j + 1] || (def.traffic[sel.i].end == 'loop' ? path[0] : null);
+        const prev = path[sel.j - 1];
+        const q = b ? [(a[0] + b[0])/2, (a[1] + b[1])/2] : [2*a[0] - prev[0], 2*a[1] - prev[1]];
+        snapshot();
+        path.splice(sel.j + 1, 0, [snap(q[0]), snap(q[1])]);
+        sel = { kind: 'point', i: sel.i, j: sel.j + 1 };
+        changed();
+    }
+    function togglePathMode()
+    {
+        const t = pathOf();
+        pathMode = pathMode !== null || t === null ? null : t;
+        status = pathMode !== null ? 'Click to add points to the path · P, Enter or Esc when done' : '';
+        refreshPanel();
+    }
+    function reversePath()
+    {
+        const t = pathOf();
+        if (t === null) return;
+        snapshot(); def.traffic[t].path.reverse(); sel = { kind: 'traffic', i: t }; changed();
     }
 
     function moveBoat(n, d)
@@ -482,10 +552,13 @@ window.pmbEditor = (() =>
         }
         const digit = e.code.match(/^Digit([1-9])$/);
         if (digit && +digit[1] <= def.boats.length) { sel = { kind: 'start', i: +digit[1] - 1 }; frameBoat(sel.i); return refreshPanel(); }
+        if (pathMode !== null && (e.code == 'Escape' || e.code == 'Enter' || e.code == 'KeyP')) { e.preventDefault(); return togglePathMode(); }
         switch (e.code)
         {
             case 'Backspace': case 'Delete': return remove();
             case 'Escape': sel = null; return refreshPanel();
+            case 'KeyP': return togglePathMode();
+            case 'KeyI': return insertPoint();
             case 'KeyD': return duplicate();
             case 'KeyT': return cycleRect();
             case 'KeyF': return e.shiftKey ? frameAll() : frameSel();
@@ -537,6 +610,20 @@ window.pmbEditor = (() =>
             drawLine(tip, tip.add(f.rotate(2.5).scale(.3*W)), .06*W, C_ED);
             drawLine(tip, tip.add(f.rotate(-2.5).scale(.3*W)), .06*W, C_ED);
         });
+        // traffic paths: the curve the boat follows; the selected boat's points get handles
+        (def.traffic || []).forEach((t, i) =>
+        {
+            if (t.path.length < 2) return;
+            const on = pathOf() == i, r = makeRoute(t.path, t.end == 'loop');
+            for (let k = 1; k < r.pts.length; k += on ? 1 : 2)
+                drawLine(r.pts[k - 1], r.pts[k], (on ? .07 : .04)*W, (on ? C_ED : C_CREAM).scale(1, on ? .9 : .55));
+            if (!on) return;
+            t.path.forEach((q, j) =>
+            {
+                const pt = vec2(q[0], q[1]), picked = sel?.kind == 'point' && sel.j == j;
+                drawCircle(pt, .5*W, picked ? C_ED : C_CREAM, .06*W, C_ED);
+            });
+        });
         for (const c of def.currents || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_CLEAR, .04*W, C_TEAL);
         if (hover && !same(hover, sel)) outline(shapeOf(hover), .06*W, C_ED.scale(1, .5));
         if (sel)
@@ -562,8 +649,10 @@ window.pmbEditor = (() =>
             txt(String(n + 1), a.x, a.y + .7, .7, C_ED, 'center', .1, C_CREAM);
             if (s) txt(String(n + 1), s.x, s.y, .9, C_CREAM, 'center', .12, C_INK);
         });
+        const t = pathOf();
+        if (t !== null) def.traffic[t].path.forEach((q, j) => { const u = worldToUi(vec2(q[0], q[1])); txt(String(j + 1), u.x, u.y - .02, .32, C_INK); });
         const left = UI_CENTER.x - viewHalfUi().x + .5;
-        txt(`EDITOR · ${li + 1}. ${def.name} · grid ${fmtLen(step())}${noSnap() ? ' (no snap)' : ''}`, left, 21.75, .55, C_INK, 'left');
+        txt(`EDITOR · ${li + 1}. ${def.name} · grid ${fmtLen(step())}${noSnap() ? ' (no snap)' : ''}${pathMode !== null ? ' · CLICK TO ADD PATH POINTS (P to finish)' : ''}`, left, 21.75, .55, C_INK, 'left');
         if (!overPanel())
         {
             const p = mouseWorld();
@@ -690,7 +779,7 @@ window.pmbEditor = (() =>
         const inner = text.slice(open + 1, close), pieces = splitTop(inner), multi = inner.includes('\n');
         const real = pieces.filter(p => p.code), filler = pieces.filter(p => !p.code);
         for (const p of real) p.vals = evalCode('[' + p.code + ']');
-        const runAt = (vals, j) => vals.length > 0 && j + vals.length <= cur.length && vals.every((v, k) => deepEqual(v, cur[j + k]));
+        const runAt = (vals, j) => vals.length > 0 && j + vals.length <= cur.length && vals.every((v, k) => deepEqual(v, cur[j + k], 1e-9));
         const indent = indentOf(pieces) || '            ';
         const out = [];
         let j = 0, carry = '';
@@ -740,7 +829,7 @@ window.pmbEditor = (() =>
                 // a spread like ...basin(...): kept while every field it gives is unchanged
                 const given = evalCode(p.code.slice(3)), keys = Object.keys(given);
                 keys.forEach(k => done.add(k));
-                if (keys.every(k => deepEqual(given[k], d[k]))) { out.push(p); continue; }
+                if (keys.every(k => deepEqual(given[k], d[k], 1e-9))) { out.push(p); continue; }
                 const live = keys.filter(k => d[k] !== undefined);
                 live.forEach((k, n) => out.push(field(k, n ? indent : p.lead.includes('\n') ? p.lead : '\n' + indent, n == live.length - 1 ? p.tail : ',\n')));
                 if (!live.length) out.push({ lead: '', code: '', tail: p.tail.replace(/^,/, '') });
@@ -752,7 +841,7 @@ window.pmbEditor = (() =>
             done.add(k);
             if (d[k] === undefined) continue;
             const was = evalCode(valueText);
-            if (deepEqual(was, d[k])) { out.push(p); continue; }
+            if (deepEqual(was, d[k], 1e-9)) { out.push(p); continue; }
             const code = valueText.trimStart().startsWith('[') && Array.isArray(d[k])
                 ? k + colon + rebuildArray(valueText, d[k]) : k + ':' + fieldCode(k, d[k]).replace(/^(?!\n)/, ' ');
             out.push({ lead: p.lead, code, tail: p.tail });
@@ -781,7 +870,7 @@ window.pmbEditor = (() =>
 
     function newLevelSource(d)
     {
-        const order = ['name', 'land', 'docks', 'boats', 'lands', 'moored', 'drifters', 'buoys', 'logs', 'ducks', 'currents'];
+        const order = ['name', 'land', 'docks', 'boats', 'lands', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'currents'];
         const keys = [...order.filter(k => d[k] !== undefined), ...Object.keys(d).filter(k => !order.includes(k) && k != 'world' && d[k] !== undefined)];
         return '    {\n' + keys.map(k => `        ${k}:${fieldCode(k, d[k]).replace(/^(?!\n)/, ' ')},\n`).join('') + '    },\n';
     }
@@ -978,7 +1067,7 @@ window.pmbEditor = (() =>
         for (const [v, text] of boatOptions()) typeSel.append(el('option', { value: v, textContent: text, selected: v == addBoatType }));
         panel.append(field('type', typeSel), el('div', { className: 'row' }, [
             button('Add to chain', () => add('start', addBoatType)), button('Add moored', () => add('moored', addBoatType)),
-            button('Add loose', () => add('drifters', addBoatType))]));
+            button('Add loose', () => add('drifters', addBoatType)), button('Add traffic', () => add('traffic', addBoatType))]));
         panel.append(el('h3', { textContent: 'Add' }), el('div', { className: 'row' }, [
             button('Buoy', () => add('buoys')), button('Log', () => add('logs')), button('Ducks', () => add('ducks')),
             button('Sand', () => add('land')), button('Dock', () => add('docks')), button('Landmass', () => add('lands')), button('Current', () => add('currents'))]));
@@ -994,6 +1083,7 @@ window.pmbEditor = (() =>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: ×10) · <b>[ ]</b> rotate 15° (Shift: 90°)<br>
             <b>1–9</b> select boat · <b>F</b> frame selection · <b>Shift+F</b> frame all<br>
             <b>D</b> duplicate · <b>Delete</b> remove · <b>T</b> sand → dock → quay<br>
+            Traffic: <b>P</b> add path points (click; P to finish) · drag a point · <b>I</b> insert after<br>
             <b>, .</b> previous / next level · <b>⌘Z</b> undo · <b>⇧⌘Z</b> redo · <b>⌘S</b> save · <b>Esc</b> deselect` }));
     }
 
@@ -1002,6 +1092,7 @@ window.pmbEditor = (() =>
         const n = sel.i + 1;
         return {
             start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
+            traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic[sel.i]?.path.length}`,
             ducks: 'Duck family', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current',
         }[sel.kind];
     }
@@ -1036,6 +1127,7 @@ window.pmbEditor = (() =>
                 field('heading°', degIn(() => m.a, v => { m.a = v; })));
             return;
         }
+        if (sel.kind == 'traffic' || sel.kind == 'point') return trafficFields(def.traffic[i], i);
         if (sel.kind == 'buoys' || sel.kind == 'logs')
         {
             const a = def[sel.kind][i], at = (k, set) => input('number', () => a[k], set || (v => { a[k] = v ?? 0; }), { step: 'any' });
@@ -1071,6 +1163,41 @@ window.pmbEditor = (() =>
         panel.append(grid([side('left', 'x0', 0), side('right', 'x1', 2), side('bottom', 'y0', 1), side('top', 'y1', 3)]));
         if (sel.kind == 'currents') panel.append(grid([field('flow x', numIn(r, 'dx', { step: 'any' })), field('flow y', numIn(r, 'dy', { step: 'any' }))]));
         if (sel.kind != 'currents') panel.append(el('div', { className: 'keys', textContent: 'T: sand → dock → quay → sand' }));
+    }
+
+    function trafficFields(t, i)
+    {
+        const grid = kids => el('div', { className: 'grid2' }, kids);
+        if (sel.kind == 'point')
+        {
+            const q = t.path[sel.j], at = k => input('number', () => q[k], v => { q[k] = v ?? 0; }, { step: 'any' });
+            panel.append(grid([field('x', at(0)), field('y', at(1))]), el('div', { className: 'row' }, [
+                button('Insert after (I)', insertPoint), button('Delete point', remove), button('Whole boat', () => { sel = { kind: 'traffic', i }; refreshPanel(); })]));
+        }
+        panel.append(el('div', { className: 'row' }, [
+            button(pathMode !== null ? 'Done adding (P)' : 'Add points (P)', togglePathMode, pathMode !== null ? 'go' : ''),
+            button('Reverse path', reversePath)]));
+        panel.append(field('boat', select(boatOptions(), () => t.boat, v => { t.boat = v; })),
+            field('size k', input('number', () => t.k, v => { if (v === undefined) delete t.k; else t.k = v; }, { placeholder: `real size (${BOATS[t.boat].k})`, step: 'any' })),
+            field('speed %', input('number', () => Math.round((t.speed ?? .6)*100), v => { t.speed = clamp((v ?? 60)/100, .05, 1); }, { step: 5, min: 5, max: 100 })),
+            field('at the end', select([['back', 'turn around (back and forth)'], ['loop', 'loop to the first point'], ['stop', 'stop']], () => t.end || 'back', v => { t.end = v; })));
+        // the parking turns it moves during; all of them is the default (no during in the file)
+        const turns = el('div', { className: 'row' });
+        def.boats.forEach((e, n) =>
+        {
+            const on = !t.during || t.during.includes(n + 1);
+            turns.append(el('label', {}, [el('input', { type: 'checkbox', checked: on, onchange: ev =>
+            {
+                snapshot();
+                const set = new Set(t.during || def.boats.map((_, m) => m + 1));
+                ev.target.checked ? set.add(n + 1) : set.delete(n + 1);
+                const list = [...set].sort((a, b) => a - b);
+                if (list.length == def.boats.length) delete t.during; else t.during = list;
+                changed();
+            } }), `${n + 1}. ${BOATS[e.boat].name}`]));
+        });
+        panel.append(el('div', { className: 'keys', textContent: 'Moves while you park:' }), turns,
+            el('div', { className: 'keys', textContent: `${t.path.length} points. It starts on point 1 and follows a smooth curve through them. Outside its turns it cuts the engine and coasts to a stop.` }));
     }
 
     function slipFields(s, n)

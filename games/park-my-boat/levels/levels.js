@@ -9,6 +9,8 @@
 // land:    [x0, y0, x1, y1] sand;  docks: {x0, y0, x1, y1, quay?, plank?}
 // lands:   blob landmasses {x, y, k, circles: [[x, y, r]] in units of k (first one on the center), grass?}
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
+// traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
+//          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn)}
 // the camera follows the boat and its slip
 
 // harbor basin: sand on the sides and bottom, a concrete quay along the top edge. The strips overlap

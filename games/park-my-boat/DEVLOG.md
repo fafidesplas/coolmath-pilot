@@ -1,5 +1,13 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Traffic boats with drawn paths
+- Owner's choices: end behavior per boat, real physics, click-to-place points, and per-turn timing. New `traffic` in the level data: `{ boat, k?, path: [[x, y], ...], end: 'back' | 'loop' | 'stop', speed: share of top speed (default .6), during: [boat numbers] (default every turn) }`.
+- Each traffic boat is a normal body with the player's engine and rudder (`driveBoat`, now shared). It follows a Catmull-Rom curve through the points, aiming 1.5 boat lengths ahead and slowing for sharp turns. Outside its turns it cuts the engine and coasts to a stop where it is. Hits count on the damage bill like other boats; traffic leaves a wake and has a captain.
+- Editor: Add traffic (type from the list), P to add points by clicking, drag points, I insert, Delete point, Reverse path; the panel has boat, size, speed %, end behavior and a checkbox per parking turn. Paths show as curves; the selected boat's points get numbered handles.
+- Measured (tug on a 1.5 km loop in Odd Couple, simulated 60 s): 0.4 m off the curve on average, 3.6 m at most, cruising at 59% of top speed with speed .6. Back and forth turns around at the ends, stop halts at the last point, `during: [2]` sits still in turn 1 and moves in turn 2, knocked 60 m sideways it is back on the path within ~7 s, a rowboat ramming it moves it 0.01 m.
+- Fixed in the editor: snapped values carried float dust (442.40000000000003), so a second save would have rewritten unchanged parts; values are cleaned and Save ignores differences under 1e-9.
+- No level has traffic yet; the tests above used temporary data. Next: add traffic to a level in the editor and play it.
+
 ## 2026-10-24 — Odd Couple edit from the editor
 - Owner's first save from the level editor into the real folder (it works). Odd Couple: the bottom sand strip is gone, so the harbor is open to the sea to the south, and the cruise ship starts at (225, 210) facing 75° instead of (1180, 470) facing left. `...basin(...)` was written out as `land` and `docks` because one of its strips changed.
 - Not replayed by hand yet.

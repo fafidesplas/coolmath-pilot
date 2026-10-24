@@ -58,7 +58,7 @@ function drawBoat(b)
     d.poly(t.deckPts, t.deck || b.color.lerp(C_CREAM, .45));
     if (len < .8) return;
     BOAT_DECO[t.key](d, t, b);
-    if (!t.blob && (b.kind == 'player' || b.kind == 'moored'))
+    if (!t.blob && (b.kind == 'player' || b.kind == 'moored' || b.kind == 'traffic'))
         drawCaptain(d, t.captainX, b, Math.min(1, 2.5 / (b.k || 1)));
 }
 
