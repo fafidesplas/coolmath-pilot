@@ -13,6 +13,9 @@ const SUBSTEPS = 2;
 // ships still feel heavy without dragging. Try other caps in the URL, e.g. ?slowdown=2
 const SLOWDOWN_CURVE = .3;
 const MAX_SLOWDOWN = +new URLSearchParams(location.search).get('slowdown') || 1.25;
+// with no throttle the player's forward drag drops to this fraction, so boats coast a long way and
+// stopping (reverse or anchor) is the skill. 1 = no extra drift. Try others with ?coast=.6
+const COAST_DRAG = +new URLSearchParams(location.search).get('coast') || .3;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -113,6 +116,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     b.wash = t.wash / (slowdown*slowdown);
     b.color = color || t.color;
     b.hurtT = 0;
+    b.dragFull = b.dragF;          // forward drag under power; controlPlayer lowers it while coasting
     bodies.push(b);
     return b;
 }
@@ -236,6 +240,7 @@ function startBoat(n)
     if (prev)
     {
         prev.kind = 'moored';
+        prev.dragF = prev.dragFull;
         moor(prev, prev.pos, prev.angle);
     }
     player = fleet[n];
@@ -458,6 +463,7 @@ function controlPlayer(dt)
     if (anchor || (intro && intro.t < intro.dur)) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;
+    player.dragF = player.dragFull * (throttle ? 1 : COAST_DRAG);
 
     const f = player.forward();
     const thrust = throttle * player.power * (throttle < 0 ? t.reverse : 1) * player.invMass;

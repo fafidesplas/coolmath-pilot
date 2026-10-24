@@ -1,5 +1,10 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — More drift
+- Letting go of the throttle drops the player's forward drag to 30% (`COAST_DRAG` in `src/main.js`, `?coast=1` in the URL for the old feel). Top speed and acceleration are unchanged; reverse and the anchor brake as before.
+- Coasting from top speed to 10%, before → now: rowboat 1.7 → 5.6 lengths (2.1 → 6.9 s), tug 0.7 → 2.5 (1.9 → 6.4 s), cruise 1.0 → 3.4 (5.8 → 19 s), continent 0.6 → 1.9 (4.8 → 16 s).
+- Next: play it. Watch for big ships taking too long to settle, and more anchor spin-outs from boats arriving fast.
+
 ## 2026-10-23 — Harbor island
 - Continental Drift: the harbor is now a bay cut into the south coast of a grassy island (sand jetties with round tips, lobes of land around them), open to the sea. Before, it was a square of sand with round bumps that read as a flower when zoomed out. The other levels keep their enclosed harbor.
 - Next: see if the harbor island reads at island zoom without a label.
