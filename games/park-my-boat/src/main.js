@@ -26,9 +26,10 @@ const BIG_SHIP_LEEWAY = 1.15;
 const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3.5;
 // dropping anchor too fast spins the boat up to this (rad/s, divided by sqrt of its size) over this many seconds
 const ANCHOR_SPIN = 6, ANCHOR_SPIN_TIME = .3;
-// a cheat so buoys and ducks stay visible next to big ships: each is at least this share of the current
-// boat's length, growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
+// a cheat so buoys stay visible next to big ships: each buoy is at least this share of the current
+// boat's length (wide), growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
 const BUOY_SHARE = +new URLSearchParams(location.search).get('buoy') || 1/12;
+const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
 const SOUNDS =
@@ -130,32 +131,15 @@ function sizeBuoy(b, s)
     b.dragA = .6/slowdown;
 }
 
-// ducks are 1.1 long at growth 1; size, mass and spin scale like a boat's
-function sizeDuck(d, g)
+function growBuoys(dt)
 {
-    d.k = g;
-    d.circles[0].r = d.radius = .34*d.duckSize*g;
-    d.mass = (d.leader ? .06 : .15)*g*g*g; d.invMass = 1/d.mass;
-    d.inertia = Math.max(.05*g**5, d.mass*d.radius*d.radius/2); d.invInertia = 1/d.inertia;
-}
-
-// buoys (.9 wide per k) and ducks (1.1 long) grow to BUOY_SHARE of the current boat, never below their level size
-function growWithBoat(dt)
-{
-    const share = boatSize(player) * BUOY_SHARE, ease = Math.min(1, dt*2.2);
-    const toward = (a, b) => Math.exp(Math.log(a) + (Math.log(b) - Math.log(a)) * ease);
+    const goal = boatSize(player) * BUOY_SHARE / .9;
     for (const b of bodies)
     {
-        if (b.kind == 'buoy')
-        {
-            const g = Math.max(b.baseK, share / .9);
-            if (Math.abs(b.k/g - 1) > 1e-3) sizeBuoy(b, toward(b.k, g));
-        }
-        else if (b.kind == 'duck')
-        {
-            const g = Math.max(1, share / 1.1);
-            if (Math.abs(b.k/g - 1) > 1e-3) sizeDuck(b, toward(b.k, g));
-        }
+        if (b.kind != 'buoy') continue;
+        const g = Math.max(b.baseK, goal);
+        if (Math.abs(b.k/g - 1) < 1e-3) continue;
+        sizeBuoy(b, Math.exp(Math.log(b.k) + (Math.log(g) - Math.log(b.k)) * Math.min(1, dt*2.2)));
     }
 }
 
@@ -235,26 +219,25 @@ function loadLevel(i)
         bodies.push(new Body(vec2(lx, ly), la, makeCircles(2.4, .55), .9, { kind:'log', dragF:.4, dragS:1.2, dragA:1.2 }));
     for (const f of L.ducks || [])
     {
-        const center = vec2(f.x, f.y);
+        const box = [f.x - 8, f.y - 5, f.x + 8, f.y + 5];
         let leader;
         for (let k = 0; k <= f.kids; k++)
         {
             const size = k ? .55 : 1;
             const d = new Body(vec2(f.x - k*.8, f.y), 0, [{ x:0, y:0, r:.34*size }], k ? .06 : .15, { kind:'duck', restitution:.6, dragA:3 });
             d.duckSize = size;
-            d.k = 1;                   // growth (see growWithBoat): the duck, its drawing and its AI distances scale with it
             d.leader = leader;
             d.stunT = 0;
             d.wanderT = 0;
             d.target = d.pos.copy();
-            d.center = center;
+            d.box = box;
             bodies.push(d);
             leader = d;
         }
     }
 
     startBoat(0);
-    growWithBoat(Infinity);
+    growBuoys(Infinity);
     setScreen('playing');
     updateCamera(0, true);
     if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
@@ -406,7 +389,7 @@ function onHit(A, B, impact, p)
         {
             duck.stunT = 1.5;
             duck.angVel += rand(-14, 14);
-            sfx('quack', p, 1, rand(.9, 1.3) / Math.sqrt(duck.duckSize * duck.k));
+            sfx('quack', p, 1, rand(.9, 1.3) / Math.sqrt(duck.duckSize));
             if (isPlayer) { ducksOffended++; damages += 5; }
         }
         return;
@@ -721,28 +704,27 @@ function updateDuck(d, dt)
     {
         // trail on a rope: aim for the point behind the leader on the line toward this duckling, so
         // an idle leader turning in place never swings the target through its own body
-        const gap = (.75 * d.leader.duckSize + .2) * d.k, back = d.pos.subtract(d.leader.pos);
+        const gap = .75 * d.leader.duckSize + .2, back = d.pos.subtract(d.leader.pos);
         d.target = d.leader.pos.add(back.length() > 1e-3 ? back.normalize(gap) : d.leader.forward().scale(-gap));
     }
     else
     {
         d.wanderT -= dt;
         const away = d.pos.subtract(player.pos);
-        if (away.length() < 2.4*d.k + player.radius)
-            d.target = d.pos.add(away.normalize(3*d.k));   // paddle away from the boat
+        if (away.length() < 2.4 + player.radius)
+            d.target = d.pos.add(away.normalize(3));       // paddle away from the boat
         else if (d.wanderT <= 0)
         {
-            // wander within 8 x 5 (times growth) of the family's spot
-            const c = d.center, w = 8*d.k, h = 5*d.k;
+            const b = d.box;
             d.wanderT = rand(3, 6);
-            d.target = vec2(clamp(d.pos.x + rand(-w, w), c.x - w, c.x + w), clamp(d.pos.y + rand(-h, h), c.y - h, c.y + h));
+            d.target = vec2(clamp(d.pos.x + rand(-8, 8), b[0], b[2]), clamp(d.pos.y + rand(-5, 5), b[1], b[3]));
         }
     }
     const tx = d.target.x - d.pos.x, ty = d.target.y - d.pos.y, dist = Math.hypot(tx, ty);
-    if (dist < .3*d.k) return;
+    if (dist < .3) return;
     const diff = wrapAngle(Math.atan2(ty, tx) - d.angle);
     d.angVel += clamp(diff*6 - d.angVel, -12, 12) * dt * 4;
-    const f = d.forward(), push = (d.leader ? 4 : 2.4) * clamp(dist, 0, 1.5*d.k) * Math.max(0, Math.cos(diff));
+    const f = d.forward(), push = (d.leader ? 4 : 2.4) * clamp(dist, 0, 1.5) * Math.max(0, Math.cos(diff));
     d.vel.x += f.x*push*dt;
     d.vel.y += f.y*push*dt;
 }
@@ -759,7 +741,10 @@ function currentAt(p)
 function stepWorld()
 {
     const dt = timeDelta / SUBSTEPS;
-    growWithBoat(timeDelta);
+    // ducks too small to see sleep: no AI, no physics, no quacks over a cruise ship
+    const ducksAsleep = cam.wu > DUCK_SLEEP_WU;
+    for (const b of bodies) b.asleep = ducksAsleep && b.kind == 'duck';
+    growBuoys(timeDelta);
     for (let s = 0; s < SUBSTEPS; s++)
     {
         controlPlayer(dt);
@@ -767,14 +752,16 @@ function stepWorld()
         for (const b of bodies) if (b.kind == 'traffic') driveTraffic(b, dt);
         for (const b of bodies)
         {
+            if (b.asleep) { b.vel.set(0, 0); b.angVel = b.stunT = 0; continue; }
             if (b.kind == 'duck') updateDuck(b, dt);
             const c = currentAt(b.pos);
             b.integrate(dt, c ? c.dx : 0, c ? c.dy : 0);
         }
         for (let i = 0; i < bodies.length; i++)
         {
+            if (bodies[i].asleep) continue;
             for (let k = i+1; k < bodies.length; k++)
-                collideBodies(bodies[i], bodies[k], onHit);
+                if (!bodies[k].asleep) collideBodies(bodies[i], bodies[k], onHit);
             collideStatics(bodies[i], rects, posts, onHit);
         }
     }
@@ -802,7 +789,7 @@ function stepWorld()
         wakes.push({ pos:b.toWorld(-b.type.L/2*b.k, 0), t:0, size:b.type.W*.7*b.k });
     }
     if (wakes.length > 120) wakes.splice(0, wakes.length - 120);
-    for (const b of bodies) if (b.type) emitFoam(b);
+    for (const b of bodies) if (b.type && !b.asleep) emitFoam(b);
 }
 
 // Foam streaks along both sides of a moving boat, like tire tracks: each side lays a trail of points
@@ -1107,7 +1094,7 @@ function drawBodies()
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
-        if (b.kind == 'duck') drawDuck(b);
+        if (b.kind == 'duck') { if (!b.asleep) drawDuck(b); }
         else if (b.kind == 'buoy') drawBuoy(b);
         else if (b.kind == 'log') drawLog(b);
     }
