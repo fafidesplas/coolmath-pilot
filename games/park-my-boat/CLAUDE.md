@@ -43,6 +43,10 @@ Not built yet. Candidates for the GDD and for new levels.
 - **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
 - **More drift:** trying it now for every boat (see Boat physics). Next question: keep it global, or make it a trait of certain boats.
 
+## Concerns
+Problems seen in play, for the GDD's open questions.
+- **Camera with small boats:** with a small boat like the Jet Ski, the camera has to stay very zoomed out so the player sees other boats in time. The boat itself is then tiny on screen, which works against fine control.
+
 ## Stretch goals
 Not built and not in v1 scope. Two-player local modes on one keyboard, for the GDD to describe once the single-player game is done.
 - **Parking race (versus):** two players, each with a boat, race to park in the same harbor. The first boat judged inside its slip wins the round. Each player could get their own slip, or both could go for one slip and bump each other out of it. Bumping is allowed, and that is the fun.
