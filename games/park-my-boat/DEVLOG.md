@@ -1,5 +1,11 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Fixed zoom in play, editor object list, smoother editor zoom
+- Owner: the player can no longer zoom. The mouse wheel did nothing else in play, so it's simply gone (with `zoomBias`); each boat gets the camera's set framing. The editor's zoom never carries into play: a play-test and every level start snap the camera to the boat's framing.
+- Editor: an Objects list in the panel shows every moored, loose and traffic boat, buoy, log, duck family, landmass, sand, dock and current, grouped by kind. Click a row to select and frame it; selecting on the canvas highlights its row.
+- Editor zoom follows the real scroll amount (LittleJS only gives the sign per event, so trackpads zoomed far too fast): about 15% per mouse notch, small steps on a trackpad.
+- Next: owner checks the zoom feel on the trackpad.
+
 ## 2026-10-24 — Editor: no sounds, and a selection crash fixed
 - Owner: boat sounds played while dragging in the editor (every edit reloads the level, which sounds the new boat's horn). `sfx()` is now silent while the editor is open; play-tests still have sound. Checked: 0 sounds during a 15-step drag, the horn plays when a play-test starts.
 - Fixed a bug from the traffic change: in a level with no traffic, selecting anything threw in the panel title (`def.traffic[...]` on a missing list), so the panel stopped drawing and drags didn't work. Checked by clicking every start, slip, moored boat, buoy, duck family, landmass and dock in all 4 levels (57 clicks): the panel draws in full each time, no console errors.

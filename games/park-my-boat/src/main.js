@@ -71,7 +71,6 @@ let buttons = [], hoverId;
 
 // camera: pos in meters, wu = meters per UI unit
 const cam = { pos: UI_CENTER.copy(), wu: 1 };
-let zoomBias = 1;
 
 
 function setScreen(s)
@@ -245,7 +244,6 @@ function startBoat(n)
     boatIndex = n;
     anchor = judge = undefined;
     boatTime = 0;
-    zoomBias = 1;
     intro = fleet.length > 1 ? { t:0, prev, dur: prev ? 2.8 : 1.8 } : undefined;
     if (intro) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
 }
@@ -276,7 +274,7 @@ function cameraGoal()
     if (intro && intro.prev && intro.t < intro.dur*.5) box = boxUnion(box, boxAround(intro.prev.pos, intro.prev.radius));
     const minW = boatSize(player) * (3 + 6/player.slowdown), pad = player.radius*.8;
     const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);
-    const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3)) * zoomBias;
+    const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3));
     // centered in the play area below the HUD bar
     return { pos:vec2((box.x0 + box.x1)/2, (box.y0 + box.y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
 }
@@ -899,8 +897,6 @@ function gameUpdate()
     {
         if (keyWasPressed('KeyP') || keyWasPressed('Escape')) isPaused = !isPaused;
         if (keyWasPressed('KeyR')) pressButton('restart');
-        // wheel zooms out to take in the whole harbor, Supreme Commander style
-        if (mouseWheel) zoomBias = clamp(zoomBias * Math.pow(1.3, mouseWheel), .6, 80);
         if (!isPaused)
         {
             if (keyWasPressed('Space') || keyWasPressed('Enter')) toggleAnchor();
