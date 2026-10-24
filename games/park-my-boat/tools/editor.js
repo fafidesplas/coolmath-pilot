@@ -33,6 +33,7 @@ window.pmbEditor = (() =>
     const fileName = new WeakMap();     // level -> its name in the file (missing: a new level, appended on save)
     const ARRAYS = ['moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'lands', 'currents'];
     let pathMode = null;            // index of the traffic boat whose path is being drawn (clicks add points)
+    let wheelPx = 0;                // scroll since last frame, in pixels (LittleJS only gives the sign per event)
 
     ///////////////////////////////////////////////////////////////////////////
     // undo snapshots: the level's data without the 'world' the game adds
@@ -259,13 +260,14 @@ window.pmbEditor = (() =>
     {
         const p = mouseWorld();
         if (!drag) hover = overPanel() ? null : pick(p);
-        if (mouseWheel && !overPanel())
+        if (wheelPx && !overPanel())
         {
-            // zoom around the cursor
-            const f = Math.pow(1.25, mouseWheel);
+            // zoom around the cursor, by how far the wheel or trackpad actually scrolled: one mouse notch is about 15%
+            const f = Math.exp(wheelPx * .0014);
             cam.wu = clamp(cam.wu * f, 1e-3, 1e6);
             cam.pos = p.subtract(mousePos.subtract(UI_CENTER).scale(cam.wu));
         }
+        wheelPx = 0;
         if (pathMode !== null && mouseWasPressed(0) && !overPanel())
         {
             snapshot();
@@ -1227,6 +1229,8 @@ window.pmbEditor = (() =>
     }
 
     addEventListener('keydown', key);
+    // lines and pages to pixels; a fast flick is capped per event so it can't jump several zoom levels
+    addEventListener('wheel', e => { if (ED.active) wheelPx += clamp(e.deltaY * [1, 16, 400][e.deltaMode], -120, 120); });
     // ?edit or ?edit=<level number> opens the editor once the game is running
     const want = new URLSearchParams(location.search).get('edit');
     if (want !== null) setTimeout(() => open(want ? +want - 1 : 0), 300);
