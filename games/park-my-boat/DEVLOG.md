@@ -1,5 +1,9 @@
 # Park My Boat — devlog
 
+## 2026-10-24 — Clearer message for dropping anchor too fast
+- Owner: "Too fast!" is now "Slow down before you drop anchor!" (slightly smaller text so it fits). Popups now stay on screen when the boat is near the edge.
+- Found while looking into the jerk on anchoring: above 2.5 speed units the boat gets an instant spin in a random direction (4 rad/s just over the limit, up to 13 for the rowboat, 8 for the container ship). Proposed: ramp it in with how far over the limit you are, spread over about 0.3 s, toward the side the anchor landed, smaller for big ships. Not changed yet.
+
 ## 2026-10-24 — Closer camera for big ships, arrow to an off-screen slip
 - Owner: the container ship was too far zoomed out. The camera no longer has to keep the slip in view. It follows the boat, a little ahead of where it's going (0.8 s of travel, at most a quarter of the view).
 - Ships of 50 m and longer (`BIG_SHIP_LENGTH`) now get 3.5 boat lengths across (`BIG_SHIP_VIEW`; try others with `?shipview=`), down from about 7.8. The container ship view went from about 3.2 km wide to 1.4 km. Smaller boats keep their old number of lengths (3 + 6 / slowdown).

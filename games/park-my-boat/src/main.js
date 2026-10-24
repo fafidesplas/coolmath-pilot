@@ -579,7 +579,7 @@ function toggleAnchor()
     splash(anchor.pos, 12, 3, k);
     if (spd > 2.5)
     {
-        popup('Too fast!', player.pos, C_SUNNY, 1.1, 1.6);
+        popup('Slow down before you drop anchor!', player.pos, C_SUNNY, .9, 1.6);
         shakeAmt = Math.max(shakeAmt, .25);
         player.hurtT = 1;
         player.angVel += (rand() < .5 ? -1 : 1) * spd * 2 / player.slowdown;     // spin-out
@@ -1116,6 +1116,9 @@ function drawPopups()
     {
         const pop = Math.min(1, p.t*8), s = p.size * (pop < 1 ? pop*1.3 : 1 + Math.max(0, .3 - (p.t - .12)*2));
         const a = clamp((1.3 - p.t)*3, 0, 1), u = worldToUi(p.pos);
+        // long messages stay on screen when the boat is near the edge
+        const half = viewHalfUi().x - p.text.length*s*.3 - .5;
+        u.x = half > 0 ? clamp(u.x, 20 - half, 20 + half) : 20;
         txt(p.text, u.x, u.y + p.lift + p.t*.8, s, p.color.scale(1, a), 'center', .14*s, C_INK.scale(1, a));
     }
 }
