@@ -1,5 +1,10 @@
 # Park My Boat — devlog
 
+## 2026-10-23 — Classic levels cut
+- Removed World 2 (the 10 one-boat Classic Marina levels) and the fixed-camera, toy-scale code only they used. The game is the 4 World 1 chain levels.
+- Old saves keep stars for levels 5–14; they are ignored.
+- Next: play the 4 levels by hand, then the GDD.
+
 ## 2026-10-23 — Continental Drift
 - New World 1 level: rowboat → cruise ship → island (30 km) → continent (3000 km), each 100x the last. The island parks in a bay between two islets next to the harbor island; the continent closes the gap in Pangaea.
 - Islands and continents are boats with blob hulls (circles, outline traced from them) and grass, volcano, palms, mountains, forests and a city drawn on. Static landmasses (`lands` in level data) collide as round posts.

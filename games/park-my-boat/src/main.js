@@ -119,7 +119,7 @@ function moor(b, pos, angle)
     b.home = { pos:pos.copy(), angle, k:s, kA:s };
 }
 
-function boatK(L, e) { return e.k ?? (L.toy ? 1 : BOATS[e.boat].k); }
+function boatK(L, e) { return e.k ?? BOATS[e.boat].k; }
 
 function makeSlip(e, k)
 {
@@ -202,7 +202,7 @@ function loadLevel(i)
         bodies.push(new Body(vec2(lx, ly), la, makeCircles(2.4, .55), .9, { kind:'log', dragF:.4, dragS:1.2, dragA:1.2 }));
     for (const f of L.ducks || [])
     {
-        const box = L.duckBox || [f.x - 8, f.y - 5, f.x + 8, f.y + 5];
+        const box = [f.x - 8, f.y - 5, f.x + 8, f.y + 5];
         let leader;
         for (let k = 0; k <= f.kids; k++)
         {
@@ -266,9 +266,6 @@ function boxUnion(a, b) { return { x0:Math.min(a.x0, b.x0), y0:Math.min(a.y0, b.
 // frame the boat and its slip, never tighter than a few boat lengths (more for small, quick boats)
 function cameraGoal()
 {
-    const v = level.view;
-    if (v) return { pos:vec2((v.x0 + v.x1)/2, (v.y0 + v.y1)/2), wu:Math.max((v.x1 - v.x0)/UI_SIZE.x, (v.y1 - v.y0)/UI_SIZE.y) };
-
     let box = boxUnion(boxAround(player.pos, player.radius),
         { x0:slip.pos.x - slip.w/2, y0:slip.pos.y - slip.h/2, x1:slip.pos.x + slip.w/2, y1:slip.pos.y + slip.h/2 });
     // the size reveal: first show the boat just parked next to the new one
@@ -283,7 +280,7 @@ function cameraGoal()
 function updateCamera(dt, snap)
 {
     const g = cameraGoal();
-    if (snap || level.view) { cam.pos = g.pos; cam.wu = g.wu; return; }
+    if (snap) { cam.pos = g.pos; cam.wu = g.wu; return; }
     // while the goal is far, stay zoomed out enough to see it: big moves read as zoom out, pan, zoom in
     const dist = cam.pos.distance(g.pos);
     const wuGoal = Math.max(g.wu, dist / 14);
@@ -800,7 +797,7 @@ function gameUpdate()
         if (keyWasPressed('KeyP') || keyWasPressed('Escape')) isPaused = !isPaused;
         if (keyWasPressed('KeyR')) pressButton('restart');
         // wheel zooms out to take in the whole harbor, Supreme Commander style
-        if (mouseWheel && !level.view) zoomBias = clamp(zoomBias * Math.pow(1.3, mouseWheel), .6, 80);
+        if (mouseWheel) zoomBias = clamp(zoomBias * Math.pow(1.3, mouseWheel), .6, 80);
         if (!isPaused)
         {
             if (keyWasPressed('Space') || keyWasPressed('Enter')) toggleAnchor();
@@ -1037,14 +1034,14 @@ function drawHud()
     drawLine(vec2(20 - wide/2, PLAY_TOP), vec2(20 + wide/2, PLAY_TOP), LINE_W, C_INK);
     txt(`${levelIndex + 1}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
     let boat = player.type.name;
-    if (!L.toy) boat += ` · ${fmtLen(boatSize(player))}`;
+    boat += ` · ${fmtLen(boatSize(player))}`;
     if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
     txt(boat, 10, 21.75, .55, C_TEAL, 'left');
     if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
-    if (!L.view) drawScaleBar();
+    drawScaleBar();
 
     // hint fades after a few seconds
-    const hint = L.boats[boatIndex].hint || L.hint;
+    const hint = L.boats[boatIndex].hint;
     const a = intro || gameScreen != 'playing' ? 0 : clamp(6 - boatTime, 0, 1);
     if (a > 0 && hint)
     {

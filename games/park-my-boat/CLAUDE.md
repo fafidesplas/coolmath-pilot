@@ -29,7 +29,6 @@ Paper Boat (33 cm), Bathtub (1.8 m, no keel at all), Swan Pedalo (2.6 m, spins),
 
 ## Levels
 - **World 1, Big & Small (4):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → paper boat), Mixed Nuts (mega yacht → bathtub → cruise ship → swan), Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step).
-- **World 2, Classic Marina (10):** the first prototype's one-boat levels at toy scale with a fixed camera: Baby Steps, Buoy Oh Buoy, Zippy, Swan Song, Party Barge, Long Story, Tug Life, Rip Current, Rubber Ducky, Mega Yacht. Candidates to cut or rework into chains.
 
 Data in `levels/levels.js`.
 
