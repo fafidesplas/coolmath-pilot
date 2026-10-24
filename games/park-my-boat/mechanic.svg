@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Park My Boat: a dinghy curves across the water into a slip between two finger docks, stops, and drops anchor. Loop 5 s. -->
+  <rect width="480" height="270" fill="#8CD6D1"/>
+  <g stroke="#A8E3DC" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M60 200 q8 -6 16 0"/><path d="M380 210 q8 -6 16 0"/><path d="M120 120 q8 -6 16 0"/><path d="M420 140 q8 -6 16 0"/>
+  </g>
+
+  <!-- pier and finger docks -->
+  <rect x="-4" y="-4" width="488" height="58" fill="#E8B873" stroke="#2B2D42" stroke-width="3"/>
+  <rect x="283" y="54" width="12" height="80" fill="#E8B873" stroke="#2B2D42" stroke-width="3"/>
+  <rect x="345" y="54" width="12" height="80" fill="#E8B873" stroke="#2B2D42" stroke-width="3"/>
+  <circle cx="289" cy="134" r="7" fill="#C78F4C" stroke="#2B2D42" stroke-width="3"/>
+  <circle cx="351" cy="134" r="7" fill="#C78F4C" stroke="#2B2D42" stroke-width="3"/>
+  <path d="M295 134 H345" stroke="#FFF7E5" stroke-width="3" stroke-dasharray="8 8"/>
+  <!-- ghost of the parked boat -->
+  <path d="M320 64 l14 18 v36 h-28 v-36 z" fill="#FFF7E5" opacity=".3"/>
+
+  <!-- the boat -->
+  <g>
+    <animateMotion dur="5s" repeatCount="indefinite" rotate="auto" keyPoints="0;1;1" keyTimes="0;.6;1" calcMode="spline" keySplines=".3 0 .4 1;0 0 1 1"
+      path="M60 220 C 200 220, 320 230, 320 140 L 320 92"/>
+    <g transform="rotate(0)">
+      <path d="M26 0 L12 -14 H-22 V14 H12 Z" fill="#2B2D42" opacity=".18" transform="translate(4 6)"/>
+      <path d="M26 0 L12 -14 H-22 V14 H12 Z" fill="#F2635F" stroke="#2B2D42" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="-6" cy="0" r="8" fill="#F3C29A" stroke="#2B2D42" stroke-width="2.5"/>
+      <circle cx="-7" cy="0" r="5" fill="#FFF7E5" stroke="#2B2D42" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- anchor splash once parked -->
+  <g opacity="0">
+    <animate attributeName="opacity" dur="5s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;.62;.66;.95;1"/>
+    <circle cx="320" cy="64" r="14" fill="none" stroke="#FFF7E5" stroke-width="3"/>
+    <text x="400" y="100" font-family="Arial Rounded MT Bold, Trebuchet MS, sans-serif" font-weight="bold" font-size="26" fill="#FFCC47" stroke="#2B2D42" stroke-width="1.5" text-anchor="middle">PARKED!</text>
+    <g fill="#FFCC47" stroke="#2B2D42" stroke-width="2">
+      <path d="M372 120 l4 8 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1z"/>
+      <path d="M400 120 l4 8 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1z"/>
+      <path d="M428 120 l4 8 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1z"/>
+    </g>
+  </g>
+
+  <!-- a duck minding its business -->
+  <g transform="translate(150 160)">
+    <ellipse cx="0" cy="0" rx="10" ry="7" fill="#FFCC47" stroke="#2B2D42" stroke-width="2.5"/>
+    <circle cx="8" cy="0" r="5" fill="#FFCC47" stroke="#2B2D42" stroke-width="2.5"/>
+    <path d="M12 -2 l6 2 -6 2z" fill="#F2635F"/>
+  </g>
+</svg>
