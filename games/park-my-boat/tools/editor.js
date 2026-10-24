@@ -999,7 +999,10 @@ window.pmbEditor = (() =>
         .pmbed .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
         .pmbed .grid2 label span{width:auto;min-width:34px}
         .pmbed .boat{display:flex;gap:4px;align-items:center;margin:3px 0}
-        .pmbed .boat button:first-child{flex:1;text-align:left}`;
+        .pmbed .boat button:first-child{flex:1;text-align:left}
+        .pmbed .objs{max-height:260px;overflow-y:auto;position:relative;border:1px solid #2B3346;padding:0 4px 4px}
+        .pmbed .objs .kind{color:#A8B0C0;font-size:11px;margin:8px 0 2px}
+        .pmbed .objs button{display:block;width:100%;text-align:left;margin:2px 0;padding:2px 8px}`;
     document.head.appendChild(css);
     panel.className = 'pmbed';
 
@@ -1074,6 +1077,8 @@ window.pmbEditor = (() =>
             button('Buoy', () => add('buoys')), button('Log', () => add('logs')), button('Ducks', () => add('ducks')),
             button('Sand', () => add('land')), button('Dock', () => add('docks')), button('Landmass', () => add('lands')), button('Current', () => add('currents'))]));
 
+        objectList();
+
         panel.append(el('h3', { textContent: sel ? selTitle() : 'Selection' }));
         selectionFields();
 
@@ -1087,6 +1092,51 @@ window.pmbEditor = (() =>
             <b>D</b> duplicate · <b>Delete</b> remove · <b>T</b> sand → dock → quay<br>
             Traffic: <b>P</b> add path points (click; P to finish) · drag a point · <b>I</b> insert after<br>
             <b>, .</b> previous / next level · <b>⌘Z</b> undo · <b>⇧⌘Z</b> redo · <b>⌘S</b> save · <b>Esc</b> deselect` }));
+    }
+
+    // everything else in the level, by kind, so a thing can be found without hunting for it on the canvas
+    const size = r => `${fmtLen(Math.abs(r.x1 - r.x0))} × ${fmtLen(Math.abs(r.y1 - r.y0))}`;
+    const boatLabel = m => `${BOATS[m.boat].name} · ${fmtLen(BOATS[m.boat].L*boatK(def, m))}`;
+    const OBJECTS = [
+        ['moored', 'Moored boats', boatLabel],
+        ['drifters', 'Loose boats', boatLabel],
+        ['traffic', 'Traffic boats', t => `${boatLabel(t)} · ${t.path.length} points`],
+        ['buoys', 'Buoys', b => b[2] && b[2] != 1 ? `Buoy ×${num(b[2])}` : 'Buoy'],
+        ['logs', 'Logs', () => 'Log'],
+        ['ducks', 'Ducks', f => `Duck + ${f.kids} kid${f.kids == 1 ? '' : 's'}`],
+        ['lands', 'Landmasses', m => `Landmass · ${m.circles.length} circles`],
+        ['land', 'Sand', r => `Sand · ${size({ x0: r[0], y0: r[1], x1: r[2], y1: r[3] })}`],
+        ['docks', 'Docks', r => `${r.quay ? 'Quay' : 'Dock'} · ${size(r)}`],
+        ['currents', 'Currents', r => `Current · ${size(r)}`],
+    ];
+    let objsScroll = 0, objsSel = null;
+    function objectList()
+    {
+        const box = el('div', { className: 'objs', onscroll: () => { objsScroll = box.scrollTop; } });
+        // a traffic boat's path point counts as its boat
+        const cur = sel?.kind == 'point' ? { kind: 'traffic', i: sel.i } : sel;
+        let on = null;
+        for (const [kind, title, label] of OBJECTS)
+        {
+            const list = def[kind] || [];
+            if (!list.length) continue;
+            box.append(el('div', { className: 'kind', textContent: `${title} (${list.length})` }));
+            list.forEach((it, i) =>
+            {
+                const b = button(`${i + 1}. ${label(it)}`, () => { sel = { kind, i }; frameSel(); refreshPanel(); }, same(cur, { kind, i }) ? 'on' : '');
+                if (b.className) on = b;
+                box.append(b);
+            });
+        }
+        panel.append(el('h3', { textContent: 'Objects' }));
+        if (!box.children.length) return panel.append(el('div', { className: 'keys', textContent: 'Nothing but the boats yet.' }));
+        panel.append(box);
+        // keep the list where it was, unless the selection changed: then bring the selected row into view
+        box.scrollTop = objsScroll;
+        const key = cur && `${cur.kind}:${cur.i}`;
+        if (key != objsSel && on && (on.offsetTop < box.scrollTop || on.offsetTop + on.offsetHeight > box.scrollTop + box.clientHeight))
+            box.scrollTop = on.offsetTop - box.clientHeight/2;
+        objsScroll = box.scrollTop; objsSel = key;
     }
 
     function selTitle()
