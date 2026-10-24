@@ -43,8 +43,9 @@ Not built yet. Candidates for the GDD and for new levels.
 - **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
 - **More drift:** trying it now for every boat (see Boat physics). Next question: keep it global, or make it a trait of certain boats.
 
-## Concerns
-Problems seen in play, for the GDD's open questions.
+## Concerns and design questions
+Problems seen in play and design changes to decide, for the GDD's open questions.
+- **Score by time, not stars:** the owner thinks the game should be time-based. Today stars come only from parking accuracy (see Judging). Two ways to do it: (1) time replaces accuracy: a boat counts once it's judged inside its slip, and the score is the level's total time; (2) time plus accuracy: a boat must be parked well enough to count, and stars come from beating time targets. Not decided yet.
 - **Camera with small boats:** with a small boat like the Jet Ski, the camera has to stay very zoomed out so the player sees other boats in time. The boat itself is then tiny on screen, which works against fine control.
 
 ## Stretch goals
