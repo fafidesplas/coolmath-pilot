@@ -33,8 +33,8 @@ class Body
         this.dragA = opts.dragA ?? 2;
         this.kind = opts.kind || 'thing';
         this.k = 1;                    // size scale (boats set these; see makeBoat in main.js)
-        this.tau = 1;                  // time scale: bigger things react more slowly
-        this.vs = 1;                   // speed scale, k / tau
+        this.slowdown = 1;             // bigger things react more slowly (see makeBoat in main.js)
+        this.vs = 1;                   // speed scale, k / slowdown
         this.home = undefined;         // mooring spring {pos, angle, k, kA}
         this.squash = 0;               // impact wobble, decays
         this.squashVel = 0;

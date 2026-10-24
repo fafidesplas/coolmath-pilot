@@ -8,9 +8,11 @@ const UI_CENTER = UI_SIZE.scale(.5);
 const PLAY_TOP = 21;                  // HUD bar above this line (UI units)
 const SAVE_KEY = 'cm_park-my-boat_save';
 const SUBSTEPS = 2;
-const TIME_EXP = .3;                  // a boat k times bigger reacts k^TIME_EXP times slower...
-// ...up to this cap, so big ships still feel heavy but never sluggish. Try others with ?taumax=2.5
-const TAU_MAX = +new URLSearchParams(location.search).get('taumax') || 1.25;
+// slowdown: how many times slower a boat reacts than its toy version (speeding up, turning, stopping).
+// A boat k times bigger is k^SLOWDOWN_CURVE times slower, but never more than MAX_SLOWDOWN, so big
+// ships still feel heavy without dragging. Try other caps in the URL, e.g. ?slowdown=2
+const SLOWDOWN_CURVE = .3;
+const MAX_SLOWDOWN = +new URLSearchParams(location.search).get('slowdown') || 1.25;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
 
@@ -98,17 +100,17 @@ function fmtMoney(n) { return '$' + n.toLocaleString('en-US'); }
 function boatSize(b) { return b.type.L * b.k; }
 
 // k scales lengths; masses go with k^3 so big ships shrug off small ones. Time stretches by
-// tau = k^TIME_EXP, so every rate and force below is the toy-scale value converted to that size.
+// slowdown = k^SLOWDOWN_CURVE (capped), so every rate and force below is the toy-scale value converted to that size.
 function makeBoat(key, pos, angle, kind, color, k=1)
 {
-    const t = BOATS[key], tau = Math.min(Math.pow(k, TIME_EXP), TAU_MAX), k3 = k*k*k;
+    const t = BOATS[key], slowdown = Math.min(Math.pow(k, SLOWDOWN_CURVE), MAX_SLOWDOWN), k3 = k*k*k;
     const b = new Body(pos, angle, hullCircles(t, k), t.mass*k3,
-        { dragF:t.dragF/tau, dragS:t.dragS/tau, dragA:t.dragA/tau, kind, inertiaScale:k3*k*k });
+        { dragF:t.dragF/slowdown, dragS:t.dragS/slowdown, dragA:t.dragA/slowdown, kind, inertiaScale:k3*k*k });
     b.type = t;
-    b.k = k; b.tau = tau; b.vs = k/tau;
-    b.power = t.power * k3*k / (tau*tau);
-    b.turn = t.turn / (k*tau);
-    b.wash = t.wash / (tau*tau);
+    b.k = k; b.slowdown = slowdown; b.vs = k/slowdown;
+    b.power = t.power * k3*k / (slowdown*slowdown);
+    b.turn = t.turn / (k*slowdown);
+    b.wash = t.wash / (slowdown*slowdown);
     b.color = color || t.color;
     b.hurtT = 0;
     bodies.push(b);
@@ -117,7 +119,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
 
 function moor(b, pos, angle)
 {
-    const s = 3 / (b.tau*b.tau);
+    const s = 3 / (b.slowdown*b.slowdown);
     b.home = { pos:pos.copy(), angle, k:s, kA:s };
 }
 
@@ -194,10 +196,10 @@ function loadLevel(i)
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
     for (const [bx, by, s=1] of L.buoys || [])
     {
-        const tau = Math.pow(s, TIME_EXP);
-        const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], .7*s*s*s, { kind:'buoy', restitution:.8, dragA:.6/tau, inertiaScale:s**5 });
-        b.k = s; b.tau = tau; b.vs = s/tau;
-        b.home = { pos:vec2(bx, by), angle:0, k:6/(tau*tau), kA:0 };
+        const slowdown = Math.pow(s, SLOWDOWN_CURVE);
+        const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], .7*s*s*s, { kind:'buoy', restitution:.8, dragA:.6/slowdown, inertiaScale:s**5 });
+        b.k = s; b.slowdown = slowdown; b.vs = s/slowdown;
+        b.home = { pos:vec2(bx, by), angle:0, k:6/(slowdown*slowdown), kA:0 };
         bodies.push(b);
     }
     for (const [lx, ly, la] of L.logs || [])
@@ -272,7 +274,7 @@ function cameraGoal()
         { x0:slip.pos.x - slip.w/2, y0:slip.pos.y - slip.h/2, x1:slip.pos.x + slip.w/2, y1:slip.pos.y + slip.h/2 });
     // the size reveal: first show the boat just parked next to the new one
     if (intro && intro.prev && intro.t < intro.dur*.5) box = boxUnion(box, boxAround(intro.prev.pos, intro.prev.radius));
-    const minW = boatSize(player) * (3 + 6/player.tau), pad = player.radius*.8;
+    const minW = boatSize(player) * (3 + 6/player.slowdown), pad = player.radius*.8;
     const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);
     const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3)) * zoomBias;
     // centered in the play area below the HUD bar
@@ -492,7 +494,7 @@ function toggleAnchor()
         popup(pick(QUIPS.fast), player.pos, C_SUNNY, 1.1, 1.6);
         shakeAmt = Math.max(shakeAmt, .25);
         player.hurtT = 1;
-        player.angVel += (rand() < .5 ? -1 : 1) * spd * 2 / player.tau;     // spin-out
+        player.angVel += (rand() < .5 ? -1 : 1) * spd * 2 / player.slowdown;     // spin-out
     }
 }
 
@@ -500,18 +502,18 @@ function anchorForce(dt)
 {
     if (!anchor) return;
     anchor.t += dt;
-    const tau = player.tau;
+    const slowdown = player.slowdown;
     const bow = bowPoint(), dx = bow.x - anchor.pos.x, dy = bow.y - anchor.pos.y, d = Math.hypot(dx, dy);
     if (d > anchor.len)
     {
         const nx = dx/d, ny = dy/d, bv = player.pointVel(bow);
         const vn = bv.x*nx + bv.y*ny, m = player.mass;
-        const f = -(d - anchor.len)*30/(tau*tau)*m - vn*3/tau*m;
+        const f = -(d - anchor.len)*30/(slowdown*slowdown)*m - vn*3/slowdown*m;
         player.applyForce(nx*f, ny*f, bow, dt);
     }
     // the anchor drags on the bottom
-    player.vel = player.vel.scale(Math.max(0, 1 - .8/tau*dt));
-    player.angVel *= Math.max(0, 1 - .9/tau*dt);
+    player.vel = player.vel.scale(Math.max(0, 1 - .8/slowdown*dt));
+    player.angVel *= Math.max(0, 1 - .9/slowdown*dt);
 }
 
 // fraction-free test: every hull circle inside the slip (small tolerance)
@@ -548,9 +550,9 @@ function updateJudge(dt)
         else if (judge.result == 'fail' && judge.t > 1.8) { anchor = judge = undefined; }
         return;
     }
-    if (player.speed() < .25*player.vs && Math.abs(player.angVel) < .25/player.tau) judge.settle += dt;
+    if (player.speed() < .25*player.vs && Math.abs(player.angVel) < .25/player.slowdown) judge.settle += dt;
     else judge.settle = 0;
-    if (judge.settle < .5 && judge.t < 3.5*player.tau) return;
+    if (judge.settle < .5 && judge.t < 3.5*player.slowdown) return;
 
     judge.t = 0;
     if (boatInSlip())
@@ -660,7 +662,7 @@ function stepWorld()
     motorTimer -= timeDelta;
     if (thr > .1 && motorTimer <= 0)
     {
-        motorTimer = (.13 - .06*thr) * player.tau;
+        motorTimer = (.13 - .06*thr) * player.slowdown;
         sfx('putt', player.pos, .5 + thr*.5, Math.max(.25, 1.6 / Math.pow(boatSize(player), .25)) + thr*.3);
     }
     wakeTimer -= timeDelta;

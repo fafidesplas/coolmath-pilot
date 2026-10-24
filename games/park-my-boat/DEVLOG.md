@@ -1,7 +1,7 @@
 # Park My Boat — devlog
 
 ## 2026-10-23 — Big ships stop dragging
-- The size slowdown (k^0.3) is now capped at 1.25x (`TAU_MAX` in `src/main.js`; `?taumax=2` etc. in the URL to compare). Boats under ~2 m are unchanged.
+- The size slowdown (k^0.3) is now capped at 1.25x (`MAX_SLOWDOWN` in `src/main.js`; `?slowdown=2` etc. in the URL to compare). Boats under ~2 m are unchanged.
 - Seconds to cover one boat length from a standstill, before → now: tug 2.6 → 1.7, yacht 6 → 3.8, cruise 9.4 → 4.3, container 10+ → 4.6, island 10+ → 4.8, continent 10+ → 5.3. Turning is 2–7x quicker too.
 - Next: play all 4 levels and see if the big ones are still too slow (the next lever is their own power stats in `src/boats.js`).
 
