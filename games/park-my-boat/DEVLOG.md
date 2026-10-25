@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Odd Couple: a busy row and edge traffic
+- Owner: more boats moored near the rowboat's slip, and traffic near the edge of the rowboat's view. Twelve small boats are tied up nose-in along the quay on both sides of the slip (jet skis, rowboats, swans, a speedboat each side, a sailboat to the west), so the slip is a gap in a busy row.
+- Two traffic lanes along the bottom of the rowboat's view, which only reaches 6.5 m below its start: jet skis back and forth 4.5 m below the start (in full view), swans on the bottom edge (half in view). They run during the rowboat's turn only, so the cruise ship doesn't plough through them.
+- Checked in Chrome: nothing knocked at load or in 30 s, traffic within 0.9 m of its lanes and never closer than 5.5 m to the waiting rowboat, `win()` completes the level, no console errors.
+- Next: owner plays. The start hint covers the bottom lane for its first 6 s.
+
 ## 2026-10-25 — Trawler replaces the tugboat
 - Owner: the tugboat looked like an iPad from above. Replaced by a fishing trawler (`trawler`), same real size (26.4 m, k 8) and the same strong, heavy handling, so it still shoves things. Pointy hull (fitted colliders), coral; wheelhouse forward, outrigger booms, mast, fish crates, net drum at the stern.
 - Way Down's second boat and the title parade use it; Way Down's hint now says the trawler can push other boats. The `tug` hull shape is gone.

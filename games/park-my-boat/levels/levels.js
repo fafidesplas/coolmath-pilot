@@ -120,9 +120,22 @@ const SCALE_LEVELS =
             { boat: 'cruise', start: { x: 466, y: 394.5, a: PI/2 }, slip: { x: 720, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
-        moored: [tiedUp('speedboat', 40, 585), tiedUp('sailboat', 60, 585), tiedUp('speedboat', 80, 585)],
+        moored:
+        [
+            tiedUp('speedboat', 40, 585), tiedUp('sailboat', 60, 585), tiedUp('speedboat', 80, 585),
+            // small boats tied up on both sides of the rowboat's slip, so it parks in a gap in the row
+            tiedUp('sailboat', 461, 585), tiedUp('speedboat', 464.8, 585), tiedUp('swan', 467.4, 585), tiedUp('dinghy', 469.4, 585), tiedUp('jetski', 471, 585),
+            tiedUp('jetski', 477, 585), tiedUp('dinghy', 478.6, 585), tiedUp('swan', 480.6, 585), tiedUp('dinghy', 482.6, 585), tiedUp('jetski', 484.4, 585), tiedUp('speedboat', 487, 585),
+        ],
         buoys: [[300, 380, 5], [900, 380, 5]],
         ducks: [{ x: 486, y: 566, kids: 3 }],
+        // two lanes of small boats along the bottom edge of the rowboat's view (it ends at about y 572.6),
+        // during its turn only: jet skis in full view, swans half out of it
+        traffic:
+        [
+            { boat: 'jetski', path: [[468, 573.5], [530, 573.5]], end: 'back', speed: .15, during: [1] },
+            { boat: 'swan', path: [[515, 571.4], [470, 571.4]], end: 'back', speed: .6, during: [1] },
+        ],
     },
     {
         name: 'Way Down', ...basin(0, -20, 1700, 900),
