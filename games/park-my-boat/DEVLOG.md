@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Slower glide from the slip
+- Owner: the move back from the slip was too fast. The camera now stays on the slip for 3 s (was 2), then glides back at 40% of its normal speed (`SLIP_GLIDE`).
+- The boat gets control when the camera is nearly back (within 10% of the view, zoom within 20%), not after a fixed time, so short trips end soon and long ones get the time they need (capped at 6 s, `SLIP_MAX`). The camera then eases back to full speed over 0.4 s, so it doesn't jump.
+- Glide times measured: Way Down 1.4 s, Odd Couple 2.7 s (the rowboat starts about one screen away from its slip), Marina 4.8 s for the jet ski and 4 s for the sailboat, Rush Hour 5.4 s. Click, Space or Enter still cuts to the glide.
+- Next: owner plays; with the 3 s hold, a long level takes about 8 s before you can steer, so check that restarts don't feel slow.
+
 ## 2026-10-24 — Every boat starts by showing its slip
 - Owner: instead of a full-level preview, show the parking spot before every boat, then glide back to the boat. Each turn now opens on the new boat's slip at that boat's framing for 2 s, then the camera glides back and the boat gets control 1.4 s later. The "Boat 2 of 3" card stays up the whole time. A click, Space or Enter cuts to the glide.
 - This replaces the size reveal (framing the parked boat next to the new one): the zoom from the parked boat to the new slip shows the size jump instead.

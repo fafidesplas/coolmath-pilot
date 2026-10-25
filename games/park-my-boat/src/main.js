@@ -27,8 +27,10 @@ const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3
 // dropping anchor too fast spins the boat up to this (rad/s, divided by sqrt of its size) over this many seconds
 const ANCHOR_SPIN = 6, ANCHOR_SPIN_TIME = .3;
 // each boat's turn opens on its slip for this many seconds (camera travel included), then the camera
-// glides back to the boat, which takes control after SLIP_BACK more; a click, Space or Enter cuts to the glide
-const SLIP_SHOW = 2, SLIP_BACK = 1.4;
+// glides back to the boat at SLIP_GLIDE of its normal speed; the boat takes control when the camera is
+// nearly there (at most SLIP_MAX seconds later), and the camera eases back to full speed as the intro
+// fades out; a click, Space or Enter cuts to the glide
+const SLIP_SHOW = 3, SLIP_GLIDE = .4, SLIP_MAX = 6;
 // a cheat so buoys stay visible next to big ships: each buoy is at least this share of the current
 // boat's length (wide), growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
 const BUOY_SHARE = +new URLSearchParams(location.search).get('buoy') || 1/12;
@@ -261,7 +263,7 @@ function startBoat(n)
     boatIndex = n;
     anchor = judge = undefined;
     boatTime = 0;
-    intro = { t:0, prev, dur: SLIP_SHOW + SLIP_BACK };
+    intro = { t:0, prev, dur: SLIP_SHOW + SLIP_MAX };
     if (fleet.length > 1) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
 }
 
@@ -301,6 +303,8 @@ function updateCamera(dt, snap)
 {
     const g = cameraGoal();
     if (snap) { cam.pos = g.pos; cam.wu = g.wu; return; }
+    const gliding = intro && intro.t >= SLIP_SHOW && intro.t < intro.dur;
+    if (intro && intro.t >= SLIP_SHOW) dt *= lerp(SLIP_GLIDE, 1, clamp((intro.t - intro.dur)/.4, 0, 1));
     // while the goal is far, stay zoomed out enough to see it: big moves read as zoom out, pan, zoom in
     const dist = cam.pos.distance(g.pos);
     const wuGoal = Math.max(g.wu, dist / 14);
@@ -309,6 +313,8 @@ function updateCamera(dt, snap)
     // panning speed is relative to the zoom
     const step = Math.min(dist * Math.min(1, dt*3), 30 * cam.wu * dt);
     if (dist > 1e-9) cam.pos = cam.pos.add(g.pos.subtract(cam.pos).scale(step/dist));
+    // back at the boat: the intro ends and the boat takes control
+    if (gliding && cam.pos.distance(g.pos) < .1*g.wu*UI_SIZE.x && Math.abs(Math.log(cam.wu/g.wu)) < .2) intro.dur = intro.t;
 }
 
 function viewHalfUi() { return vec2(mainCanvasSize.x, mainCanvasSize.y).scale(.5 / uiScale()); }
