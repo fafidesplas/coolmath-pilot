@@ -1,11 +1,11 @@
 # Dock All The Boats — Game design document
 
 **Status:** Draft
-**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-10-24
+**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-10-25
 
 > Park a rowboat, then a cruise ship 100x bigger right next to it, against the clock, in a harbor where nothing has brakes.
 
-This GDD describes the prototype that is already built (`src/`, `levels/levels.js`, `tools/editor.js`) and the changes for v1. Lines marked **(new)** are not built yet. The decisions taken from the phase 1a questions are listed in section 14 as "Proposed" until Pao and Fafi confirm them.
+This GDD describes the prototype that is already built (`src/`, `levels/levels.js`, `tools/editor.js`) and the changes for v1. Lines marked **(new)** are not built yet. The owner's decisions are listed in section 14.
 
 ## 1. Summary
 - **Pillars:**
@@ -180,7 +180,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 ## 8. Screens and UI flow
 **Title → Level select → Playing (⇄ Pause) → Level complete → next level / retry / menu.**
 
-- **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. PLAY (goes to the first level without 3 stars), LEVELS, SOUND toggle, **(new)** MUSIC toggle.
+- **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. PLAY (goes to the first level without 3 stars), LEVELS, SOUND toggle, **(new)** MUSIC toggle once the music is in (see 10).
 - **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the best time. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
 - **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the clock with the par time ("0:31 / ★★★ 0:45"), damages, the scale bar, RESTART and II. The anchor button sits bottom right. The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
 - **Pause:** dims the screen. RESUME, RESTART, MENU.
@@ -231,7 +231,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 
 All are ZzFX through LittleJS `Sound`, created after the first input.
 
-Music **(new)**: yes. A quiet, light synthesized loop (steel-drum or marimba feel, 16–30 s), on by default at low volume, with its own toggle. It ducks under the horn and win jingle.
+Music **(new)**: yes. Pao adds it later in production; mood and length are decided then. The MUSIC toggle on the title comes with it (required by `STANDARDS.md`).
 
 ## 11. GameAnalytics
 Level ids: `world01:level04` (`bonus:level01` for the bonus).
@@ -272,7 +272,8 @@ No daily events (no daily in v1).
 - **v1:**
   - 20 levels in 2 worlds, plus the hidden bonus.
   - Time and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
-  - Music loop and music toggle; level select by world; results with time.
+  - Level select by world; results with time.
+  - Music and its toggle, added by Pao later in production.
   - GameAnalytics events (11); 48 px touch targets; the full shell from `STANDARDS.md`.
 - **Later:**
   - Daily challenge (a seeded harbor needs a level generator; too big for v1).
@@ -285,24 +286,34 @@ No daily events (no daily in v1).
   - Stars from accuracy alone: replaced by time (3.6).
 
 ## 14. Open questions
+Decided with the owner on 2026-10-25:
+
+| Question | Decision | Who decides | Status |
+|---|---|---|---|
+| How is a level scored? | Time plus at least 50% accuracy to count; stars from par times (3.6) | Pao | Decided |
+| What happens on a miss? | The clock keeps running; retry from where you are; no fail state | Pao | Decided |
+| Should the clock run during the slip preview and glide between boats? | No: it runs only while the player can steer | Pao | Decided |
+| Restart under 1 s? | Restart skips the boat 1 slip preview; later boats keep theirs | Pao | Decided |
+| v1 size? | 2 worlds of 10 levels | Pao | Decided |
+| When is the first scale jump? | Level 4 (Odd Couple); levels 1–3 teach the controls | Pao | Decided |
+| Unlocks? | Finish to unlock the next; no star gates; bonus after all 20 | Pao | Decided |
+| Small-boat camera? | Look-ahead plus edge arrows; jet ski framing 3x → 2x | Pao | Decided |
+| Daily challenge? | Not in v1 | Pao | Decided |
+| Music? | Pao adds it later; the toggle comes with it | Pao | Decided |
+| Drift for every boat? | Keep it global; boat stats make the differences | Pao | Decided |
+| Out of v1? | Later: two-player modes, tug towing a barge. Cut: submarine, player zoom | Pao | Decided |
+| Par times | Designer's clean run × 1.2, rounded up to a whole second, checked in playtests | Pao | Decided |
+| Palette: 6 main colors plus sand, stone, navy, grass, skin | Keep the extras as support tones for land, quays, ship hulls and captains | Pao | Decided |
+| Main analytics question | Which boat makes players give up | Pao | Decided |
+
+Still open:
+
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| How is a level scored? | Time plus at least 50% accuracy to count; stars from par times (3.6) | Pao, Fafi | Proposed |
-| What happens on a miss? | The clock keeps running; retry from where you are; no fail state | Pao, Fafi | Proposed |
-| Restart under 1 s? | Restart skips the boat 1 slip preview | Pao | Proposed |
-| v1 size? | 2 worlds of 10 levels | Pao, Fafi | Proposed |
-| First level? | A single rowboat; Odd Couple moves to level 4 | Pao | Proposed |
-| Unlocks? | Finish to unlock the next; no star gates; bonus after all 20 | Pao, Fafi | Proposed |
-| Small-boat camera? | Look-ahead plus edge arrows; jet ski framing 3x → 2x | Pao | Proposed |
-| Daily challenge? | Not in v1 | Pao, Fafi | Proposed |
-| Music? | Quiet synthesized loop, on by default, own toggle | Pao | Proposed |
-| Drift for every boat? | Keep it global; boat stats make the differences | Pao | Proposed |
-| Later and cut lists? | As in section 13 | Pao, Fafi | Proposed |
-| Main analytics question? | Which boat makes players give up | Pao, Fafi | Proposed |
-| Should the clock run during the camera glide between boats? | No: the player can't act then | Pao | Open |
-| Par times | Designer's clean run × 1.2, checked in playtests | Pao | Open |
-| Palette has 6 colors plus support tones (sand, stone, navy, grass, skin) | Keep them as support tones for boats and land; STANDARDS asks for 4–6 main colors | Fafi | Open |
+| Music mood and length | Decide when the music is made | Pao | Open |
 | Coolmath SDK, ad breaks, branding, size limit, GA keys | Team-wide `[confirm]` items in `STANDARDS.md` | Team | Open |
+| Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Owner answered the open questions; all proposals confirmed except music, which Pao adds later.
 - 2026-10-24 — First draft. Records the prototype as built (10 regular boats, 5 levels, the editor) and proposes time-based stars, 2 worlds of 10 levels, unlocks, camera look-ahead and music.

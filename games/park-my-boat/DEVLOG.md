@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — GDD questions answered
+- Pao answered the GDD's open questions: time-based stars with a 50% accuracy minimum, retry in place, clock paused between boats, restart skips the first preview, 2 worlds of 10, first scale jump at level 4, finish-to-unlock, look-ahead camera with edge arrows, no daily, global drift, par = clean run × 1.2, support tones kept, analytics question confirmed.
+- Music: Pao adds it later; the MUSIC toggle comes with it.
+- Next: phase 1c critical review, then Fafi reads it.
+
 ## 2026-10-24 — GDD first draft
 - Wrote `GDD.md` (Status: Draft, reviewer: Fafi). It records the prototype as built and proposes the v1 changes: stars from time against a par (a boat counts when parked with 50%+ accuracy), 2 worlds of 10 levels (5 existing levels slot in as 4, 10, 11, 14, 18), finish-to-unlock, restart without the slip preview, camera look-ahead and edge arrows, a music loop, and the analytics event list.
 - The 12 phase 1a answers are in the GDD as "Proposed" under Open questions, waiting for Pao and Fafi to confirm.
