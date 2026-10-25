@@ -161,7 +161,7 @@ HR_LEVELS.rocket = [
         solids: [
             {l: -14.5, r: -5, top: 8},     // tall left wall
             {l: -7.25, r: 0.5, top: -4.5},   // the pit floor you start on
-            {l: 0, r: 6, top: 3},         // the tower: too tall to blast over from the floor
+            {l: 0, r: 6, top: 2},         // the tower: too tall to blast over from the floor
             {l: 4.75, r: 14.25, top: -2},    // flag ledge
             {l: 10.5, r: 15.25, top: 8, bottom: -3.25},   // right wall hanging over the flag ledge
         ],
