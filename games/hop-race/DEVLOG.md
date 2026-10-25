@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: auto-run with a standard jump
+- Owner: charging while running was too tight. Switched to a standard jump: a press jumps at once (20 u/s), holding keeps rising, letting go while rising cuts the upward speed to 6 u/s (`runJump`, `runCut`). Height by hold: 1 frame 0.7 u, 6 frames 2.1 u, 15 frames 4.0 u, 25+ frames 4.6 u. Launch stretch, landing squeeze and dust stay; the charge squash is gone. Hint "Press: jump · Hold: higher", level 1 prompt "Press A to run, press again to jump!". A mid-air wall turns you around at full run speed.
+- Checked in Chrome: the per-jump timing search finishes 1–5 (2.9–3.9 s) and not 6–10. In the real game loop, the player leaves the ground 1 frame after the press.
+- Next: owner plays 1–5; then decide on 6 (ceiling gap) and on grip walls for 7–10.
+
 ## 2026-10-25 — Hop: auto-run keeps the charge hop
 - Owner asked to keep the hop's physics and animation in auto-run: hold to squeeze, release to jump with more power. Answers: you keep running while you charge, and the power sets the angle (no aim sweep). Built in `HR_MODES.hop.run()`: power and speed as before (1.1 s, 9–20 u/s), angle 18°–80° with power, squash and a back lean growing with power, charge ticks, the eye looks along the hop. Running off an edge while charging loses the charge after 0.08 s. A mid-air wall bounces at 35 % and turns you around. The world hint is back to "Hold: charge · Release: hop"; level 1's prompt is "Press A to run. Hold, then let go to jump!". Removed `runJump` and `runCut`.
 - Checked in Chrome with a search over wait and hold timings per hop: levels 1, 2, 4, 5 and 6 can be finished (6 needs the low flat hops). 3 and 7–10 can't. Hop 3's 3 u steps are too short to charge for its 2.5 u climbs while running. Seen in play: the squash and lean show while running, and a 0.7 s charge already carries you 4 u, to the gap's edge in 1-1.
