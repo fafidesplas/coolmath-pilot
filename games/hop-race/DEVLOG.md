@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: run lean, somersault, landing squeeze
+- Owner asked for a forward lean while running, a somersault on a hold of 0.4 s or more, and a squeeze on landing. Built: `runLean` .15 (was .06, and the shared decay in `player.js` cut it to .04; running players now skip that decay), eased to 0 in the air. A full hold starts `p.flipT`: one forward turn in 0.4 s (`flipTime`), clockwise when facing right, finishing 4× faster if you land mid-flip. Landing squeeze `landSquash` 0.2 + 0.015 × fall speed, up to 0.4.
+- `hrDrawPlayer` takes `p.spin` (clockwise radians) and turns the body, letter and eye together around the center; other modes never set it. A flip cut off by the finish settles upright (`player.js`).
+- Checked in Chrome with frozen frames on 1-4: the lean while running, a 135° roll mid-jump, and a 44 % squeeze on landing (before the cap went from .45 to .4). Timings: a 40-frame hold flips from 0.40 s to 0.80 s and lands at 0.88 s; shorter holds don't flip.
+
 ## 2026-10-25 — Hop: softer auto-run jump
 - Owner: the jump popped up too fast. Every jump launched at 20 u/s and a tap was made by cutting the speed on release, so every jump had the same hard burst and an abrupt stop. Now it takes off at 12 u/s (`runJump`) and holding lowers gravity to 12 (`holdGravity`) for up to 0.4 s (`holdTime`); `runCut` is gone.
 - Measured: tap 1.8 u high and 3.4 u long, 0.27 s to the top; full hold 4.4 u high and 6.1 u long, 0.55 s to the top (was 0.47 s at 20 u/s). The timing search still finishes 1–5 and not 6–10.

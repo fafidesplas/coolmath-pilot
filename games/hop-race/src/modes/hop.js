@@ -38,7 +38,9 @@ const HR_HOP = {
     holdGravity: 12,    // lighter gravity while you hold and rise, for up to holdTime: held all the way, about 4.5 u high
     holdTime:  .4,      // (s)
     coyote:    .08,     // a press this soon after running off an edge still jumps (s)
-    runLean:   .06,     // the top leans into the run (u)
+    runLean:   .15,     // on the ground the top leans into the run (u)
+    flipTime:  .4,      // a hold that lasts the whole holdTime ends in a forward somersault this long (s)
+    landSquash: .2,     // landing squeeze: this much flatter, plus more for a harder landing (up to .4)
 };
 
 if (HR_HOP.autoRun) HR_WORLDS.find(w => w.id == 'hop').hint = 'Press: jump · Hold: higher';
@@ -53,7 +55,8 @@ HR_MODES.hop = {
         p.dir = 1;
         p.t = p.charge = p.flat = 0;
         p.running = p.rising = false;
-        p.coyote = 0;
+        p.coyote = p.spin = 0;
+        p.flipT = -1;   // somersault time, -1 when not flipping
     },
 
     // level 1's prompt when auto-run replaces the level's own
@@ -214,11 +217,12 @@ HR_MODES.hop = {
             hrEmit('hold', p);
             hrEmit('jump', p);
         }
-        // holding keeps gravity light for a while, so the jump floats higher; letting go ends it for this jump
-        if (!p.down || p.vy <= 0 || (p.holdT += dt) > H.holdTime) p.rising = false;
+        // holding keeps gravity light for a while, so the jump floats higher; letting go ends it for this jump.
+        // Holding all the way through holdTime throws a forward somersault
+        if (p.rising && p.down && (p.holdT += dt) >= H.holdTime && p.flipT < 0) { p.flipT = 0; p.flipDir = p.dir; }
+        if (!p.down || p.vy <= 0 || p.holdT >= H.holdTime) p.rising = false;
         p.vx = p.dir * H.runSpeed;
         p.vy -= (p.rising ? H.holdGravity : H.gravity) * dt;
-        p.lean = H.runLean;
 
         p.x += p.vx * dt;
         for (const s of solids)
@@ -244,7 +248,7 @@ HR_MODES.hop = {
                     if (!wasGrounded)
                     {
                         p.pupilKick(0, max(-.3, p.vy * .015));
-                        p.land = min(.35, .12 + -p.vy * .012);
+                        p.land = min(.4, H.landSquash + -p.vy * .015);
                         p.landT = 0;
                         hrSfx.land.play();
                         hrDust(p.x, p.y - HR_PSIZE / 2);
@@ -258,6 +262,17 @@ HR_MODES.hop = {
                     p.vy = 0;
                 }
             }
+
+        // somersault: a full turn forward (clockwise when facing right), eased; landing mid-flip rolls the rest quickly
+        if (p.flipT >= 0)
+        {
+            p.flipT += dt * (p.grounded ? 4 : 1);
+            const k = min(1, p.flipT / H.flipTime);
+            p.spin = k < 1 ? smoothStep(k) * 2 * PI * p.flipDir : 0;
+            if (k >= 1) p.flipT = -1;
+        }
+        // lean into the run on the ground, straighten up in the air
+        p.lean += ((p.grounded && p.flipT < 0 ? H.runLean : 0) - p.lean) * min(1, dt * 12);
     },
 
     // the lunge pose in flight: held for lungeKeep of the airtime, then eased back to square
