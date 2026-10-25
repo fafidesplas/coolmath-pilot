@@ -1,5 +1,9 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Unparking: a boat you switch away from keeps gliding
+- Owner: switching away from a boat keeps its momentum. It now glides on with the coasting drag, as if you'd let go of the throttle, instead of stopping dead. Its own glide isn't charged as a push until it comes to rest; anything it drifts into is.
+- Checked in Chrome: the sailboat switched away from at 1.9 m/s was still moving at 1.2 m/s four seconds later, at no cost.
+
 ## 2026-10-25 — Unparking: shove boats, pay for it
 - Owner: in Unparking the boats should be pushable, but cost money. Every boat in a jam is a normal floating body again (no more fixed-in-place). Every meter a boat you aren't driving moves costs $100, charged every half second with a "PUSH" popup over the boat being shoved; a hard knock (impact 1 or more in the driven boat's speed scale, against a boat or a wall) still costs a $1,000 bump. A boat shoved out of the harbor counts as out. The boat you switch away from still stops where it is, so its own coasting isn't charged. Tapping a boat still gives you control of it. Results show meters pushed.
 - Checked in Chrome: no level moves or costs anything while idle; in Marina Jam, driving the trawler east bulldozed the sailboat and the jet ski out of the harbor for $5,400 (44 m pushed, 1 bump); a clean win still gives 3 stars; no console errors.

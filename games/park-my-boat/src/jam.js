@@ -24,17 +24,19 @@ function jamLoad(L)
     fleet = []; slips = []; slip = undefined;
 }
 
-// the boat you tapped becomes the one you drive; the one you were driving stops where it is
+// the boat you tapped becomes the one you drive; the one you were driving keeps its momentum and glides
+// on as if you'd let go of the throttle. Its own glide isn't charged as a push until it comes to rest.
 function jamSelect(b)
 {
     if (player)
     {
         player.kind = 'jam';
-        player.vel.set(0, 0); player.angVel = 0;
-        player.dragF = player.dragFull; player.dragA = player.dragAFull;
+        player.coasting = true;
+        player.dragF = player.dragFull * COAST_DRAG; player.dragA = player.dragAFull;
     }
     player = b;
     b.kind = 'player';
+    b.coasting = false;
     sfx('click', b.pos, 1, 1.2);
     if (!attempts++) track('design', 'tutorial:step01');
 }
@@ -139,7 +141,13 @@ function jamUpdate(dt)
     let most = 0;
     for (const b of jamBoats)
     {
-        if (b != player)
+        // a boat let go of glides on for free until it comes to rest
+        if (b.coasting && b.speed() < REST_SPEED*b.vs && Math.abs(b.angVel) < REST_SPIN/b.slowdown)
+        {
+            b.coasting = false;
+            b.dragF = b.dragFull;
+        }
+        if (b != player && !b.coasting)
         {
             const d = b.pos.distance(b.lastPos);
             if (d > 1e-3) { jamPushed += d; jamPushOwed += d*JAM_PUSH; }
