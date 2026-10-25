@@ -116,12 +116,12 @@ const SCALE_LEVELS =
         [
             { boat: 'dinghy', start: { x: 483, y: 579, a: PI }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box and let go.' },
-            { boat: 'cruise', start: { x: 316, y: 564.5, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 466, y: 394.5, a: PI/2 }, slip: { x: 720, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
         moored: [tiedUp('speedboat', 40, 585), tiedUp('sailboat', 60, 585), tiedUp('speedboat', 80, 585)],
         buoys: [[300, 380, 5], [900, 380, 5]],
-        ducks: [{ x: 472, y: 574, kids: 3 }],
+        ducks: [{ x: 486, y: 566, kids: 3 }],
     },
     {
         name: 'Way Down', ...basin(0, -20, 1700, 900),
