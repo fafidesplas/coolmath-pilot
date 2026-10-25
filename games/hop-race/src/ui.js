@@ -600,7 +600,7 @@ function hrDrawPrompt()
     const def = hrLevelDef(), s = hrLevel.start;
     // high enough to stay clear of a full-power aim arc, unless the level places it
     const at = def.promptAt ? vec2(def.promptAt.x, def.promptAt.y) : vec2(0, s.y + 6);
-    drawText(def.prompt, at, .9, HR_INK.scale(1, hrRun.prompt), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
+    drawText(hrMode().prompt || def.prompt, at, .9, HR_INK.scale(1, hrRun.prompt), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
 }
 
 function hrDrawComplete(W, H, u, y0)

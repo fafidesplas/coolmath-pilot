@@ -29,7 +29,18 @@ const HR_HOP = {
     eyeDrop:   .08,     // ...and how far it sits lower (u)
     backLean:  .25,     // charging toward a high hop, the top leans back by up to this much (u), with power times aim height
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
+
+    // auto-run (testing, 2026-10-25): the first press starts a run, then a press jumps and holding jumps higher;
+    // walls (grip ones too) turn you around and ice is plain floor. false: the hold-to-charge hop above
+    autoRun:   true,
+    runSpeed:  6,       // run speed, on the ground and in the air (u/s)
+    runJump:   20,      // jump speed straight up while held (u/s): 4.8 u high
+    runCut:    6,       // letting go while rising cuts the upward speed to this (u/s): a tap is about 1.5 u high
+    coyote:    .08,     // a press this soon after running off an edge still jumps (s)
+    runLean:   .06,     // the top leans into the run (u)
 };
+
+if (HR_HOP.autoRun) HR_WORLDS.find(w => w.id == 'hop').hint = 'Press: jump · Hold: higher';
 
 const HR_MODES = {};
 
@@ -40,7 +51,12 @@ HR_MODES.hop = {
         p.cling = 0;
         p.dir = 1;
         p.t = p.charge = p.flat = 0;
+        p.running = p.rising = false;
+        p.coyote = 0;
     },
+
+    // level 1's prompt when auto-run replaces the level's own
+    prompt: HR_HOP.autoRun ? 'Press A to run, press again to jump!' : undefined,
 
     aim(p)
     {
@@ -53,6 +69,7 @@ HR_MODES.hop = {
     step(p, input)
     {
         const H = HR_HOP, dt = timeDelta, solids = hrLevel.solids;
+        if (H.autoRun) return this.run(p, input);
         const canCharge = p.grounded || p.cling;
         if (canCharge)
         {
@@ -159,6 +176,78 @@ HR_MODES.hop = {
                     hrSfx.land.play();
                     hrDust(p.x, p.y - HR_PSIZE / 2);
                     hrEmit('land', p);
+                }
+                else if (p.vy > 0)
+                {
+                    p.y = s.bottom - HR_PSIZE / 2;   // bonk head on the underside
+                    p.vy = 0;
+                }
+            }
+    },
+
+    // auto-run: the first press only starts the run; then a press jumps (from the ground, or just after
+    // running off an edge) and letting go early cuts the jump short. Walls turn you around
+    run(p, input)
+    {
+        const H = HR_HOP, dt = timeDelta, solids = hrLevel.solids;
+        const press = input.down && !p.down;   // a held button (e.g. after a fall) must be pressed again
+        p.down = input.down;
+        if (!p.running)
+        {
+            if (press) { p.running = true; p.pupilKick(-p.dir * .2, 0); hrEmit('hold', p); }
+            return;
+        }
+
+        p.coyote = p.grounded ? H.coyote : max(0, p.coyote - dt);
+        if (press && p.coyote > 0)
+        {
+            p.vy = H.runJump;
+            p.rising = true;
+            p.grounded = false;
+            p.coyote = 0;
+            p.squash = -.3;
+            p.landT = -1;
+            p.pupilKick(0, -.3);
+            hrSfx.jump.play();
+            hrEmit('jump', p);
+        }
+        if (p.rising && !p.down && p.vy > H.runCut) p.vy = H.runCut;   // let go early: a lower jump
+        if (p.vy <= 0) p.rising = false;
+        p.vx = p.dir * H.runSpeed;
+        p.vy -= H.gravity * dt;
+        p.lean = H.runLean;
+
+        p.x += p.vx * dt;
+        for (const s of solids)
+            if (hrOverlapSolid(p.x, p.y, s, .1))   // slightly short so the floor you run on doesn't count
+            {
+                p.x = p.vx > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
+                p.pupilKick(p.dir * .2, 0);
+                p.dir = -p.dir;
+                p.vx = -p.vx;
+                hrSfx.land.play(undefined, .5, 1.3);
+            }
+
+        const prevY = p.y, wasGrounded = p.grounded;
+        p.grounded = false;
+        p.y += p.vy * dt;
+        for (const s of solids)
+            if (hrOverlapSolid(p.x, p.y, s))
+            {
+                if (p.vy <= 0 && prevY - HR_PSIZE / 2 >= s.top - .15)
+                {
+                    p.y = s.top + HR_PSIZE / 2;
+                    p.grounded = true;
+                    if (!wasGrounded)
+                    {
+                        p.pupilKick(0, max(-.3, p.vy * .015));
+                        p.land = min(.35, .12 + -p.vy * .012);
+                        p.landT = 0;
+                        hrSfx.land.play();
+                        hrDust(p.x, p.y - HR_PSIZE / 2);
+                        hrEmit('land', p);
+                    }
+                    p.vy = 0;
                 }
                 else if (p.vy > 0)
                 {

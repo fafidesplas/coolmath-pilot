@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: auto-run test
+- Owner asked for Hop with automatic running and a tap to jump. Their answers: a switch inside Hop (`HR_HOP.autoRun`, on now; false is the old hold-to-charge hop), hold for a higher jump, every wall turns you around, and the first press only starts the run. Built as `HR_MODES.hop.run()`: 6 u/s run, 20 u/s jump (4.8 u high when held, about 1.5 u on a tap), 0.08 s coyote time. Level 1 has a new prompt and the world hint changed (`HR_MODES.hop.prompt`, used by the prompt drawing in `ui.js`).
+- Checked in Chrome with a simple bot (jump when a wall or a drop is ahead, 140 timings): levels 1–5 finish in 3–4 s; 6–10 never do. Hop 6's gap is under a 2.5 u ceiling, and a running jump there carries only about 2 u. 7–10 climb shafts by clinging to grip walls, which turning around rules out. Real keyboard play finished 1-1.
+- Not changed: the editor's Check (`tools/hop-bot.js`) still simulates the charge hop, and saved best times and ghosts are from the charge hop.
+- Next: owner plays 1–5, then decides what to do with 6–10.
+
 ## 2026-10-25 — Title world cards: no blank screen on a finished world
 - Owner: clicking a world card on the title gave a blank screen ("Cannot read properties of undefined (reading 'id')"). With every level of a world finished, the card asked for level -1. It now starts the last level played in that world, or its first (`hrCardLevel`). Play 1P/2P already had a fallback, so they worked.
 - Checked in Chrome with every level marked finished: all four cards start a level, no console errors.
