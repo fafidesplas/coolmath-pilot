@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Unparking: shove boats, pay for it
+- Owner: in Unparking the boats should be pushable, but cost money. Every boat in a jam is a normal floating body again (no more fixed-in-place). Every meter a boat you aren't driving moves costs $100, charged every half second with a "PUSH" popup over the boat being shoved; a hard knock (impact 1 or more in the driven boat's speed scale, against a boat or a wall) still costs a $1,000 bump. A boat shoved out of the harbor counts as out. The boat you switch away from still stops where it is, so its own coasting isn't charged. Tapping a boat still gives you control of it. Results show meters pushed.
+- Checked in Chrome: no level moves or costs anything while idle; in Marina Jam, driving the trawler east bulldozed the sailboat and the jet ski out of the harbor for $5,400 (44 m pushed, 1 bump); a clean win still gives 3 stars; no console errors.
+- Next: owner plays; tune $100/m (brute force should work but cost stars).
+
 ## 2026-10-25 — Unparking: the way out is a dashed line
 - Owner: show where a boat counts as out. A dashed cream line (with a faint ink edge) runs along the jam's view box wherever it crosses open water; it skips sand and quays. A boat is out once its whole hull is past the line, tested per hull circle (it used the bounding circle, which for long boats was well past the hull).
 - The jam camera keeps a 7% margin round the view box so the line shows on every side.

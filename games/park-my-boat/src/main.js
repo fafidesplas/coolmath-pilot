@@ -1362,7 +1362,7 @@ function drawComplete()
     if (level.jam)
     {
         txt(`Money kept ${fmtMoney(Math.round(level.budget*shown/100))}`, 20, 11.6, 1, C_INK);
-        txt(`Bumps: ${jamBumps}    Ducks hit: ${ducksOffended}    Boats picked: ${attempts}`, 20, 10.3, .55, C_TEAL);
+        txt(`Bumps: ${jamBumps}    Pushed: ${fmtLen(jamPushed)}    Ducks hit: ${ducksOffended}    Boats picked: ${attempts}`, 20, 10.3, .55, C_TEAL);
         if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
         return;
     }

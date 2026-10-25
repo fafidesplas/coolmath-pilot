@@ -294,7 +294,7 @@ No daily events (no daily in v1).
   - Two-player local modes: parking race (versus) and tugboat co-op (needs a redrawn tugboat). Notes are in `CLAUDE.md` under Stretch goals.
   - A boat towing a barge (a redrawn tug, or the trawler).
   - More worlds (World 3 could be "Open Sea": waves, wind, islands).
-  - **Unparking mode (prototype built: its own button on the title, 3 levels: Marina Jam, Fishing Port, Big Ship Day):** a packed corner of a harbor to clear out, like a car parking-jam puzzle. Tap a boat to select it (an RTS-style ring), then drive it out with the same controls as parking; tapping another boat swaps, and the one you leave stops where it is. Every boat you're not driving is fixed in place, so the one you drive bounces off and never shoves the jam: it's solved by planning the order. A real knock costs a bump (10% of the budget), a gentle scrape is free. Boats leave through open sea (see the open-sea rule). Clear every boat; stars from money kept (3.6). Code: `src/jam.js`, with a solver (`jamSolve()` in the console) that checks a jam can be cleared driving each boat straight out, and lists the rounds. Open: a mode of its own, or a world of puzzle levels between the parking worlds.
+  - **Unparking mode (prototype built: its own button on the title, 3 levels: Marina Jam, Fishing Port, Big Ship Day):** a packed corner of a harbor to clear out, like a car parking-jam puzzle. Tap a boat to select it (an RTS-style ring), then drive it out with the same controls as parking; tapping another boat swaps, and the one you leave stops where it is. The other boats float and can be shoved, but every meter a boat you're not driving moves costs money ($100 per meter now) and a hard knock costs a bump (10% of the budget), so planning the order is the cheap way; brute force works but costs stars. A boat shoved out of the harbor counts as out. Boats leave through open sea (see the open-sea rule). Clear every boat; stars from money kept (3.6). Code: `src/jam.js`, with a solver (`jamSolve()` in the console) that checks a jam can be cleared driving each boat straight out, and lists the rounds. Open: a mode of its own, or a world of puzzle levels between the parking worlds.
   - **Settings (stretch goal):** levels in different places, not only harbors. A setting is a look plus one or two things of its own, so it reads as new without new rules:
     - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and trawlers.
     - **Marina:** packed piers, yachts, tenders (Marina today).
@@ -367,6 +367,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Unparking: boats can be shoved, paid by the meter.
 - 2026-10-25 — Unparking levels 2 and 3 (Fishing Port, Big Ship Day): wider spread of sizes, diagonal boats, buoys and ducks inside the jam.
 - 2026-10-25 — The jam puzzle is its own mode, Unparking, next to Parking on the title screen.
 - 2026-10-25 — Harbor Jam mode prototyped (13, Later): level 6, Marina Jam.

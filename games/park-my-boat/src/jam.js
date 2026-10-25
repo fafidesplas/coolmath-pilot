@@ -1,9 +1,9 @@
 'use strict';
 // Harbor Jam (prototype): a level with jam: true is a packed corner of a harbor instead of a chain of
 // boats to park. Tap a boat to select it (a ring shows which), then drive it out with the usual controls.
-// Every other boat is fixed in place, so the one you drive bounces off and never shoves the jam around:
-// it's solved by planning the order. A real knock costs a bump; a gentle scrape is free. Clear every
-// boat out; stars come from the money kept. The harbor is walled where the level has sand or docks and
+// The other boats float too: you can shove them out of the way, but every meter a boat you aren't driving
+// is moved costs money, and a hard knock costs a bump, so planning the order is the cheap way. Clear every
+// boat out (shoving one out counts); stars come from the money kept. The harbor is walled where the level has sand or docks and
 // open to the sea elsewhere; a boat is out once it is wholly past the level's view box.
 //
 // level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows, and the harbor's edge),
@@ -11,23 +11,17 @@
 //               line over open water: a boat is out once its whole hull is past it.
 
 const JAM_BUMP = .1;            // share of the budget one bump costs
-const JAM_KNOCK = 1;            // impact (in the boat's own speed scale) below which a touch is free
-let jamBoats = [], jamBumps = 0;
+const JAM_KNOCK = 1;            // impact (in the boat's own speed scale) from which a hit is a bump
+const JAM_PUSH = 100;           // $ per meter a boat you aren't driving gets moved
+let jamBoats = [], jamBumps = 0, jamPushed = 0, jamPushOwed = 0, jamPushT = 0, jamPushAt = vec2();
 
 function jamLoad(L)
 {
     jamBoats = (L.moored || []).map((m, k) =>
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'jam', MOORED_COLORS[k % MOORED_COLORS.length], boatK(L, m)));
-    for (const b of jamBoats) jamFix(b, true);
-    jamBumps = 0;
+    for (const b of jamBoats) b.lastPos = b.pos.copy();
+    jamBumps = jamPushed = jamPushOwed = jamPushT = 0;
     fleet = []; slips = []; slip = undefined;
-}
-
-// a boat that isn't selected can't be moved: collisions only push the one being driven
-function jamFix(b, fixed)
-{
-    b.invMass = fixed ? 0 : 1/b.mass;
-    b.invInertia = fixed ? 0 : 1/b.inertia;
 }
 
 // the boat you tapped becomes the one you drive; the one you were driving stops where it is
@@ -38,11 +32,9 @@ function jamSelect(b)
         player.kind = 'jam';
         player.vel.set(0, 0); player.angVel = 0;
         player.dragF = player.dragFull; player.dragA = player.dragAFull;
-        jamFix(player, true);
     }
     player = b;
     b.kind = 'player';
-    jamFix(b, false);
     sfx('click', b.pos, 1, 1.2);
     if (!attempts++) track('design', 'tutorial:step01');
 }
@@ -115,20 +107,23 @@ function jamUpdate(dt)
         const b = jamPick(uiToWorld(mousePos));
         if (b) { steerHeld = false; if (b != player) jamSelect(b); }
     }
-    for (const b of jamBoats) if (b != player) { b.vel.set(0, 0); b.angVel = 0; b.integrate(dt); }    // squash wobble only
-
-    // buoys, logs and ducks float free: the boat you drive nudges them, the fixed boats stop them
+    // every boat floats and can be shoved; buoys, logs and ducks too
     const floaters = bodies.filter(b => b.kind == 'buoy' || b.kind == 'log' || b.kind == 'duck');
     const sub = dt / SUBSTEPS;
     for (let s = 0; s < SUBSTEPS; s++)
     {
-        if (player)
+        if (player) controlPlayer(sub);
+        for (const b of jamBoats)
         {
-            controlPlayer(sub);
-            player.integrate(sub);
-            collideStatics(player, rects, posts, jamHit);
-            for (const o of jamBoats) if (o != player) collideBodies(player, o, jamHit);
+            b.integrate(sub);
+            collideStatics(b, rects, posts, b == player ? jamHit : undefined);
         }
+        for (let i = 0; i < jamBoats.length; i++)
+            for (let j = i + 1; j < jamBoats.length; j++)
+            {
+                const A = jamBoats[i], B = jamBoats[j];
+                collideBodies(A, B, A == player || B == player ? jamHit : undefined);
+            }
         for (const f of floaters)
         {
             if (f.kind == 'duck') updateDuck(f, sub);
@@ -139,6 +134,31 @@ function jamUpdate(dt)
         for (let i = 0; i < floaters.length; i++)
             for (let j = i + 1; j < floaters.length; j++) collideBodies(floaters[i], floaters[j]);
     }
+
+    // shoving costs: every meter a boat you aren't driving moves, paid as it happens
+    let most = 0;
+    for (const b of jamBoats)
+    {
+        if (b != player)
+        {
+            const d = b.pos.distance(b.lastPos);
+            if (d > 1e-3) { jamPushed += d; jamPushOwed += d*JAM_PUSH; }
+            if (d > most) { most = d; jamPushAt = b.pos.copy(); }
+        }
+        b.lastPos = b.pos.copy();
+    }
+    jamPushT -= dt;
+    if (jamPushOwed >= 1 && jamPushT <= 0)
+    {
+        const cost = Math.round(jamPushOwed);
+        damages += cost;
+        jamPushOwed -= cost;
+        jamPushT = .5;
+        popup(`PUSH  -${fmtMoney(cost)}`, jamPushAt, C_SUNNY, .6, 1);     // over the boat being shoved
+    }
+
+    // shoved out counts too
+    for (const b of [...jamBoats]) if (b != player && jamOut(b)) jamLeave(b);
     if (!player) return;
 
     // motor putts and wake, as in stepWorld
@@ -156,19 +176,24 @@ function jamUpdate(dt)
         wakes.push({ pos: player.toWorld(-player.type.L/2*player.k, 0), t: 0, size: player.type.W*.7*player.k });
     }
 
-    if (jamOut(player))
+    if (jamOut(player)) jamLeave(player);
+}
+
+function jamLeave(b)
+{
+    jamBoats.splice(jamBoats.indexOf(b), 1);
+    bodies.splice(bodies.indexOf(b), 1);
+    if (b == player) { player = undefined; steerHeld = false; }
+    sfx('horn', undefined, .5, clamp(3 / Math.pow(boatSize(b), .3), .35, 3));
+    if (!jamBoats.length)
     {
-        const b = player;
-        jamBoats.splice(jamBoats.indexOf(b), 1);
-        bodies.splice(bodies.indexOf(b), 1);
-        player = undefined;
-        steerHeld = false;
-        sfx('horn', undefined, .5, clamp(3 / Math.pow(boatSize(b), .3), .35, 3));
-        if (!jamBoats.length) showComplete();
+        damages += Math.round(jamPushOwed);
+        jamPushOwed = 0;
+        showComplete();
     }
 }
 
-// a real knock costs a bump (once per knock); scrapes and gentle touches are free
+// a hard knock (against a boat or a wall) costs a bump, once per knock; pushes are paid by the meter
 function jamHit(A, B, impact, p)
 {
     const other = A == player ? B : A;
@@ -186,7 +211,7 @@ function jamHit(A, B, impact, p)
 }
 
 // the boat you drive hitting a buoy, log or duck: buoys ring and float off for free, a duck costs a
-// little (1% of the budget) and spins; the fixed boats just stop them
+// little (1% of the budget) and spins
 function jamFloaterHit(A, B, impact, p)
 {
     const f = A.kind == 'jam' || A.kind == 'player' ? B : A, boat = f == A ? B : A;
