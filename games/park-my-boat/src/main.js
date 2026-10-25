@@ -1282,7 +1282,7 @@ function drawTitle()
     const ship = { pos:vec2(((time*1.2) % 90) - 25, 2.6), angle:0, sx:1, sy:1, id:9, k:2.4, type:BOATS.cruise, color:BOATS.cruise.color, kind:'title' };
     drawBoatShadow(ship);
     drawBoat(ship);
-    ['dinghy', 'swan', 'tug', 'speedboat'].forEach((key, i) =>
+    ['dinghy', 'swan', 'trawler', 'speedboat'].forEach((key, i) =>
     {
         const a = time*.4 + i*PI/2;
         const b = { pos:vec2(20 + Math.cos(a)*15, 11 + Math.sin(a)*7.5), angle:a + PI/2, sx:1, sy:1, id:i, type:BOATS[key], color:BOATS[key].color, kind:'title' };

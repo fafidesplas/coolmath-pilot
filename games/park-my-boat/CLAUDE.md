@@ -13,7 +13,7 @@
 Everyone knows how hard parallel parking is, and a boat has no brakes. The goal is clear at a glance: a dashed box to stop in, either way round. A level takes 20–60 seconds, and a miss costs nothing but pride, so players retry for three stars. The jokes are visual (ducks spin, boats wobble, the captain's eyes pop) and work with the sound off.
 
 ## Core loop
-A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop and let go → once the boat rests in the slip for 0.5 s it is checked → inside: 1–3 stars by accuracy and the anchor drops by itself; partly outside: "Not in the slip. Try again.", and the boat must move before the next check.
+A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → trawler). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop and let go → once the boat rests in the slip for 0.5 s it is checked → inside: 1–3 stars by accuracy and the anchor drops by itself; partly outside: "Not in the slip. Try again.", and the boat must move before the next check.
 
 ## Mechanics (what is built)
 - **Scale:** world units are meters. Each boat type is drawn at toy size and scaled by `k` to real size. Mass scales with k³, so big ships shove small boats and barely notice. Boats react slower the bigger they are (k^0.3 times slower, capped at 1.25x: `MAX_SLOWDOWN`, try others with `?slowdown=`), so big ships are a bit slower relative to their own length without dragging, and tiny boats are twitchy. All handling, resting and judging numbers convert from the toy values the same way (`makeBoat` in `src/main.js`).
@@ -25,10 +25,10 @@ A level is a chain of boats of wildly different sizes parked one after another i
 - **Score extras:** a damage bill in dollars and a count of ducks hit, shown in the HUD and on the result screen. They don't affect stars.
 
 ## Boats (real size)
-Jet Ski (2.4 m, quick and slidey, almost no reverse), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Tugboat (26 m, pushes things), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, and for now they appear only in the hidden bonus level.
+Jet Ski (2.4 m, quick and slidey, almost no reverse), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Party Barge (9.2 m, wide), Sailboat (12 m, strong keel), Trawler (26 m fishing boat, strong, pushes things; replaced the tugboat, whose boxy top view looked like an iPad), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, and for now they appear only in the hidden bonus level.
 
 ## Levels
-- **World 1, Big & Small (5):** Odd Couple (rowboat → cruise ship), Way Down (container ship → tugboat → jet ski), Mixed Nuts (mega yacht → cruise ship → swan), Rush Hour (jet ski down a 30 m channel crossed by three 6 m canals of looping traffic, all on one screen: 10 rowboats and swans at 2.2 m/s, 10 jet skis and rowboats at 3 m/s, then 10 jet skis at 4 m/s; the loops turn round in lagoons just off screen; wait on the 3.5 m of sand between canals for a gap).
+- **World 1, Big & Small (5):** Odd Couple (rowboat → cruise ship), Way Down (container ship → trawler → jet ski), Mixed Nuts (mega yacht → cruise ship → swan), Rush Hour (jet ski down a 30 m channel crossed by three 6 m canals of looping traffic, all on one screen: 10 rowboats and swans at 2.2 m/s, 10 jet skis and rowboats at 3 m/s, then 10 jet skis at 4 m/s; the loops turn round in lagoons just off screen; wait on the 3.5 m of sand between canals for a gap).
   Marina (jet ski → sailboat → 48 m yacht in a packed yacht marina: big yachts along the quay, two piers lined on both sides with yachts, sailboats, speedboats, party barges, rowboat tenders and jet skis; each boat has one free berth in a row; tenders, jet skis, speedboats and a party barge cruise the fairways. No ships or tugs).
 - **Bonus (1, hidden for now):** Continental Drift (rowboat → cruise ship → island into a bay → continent into the gap in Pangaea, 100x each step). Marked `bonus: true` in the data. Players don't see bonus levels. Load `index.html?bonus` to show them (the editor sees them that way too). When shown, they sit after the regular ones in level select on a "BONUS" card. PLAY never picks them as the next level, and the last regular level's NEXT button reads "BONUS".
 
@@ -40,7 +40,7 @@ In-game text is plain and direct: instructions and results, no jokes or quips. T
 ## Ideas to try in future levels
 Not built yet. Candidates for the GDD and for new levels.
 - **More crowded harbors:** tighter slips between more moored boats, so a parking job means threading a gap without bumping the neighbors.
-- **More boat traffic:** built as `traffic` (see Obstacles); no level uses it yet. Still to try: a tug towing a barge.
+- **More boat traffic:** built as `traffic` (see Obstacles); no level uses it yet. Still to try: a boat towing a barge (the tugboat is gone; a redrawn tug or the trawler could do it).
 - **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
 - **More drift:** trying it now for every boat (see Boat physics). Next question: keep it global, or make it a trait of certain boats.
 
@@ -52,7 +52,7 @@ Problems seen in play and design changes to decide, for the GDD's open questions
 ## Stretch goals
 Not built and not in v1 scope. Two-player local modes on one keyboard, for the GDD to describe once the single-player game is done.
 - **Parking race (versus):** two players, each with a boat, race to park in the same harbor. The first boat judged inside its slip wins the round. Each player could get their own slip, or both could go for one slip and bump each other out of it. Bumping is allowed, and that is the fun.
-- **Tugboat co-op:** two players each drive a tugboat and push a big ship that has no engine (a cruise or container ship) into its slip together. Pushing on one end turns the ship, so the players have to work together. The ship is judged like a normal parking job.
+- **Tugboat co-op:** (needs a redrawn tugboat: the old one was cut for looking like an iPad) two players each drive a tugboat and push a big ship that has no engine (a cruise or container ship) into its slip together. Pushing on one end turns the ship, so the players have to work together. The ship is judged like a normal parking job.
 - **Open questions:**
   - Controls: P1 uses WASD and drops the anchor with Space. P2 uses the arrows and drops the anchor with Right Shift or Enter, both right next to the arrow keys. L was the other option, but it is too far from the arrows. The mouse can only steer one boat. Some cheap keyboards can't register many keys at once, so test that.
   - Camera: one shared view that frames both boats. In the race, both players should have boats of the same size.

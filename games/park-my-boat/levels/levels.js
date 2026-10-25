@@ -130,8 +130,8 @@ const SCALE_LEVELS =
         [
             { boat: 'container', start: { x: 1250, y: 780, a: PI }, slip: { x: 620, top: 900, a: -PI/2, pad: [0.5, 0.25], fingers: 'none' },
               hint: 'Big ships take a long time to stop. Slow down early.' },
-            { boat: 'tug', start: { x: 382, y: 860, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
-              hint: 'The tugboat can push other boats out of the way.' },
+            { boat: 'trawler', start: { x: 382, y: 860, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
+              hint: 'The trawler is strong: it can push other boats out of the way.' },
             { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 475, top: 900, a: PI/2, pad: [1.4, 1] },
               hint: '' },
         ],

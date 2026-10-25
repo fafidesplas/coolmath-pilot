@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Trawler replaces the tugboat
+- Owner: the tugboat looked like an iPad from above. Replaced by a fishing trawler (`trawler`), same real size (26.4 m, k 8) and the same strong, heavy handling, so it still shoves things. Pointy hull (fitted colliders), coral; wheelhouse forward, outrigger booms, mast, fish crates, net drum at the stern.
+- Way Down's second boat and the title parade use it; Way Down's hint now says the trawler can push other boats. The `tug` hull shape is gone.
+- GDD and brief updated (boat table, levels 8/11/13/17, palette, art prompt). The tugboat co-op and towing ideas now note they'd need a redrawn tug.
+- Checked in Chrome: the trawler draws as a fishing boat, `win()` completes all 5 levels, no console errors.
+
 ## 2026-10-25 — No closed pools
 - Owner: no level should be a closed-off pool; they should all lead to open ocean. `basin()` (Way Down, Mixed Nuts, Marina) no longer has a sand strip along the bottom, and its side walls stop at the basin's edge, so the south side opens onto the sea. Rush Hour's lagoons now run out past the sand to the sea. Odd Couple was already open to the south.
 - Added the open-sea rule to the GDD's level design section. Also added level settings (harbor, marina, tropical islands) to the GDD as a stretch goal.

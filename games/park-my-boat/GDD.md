@@ -44,7 +44,7 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 | Zippy | 6.8 m | 1.5 | 13 | 0.5 | 0.9 | Fast, drifts in turns |
 | Party Barge | 9.2 m | 4 | 12 | 0.6 | 0.55 | Wide, slow to turn |
 | Sailboat | 12 m | 3.5 | 7 | 0.5 | 0.7 | Strong keel, tracks straight |
-| Tugboat | 26 m | 5 | 30 | 0.8 | 0.9 | Strong, pushes things |
+| Trawler | 26 m | 5 | 30 | 0.8 | 0.9 | Fishing boat; strong, pushes things (replaced the tugboat) |
 | Mega Yacht | 80 m | 10 | 30 | 0.5 | 0.35 | Long, slow to turn |
 | Cruise Ship | 300 m | 12 | 34 | 0.5 | 0.32 | Huge, takes ages to stop |
 | Container Ship | 400 m | 14 | 34 | 0.45 | 0.28 | The biggest regular boat |
@@ -147,16 +147,16 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | 5 | Buoy Alley | Jet Ski | The jet ski's own level: quick, slidey, almost no reverse, through a line of bouncy buoys to a pier slip. |
 | 6 | Duck Crossing | Swan Pedalo → Sailboat | Duck families cross the fairway; the swan spins, the sailboat tracks straight. |
 | 7 | Tight Squeeze | Sailboat | Parallel park between two moored boats on a pier. |
-| 8 | Tug Life | Tugboat → Mega Yacht | Push drifting logs and an empty barge out of the yacht's slip, then park the yacht. |
+| 8 | Clear the Way | Trawler → Mega Yacht | Push drifting logs and an empty barge out of the yacht's slip, then park the yacht. |
 | 9 | River Mouth | Zippy → Party Barge | A current crosses the approach; aim upstream. The wide barge gets pushed more. |
 | 10 | "Mixed Nuts" | Mega Yacht → Cruise Ship → Swan Pedalo | World finale: big, bigger, tiny. |
-| 11 | "Way Down" | Container Ship → Tugboat → Jet Ski | Big-to-small chain, first slow traffic (party barge, sailboat). |
+| 11 | "Way Down" | Container Ship → Trawler → Jet Ski | Big-to-small chain, first slow traffic (party barge, sailboat). |
 | 12 | Ferry Lane | Rowboat → Mega Yacht | One ferry lane of back-and-forth traffic to cross twice. |
-| 13 | Container Port | Tugboat → Container Ship | Tight ship berth between two moored container ships. |
+| 13 | Container Port | Trawler → Container Ship | Tight ship berth between two moored container ships. |
 | 14 | "Rush Hour" | Jet Ski | A gauntlet on one screen: three narrow canals of looping traffic, faster each time; stop on the sand and wait for a gap. |
 | 15 | Swan Lake | Swan Pedalo → Rowboat → Jet Ski → Cruise Ship | Three tiny slips side by side, then the ship parks next to them without crushing them. |
 | 16 | Crosscurrent | Sailboat → Cruise Ship | A strong current along the quay. |
-| 17 | Drift Field | Zippy → Tugboat → Mega Yacht | A harbor full of loose boats and logs. |
+| 17 | Drift Field | Zippy → Trawler → Mega Yacht | A harbor full of loose boats and logs. |
 | 18 | "Marina" | Jet Ski → Sailboat → 48 m Yacht | Packed yacht marina with tenders in the fairways. |
 | 19 | Busy Harbor | Party Barge → Container Ship → Rowboat | Traffic plus current plus moored boats. |
 | 20 | Dock All The Boats | Jet Ski → Rowboat → Sailboat → Mega Yacht → Container Ship | Five boats, 2.4 m to 400 m, one harbor. |
@@ -207,7 +207,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 |---|---|
 | `#8CD6D1` | Water |
 | `#33949E` | Teal: UI accents, jet ski, slip outline |
-| `#F2635F` | Coral: warnings, damages, rowboat, tug |
+| `#F2635F` | Coral: warnings, damages, rowboat, trawler |
 | `#FFCC47` | Sunny: title, stars, party barge |
 | `#FFF7E5` | Cream: panels, white hulls |
 | `#E8B873` | Wood: docks, decks |
@@ -225,7 +225,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
   - Title: bobbing logo, boat parade.
 - **Concept art prompts:**
   - "Top-down toy harbor in flat vector style, teal water #8CD6D1, wooden docks #E8B873, a tiny coral rowboat parked next to a giant navy cruise ship, thick dark outlines #2B2D42, soft drop shadows, cream and sunny yellow accents, playful, no text."
-  - "Flat vector sticker sheet of toy boats seen from above: jet ski, swan pedal boat, rowboat, speedboat, party barge, sailboat, tugboat, mega yacht, cruise ship, container ship; each with a tiny cartoon captain, thick ink outlines, palette teal, coral, sunny yellow, cream, wood."
+  - "Flat vector sticker sheet of toy boats seen from above: jet ski, swan pedal boat, rowboat, speedboat, party barge, sailboat, fishing trawler, mega yacht, cruise ship, container ship; each with a tiny cartoon captain, thick ink outlines, palette teal, coral, sunny yellow, cream, wood."
   - "Top-down crowded yacht marina in toy flat style, piers lined with boats, one empty berth outlined with a dashed box, ducks in a line, buoys, teal water."
 
 ## 10. Audio
@@ -291,11 +291,11 @@ No daily events (no daily in v1).
   - The done checklist's daily events item doesn't apply: v1 has no daily.
 - **Later:**
   - Daily challenge (a seeded harbor needs a level generator; too big for v1).
-  - Two-player local modes: parking race (versus) and tugboat co-op. Notes are in `CLAUDE.md` under Stretch goals.
-  - A tug towing a barge.
+  - Two-player local modes: parking race (versus) and tugboat co-op (needs a redrawn tugboat). Notes are in `CLAUDE.md` under Stretch goals.
+  - A boat towing a barge (a redrawn tug, or the trawler).
   - More worlds (World 3 could be "Open Sea": waves, wind, islands).
   - **Settings (stretch goal):** levels in different places, not only harbors. A setting is a look plus one or two things of its own, so it reads as new without new rules:
-    - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and tugs.
+    - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and trawlers.
     - **Marina:** packed piers, yachts, tenders (Marina today).
     - **Tropical islands:** turquoise shallows, white sand, palm trees, a wooden jetty or a beach hut on stilts; coral heads as fixed obstacles; jet skis, swans and party barges.
     - Later candidates: a canal town (narrow canals, bridges, gondolas), a lake with a boathouse, an icy fjord with floating ice.
@@ -322,7 +322,7 @@ Decided with the owner on 2026-10-25:
 | Daily challenge? | Not in v1 | Pao | Decided |
 | Music? | Pao adds it later; the toggle comes with it | Pao | Decided |
 | Drift for every boat? | Keep it global; boat stats make the differences | Pao | Decided |
-| Out of v1? | Later: two-player modes, tug towing a barge. Cut: submarine, player zoom | Pao | Decided |
+| Out of v1? | Later: two-player modes, a boat towing a barge. Cut: submarine, player zoom | Pao | Decided |
 | Palette: 6 main colors plus sand, stone, navy, grass, skin | Keep the extras as support tones for land, quays, ship hulls and captains | Pao | Decided |
 | Main analytics question | Which boat makes players give up | Pao | Decided |
 
@@ -366,6 +366,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Tugboat replaced by a fishing trawler of the same size and handling (the tug's top view looked like an iPad). Level 8 renamed Clear the Way.
 - 2026-10-25 — Open-sea rule (6): no level is a closed pool.
 - 2026-10-25 — Stretch goal: levels in different settings (harbor, marina, tropical islands, more later).
 - 2026-10-25 — No clock: stars come from money kept from a per-level budget (3.6). Par times, the clock rules and time-based results removed; the economy questions for Fafi became decisions plus four tuning questions.
