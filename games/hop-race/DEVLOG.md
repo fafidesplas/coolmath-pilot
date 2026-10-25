@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Title world cards: no blank screen on a finished world
+- Owner: clicking a world card on the title gave a blank screen ("Cannot read properties of undefined (reading 'id')"). With every level of a world finished, the card asked for level -1. It now starts the last level played in that world, or its first (`hrCardLevel`). Play 1P/2P already had a fallback, so they worked.
+- Checked in Chrome with every level marked finished: all four cards start a level, no console errors.
+
 ## 2026-10-25 — Climb: the cup breaks on resistance
 - Owner found that tapping (presses under 0.2 s) with the cup stuck on a wall could teleport the body under a platform. Creeping turned the arm into a solid, and the push-out moved the body to the far side, so the cup never let go. Now, if creeping would put the body into a solid or the arm through one, the cup breaks at once (`resisted()`, `hrClimbArmCuts()`). Then the press whips as it does after a hold past 0.2 s.
 - Checked headless on every Climb wall face, with taps of 3, 6 and 11 frames from 16,428 starts. Body or arm through a solid with the cup still on: 2,774 before, 0 after. Taps still lift the body more than 1 u in 5,038 starts (6,134 before; the difference is climbs that only worked by clipping).

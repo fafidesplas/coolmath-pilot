@@ -63,7 +63,7 @@ function hrUiButtons()
         const n = shown.length, cw = min(200 * u, W / (n + 1.2)), gap = cw * 1.12;
         shown.forEach((i, k) => add({id: 'world' + i, card: i, x: W / 2 + (k - (n - 1) / 2) * gap, y: H * .72, w: cw, h: 250 * u,
             enabled: hrLevelsOf(i).length > 0,
-            act: () => hrStartLevel(i, hrNextLevel(i), false)}));
+            act: () => hrStartLevel(i, hrCardLevel(i), false)}));
         add({id: 'settings', x: W - 110 * u, y: 50 * u, w: 180 * u, h: 56 * u, label: 'Settings', act: () => hrOpenSettings('title')});
     }
     else if (hrScreen == 'modes')
@@ -151,6 +151,14 @@ function hrNextLevel(world)
     for (let i = 0; i < hrLevelsOf(world).length; i++)
         if (isUnlocked(world, i) && !hrSaveLevel(hrLevelsOf(world)[i].id).bestMs) return i;
     return -1;
+}
+
+// a title card starts the world's next level; once it is all finished, the last one played there (or its first)
+function hrCardLevel(world)
+{
+    const next = hrNextLevel(world), last = hrFindLevel(hrSave.last);
+    if (next >= 0) return next;
+    return last && last.world == world ? last.index : 0;
 }
 
 function hrToLevels() { hrMenuWorld = hrWorld; hrMenuVersus = hrVersus; hrGo('levels'); }
