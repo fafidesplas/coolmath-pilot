@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — GDD: no more anchor
+- Pao: remove the anchor drop. In the GDD, parking is now checked by itself when the boat has rested for 0.5 s with part of its hull in the slip (speed under 0.25 toy units/s × scale, no throttle). Resting anywhere else is never judged, so waiting for traffic is safe.
+- New in the GDD: settle drag (below 1 toy unit/s with no throttle, full drag) so ships don't creep for ~20 s; a rest ring that fills around the boat in the slip; the anchor drops by itself as part of the park celebration. Gone: anchor button, Space/Enter anchor, "Too fast!", anchor speed cue, `anchor:toofast`. Level 3 is now "No Brakes".
+- Next: the code still has the anchor; it changes in phase 2. Then review again, or Fafi reads it.
+
 ## 2026-10-25 — GDD review 1
 - Ran the phase 1c review (14 items) and went through each with Pao. All applied to `GDD.md`, with Pao's own answers on two:
   - Slip blockers: boats in the current slip start their engines and drive out; logs and buoys drift out. No Reset button.

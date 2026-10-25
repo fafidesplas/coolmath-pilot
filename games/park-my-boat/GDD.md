@@ -17,7 +17,7 @@ This GDD describes the prototype that is already built (`src/`, `levels/levels.j
 - **Hook:** a clock and a par time. "I was 3 s off three stars" brings players back. Knowing the harbor makes the next run faster.
 
 ## 2. Core loop
-- **Moment (seconds):** steer → let go early → coast → line up → drop anchor → wait for the boat to settle.
+- **Moment (seconds):** steer → let go early → coast → line up → back off with reverse → come to rest inside the slip → parked.
 - **Level (20–90 s of clock time, plus camera moves):** the camera shows the slip → glides back to the boat → park it → the camera zooms to the next boat, bigger or smaller → … → results with time and stars.
 - **Meta (days):** unlock the next level, replay for three stars, beat your best time, find the bonus level.
 
@@ -31,6 +31,7 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 ### 3.2 Boat physics
 - Each boat is a rigid body made of circles along the keel. On pointy hulls the circles shrink toward the bow and stern (`fitCircles`), so the tips collide where they are drawn.
 - Water drag is low along the keel and high sideways. With no throttle, forward drag drops to 30% (`COAST_DRAG = 0.3`), so boats glide about 3x farther. This is global for every boat; the boat stats make the differences.
+- **(new) Settle drag:** below 1 toy unit/s with no throttle, forward drag goes back to 100% and spin drag doubles, so a boat that is nearly stopped comes to rest in about 1 s instead of creeping. Without this a cruise ship takes about 20 s to coast from 5 to 0.25 toy units/s. Tune in the slice.
 - The rudder turns more at higher speed, plus some prop wash at low speed. Reverse is weaker than forward. All engine power × 1.5 (`SPEED`).
 - 2 physics substeps per frame (`SUBSTEPS`).
 
@@ -52,25 +53,25 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 
 Mass and power are toy values before scaling. A level can set its own `k` for a boat (for example the 48 m yacht in Marina).
 
-### 3.4 Anchor
-- Space, Enter or the anchor button drops the anchor at the bow on a short rope with heavy drag.
-- Dropping it faster than 2.5 toy units/s spins the boat out (spin 6 rad/s for 0.3 s, `ANCHOR_SPIN`) with a "Too fast!" popup.
-- Pressing again before the boat settles raises the anchor.
-- **(new) Speed cue:** the anchor button shows a calm anchor icon below the limit and a ⚠ shape above it (shape, not just color). A thin arc around the player's boat fills with speed and shows a notch at the limit.
+### 3.4 Stopping (new: no anchor)
+- There is no anchor and no anchor button. The player stops with reverse, with drag, or by letting go early.
+- **Rest:** a boat is at rest when its speed is under 0.25 toy units/s (× its scale) and it turns slower than 0.25 rad/s, with no throttle input. These are today's "nearly still" numbers.
+- **Rest cue:** when the boat is inside the slip, a ring around it fills over the 0.5 s rest time, so the player sees the park coming. Moving again empties it.
+- On park, an anchor drops by itself from the bow (splash and chain), as part of the celebration.
 
 ### 3.5 Judging
-- The boat is judged when it is nearly still for 0.5 s, or 3.5 s after the anchor drops.
+- **(new) When:** the check runs by itself when the boat has been at rest (3.4) for 0.5 s while at least one hull circle is inside the slip. A boat at rest anywhere else is never judged, so stopping to wait for traffic is safe. After a check, the boat must move above the rest speed before it is checked again.
 - **Inside:** every hull circle is inside the slip. Nose-in and stern-in both count.
 - **Accuracy:** 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Boats 50 m and longer get a slip 15% longer and wider and a 23° angle allowance (`BIG_SHIP_LENGTH`, `BIG_SHIP_LEEWAY`).
 - **(new) Parked:** inside and accuracy ≥ 50%. The slip turns solid, a check mark pops up, and the next boat starts.
-- **Not parked (new: a message per cause):** the anchor comes up and the player keeps going from where the boat is. The clock keeps running. The message says what was wrong, and the ghost in the slip flashes the matching part:
+- **Not parked (new: a message per cause):** the player keeps going from where the boat is. The clock keeps running. The message says what was wrong, and the ghost in the slip flashes the matching part:
   - a hull circle is outside the slip: "Not in the slip." (the ghost outline flashes);
   - inside, but the angle part is the bigger loss: "Line it up straighter." (the ghost rocks to the right angle);
   - inside, but the position part is the bigger loss: "Closer to the middle." (the ghost's center mark flashes).
 
 ### 3.6 Time and stars (new)
 - The clock runs only while the player has control. It stops during the slip preview and the camera glides between boats, while paused, and while the tab is hidden (the game pauses then too).
-- A boat's time stops at the anchor drop that ends up parking it, so the settle wait doesn't count. After a miss, the wait counts.
+- A parked boat's time stops at the moment its 0.5 s rest began, so the rest wait doesn't count. After a miss, the wait counts.
 - Level time = sum of the times for all boats.
 - Each level has a `par` time in seconds in its data. 3★ ≤ par, 2★ ≤ 1.5 × par, 1★ for finishing.
 - **Setting par:** the designer's clean run (no misses) × 1.2, rounded up to the next whole second. Checked again in playtests. Par is at most 90 s per level (120 s for level 20); if a level needs more, move ship slips closer to where the ships start.
@@ -102,7 +103,6 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
 | Throttle and steer | Hold anywhere on the water: the boat steers toward the pointer. Farther = more throttle | W / Up |
 | Reverse | Hold behind the boat | S / Down |
 | Rudder | (by pointer position) | A / D, Left / Right |
-| Drop or raise anchor | Anchor button (bottom right, 3.6 units round) | Space / Enter |
 | Skip slip preview | Click or tap | Space / Enter |
 | Restart level | RESTART button | R |
 | Pause | II button | P / Esc |
@@ -127,7 +127,7 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
 
 ## 6. Level design
 - **Structure (v1):** 2 worlds of 10 levels, plus 1 hidden bonus.
-  - **World 1, Learn the Ropes:** one boat per level at first, then pairs. Teaches throttle, coasting, the anchor, the first scale jump, then one new obstacle per level.
+  - **World 1, Learn the Ropes:** one boat per level at first, then pairs. Teaches throttle, coasting, stopping with reverse, the first scale jump, then one new obstacle per level.
   - **World 2, Big & Small:** chains of 2–5 boats with big scale jumps, traffic, crowded marinas and currents together.
   - **Bonus, Continental Drift:** rowboat → cruise ship → island → continent, 100x each step. Unlocks when all 20 levels are finished.
 - **Teaching order:** each new element first appears where it can't hurt (ducks away from the line to the slip), next in the way (ducks crossing the fairway), then with an earlier element (ducks plus moored boats).
@@ -137,9 +137,9 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
 
 | # | Name | Boats | What it teaches |
 |---|---|---|---|
-| 1 | First Mooring | Rowboat | Empty harbor, big slip straight ahead at a dock. Taught by play: a ghost pointer holds and drags from the boat toward the slip until the player moves; when the boat is slow inside the slip, a SPACE key and anchor icon pulse over the anchor button. Text: "Park in the box." |
+| 1 | First Mooring | Rowboat | Empty harbor, big slip straight ahead at a dock. Taught by play: a ghost pointer holds and drags from the boat toward the slip until the player moves; when the boat is inside the slip, the rest ring fills and a "let go" pointer-up icon pulses. Text: "Park in the box." |
 | 2 | Easy Does It | Rowboat | Slip to the side past two pilings: turn 90° and let go early. Hint: "Let go early. Boats keep gliding." |
-| 3 | Too Fast! | Zippy | Long straight run, slip at the end. Anchoring at speed spins you out. Hint: "Slow down before you drop anchor." |
+| 3 | No Brakes | Zippy | Long straight run, slip at the end: a fast boat overshoots unless you let go early and use reverse. Hint: "Pull back to slow down." |
 | 4 | "Odd Couple" | Rowboat → Cruise Ship | The first scale jump. The parked rowboat sits next to the cruise ship's slip. |
 | 5 | Buoy Alley | Jet Ski | The jet ski's own level: quick, slidey, almost no reverse, through a line of bouncy buoys to a pier slip. |
 | 6 | Duck Crossing | Swan Pedalo → Sailboat | Duck families cross the fairway; the swan spins, the sailboat tracks straight. |
@@ -192,9 +192,9 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 
 - **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. PLAY (goes to the first level without 3 stars), LEVELS, SOUND toggle, **(new)** MUSIC toggle once the music is in (see 10).
 - **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the best time. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
-- **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the clock with the par time ("0:31 / ★★★ 0:45"), damages, the scale bar, RESTART and II. The anchor button sits bottom right and shows the speed cue (3.4). The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
+- **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the clock with the par time ("0:31 / ★★★ 0:45"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
 - **Pause:** dims the screen. RESUME, RESTART, MENU.
-- **Level complete:** "PARKED!", 3 stars that pop in one by one, **(new)** level time counting up, the par times, "NEW BEST!", time per boat, accuracy per boat, anchor drops, damages, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
+- **Level complete:** "PARKED!", 3 stars that pop in one by one, **(new)** level time counting up, the par times, "NEW BEST!", time per boat, accuracy per boat, misses, damages, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
 
 ## 9. Art direction
 - **Family:** Toybox Flat. Everything is drawn in code with Canvas 2D: flat fills, 0.1-unit ink outlines, soft offset drop shadows.
@@ -213,10 +213,10 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 - **Key visuals:** the player boat with a captain (eyes pop on a bump); slips as dashed boxes with a ghost of the boat; water ripples in octaves 10x apart so the water keeps its texture at every zoom; a map-style scale bar.
 - **Juice list:**
   - Bump: screen shake scaled by impact (max 0.5), bonk, the captain's eyes pop.
-  - Anchor drop: splash ring and chain sound; "Too fast!" spin-out.
+  - Rest ring filling around the boat in the slip.
   - Ducks hit: the duck spins and quacks.
   - Wake foam behind moving boats.
-  - Parked: slip goes solid with a check, **(new)** confetti burst from the slip, horn.
+  - Parked: slip goes solid with a check, **(new)** the anchor drops by itself (splash ring), confetti burst from the slip, horn.
   - Between boats: zoom glide with the size card sliding in.
   - Results: panel drops in with overshoot, stars pop one by one with rising clicks, **(new)** time counts up, "NEW BEST!" bounces.
   - Title: bobbing logo, boat parade.
@@ -232,8 +232,8 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 | bonk | Any bump | Hollow wooden knock, louder with impact |
 | quack | Duck hit or fleeing | Short squeaky quack |
 | bong | Buoy hit | Bell-like ring |
-| splash | Anchor hits the water | Short noise burst |
-| chain | Anchor rope paying out | Fast rattling clicks |
+| splash | Anchor drops on park | Short noise burst |
+| chain | Anchor rope paying out on park | Fast rattling clicks |
 | horn | Boat parked / ship starts | Deep ship horn |
 | win | Level complete | Rising two-note jingle |
 | fail | Not in the slip | Soft descending womp |
@@ -252,13 +252,12 @@ Level ids: `world01:level04` (`bonus:level01` for the bonus).
 | `progression Complete world01:level04` | Last boat parked | Level time in tenths of a second |
 | `progression Fail world01:level04` | Player restarts or quits to the menu before finishing | Seconds played |
 | `tutorial:step01` | Level 1: first throttle input | — |
-| `tutorial:step02` | Level 1: first anchor drop | — |
-| `tutorial:step03` | Level 1: first boat judged (inside or not) | — |
+| `tutorial:step02` | Level 1: boat first inside the slip | — |
+| `tutorial:step03` | Level 1: first check (parked or not) | — |
 | `tutorial:done` | Level 1 complete | — |
 | `boat:world01:level04:b2:start` | Boat 2 gets control | — |
 | `boat:world01:level04:b2:park` | Boat 2 parked | Seconds for that boat |
-| `boat:world01:level04:b2:miss` | Boat 2 judged outside the slip | Miss count for this boat so far |
-| `anchor:toofast` | Anchor dropped too fast | Boat number |
+| `boat:world01:level04:b2:miss` | Boat 2 checked and not parked | Miss count for this boat so far |
 | `ui:restart` | R or RESTART | — |
 | `ui:skip` | Slip preview skipped | — |
 | `settings:sfx:off` | Sound toggled off | — |
@@ -279,7 +278,7 @@ No daily events (no daily in v1).
 - **Second risk:** par times that feel fair. The `boat:…:park` times from playtests set them.
 
 ## 13. Scope
-- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: timer and par stars, unlocks, restart without preview, clearing the slip, miss messages, anchor speed cue, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new tutorial levels come in phase 3. Gate: a teammate plays it cold and wants more.
+- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: timer and par stars, unlocks, restart without preview, clearing the slip, miss messages, automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new tutorial levels come in phase 3. Gate: a teammate plays it cold and wants more.
 - **v1:**
   - 20 levels in 2 worlds, plus the hidden bonus.
   - Time and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
@@ -324,10 +323,9 @@ Decided in review 1 (2026-10-25):
 |---|---|---|---|
 | Something blocks the slip | Boats in it start their engines and drive out; logs and buoys drift out (3.8) | Pao | Decided |
 | Inside but under 50% accuracy | A message per cause, with the ghost showing what's wrong (3.5) | Pao | Decided |
-| Settle wait on the clock | A parked boat's time stops at the anchor drop (3.6) | Pao | Decided |
+| Settle wait on the clock | A parked boat's time stops when its rest begins (3.6) | Pao | Decided |
 | Vertical slice | The 5 existing levels in the full v1 shell (13) | Pao | Decided |
 | Players who close the tab | `boat:…:start` events; `stars:…` dropped (11) | Pao | Decided |
-| Too fast to anchor | Anchor button icon + speed arc (3.4) | Pao | Decided |
 | Teaching order | Jet ski gets level 5; level 9 is Zippy → Party Barge; traffic first at 11 | Pao | Decided |
 | Edge arrows | Size-aware warning, at most 2 traffic arrows (3.7) | Pao | Decided |
 | Level 1 tutorial | Ghost pointer and key icons, 3-word text (6) | Pao | Decided |
@@ -336,16 +334,19 @@ Decided in review 1 (2026-10-25):
 | Swan Lake, Night Shift | Swan Lake gets 3 different small boats; Night Shift renamed Busy Harbor | Pao | Decided |
 | When to split `main.js` | First step of phase 2, own commit | Pao | Decided |
 | Daily checklist item | Noted as not applying (13) | Pao | Decided |
+| Anchor | Removed: the check runs by itself when the boat rests in the slip; settle drag added (3.4, 3.5) | Pao | Decided |
 
 Still open:
 
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
+| Settle drag numbers (1 toy unit/s, 100% drag) | Tune in the slice so every boat, ships included, can stop within par | Pao | Open |
 | Music mood and length | Decide when the music is made | Pao | Open |
 | Coolmath SDK, ad breaks, branding, size limit, GA keys | Team-wide `[confirm]` items in `STANDARDS.md` | Team | Open |
 | Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Anchor removed: parking is checked automatically when the boat rests in the slip. Added settle drag, the rest ring, and the auto anchor on park; level 3 is now "No Brakes".
 - 2026-10-25 — Review 1 applied: slip clearing, miss messages, clock stops at the anchor drop, vertical slice defined, per-boat start events, anchor speed cue, teaching order and level fixes, par cap, edge cases.
 - 2026-10-25 — Owner answered the open questions; all proposals confirmed except music, which Pao adds later.
 - 2026-10-24 — First draft. Records the prototype as built (10 regular boats, 5 levels, the editor) and proposes time-based stars, 2 worlds of 10 levels, unlocks, camera look-ahead and music.
