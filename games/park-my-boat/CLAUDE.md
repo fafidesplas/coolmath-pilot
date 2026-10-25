@@ -10,7 +10,7 @@
 @../../PHASES.md
 
 ## Why it works for Coolmath
-Everyone knows how hard parallel parking is, and a boat has no brakes. The goal is clear at a glance: a dashed box with a ghost of your boat in it. A level takes 20–60 seconds, and a miss costs nothing but pride, so players retry for three stars. The jokes are visual (ducks spin, boats wobble, the captain's eyes pop) and work with the sound off.
+Everyone knows how hard parallel parking is, and a boat has no brakes. The goal is clear at a glance: a dashed box to stop in, either way round. A level takes 20–60 seconds, and a miss costs nothing but pride, so players retry for three stars. The jokes are visual (ducks spin, boats wobble, the captain's eyes pop) and work with the sound off.
 
 ## Core loop
 A level is a chain of boats of wildly different sizes parked one after another in the same harbor (rowboat → cruise ship, or container ship → tugboat). Between boats the camera zooms (out by 100x, or back in) and a card shows the new boat's size ("300 m · 105x BIGGER"). Boats parked earlier stay put as tiny dots or huge obstacles. For each boat: steer it across the harbor → line it up in the slip → stop and let go → once the boat rests in the slip for 0.5 s it is checked → inside: 1–3 stars by accuracy and the anchor drops by itself; partly outside: "Not in the slip. Try again.", and the boat must move before the next check.

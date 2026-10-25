@@ -1049,9 +1049,6 @@ function drawSlip()
 {
     const inside = boatInSlip(), pulse = .5 + .5*Math.sin(time*5);
     const lw = Math.min(.14*WU, slip.wid*.08);
-    // ghost of the boat where it should end up
-    const ghost = { pos:slip.pos, angle:slip.a, sx:1, sy:1, k:player.k };
-    painter(ghost).poly(player.type.hullPts, C_CREAM.scale(1, .22));
     if (inside)
     {
         drawPoly([vec2(slip.pos.x-slip.w/2, slip.pos.y-slip.h/2), vec2(slip.pos.x+slip.w/2, slip.pos.y-slip.h/2),

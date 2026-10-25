@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — No boat silhouette in the slip
+- Owner: nose-in and stern-in both count, so the boat-shaped ghost in the slip (always pointing one way) is gone. The slip is just its dashed box, solid when the boat is inside. Brief and GDD updated (the GDD's miss cues now flash parts of the slip instead of the ghost).
+- Also committed the owner's own edits to Odd Couple (cruise ship starts below the rowboat's slip facing the quay, slip at x 720) and Way Down (container ship parks nose-in at x 620, jet ski starts right by its slip).
+- Next: check that slips with finger docks still read clearly with only the dashed mouth showing.
+
 ## 2026-10-25 — Rush Hour on one screen
 - Owner: compress Rush Hour into one small area, still with lots of moving boats, and keep the slip in the jet ski's view. The level is now 37 m across instead of 330 m: the jet ski starts at x -1, the slip is at a quay at x 30.5, and the whole run fits in the jet ski's 65 m view (slip on screen from the start, 1 m to spare).
 - The channel is 5 m wide, crossed by three 6 m canals with 3.5 m of sand between them to wait on. 30 traffic boats on three loops (`loopLane`, legs 3.8 m apart): 5 rowboats + 5 swans at 2.2 m/s, 5 jet skis + 5 rowboats at 3 m/s, 10 jet skis at 4 m/s. The loops turn round in lagoons 18 m north and south of the channel, just off screen, so boats pour in from the screen edges. The yachts, tugs, barges and sailboats are gone: they can't turn in a canal this small.

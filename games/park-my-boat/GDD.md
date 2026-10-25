@@ -64,10 +64,10 @@ Mass and power are toy values before scaling. A level can set its own `k` for a 
 - **Inside:** every hull circle is inside the slip. Nose-in and stern-in both count.
 - **Accuracy:** 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Boats 50 m and longer get a slip 15% longer and wider and a 23° angle allowance (`BIG_SHIP_LENGTH`, `BIG_SHIP_LEEWAY`).
 - **(new) Parked:** inside and accuracy ≥ 50%. The slip turns solid, a check mark pops up, and the next boat starts.
-- **Not parked (new: a message per cause):** the player keeps going from where the boat is. The clock keeps running. The message says what was wrong, and the ghost in the slip flashes the matching part:
-  - a hull circle is outside the slip: "Not in the slip." (the ghost outline flashes);
-  - inside, but the angle part is the bigger loss: "Line it up straighter." (the ghost rocks to the right angle);
-  - inside, but the position part is the bigger loss: "Closer to the middle." (the ghost's center mark flashes).
+- **Not parked (new: a message per cause):** the player keeps going from where the boat is. The clock keeps running. The message says what was wrong, and the slip shows the matching cue:
+  - a hull circle is outside the slip: "Not in the slip." (the slip outline flashes);
+  - inside, but the angle part is the bigger loss: "Line it up straighter." (the slip's long sides flash);
+  - inside, but the position part is the bigger loss: "Closer to the middle." (a mark at the slip's center flashes).
 
 ### 3.6 Time and stars (new)
 - The clock runs only while the player has control. It stops during the slip preview and the camera glides between boats, while paused, and while the tab is hidden (the game pauses then too).
@@ -112,7 +112,7 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
 ## 5. Game elements
 | Element | Behavior | First appears | Shape/icon (not color alone) |
 |---|---|---|---|
-| Slip | Dashed box with a ghost of the boat; turns solid with a check mark when parked | 1 | Dashed outline → solid fill + check |
+| Slip | Dashed box, no boat silhouette (either end in counts); turns solid with a check mark when parked | 1 | Dashed outline → solid fill + check |
 | Dock / quay | Static wood or concrete edge | 1 | Planks / stone blocks |
 | Sand / landmass | Static; boats bump off | 1 | Sand fill, round blobs |
 | Pilings | Static posts | 2 | Small round posts |
@@ -212,7 +212,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 | `#E8B873` | Wood: docks, decks |
 
 `#2B2D42` ink is the outline color. Sand, stone, navy, grass and skin are support tones (see 14).
-- **Key visuals:** the player boat with a captain (eyes pop on a bump); slips as dashed boxes with a ghost of the boat; water ripples in octaves 10x apart so the water keeps its texture at every zoom; a map-style scale bar.
+- **Key visuals:** the player boat with a captain (eyes pop on a bump); slips as dashed boxes (no boat silhouette, since nose-in and stern-in both count); water ripples in octaves 10x apart so the water keeps its texture at every zoom; a map-style scale bar.
 - **Juice list:**
   - Bump: screen shake scaled by impact (max 0.5), bonk, the captain's eyes pop.
   - Rest ring filling around the boat in the slip.
@@ -324,7 +324,7 @@ Decided in review 1 (2026-10-25):
 | Question | Decision | Who decides | Status |
 |---|---|---|---|
 | Something blocks the slip | Boats in it start their engines and drive out; logs and buoys drift out (3.8) | Pao | Decided |
-| Inside but under 50% accuracy | A message per cause, with the ghost showing what's wrong (3.5) | Pao | Decided |
+| Inside but under 50% accuracy | A message per cause, with the slip showing what's wrong (3.5) | Pao | Decided |
 | Settle wait on the clock | A parked boat's time stops when its rest begins (3.6) | Pao | Decided |
 | Vertical slice | The 5 existing levels in the full v1 shell (13) | Pao | Decided |
 | Players who close the tab | `boat:…:start` events; `stars:…` dropped (11) | Pao | Decided |
@@ -360,6 +360,7 @@ Still open:
 | Bonus for a clean park (no contact at all)? | Yes: a "Clean!" popup and a small bonus per boat, so "don't touch anything" is felt in the moment, not only at the end | Fafi, Pao | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Slip silhouette removed: either end in counts, so a boat shape in the slip pointed one way for no reason.
 - 2026-10-25 — Rush Hour compressed to one screen.
 - 2026-10-25 — Added the slip-in-view rule (6): every boat starts with its slip on screen, except gauntlet levels.
 - 2026-10-25 — Added the hand-off rule (6): the next boat is visible from where the previous one parks.
