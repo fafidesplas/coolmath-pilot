@@ -24,8 +24,11 @@ const BIG_SHIP_LENGTH = 50;
 const BIG_SHIP_LEEWAY = 1.15;
 // the camera shows this many boat lengths across for big ships (smaller boats see more, see cameraGoal)
 const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3.5;
-// dropping anchor too fast spins the boat up to this (rad/s, divided by sqrt of its size) over this many seconds
-const ANCHOR_SPIN = 6, ANCHOR_SPIN_TIME = .3;
+// no anchor: a boat is parked once it rests (under REST_SPEED toy units/s and REST_SPIN rad/s, no input) for
+// REST_TIME seconds with part of its hull in the slip. Below SETTLE_SPEED with no throttle the coast ends:
+// full forward drag and SETTLE_SPIN times the spin drag, so a nearly stopped ship doesn't creep for ages
+const REST_SPEED = .25, REST_SPIN = .25, REST_TIME = .5;
+const SETTLE_SPEED = +new URLSearchParams(location.search).get('settle') || 1, SETTLE_SPIN = 2;
 // each boat's turn opens on its slip for this many seconds (camera travel included), then the camera
 // glides back to the boat at SLIP_GLIDE of its normal speed; the boat takes control when the camera is
 // nearly there (at most SLIP_MAX seconds later), and the camera eases back to full speed as the intro
@@ -75,7 +78,7 @@ function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics sta
 let gameScreen = 'title', screenTime = 0, levelIndex = 0, level, isPaused = false;
 let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip;
 let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
-let anchor, judge, result;
+let anchor, judge, result, restT = 0, restArmed = true;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
 let popups = [], drops = [], wakes = [], foams = [];
 let shakeAmt = 0, steerHeld = false, motorTimer = 0, wakeTimer = 0;
@@ -121,6 +124,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     b.color = color || t.color;
     b.hurtT = 0;
     b.dragFull = b.dragF;          // forward drag under power; controlPlayer lowers it while coasting
+    b.dragAFull = b.dragA;         // spin drag; controlPlayer raises it while settling
     bodies.push(b);
     return b;
 }
@@ -256,12 +260,14 @@ function startBoat(n)
     {
         prev.kind = 'moored';
         prev.dragF = prev.dragFull;
+        prev.dragA = prev.dragAFull;
     }
     player = fleet[n];
     player.kind = 'player';
     slip = slips[n];
     boatIndex = n;
     anchor = judge = undefined;
+    restT = 0; restArmed = true;
     boatTime = 0;
     intro = { t:0, prev, dur: SLIP_SHOW + SLIP_MAX };
     if (fleet.length > 1) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
@@ -439,7 +445,7 @@ function onHit(A, B, impact, p)
 }
 
 // ---------------------------------------------------------------------------
-// player and anchor
+// player, resting and parking
 
 function controlPlayer(dt)
 {
@@ -475,7 +481,9 @@ function controlPlayer(dt)
     if (anchor || (intro && intro.t < intro.dur)) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;
-    player.dragF = player.dragFull * (throttle ? 1 : COAST_DRAG);
+    const settling = !throttle && player.speed() < SETTLE_SPEED*player.vs;
+    player.dragF = player.dragFull * (throttle || settling ? 1 : COAST_DRAG);
+    player.dragA = player.dragAFull * (settling && !rudder ? SETTLE_SPIN : 1);
     driveBoat(player, throttle, rudder, dt);
 }
 
@@ -587,42 +595,19 @@ function driveTraffic(b, dt)
 
 function bowPoint() { return player.toWorld((player.type.L/2 - .25)*player.k, 0); }
 
-function toggleAnchor()
+// the anchor only drops once the boat is parked: a splash, and it holds the boat still for the celebration
+function dropAnchor()
 {
-    if (judge && judge.result) return;
-    if (intro && intro.t < intro.dur) return;
     const k = player.k;
-    if (anchor)
-    {
-        anchor = judge = undefined;
-        sfx('chain', player.pos, 1, 1.3);
-        popup('Anchor up', player.pos, C_CREAM, .7, 1.5);
-        return;
-    }
-    const spd = player.speed() / player.vs;
-    // lands right at the bow, a hair off-center toward the way the boat is turning (a random side if
-    // it isn't), so a boat still moving fast whips around it that way
-    const side = Math.abs(player.angVel) > .05 ? Math.sign(player.angVel) : rand() < .5 ? -1 : 1;
-    anchor = { pos: bowPoint().add(player.forward().rotate(PI/2).scale(side*rand(.03, .15)*k)), len: .5*k, t: 0, spin: 0 };
-    judge = { t:0, settle:0 };
-    attempts++;
+    anchor = { pos: bowPoint(), len: .5*k, t: 0 };
     sfx('chain', anchor.pos);
     sfx('splash', anchor.pos, .8);
     splash(anchor.pos, 12, 3, k);
-    if (spd > 2.5)
-    {
-        popup('Slow down before you drop anchor!', player.pos, C_SUNNY, .9, 1.6);
-        shakeAmt = Math.max(shakeAmt, .25);
-        player.hurtT = 1;
-        // spin-out: grows from nothing at the limit, gentler for bigger boats, spun up in anchorForce
-        anchor.spin = side * ANCHOR_SPIN * Math.min(1, (spd - 2.5)/3) / Math.sqrt(k);
-    }
 }
 
 function anchorForce(dt)
 {
     if (!anchor) return;
-    if (anchor.t < ANCHOR_SPIN_TIME) player.angVel += anchor.spin / ANCHOR_SPIN_TIME * dt;
     anchor.t += dt;
     const slowdown = player.slowdown;
     const bow = bowPoint(), dx = bow.x - anchor.pos.x, dy = bow.y - anchor.pos.y, d = Math.hypot(dx, dy);
@@ -638,8 +623,8 @@ function anchorForce(dt)
     player.angVel *= Math.max(0, 1 - .9/slowdown*dt);
 }
 
-// fraction-free test: every hull circle inside the slip (small tolerance)
-function boatInSlip()
+// hull circle i in slip-local coordinates, tested against the slip (small tolerance); all: every circle inside, else any
+function boatInSlip(all = true)
 {
     const c = Math.cos(slip.a), s = Math.sin(slip.a), tol = .15*player.k;
     for (let i = 0; i < player.circles.length; i++)
@@ -647,10 +632,10 @@ function boatInSlip()
         const p = player.world[i], r = player.circles[i].r;
         const dx = p.x - slip.pos.x, dy = p.y - slip.pos.y;
         const lx = dx*c + dy*s, ly = -dx*s + dy*c;
-        if (Math.abs(lx) + r > slip.len/2 + tol || Math.abs(ly) + r > slip.wid/2 + tol)
-            return false;
+        const inside = Math.abs(lx) + r <= slip.len/2 + tol && Math.abs(ly) + r <= slip.wid/2 + tol;
+        if (inside != all) return !all;
     }
-    return true;
+    return all;
 }
 
 function parkingScore()
@@ -661,27 +646,42 @@ function parkingScore()
     return clamp(1 - .6*Math.min(1, posErr/(.8*player.k)) - .4*Math.min(1, angErr/(.35*slip.leeway)), 0, 1);
 }
 
+function isResting()
+{
+    return player.speed() < REST_SPEED*player.vs && Math.abs(player.angVel) < REST_SPIN/player.slowdown
+        && !player.throttle && !player.rudder;
+}
+
+// no anchor: the boat is checked once it has rested for REST_TIME with part of its hull in the slip.
+// Resting anywhere else is never judged, and after a miss the boat must move again before the next check.
 function updateJudge(dt)
 {
-    if (!judge) return;
-    judge.t += dt;
-    if (judge.result)
+    if (judge)
     {
+        judge.t += dt;
         if (judge.result == 'win' && judge.t > 1.4)
             boatIndex < fleet.length - 1 ? startBoat(boatIndex + 1) : showComplete();
-        else if (judge.result == 'fail' && judge.t > 1.8) { anchor = judge = undefined; }
-        return;
+        else if (judge.result == 'fail' && judge.t > 1.8) judge = undefined;
+        if (judge) return;
     }
-    if (player.speed() < .25*player.vs && Math.abs(player.angVel) < .25/player.slowdown) judge.settle += dt;
-    else judge.settle = 0;
-    if (judge.settle < .5 && judge.t < 3.5*player.slowdown) return;
+    if (intro && intro.t < intro.dur) return;
+    if (!isResting()) { restT = 0; restArmed = true; return; }
+    if (!restArmed || !boatInSlip(false)) { restT = 0; return; }
+    restT += dt;
+    if (restT >= REST_TIME) judgeBoat();
+}
 
-    judge.t = 0;
+function judgeBoat()
+{
+    judge = { t:0 };
+    restT = 0; restArmed = false;
+    attempts++;
     if (boatInSlip())
     {
         const acc = parkingScore();
         accs.push(acc);
         judge.result = 'win';
+        dropAnchor();
         sfx('win');
         confetti(player.pos, player.k);
         popup('PARKED!', player.pos, C_SUNNY, 1.6, 2);
@@ -894,9 +894,7 @@ function layoutButtons()
     {
         button('pause', 'II', 37.6, 21.75, 2.2, 1.2, { small:true });
         button('restart', 'RESTART', 33.6, 21.75, 4.8, 1.2, { small:true });
-        if (!isPaused)
-            button('anchor', '', 37.4, 3, 3.6, 3.6, { round:true });
-        else
+        if (isPaused)
         {
             button('resume', 'RESUME', 20, 13, 8, 2.2, { big:true });
             button('restart', 'RESTART', 20, 10, 7, 1.8);
@@ -916,7 +914,7 @@ function buttonAt(p)
 {
     for (const b of buttons)
     {
-        if (b.round ? p.distance(vec2(b.x, b.y)) < b.w/2 : Math.abs(p.x - b.x) < b.w/2 && Math.abs(p.y - b.y) < b.h/2)
+        if (Math.abs(p.x - b.x) < b.w/2 && Math.abs(p.y - b.y) < b.h/2)
             return b;
     }
 }
@@ -938,7 +936,6 @@ function pressButton(id)
     else if (id == 'pause') isPaused = !isPaused;
     else if (id == 'resume') isPaused = false;
     else if (id == 'restart' || id == 'retry') { track('design', 'ui:restart'); loadLevel(levelIndex); }
-    else if (id == 'anchor') toggleAnchor();
     else if (id == 'next') levelIndex >= LEVELS.length - 1 ? setScreen('title') : loadLevel(levelIndex + 1);
 }
 
@@ -983,7 +980,6 @@ function gameUpdate()
         if (keyWasPressed('KeyR')) pressButton('restart');
         if (!isPaused)
         {
-            if (keyWasPressed('Space') || keyWasPressed('Enter')) toggleAnchor();
             levelTime += timeDelta;
             if (intro && intro.t < SLIP_SHOW && (mouseWasPressed(0) || keyWasPressed('Space') || keyWasPressed('Enter')))
                 intro.t = SLIP_SHOW;
@@ -1097,11 +1093,25 @@ function drawWakes()
 
 function drawAnchorRope()
 {
+    drawRestRing();
     if (!anchor) return;
     const drop = Math.min(1, anchor.t*4), k = player.k;
     drawCircle(anchor.pos, 1.2*drop*k, C_WATER2.scale(1, .6));
     drawAnchorGlyph(anchor.pos, .55*k, C_INK.scale(1, .5));
     drawLine(bowPoint(), anchor.pos, Math.min(.08*WU, .08*k), C_INK);
+}
+
+// fills around the boat while it rests in the slip, so the player sees the park coming
+function drawRestRing()
+{
+    if (!restT || judge) return;
+    const p = Math.min(1, restT/REST_TIME), r = player.radius*1.15, n = 40, w = .14*cam.wu;
+    drawCircle(player.pos, r*2, C_CLEAR, w, C_INK.scale(1, .2));
+    for (let i = 0; i < n*p; i++)
+    {
+        const a0 = PI/2 - i/n*2*PI, a1 = PI/2 - Math.min(i + 1, n*p)/n*2*PI;
+        drawLine(player.pos.add(vec2(Math.cos(a0), Math.sin(a0)).scale(r)), player.pos.add(vec2(Math.cos(a1), Math.sin(a1)).scale(r)), w, C_SUNNY);
+    }
 }
 
 function drawBodies()
@@ -1163,17 +1173,6 @@ function drawPopups()
 function drawButton(b)
 {
     const hover = hoverId == b.id, lift = hover ? .12 : 0;
-    if (b.round)
-    {
-        const inSlip = boatInSlip() && player.speed() < player.vs;
-        const pulse = !anchor && inSlip ? 1 + Math.sin(time*8)*.06 : 1;
-        const c = vec2(b.x, b.y + lift), d = b.w*pulse;
-        drawCircle(c.add(vec2(.16, -.22)), d, C_SHADOW);
-        drawCircle(c, d, anchor ? C_TEAL : C_CORAL, LINE_W*1.4, C_INK);
-        drawAnchorGlyph(c.add(vec2(0, .2)), 1.25*pulse, C_CREAM);
-        txt(anchor ? 'RAISE' : 'SPACE', b.x, b.y - b.h/2 - .55, .55, C_INK);
-        return;
-    }
     if (b.card !== undefined) return drawLevelCard(b, hover);
     const c = vec2(b.x, b.y + lift);
     drawPanel(c, b.w, b.h, b.big ? C_CORAL : C_CREAM, Math.min(.6, b.h*.35));
@@ -1315,7 +1314,7 @@ function drawComplete()
     }
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
     txt(`Accuracy ${shown}%`, 20, 11.6, 1, C_INK);
-    txt(`Anchor drops: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks hit: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
+    txt(`Tries: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks hit: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
     if (accs.length > 1)
         txt(level.boats.map((e, i) => `${BOATS[e.boat].name} ${Math.round(accs[i]*100)}%`).join('    '), 20, 9.3, .5, C_INK);
     if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
@@ -1380,7 +1379,7 @@ window.game =
         if (intro) intro.t = intro.dur;
         player.pos = slip.pos.copy(); player.angle = slip.a; player.vel = vec2(); player.angVel = 0;
         player.updateWorld();
-        if (!anchor) toggleAnchor();
+        if (!judge) judgeBoat();
     },
 };
 

@@ -115,7 +115,7 @@ const SCALE_LEVELS =
         boats:
         [
             { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
-              hint: 'Hold the mouse to steer (or WASD). Stop in the box, then SPACE to drop anchor.' },
+              hint: 'Hold the mouse to steer (or WASD). Stop in the box and let go.' },
             { boat: 'cruise', start: { x: 225, y: 210, a: PI*5/12 }, slip: { x: 680, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],

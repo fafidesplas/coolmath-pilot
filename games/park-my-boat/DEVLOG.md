@@ -1,5 +1,13 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — No more anchor (prototype)
+- Owner: removed the anchor drop, ahead of Fafi's GDD review, to test the feel. No anchor button, no Space/Enter anchor, no "Too fast!" spin-out.
+- A boat is checked by itself once it rests (under 0.25 u/s and 0.25 rad/s, no input) for 0.5 s with part of its hull in the slip. A yellow ring fills around the boat while it rests there. Resting anywhere else is never judged; after a miss the boat must move before the next check. When a boat parks, the anchor drops by itself (splash, chain) for the celebration.
+- Settle drag: below 1 u/s with no throttle, full forward drag and 2x spin drag (`SETTLE_SPEED`, `?settle=`). The results line "Anchor drops" is now "Tries". Odd Couple's hint: "Stop in the box and let go."
+- Measured, letting go at top speed in open water: rowboat at rest after 7.4 s (8.5 boat lengths), jet ski 11.5 s (21 lengths), mega yacht 17 s (4.7 lengths). The long coast is the existing 30% coast drag; the anchor used to cut it short. Reverse is now the only brake.
+- Checked in Chrome: parks after 0.5 s of rest, a half-out boat misses once and isn't re-checked until it moves, resting away from the slip is never judged, `win()` completes all 5 levels, no console errors.
+- Next: owner plays it. If stopping feels too slow, try `?coast=.5` or `?settle=2`.
+
 ## 2026-10-25 — GDD: no more anchor
 - Pao: remove the anchor drop. In the GDD, parking is now checked by itself when the boat has rested for 0.5 s with part of its hull in the slip (speed under 0.25 toy units/s × scale, no throttle). Resting anywhere else is never judged, so waiting for traffic is safe.
 - New in the GDD: settle drag (below 1 toy unit/s with no throttle, full drag) so ships don't creep for ~20 s; a rest ring that fills around the boat in the slip; the anchor drops by itself as part of the park celebration. Gone: anchor button, Space/Enter anchor, "Too fast!", anchor speed cue, `anchor:toofast`. Level 3 is now "No Brakes".
