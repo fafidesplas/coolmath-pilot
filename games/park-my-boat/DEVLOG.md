@@ -1,5 +1,13 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Unparking: jams in the open ocean
+- Owner: some Unparking levels should be in the middle of the ocean; walls shrink the solution space and give the answer away. Two new jams with no land at all, the dashed way-out line all round:
+  - Open Water (Unparking 2): a 9-boat nested box, 0.6-0.8 m apart: trawler and a 30 m container ship outside, sailboats down the sides and across, rowboats, a swan in the middle. 5 rounds (2-2-2-2-1). A buoy and ducks outside it.
+  - Raft-Up (Unparking 5): 13 boats rafted round a jet ski (swans, speedboats, party barges, a 20 m yacht, the trawler) with jet skis and rowboats pinning the outer pair's ends, the whole raft turned 45°. 6 rounds (4-2-2-2-2-1). Two buoys and ducks.
+- Unparking order is now Marina Jam, Open Water, Fishing Port, Big Ship Day, Raft-Up.
+- Tried a random layout search with the solver first: in open water it rated loose layouts as deep (straight-line exits blocked by far-away boats) when steering would get round everything. Open-water jams have to be packed under a meter apart to be puzzles, so these two are built by hand as nested layers and checked with `jamSolve()`.
+- Checked in Chrome: both solve, all boats start inside the line, nothing moves or costs while idle, gaps 0.4-0.8 m.
+
 ## 2026-10-25 — Unparking: a boat you switch away from keeps gliding
 - Owner: switching away from a boat keeps its momentum. It now glides on with the coasting drag, as if you'd let go of the throttle, instead of stopping dead. Its own glide isn't charged as a push until it comes to rest; anything it drifts into is.
 - Checked in Chrome: the sailboat switched away from at 1.9 m/s was still moving at 1.2 m/s four seconds later, at no cost.

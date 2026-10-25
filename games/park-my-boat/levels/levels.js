@@ -256,6 +256,27 @@ const SCALE_LEVELS =
         hint: 'Tap a boat to pick it, then drive it out of the harbor.',
     },
     {
+        // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
+        // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
+        // sailboats, the rowboats, and the swan in the middle.
+        name: 'Open Water', jam: true, budget: 10000, view: [12, 5, 48, 40], boats: [], land: [], docks: [],
+        moored:
+        [
+            { boat: 'trawler', x: 30, y: 31.8, a: 0 },
+            { boat: 'container', k: 3, x: 30, y: 11.05, a: PI },
+            { boat: 'sailboat', x: 21.4, y: 20, a: PI/2 },
+            { boat: 'sailboat', x: 38.6, y: 20, a: -PI/2 },
+            { boat: 'sailboat', x: 30, y: 24.02, a: 0 },
+            { boat: 'sailboat', x: 30, y: 15.98, a: PI },
+            { boat: 'dinghy', x: 27.2, y: 20, a: PI/2 },
+            { boat: 'dinghy', x: 32.8, y: 20, a: -PI/2 },
+            { boat: 'swan', x: 30, y: 20, a: 0 },
+        ],
+        buoys: [[14.5, 37.5, 1.5]],
+        ducks: [{ x: 44, y: 6.5, kids: 2 }],
+        hint: 'Open water: you can leave any way. Work from the outside in.',
+    },
+    {
         // jam 2: ten boats from a 40 m container ship to jet skis, one parked on the diagonal; buoys and
         // ducks drift between them. Quay along the top, sand west and along the bottom to the mouth (x 40-64).
         name: 'Fishing Port', jam: true, budget: 10000, view: [-2, -2, 66, 38], boats: [],
@@ -301,6 +322,30 @@ const SCALE_LEVELS =
         buoys: [[22, 30, 2.5], [55, 12, 2], [74, 22, 2]],
         ducks: [{ x: 18, y: 12, kids: 3 }, { x: 46, y: 42, kids: 2 }],
         hint: 'Big ships need room. Clear the way first.',
+    },
+    {
+        // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats, party barges,
+        // a 20 m yacht and the trawler, with small boats pinning the outer pair's ends. 6 rounds.
+        name: 'Raft-Up', jam: true, budget: 10000, view: [13, 9, 55, 51], boats: [], land: [], docks: [],
+        moored:
+        [
+            { boat: 'jetski', x: 32.00, y: 32.00, a: PI/4 },
+            { boat: 'swan', x: 30.03, y: 30.03, a: 3*PI/4 },
+            { boat: 'swan', x: 33.97, y: 33.97, a: -PI/4 },
+            { boat: 'speedboat', x: 29.65, y: 34.35, a: PI/4 },
+            { boat: 'speedboat', x: 34.35, y: 29.65, a: -3*PI/4 },
+            { boat: 'pontoon', x: 27.40, y: 27.40, a: -PI/4 },
+            { boat: 'pontoon', x: 36.60, y: 36.60, a: 3*PI/4 },
+            { boat: 'yacht', k: 2.5, x: 25.94, y: 38.06, a: -3*PI/4 },
+            { boat: 'trawler', x: 39.16, y: 24.84, a: PI/4 },
+            { boat: 'jetski', x: 17.99, y: 30.10, a: 3*PI/4 },
+            { boat: 'jetski', x: 33.90, y: 46.01, a: -PI/4 },
+            { boat: 'dinghy', x: 28.80, y: 14.48, a: -PI/4 },
+            { boat: 'dinghy', x: 49.52, y: 35.20, a: 3*PI/4 },
+        ],
+        buoys: [[18, 46, 2], [48, 16, 2]],
+        ducks: [{ x: 46, y: 46, kids: 3 }],
+        hint: 'Find the boats that are free, then peel the raft from the outside in.',
     },
     {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a
