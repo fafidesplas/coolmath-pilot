@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: softer auto-run jump
+- Owner: the jump popped up too fast. Every jump launched at 20 u/s and a tap was made by cutting the speed on release, so every jump had the same hard burst and an abrupt stop. Now it takes off at 12 u/s (`runJump`) and holding lowers gravity to 12 (`holdGravity`) for up to 0.4 s (`holdTime`); `runCut` is gone.
+- Measured: tap 1.8 u high and 3.4 u long, 0.27 s to the top; full hold 4.4 u high and 6.1 u long, 0.55 s to the top (was 0.47 s at 20 u/s). The timing search still finishes 1–5 and not 6–10.
+
 ## 2026-10-25 — Hop: auto-run with a standard jump
 - Owner: charging while running was too tight. Switched to a standard jump: a press jumps at once (20 u/s), holding keeps rising, letting go while rising cuts the upward speed to 6 u/s (`runJump`, `runCut`). Height by hold: 1 frame 0.7 u, 6 frames 2.1 u, 15 frames 4.0 u, 25+ frames 4.6 u. Launch stretch, landing squeeze and dust stay; the charge squash is gone. Hint "Press: jump · Hold: higher", level 1 prompt "Press A to run, press again to jump!". A mid-air wall turns you around at full run speed.
 - Checked in Chrome: the per-jump timing search finishes 1–5 (2.9–3.9 s) and not 6–10. In the real game loop, the player leaves the ground 1 frame after the press.

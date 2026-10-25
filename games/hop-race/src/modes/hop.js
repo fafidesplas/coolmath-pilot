@@ -34,8 +34,9 @@ const HR_HOP = {
     // jumps higher. Walls (grip ones too) turn you around and ice is plain floor. false: the hold-to-charge hop above
     autoRun:   true,
     runSpeed:  6,       // run speed, on the ground and in the air (u/s)
-    runJump:   20,      // jump speed straight up (u/s): held all the way, about 4.8 u high
-    runCut:    6,       // letting go while rising cuts the upward speed to this (u/s): a tap is about 1.4 u high
+    runJump:   12,      // takeoff speed straight up (u/s): a tap is about 1.7 u high
+    holdGravity: 12,    // lighter gravity while you hold and rise, for up to holdTime: held all the way, about 4.5 u high
+    holdTime:  .4,      // (s)
     coyote:    .08,     // a press this soon after running off an edge still jumps (s)
     runLean:   .06,     // the top leans into the run (u)
 };
@@ -186,7 +187,7 @@ HR_MODES.hop = {
     },
 
     // auto-run: the first press only starts the run; then a press jumps at once (on the ground, or just after
-    // running off an edge) and holding keeps rising higher: letting go early cuts the jump short. Walls turn you around
+    // running off an edge) and holding keeps rising higher, up to holdTime. Walls turn you around
     run(p, input)
     {
         const H = HR_HOP, dt = timeDelta, solids = hrLevel.solids;
@@ -203,6 +204,7 @@ HR_MODES.hop = {
         {
             p.vy = H.runJump;
             p.rising = true;
+            p.holdT = 0;
             p.grounded = false;
             p.coyote = 0;
             p.squash = -.3;   // launch stretch
@@ -212,10 +214,10 @@ HR_MODES.hop = {
             hrEmit('hold', p);
             hrEmit('jump', p);
         }
-        if (p.rising && !p.down && p.vy > H.runCut) p.vy = H.runCut;   // let go early: a lower jump
-        if (p.vy <= 0) p.rising = false;
+        // holding keeps gravity light for a while, so the jump floats higher; letting go ends it for this jump
+        if (!p.down || p.vy <= 0 || (p.holdT += dt) > H.holdTime) p.rising = false;
         p.vx = p.dir * H.runSpeed;
-        p.vy -= H.gravity * dt;
+        p.vy -= (p.rising ? H.holdGravity : H.gravity) * dt;
         p.lean = H.runLean;
 
         p.x += p.vx * dt;
