@@ -345,7 +345,20 @@ Still open:
 | Coolmath SDK, ad breaks, branding, size limit, GA keys | Team-wide `[confirm]` items in `STANDARDS.md` | Team | Open |
 | Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
 
+**Questions for Fafi: an economy?** Pao's idea: each level starts you with a sum of money (say $10,000), every bump and duck takes from it, and you keep it all if you park without touching anything. Today the damage bill (3.9) is only shown, it changes nothing.
+
+| Question | Recommendation | Who decides | Status |
+|---|---|---|---|
+| Should there be an economy at all? | Try it as a per-level score: start with a set sum, damages come off it, the rest is "kept". It gives careful players a goal that time alone doesn't | Fafi, Pao | Open |
+| Does money change the stars, or is it a separate score? | Separate: stars stay time-based (3.6), money is a second number with its own best, so the two don't fight (fast vs careful) | Fafi, Pao | Open |
+| Per level, or a wallet that carries across levels? | Per level for v1. A wallet needs something to spend it on, which is a bigger feature | Fafi, Pao | Open |
+| If there is a wallet, what does money buy? | Only cosmetics (hull colors, captain hats), never boats or advantages. No random rewards (`STANDARDS.md`: no loot boxes) | Fafi, Pao | Open |
+| What happens at $0? | Nothing: the level goes on and the money stays at $0. A fail state here would undo "no fail state" (3.6) | Fafi, Pao | Open |
+| Does the starting sum scale with the boats? | Yes: a cruise ship's bumps cost far more than a rowboat's, so each level's sum is set from its boats (like par) | Fafi, Pao | Open |
+| Bonus for a clean park (no contact at all)? | Yes: a "Clean!" popup and a small bonus per boat, so "don't touch anything" is felt in the moment, not only at the end | Fafi, Pao | Open |
+
 ## 15. Changelog
+- 2026-10-25 — Added questions for Fafi on an economy (Pao's idea: start each level with money, keep it all with no damage).
 - 2026-10-25 — Sent to Fafi for review.
 - 2026-10-25 — Anchor removed: parking is checked automatically when the boat rests in the slip. Added settle drag, the rest ring, and the auto anchor on park; level 3 is now "No Brakes".
 - 2026-10-25 — Review 1 applied: slip clearing, miss messages, clock stops at the anchor drop, vertical slice defined, per-boat start events, anchor speed cue, teaching order and level fixes, par cap, edge cases.
