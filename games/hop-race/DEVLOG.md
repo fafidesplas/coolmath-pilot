@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: ice speeds up the run, jumps off it dash
+- Owner: ice should speed you up, and the extra speed should make a jump a longer forward dash at the cost of height. Built: `p.speed` builds from 6 to 11 u/s on ice (`iceSpeed`, `iceAccel` 5 u/s²) and drops back at `groundBrake` 10 u/s² off it; you keep it in the air. Takeoff is up to 35 % weaker at full speed (`dashCost`). A wall resets you to 6 u/s. The lean grows with speed and ice sparkles show when fast.
+- Measured on flat ice: tap 1.8 u high/3.5 u long at 6 u/s, 0.8/4.2 at 11; full hold 4.4/6.2 at 6 u/s, 3.2/7.8 at 8.5, 2.2/8.8 at 11 (still flips). The timing search finishes 1–5 (1-5 Thin Ice in 2.9 s, was 3.7 s) and not 6–10. Frozen frame on 1-5 shows the lean and sparkles at 9.5 u/s.
+
 ## 2026-10-25 — Hop: run lean, somersault, landing squeeze
 - Owner asked for a forward lean while running, a somersault on a hold of 0.4 s or more, and a squeeze on landing. Built: `runLean` .15 (was .06, and the shared decay in `player.js` cut it to .04; running players now skip that decay), eased to 0 in the air. A full hold starts `p.flipT`: one forward turn in 0.4 s (`flipTime`), clockwise when facing right, finishing 4× faster if you land mid-flip. Landing squeeze `landSquash` 0.2 + 0.015 × fall speed, up to 0.4.
 - `hrDrawPlayer` takes `p.spin` (clockwise radians) and turns the body, letter and eye together around the center; other modes never set it. A flip cut off by the finish settles upright (`player.js`).

@@ -31,9 +31,13 @@ const HR_HOP = {
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 
     // auto-run (testing, 2026-10-25): the first press starts a run; then a press jumps at once and holding
-    // jumps higher. Walls (grip ones too) turn you around and ice is plain floor. false: the hold-to-charge hop above
+    // jumps higher. Walls (grip ones too) turn you around and ice speeds you up. false: the hold-to-charge hop above
     autoRun:   true,
-    runSpeed:  6,       // run speed, on the ground and in the air (u/s)
+    runSpeed:  6,       // run speed (u/s); in the air you keep the speed you took off with
+    iceSpeed:  11,      // on ice the run speeds up to this (u/s)...
+    iceAccel:  5,       // ...at this rate (u/s²)
+    groundBrake: 10,    // off the ice, a faster run slows back to runSpeed at this rate (u/s²)
+    dashCost:  .35,     // at full ice speed the takeoff is this much weaker: a long, low dash
     runJump:   12,      // takeoff speed straight up (u/s): a tap is about 1.7 u high
     holdGravity: 12,    // lighter gravity while you hold and rise, for up to holdTime: held all the way, about 4.5 u high
     holdTime:  .4,      // (s)
@@ -56,6 +60,8 @@ HR_MODES.hop = {
         p.t = p.charge = p.flat = 0;
         p.running = p.rising = false;
         p.coyote = p.spin = 0;
+        p.speed = HR_HOP.runSpeed;
+        p.onIce = false;
         p.flipT = -1;   // somersault time, -1 when not flipping
     },
 
@@ -205,7 +211,8 @@ HR_MODES.hop = {
         p.coyote = p.grounded ? H.coyote : max(0, p.coyote - dt);
         if (press && p.coyote > 0)
         {
-            p.vy = H.runJump;
+            // the faster you run, the weaker the takeoff: speed from the ice turns a jump into a long, low dash
+            p.vy = H.runJump * (1 - H.dashCost * clamp((p.speed - H.runSpeed) / (H.iceSpeed - H.runSpeed)));
             p.rising = true;
             p.holdT = 0;
             p.grounded = false;
@@ -221,7 +228,9 @@ HR_MODES.hop = {
         // Holding all the way through holdTime throws a forward somersault
         if (p.rising && p.down && (p.holdT += dt) >= H.holdTime && p.flipT < 0) { p.flipT = 0; p.flipDir = p.dir; }
         if (!p.down || p.vy <= 0 || p.holdT >= H.holdTime) p.rising = false;
-        p.vx = p.dir * H.runSpeed;
+        if (p.grounded)
+            p.speed = p.onIce ? min(H.iceSpeed, p.speed + H.iceAccel * dt) : max(H.runSpeed, p.speed - H.groundBrake * dt);
+        p.vx = p.dir * p.speed;
         p.vy -= (p.rising ? H.holdGravity : H.gravity) * dt;
 
         p.x += p.vx * dt;
@@ -231,7 +240,8 @@ HR_MODES.hop = {
                 p.x = p.vx > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
                 p.pupilKick(p.dir * .2, 0);
                 p.dir = -p.dir;
-                p.vx = -p.vx;
+                p.speed = H.runSpeed;   // a bump costs the ice speed
+                p.vx = p.dir * p.speed;
                 hrSfx.land.play(undefined, .5, 1.3);
             }
 
@@ -245,6 +255,7 @@ HR_MODES.hop = {
                 {
                     p.y = s.top + HR_PSIZE / 2;
                     p.grounded = true;
+                    p.onIce = s.ice;
                     if (!wasGrounded)
                     {
                         p.pupilKick(0, max(-.3, p.vy * .015));
@@ -271,8 +282,9 @@ HR_MODES.hop = {
             p.spin = k < 1 ? smoothStep(k) * 2 * PI * p.flipDir : 0;
             if (k >= 1) p.flipT = -1;
         }
-        // lean into the run on the ground, straighten up in the air
-        p.lean += ((p.grounded && p.flipT < 0 ? H.runLean : 0) - p.lean) * min(1, dt * 12);
+        // lean into the run on the ground (more the faster you go), straighten up in the air
+        p.lean += ((p.grounded && p.flipT < 0 ? H.runLean * p.speed / H.runSpeed : 0) - p.lean) * min(1, dt * 12);
+        if (p.grounded && p.onIce && p.speed > H.runSpeed + 1 && rand() < .3) hrSparkle(p.x, p.y - HR_PSIZE / 2);
     },
 
     // the lunge pose in flight: held for lungeKeep of the airtime, then eased back to square
