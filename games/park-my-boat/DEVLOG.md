@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — GDD first draft
+- Wrote `GDD.md` (Status: Draft, reviewer: Fafi). It records the prototype as built and proposes the v1 changes: stars from time against a par (a boat counts when parked with 50%+ accuracy), 2 worlds of 10 levels (5 existing levels slot in as 4, 10, 11, 14, 18), finish-to-unlock, restart without the slip preview, camera look-ahead and edge arrows, a music loop, and the analytics event list.
+- The 12 phase 1a answers are in the GDD as "Proposed" under Open questions, waiting for Pao and Fafi to confirm.
+- `meta.json` stage: brief → gdd.
+- Next: phase 1c critical review, then Fafi reads it.
+
 ## 2026-10-24 — Slower glide from the slip
 - Owner: the move back from the slip was too fast. The camera now stays on the slip for 3 s (was 2), then glides back at 40% of its normal speed (`SLIP_GLIDE`).
 - The boat gets control when the camera is nearly back (within 10% of the view, zoom within 20%), not after a fixed time, so short trips end soon and long ones get the time they need (capped at 6 s, `SLIP_MAX`). The camera then eases back to full speed over 0.4 s, so it doesn't jump.
