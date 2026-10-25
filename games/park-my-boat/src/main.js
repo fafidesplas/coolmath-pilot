@@ -200,41 +200,9 @@ function addLand(m)
     lands.push({ pos:vec2(m.x, m.y), r, pts, grass: m.grass && outline.map(p => at(p.scale(.8))) });
 }
 
-function loadLevel(i)
+// buoys, logs and duck families: things afloat that aren't boats
+function addFloaters(L)
 {
-    levelIndex = i;
-    const L = level = LEVELS[i];
-    gameMode = modeOf(L);
-    bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
-    popups.length = drops.length = wakes.length = foams.length = 0;
-    anchor = judge = result = intro = player = undefined;
-    attempts = damages = ducksOffended = levelTime = 0;
-    accs = [];
-    steerHeld = false;
-
-    for (const r of L.land) rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], land:true });
-    for (const d of L.docks) rects.push({ ...d, dock:true });
-    for (const m of L.lands || []) addLand(m);
-
-    // a harbor jam (src/jam.js) has no chain of boats to park, only the boats to clear out
-    if (L.jam)
-    {
-        jamLoad(L);
-        setScreen('playing');
-        updateCamera(0, true);
-        if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
-        return;
-    }
-
-    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
-    slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
-    fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
-
-    (L.moored || []).forEach((m, k) =>
-        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
-    for (const m of L.drifters || [])
-        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
-    (L.traffic || []).forEach((t, n) => makeTraffic(t, n));
     for (const [bx, by, s=1] of L.buoys || [])
     {
         const b = new Body(vec2(bx, by), 0, [{ x:0, y:0, r:.45*s }], 1, { kind:'buoy', restitution:.8 });
@@ -262,6 +230,45 @@ function loadLevel(i)
             leader = d;
         }
     }
+}
+
+function loadLevel(i)
+{
+    levelIndex = i;
+    const L = level = LEVELS[i];
+    gameMode = modeOf(L);
+    bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
+    popups.length = drops.length = wakes.length = foams.length = 0;
+    anchor = judge = result = intro = player = undefined;
+    attempts = damages = ducksOffended = levelTime = 0;
+    accs = [];
+    steerHeld = false;
+
+    for (const r of L.land) rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], land:true });
+    for (const d of L.docks) rects.push({ ...d, dock:true });
+    for (const m of L.lands || []) addLand(m);
+
+    // a harbor jam (src/jam.js) has no chain of boats to park, only the boats to clear out
+    if (L.jam)
+    {
+        jamLoad(L);
+        addFloaters(L);
+        setScreen('playing');
+        updateCamera(0, true);
+        if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
+        return;
+    }
+
+    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
+    slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
+    fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
+
+    (L.moored || []).forEach((m, k) =>
+        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
+    for (const m of L.drifters || [])
+        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
+    (L.traffic || []).forEach((t, n) => makeTraffic(t, n));
+    addFloaters(L);
 
     startBoat(0);
     growBuoys(Infinity);
@@ -753,8 +760,8 @@ function updateDuck(d, dt)
     else
     {
         d.wanderT -= dt;
-        const away = d.pos.subtract(player.pos);
-        if (away.length() < 2.4 + player.radius)
+        const away = player && d.pos.subtract(player.pos);
+        if (away && away.length() < 2.4 + player.radius)
             d.target = d.pos.add(away.normalize(3));       // paddle away from the boat
         else if (d.wanderT <= 0)
         {
@@ -1353,7 +1360,7 @@ function drawComplete()
     if (level.jam)
     {
         txt(`Money kept ${fmtMoney(Math.round(level.budget*shown/100))}`, 20, 11.6, 1, C_INK);
-        txt(`Bumps: ${jamBumps}    Boats picked: ${attempts}`, 20, 10.3, .55, C_TEAL);
+        txt(`Bumps: ${jamBumps}    Ducks hit: ${ducksOffended}    Boats picked: ${attempts}`, 20, 10.3, .55, C_TEAL);
         if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
         return;
     }

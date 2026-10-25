@@ -1,5 +1,13 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Unparking: Fishing Port and Big Ship Day
+- Owner: two more Unparking levels, more variety of sizes, more complex layouts, buoys and ducks inside.
+  - Fishing Port (Unparking 2): 10 boats in a 64 x 36 m corner: a 40 m container ship along the bottom, the trawler upright beside the mouth, a 16 m yacht, a speedboat parked at 45°, party barge, sailboat, swan, rowboat, two jet skis; two buoys and a duck family. `jamSolve()`: 4 rounds (4, 3, 2, 1 boats).
+  - Big Ship Day (Unparking 3): 11 boats in a 94 x 50 m corner: a 50 m cruise ship along the bottom, a 45 m container ship and the trawler standing upright, a 24 m yacht on the diagonal that leaves through the mouth, plus barge, sailboat, speedboat, swan, rowboat, two jet skis; three buoys and two duck families. 5 rounds (3, 3, 1, 3, 1). The first draft had two boats overlapping and seven stuck; reworked live with the solver.
+- Jams now have floaters: buoys, logs and ducks float and collide (`addFloaters` shared with parking levels). The boat you drive nudges them; buoys are free, a duck costs 1% of the budget ("QUACK"); the fixed boats stop them. Ducks no longer need a player to exist. Results show ducks hit.
+- Checked in Chrome: all three jams load with no overlaps and solve; driving into a buoy nudges it for free; driving through the ducks costs $100 for one duck; no console errors.
+- Next: owner plays the three in order; the curve is 8 boats/3 rounds, 10/4, 11/5.
+
 ## 2026-10-25 — Two modes: Parking and Unparking
 - Owner: the jam puzzle is its own mode. The title now has PARKING and UNPARKING (Space/Enter picks Parking) instead of PLAY and LEVELS; each opens its own level list, headed with the mode's name and numbered from 1. Marina Jam is Unparking level 1; Parking keeps its 5 levels.
 - NEXT stays in the mode (after the last one it goes back to that mode's list), MENU goes to the mode's list, BACK from a list goes to the title. The HUD number and analytics ids count within the mode (`unpark:level01` for jams). A level's save slot is still its place in `LEVELS`, so saves keep working.

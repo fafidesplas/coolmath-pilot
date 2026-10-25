@@ -90,16 +90,30 @@ function jamUpdate(dt)
         if (b) { steerHeld = false; if (b != player) jamSelect(b); }
     }
     for (const b of jamBoats) if (b != player) { b.vel.set(0, 0); b.angVel = 0; b.integrate(dt); }    // squash wobble only
-    if (!player) return;
 
+    // buoys, logs and ducks float free: the boat you drive nudges them, the fixed boats stop them
+    const floaters = bodies.filter(b => b.kind == 'buoy' || b.kind == 'log' || b.kind == 'duck');
     const sub = dt / SUBSTEPS;
     for (let s = 0; s < SUBSTEPS; s++)
     {
-        controlPlayer(sub);
-        player.integrate(sub);
-        collideStatics(player, rects, posts, jamHit);
-        for (const o of jamBoats) if (o != player) collideBodies(player, o, jamHit);
+        if (player)
+        {
+            controlPlayer(sub);
+            player.integrate(sub);
+            collideStatics(player, rects, posts, jamHit);
+            for (const o of jamBoats) if (o != player) collideBodies(player, o, jamHit);
+        }
+        for (const f of floaters)
+        {
+            if (f.kind == 'duck') updateDuck(f, sub);
+            f.integrate(sub);
+            collideStatics(f, rects, posts);
+            for (const o of jamBoats) collideBodies(o, f, jamFloaterHit);
+        }
+        for (let i = 0; i < floaters.length; i++)
+            for (let j = i + 1; j < floaters.length; j++) collideBodies(floaters[i], floaters[j]);
     }
+    if (!player) return;
 
     // motor putts and wake, as in stepWorld
     const thr = Math.abs(player.throttle);
@@ -143,6 +157,27 @@ function jamHit(A, B, impact, p)
     sfx('bonk', p, 1, .8);
     splash(p, 8, 3, player.k);
     popup(`BUMP  -${fmtMoney(cost)}`, player.pos, C_CORAL, .8, 1.2);
+}
+
+// the boat you drive hitting a buoy, log or duck: buoys ring and float off for free, a duck costs a
+// little (1% of the budget) and spins; the fixed boats just stop them
+function jamFloaterHit(A, B, impact, p)
+{
+    const f = A.kind == 'jam' || A.kind == 'player' ? B : A, boat = f == A ? B : A;
+    if (boat != player || impact / Math.min(boat.vs, f.vs) < .6 || f.hitCooldown > 0) return;
+    f.hitCooldown = .4;
+    if (f.kind == 'duck')
+    {
+        if (f.stunT > 0) return;
+        f.stunT = 1.5;
+        f.angVel += rand(-14, 14);
+        ducksOffended++;
+        const cost = Math.round(level.budget*.01);
+        damages += cost;
+        sfx('quack', p, 1, rand(.9, 1.3) / Math.sqrt(f.duckSize));
+        popup(`QUACK  -${fmtMoney(cost)}`, f.pos, C_CORAL, .6, 1);
+    }
+    else sfx(f.kind == 'buoy' ? 'bong' : 'bonk', p, .8, rand(.9, 1.1) / Math.sqrt(f.k || 1));
 }
 
 // RTS-style selection ring around the boat being driven, under its hull

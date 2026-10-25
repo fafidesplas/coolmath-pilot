@@ -256,6 +256,53 @@ const SCALE_LEVELS =
         hint: 'Tap a boat to pick it, then drive it out of the harbor.',
     },
     {
+        // jam 2: ten boats from a 40 m container ship to jet skis, one parked on the diagonal; buoys and
+        // ducks drift between them. Quay along the top, sand west and along the bottom to the mouth (x 40-64).
+        name: 'Fishing Port', jam: true, budget: 10000, view: [-2, -2, 66, 38], boats: [],
+        land: [[-50, -50, 0, 80], [-50, -50, 40, 0], [-50, 39, 90, 90]],
+        docks: [{ x0: -1, y0: 36, x1: 64, y1: 39, quay: true }],
+        moored:
+        [
+            { boat: 'container', k: 4, x: 20.5, y: 4, a: 0 },
+            { boat: 'trawler', x: 46, y: 14.5, a: PI/2 },
+            { boat: 'jetski', x: 56, y: 3, a: -PI/2 },
+            { boat: 'pontoon', x: 56, y: 22, a: PI },
+            { boat: 'sailboat', x: 63, y: 22, a: -PI/2 },
+            { boat: 'yacht', k: 2, x: 12, y: 15, a: 0 },
+            { boat: 'speedboat', x: 30, y: 14, a: -PI/4 },
+            { boat: 'swan', x: 30, y: 26, a: 0 },
+            { boat: 'dinghy', x: 6, y: 22, a: PI },
+            { boat: 'jetski', x: 24, y: 32, a: 0 },
+        ],
+        buoys: [[34, 31, 2], [14, 26, 2]],
+        ducks: [{ x: 20, y: 30, kids: 3 }],
+        hint: 'Buoys float out of your way. Ducks cost a little if you hit them.',
+    },
+    {
+        // jam 3: big ships and small fry. A 50 m cruise ship and a 45 m container ship, a yacht on the
+        // diagonal, buoys and two duck families. Sand west and along the bottom to the mouth (x 60-94).
+        name: 'Big Ship Day', jam: true, budget: 10000, view: [-2, -2, 96, 52], boats: [],
+        land: [[-50, -50, 0, 90], [-50, -50, 60, 0], [-50, 53, 120, 120]],
+        docks: [{ x0: -1, y0: 50, x1: 94, y1: 53, quay: true }],
+        moored:
+        [
+            { boat: 'cruise', k: 5, x: 26, y: 5, a: 0 },
+            { boat: 'container', k: 4.5, x: 64, y: 26, a: PI/2 },
+            { boat: 'yacht', k: 3, x: 44, y: 25, a: -PI/4 },
+            { boat: 'pontoon', x: 80, y: 14, a: PI },
+            { boat: 'sailboat', x: 88, y: 14, a: -PI/2 },
+            { boat: 'trawler', x: 82, y: 33, a: PI/2 },
+            { boat: 'speedboat', x: 14, y: 20, a: 0 },
+            { boat: 'jetski', x: 72, y: 6, a: -PI/2 },
+            { boat: 'swan', x: 30, y: 38.5, a: 0 },
+            { boat: 'dinghy', x: 10, y: 38, a: PI },
+            { boat: 'jetski', x: 52, y: 44, a: 0 },
+        ],
+        buoys: [[22, 30, 2.5], [55, 12, 2], [74, 22, 2]],
+        ducks: [{ x: 18, y: 12, kids: 3 }, { x: 46, y: 42, kids: 2 }],
+        hint: 'Big ships need room. Clear the way first.',
+    },
+    {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a
         // bay next to it, the continent closes the gap in Pangaea thousands of km away
         name: 'Continental Drift', bonus: true, land: HARBOR_ISLAND.land, docks: HARBOR_ISLAND.docks,
