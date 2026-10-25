@@ -7,7 +7,8 @@
 // open to the sea elsewhere; a boat is out once it is wholly past the level's view box.
 //
 // level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows, and the harbor's edge),
-//               budget ($), moored: the boats in the jam, hint
+//               budget ($), moored: the boats in the jam, hint. The view box's edge is drawn as a dashed
+//               line over open water: a boat is out once its whole hull is past it.
 
 const JAM_BUMP = .1;            // share of the budget one bump costs
 const JAM_KNOCK = 1;            // impact (in the boat's own speed scale) below which a touch is free
@@ -67,10 +68,35 @@ function jamBlocked(b, pos)
     return false;
 }
 
+// out once every hull circle is wholly past the dashed line (the view box), on any side
 function jamOut(b, pos = b.pos)
 {
-    const [x0, y0, x1, y1] = level.view, r = b.radius;
-    return pos.x - r > x1 || pos.x + r < x0 || pos.y - r > y1 || pos.y + r < y0;
+    const [x0, y0, x1, y1] = level.view, c = Math.cos(b.angle), s = Math.sin(b.angle);
+    if (pos.x - b.radius > x1 || pos.x + b.radius < x0 || pos.y - b.radius > y1 || pos.y + b.radius < y0) return true;
+    return b.circles.every(k =>
+    {
+        const x = pos.x + k.x*c - k.y*s, y = pos.y + k.x*s + k.y*c;
+        return x - k.r > x1 || x + k.r < x0 || y - k.r > y1 || y + k.r < y0;
+    });
+}
+
+// the way out: a dashed line along the view box's edge, drawn only where it crosses open water
+function drawJamBoundary()
+{
+    const [x0, y0, x1, y1] = level.view, dash = .6*cam.wu, w = .14*cam.wu;
+    const onLand = p => rects.some(r => p.x > r.x0 && p.x < r.x1 && p.y > r.y0 && p.y < r.y1) ||
+        posts.some(q => Math.hypot(p.x - q.x, p.y - q.y) < q.r);
+    for (const [a, b] of [[vec2(x0, y0), vec2(x1, y0)], [vec2(x1, y0), vec2(x1, y1)], [vec2(x1, y1), vec2(x0, y1)], [vec2(x0, y1), vec2(x0, y0)]])
+    {
+        const len = a.distance(b), n = Math.floor(len / (dash*2)), d = b.subtract(a).normalize();
+        for (let i = 0; i < n; i++)
+        {
+            const p = a.add(d.scale(i*dash*2)), q = p.add(d.scale(dash));
+            if (onLand(p.add(d.scale(dash/2)))) continue;
+            drawLine(p, q, w*1.6, C_INK.scale(1, .35));
+            drawLine(p, q, w, C_CREAM);
+        }
+    }
 }
 
 // which jam boat is under a world point

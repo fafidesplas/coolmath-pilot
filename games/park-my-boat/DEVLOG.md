@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Unparking: the way out is a dashed line
+- Owner: show where a boat counts as out. A dashed cream line (with a faint ink edge) runs along the jam's view box wherever it crosses open water; it skips sand and quays. A boat is out once its whole hull is past the line, tested per hull circle (it used the bounding circle, which for long boats was well past the hull).
+- The jam camera keeps a 7% margin round the view box so the line shows on every side.
+- Checked in Chrome: the line shows across the harbor mouth and the open east side of Fishing Port; all three jams still solve.
+
 ## 2026-10-25 — Unparking: Fishing Port and Big Ship Day
 - Owner: two more Unparking levels, more variety of sizes, more complex layouts, buoys and ducks inside.
   - Fishing Port (Unparking 2): 10 boats in a 64 x 36 m corner: a 40 m container ship along the bottom, the trawler upright beside the mouth, a 16 m yacht, a speedboat parked at 45°, party barge, sailboat, swan, rowboat, two jet skis; two buoys and a duck family. `jamSolve()`: 4 rounds (4, 3, 2, 1 boats).

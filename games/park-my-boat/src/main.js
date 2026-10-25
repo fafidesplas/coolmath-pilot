@@ -322,7 +322,9 @@ function cameraGoal()
     // a jam's camera holds still on the whole harbor corner
     if (level?.jam)
     {
-        const [x0, y0, x1, y1] = level.view, wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
+        // with a margin, so the dashed way-out line round the view box shows on every side
+        const v = level.view, m = .07*Math.max(v[2] - v[0], v[3] - v[1]);
+        const [x0, y0, x1, y1] = [v[0] - m, v[1] - m, v[2] + m, v[3] + m], wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
         return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
     }
     const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.type.view || 1);
@@ -1160,7 +1162,7 @@ function drawBodies()
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     drawSlip();     // over the finger docks, so its dashed sides show
-    if (level?.jam) drawJamSelection();
+    if (level?.jam) { drawJamBoundary(); drawJamSelection(); }
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
