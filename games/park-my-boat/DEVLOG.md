@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Level preview for big layouts
+- Owner: big levels should open on the whole layout, then zoom in to the first boat. A level can now have `preview: [x0, y0, x1, y1]`: on load the camera frames that box for 3 s with a card (level number, name, how many boats to park), then the usual zoom in and boat card follow. Single-boat levels skip the boat card.
+- Click, Space or Enter skips the preview. Restart skips it too; it plays again after you play another level. The editor's test play skips it.
+- Marina and Rush Hour have a preview. Editor self-test: 5 levels, 0 problems.
+- Next: owner plays both; decide if 3 s is the right length and if the smaller levels want one too.
+
 ## 2026-10-24 — Marina
 - Owner (from a photo of a crowded yacht marina): new level 5, Marina. A 380 x 350 m basin with big yachts (40–52 m) along the quay, an upper pier from the west wall (sailboats, speedboats and party barges on top, 28–36 m yachts underneath) and a lower pier from the east wall (small craft on top, sailboats and speedboats underneath). 218 moored boats, only jet ski to yacht size: no ships, tugs or swans.
 - The jet ski parks in a gap among small craft on the lower pier, the sailboat on the upper pier, then a 48 m yacht (k 6) waits in the middle fairway and squeezes into a 26 m gap on the quay. Six traffic boats at ~3 m/s: rowboat tenders, speedboats, a jet ski loop round the upper pier's end, a party barge.
