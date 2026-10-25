@@ -158,27 +158,27 @@ const SCALE_LEVELS =
         buoys: [[1000, 300, 5]],
     },
     {
-        // a channel east to the slip, crossed by three canals of looping traffic, bigger boats each time;
-        // sand between the canals is where you stop and wait for a gap. The yachts turn in wide lagoons.
+        // a short channel east to the slip, crossed by three narrow canals of looping traffic, faster each
+        // time; all of it fits in the jet ski's view. The 3.5 m of sand between canals is where you wait for
+        // a gap. The loops turn round in lagoons just off screen to the north and south.
         name: 'Rush Hour',
-        land: sandAround([-1000, -1000, 2000, 1000],
+        land: sandAround([-100, -100, 130, 100],
         [
-            [-25, -25, 20, 25], [-25, -15, 290, 15], [270, -30, 290, 30],    // start pool, channel, slip pool
-            [20, -80, 50, 80], [70, -115, 110, 115], [130, -380, 270, 380],  // the three canals
-            [118, -380, 360, -90], [118, 90, 360, 380],                      // lagoons at the ends of the third,
-            [40, -380, 360, -150], [40, 150, 360, 380],                      // wider past the second
+            [-6, -4, 1.5, 4], [-6, -2.5, 30.5, 2.5], [26.5, -4, 30.5, 4],     // start pool, channel, slip pool
+            [1.5, -18, 7.5, 18], [11, -18, 17, 18], [20.5, -18, 26.5, 18],    // the three canals
+            [-6, 18, 36, 34], [-6, -34, 36, -18],                             // lagoons at both ends
         ]),
-        docks: [{ x0: 290, y0: -40, x1: 305, y1: 40, quay: true }],
+        docks: [{ x0: 30.5, y0: -6, x1: 32, y1: 6, quay: true }],
         boats:
         [
-            { boat: 'jetski', start: { x: -10, y: 0, a: 0 }, slip: { right: 290, y: 0, a: 0, pad: [1.4, 1] },
+            { boat: 'jetski', start: { x: -1, y: 0, a: 0 }, slip: { right: 30.5, y: 0, a: 0, pad: [1.4, 1] },
               hint: 'Stop between the canals and wait for a gap.' },
         ],
         traffic:
         [
-            ...loopLane(35, 8, 60, false, 3, Array(6).fill([['dinghy', .33], ['swan', .75]]).flat()),
-            ...loopLane(90, 12, 90, true, 4, Array(3).fill([['pontoon', .44], ['sailboat', .35], ['speedboat', .19]]).flat()),
-            ...loopLane(200, 40, 250, false, 7, Array(5).fill([['yacht', .12], ['tug', .18]]).flat()),
+            ...loopLane(4.5, 1.9, 24, false, 2.2, Array(5).fill([['dinghy', .25], ['swan', .55]]).flat()),
+            ...loopLane(14, 1.9, 24, true, 3, Array(5).fill([['jetski', .2], ['dinghy', .33]]).flat()),
+            ...loopLane(23.5, 1.9, 24, false, 4, Array(10).fill(['jetski', .27])),
         ],
     },
     {

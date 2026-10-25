@@ -132,7 +132,7 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
   - **Bonus, Continental Drift:** rowboat → cruise ship → island → continent, 100x each step. Unlocks when all 20 levels are finished.
 - **Teaching order:** each new element first appears where it can't hurt (ducks away from the line to the slip), next in the way (ducks crossing the fairway), then with an earlier element (ducks plus moored boats).
 - **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 5 current levels pass; check new levels with the same test (park each boat, look for the next).
-- **Slip-in-view rule:** every boat starts with its whole slip on screen, at its own framing. No crossing open water with nothing happening: the challenge is stopping, turning and the obstacles around the slip, not distance. The one exception is a gauntlet level built around the trip itself (Rush Hour). Together with the hand-off rule, this keeps each level's slips close together.
+- **Slip-in-view rule:** every boat starts with its whole slip on screen, at its own framing. No crossing open water with nothing happening: the challenge is stopping, turning and the obstacles around the slip, not distance. The one exception is a gauntlet level built around the trip itself, and even that fits on the player's screen (Rush Hour: 30 m, all in the jet ski's view). Together with the hand-off rule, this keeps each level's slips close together.
 - **Difficulty curve:** a level gets harder with: more boats in the chain, bigger scale jumps, a narrower slip (less `pad`), a longer or bent route, moving things in the way, current across the approach. Add one of these per level, and never two new ones at once. Par stays at most 90 s (3.6). A level should take a first-time player at most 3 tries.
 - **Stars:** see 3.6. 3★ ≤ par, 2★ ≤ 1.5 × par, 1★ for finishing.
 - **Levels:** (existing levels are named in quotes)
@@ -152,7 +152,7 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
 | 11 | "Way Down" | Container Ship → Tugboat → Jet Ski | Big-to-small chain, first slow traffic (party barge, sailboat). |
 | 12 | Ferry Lane | Rowboat → Mega Yacht | One ferry lane of back-and-forth traffic to cross twice. |
 | 13 | Container Port | Tugboat → Container Ship | Tight ship berth between two moored container ships. |
-| 14 | "Rush Hour" | Jet Ski | Three canals of looping traffic; stop on the sand and wait for a gap. |
+| 14 | "Rush Hour" | Jet Ski | A gauntlet on one screen: three narrow canals of looping traffic, faster each time; stop on the sand and wait for a gap. |
 | 15 | Swan Lake | Swan Pedalo → Rowboat → Jet Ski → Cruise Ship | Three tiny slips side by side, then the ship parks next to them without crushing them. |
 | 16 | Crosscurrent | Sailboat → Cruise Ship | A strong current along the quay. |
 | 17 | Drift Field | Zippy → Tugboat → Mega Yacht | A harbor full of loose boats and logs. |
@@ -360,6 +360,7 @@ Still open:
 | Bonus for a clean park (no contact at all)? | Yes: a "Clean!" popup and a small bonus per boat, so "don't touch anything" is felt in the moment, not only at the end | Fafi, Pao | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Rush Hour compressed to one screen.
 - 2026-10-25 — Added the slip-in-view rule (6): every boat starts with its slip on screen, except gauntlet levels.
 - 2026-10-25 — Added the hand-off rule (6): the next boat is visible from where the previous one parks.
 - 2026-10-25 — Added questions for Fafi on an economy (Pao's idea: start each level with money, keep it all with no damage).
