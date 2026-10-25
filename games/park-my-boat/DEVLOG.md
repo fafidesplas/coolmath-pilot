@@ -1,5 +1,12 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Marina Jam: select, then drive
+- Owner: same controls as parking. Tapping a boat now only selects it, with an RTS-style ring (a sunny ellipse with an ink edge, pulsing gently, under the hull); you drive it out with the mouse or WASD. Tapping another boat swaps; the one you leave stops where it is. Hint: "Tap a boat to pick it, then drive it out of the harbor."
+- Every boat you're not driving is fixed in place (no mass for collisions), so the one you drive bounces off and the jam can't be shoved around. A real knock (impact at or over 1 in the boat's own speed scale) costs a $1,000 bump, once per knock; gentle scrapes are free. The results show bumps and boats picked.
+- `jamSolve()` still checks straight-out exits: a floor, since steering can do more.
+- Checked in Chrome: tapping selects (ring shown, others fixed), the sailboat reverses out with S, the trawler driven into the jet ski costs one bump and moves nothing else, no console errors.
+- Next: owner plays; tune the knock threshold if bumps feel too strict or too loose.
+
 ## 2026-10-25 — Harbor Jam prototype: Marina Jam
 - Owner: try a parking-jam mode (like car jam puzzles). New level 6, Marina Jam, and `src/jam.js`. Tap a boat's front half to send it ahead, its back half to reverse; it drives straight (3 m/s + half its length per second) until it leaves the harbor or touches something, and stops there without shoving anything. A bump costs 10% of a $10,000 budget; stars from money kept (3★ at 90%, 2★ at 60%), so it already scores the way the GDD now says.
 - The layout: 8 boats (trawler, sailboat, jet ski, party barge, two speedboats, swan, 16 m yacht) in a corner walled by a quay, sand to the west and sand along the bottom up to a harbor mouth. `jamSolve()` confirms it clears with no bump in 3 rounds; each boat also has a wrong way that ends in a bump.

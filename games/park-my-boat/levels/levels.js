@@ -252,7 +252,7 @@ const SCALE_LEVELS =
             { boat: 'yacht', k: 2, x: 12, y: 18.5, a: 0 },
             { boat: 'speedboat', x: 8, y: 12.5, a: PI },
         ],
-        hint: 'Tap a boat to send it out: tap its front to go ahead, its back to reverse.',
+        hint: 'Tap a boat to pick it, then drive it out of the harbor.',
     },
     {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a

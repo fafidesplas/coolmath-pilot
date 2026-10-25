@@ -1140,6 +1140,7 @@ function drawBodies()
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     drawSlip();     // over the finger docks, so its dashed sides show
+    if (level?.jam) drawJamSelection();
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
@@ -1339,7 +1340,7 @@ function drawComplete()
     if (level.jam)
     {
         txt(`Money kept ${fmtMoney(Math.round(level.budget*shown/100))}`, 20, 11.6, 1, C_INK);
-        txt(`Bumps: ${jamBumps}    Taps: ${attempts}`, 20, 10.3, .55, C_TEAL);
+        txt(`Bumps: ${jamBumps}    Boats picked: ${attempts}`, 20, 10.3, .55, C_TEAL);
         if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
         return;
     }
