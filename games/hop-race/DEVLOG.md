@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Climb: the cup breaks on resistance
+- Owner found that tapping (presses under 0.2 s) with the cup stuck on a wall could teleport the body under a platform. Creeping turned the arm into a solid, and the push-out moved the body to the far side, so the cup never let go. Now, if creeping would put the body into a solid or the arm through one, the cup breaks at once (`resisted()`, `hrClimbArmCuts()`). Then the press whips as it does after a hold past 0.2 s.
+- Checked headless on every Climb wall face, with taps of 3, 6 and 11 frames from 16,428 starts. Body or arm through a solid with the cup still on: 2,774 before, 0 after. Taps still lift the body more than 1 u in 5,038 starts (6,134 before; the difference is climbs that only worked by clipping).
+- Not touched: a whipping arm (cup off) can still cut through a corner, because only the head and the body collide.
+
 ## 2026-10-23 — Title shows the worlds
 - A cold playtester never realized there were worlds besides Hop: they were behind "Levels". The title now has a row of the four world cards (same as Mode select) under the Play buttons, labeled "or pick a world"; a card starts that world's next level, solo. Play 1P / Play 2P are unchanged, so it's still one click to playing. The Levels button is gone, Settings is a small button top right, the title is a bit smaller and the idle hopping square was removed to make room. GDD §8 updated.
 - Checked in Chrome at 1568×762 as a mockup first, which the owner approved.

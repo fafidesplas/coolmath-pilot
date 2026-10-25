@@ -10,6 +10,7 @@
     any surface (floor, wall or ceiling) it sticks and holds your whole weight, so you can perch on the
     arm, hang from a wall or dangle under a ceiling. Pressing while stuck to a wall turns the arm slowly around
     the cup, levering the body (taps inch you along); only a hold longer than peelTime pulls the cup off.
+    If creeping meets any resistance (the body or the arm would hit a solid), the cup breaks at once.
 */
 
 'use strict';
@@ -63,6 +64,21 @@ function hrClimbTouching(x, y)
 {
     const r = HR_CLIMB.headR + HR_CLIMB.suckReach;
     return hrLevel.solids.some(s => hrClimbPush(x, y, s).d < r);
+}
+
+// does the arm from the body center (x0, y0) to the head center (x1, y1) pass through solid s?
+// slab test on s shrunk by a hair, so an arm lying along a face doesn't count
+function hrClimbArmCuts(x0, y0, x1, y1, s)
+{
+    const e = .02, dx = x1 - x0, dy = y1 - y0;
+    let t0 = 0, t1 = 1;
+    for (const [d, lo, hi] of [[dx, s.l + e - x0, s.r - e - x0], [dy, s.bottom + e - y0, s.top - e - y0]])
+    {
+        if (!d) { if (lo > 0 || hi < 0) return false; continue; }
+        const a = lo / d, b = hi / d;
+        t0 = max(t0, min(a, b)); t1 = min(t1, max(a, b));
+    }
+    return t0 < t1;
 }
 
 // push the body square out of every solid; returns true if a solid pushed it up (it stands on it)
@@ -131,6 +147,7 @@ HR_MODES.climb = {
         else p.armW = C.coastTime > 0 ? max(0, p.armW - C.spin / C.coastTime * h) : 0;
         const moving = p.armW > 0;
         p.aimA -= p.armW * h;
+        if (p.pin && moving && this.resisted(p)) p.pin = null;   // creeping would shove the body into a solid: the cup breaks
 
         let grounded = this.solve(p, moving, head0);
         if (p.pin && moving && this.jammed(p))
@@ -217,6 +234,14 @@ HR_MODES.climb = {
         p.armW = 0;
         hrSfx.click.play(vec2(x, y), .7, .5);   // a low thwop
         p.pupilKick(0, -.1);
+    },
+
+    // with the head held on the cup, would the body overlap a solid, or the arm cut through one?
+    // (checked before anything pushes the body out)
+    resisted(p)
+    {
+        const hd = this.head(p), x = p.x - (hd.x - p.pin.x), y = p.y - (hd.y - p.pin.y);
+        return hrLevel.solids.some(s => hrOverlapSolid(x, y, s, .02) || hrClimbArmCuts(x, y, p.pin.x, p.pin.y, s));
     },
 
     jammed(p)
