@@ -133,6 +133,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 - **Teaching order:** each new element first appears where it can't hurt (ducks away from the line to the slip), next in the way (ducks crossing the fairway), then with an earlier element (ducks plus moored boats).
 - **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 5 current levels pass; check new levels with the same test (park each boat, look for the next).
 - **Slip-in-view rule:** every boat starts with its whole slip on screen, at its own framing. No crossing open water with nothing happening: the challenge is stopping, turning and the obstacles around the slip, not distance. The one exception is a gauntlet level built around the trip itself, and even that fits on the player's screen (Rush Hour: 30 m, all in the jet ski's view). Together with the hand-off rule, this keeps each level's slips close together.
+- **Open-sea rule:** no level is a closed pool. Every harbor, marina or canal opens onto the sea somewhere, even off screen: a harbor mouth, an open side, lagoons that run out to sea. Boats come from somewhere and the water goes somewhere. (Done for all 5 levels: the `basin()` helper leaves the south side open, and Rush Hour's lagoons run out to sea.)
 - **Difficulty curve:** a level gets harder with: more boats in the chain, bigger scale jumps, a narrower slip (less `pad`), a longer or bent route, moving things in the way, current across the approach. Add one of these per level, and never two new ones at once. A decent run should take at most 90 s (120 s for level 20). A level should take a first-time player at most 3 tries.
 - **Stars:** see 3.6. 3★ keeping 90% of the budget or more, 2★ 60% or more, 1★ for finishing.
 - **Levels:** (existing levels are named in quotes)
@@ -365,6 +366,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Open-sea rule (6): no level is a closed pool.
 - 2026-10-25 — Stretch goal: levels in different settings (harbor, marina, tropical islands, more later).
 - 2026-10-25 — No clock: stars come from money kept from a per-level budget (3.6). Par times, the clock rules and time-based results removed; the economy questions for Fafi became decisions plus four tuning questions.
 - 2026-10-25 — Slip silhouette removed: either end in counts, so a boat shape in the slip pointed one way for no reason.

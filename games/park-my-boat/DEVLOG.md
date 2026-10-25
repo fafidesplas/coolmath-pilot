@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — No closed pools
+- Owner: no level should be a closed-off pool; they should all lead to open ocean. `basin()` (Way Down, Mixed Nuts, Marina) no longer has a sand strip along the bottom, and its side walls stop at the basin's edge, so the south side opens onto the sea. Rush Hour's lagoons now run out past the sand to the sea. Odd Couple was already open to the south.
+- Added the open-sea rule to the GDD's level design section. Also added level settings (harbor, marina, tropical islands) to the GDD as a stretch goal.
+- Checked in Chrome: all 5 levels load with nothing knocked at load, `win()` completes each.
+- Next: owner plays; boats knocked south can now drift out to sea instead of hitting a wall.
+
 ## 2026-10-25 — GDD: money kept, no clock
 - Owner: it's not a race. The GDD drops the clock and par times; stars now come from money kept. Each level has a budget, every bump costs (big boats more), a miss costs 5%, ducks 1%; 3★ at 90% kept, 2★ at 60%, 1★ for finishing. A boat still needs 50% accuracy to count. "Clean!" popup for a boat parked without touching anything.
 - This answers Fafi's economy questions (per level, no wallet); the numbers are left open for Fafi and the slice.

@@ -14,12 +14,13 @@
 //          pace?: m/s, loops only: keeps to a timetable so boats sharing a loop stay evenly spaced}
 // the camera follows the boat and its slip
 
-// harbor basin: sand on the sides and bottom, a concrete quay along the top edge. The strips overlap
-// instead of meeting edge to edge, which would leave a hairline seam.
+// harbor basin: a concrete quay along the top edge, sand on the sides down to y0, and open sea to the
+// south of that (no level is a closed pool). The strips overlap instead of meeting edge to edge, which
+// would leave a hairline seam.
 function basin(x0, y0, x1, top)
 {
     return {
-        land: [[x0-3000, y0-3000, x0, top+3000], [x1, y0-3000, x1+3000, top+3000], [x0-3000, y0-3000, x1+3000, y0], [x0-3000, top+15, x1+3000, top+3000]],
+        land: [[x0-3000, y0, x0, top+3000], [x1, y0, x1+3000, top+3000], [x0-3000, top+15, x1+3000, top+3000]],
         docks: [{ x0, y0:top, x1, y1:top+15, quay:true }],
     };
 }
@@ -160,13 +161,13 @@ const SCALE_LEVELS =
     {
         // a short channel east to the slip, crossed by three narrow canals of looping traffic, faster each
         // time; all of it fits in the jet ski's view. The 3.5 m of sand between canals is where you wait for
-        // a gap. The loops turn round in lagoons just off screen to the north and south.
+        // a gap. The loops turn round in lagoons just off screen to the north and south, which run out to sea.
         name: 'Rush Hour',
         land: sandAround([-100, -100, 130, 100],
         [
             [-6, -4, 1.5, 4], [-6, -2.5, 30.5, 2.5], [26.5, -4, 30.5, 4],     // start pool, channel, slip pool
             [1.5, -18, 7.5, 18], [11, -18, 17, 18], [20.5, -18, 26.5, 18],    // the three canals
-            [-6, 18, 36, 34], [-6, -34, 36, -18],                             // lagoons at both ends
+            [-6, 18, 36, 100], [-6, -100, 36, -18],                           // lagoons at both ends, open to the sea
         ]),
         docks: [{ x0: 30.5, y0: -6, x1: 32, y1: 6, quay: true }],
         boats:
