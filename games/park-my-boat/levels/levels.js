@@ -69,6 +69,23 @@ function sandAround(box, water)
         [sandAt(cols[i - 1], y0, y1) ? c.x0 - 1 : c.x0, y0, sandAt(cols[i + 1], y0, y1) ? c.x1 + 1 : c.x1, y1]));
 }
 
+// a row of boats tied up side by side along a pier edge at y = edge, from x0 east to x1: under it bow
+// up (dir -1) or on top of it bow down (dir 1). pattern: [[boat, k], ...] repeated, gap meters between
+// hulls; free: [[x, width], ...] open water left in the row (the player's slips)
+function berths(x0, x1, edge, dir, gap, pattern, free = [])
+{
+    const out = [];
+    for (let x = x0, i = 0; ; i++)
+    {
+        const [boat, k] = pattern[i % pattern.length], t = BOATS[boat], w = t.W*k;
+        const f = free.find(([fx, fw]) => x < fx + fw/2 && x + w > fx - fw/2);
+        if (f) { x = f[0] + f[1]/2; i--; continue; }
+        if (x + w > x1) return out;
+        out.push({ boat, k, x: +(x + w/2).toFixed(1), y: +(edge + dir*(t.L*k/2 + .35*k)).toFixed(1), a: -dir*PI/2 });
+        x += w + gap;
+    }
+}
+
 // traffic on one loop across a canal at x: north up the leg at x - d, south down the leg at x + d
 // (flip swaps them), turning around at y = +-Y, at pace m/s. boats: [[boat, speed], ...] spaced evenly
 // around the loop; speed is the share of each boat's top speed that comes closest to the pace.
@@ -162,6 +179,44 @@ const SCALE_LEVELS =
             ...loopLane(35, 8, 60, false, 3, Array(6).fill([['dinghy', .33], ['swan', .75]]).flat()),
             ...loopLane(90, 12, 90, true, 4, Array(3).fill([['pontoon', .44], ['sailboat', .35], ['speedboat', .19]]).flat()),
             ...loopLane(200, 40, 250, false, 7, Array(5).fill([['yacht', .12], ['tug', .18]]).flat()),
+        ],
+    },
+    {
+        // a crowded yacht marina: big yachts along the quay, two piers packed on both sides, open water
+        // round the west end of the lower pier and the east end of the upper one. Each boat has one free
+        // slip between the moored boats; tenders, jet skis and speedboats cruise the fairways.
+        name: 'Marina', land: basin(0, 0, 380, 350).land,
+        docks:
+        [
+            { x0: 0, y0: 350, x1: 380, y1: 365, quay: true },
+            { x0: -5, y0: 200, x1: 270, y1: 206 },     // upper pier, from the west wall
+            { x0: 100, y0: 70, x1: 385, y1: 76 },      // lower pier, from the east wall
+        ],
+        boats:
+        [
+            { boat: 'jetski', start: { x: 25, y: 25, a: PI/2 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' },
+              hint: 'Find the free spot on the lower pier.' },
+            { boat: 'sailboat', start: { x: 200, y: 30, a: PI }, slip: { x: 150, y: 213, a: PI/2, pad: [.8, .5], fingers: 'none' },
+              hint: 'Your berth is on the upper pier. Watch for the tenders.' },
+            { boat: 'yacht', k: 6, start: { x: 200, y: 125, a: 0 }, slip: { x: 110, top: 350, a: PI/2, pad: [.8, .6], fingers: 'none' },
+              hint: 'Squeeze the yacht in between the others on the quay.' },
+        ],
+        moored:
+        [
+            ...berths(3, 377, 350, -1, 2, [['yacht', 5.5], ['yacht', 6.5], ['yacht', 5], ['yacht', 6]], [[110, 26]]),
+            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2], ['sailboat', 2.4]], [[150, 7.5]]),
+            ...berths(3, 266, 200, -1, 2, [['yacht', 4], ['yacht', 3.5], ['yacht', 4.5]]),
+            ...berths(104, 377, 76, 1, 1.2, [['speedboat', 2], ['dinghy', 1.3], ['jetski', 1], ['pontoon', 2], ['speedboat', 2], ['sailboat', 2.4], ['dinghy', 1.3], ['jetski', 1]], [[230, 4.2]]),
+            ...berths(104, 377, 70, -1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2]]),
+        ],
+        traffic:
+        [
+            { boat: 'dinghy', path: [[110, 148], [280, 148]], end: 'back', speed: .33 },
+            { boat: 'speedboat', path: [[280, 100], [110, 100]], end: 'back', speed: .15 },
+            { boat: 'jetski', path: [[300, 110], [360, 110], [360, 190], [300, 190]], end: 'loop', speed: .22 },
+            { boat: 'pontoon', path: [[30, 250], [260, 250]], end: 'back', speed: .33 },
+            { boat: 'speedboat', path: [[360, 278], [40, 278]], end: 'back', speed: .15 },
+            { boat: 'dinghy', path: [[110, 42], [370, 42]], end: 'back', speed: .33 },
         ],
     },
     {

@@ -1,5 +1,12 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Marina
+- Owner (from a photo of a crowded yacht marina): new level 5, Marina. A 380 x 350 m basin with big yachts (40–52 m) along the quay, an upper pier from the west wall (sailboats, speedboats and party barges on top, 28–36 m yachts underneath) and a lower pier from the east wall (small craft on top, sailboats and speedboats underneath). 218 moored boats, only jet ski to yacht size: no ships, tugs or swans.
+- The jet ski parks in a gap among small craft on the lower pier, the sailboat on the upper pier, then a 48 m yacht (k 6) waits in the middle fairway and squeezes into a 26 m gap on the quay. Six traffic boats at ~3 m/s: rowboat tenders, speedboats, a jet ski loop round the upper pier's end, a party barge.
+- New helper `berths` in `levels/levels.js`: a row of boats side by side along a pier edge from a repeating pattern, with free gaps left for the player's slips.
+- Checked: 60 fps, no moored boat moves on load, `win()` parks all three boats with no neighbor bumped, editor self-test 5 levels 0 problems.
+- Next: owner plays it; check the yacht has room to turn into its berth (fairway is ~77 m) and tune traffic.
+
 ## 2026-10-24 — Rush Hour
 - Owner (from an HTML sketch): new level 4, Rush Hour. The jet ski runs east down a 290 m channel to a slip at a quay. Three canals cross it at right angles, each packed with traffic on a loop that crosses the channel twice (north on one leg, south on the other): 6 rowboats + 6 swans at ~3 m/s, 3 party barges + 3 sailboats + 3 Zippys at ~4 m/s, 5 mega yachts + 5 tugboats at ~7 m/s. 20 m of sand between canals is where you stop and wait for a gap.
 - Two level helpers in `levels/levels.js`: `loopLane` (boats spaced evenly on a racetrack loop across a canal) and `sandAround` (sand everywhere in a box except a list of water rects). Traffic speeds are shares of each boat's top speed, picked so a whole lane moves at one pace.
