@@ -3,7 +3,7 @@
 **Status:** In review
 **Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-10-25
 
-> Park a rowboat, then a cruise ship 100x bigger right next to it, against the clock, in a harbor where nothing has brakes.
+> Park a rowboat, then a cruise ship 100x bigger right next to it without a scratch, in a harbor where nothing has brakes.
 
 This GDD describes the prototype that is already built (`src/`, `levels/levels.js`, `tools/editor.js`) and the changes for v1. Lines marked **(new)** are not built yet. The owner's decisions are listed in section 14.
 
@@ -13,13 +13,13 @@ This GDD describes the prototype that is already built (`src/`, `levels/levels.j
   2. **Wildly different sizes.** A 2.4 m jet ski and a 400 m container ship share one harbor. The camera zoom sells the jump.
   3. **Physics is the joke.** Bumps, spinning ducks and wobbling boats are funny with the sound off. The text stays plain.
 - **Player:** Coolmath players aged 12–24, on a school Chromebook or at a desk, mouse or trackpad, often with the sound off.
-- **Session:** one boat takes 15–40 s; one level (1–5 boats) takes 20–90 s of clock time (par ≤ 90 s, see 3.6); a typical visit is 10–20 minutes (6–12 levels).
-- **Hook:** a clock and a par time. "I was 3 s off three stars" brings players back. Knowing the harbor makes the next run faster.
+- **Session:** one boat takes 15–40 s; one level (1–5 boats) takes 20–90 s for a decent run; a typical visit is 10–20 minutes (6–12 levels).
+- **Hook:** keep the money. Each level gives you a budget and every bump costs. "One scrape off three stars" brings players back, and knowing the harbor makes the next run cleaner. It is not a race: there is no clock.
 
 ## 2. Core loop
 - **Moment (seconds):** steer → let go early → coast → line up → back off with reverse → come to rest inside the slip → parked.
-- **Level (20–90 s of clock time, plus camera moves):** the camera shows the slip → glides back to the boat → park it → the camera zooms to the next boat, bigger or smaller → … → results with time and stars.
-- **Meta (days):** unlock the next level, replay for three stars, beat your best time, find the bonus level.
+- **Level (20–90 s, plus camera moves):** the camera shows the slip → glides back to the boat → park it → the camera zooms to the next boat, bigger or smaller → … → results with money kept and stars.
+- **Meta (days):** unlock the next level, replay for three stars, keep more money than last time, find the bonus level.
 
 ## 3. Mechanics
 Units: the world is in meters, and the camera is free (no fixed px scale). Each boat type has a toy size (`L`, `W` in toy units) and a scale `k` to real size. All handling numbers below are in toy units and scale with `k` (`makeBoat` in `src/main.js`). UI is laid out in a 40 × 22.5 unit box (1280 × 720 at 32 px per unit).
@@ -64,19 +64,19 @@ Mass and power are toy values before scaling. A level can set its own `k` for a 
 - **Inside:** every hull circle is inside the slip. Nose-in and stern-in both count.
 - **Accuracy:** 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Boats 50 m and longer get a slip 15% longer and wider and a 23° angle allowance (`BIG_SHIP_LENGTH`, `BIG_SHIP_LEEWAY`).
 - **(new) Parked:** inside and accuracy ≥ 50%. The slip turns solid, a check mark pops up, and the next boat starts.
-- **Not parked (new: a message per cause):** the player keeps going from where the boat is. The clock keeps running. The message says what was wrong, and the slip shows the matching cue:
+- **Not parked (new: a message per cause):** the player keeps going from where the boat is, and pays a miss fee (3.6). The message says what was wrong, and the slip shows the matching cue:
   - a hull circle is outside the slip: "Not in the slip." (the slip outline flashes);
   - inside, but the angle part is the bigger loss: "Line it up straighter." (the slip's long sides flash);
   - inside, but the position part is the bigger loss: "Closer to the middle." (a mark at the slip's center flashes).
 
-### 3.6 Time and stars (new)
-- The clock runs only while the player has control. It stops during the slip preview and the camera glides between boats, while paused, and while the tab is hidden (the game pauses then too).
-- A parked boat's time stops at the moment its 0.5 s rest began, so the rest wait doesn't count. After a miss, the wait counts.
-- Level time = sum of the times for all boats.
-- Each level has a `par` time in seconds in its data. 3★ ≤ par, 2★ ≤ 1.5 × par, 1★ for finishing.
-- **Setting par:** the designer's clean run (no misses) × 1.2, rounded up to the next whole second. Checked again in playtests. Par is at most 90 s per level (120 s for level 20); if a level needs more, move ship slips closer to where the ships start.
-- Accuracy, the damage bill and ducks hit show on the results as extras. They do not change stars.
-- There is no fail state. A level only ends when all its boats are parked, or when the player restarts or quits.
+### 3.6 Money and stars (new)
+- **No clock.** It is not a race: the player can take as long as they like to plan and line up.
+- **Budget:** each level starts with a sum of money in its data (`budget`, in $), shown in the HUD. Damage comes off it (3.9): every bump, scrape and hit duck. A miss costs a fee of 5% of the budget, so retrying isn't free. What is left at the end is the money kept. It never goes below $0.
+- **Stars** from the share of the budget kept: 3★ at 90% or more, 2★ at 60% or more, 1★ for finishing.
+- **Clean park:** a boat parked without touching anything gets a "Clean!" popup. No extra money: keeping it all is the reward.
+- **Setting the budget:** tuned per level in the slice so that a light scrape costs at most 5% of the budget and a solid hit 15–25%. Bigger boats cost more per bump, so the budget grows with the boats in the level.
+- Accuracy and the number of misses show on the results as extras. A boat still needs 50% accuracy to count as parked (3.5).
+- There is no fail state. A level only ends when all its boats are parked, or when the player restarts or quits. At $0 the level goes on and finishing still earns 1★.
 
 ### 3.7 Camera
 - Each boat has a set framing ("a few boat lengths") and the player can't zoom. The jet ski multiplies its framing by `view` (3 today, **(new)** 2 with look-ahead). Ships of 50 m and longer use `BIG_SHIP_VIEW = 3.5`.
@@ -94,8 +94,8 @@ See section 5 for each element. Things that get bumped stay where they end up: n
 - Logs and buoys inside the slip get a gentle push out of it (0.5 toy units/s, like a small current), until they are clear.
 - This runs at the start of each turn and all through it. It doesn't move the player's boat; a wedged player can always reverse, and R is the last resort.
 
-### 3.9 Score extras
-A damage bill in dollars (from impact energy) and a count of ducks hit, shown in the HUD and on the results. They don't affect stars.
+### 3.9 Damage costs
+Every hit costs money from the level's budget (3.6), from the impact energy and the masses involved, so a cruise ship's scrape costs far more than a rowboat's. Hitting a duck costs 1% of the budget. Damage and ducks hit show in the HUD and on the results.
 
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
@@ -133,8 +133,8 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
 - **Teaching order:** each new element first appears where it can't hurt (ducks away from the line to the slip), next in the way (ducks crossing the fairway), then with an earlier element (ducks plus moored boats).
 - **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 5 current levels pass; check new levels with the same test (park each boat, look for the next).
 - **Slip-in-view rule:** every boat starts with its whole slip on screen, at its own framing. No crossing open water with nothing happening: the challenge is stopping, turning and the obstacles around the slip, not distance. The one exception is a gauntlet level built around the trip itself, and even that fits on the player's screen (Rush Hour: 30 m, all in the jet ski's view). Together with the hand-off rule, this keeps each level's slips close together.
-- **Difficulty curve:** a level gets harder with: more boats in the chain, bigger scale jumps, a narrower slip (less `pad`), a longer or bent route, moving things in the way, current across the approach. Add one of these per level, and never two new ones at once. Par stays at most 90 s (3.6). A level should take a first-time player at most 3 tries.
-- **Stars:** see 3.6. 3★ ≤ par, 2★ ≤ 1.5 × par, 1★ for finishing.
+- **Difficulty curve:** a level gets harder with: more boats in the chain, bigger scale jumps, a narrower slip (less `pad`), a longer or bent route, moving things in the way, current across the approach. Add one of these per level, and never two new ones at once. A decent run should take at most 90 s (120 s for level 20). A level should take a first-time player at most 3 tries.
+- **Stars:** see 3.6. 3★ keeping 90% of the budget or more, 2★ 60% or more, 1★ for finishing.
 - **Levels:** (existing levels are named in quotes)
 
 | # | Name | Boats | What it teaches |
@@ -167,7 +167,7 @@ Levels 1–3 and 5–9, 12–13, 15–17 and 19–20 are new.
 ```js
 {
     name: 'Odd Couple',
-    par: 45,                       // (new) seconds for 3 stars
+    budget: 20000,                 // (new) money to start with, in $
     bonus: false,                  // hidden unless ?bonus, unlocks after all regular levels (new)
     land: [[x0, y0, x1, y1], ...], // sand rects, meters
     docks: [{ x0, y0, x1, y1, quay?, plank? }],
@@ -184,19 +184,19 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 ## 7. Progression and retention
 - **(new) Unlocks:** finishing a level (any stars) unlocks the next one. No star gates. World 2 opens when level 10 is finished.
 - **(new) Bonus:** Continental Drift unlocks when all 20 levels are finished. Its card says "BONUS". `?bonus` still shows it for testing.
-- **Best time** per level, shown on the level card and the results.
-- **Replay pull:** the results show how many seconds were missing for the next star ("2.4 s to ★★★").
+- **Most money kept** per level, shown on the level card and the results.
+- **Replay pull:** the results show how much money was missing for the next star ("$600 to ★★★").
 - **Daily challenge:** not in v1 (see 13).
-- **Save (new shape):** `cm_park-my-boat_save` = `{ v: 1, stars: [], best: [] /* best time in ms */, sound: true, music: true }`. The prototype stored best accuracy in `best`; no one outside the team has a save, so old saves are reset.
+- **Save (new shape):** `cm_park-my-boat_save` = `{ v: 1, stars: [], best: [] /* most money kept, $ */, sound: true, music: true }`. The prototype stored best accuracy in `best`; no one outside the team has a save, so old saves are reset.
 
 ## 8. Screens and UI flow
 **Title → Level select → Playing (⇄ Pause) → Level complete → next level / retry / menu.**
 
 - **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. PLAY (goes to the first level without 3 stars), LEVELS, SOUND toggle, **(new)** MUSIC toggle once the music is in (see 10).
-- **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the best time. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
-- **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the clock with the par time ("0:31 / ★★★ 0:45"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
+- **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the most money kept. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
+- **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the money left with the 3★ line marked ("$9,400 of $10,000 · ★★★ $9,000"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
 - **Pause:** dims the screen. RESUME, RESTART, MENU.
-- **Level complete:** "PARKED!", 3 stars that pop in one by one, **(new)** level time counting up, the par times, "NEW BEST!", time per boat, accuracy per boat, misses, damages, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
+- **Level complete:** "PARKED!", 3 stars that pop in one by one, **(new)** money kept counting up, the 3★ and 2★ lines, "NEW BEST!", damage per boat, "Clean!" boats, accuracy per boat, misses, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
 
 ## 9. Art direction
 - **Family:** Toybox Flat. Everything is drawn in code with Canvas 2D: flat fills, 0.1-unit ink outlines, soft offset drop shadows.
@@ -220,7 +220,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
   - Wake foam behind moving boats.
   - Parked: slip goes solid with a check, **(new)** the anchor drops by itself (splash ring), confetti burst from the slip, horn.
   - Between boats: zoom glide with the size card sliding in.
-  - Results: panel drops in with overshoot, stars pop one by one with rising clicks, **(new)** time counts up, "NEW BEST!" bounces.
+  - Results: panel drops in with overshoot, stars pop one by one with rising clicks, **(new)** money kept counts up, "NEW BEST!" bounces.
   - Title: bobbing logo, boat parade.
 - **Concept art prompts:**
   - "Top-down toy harbor in flat vector style, teal water #8CD6D1, wooden docks #E8B873, a tiny coral rowboat parked next to a giant navy cruise ship, thick dark outlines #2B2D42, soft drop shadows, cream and sunny yellow accents, playful, no text."
@@ -251,14 +251,14 @@ Level ids: `world01:level04` (`bonus:level01` for the bonus).
 | Event id | When it fires | Value |
 |---|---|---|
 | `progression Start world01:level04` | Level loads (also on restart) | — |
-| `progression Complete world01:level04` | Last boat parked | Level time in tenths of a second |
-| `progression Fail world01:level04` | Player restarts or quits to the menu before finishing | Seconds played |
+| `progression Complete world01:level04` | Last boat parked | Share of the budget kept, 0–100 |
+| `progression Fail world01:level04` | Player restarts or quits to the menu before finishing | Share of the budget left, 0–100 |
 | `tutorial:step01` | Level 1: first throttle input | — |
 | `tutorial:step02` | Level 1: boat first inside the slip | — |
 | `tutorial:step03` | Level 1: first check (parked or not) | — |
 | `tutorial:done` | Level 1 complete | — |
 | `boat:world01:level04:b2:start` | Boat 2 gets control | — |
-| `boat:world01:level04:b2:park` | Boat 2 parked | Seconds for that boat |
+| `boat:world01:level04:b2:park` | Boat 2 parked | Damage during that boat's turn, % of the budget |
 | `boat:world01:level04:b2:miss` | Boat 2 checked and not parked | Miss count for this boat so far |
 | `ui:restart` | R or RESTART | — |
 | `ui:skip` | Slip preview skipped | — |
@@ -275,16 +275,16 @@ No daily events (no daily in v1).
 - **(new) Split `main.js`** by concern as the first step of phase 2, in its own commit with no behavior change: `camera.js`, `ui.js`, `audio.js`, `analytics.js`, `save.js`, keeping `main.js` for the game state and loop.
 - **Simulation:** LittleJS fixed 60 Hz update with 2 physics substeps. Not deterministic across machines; nothing needs it to be (no replays, no daily).
 - **Save:** one key, `cm_park-my-boat_save`, read in `try/catch`, reset on any error.
-- **Testing hook:** `window.game` with `screen`, `level`, `score` (level time), `start()`, `restart()`, `win()` (debug only).
+- **Testing hook:** `window.game` with `screen`, `level`, `score` (money kept), `start()`, `restart()`, `win()` (debug only).
 - **Riskiest piece:** performance in big levels on a 4 GB Chromebook. Marina has 218 moored boats and 6 traffic boats; Rush Hour has 31 traffic boats. **Prove it early:** run Marina and Rush Hour in Chrome with 4x CPU throttle in the first slice week. If under 60 fps, put moored boats to sleep until something touches them, and draw far-away boats as cached sprites.
-- **Second risk:** par times that feel fair. The `boat:…:park` times from playtests set them.
+- **Second risk:** budgets that feel fair: bumps are the comedy, so a light scrape must not sink three stars. The `boat:…:park` damage from playtests sets them.
 
 ## 13. Scope
-- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: timer and par stars, unlocks, restart without preview, clearing the slip, miss messages, automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new tutorial levels come in phase 3. Gate: a teammate plays it cold and wants more.
+- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart without preview, clearing the slip, miss messages, automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new tutorial levels come in phase 3. Gate: a teammate plays it cold and wants more.
 - **v1:**
   - 20 levels in 2 worlds, plus the hidden bonus.
-  - Time and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
-  - Level select by world; results with time.
+  - Money and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
+  - Level select by world; results with money kept.
   - Music and its toggle, added by Pao later in production.
   - GameAnalytics events (11); 48 px touch targets; the full shell from `STANDARDS.md`.
   - The done checklist's daily events item doesn't apply: v1 has no daily.
@@ -296,16 +296,16 @@ No daily events (no daily in v1).
 - **Cut:**
   - Submarine: needs a dive control and an underwater view. Too much new UI for a pilot.
   - Player zoom: the set framing per boat keeps the size jump readable and the controls simple.
-  - Stars from accuracy alone: replaced by time (3.6).
+  - The clock and par times: it is not a race (3.6).
+  - Stars from accuracy alone: replaced by money kept (3.6).
 
 ## 14. Open questions
 Decided with the owner on 2026-10-25:
 
 | Question | Decision | Who decides | Status |
 |---|---|---|---|
-| How is a level scored? | Time plus at least 50% accuracy to count; stars from par times (3.6) | Pao | Decided |
-| What happens on a miss? | The clock keeps running; retry from where you are; no fail state | Pao | Decided |
-| Should the clock run during the slip preview and glide between boats? | No: it runs only while the player can steer | Pao | Decided |
+| How is a level scored? | Money kept from a per-level budget; a boat needs 50% accuracy to count; no clock (3.6). Changed from time on 2026-10-25 | Pao | Decided |
+| What happens on a miss? | Retry from where you are; no fail state | Pao | Decided |
 | Restart under 1 s? | Restart skips the boat 1 slip preview; later boats keep theirs | Pao | Decided |
 | v1 size? | 2 worlds of 10 levels | Pao | Decided |
 | When is the first scale jump? | Level 4 (Odd Couple); levels 1–3 teach the controls | Pao | Decided |
@@ -315,7 +315,6 @@ Decided with the owner on 2026-10-25:
 | Music? | Pao adds it later; the toggle comes with it | Pao | Decided |
 | Drift for every boat? | Keep it global; boat stats make the differences | Pao | Decided |
 | Out of v1? | Later: two-player modes, tug towing a barge. Cut: submarine, player zoom | Pao | Decided |
-| Par times | Designer's clean run × 1.2, rounded up to a whole second, checked in playtests | Pao | Decided |
 | Palette: 6 main colors plus sand, stone, navy, grass, skin | Keep the extras as support tones for land, quays, ship hulls and captains | Pao | Decided |
 | Main analytics question | Which boat makes players give up | Pao | Decided |
 
@@ -325,14 +324,13 @@ Decided in review 1 (2026-10-25):
 |---|---|---|---|
 | Something blocks the slip | Boats in it start their engines and drive out; logs and buoys drift out (3.8) | Pao | Decided |
 | Inside but under 50% accuracy | A message per cause, with the slip showing what's wrong (3.5) | Pao | Decided |
-| Settle wait on the clock | A parked boat's time stops when its rest begins (3.6) | Pao | Decided |
 | Vertical slice | The 5 existing levels in the full v1 shell (13) | Pao | Decided |
 | Players who close the tab | `boat:…:start` events; `stars:…` dropped (11) | Pao | Decided |
 | Teaching order | Jet ski gets level 5; level 9 is Zippy → Party Barge; traffic first at 11 | Pao | Decided |
 | Edge arrows | Size-aware warning, at most 2 traffic arrows (3.7) | Pao | Decided |
 | Level 1 tutorial | Ghost pointer and key icons, 3-word text (6) | Pao | Decided |
-| Level length | Par ≤ 90 s (120 s for level 20) | Pao | Decided |
-| RETRY and hidden tab | RETRY skips the preview; a hidden tab pauses the game and clock | Pao | Decided |
+| Level length | A decent run takes at most 90 s (120 s for level 20) | Pao | Decided |
+| RETRY and hidden tab | RETRY skips the preview; a hidden tab pauses the game | Pao | Decided |
 | Swan Lake, Night Shift | Swan Lake gets 3 different small boats; Night Shift renamed Busy Harbor | Pao | Decided |
 | When to split `main.js` | First step of phase 2, own commit | Pao | Decided |
 | Daily checklist item | Noted as not applying (13) | Pao | Decided |
@@ -342,24 +340,24 @@ Still open:
 
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| Settle drag numbers (1 toy unit/s, 100% drag) | Tune in the slice so every boat, ships included, can stop within par | Pao | Open |
+| Settle drag numbers (1 toy unit/s, 100% drag) | Tune in the slice so every boat, ships included, can stop in a few seconds | Pao | Open |
 | Music mood and length | Decide when the music is made | Pao | Open |
 | Coolmath SDK, ad breaks, branding, size limit, GA keys | Team-wide `[confirm]` items in `STANDARDS.md` | Team | Open |
 | Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
 
-**Questions for Fafi: an economy?** Pao's idea: each level starts you with a sum of money (say $10,000), every bump and duck takes from it, and you keep it all if you park without touching anything. Today the damage bill (3.9) is only shown, it changes nothing.
+**Economy (decided 2026-10-25, was a question for Fafi):** money kept is the score. Each level has a budget, damage comes off it, stars come from the share kept (3.6). Per level only, no wallet carried across levels, so nothing to spend it on. If a wallet ever comes, it buys only cosmetics, never advantages, and never random rewards (`STANDARDS.md`: no loot boxes).
+
+Still open on the economy:
 
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| Should there be an economy at all? | Try it as a per-level score: start with a set sum, damages come off it, the rest is "kept". It gives careful players a goal that time alone doesn't | Fafi, Pao | Open |
-| Does money change the stars, or is it a separate score? | Separate: stars stay time-based (3.6), money is a second number with its own best, so the two don't fight (fast vs careful) | Fafi, Pao | Open |
-| Per level, or a wallet that carries across levels? | Per level for v1. A wallet needs something to spend it on, which is a bigger feature | Fafi, Pao | Open |
-| If there is a wallet, what does money buy? | Only cosmetics (hull colors, captain hats), never boats or advantages. No random rewards (`STANDARDS.md`: no loot boxes) | Fafi, Pao | Open |
-| What happens at $0? | Nothing: the level goes on and the money stays at $0. A fail state here would undo "no fail state" (3.6) | Fafi, Pao | Open |
-| Does the starting sum scale with the boats? | Yes: a cruise ship's bumps cost far more than a rowboat's, so each level's sum is set from its boats (like par) | Fafi, Pao | Open |
-| Bonus for a clean park (no contact at all)? | Yes: a "Clean!" popup and a small bonus per boat, so "don't touch anything" is felt in the moment, not only at the end | Fafi, Pao | Open |
+| Budgets and star lines | 3★ at 90% kept, 2★ at 60%; a light scrape ≤ 5%, a solid hit 15–25%; tune in the slice | Pao, Fafi | Open |
+| Miss fee | 5% of the budget per miss, so planning beats trial and error | Pao, Fafi | Open |
+| Clean park | "Clean!" popup only, no bonus money (keeping it all is the reward) | Pao, Fafi | Open |
+| Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — No clock: stars come from money kept from a per-level budget (3.6). Par times, the clock rules and time-based results removed; the economy questions for Fafi became decisions plus four tuning questions.
 - 2026-10-25 — Slip silhouette removed: either end in counts, so a boat shape in the slip pointed one way for no reason.
 - 2026-10-25 — Rush Hour compressed to one screen.
 - 2026-10-25 — Added the slip-in-view rule (6): every boat starts with its slip on screen, except gauntlet levels.

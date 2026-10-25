@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — GDD: money kept, no clock
+- Owner: it's not a race. The GDD drops the clock and par times; stars now come from money kept. Each level has a budget, every bump costs (big boats more), a miss costs 5%, ducks 1%; 3★ at 90% kept, 2★ at 60%, 1★ for finishing. A boat still needs 50% accuracy to count. "Clean!" popup for a boat parked without touching anything.
+- This answers Fafi's economy questions (per level, no wallet); the numbers are left open for Fafi and the slice.
+- Discussed making the game more thinky: choose the parking order and match boats to slips (recommended first prototype), tug-pushing puzzles, clearing a boxed-in slip. Not in the GDD yet.
+- Next: Fafi reviews; the code still scores by accuracy.
+
 ## 2026-10-25 — Slip sides over the docks, rotate handle in the editor
 - Owner: the slip's dashed sides were hidden under the finger docks. The slip is now drawn after the docks and posts (still under the boats), so the whole dashed box shows.
 - Owner: rotate things without the panel, like a transform box in Photoshop. A selected boat start, moored or loose boat, log or slip now has an arm off its bow with a round knob; drag the knob round to turn it. Snaps to 15° (the same steps as `[ ]`), Alt for free; slips snap to 90°. Undo works; the angle shows next to the cursor while turning.

@@ -46,7 +46,7 @@ Not built yet. Candidates for the GDD and for new levels.
 
 ## Concerns and design questions
 Problems seen in play and design changes to decide, for the GDD's open questions.
-- **Score by time, not stars:** the owner thinks the game should be time-based. Today stars come only from parking accuracy (see Judging). Two ways to do it: (1) time replaces accuracy: a boat counts once it's judged inside its slip, and the score is the level's total time; (2) time plus accuracy: a boat must be parked well enough to count, and stars come from beating time targets. Not decided yet.
+- **Score:** decided (see `GDD.md` 3.6): not time. Each level has a budget, damage comes off it, and stars come from the money kept. Not built yet: the game still gives stars by accuracy.
 - **Camera with small boats:** with a small boat like the Jet Ski, the camera has to stay very zoomed out so the player sees other boats in time. The boat itself is then tiny on screen, which works against fine control.
 
 ## Stretch goals
