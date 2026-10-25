@@ -143,17 +143,18 @@ const SCALE_LEVELS =
         [
             { boat: 'container', start: { x: 1250, y: 780, a: PI }, slip: { x: 620, top: 900, a: -PI/2, pad: [0.5, 0.25], fingers: 'none' },
               hint: 'Big ships take a long time to stop. Slow down early.' },
-            { boat: 'trawler', start: { x: 400, y: 850, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [.6, .3], fingers: 'none' },
-              hint: 'Squeeze between the two yachts. Line up before you go in.' },
+            { boat: 'trawler', start: { x: 368, y: 849, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] },
+              hint: 'Squeeze through the gap between the yachts, then turn into your slip.' },
             { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 475, top: 900, a: PI/2, pad: [1.4, 1] },
               hint: '' },
         ],
-        // the trawler's tight squeeze: two 40 m yachts nose-in to the quay leave a 13 m alley for a 9.6 m boat
-        moored: [{ boat: 'yacht', k: 5, x: 427, y: 878.25, a: PI/2 }, { boat: 'yacht', k: 5, x: 453, y: 878.25, a: PI/2 }],
-        ducks: [{ x: 414, y: 896, kids: 2 }],
+        // the trawler's tight squeeze on the way to its slip: two 40 m yachts in a line west of it, one
+        // nose-in to the quay, leave a 13 m gap (y 845-858) for a 9.6 m boat
+        moored: [{ boat: 'yacht', k: 5, x: 410, y: 878.25, a: PI/2 }, { boat: 'yacht', k: 5, x: 410, y: 825.25, a: PI/2 }],
+        ducks: [{ x: 466, y: 868, kids: 2 }],
         traffic:
         [
-            { boat: 'dinghy', path: [[300, 830], [360, 830], [1320, 460], [1060, 380], [560, 380], [950.2, 700]], end: 'back', speed: 0.6 },
+            { boat: 'dinghy', path: [[300, 790], [360, 790], [1320, 460], [1060, 380], [560, 380], [950.2, 700]], end: 'back', speed: 0.6 },
             { boat: 'yacht', path: [[1160, 620], [1015, 755], [1020, 885]], end: 'back', speed: 0.8, during: [1] },
             { boat: 'pontoon', path: [[170, 786], [219.6, 747]], end: 'back', speed: 0.6 },
             { boat: 'sailboat', path: [[240, 706], [188, 700], [104, 724], [76, 786], [146, 846], [260, 832], [272, 748], [240, 704]], end: 'back', speed: 0.6 },

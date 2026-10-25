@@ -150,7 +150,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | 8 | Clear the Way | Trawler → Mega Yacht | Push drifting logs and an empty barge out of the yacht's slip, then park the yacht. |
 | 9 | River Mouth | Zippy → Party Barge | A current crosses the approach; aim upstream. The wide barge gets pushed more. |
 | 10 | "Mixed Nuts" | Mega Yacht → Cruise Ship → Swan Pedalo | World finale: big, bigger, tiny. |
-| 11 | "Way Down" | Container Ship → Trawler → Jet Ski | Big-to-small chain, first slow traffic (party barge, sailboat); the trawler squeezes into a 13 m alley between two moored yachts. |
+| 11 | "Way Down" | Container Ship → Trawler → Jet Ski | Big-to-small chain, first slow traffic (party barge, sailboat); the trawler squeezes through a 13 m gap between two moored yachts on the way to its slip. |
 | 12 | Ferry Lane | Rowboat → Mega Yacht | One ferry lane of back-and-forth traffic to cross twice. |
 | 13 | Container Port | Trawler → Container Ship | Tight ship berth between two moored container ships. |
 | 14 | "Rush Hour" | Jet Ski | A gauntlet on one screen: three narrow canals of looping traffic, faster each time; stop on the sand and wait for a gap. |

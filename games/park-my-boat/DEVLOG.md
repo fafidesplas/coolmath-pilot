@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Way Down: the squeeze is on the way, not in the slip
+- Owner: the trawler's squeeze should be in the path to the slip, not the slip itself. The two 40 m yachts now stand nose-in in a line west of the slip (x 410), one against the quay and one south of it, with a 13 m doorway between them (y 845-858; 12.4 m between hulls for the 9.6 m trawler). The slip is a normal one again (x 455, finger docks, usual room), 45 m east of the doorway, so there is room to swing in. The trawler starts west of the wall at (368, 849) heading east, 3 m off the doorway's line. Ducks moved to (466, 868); the rowboat traffic's first leg to y 790, clear of the south yacht.
+- Owner likes how Marina and Rush Hour play now.
+- Checked in Chrome: slip on screen from the start, hand-offs still show the next boat, nothing moves at load, the trawler goes through the doorway with no damage, and from three points past it a crude driver turns in and parks every time (with quay bumps from never slowing down).
+
 ## 2026-10-25 — Marina Jam: select, then drive
 - Owner: same controls as parking. Tapping a boat now only selects it, with an RTS-style ring (a sunny ellipse with an ink edge, pulsing gently, under the hull); you drive it out with the mouse or WASD. Tapping another boat swaps; the one you leave stops where it is. Hint: "Tap a boat to pick it, then drive it out of the harbor."
 - Every boat you're not driving is fixed in place (no mass for collisions), so the one you drive bounces off and the jam can't be shoved around. A real knock (impact at or over 1 in the boat's own speed scale) costs a $1,000 bump, once per knock; gentle scrapes are free. The results show bumps and boats picked.
