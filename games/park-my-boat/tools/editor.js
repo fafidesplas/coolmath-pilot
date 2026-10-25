@@ -12,7 +12,8 @@
     Mouse: drag empty space to pan, wheel to zoom, click to select, drag to move, drag an edge of a
     selected sand / dock / current rect to resize, Shift+drag on empty space for new sand. Traffic
     boats: P with one selected, then click to add path points (P, Enter or Esc to finish); drag a
-    point to move it. Keys are listed in the panel.
+    point to move it. A selected boat, slip or log has a rotate handle on an arm off its bow: drag it
+    round (15° steps, Alt: free; slips 90°). Keys are listed in the panel.
 */
 
 'use strict';
@@ -174,6 +175,7 @@ window.pmbEditor = (() =>
         return { type: 'poly', c: vec2(x, y), r: Math.hypot(hl, hw), pts: [[hl, hw], [-hl, hw], [-hl, -hw], [hl, -hw]].map(([u, v]) => vec2(x + u*c - v*s, y + u*s + v*c)) };
     }
     function boatShape(key, k, x, y, a) { const t = BOATS[key]; return orientedRect(x, y, a, t.L*k, t.W*k); }
+    const boxUnion = (a, b) => ({ x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) });
     const rectShape = (x0, y0, x1, y1) => ({ type: 'rect', x0: Math.min(x0, x1), y0: Math.min(y0, y1), x1: Math.max(x0, x1), y1: Math.max(y0, y1) });
 
     function shapeOf(it)
@@ -259,7 +261,7 @@ window.pmbEditor = (() =>
     function mouse()
     {
         const p = mouseWorld();
-        if (!drag) hover = overPanel() ? null : pick(p);
+        if (!drag) hover = overPanel() || onKnob(p) ? null : pick(p);
         if (wheelPx && !overPanel())
         {
             // zoom around the cursor, by how far the wheel or trackpad actually scrolled: one mouse notch is about 15%
@@ -279,7 +281,8 @@ window.pmbEditor = (() =>
         if (mouseWasPressed(0) && !overPanel())
         {
             const edges = edgesAt(p), shift = keyIsDown('ShiftLeft') || keyIsDown('ShiftRight');
-            if (edges) drag = { mode: 'edge', edges, snapped: false };
+            if (onKnob(p)) drag = { mode: 'rotate', c: rotHandle().c, snapped: false };
+            else if (edges) drag = { mode: 'edge', edges, snapped: false };
             else
             {
                 const it = pick(p);
@@ -306,6 +309,17 @@ window.pmbEditor = (() =>
             if (d.length() > .1) drag.moved = true;
             cam.pos = drag.cam.subtract(d.scale(cam.wu));
             return;
+        }
+        if (drag.mode == 'rotate')
+        {
+            // slips only face the four ways; the rest snap to 15° unless Alt is held
+            const step = sel.kind == 'slip' ? PI/2 : noSnap() ? 0 : PI/12;
+            let a = Math.atan2(p.y - drag.c.y, p.x - drag.c.x);
+            if (step) a = Math.round(a/step)*step;
+            if (Math.abs(wrapAngle(a - angleOf(sel))) < 1e-6) return;
+            if (!drag.snapped) { snapshot(); drag.snapped = true; }
+            setAngle(sel, a);
+            return changed();
         }
         const q = vec2(snap(p.x), snap(p.y));
         if (drag.mode == 'new') { drag.to = q; return; }
@@ -369,6 +383,33 @@ window.pmbEditor = (() =>
             default: { const o = def[it.kind][it.i]; o.x += dx; o.y += dy; }
         }
     }
+
+    // the angle of a thing that can turn (undefined for the rest), and setting it
+    function angleOf(it)
+    {
+        if (it.kind == 'start' || it.kind == 'slip') return def.boats[it.i][it.kind].a;
+        if (it.kind == 'moored' || it.kind == 'drifters') return def[it.kind][it.i].a;
+        if (it.kind == 'logs') return def.logs[it.i][2] || 0;
+    }
+    function setAngle(it, a)
+    {
+        a = wrapAngle(a);
+        if (Math.abs(a) < 1e-9) a = 0;
+        if (it.kind == 'start' || it.kind == 'slip') def.boats[it.i][it.kind].a = a;
+        else if (it.kind == 'moored' || it.kind == 'drifters') def[it.kind][it.i].a = a;
+        else if (it.kind == 'logs') def.logs[it.i][2] = a;
+    }
+    // rotate handle of the selection, like a transform box's: an arm out of the bow, a knob at its end
+    function rotHandle()
+    {
+        const a = sel && angleOf(sel);
+        if (a === undefined || a === null) return null;
+        const s = shapeOf(sel), c = s.type == 'rect' ? vec2((s.x0 + s.x1)/2, (s.y0 + s.y1)/2) : s.c;
+        const r = s.type == 'rect' ? Math.hypot(s.x1 - s.x0, s.y1 - s.y0)/2 : s.r;
+        const f = vec2(Math.cos(a), Math.sin(a));
+        return { c, base: c.add(f.scale(r)), knob: c.add(f.scale(r + 1.6*cam.wu)) };
+    }
+    const onKnob = p => { const h = rotHandle(); return h && p.distance(h.knob) < .45*cam.wu; };
 
     function rotate(it, da)
     {
@@ -632,6 +673,13 @@ window.pmbEditor = (() =>
         {
             const s = shapeOf(sel);
             outline(s, .1*W, C_ED);
+            const h = rotHandle();
+            if (h)
+            {
+                const on = drag?.mode == 'rotate' || onKnob(mouseWorld());
+                drawLine(h.base, h.knob, .06*W, C_ED);
+                drawCircle(h.knob, (on ? .7 : .55)*W, on ? C_ED : C_CREAM, .08*W, C_ED);
+            }
             if (isRect(sel))
             {
                 const hs = vec2(.25*W), mx = (s.x0 + s.x1)/2, my = (s.y0 + s.y1)/2;
@@ -655,7 +703,12 @@ window.pmbEditor = (() =>
         if (t !== null) def.traffic[t].path.forEach((q, j) => { const u = worldToUi(vec2(q[0], q[1])); txt(String(j + 1), u.x, u.y - .02, .32, C_INK); });
         const left = UI_CENTER.x - viewHalfUi().x + .5;
         txt(`EDITOR · ${li + 1}. ${def.name} · grid ${fmtLen(step())}${noSnap() ? ' (no snap)' : ''}${pathMode !== null ? ' · CLICK TO ADD PATH POINTS (P to finish)' : ''}`, left, 21.75, .55, C_INK, 'left');
-        if (!overPanel())
+        if (drag?.mode == 'rotate')
+        {
+            const deg = Math.round(angleOf(sel)*180/PI*10)/10;
+            txt(`${deg}°`, mousePos.x + .4, mousePos.y - .6, .55, C_ED, 'left', .1, C_CREAM);
+        }
+        else if (!overPanel())
         {
             const p = mouseWorld();
             txt(`${num(snap(p.x))}, ${num(snap(p.y))}`, mousePos.x + .4, mousePos.y - .6, .45, C_INK.scale(1, .7), 'left');
@@ -1088,6 +1141,7 @@ window.pmbEditor = (() =>
             <b>drag an edge</b> resize sand, dock, current · <b>Shift+drag empty</b> new sand<br>
             Slips under a pier slide along it; <b>Shift</b> moves them off it<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: ×10) · <b>[ ]</b> rotate 15° (Shift: 90°)<br>
+            <b>drag the round handle</b> rotate (15° steps, Alt: free; slips 90°)<br>
             <b>1–9</b> select boat · <b>F</b> frame selection · <b>Shift+F</b> frame all<br>
             <b>D</b> duplicate · <b>Delete</b> remove · <b>T</b> sand → dock → quay<br>
             Traffic: <b>P</b> add path points (click; P to finish) · drag a point · <b>I</b> insert after<br>

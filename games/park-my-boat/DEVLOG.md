@@ -1,5 +1,12 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Slip sides over the docks, rotate handle in the editor
+- Owner: the slip's dashed sides were hidden under the finger docks. The slip is now drawn after the docks and posts (still under the boats), so the whole dashed box shows.
+- Owner: rotate things without the panel, like a transform box in Photoshop. A selected boat start, moored or loose boat, log or slip now has an arm off its bow with a round knob; drag the knob round to turn it. Snaps to 15° (the same steps as `[ ]`), Alt for free; slips snap to 90°. Undo works; the angle shows next to the cursor while turning.
+- Fixed: the editor crashed when framing (on open, `1`–`9`, `F`) since the slip-preview commit removed `boxUnion` from `main.js`. It now has its own copy.
+- Checked in Chrome: dragging the knob turned the rowboat to 90° and then 45°; the slip snapped from 90° to 0°; ⌘Z restored it. Not saved.
+- Next: owner checks the slip outline over the docks in play (verified in code; my test tab got stuck behind the editor's unsaved-changes prompt).
+
 ## 2026-10-25 — No boat silhouette in the slip
 - Owner: nose-in and stern-in both count, so the boat-shaped ghost in the slip (always pointing one way) is gone. The slip is just its dashed box, solid when the boat is inside. Brief and GDD updated (the GDD's miss cues now flash parts of the slip instead of the ghost).
 - Also committed the owner's own edits to Odd Couple (cruise ship starts below the rowboat's slip facing the quay, slip at x 720) and Way Down (container ship parks nose-in at x 620, jet ski starts right by its slip).

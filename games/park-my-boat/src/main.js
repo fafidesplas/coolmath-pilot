@@ -1118,6 +1118,7 @@ function drawBodies()
     for (const b of bodies) if (b.type && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
+    drawSlip();     // over the finger docks, so its dashed sides show
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
@@ -1329,7 +1330,6 @@ function gameRender()
         return;
     }
     drawCurrents();
-    drawSlip();
     drawFoam();
     drawWakes();
     drawBodies();
