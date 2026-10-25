@@ -1,5 +1,15 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Every slip on screen from the start
+- Owner: crossing open water with nothing happening is the least fun part. Every boat now starts with its whole slip on screen (Rush Hour, the gauntlet, is the exception). Before, only 1 of 11 boats did. The hand-off rule (next boat visible from the last slip) still holds everywhere.
+  - Odd Couple: the rowboat starts 10 m east of its slip, facing west, with the ducks in the slip's mouth.
+  - Way Down: the container ship starts at (1250, 780), so the yacht traffic crosses its approach; the tug starts at (382, 860); the jet ski's slip moved next to the tug's (x 475) and it starts 28 m away facing east, so it has to turn round with almost no reverse.
+  - Mixed Nuts: the yacht starts 125 m from its slip (860, 640); the cruise ship's slip moved 20 m east and it starts at (920, 570); the swan starts 10 m east of its slip.
+  - Marina: all three berths are now in the lower half. The jet ski starts 20 m from its slip; the sailboat's berth is on the lower pier too (x 290); the yacht's berth is under the upper pier (x 150, a 20 m gap among the moored yachts) and it starts at (280, 110), crossing the tender lanes. The quay and upper-pier rows are full again. Speedboat lane moved to y 136, jet ski loop to x 320–365.
+- Added the slip-in-view rule to the GDD's level design section.
+- Checked in Chrome: all boats start with their slip on screen, all hand-offs show the next boat, nothing overlaps at load, no traffic hits a waiting boat in 15 s of any turn, `win()` completes all 5 levels.
+- Next: owner plays. The old traffic far from the slips (Way Down's west sailboat and barge) is now only scenery. The slip preview at the start of each boat is now mostly redundant: consider skipping it when the slip is already on screen.
+
 ## 2026-10-25 — Next boat visible from each slip
 - Owner: wherever a boat docks, the next boat in the chain should be visible. Before, only 2 of 7 hand-offs showed it. Moved the waiting boats (and what was in their way), now all 7 do:
   - Odd Couple: the cruise ship waits along the quay right west of the rowboat's slip, bow west; its stern shows next to the rowboat. Rowboat starts at (500, 548), moored boats moved to x 40–80, ducks to (530, 570). Pulling the ship off the quay costs nothing.

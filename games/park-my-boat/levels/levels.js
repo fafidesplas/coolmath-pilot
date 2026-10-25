@@ -114,24 +114,24 @@ const SCALE_LEVELS =
         docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
         boats:
         [
-            { boat: 'dinghy', start: { x: 500, y: 548, a: 2 }, slip: { x: 474, top: 585, a: PI/2 },
+            { boat: 'dinghy', start: { x: 483, y: 579, a: PI }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box and let go.' },
             { boat: 'cruise', start: { x: 316, y: 564.5, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
         moored: [tiedUp('speedboat', 40, 585), tiedUp('sailboat', 60, 585), tiedUp('speedboat', 80, 585)],
         buoys: [[300, 380, 5], [900, 380, 5]],
-        ducks: [{ x: 530, y: 570, kids: 3 }],
+        ducks: [{ x: 472, y: 574, kids: 3 }],
     },
     {
         name: 'Way Down', ...basin(0, -20, 1700, 900),
         boats:
         [
-            { boat: 'container', start: { x: 1450, y: 700, a: PI }, slip: { x: 700, top: 900, a: 0, pad: [.5, .25], fingers: 'none' },
+            { boat: 'container', start: { x: 1250, y: 780, a: PI }, slip: { x: 700, top: 900, a: 0, pad: [.5, .25], fingers: 'none' },
               hint: 'Big ships take a long time to stop. Slow down early.' },
-            { boat: 'tug', start: { x: 382, y: 832, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
+            { boat: 'tug', start: { x: 382, y: 860, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'The tugboat can push other boats out of the way.' },
-            { boat: 'jetski', start: { x: 515, y: 860, a: -PI/2 }, slip: { x: 291, y: 898, a: PI/2, pad: [1.4, 1] },
+            { boat: 'jetski', start: { x: 500, y: 886, a: 0 }, slip: { x: 475, top: 900, a: PI/2, pad: [1.4, 1] },
               hint: '' },
         ],
         ducks: [{ x: 414, y: 896, kids: 2 }],
@@ -147,11 +147,11 @@ const SCALE_LEVELS =
         name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
         boats:
         [
-            { boat: 'yacht', start: { x: 1100, y: 420, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
+            { boat: 'yacht', start: { x: 860, y: 640, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
               hint: 'Start turning early.' },
-            { boat: 'cruise', start: { x: 980, y: 570, a: PI }, slip: { x: 510, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 920, y: 570, a: PI }, slip: { x: 530, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay.' },
-            { boat: 'swan', start: { x: 305, y: 692, a: 2.1 }, slip: { x: 300, top: 700, a: PI/2, pad: [1, .9] },
+            { boat: 'swan', start: { x: 310, y: 696, a: PI }, slip: { x: 300, top: 700, a: PI/2, pad: [1, .9] },
               hint: 'The swan pedalo turns very quickly.' },
         ],
         ducks: [{ x: 780, y: 690, kids: 3 }],
@@ -194,26 +194,26 @@ const SCALE_LEVELS =
         ],
         boats:
         [
-            { boat: 'jetski', start: { x: 25, y: 25, a: PI/2 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' },
+            { boat: 'jetski', start: { x: 215, y: 91, a: 0 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' },
               hint: 'Find the free spot on the lower pier.' },
-            { boat: 'sailboat', start: { x: 250, y: 91, a: PI }, slip: { x: 240, y: 213, a: PI/2, pad: [.8, .5], fingers: 'none' },
-              hint: 'Your berth is on the upper pier. Watch for the tenders.' },
-            { boat: 'yacht', k: 6, start: { x: 300, y: 225, a: PI }, slip: { x: 110, top: 350, a: PI/2, pad: [.8, .6], fingers: 'none' },
-              hint: 'Squeeze the yacht in between the others on the quay.' },
+            { boat: 'sailboat', start: { x: 255, y: 93, a: 0 }, slip: { x: 290, y: 83.2, a: PI/2, pad: [.8, .5], fingers: 'none' },
+              hint: 'Your berth is on the lower pier too.' },
+            { boat: 'yacht', k: 6, start: { x: 280, y: 110, a: PI }, slip: { x: 150, y: 173.5, a: PI/2, pad: [.8, .6], fingers: 'none' },
+              hint: 'Squeeze the yacht in under the upper pier. Watch for the tenders.' },
         ],
         moored:
         [
-            ...berths(3, 377, 350, -1, 2, [['yacht', 5.5], ['yacht', 6.5], ['yacht', 5], ['yacht', 6]], [[110, 26]]),
-            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2], ['sailboat', 2.4]], [[240, 7.5]]),
-            ...berths(3, 266, 200, -1, 2, [['yacht', 4], ['yacht', 3.5], ['yacht', 4.5]]),
-            ...berths(104, 377, 76, 1, 1.2, [['speedboat', 2], ['dinghy', 1.3], ['jetski', 1], ['pontoon', 2], ['speedboat', 2], ['sailboat', 2.4], ['dinghy', 1.3], ['jetski', 1]], [[230, 4.2]]),
+            ...berths(3, 377, 350, -1, 2, [['yacht', 5.5], ['yacht', 6.5], ['yacht', 5], ['yacht', 6]]),
+            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2], ['sailboat', 2.4]]),
+            ...berths(3, 266, 200, -1, 2, [['yacht', 4], ['yacht', 3.5], ['yacht', 4.5]], [[150, 20]]),
+            ...berths(104, 377, 76, 1, 1.2, [['speedboat', 2], ['dinghy', 1.3], ['jetski', 1], ['pontoon', 2], ['speedboat', 2], ['sailboat', 2.4], ['dinghy', 1.3], ['jetski', 1]], [[230, 4.2], [290, 7.5]]),
             ...berths(104, 377, 70, -1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2]]),
         ],
         traffic:
         [
             { boat: 'dinghy', path: [[110, 148], [280, 148]], end: 'back', speed: .33 },
-            { boat: 'speedboat', path: [[280, 112], [110, 112]], end: 'back', speed: .15 },
-            { boat: 'jetski', path: [[300, 110], [360, 110], [360, 190], [300, 190]], end: 'loop', speed: .22 },
+            { boat: 'speedboat', path: [[280, 136], [110, 136]], end: 'back', speed: .15 },
+            { boat: 'jetski', path: [[320, 125], [365, 125], [365, 190], [320, 190]], end: 'loop', speed: .22 },
             { boat: 'pontoon', path: [[30, 257], [260, 257]], end: 'back', speed: .33 },
             { boat: 'speedboat', path: [[360, 278], [40, 278]], end: 'back', speed: .15 },
             { boat: 'dinghy', path: [[110, 42], [370, 42]], end: 'back', speed: .33 },
