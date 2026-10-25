@@ -574,15 +574,14 @@ function hrDrawHud(W, H, u)
                 else hrOutline(px, top, 22 * u, 22 * u, 4 * u, HR_INK);
             }
         });
-        const c = hrMatch.countdown;
-        if (c > 0) hrText(String(Math.ceil(c / .8)), W / 2, H * .45, 160 * u * (1 + (c % .8) * .4));
-        else if (hrMatch.frames < 40) hrText('GO', W / 2, H * .45, 160 * u, HR_INK.scale(1, 1 - hrMatch.frames / 40));
+        hrDrawCountdown(W, H, u, hrMatch.frames);
         return;
     }
     const ms = hrFinishT >= 0 && hrResult ? hrResult.ms : hrRunMs();
     hrText(`${label}   ${hrFmt(ms)}`, W / 2, top, 34 * u);
     const best = hrSaveLevel(hrLevelDef().id).bestMs;
     if (best) hrText('Best ' + hrFmt(best), W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
+    if (hrMode().countdown) hrDrawCountdown(W, H, u, hrRun.frames);
     // from level 2 on, the button hint shows for the first 3 s
     if (hrRun.hintT < 3.5 && hrLevelIndex > 0)
         hrText(HR_WORLDS[hrWorld].hint, W / 2, H - 40 * u, 26 * u, HR_INK.scale(1, clamp(3.5 - hrRun.hintT)));
@@ -593,10 +592,18 @@ function hrDrawHud(W, H, u)
     }
 }
 
+// 3-2-1 before the start, then GO fading out over the first 40 frames of the race
+function hrDrawCountdown(W, H, u, framesSinceGo)
+{
+    const c = hrCountdown;
+    if (c > 0) hrText(String(Math.ceil(c / .8)), W / 2, H * .45, 160 * u * (1 + (c % .8) * .4));
+    else if (framesSinceGo < 40) hrText('GO', W / 2, H * .45, 160 * u, HR_INK.scale(1, 1 - framesSinceGo / 40));
+}
+
 // world-space tutorial prompt above the start, level 1 of each world only
 function hrDrawPrompt()
 {
-    if (!hrRun || !hrRun.prompt || hrScreen != 'playing' || (hrMatch && hrMatch.countdown > 0)) return;
+    if (!hrRun || !hrRun.prompt || hrScreen != 'playing' || hrCountdown > 0) return;
     const def = hrLevelDef(), s = hrLevel.start;
     // high enough to stay clear of a full-power aim arc, unless the level places it
     const at = def.promptAt ? vec2(def.promptAt.x, def.promptAt.y) : vec2(0, s.y + 6);

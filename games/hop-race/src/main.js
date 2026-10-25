@@ -7,7 +7,8 @@
 
 let hrWorld = 0, hrLevelIndex = 0, hrVersus = false;
 let hrRun = null;      // solo attempt: timer, ghost, nudge, tutorial prompt
-let hrMatch = null;    // versus match: wins, countdown, round time
+let hrMatch = null;    // versus match: wins, round time
+let hrCountdown = 0, hrCountBeep = 0;   // 3-2-1-GO before a versus round, or a solo level of a mode with countdown: true
 let hrResult = null;   // last solo finish, shown on the level complete screen
 let hrFinishT = -1;    // real seconds since the finish line, -1 while racing
 const hrTutorialSent = {};
@@ -42,10 +43,8 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
             hrGaDesign(`mode:${HR_WORLDS[world].id}:versus`);
         }
         if (!hrMatch.played.includes(index)) hrMatch.played.push(index);
-        hrMatch.countdown = 2.4;
         hrMatch.frames = 0;
         hrMatch.winner = -1;
-        hrMatch.beep = 4;
     }
     else
     {
@@ -54,6 +53,8 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
         if (hrEditDef) hrGhostPlay = null;   // an edited level may not match the saved ghost
         hrGaDesign(`mode:${HR_WORLDS[world].id}:solo`);
     }
+    hrCountdown = versus || hrMode().countdown ? 2.4 : 0;
+    hrCountBeep = 4;
     hrGo('playing');
 }
 
@@ -183,7 +184,7 @@ function gameUpdate()
         return;   // the game waits behind the rotate screen
     }
     hrUiUpdate();
-    const racing = hrScreen == 'playing' && hrFinishT < 0 && !(hrMatch && hrMatch.countdown > 0);
+    const racing = hrScreen == 'playing' && hrFinishT < 0 && !(hrCountdown > 0);
     hrInputEnd(racing, hrVersus);
     hrUiContinue();
 
@@ -209,12 +210,12 @@ function hrPlayUpdate(racing)
         return;
     }
 
-    if (hrMatch && hrMatch.countdown > 0)
+    if (hrCountdown > 0)
     {
         // 3-2-1-GO: input is ignored until GO
-        hrMatch.countdown -= timeDelta;
-        const n = Math.ceil(hrMatch.countdown / .8);
-        if (n < hrMatch.beep) { hrMatch.beep = n; (n > 0 ? hrSfx.beepLow : hrSfx.beepHigh).play(); }
+        hrCountdown -= timeDelta;
+        const n = Math.ceil(hrCountdown / .8);
+        if (n < hrCountBeep) { hrCountBeep = n; (n > 0 ? hrSfx.beepLow : hrSfx.beepHigh).play(); }
         hrPlayers.forEach(p => hrPlayerStep(p, {down: false, pressed: false, released: false}));
         return;
     }
@@ -230,9 +231,9 @@ function hrPlayUpdate(racing)
     }
 
     const p = hrPlayers[0], input = hrButtons[0];
-    if (!hrRun.started && input.pressed)
+    if (!hrRun.started && (input.pressed || hrMode().countdown))
     {
-        // the timer (and ghost) start at the first input, so reading the level is free
+        // the timer (and ghost) start at the first input, so reading the level is free (or at GO after a countdown)
         hrRun.started = true;
         hrGaProgress('Start', hrWorld, hrLevelIndex);
     }

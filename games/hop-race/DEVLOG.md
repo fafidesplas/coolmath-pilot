@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: countdown, then the run starts by itself
+- Owner: no press to start; count 3-2-1 and start running, in 2P too. The Versus countdown moved out of `hrMatch` into shared `hrCountdown` / `hrCountBeep` (`main.js`), set for every Versus round and for solo levels of a mode with `countdown: true` (Hop while `autoRun` is on). Solo starts its timer and ghost at GO. `run()` waits while `hrCountdown > 0`, then runs; after a fall you run again at once. The 3-2-1-GO drawing is now `hrDrawCountdown()` in `ui.js`, used by both HUDs. Level 1's prompt is "Press A to jump!".
+- Checked in Chrome: solo 1-2 shows the countdown with the runner still, GO at 2.40 s with the clock at 0, 300 ms on the clock 0.3 s later; 2P both runners start at GO; after a fall on 1-1 the runner sets off again; Rocket solo has no countdown. No console errors.
+- Note: every restart now waits through the 2.4 s countdown, against the "restart under 1 s" standard. A shorter or skipped countdown on restart is an option.
+
 ## 2026-10-25 — Hop: bigger ice boost
 - Owner wanted more speed on ice. `iceSpeed` 11 → 15 u/s, `iceAccel` 5 → 9 u/s², so full speed still comes in 1 s. The lean that grows with speed is capped at `maxLean` 0.26 u.
 - Measured on flat ice at 15 u/s: tap 0.8 u high, 5.8 u long; full hold 2.2 u high, 12 u long. Timing search: all 10 levels finish; ice levels 9 and 10 got faster (3.9 s and 3.8 s, were 4.2 s and 4.8 s). Run with the owner's uncommitted 6.

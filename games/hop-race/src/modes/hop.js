@@ -30,7 +30,7 @@ const HR_HOP = {
     backLean:  .25,     // charging toward a high hop, the top leans back by up to this much (u), with power times aim height
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 
-    // auto-run (testing, 2026-10-25): the first press starts a run; then a press jumps at once and holding
+    // auto-run (testing, 2026-10-25): after a 3-2-1 countdown you run by yourself; a press jumps at once and holding
     // jumps higher. Walls turn you around, except a grip wall hit in the air, which you cling to and jump off;
     // ice speeds you up. false: the hold-to-charge hop above
     autoRun:   true,
@@ -68,7 +68,8 @@ HR_MODES.hop = {
     },
 
     // level 1's prompt when auto-run replaces the level's own
-    prompt: HR_HOP.autoRun ? 'Press A to run, press again to jump!' : undefined,
+    prompt: HR_HOP.autoRun ? 'Press A to jump!' : undefined,
+    countdown: HR_HOP.autoRun,   // 3-2-1-GO before every solo level too, then the run starts by itself
 
     aim(p)
     {
@@ -197,7 +198,7 @@ HR_MODES.hop = {
             }
     },
 
-    // auto-run: the first press only starts the run; then a press jumps at once (on the ground, or just after
+    // auto-run: the run starts by itself at GO; a press jumps at once (on the ground, or just after
     // running off an edge) and holding keeps rising higher, up to holdTime. Walls turn you around
     run(p, input)
     {
@@ -206,8 +207,9 @@ HR_MODES.hop = {
         p.down = input.down;
         if (!p.running)
         {
-            if (press) { p.running = true; p.pupilKick(-p.dir * .2, 0); }
-            return;
+            if (hrCountdown > 0) return;   // waiting for GO (main.js); after a fall you run again at once
+            p.running = true;
+            p.pupilKick(-p.dir * .2, 0);
         }
 
         p.coyote = p.grounded ? H.coyote : max(0, p.coyote - dt);
