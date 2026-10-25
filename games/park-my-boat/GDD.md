@@ -193,7 +193,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 ## 8. Screens and UI flow
 **Title → Level select → Playing (⇄ Pause) → Level complete → next level / retry / menu.**
 
-- **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. PLAY (goes to the first level without 3 stars), LEVELS, SOUND toggle, **(new)** MUSIC toggle once the music is in (see 10).
+- **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. two modes, PARKING and UNPARKING (each opens its own level select), SOUND toggle, **(new)** MUSIC toggle once the music is in (see 10).
 - **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the most money kept. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
 - **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the money left with the 3★ line marked ("$9,400 of $10,000 · ★★★ $9,000"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
 - **Pause:** dims the screen. RESUME, RESTART, MENU.
@@ -294,7 +294,7 @@ No daily events (no daily in v1).
   - Two-player local modes: parking race (versus) and tugboat co-op (needs a redrawn tugboat). Notes are in `CLAUDE.md` under Stretch goals.
   - A boat towing a barge (a redrawn tug, or the trawler).
   - More worlds (World 3 could be "Open Sea": waves, wind, islands).
-  - **Harbor Jam mode (prototype built: level 6, "Marina Jam"):** a packed corner of a harbor to clear out, like a car parking-jam puzzle. Tap a boat to select it (an RTS-style ring), then drive it out with the same controls as parking; tapping another boat swaps, and the one you leave stops where it is. Every boat you're not driving is fixed in place, so the one you drive bounces off and never shoves the jam: it's solved by planning the order. A real knock costs a bump (10% of the budget), a gentle scrape is free. Boats leave through open sea (see the open-sea rule). Clear every boat; stars from money kept (3.6). Code: `src/jam.js`, with a solver (`jamSolve()` in the console) that checks a jam can be cleared driving each boat straight out, and lists the rounds. Open: a mode of its own, or a world of puzzle levels between the parking worlds.
+  - **Unparking mode (prototype built: its own button on the title, level 1 "Marina Jam"):** a packed corner of a harbor to clear out, like a car parking-jam puzzle. Tap a boat to select it (an RTS-style ring), then drive it out with the same controls as parking; tapping another boat swaps, and the one you leave stops where it is. Every boat you're not driving is fixed in place, so the one you drive bounces off and never shoves the jam: it's solved by planning the order. A real knock costs a bump (10% of the budget), a gentle scrape is free. Boats leave through open sea (see the open-sea rule). Clear every boat; stars from money kept (3.6). Code: `src/jam.js`, with a solver (`jamSolve()` in the console) that checks a jam can be cleared driving each boat straight out, and lists the rounds. Open: a mode of its own, or a world of puzzle levels between the parking worlds.
   - **Settings (stretch goal):** levels in different places, not only harbors. A setting is a look plus one or two things of its own, so it reads as new without new rules:
     - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and trawlers.
     - **Marina:** packed piers, yachts, tenders (Marina today).
@@ -367,6 +367,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — The jam puzzle is its own mode, Unparking, next to Parking on the title screen.
 - 2026-10-25 — Harbor Jam mode prototyped (13, Later): level 6, Marina Jam.
 - 2026-10-25 — Tugboat replaced by a fishing trawler of the same size and handling (the tug's top view looked like an iPad). Level 8 renamed Clear the Way.
 - 2026-10-25 — Open-sea rule (6): no level is a closed pool.

@@ -76,6 +76,13 @@ function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics sta
 // state
 
 let gameScreen = 'title', screenTime = 0, levelIndex = 0, level, isPaused = false;
+// two modes, chosen on the title: Parking (chains of boats to park) and Unparking (harbor jams to
+// clear, src/jam.js). Each has its own level list; a level's index stays its place in LEVELS (saves).
+let gameMode = 'park';
+const modeOf = L => L.jam ? 'unpark' : 'park';
+const modeLevels = (m = gameMode) => LEVELS.map((L, i) => i).filter(i => modeOf(LEVELS[i]) == m);
+// a level's number within its mode, from 1
+const levelNumber = (i = levelIndex) => modeLevels(modeOf(LEVELS[i])).indexOf(i) + 1;
 let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip;
 let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
 let anchor, judge, result, restT = 0, restArmed = true;
@@ -197,6 +204,7 @@ function loadLevel(i)
 {
     levelIndex = i;
     const L = level = LEVELS[i];
+    gameMode = modeOf(L);
     bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
     popups.length = drops.length = wakes.length = foams.length = 0;
     anchor = judge = result = intro = player = undefined;
@@ -285,8 +293,9 @@ function startBoat(n)
 
 function levelId()
 {
-    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world && !l.bonus == !level.bonus).length + 1;
-    return `${level.bonus ? 'bonus' : 'world' + String(level.world).padStart(2, '0')}:level${String(n).padStart(2, '0')}`;
+    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world && !l.bonus == !level.bonus && !l.jam == !level.jam).length + 1;
+    const group = level.jam ? 'unpark' : level.bonus ? 'bonus' : 'world' + String(level.world).padStart(2, '0');
+    return `${group}:level${String(n).padStart(2, '0')}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -897,13 +906,13 @@ function layoutButtons()
     buttons = [];
     if (gameScreen == 'title')
     {
-        button('play', 'PLAY', 20, 8.6, 9, 2.6, { big:true });
-        button('levels', 'LEVELS', 20, 5.4, 7, 1.9);
+        button('park', 'PARKING', 20, 9, 10, 2.4, { big:true });
+        button('unpark', 'UNPARKING', 20, 6, 10, 2.4, { big:true });
         button('sound', saveData.sound ? 'SOUND: ON' : 'SOUND: OFF', 20, 2.8, 7, 1.5, { small:true });
     }
     else if (gameScreen == 'levels')
     {
-        LEVELS.forEach((L, i) => button('level' + i, L.bonus ? 'BONUS' : String(i+1), 8 + (i%5)*6, 15.4 - Math.floor(i/5)*4.8, 5.2, 4.3, { card:i }));
+        modeLevels().forEach((i, n) => button('level' + i, LEVELS[i].bonus ? 'BONUS' : String(n + 1), 8 + (n%5)*6, 15.4 - Math.floor(n/5)*4.8, 5.2, 4.3, { card:i }));
         button('back', 'BACK', 20, 1.6, 6, 1.4, { small:true });
     }
     else if (gameScreen == 'playing')
@@ -919,7 +928,7 @@ function layoutButtons()
     }
     else if (gameScreen == 'complete')
     {
-        const last = levelIndex >= LEVELS.length - 1, toBonus = !last && !level.bonus && LEVELS[levelIndex + 1].bonus;
+        const next = nextInMode(), last = next === undefined, toBonus = !last && !level.bonus && LEVELS[next].bonus;
         button('next', last ? 'THE END' : toBonus ? 'BONUS' : 'NEXT', 24.5, 6, 7, 2.2, { big:true });
         button('retry', 'RETRY', 16, 6, 6, 2.2);
         button('menu', 'MENU', 20, 4, 4.5, 1.2, { small:true });
@@ -935,24 +944,28 @@ function buttonAt(p)
     }
 }
 
-function nextLevelIndex()
+// the first level of the mode without stars (bonus levels aside), else its first
+function nextLevelIndex(m = gameMode)
 {
-    for (let i = 0; i < LEVELS.length; i++) if (!saveData.stars[i] && !LEVELS[i].bonus) return i;
-    return 0;
+    const list = modeLevels(m);
+    return list.find(i => !saveData.stars[i] && !LEVELS[i].bonus) ?? list[0];
 }
+
+// the level after this one in its mode
+function nextInMode() { const list = modeLevels(modeOf(level)); return list[list.indexOf(levelIndex) + 1]; }
 
 function pressButton(id)
 {
     sfx('click');
-    if (id == 'play') loadLevel(nextLevelIndex());
-    else if (id == 'levels') setScreen('levels');
+    if (id == 'park' || id == 'unpark') { gameMode = id; setScreen('levels'); }
     else if (id == 'sound') { saveData.sound = !saveData.sound; persist(); if (!saveData.sound) track('design', 'settings:sfx:off'); }
-    else if (id == 'back' || id == 'menu') setScreen('title');
+    else if (id == 'back') setScreen('title');
+    else if (id == 'menu') setScreen('levels');
     else if (id.startsWith('level')) loadLevel(+id.slice(5));
     else if (id == 'pause') isPaused = !isPaused;
     else if (id == 'resume') isPaused = false;
     else if (id == 'restart' || id == 'retry') { track('design', 'ui:restart'); loadLevel(levelIndex); }
-    else if (id == 'next') levelIndex >= LEVELS.length - 1 ? setScreen('title') : loadLevel(levelIndex + 1);
+    else if (id == 'next') nextInMode() === undefined ? setScreen('levels') : loadLevel(nextInMode());
 }
 
 // ---------------------------------------------------------------------------
@@ -984,7 +997,7 @@ function gameUpdate()
     }
     if (!mouseIsDown(0)) steerHeld = false;
 
-    if (gameScreen == 'title' && (keyWasPressed('Enter') || keyWasPressed('Space'))) pressButton('play');
+    if (gameScreen == 'title' && (keyWasPressed('Enter') || keyWasPressed('Space'))) pressButton('park');
     if (gameScreen == 'complete')
     {
         if (keyWasPressed('Enter') || keyWasPressed('Space')) pressButton('next');
@@ -1281,7 +1294,7 @@ function drawHud()
     const L = level, wide = viewHalfUi().x*2;
     drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), C_CREAM);
     drawLine(vec2(20 - wide/2, PLAY_TOP), vec2(20 + wide/2, PLAY_TOP), LINE_W, C_INK);
-    txt(`${levelIndex + 1}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
+    txt(`${levelNumber()}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
     // a jam's hint stays up until the first tap
     if (L.jam) { drawJamHud(); drawHint(L.hint, attempts || gameScreen != 'playing' ? 0 : 1); return; }
     let boat = player.type.name;
@@ -1318,7 +1331,7 @@ function drawTitle()
     const bob = Math.sin(time*2)*.2;
     txt('DOCK ALL THE BOATS', 20.2, 15.1 + bob, 2.8, C_INK);
     txt('DOCK ALL THE BOATS', 20, 15.4 + bob, 2.8, C_SUNNY, 'center', .25, C_INK);
-    txt('Park boats of every size.', 20, 12.7, .8, C_INK);
+    txt('Park boats of every size. Or get them all out.', 20, 12.7, .8, C_INK);
 }
 
 function drawComplete()
@@ -1359,7 +1372,7 @@ function gameRender()
     {
         useUiCamera();
         if (gameScreen == 'title') drawTitle();
-        else txt('SELECT LEVEL', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
+        else txt(gameMode == 'unpark' ? 'UNPARKING' : 'PARKING', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
         return;
     }
     drawCurrents();

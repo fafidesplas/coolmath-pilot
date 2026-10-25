@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Two modes: Parking and Unparking
+- Owner: the jam puzzle is its own mode. The title now has PARKING and UNPARKING (Space/Enter picks Parking) instead of PLAY and LEVELS; each opens its own level list, headed with the mode's name and numbered from 1. Marina Jam is Unparking level 1; Parking keeps its 5 levels.
+- NEXT stays in the mode (after the last one it goes back to that mode's list), MENU goes to the mode's list, BACK from a list goes to the title. The HUD number and analytics ids count within the mode (`unpark:level01` for jams). A level's save slot is still its place in `LEVELS`, so saves keep working.
+- Checked in Chrome: both lists show the right levels, NEXT and MENU go where they should, no console errors.
+
 ## 2026-10-25 — Way Down: the squeeze is on the way, not in the slip
 - Owner: the trawler's squeeze should be in the path to the slip, not the slip itself. The two 40 m yachts now stand nose-in in a line west of the slip (x 410), one against the quay and one south of it, with a 13 m doorway between them (y 845-858; 12.4 m between hulls for the 9.6 m trawler). The slip is a normal one again (x 455, finger docks, usual room), 45 m east of the doorway, so there is room to swing in. The trawler starts west of the wall at (368, 849) heading east, 3 m off the doorway's line. Ducks moved to (466, 868); the rowboat traffic's first leg to y 790, clear of the south yacht.
 - Owner likes how Marina and Rush Hour play now.
