@@ -293,6 +293,13 @@ No daily events (no daily in v1).
   - Two-player local modes: parking race (versus) and tugboat co-op. Notes are in `CLAUDE.md` under Stretch goals.
   - A tug towing a barge.
   - More worlds (World 3 could be "Open Sea": waves, wind, islands).
+  - **Settings (stretch goal):** levels in different places, not only harbors. A setting is a look plus one or two things of its own, so it reads as new without new rules:
+    - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and tugs.
+    - **Marina:** packed piers, yachts, tenders (Marina today).
+    - **Tropical islands:** turquoise shallows, white sand, palm trees, a wooden jetty or a beach hut on stilts; coral heads as fixed obstacles; jet skis, swans and party barges.
+    - Later candidates: a canal town (narrow canals, bridges, gondolas), a lake with a boathouse, an icy fjord with floating ice.
+    - Each setting needs its own water, land and accent colors on top of the shared ink, cream and sunny. `STANDARDS.md` asks for one palette of 4–6 colors chosen once, so per-setting palettes need the team's OK first (see 14).
+    - Settings could become the worlds (World 1 the harbor, World 2 the islands…), which gives each world its own look as well as its own lesson.
 - **Cut:**
   - Submarine: needs a dive control and an underwater view. Too much new UI for a pilot.
   - Player zoom: the set framing per boat keeps the size jump readable and the controls simple.
@@ -342,6 +349,7 @@ Still open:
 |---|---|---|---|
 | Settle drag numbers (1 toy unit/s, 100% drag) | Tune in the slice so every boat, ships included, can stop in a few seconds | Pao | Open |
 | Music mood and length | Decide when the music is made | Pao | Open |
+| Settings (stretch goal, 13): one palette per setting? | Keep ink, cream, sunny and coral shared; let each setting swap water, land and one accent. Ask the team, since `STANDARDS.md` says one palette chosen once | Pao, Fafi, Team | Open |
 | Coolmath SDK, ad breaks, branding, size limit, GA keys | Team-wide `[confirm]` items in `STANDARDS.md` | Team | Open |
 | Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
 
@@ -357,6 +365,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Stretch goal: levels in different settings (harbor, marina, tropical islands, more later).
 - 2026-10-25 — No clock: stars come from money kept from a per-level budget (3.6). Par times, the clock rules and time-based results removed; the economy questions for Fafi became decisions plus four tuning questions.
 - 2026-10-25 — Slip silhouette removed: either end in counts, so a boat shape in the slip pointed one way for no reason.
 - 2026-10-25 — Rush Hour compressed to one screen.
