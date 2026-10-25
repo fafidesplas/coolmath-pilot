@@ -1,6 +1,6 @@
 # Dock All The Boats — Game design document
 
-**Status:** Draft
+**Status:** In review
 **Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-10-25
 
 > Park a rowboat, then a cruise ship 100x bigger right next to it, against the clock, in a harbor where nothing has brakes.
@@ -346,6 +346,7 @@ Still open:
 | Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Sent to Fafi for review.
 - 2026-10-25 — Anchor removed: parking is checked automatically when the boat rests in the slip. Added settle drag, the rest ring, and the auto anchor on park; level 3 is now "No Brakes".
 - 2026-10-25 — Review 1 applied: slip clearing, miss messages, clock stops at the anchor drop, vertical slice defined, per-boat start events, anchor speed cue, teaching order and level fixes, par cap, edge cases.
 - 2026-10-25 — Owner answered the open questions; all proposals confirmed except music, which Pao adds later.
