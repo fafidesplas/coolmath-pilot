@@ -131,6 +131,7 @@ A damage bill in dollars (from impact energy) and a count of ducks hit, shown in
   - **World 2, Big & Small:** chains of 2–5 boats with big scale jumps, traffic, crowded marinas and currents together.
   - **Bonus, Continental Drift:** rowboat → cruise ship → island → continent, 100x each step. Unlocks when all 20 levels are finished.
 - **Teaching order:** each new element first appears where it can't hurt (ducks away from the line to the slip), next in the way (ducks crossing the fairway), then with an earlier element (ducks plus moored boats).
+- **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 5 current levels pass; check new levels with the same test (park each boat, look for the next).
 - **Difficulty curve:** a level gets harder with: more boats in the chain, bigger scale jumps, a narrower slip (less `pad`), a longer or bent route, moving things in the way, current across the approach. Add one of these per level, and never two new ones at once. Par stays at most 90 s (3.6). A level should take a first-time player at most 3 tries.
 - **Stars:** see 3.6. 3★ ≤ par, 2★ ≤ 1.5 × par, 1★ for finishing.
 - **Levels:** (existing levels are named in quotes)
@@ -358,6 +359,7 @@ Still open:
 | Bonus for a clean park (no contact at all)? | Yes: a "Clean!" popup and a small bonus per boat, so "don't touch anything" is felt in the moment, not only at the end | Fafi, Pao | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Added the hand-off rule (6): the next boat is visible from where the previous one parks.
 - 2026-10-25 — Added questions for Fafi on an economy (Pao's idea: start each level with money, keep it all with no damage).
 - 2026-10-25 — Sent to Fafi for review.
 - 2026-10-25 — Anchor removed: parking is checked automatically when the boat rests in the slip. Added settle drag, the rest ring, and the auto anchor on park; level 3 is now "No Brakes".

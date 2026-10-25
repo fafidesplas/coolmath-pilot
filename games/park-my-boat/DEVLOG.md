@@ -1,5 +1,15 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Next boat visible from each slip
+- Owner: wherever a boat docks, the next boat in the chain should be visible. Before, only 2 of 7 hand-offs showed it. Moved the waiting boats (and what was in their way), now all 7 do:
+  - Odd Couple: the cruise ship waits along the quay right west of the rowboat's slip, bow west; its stern shows next to the rowboat. Rowboat starts at (500, 548), moored boats moved to x 40–80, ducks to (530, 570). Pulling the ship off the quay costs nothing.
+  - Way Down: the jet ski waits at (515, 860), 75 m from the tug's slip (was across the basin). Its trip to its slip is shorter now.
+  - Mixed Nuts: the cruise ship waits at (980, 570) east of the yacht's slip, half on screen; the yacht starts farther out at (1100, 420).
+  - Marina: the sailboat waits in the lower fairway at (250, 91) (speedboat lane moved to y 112). The sailboat's free berth moved to the east end of the upper pier (x 240), and the yacht waits just past the pier's end at (300, 225) (barge lane moved to y 257).
+- Added the rule to the GDD's level design section.
+- Checked in Chrome: every hand-off shows the next boat, nothing overlaps at load, `win()` completes all 5 levels.
+- Next: owner plays. Way Down's jet ski and Marina's yacht have shorter trips now, so check they're still a challenge.
+
 ## 2026-10-25 — No more anchor (prototype)
 - Owner: removed the anchor drop, ahead of Fafi's GDD review, to test the feel. No anchor button, no Space/Enter anchor, no "Too fast!" spin-out.
 - A boat is checked by itself once it rests (under 0.25 u/s and 0.25 rad/s, no input) for 0.5 s with part of its hull in the slip. A yellow ring fills around the boat while it rests there. Resting anywhere else is never judged; after a miss the boat must move before the next check. When a boat parks, the anchor drops by itself (splash, chain) for the celebration.

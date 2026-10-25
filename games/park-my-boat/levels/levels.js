@@ -114,14 +114,14 @@ const SCALE_LEVELS =
         docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
         boats:
         [
-            { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
+            { boat: 'dinghy', start: { x: 500, y: 548, a: 2 }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box and let go.' },
-            { boat: 'cruise', start: { x: 225, y: 210, a: PI*5/12 }, slip: { x: 680, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 316, y: 564.5, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
         ],
-        moored: [tiedUp('speedboat', 120, 585), tiedUp('sailboat', 140, 585), tiedUp('speedboat', 160, 585)],
+        moored: [tiedUp('speedboat', 40, 585), tiedUp('sailboat', 60, 585), tiedUp('speedboat', 80, 585)],
         buoys: [[300, 380, 5], [900, 380, 5]],
-        ducks: [{ x: 440, y: 572, kids: 3 }],
+        ducks: [{ x: 530, y: 570, kids: 3 }],
     },
     {
         name: 'Way Down', ...basin(0, -20, 1700, 900),
@@ -131,7 +131,7 @@ const SCALE_LEVELS =
               hint: 'Big ships take a long time to stop. Slow down early.' },
             { boat: 'tug', start: { x: 382, y: 832, a: 0 }, slip: { x: 440, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'The tugboat can push other boats out of the way.' },
-            { boat: 'jetski', start: { x: 93.5, y: 616, a: PI/2 }, slip: { x: 291, y: 898, a: PI/2, pad: [1.4, 1] },
+            { boat: 'jetski', start: { x: 515, y: 860, a: -PI/2 }, slip: { x: 291, y: 898, a: PI/2, pad: [1.4, 1] },
               hint: '' },
         ],
         ducks: [{ x: 414, y: 896, kids: 2 }],
@@ -147,9 +147,9 @@ const SCALE_LEVELS =
         name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
         boats:
         [
-            { boat: 'yacht', start: { x: 950, y: 560, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
+            { boat: 'yacht', start: { x: 1100, y: 420, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
               hint: 'Start turning early.' },
-            { boat: 'cruise', start: { x: 1150, y: 450, a: PI }, slip: { x: 510, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 980, y: 570, a: PI }, slip: { x: 510, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay.' },
             { boat: 'swan', start: { x: 305, y: 692, a: 2.1 }, slip: { x: 300, top: 700, a: PI/2, pad: [1, .9] },
               hint: 'The swan pedalo turns very quickly.' },
@@ -196,15 +196,15 @@ const SCALE_LEVELS =
         [
             { boat: 'jetski', start: { x: 25, y: 25, a: PI/2 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' },
               hint: 'Find the free spot on the lower pier.' },
-            { boat: 'sailboat', start: { x: 200, y: 30, a: PI }, slip: { x: 150, y: 213, a: PI/2, pad: [.8, .5], fingers: 'none' },
+            { boat: 'sailboat', start: { x: 250, y: 91, a: PI }, slip: { x: 240, y: 213, a: PI/2, pad: [.8, .5], fingers: 'none' },
               hint: 'Your berth is on the upper pier. Watch for the tenders.' },
-            { boat: 'yacht', k: 6, start: { x: 200, y: 125, a: 0 }, slip: { x: 110, top: 350, a: PI/2, pad: [.8, .6], fingers: 'none' },
+            { boat: 'yacht', k: 6, start: { x: 300, y: 225, a: PI }, slip: { x: 110, top: 350, a: PI/2, pad: [.8, .6], fingers: 'none' },
               hint: 'Squeeze the yacht in between the others on the quay.' },
         ],
         moored:
         [
             ...berths(3, 377, 350, -1, 2, [['yacht', 5.5], ['yacht', 6.5], ['yacht', 5], ['yacht', 6]], [[110, 26]]),
-            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2], ['sailboat', 2.4]], [[150, 7.5]]),
+            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2], ['sailboat', 2.4]], [[240, 7.5]]),
             ...berths(3, 266, 200, -1, 2, [['yacht', 4], ['yacht', 3.5], ['yacht', 4.5]]),
             ...berths(104, 377, 76, 1, 1.2, [['speedboat', 2], ['dinghy', 1.3], ['jetski', 1], ['pontoon', 2], ['speedboat', 2], ['sailboat', 2.4], ['dinghy', 1.3], ['jetski', 1]], [[230, 4.2]]),
             ...berths(104, 377, 70, -1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2]]),
@@ -212,9 +212,9 @@ const SCALE_LEVELS =
         traffic:
         [
             { boat: 'dinghy', path: [[110, 148], [280, 148]], end: 'back', speed: .33 },
-            { boat: 'speedboat', path: [[280, 100], [110, 100]], end: 'back', speed: .15 },
+            { boat: 'speedboat', path: [[280, 112], [110, 112]], end: 'back', speed: .15 },
             { boat: 'jetski', path: [[300, 110], [360, 110], [360, 190], [300, 190]], end: 'loop', speed: .22 },
-            { boat: 'pontoon', path: [[30, 250], [260, 250]], end: 'back', speed: .33 },
+            { boat: 'pontoon', path: [[30, 257], [260, 257]], end: 'back', speed: .33 },
             { boat: 'speedboat', path: [[360, 278], [40, 278]], end: 'back', speed: .15 },
             { boat: 'dinghy', path: [[110, 42], [370, 42]], end: 'back', speed: .33 },
         ],
