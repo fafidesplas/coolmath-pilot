@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Way Down: a tight squeeze for the trawler
+- Owner: a level with a very tight squeeze to reach the slot. In Way Down, two 40 m yachts (k 5) lie nose-in to the quay either side of the trawler's slip, leaving an alley 12.4 m wide between their hulls for the 9.6 m trawler (1.4 m each side). The slip is narrower too (pad [.6, .3]: 12 m wide, 31 m long), no finger docks. The trawler starts side-on just outside the alley mouth at (400, 850), so it has to back off and line up. Hint: "Squeeze between the two yachts. Line up before you go in." The rowboat traffic's first leg moved to y 830 so it no longer starts on the trawler.
+- Checked in Chrome: slip on screen from the start, hand-offs still show the next boat, the yachts don't move at load, a trawler placed in the slip fits (100%). Lined up just outside the alley, a short push parks it (also 1 m off or 2° off); the yachts only got scraped at 2° off. My scripted driver couldn't do the whole line-up from the start, so the full approach is untested by a person.
+- Next: owner plays it; if it's too hard, move the yachts apart (x 427 and 453).
+
 ## 2026-10-25 — Odd Couple: a busy row and edge traffic
 - Owner: more boats moored near the rowboat's slip, and traffic near the edge of the rowboat's view. Twelve small boats are tied up nose-in along the quay on both sides of the slip (jet skis, rowboats, swans, a speedboat each side, a sailboat to the west), so the slip is a gap in a busy row.
 - Two traffic lanes along the bottom of the rowboat's view, which only reaches 6.5 m below its start: jet skis back and forth 4.5 m below the start (in full view), swans on the bottom edge (half in view). They run during the rowboat's turn only, so the cruise ship doesn't plough through them.
