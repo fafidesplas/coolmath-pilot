@@ -147,14 +147,14 @@ const SCALE_LEVELS =
         name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
         boats:
         [
-            { boat: 'yacht', start: { x: 860, y: 640, a: PI }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
+            { boat: 'yacht', start: { x: 964, y: 656, a: 0 }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
               hint: 'Start turning early.' },
-            { boat: 'cruise', start: { x: 920, y: 570, a: PI }, slip: { x: 530, top: 700, a: 0, pad: [.6, .3], fingers: 'none' },
+            { boat: 'cruise', start: { x: 796, y: 546, a: -PI/2 }, slip: { x: 522, top: 700, a: 0, pad: [0.6, 0.3], fingers: 'none' },
               hint: 'Park the cruise ship along the quay.' },
-            { boat: 'swan', start: { x: 310, y: 696, a: PI }, slip: { x: 300, top: 700, a: PI/2, pad: [1, .9] },
+            { boat: 'swan', start: { x: 316.8, y: 690.4, a: PI }, slip: { x: 309, top: 700, a: PI/2, pad: [1, 0.9] },
               hint: 'The swan pedalo turns very quickly.' },
         ],
-        ducks: [{ x: 780, y: 690, kids: 3 }],
+        ducks: [{ x: 780, y: 690, kids: 3 }, { x: 300.7, y: 694, kids: 3 }],
         buoys: [[1000, 300, 5]],
     },
     {
