@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: auto-run keeps the charge hop
+- Owner asked to keep the hop's physics and animation in auto-run: hold to squeeze, release to jump with more power. Answers: you keep running while you charge, and the power sets the angle (no aim sweep). Built in `HR_MODES.hop.run()`: power and speed as before (1.1 s, 9–20 u/s), angle 18°–80° with power, squash and a back lean growing with power, charge ticks, the eye looks along the hop. Running off an edge while charging loses the charge after 0.08 s. A mid-air wall bounces at 35 % and turns you around. The world hint is back to "Hold: charge · Release: hop"; level 1's prompt is "Press A to run. Hold, then let go to jump!". Removed `runJump` and `runCut`.
+- Checked in Chrome with a search over wait and hold timings per hop: levels 1, 2, 4, 5 and 6 can be finished (6 needs the low flat hops). 3 and 7–10 can't. Hop 3's 3 u steps are too short to charge for its 2.5 u climbs while running. Seen in play: the squash and lean show while running, and a 0.7 s charge already carries you 4 u, to the gap's edge in 1-1.
+- Next: owner plays; decide on charging while running vs. slowing down, and what to do with 3 and 7–10.
+
 ## 2026-10-25 — Hop: auto-run test
 - Owner asked for Hop with automatic running and a tap to jump. Their answers: a switch inside Hop (`HR_HOP.autoRun`, on now; false is the old hold-to-charge hop), hold for a higher jump, every wall turns you around, and the first press only starts the run. Built as `HR_MODES.hop.run()`: 6 u/s run, 20 u/s jump (4.8 u high when held, about 1.5 u on a tap), 0.08 s coyote time. Level 1 has a new prompt and the world hint changed (`HR_MODES.hop.prompt`, used by the prompt drawing in `ui.js`).
 - Checked in Chrome with a simple bot (jump when a wall or a drop is ahead, 140 timings): levels 1–5 finish in 3–4 s; 6–10 never do. Hop 6's gap is under a 2.5 u ceiling, and a running jump there carries only about 2 u. 7–10 climb shafts by clinging to grip walls, which turning around rules out. Real keyboard play finished 1-1.

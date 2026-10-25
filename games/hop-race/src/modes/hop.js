@@ -30,17 +30,14 @@ const HR_HOP = {
     backLean:  .25,     // charging toward a high hop, the top leans back by up to this much (u), with power times aim height
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 
-    // auto-run (testing, 2026-10-25): the first press starts a run, then a press jumps and holding jumps higher;
-    // walls (grip ones too) turn you around and ice is plain floor. false: the hold-to-charge hop above
+    // auto-run (testing, 2026-10-25): the first press starts a run; then hold to charge while you keep running
+    // and release to hop. No aim sweep: the power sets the angle, from a low flat hop to a high one.
+    // Walls (grip ones too) turn you around and ice is plain floor. false: the hold-to-charge hop above
     autoRun:   true,
-    runSpeed:  6,       // run speed, on the ground and in the air (u/s)
-    runJump:   20,      // jump speed straight up while held (u/s): 4.8 u high
-    runCut:    6,       // letting go while rising cuts the upward speed to this (u/s): a tap is about 1.5 u high
-    coyote:    .08,     // a press this soon after running off an edge still jumps (s)
+    runSpeed:  6,       // run speed on the ground (u/s); in the air you keep the hop's own speed
+    coyote:    .08,     // a release this soon after running off an edge still hops (s)
     runLean:   .06,     // the top leans into the run (u)
 };
-
-if (HR_HOP.autoRun) HR_WORLDS.find(w => w.id == 'hop').hint = 'Press: jump · Hold: higher';
 
 const HR_MODES = {};
 
@@ -51,12 +48,12 @@ HR_MODES.hop = {
         p.cling = 0;
         p.dir = 1;
         p.t = p.charge = p.flat = 0;
-        p.running = p.rising = false;
+        p.running = p.charging = false;
         p.coyote = 0;
     },
 
     // level 1's prompt when auto-run replaces the level's own
-    prompt: HR_HOP.autoRun ? 'Press A to run, press again to jump!' : undefined,
+    prompt: HR_HOP.autoRun ? 'Press A to run. Hold, then let go to jump!' : undefined,
 
     aim(p)
     {
@@ -185,37 +182,54 @@ HR_MODES.hop = {
             }
     },
 
-    // auto-run: the first press only starts the run; then a press jumps (from the ground, or just after
-    // running off an edge) and letting go early cuts the jump short. Walls turn you around
+    // auto-run: the first press only starts the run; then hold to charge while you keep running and release
+    // to hop (on the ground, or just after running off an edge). The power sets both the speed and the angle,
+    // so a short hold is a low flat hop and a full one a high hop. Walls turn you around
     run(p, input)
     {
         const H = HR_HOP, dt = timeDelta, solids = hrLevel.solids;
         const press = input.down && !p.down;   // a held button (e.g. after a fall) must be pressed again
-        p.down = input.down;
         if (!p.running)
         {
-            if (press) { p.running = true; p.pupilKick(-p.dir * .2, 0); hrEmit('hold', p); }
+            if (press) { p.running = true; p.pupilKick(-p.dir * .2, 0); }
+            p.down = input.down;
             return;
         }
 
         p.coyote = p.grounded ? H.coyote : max(0, p.coyote - dt);
-        if (press && p.coyote > 0)
+        if (press && p.coyote > 0) { p.charging = true; p.charge = 0; hrEmit('hold', p); }
+        if (p.charging && !p.coyote)
         {
-            p.vy = H.runJump;
-            p.rising = true;
-            p.grounded = false;
+            p.charging = false;   // ran off an edge while charging: the charge is lost
+            p.charge = p.crouch = 0;
+        }
+        const angle = H.angleLo + (H.angleHi - H.angleLo) * p.charge, speed = H.vMin + (H.vMax - H.vMin) * p.charge;
+        if (p.charging && input.down)
+        {
+            const before = p.charge;
+            p.charge = min(1, p.charge + dt / H.chargeT);
+            p.crouch = H.crouch * p.charge;   // squash toward the floor, deeper with more power
+            p.look = vec2(Math.cos(angle) * p.dir, Math.sin(angle));   // the eye looks where you'll hop
+            if (floor(before * 8) != floor(min(p.charge, .99) * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
+        }
+        else if (p.charging)
+        {
+            p.vx = Math.cos(angle) * speed * p.dir;
+            p.vy = Math.sin(angle) * speed;
+            p.grounded = p.charging = false;
             p.coyote = 0;
             p.squash = -.3;
             p.landT = -1;
-            p.pupilKick(0, -.3);
-            hrSfx.jump.play();
+            p.crouch = 0;
+            p.pupilKick(-p.vx * .02, -p.vy * .02);
+            hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
             hrEmit('jump', p);
         }
-        if (p.rising && !p.down && p.vy > H.runCut) p.vy = H.runCut;   // let go early: a lower jump
-        if (p.vy <= 0) p.rising = false;
-        p.vx = p.dir * H.runSpeed;
+        p.down = input.down;
+        if (p.grounded) p.vx = p.dir * H.runSpeed;   // in the air you keep the hop's (or the run's) speed
         p.vy -= H.gravity * dt;
-        p.lean = H.runLean;
+        // the top leans into the run, and back the more power a (high) hop has
+        p.lean = H.runLean - (p.charging ? H.backLean * p.charge : 0);
 
         p.x += p.vx * dt;
         for (const s of solids)
@@ -224,7 +238,7 @@ HR_MODES.hop = {
                 p.x = p.vx > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
                 p.pupilKick(p.dir * .2, 0);
                 p.dir = -p.dir;
-                p.vx = -p.vx;
+                p.vx *= p.grounded ? -1 : -H.wallBounce;   // in the air plain bounce physics, then run the other way
                 hrSfx.land.play(undefined, .5, 1.3);
             }
 
