@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: wall jumps back in auto-run
+- Owner: grip walls stopped working. Auto-run turned you around at every wall, grip walls too. Now a grip wall hit in the air holds you like the charge hop did (`p.cling`, slide at up to `clingSlide` 3 u/s, no riding up, let go if the wall ends) and a press wall-jumps you away from it with the normal run jump (hold for higher, somersault on a full hold). On the ground a grip wall still turns you around. A flip in progress finishes fast on the wall.
+- Checked in Chrome with the timing search, now also stopping at wall grabs: every Hop level finishes, 7–10 with 1–2 wall grabs (4.2–4.8 s). Level 6 here is the owner's uncommitted edit (no ceiling, ice floors); the committed 6 with the ceiling still can't be finished.
+
 ## 2026-10-25 — Hop: ice speeds up the run, jumps off it dash
 - Owner: ice should speed you up, and the extra speed should make a jump a longer forward dash at the cost of height. Built: `p.speed` builds from 6 to 11 u/s on ice (`iceSpeed`, `iceAccel` 5 u/s²) and drops back at `groundBrake` 10 u/s² off it; you keep it in the air. Takeoff is up to 35 % weaker at full speed (`dashCost`). A wall resets you to 6 u/s. The lean grows with speed and ice sparkles show when fast.
 - Measured on flat ice: tap 1.8 u high/3.5 u long at 6 u/s, 0.8/4.2 at 11; full hold 4.4/6.2 at 6 u/s, 3.2/7.8 at 8.5, 2.2/8.8 at 11 (still flips). The timing search finishes 1–5 (1-5 Thin Ice in 2.9 s, was 3.7 s) and not 6–10. Frozen frame on 1-5 shows the lean and sparkles at 9.5 u/s.

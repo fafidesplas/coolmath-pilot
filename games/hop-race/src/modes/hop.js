@@ -31,7 +31,8 @@ const HR_HOP = {
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 
     // auto-run (testing, 2026-10-25): the first press starts a run; then a press jumps at once and holding
-    // jumps higher. Walls (grip ones too) turn you around and ice speeds you up. false: the hold-to-charge hop above
+    // jumps higher. Walls turn you around, except a grip wall hit in the air, which you cling to and jump off;
+    // ice speeds you up. false: the hold-to-charge hop above
     autoRun:   true,
     runSpeed:  6,       // run speed (u/s); in the air you keep the speed you took off with
     iceSpeed:  11,      // on ice the run speeds up to this (u/s)...
@@ -209,8 +210,10 @@ HR_MODES.hop = {
         }
 
         p.coyote = p.grounded ? H.coyote : max(0, p.coyote - dt);
-        if (press && p.coyote > 0)
+        if (press && (p.coyote > 0 || p.cling))
         {
+            if (p.cling) p.x += p.dir * .02;   // a wall jump: step off the wall, already facing away from it
+            p.cling = 0;
             // the faster you run, the weaker the takeoff: speed from the ice turns a jump into a long, low dash
             p.vy = H.runJump * (1 - H.dashCost * clamp((p.speed - H.runSpeed) / (H.iceSpeed - H.runSpeed)));
             p.rising = true;
@@ -230,19 +233,44 @@ HR_MODES.hop = {
         if (!p.down || p.vy <= 0 || p.holdT >= H.holdTime) p.rising = false;
         if (p.grounded)
             p.speed = p.onIce ? min(H.iceSpeed, p.speed + H.iceAccel * dt) : max(H.runSpeed, p.speed - H.groundBrake * dt);
-        p.vx = p.dir * p.speed;
-        p.vy -= (p.rising ? H.holdGravity : H.gravity) * dt;
+        if (p.cling)
+        {
+            // on a grip wall: slide slowly down it; let go and fall if it ends
+            p.vx = 0;
+            p.vy = max(-H.clingSlide, p.vy - H.clingAccel * dt);
+            if (!solids.some(s => hrOverlapSolid(p.x + p.cling * .06, p.y, s))) p.cling = 0;
+        }
+        else
+        {
+            p.vx = p.dir * p.speed;
+            p.vy -= (p.rising ? H.holdGravity : H.gravity) * dt;
+        }
 
         p.x += p.vx * dt;
         for (const s of solids)
             if (hrOverlapSolid(p.x, p.y, s, .1))   // slightly short so the floor you run on doesn't count
             {
-                p.x = p.vx > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
-                p.pupilKick(p.dir * .2, 0);
-                p.dir = -p.dir;
+                const side = p.vx > 0 ? 1 : -1;
+                p.x = side > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
+                p.dir = -side;          // turn around (or, clinging, face away from the wall)
                 p.speed = H.runSpeed;   // a bump costs the ice speed
-                p.vx = p.dir * p.speed;
-                hrSfx.land.play(undefined, .5, 1.3);
+                if (s.grip && !p.grounded)
+                {
+                    // a grip wall hit in the air holds you: no riding up it, and a press jumps you off
+                    p.cling = side;
+                    p.vx = 0;
+                    p.vy = clamp(p.vy, -H.clingSlide, 0);
+                    p.rising = false;
+                    p.squash = .2;
+                    p.pupilKick(side * .15, 0);
+                    hrSfx.land.play(undefined, .6, 1.5);
+                }
+                else
+                {
+                    p.vx = p.dir * p.speed;
+                    p.pupilKick(side * .2, 0);
+                    hrSfx.land.play(undefined, .5, 1.3);
+                }
             }
 
         const prevY = p.y, wasGrounded = p.grounded;
@@ -255,6 +283,7 @@ HR_MODES.hop = {
                 {
                     p.y = s.top + HR_PSIZE / 2;
                     p.grounded = true;
+                    p.cling = 0;
                     p.onIce = s.ice;
                     if (!wasGrounded)
                     {
@@ -277,7 +306,7 @@ HR_MODES.hop = {
         // somersault: a full turn forward (clockwise when facing right), eased; landing mid-flip rolls the rest quickly
         if (p.flipT >= 0)
         {
-            p.flipT += dt * (p.grounded ? 4 : 1);
+            p.flipT += dt * (p.grounded || p.cling ? 4 : 1);
             const k = min(1, p.flipT / H.flipTime);
             p.spin = k < 1 ? smoothStep(k) * 2 * PI * p.flipDir : 0;
             if (k >= 1) p.flipT = -1;
