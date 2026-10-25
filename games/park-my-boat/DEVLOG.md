@@ -1,5 +1,13 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — GDD review 1
+- Ran the phase 1c review (14 items) and went through each with Pao. All applied to `GDD.md`, with Pao's own answers on two:
+  - Slip blockers: boats in the current slip start their engines and drive out; logs and buoys drift out. No Reset button.
+  - Vertical slice: the 5 existing levels in the full v1 shell; the tutorial levels come in phase 3.
+  - The jet ski gets its own level (5, Buoy Alley); level 9 is Zippy → Party Barge.
+- Also: miss messages per cause, clock stops at the anchor drop, per-boat start events, anchor speed cue, size-aware edge arrows (max 2), animated level 1 tutorial, par ≤ 90 s, RETRY skips the preview, hidden tab pauses, Swan Lake and Busy Harbor, `main.js` split first in phase 2.
+- Next: review again, then Fafi reads it.
+
 ## 2026-10-25 — GDD questions answered
 - Pao answered the GDD's open questions: time-based stars with a 50% accuracy minimum, retry in place, clock paused between boats, restart skips the first preview, 2 worlds of 10, first scale jump at level 4, finish-to-unlock, look-ahead camera with edge arrows, no daily, global drift, par = clean run × 1.2, support tones kept, analytics question confirmed.
 - Music: Pao adds it later; the MUSIC toggle comes with it.
