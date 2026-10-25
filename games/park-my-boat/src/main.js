@@ -208,6 +208,16 @@ function loadLevel(i)
     for (const d of L.docks) rects.push({ ...d, dock:true });
     for (const m of L.lands || []) addLand(m);
 
+    // a harbor jam (src/jam.js) has no chain of boats to park, only the boats to clear out
+    if (L.jam)
+    {
+        jamLoad(L);
+        setScreen('playing');
+        updateCamera(0, true);
+        if (!window.pmbEditor?.active) track('progression', 'Start', levelId());
+        return;
+    }
+
     // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
     fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
@@ -293,6 +303,12 @@ function boxAround(p, r) { return { x0:p.x - r, y0:p.y - r, x1:p.x + r, y1:p.y +
 // (more for small, quick boats); the slip may be off screen, an arrow at the edge points to it
 function cameraGoal()
 {
+    // a jam's camera holds still on the whole harbor corner
+    if (level?.jam)
+    {
+        const [x0, y0, x1, y1] = level.view, wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
+        return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
+    }
     const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.type.view || 1);
     const minW = boatSize(player) * lens, pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
@@ -699,7 +715,7 @@ function showComplete()
 {
     const i = levelIndex, acc = accs.reduce((a, b) => a + b, 0) / accs.length;
     const stars = acc >= .85 ? 3 : acc >= .6 ? 2 : 1;
-    result = { acc, stars };
+    result = level.jam ? jamResult() : { acc, stars };
     result.isBest = result.stars > (saveData.stars[i] || 0) || result.acc > (saveData.best[i] || 0);
     // the level editor's test runs don't count
     if (!window.pmbEditor?.testing)
@@ -981,6 +997,9 @@ function gameUpdate()
         if (!isPaused)
         {
             levelTime += timeDelta;
+            if (level.jam) jamUpdate(timeDelta);
+            else
+            {
             if (intro && intro.t < SLIP_SHOW && (mouseWasPressed(0) || keyWasPressed('Space') || keyWasPressed('Enter')))
                 intro.t = SLIP_SHOW;
             if (intro)
@@ -991,6 +1010,7 @@ function gameUpdate()
             else boatTime += timeDelta;
             stepWorld();
             updateJudge(timeDelta);
+            }
         }
     }
     if (gameScreen == 'playing' || gameScreen == 'complete')
@@ -1047,6 +1067,7 @@ function drawCurrents()
 
 function drawSlip()
 {
+    if (!slip) return;
     const inside = boatInSlip(), pulse = .5 + .5*Math.sin(time*5);
     const lw = Math.min(.14*WU, slip.wid*.08);
     if (inside)
@@ -1127,7 +1148,7 @@ function drawBodies()
         else if (b.kind == 'log') drawLog(b);
     }
     for (const b of bodies) if (b.type && b != player && inView(b.pos, b.radius*1.2)) drawBoat(b);
-    drawBoat(player);
+    if (player) drawBoat(player);
 }
 
 // sand rects and landmass blobs drawn as one shape: every outline first, then every fill on top,
@@ -1184,7 +1205,7 @@ function drawLevelCard(b, hover)
     drawPanel(c, b.w, b.h, isNext ? C_SUNNY : L.bonus ? C_WATER2 : C_CREAM, .5);
     txt(b.label, c.x, c.y + 1.15, L.bonus ? .8 : 1.2, C_INK);
     txt(L.name, c.x, c.y + .1, .48, C_INK);
-    txt(L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
+    txt(L.jam ? 'Harbor jam' : L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
     for (let s = 0; s < 3; s++) drawStar(vec2(c.x - 1.15 + s*1.15, c.y - 1.45), .42, s < stars);
 }
 
@@ -1223,6 +1244,7 @@ function drawSlipArrow()
 // a ring around the player when the boat is too small to spot
 function drawPlayerMarker()
 {
+    if (!player) return;
     const len = boatSize(player) / cam.wu;
     if (len > 1.2) return;
     const u = worldToUi(player.pos), r = 1.1 + Math.sin(time*6)*.12;
@@ -1259,6 +1281,8 @@ function drawHud()
     drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), C_CREAM);
     drawLine(vec2(20 - wide/2, PLAY_TOP), vec2(20 + wide/2, PLAY_TOP), LINE_W, C_INK);
     txt(`${levelIndex + 1}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
+    // a jam's hint stays up until the first tap
+    if (L.jam) { drawJamHud(); drawHint(L.hint, attempts || gameScreen != 'playing' ? 0 : 1); return; }
     let boat = player.type.name;
     boat += ` · ${fmtLen(boatSize(player))}`;
     if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
@@ -1267,13 +1291,14 @@ function drawHud()
     drawScaleBar();
 
     // hint fades after a few seconds
-    const hint = L.boats[boatIndex].hint;
-    const a = intro || gameScreen != 'playing' ? 0 : clamp(6 - boatTime, 0, 1);
-    if (a > 0 && hint)
-    {
-        drawPanel(vec2(20, 1.6), Math.min(36, hint.length*.33 + 2), 1.5, C_CREAM.scale(1, a), .5, false);
-        txt(hint, 20, 1.6, .58, C_INK.scale(1, a));
-    }
+    drawHint(L.boats[boatIndex].hint, intro || gameScreen != 'playing' ? 0 : clamp(6 - boatTime, 0, 1));
+}
+
+function drawHint(hint, a)
+{
+    if (!(a > 0 && hint)) return;
+    drawPanel(vec2(20, 1.6), Math.min(36, hint.length*.33 + 2), 1.5, C_CREAM.scale(1, a), .5, false);
+    txt(hint, 20, 1.6, .58, C_INK.scale(1, a));
 }
 
 function drawTitle()
@@ -1302,7 +1327,7 @@ function drawComplete()
     const c = vec2(20, 11.5);
     drawPanel(c.add(vec2(0, (1 - ease)*-12)), 24, 17, C_CREAM, .8);
     if (k < 1) return;
-    txt('PARKED!', 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
+    txt(level.jam ? 'ALL CLEAR!' : 'PARKED!', 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
     for (let s = 0; s < 3; s++)
     {
         const st = clamp((t - .35 - s*.25)*5, 0, 1);
@@ -1311,6 +1336,13 @@ function drawComplete()
         drawStar(vec2(16 + s*4, 14.4), 1.4*Math.max(.01, s < result.stars ? sz : 1), s < result.stars && st > 0);
     }
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
+    if (level.jam)
+    {
+        txt(`Money kept ${fmtMoney(Math.round(level.budget*shown/100))}`, 20, 11.6, 1, C_INK);
+        txt(`Bumps: ${jamBumps}    Taps: ${attempts}`, 20, 10.3, .55, C_TEAL);
+        if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
+        return;
+    }
     txt(`Accuracy ${shown}%`, 20, 11.6, 1, C_INK);
     txt(`Tries: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks hit: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
     if (accs.length > 1)
@@ -1373,6 +1405,7 @@ window.game =
     // debug: park the current boat perfectly
     win()
     {
+        if (level.jam) return jamWin();
         if (intro) intro.t = intro.dur;
         player.pos = slip.pos.copy(); player.angle = slip.a; player.vel = vec2(); player.angVel = 0;
         player.updateWorld();

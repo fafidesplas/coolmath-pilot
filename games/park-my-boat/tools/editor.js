@@ -63,7 +63,7 @@ window.pmbEditor = (() =>
         undo = []; redo = [];
         ED.active = true; ED.testing = false;
         load();
-        frameBoat(0);
+        if (def.boats?.length) frameBoat(0); else frameAll();
         panel.style.display = 'block'; testTag.style.display = 'none';
         refreshPanel();
     }
@@ -140,10 +140,10 @@ window.pmbEditor = (() =>
     }
     function frameAll()
     {
-        let b;
-        def.boats.forEach((e, n) => { const r = BOATS[e.boat].L * boatK(def, e); const u = boxUnion(slipBox(n), boxAround(vec2(e.start.x, e.start.y), r)); b = b ? boxUnion(b, u) : u; });
-        for (const m of def.lands || []) b = boxUnion(b, boxAround(vec2(m.x, m.y), blobRadius(m)));
-        frame(b);
+        let b = def.view && { x0: def.view[0], y0: def.view[1], x1: def.view[2], y1: def.view[3] };
+        (def.boats || []).forEach((e, n) => { const r = BOATS[e.boat].L * boatK(def, e); const u = boxUnion(slipBox(n), boxAround(vec2(e.start.x, e.start.y), r)); b = b ? boxUnion(b, u) : u; });
+        for (const m of def.lands || []) { const u = boxAround(vec2(m.x, m.y), blobRadius(m)); b = b ? boxUnion(b, u) : u; }
+        if (b) frame(b);
     }
     function frameSel()
     {

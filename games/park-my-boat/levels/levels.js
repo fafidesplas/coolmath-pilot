@@ -236,6 +236,25 @@ const SCALE_LEVELS =
         ],
     },
     {
+        // a harbor jam (src/jam.js): clear every boat out of a packed corner. Quay along the top, sand to
+        // the west and along the bottom up to the harbor mouth (x 30-44); open sea to the east.
+        name: 'Marina Jam', jam: true, budget: 10000, view: [-2, -2, 46, 26], boats: [],
+        land: [[-50, -50, 0, 60], [-50, -50, 30, 0], [-50, 27, 60, 60]],
+        docks: [{ x0: -1, y0: 24, x1: 44, y1: 27, quay: true }],
+        moored:
+        [
+            { boat: 'trawler', x: 14.2, y: 5.3, a: 0 },
+            { boat: 'sailboat', x: 33, y: 7.2, a: PI/2 },
+            { boat: 'jetski', x: 38, y: 3.2, a: -PI/2 },
+            { boat: 'pontoon', x: 38, y: 11.5, a: PI/2 },
+            { boat: 'speedboat', x: 42, y: 18.4, a: -PI/2 },
+            { boat: 'swan', x: 33, y: 19.5, a: PI/2 },
+            { boat: 'yacht', k: 2, x: 12, y: 18.5, a: 0 },
+            { boat: 'speedboat', x: 8, y: 12.5, a: PI },
+        ],
+        hint: 'Tap a boat to send it out: tap its front to go ahead, its back to reverse.',
+    },
+    {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a
         // bay next to it, the continent closes the gap in Pangaea thousands of km away
         name: 'Continental Drift', bonus: true, land: HARBOR_ISLAND.land, docks: HARBOR_ISLAND.docks,

@@ -294,6 +294,7 @@ No daily events (no daily in v1).
   - Two-player local modes: parking race (versus) and tugboat co-op (needs a redrawn tugboat). Notes are in `CLAUDE.md` under Stretch goals.
   - A boat towing a barge (a redrawn tug, or the trawler).
   - More worlds (World 3 could be "Open Sea": waves, wind, islands).
+  - **Harbor Jam mode (prototype built: level 6, "Marina Jam"):** a packed corner of a harbor to clear out, like a car parking-jam puzzle. Tap a boat's front half to send it straight ahead, its back half to back it out. It goes until it leaves the harbor (open sea, see the open-sea rule) or touches something; a touch stops it right there, with no shoving, and costs a bump (10% of the budget). Clear every boat; stars from money kept (3.6). Wrong taps can make the jam worse, since the boat stays where it stopped. Code: `src/jam.js`, with a solver (`jamSolve()` in the console) that checks a jam can be cleared without a bump and lists the rounds. Open: a mode of its own, or a world of puzzle levels between the parking worlds.
   - **Settings (stretch goal):** levels in different places, not only harbors. A setting is a look plus one or two things of its own, so it reads as new without new rules:
     - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and trawlers.
     - **Marina:** packed piers, yachts, tenders (Marina today).
@@ -366,6 +367,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-25 — Harbor Jam mode prototyped (13, Later): level 6, Marina Jam.
 - 2026-10-25 — Tugboat replaced by a fishing trawler of the same size and handling (the tug's top view looked like an iPad). Level 8 renamed Clear the Way.
 - 2026-10-25 — Open-sea rule (6): no level is a closed pool.
 - 2026-10-25 — Stretch goal: levels in different settings (harbor, marina, tropical islands, more later).

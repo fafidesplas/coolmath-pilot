@@ -210,10 +210,10 @@ const BOAT_DECO =
     },
     trawler(d, t)
     {
-        d.line(.15, 0, -.55, .95, .07, C_INK);                     // outrigger booms
-        d.line(.15, 0, -.55, -.95, .07, C_INK);
-        d.circle(-.55, .95, .14, C_CORAL);
-        d.circle(-.55, -.95, .14, C_CORAL);
+        d.line(.15, 0, -.45, .72, .07, C_INK);                     // outrigger booms, just past the rail
+        d.line(.15, 0, -.45, -.72, .07, C_INK);
+        d.circle(-.45, .72, .14, C_CORAL);
+        d.circle(-.45, -.72, .14, C_CORAL);
         d.rect(.6, 0, .75, .62, C_CREAM, true);                    // wheelhouse, forward
         d.rect(.88, 0, .14, .5, rgb(.4,.7,.8));                     // windows
         d.circle(.15, 0, .2, C_WOOD2, true);                        // mast

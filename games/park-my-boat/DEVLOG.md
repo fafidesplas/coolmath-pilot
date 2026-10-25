@@ -1,5 +1,13 @@
 # Dock All The Boats — devlog
 
+## 2026-10-25 — Harbor Jam prototype: Marina Jam
+- Owner: try a parking-jam mode (like car jam puzzles). New level 6, Marina Jam, and `src/jam.js`. Tap a boat's front half to send it ahead, its back half to reverse; it drives straight (3 m/s + half its length per second) until it leaves the harbor or touches something, and stops there without shoving anything. A bump costs 10% of a $10,000 budget; stars from money kept (3★ at 90%, 2★ at 60%), so it already scores the way the GDD now says.
+- The layout: 8 boats (trawler, sailboat, jet ski, party barge, two speedboats, swan, 16 m yacht) in a corner walled by a quay, sand to the west and sand along the bottom up to a harbor mouth. `jamSolve()` confirms it clears with no bump in 3 rounds; each boat also has a wrong way that ends in a bump.
+- `main.js` branches to the jam code in loadLevel, the camera (holds still on the level's `view`), the update loop, the HUD (boats left, money), and the results ("ALL CLEAR!", money kept, bumps). Drawing code no longer assumes a player boat or a slip. The editor opens jam levels (they have no chain, so it frames the view); the jam boats edit as moored boats.
+- Trawler outrigger booms shortened to just past the rail; they reached into neighboring boats in the jam.
+- Checked in Chrome: no overlaps at load; tapping in the solver's order clears it with 0 bumps (3★, $10,000); a wrong first tap (trawler ahead) bumps and then blocks the sailboat's way out; the editor opens it; no console errors.
+- Next: owner plays it. Questions: one boat moving at a time (now) or several; a cue for which end is the front; more jam levels, a mode of its own or a puzzle world.
+
 ## 2026-10-25 — Way Down: a tight squeeze for the trawler
 - Owner: a level with a very tight squeeze to reach the slot. In Way Down, two 40 m yachts (k 5) lie nose-in to the quay either side of the trawler's slip, leaving an alley 12.4 m wide between their hulls for the 9.6 m trawler (1.4 m each side). The slip is narrower too (pad [.6, .3]: 12 m wide, 31 m long), no finger docks. The trawler starts side-on just outside the alley mouth at (400, 850), so it has to back off and line up. Hint: "Squeeze between the two yachts. Line up before you go in." The rowboat traffic's first leg moved to y 830 so it no longer starts on the trawler.
 - Checked in Chrome: slip on screen from the start, hand-offs still show the next boat, the yachts don't move at load, a trawler placed in the slip fits (100%). Lined up just outside the alley, a short push parks it (also 1 m off or 2° off); the yachts only got scraped at 2° off. My scripted driver couldn't do the whole line-up from the start, so the full approach is untested by a person.
