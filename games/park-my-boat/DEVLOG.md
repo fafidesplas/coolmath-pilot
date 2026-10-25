@@ -1,5 +1,12 @@
 # Dock All The Boats — devlog
 
+## 2026-10-24 — Every boat starts by showing its slip
+- Owner: instead of a full-level preview, show the parking spot before every boat, then glide back to the boat. Each turn now opens on the new boat's slip at that boat's framing for 2 s, then the camera glides back and the boat gets control 1.4 s later. The "Boat 2 of 3" card stays up the whole time. A click, Space or Enter cuts to the glide.
+- This replaces the size reveal (framing the parked boat next to the new one): the zoom from the parked boat to the new slip shows the size jump instead.
+- Removed the level preview from the last commit (`preview` fields on Marina and Rush Hour, `PREVIEW_TIME`). Single-boat levels (Rush Hour) also show the slip, without the card.
+- Checked in Chrome on all 5 levels: opens on the slip, ends on the boat, no console errors, editor self-test 5 levels 0 problems.
+- Next: owner plays; tune the 2 s / 1.4 s, and see if the slip shot should be skipped when the slip is already in view (Odd Couple's rowboat).
+
 ## 2026-10-24 — Level preview for big layouts
 - Owner: big levels should open on the whole layout, then zoom in to the first boat. A level can now have `preview: [x0, y0, x1, y1]`: on load the camera frames that box for 3 s with a card (level number, name, how many boats to park), then the usual zoom in and boat card follow. Single-boat levels skip the boat card.
 - Click, Space or Enter skips the preview. Restart skips it too; it plays again after you play another level. The editor's test play skips it.

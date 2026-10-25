@@ -12,7 +12,6 @@
 // traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
 //          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn),
 //          pace?: m/s, loops only: keeps to a timetable so boats sharing a loop stay evenly spaced}
-// preview: [x0, y0, x1, y1] the camera shows first, the whole layout, before zooming in to boat 1
 // the camera follows the boat and its slip
 
 // harbor basin: sand on the sides and bottom, a concrete quay along the top edge. The strips overlap
@@ -161,7 +160,7 @@ const SCALE_LEVELS =
     {
         // a channel east to the slip, crossed by three canals of looping traffic, bigger boats each time;
         // sand between the canals is where you stop and wait for a gap. The yachts turn in wide lagoons.
-        name: 'Rush Hour', preview: [-25, -120, 305, 120],
+        name: 'Rush Hour',
         land: sandAround([-1000, -1000, 2000, 1000],
         [
             [-25, -25, 20, 25], [-25, -15, 290, 15], [270, -30, 290, 30],    // start pool, channel, slip pool
@@ -186,7 +185,7 @@ const SCALE_LEVELS =
         // a crowded yacht marina: big yachts along the quay, two piers packed on both sides, open water
         // round the west end of the lower pier and the east end of the upper one. Each boat has one free
         // slip between the moored boats; tenders, jet skis and speedboats cruise the fairways.
-        name: 'Marina', preview: [0, 0, 380, 365], land: basin(0, 0, 380, 350).land,
+        name: 'Marina', land: basin(0, 0, 380, 350).land,
         docks:
         [
             { x0: 0, y0: 350, x1: 380, y1: 365, quay: true },

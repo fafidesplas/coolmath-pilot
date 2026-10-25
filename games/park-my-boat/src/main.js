@@ -26,9 +26,9 @@ const BIG_SHIP_LEEWAY = 1.15;
 const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3.5;
 // dropping anchor too fast spins the boat up to this (rad/s, divided by sqrt of its size) over this many seconds
 const ANCHOR_SPIN = 6, ANCHOR_SPIN_TIME = .3;
-// levels with a preview box show the whole layout this many seconds before zooming in to the first boat
-// (the first time the level is loaded; a restart skips it, and so does a click or Space)
-const PREVIEW_TIME = 3;
+// each boat's turn opens on its slip for this many seconds (camera travel included), then the camera
+// glides back to the boat, which takes control after SLIP_BACK more; a click, Space or Enter cuts to the glide
+const SLIP_SHOW = 2, SLIP_BACK = 1.4;
 // a cheat so buoys stay visible next to big ships: each buoy is at least this share of the current
 // boat's length (wide), growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
 const BUOY_SHARE = +new URLSearchParams(location.search).get('buoy') || 1/12;
@@ -72,7 +72,7 @@ function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics sta
 
 let gameScreen = 'title', screenTime = 0, levelIndex = 0, level, isPaused = false;
 let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip;
-let fleet = [], slips = [], boatIndex = 0, accs = [], intro, previewed;
+let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
 let anchor, judge, result;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
 let popups = [], drops = [], wakes = [], foams = [];
@@ -189,7 +189,6 @@ function addLand(m)
 
 function loadLevel(i)
 {
-    if (i != levelIndex) previewed = undefined;     // the preview plays again after another level
     levelIndex = i;
     const L = level = LEVELS[i];
     bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
@@ -262,10 +261,8 @@ function startBoat(n)
     boatIndex = n;
     anchor = judge = undefined;
     boatTime = 0;
-    const preview = n == 0 && level.preview && previewed !== levelIndex && !window.pmbEditor?.active && !window.pmbEditor?.testing ? PREVIEW_TIME : 0;
-    if (preview) previewed = levelIndex;
-    intro = fleet.length > 1 || preview ? { t:0, prev, preview, dur: preview + (fleet.length > 1 ? prev ? 2.8 : 1.8 : 0) } : undefined;
-    if (intro) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
+    intro = { t:0, prev, dur: SLIP_SHOW + SLIP_BACK };
+    if (fleet.length > 1) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
 }
 
 function levelId()
@@ -283,25 +280,17 @@ function worldToUi(p) { return UI_CENTER.add(p.subtract(cam.pos).scale(1/cam.wu)
 function uiToWorld(p) { return cam.pos.add(p.subtract(UI_CENTER).scale(cam.wu)); }
 
 function boxAround(p, r) { return { x0:p.x - r, y0:p.y - r, x1:p.x + r, y1:p.y + r }; }
-function boxUnion(a, b) { return { x0:Math.min(a.x0, b.x0), y0:Math.min(a.y0, b.y0), x1:Math.max(a.x1, b.x1), y1:Math.max(a.y1, b.y1) }; }
 
 // follow the boat a little ahead of where it is going, a set number of boat lengths across
 // (more for small, quick boats); the slip may be off screen, an arrow at the edge points to it
 function cameraGoal()
 {
-    // the level preview: the whole layout, centered above the card at the bottom
-    if (intro && intro.t < intro.preview)
-    {
-        const [x0, y0, x1, y1] = level.preview;
-        const wu = Math.max((x1 - x0) / (UI_SIZE.x - 2), (y1 - y0) / (PLAY_TOP - 6));
-        return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - (PLAY_TOP + 5)/2)*wu), wu };
-    }
     const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.type.view || 1);
     const minW = boatSize(player) * lens, pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
     let box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
-    // the size reveal: first show the boat just parked next to the new one
-    if (intro && intro.prev && intro.t < intro.dur*.5) box = boxUnion(box, boxAround(intro.prev.pos, intro.prev.radius));
+    // a new boat's turn opens on its slip, at the boat's own framing
+    if (intro && intro.t < SLIP_SHOW) box = boxAround(slip.pos, Math.max(slip.w, slip.h)/2);
     const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);
     const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3));
     // centered in the play area below the HUD bar
@@ -990,8 +979,8 @@ function gameUpdate()
         {
             if (keyWasPressed('Space') || keyWasPressed('Enter')) toggleAnchor();
             levelTime += timeDelta;
-            if (intro && intro.t < intro.preview && (mouseWasPressed(0) || keyWasPressed('Space') || keyWasPressed('Enter')))
-                intro.t = intro.preview;
+            if (intro && intro.t < SLIP_SHOW && (mouseWasPressed(0) || keyWasPressed('Space') || keyWasPressed('Enter')))
+                intro.t = SLIP_SHOW;
             if (intro)
             {
                 intro.t += timeDelta;
@@ -1241,18 +1230,8 @@ function drawPlayerMarker()
 function drawIntro()
 {
     if (!intro) return;
-    if (intro.t < intro.preview)
-    {
-        // the level preview card: level name and how many boats
-        const k = Math.min(1, intro.t*4) * clamp((intro.preview - intro.t)*4, 0, 1), y = 3.2 - (1 - k)*5;
-        drawPanel(vec2(20, y), 17, 3.6, C_CREAM.scale(1, k), .6);
-        txt(`LEVEL ${levelIndex + 1}`, 20, y + 1.05, .5, C_TEAL.scale(1, k));
-        txt(level.name.toUpperCase(), 20, y - .05, 1.3, C_CORAL.scale(1, k), 'center', .12, C_INK.scale(1, k));
-        txt(`${fleet.length} ${fleet.length == 1 ? 'boat' : 'boats'} to park`, 20, y - 1.15, .6, C_INK.scale(1, k));
-        return;
-    }
     if (fleet.length < 2) return;
-    const t = intro.t - intro.preview, out = intro.dur - intro.preview + .4;
+    const t = intro.t, out = intro.dur + .4;
     const k = Math.min(1, t*4) * clamp((out - t)*4, 0, 1);
     if (k <= 0) return;
     // at the bottom: piers and the boat just parked are usually up top
