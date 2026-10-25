@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-10-25 — Hop: bigger ice boost
+- Owner wanted more speed on ice. `iceSpeed` 11 → 15 u/s, `iceAccel` 5 → 9 u/s², so full speed still comes in 1 s. The lean that grows with speed is capped at `maxLean` 0.26 u.
+- Measured on flat ice at 15 u/s: tap 0.8 u high, 5.8 u long; full hold 2.2 u high, 12 u long. Timing search: all 10 levels finish; ice levels 9 and 10 got faster (3.9 s and 3.8 s, were 4.2 s and 4.8 s). Run with the owner's uncommitted 6.
+
 ## 2026-10-25 — Hop: wall jumps back in auto-run
 - Owner: grip walls stopped working. Auto-run turned you around at every wall, grip walls too. Now a grip wall hit in the air holds you like the charge hop did (`p.cling`, slide at up to `clingSlide` 3 u/s, no riding up, let go if the wall ends) and a press wall-jumps you away from it with the normal run jump (hold for higher, somersault on a full hold). On the ground a grip wall still turns you around. A flip in progress finishes fast on the wall.
 - Checked in Chrome with the timing search, now also stopping at wall grabs: every Hop level finishes, 7–10 with 1–2 wall grabs (4.2–4.8 s). Level 6 here is the owner's uncommitted edit (no ceiling, ice floors); the committed 6 with the ceiling still can't be finished.

@@ -35,15 +35,16 @@ const HR_HOP = {
     // ice speeds you up. false: the hold-to-charge hop above
     autoRun:   true,
     runSpeed:  6,       // run speed (u/s); in the air you keep the speed you took off with
-    iceSpeed:  11,      // on ice the run speeds up to this (u/s)...
-    iceAccel:  5,       // ...at this rate (u/s²)
+    iceSpeed:  15,      // on ice the run speeds up to this (u/s)...
+    iceAccel:  9,       // ...at this rate (u/s²)
     groundBrake: 10,    // off the ice, a faster run slows back to runSpeed at this rate (u/s²)
     dashCost:  .35,     // at full ice speed the takeoff is this much weaker: a long, low dash
     runJump:   12,      // takeoff speed straight up (u/s): a tap is about 1.7 u high
     holdGravity: 12,    // lighter gravity while you hold and rise, for up to holdTime: held all the way, about 4.5 u high
     holdTime:  .4,      // (s)
     coyote:    .08,     // a press this soon after running off an edge still jumps (s)
-    runLean:   .15,     // on the ground the top leans into the run (u)
+    runLean:   .15,     // on the ground the top leans into the run (u), more the faster you go...
+    maxLean:   .26,     // ...up to this (u)
     flipTime:  .4,      // a hold that lasts the whole holdTime ends in a forward somersault this long (s)
     landSquash: .2,     // landing squeeze: this much flatter, plus more for a harder landing (up to .4)
 };
@@ -312,7 +313,7 @@ HR_MODES.hop = {
             if (k >= 1) p.flipT = -1;
         }
         // lean into the run on the ground (more the faster you go), straighten up in the air
-        p.lean += ((p.grounded && p.flipT < 0 ? H.runLean * p.speed / H.runSpeed : 0) - p.lean) * min(1, dt * 12);
+        p.lean += ((p.grounded && p.flipT < 0 ? min(H.maxLean, H.runLean * p.speed / H.runSpeed) : 0) - p.lean) * min(1, dt * 12);
         if (p.grounded && p.onIce && p.speed > H.runSpeed + 1 && rand() < .3) hrSparkle(p.x, p.y - HR_PSIZE / 2);
     },
 
