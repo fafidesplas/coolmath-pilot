@@ -1,5 +1,9 @@
 # Magnet Twins — devlog
 
+## 2026-10-26 — GDD approved
+- Pao approved `GDD.md`; status set to Approved and stage to `slice`. The vertical slice is already playable.
+- Next: the phase 2 gate, a teammate plays the slice cold, with no explanation.
+
 ## 2026-10-21 — Feel loop 1: aim preview
 - First playtest (Fafi): the slice works, but choosing the field direction felt unclear, especially aiming down.
 - Fixed the menu buttons ignoring mouse clicks.

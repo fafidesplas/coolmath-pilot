@@ -1,7 +1,7 @@
 # Magnet Twins — Game design document
 
-**Status:** In review
-**Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-21
+**Status:** Approved
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-26
 
 > Two little robots share one keyboard: red Plus pulls metal, blue Minus pushes it, and every level needs both of them working together.
 
@@ -301,6 +301,7 @@ Power and switch counts are sent once per attempt with a value, not per press, t
 | Is a 3rd progression tier for mode acceptable for cross-game comparison? | Yes; the first two tiers match `STANDARDS.md` | Team | Open |
 
 ## 15. Changelog
+- 2026-10-26 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-21 — Feel loop: aim preview (ghost cone and target rings while the power is off), because players could not tell which way the field would fire or that up and down change it.
 - 2026-10-21 — Changes found while building the vertical slice: spikes are not solid (crates sit over them); facing locks while the power is on, and a carried crate is put down by letting go; hover damping only while falling, so launches and jumps keep their height; line of sight to a box's center or any corner; recordings store controller bitmasks; level 2 uses spikes instead of a pit (a pit can't be emptied with a 30° cone); module list updated to the real code.
 - 2026-10-21 — Second review pass: up-aim grace window (W+F aims up without a hop), radial force direction, levels 2 and 3 redesigned so walking can't bypass the power, solo par from its own recording, documented two intended side effects (dropping off a field by turning your power on, turning around drops a carried crate). Status set to In review.
