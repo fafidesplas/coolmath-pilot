@@ -1,7 +1,7 @@
 # Flip Runner — Game design document
 
-**Status:** In review
-**Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-22
+**Status:** Approved
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-26
 
 > A little runner dashes on by itself and one button does everything, but portals keep changing what that button means: flip gravity, glide through caves, or steer two runners at once. Read the corridor, time the press, thread the gaps.
 
@@ -300,6 +300,7 @@ Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, b
 | Should endless chunks be hand-made only, or also cut from levels? | Hand-made with the level editor, 30 chunks for v1 (8 per tier, 6 neutral) | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-26 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-22 — Redesign around **forms** after the forms prototype playtested better than flip-only: portals switch between Flip, Glider (hold to climb) and Twin (two runners, one tap); worlds now introduce Glider (world 2) and Twin (world 3), world 4 mixes all; moving blocks move to level 15, speed pads to 25; no-flip zones cut; input sends press and held bits; analytics add the form on quits; two form accent colors. Status stays In review: the team needs to read the new design.
 - 2026-10-22 — Feel loop 1 ("too slow and bland"): world speeds 440–530 px/s (+37%), gravity 7000 and a 250 px/s kick (flip ~0.22 s), denser levels (something every 0.6–1 s), music on by default, speed lines, pillars, afterimages, running dust, and close calls with a counter on the results.
 - 2026-10-21 — Vertical slice built: flip measured at ~0.27 s across a 6-tile corridor (kick included); solver picks the widest window per flip.

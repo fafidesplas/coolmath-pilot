@@ -1,5 +1,9 @@
 # Flip Runner — devlog
 
+## 2026-10-26 — GDD approved
+- Pao approved `GDD.md`; status set to Approved and stage to `slice`. The vertical slice is already playable.
+- Next: the phase 2 gate, a teammate plays the slice cold, with no explanation.
+
 ## 2026-10-22 — GDD rewritten around forms
 - The forms prototype played better than flip-only, so the GDD now builds the game on three forms switched by portals: Flip (world 1), Glider (world 2), Twin (world 3), all mixed in world 4.
 - Moving blocks move to level 15, speed pads to 25; no-flip zones are cut. Analytics add `quit:form:<form>`; the HUD shows the current form.
