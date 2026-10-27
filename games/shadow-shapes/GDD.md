@@ -1,7 +1,7 @@
 # Shadow Shapes — Game design document
 
-**Status:** In review
-**Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-26
+**Status:** Approved
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-27
 
 > Turn a strange clump of glowing blocks in the lamplight until its shadow fills the outline on the wall, then watch the shadow light up into a picture.
 
@@ -380,5 +380,6 @@ Music: yes, a calm synthesized ambient loop per room (8 bars at 72 BPM: soft pad
 | Three.js vs a Canvas 2D block renderer | Three.js as the brief asks; Canvas 2D fallback only if phase 2 fails 60 fps | Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-26 — Phase 1c review applied: Spin moves from a dial on the wall to a notched wheel under the object (the wall dial changed what a wall drag did at level 11 and did not fit two-light or two-part layouts); the whole playfield is one Turn/Tip drag surface in every level; orthographic camera, so the front faces line up into the picture at the reveal (with perspective, back blocks were about 13% smaller); thresholds under 0.75 reject the picture instead of being clamped; holes at least 2×2 cells; R keeps the daily clock running; daily number defined; side panel orientation and colors; Theater badges and locked-part feedback; Enter/Space for Next; minimum text size; the extra pastel set documented as a deviation; `window.game` screen names as in `STANDARDS.md`. Second pass: target area and part sizes on screen, two-light depth up to 8, 48 CSS px hit areas for the wheel ends and part badges, results ignore presses for 300 ms, loop and audio unlock rules, consistent data example. Status set to In review.
 - 2026-10-26 — First draft from the brief and the phase 1a answers: three path-independent dials (Turn, Tip, Spin) with axis-locked drags and rings; IoU on 64×64 masks from our own orthographic projection, with per-level thresholds for a 6° window (measured with a prototype of the check: a fixed 0.90 gave ±3.5° to ±11°); honest match % plus spill and gap visuals; time stars with a hint cap; voxel sculptures generated from pixel pictures, revealed as a mosaic; rooms teach Turn/Tip, Spin, two-part puppets and two lights; the book is the level select; daily from a 366-entry pool with a moon result line.
