@@ -1,7 +1,7 @@
 # Ink Path — Game design document
 
-**Status:** In review
-**Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-26
+**Status:** Approved
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-27
 
 > Draw one line with a small pot of ink, let go, and Dot the ball drops and rolls along it into the cup. Any line that works wins; a clever, short line wins three stars.
 
@@ -391,5 +391,6 @@ Per-action counts are sent once per level end with a value, never one event per 
 | GameAnalytics game key and secret | One key per game in `src/config.js` | Team | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-26 — Phase 1c review applied: reference lines recorded through the real pen and shift-tested after simplification (level 4's shortest kicker failed once simplified; example marks updated); distinct styles for the line, ghost, hint, guide, drop preview and blocked tether; trackpad length rule (easy lines ≤ 600 px), with level 3's naive route shortened and levels 9 and 34 flagged to shorten; hint counts only real attempts; results timing for two balls; which levels were simulated is stated. Status set to In review.
 - 2026-10-26 — First draft from the brief and the phase 1a answers: stars from ink only (touch-stars cut), drop 150 ms after release, drawing again restarts at once, ghost of the last line, drop preview, fail-fast rules, ink and walls block air, triggered ferries, latching buttons, Dot and Dash, low gravity in Space, 40 levels in 4 worlds, two reference lines per level with the hint and the dev record taken from them, pens unlocked by stars, per-attempt progression events. The physics numbers and levels 1–4 and 6–9 (plus 11 and 34) were checked in a throwaway simulation outside the repo, which changed the design: no bounce on ink, glancing hits keep speed, small lips roll over, RDP needed so jittery gentle lines roll, landing surfaces lower than the line's end, backboards built into cups, a turn-back fail rule (a rocking ball took 12 s to fail), the level 4 jump made steeper with a smaller pot, level 6 rebuilt around throwing Dot up (a straight ramp threw as far as a curve), level 7's cup moved under the slide (it was winnable with no ink).
