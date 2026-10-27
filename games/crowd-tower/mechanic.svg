@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+  <!-- Crowd Tower: votes fill, block B (top pick) slides out and lands on top. Loop 6s. -->
+  <style>.b{fill:#E8B86D;stroke:#2B2233;stroke-width:2.5} text{font:bold 13px system-ui,sans-serif;fill:#2B2233}</style>
+  <rect width="480" height="270" fill="#2F5A9E"/>
+  <rect x="30" y="236" width="220" height="20" rx="4" fill="#8A5A2B" stroke="#2B2233" stroke-width="2.5"/>
+  <rect x="80" y="218" width="120" height="18" rx="3" class="b"/>
+  <rect x="80" y="200" width="40" height="18" rx="3" class="b"/>
+  <rect x="120" y="200" width="40" height="18" rx="3" class="b"/>
+  <rect x="160" y="200" width="40" height="18" rx="3" class="b"/>
+  <rect x="80" y="182" width="120" height="18" rx="3" class="b"/>
+  <rect x="80" y="164" width="40" height="18" rx="3" class="b"/>
+  <rect x="160" y="164" width="40" height="18" rx="3" class="b"/>
+  <rect x="80" y="146" width="120" height="18" rx="3" class="b"/>
+  <rect x="80" y="128" width="40" height="18" rx="3" class="b"/>
+  <rect x="120" y="128" width="40" height="18" rx="3" class="b"/>
+  <rect x="160" y="128" width="40" height="18" rx="3" class="b"/>
+  <rect x="80" y="110" width="120" height="18" rx="3" class="b"/>
+  <rect x="80" y="92" width="40" height="18" rx="3" class="b"/>
+  <rect x="120" y="92" width="40" height="18" rx="3" class="b"/>
+  <rect x="160" y="92" width="40" height="18" rx="3" class="b"/>
+  <!-- Block B: slides right out of the tower, then lands on top -->
+  <rect x="120" y="164" width="40" height="18" rx="3" class="b">
+    <animate attributeName="x" dur="6s" repeatCount="indefinite" values="120;120;200;200;80;80" keyTimes="0;0.5;0.62;0.68;0.8;1"/>
+    <animate attributeName="y" dur="6s" repeatCount="indefinite" values="164;164;164;50;56;56" keyTimes="0;0.5;0.62;0.72;0.8;1"/>
+    <animate attributeName="opacity" dur="6s" repeatCount="indefinite" values="1;1;1;1;0" keyTimes="0;0.9;0.95;0.97;1"/>
+  </rect>
+  <!-- Candidate tags -->
+  <g><rect x="166" y="200" width="26" height="18" rx="9" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text x="174" y="214">A</text></g>
+  <g><rect x="208" y="164" width="26" height="18" rx="9" fill="#5CB85C" stroke="#2B2233" stroke-width="2"/><text x="216" y="178">B</text>
+    <animate attributeName="opacity" dur="6s" repeatCount="indefinite" values="1;1;0;0;1" keyTimes="0;0.5;0.52;0.95;1"/></g>
+  <g><rect x="208" y="110" width="26" height="18" rx="9" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text x="216" y="124">C</text></g>
+  <!-- Vote panel -->
+  <rect x="270" y="60" width="180" height="130" rx="8" fill="#FFF3DC" stroke="#2B2233" stroke-width="2.5"/>
+  <text x="284" y="84">Which block?</text>
+  <text x="284" y="112">A</text><text x="284" y="140">B ✓</text><text x="284" y="168">C</text>
+  <rect x="320" y="100" width="0" height="14" rx="3" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
+    <animate attributeName="width" dur="6s" repeatCount="indefinite" values="0;60;60;0" keyTimes="0;0.45;0.95;1"/></rect>
+  <rect x="320" y="128" width="0" height="14" rx="3" fill="#5CB85C" stroke="#2B2233" stroke-width="1.5">
+    <animate attributeName="width" dur="6s" repeatCount="indefinite" values="0;110;110;0" keyTimes="0;0.45;0.95;1"/></rect>
+  <rect x="320" y="156" width="0" height="14" rx="3" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
+    <animate attributeName="width" dur="6s" repeatCount="indefinite" values="0;35;35;0" keyTimes="0;0.45;0.95;1"/></rect>
+  <text x="284" y="222" style="fill:#FFF3DC">Top pick is pulled.</text>
+  <text x="284" y="240" style="fill:#FFF3DC">Falls? Falls for everyone.</text>
+</svg>
