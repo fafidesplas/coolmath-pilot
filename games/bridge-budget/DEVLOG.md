@@ -1,5 +1,9 @@
 # Bridge Budget — devlog
 
+## 2026-10-27 — GDD approved
+- Pao approved `GDD.md`; status Approved, stage `slice`.
+- Next: phase 2, the vertical slice.
+
 ## 2026-10-26 — GDD first draft and review
 - Wrote `GDD.md` from the brief and the phase 1a answers. Key decisions:
   - XPBD spring-mass at 120 Hz × 8 substeps, deterministic (arithmetic and `sqrt` only), with a deliberately weak road deck.

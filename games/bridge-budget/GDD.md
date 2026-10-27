@@ -1,7 +1,7 @@
 # Bridge Budget — Game design document
 
-**Status:** In review
-**Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-26
+**Status:** Approved
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-27
 
 > Drag beams, cables and road across a gap, press Test, and watch a little truck with a face drive over it. Will it hold, sag, or snap into the river? Then make it cheaper, because there is always a cheaper bridge.
 
@@ -482,6 +482,7 @@ Music and sound effects have separate toggles, and both persist.
 | GameAnalytics game key and secret | One key per game in a config file | Team | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-26 — Phase 1c review applied. Status set to In review.
   - **No more jelly:** soft members made the bridge bob at about 1 Hz for over 10 s; added a 1 s settle phase and raised axial damping to 100 /s.
   - **Numbers re-verified:** every level 1–10 claim re-run with the final settings and updated. Level 7's reference changed to a robust $7,660 at 48%; level 23's flat-cable claim became a hint.
