@@ -1,7 +1,7 @@
 # Echo Steps — Game design document
 
-**Status:** In review
-**Owner:** Fafi · **Reviewed by:** — · **Last updated:** 2026-10-26
+**Status:** Approved
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-27
 
 > Every try leaves a glowing echo that does exactly what you did. Stand on plates, climb on your own head, take a laser hit for your future self: solve each room by teaming up with your past.
 
@@ -399,5 +399,6 @@ Counts are sent once per attempt with a value, never one event per action, to ke
 | GameAnalytics game key and secret | One key per game in a config file | Team | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-26 — Phase 1c review applied: room 3 gates made adjacent (one echo could hold both plates in turn while you waited between them, making the Loop-key room a two-jobs puzzle); room 10 replaced by Spawn Step (the old one-echo answer was the obvious one); room 26 lasers at foot and head height (a waist-high beam could be jumped); echo tops solid only while the echo stands (riding a jumping echo gave 6-tile boost jumps that broke the reach table); resting echoes drop if their tape ends mid-air (no floating platforms); fast-forward while standing still and the short-wait rule, because waiting for an echo's moment was the dullest part; timeline hidden in rooms 1–2 to keep the first minute clean; jitter test (0.25 s) and lone-runner bot so rooms are fair and need their echoes; hints from the reference solutions and a skip after 3 minutes, because a stuck puzzle player leaves; HUD hit areas never under 48 CSS px; Loop before moving records an empty tape; trails cut from 6 to 4; the brief's definition of done added as an acceptance test. Status set to In review.
 - 2026-10-26 — First draft from the brief and the phase 1a answers: echoes replay recorded positions and break visibly when the live player changes their past; a resting echo holds its last spot; the clock waits for the first move; Delete removes the latest echo and retries the loop; a laser zap ends the loop and its echo becomes a beam blocker; 280 px/s run and 105 px jump so each stacked echo is one more tile; paths, forecast arcs and timeline as previews; three independent stars (exit, echo par, time par = reference × 1.25); per-room loop length 5–10 s and 1–4 slots; Lab (plates, gates, steps), Archive (switches, bridges, keys), Core (lasers, lifts); music built from echo layers, on by default; reference solution per room replayed by `tools/simtest.mjs`; keyboard-first exception documented.
