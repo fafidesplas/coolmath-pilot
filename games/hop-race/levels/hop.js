@@ -70,12 +70,11 @@ HR_LEVELS.hop = [
         size: 28,
         start: {x: -12.5, y: -4},
         solids: [
-            {l: -15, r: -5.5, top: -4},
-            {l: 0, r: 5, top: -4},
-            {l: -9, r: -2.6, top: 20, bottom: -1.5},   // hangs from the top, 2.5 u over the gap
-            {l: 8, r: 15, top: -2},
+            {l: -15, r: -7.25, top: -4, ice: true},
+            {l: 0.5, r: 3.75, top: -4.25, ice: true},
+            {l: 12, r: 19, top: -4},
         ],
-        flag: {x: 11.5, y: -2},
+        flag: {x: 12.5, y: -4},
     },
     {
         id: 'hop-07', name: 'Grip',
@@ -90,15 +89,18 @@ HR_LEVELS.hop = [
     },
     {
         id: 'hop-08', name: 'Which Wall?',
-        size: 28,
+        size: 29,
         start: {x: -12, y: -5},
         solids: [
             {l: -15, r: -8, top: -5},
-            {l: -5, r: 3, top: -5},
-            {l: -1, r: 0, top: 3, bottom: -1.5, grip: true},   // a grip pillar, 3 u from the cliff
+            {l: -5, r: 3.75, top: -5},
+            {l: 3.5, r: 4.5, top: 5.5, bottom: -5.25, grip: true},   // a grip pillar, 3 u from the cliff
             {l: 3.5, r: 15, top: 1.5},                          // the cliff
-            {l: 3, r: 3.5, top: -2},                            // its foot is plain: it bounces
-            {l: 3, r: 3.5, top: 1.5, bottom: -2, grip: true},   // its top half is grip: it holds
+            {l: -9.75, r: 8.75, top: 6, bottom: 5},
+            {l: 3.5, r: 8.75, top: 5.25, bottom: 0.25},
+            {l: -4, r: -2, top: 1, bottom: 0, ice: true},
+            {l: -9.75, r: -7.75, top: 2, bottom: 1},
+            {l: -14.5, r: -12, top: 4, bottom: 3},
         ],
         flag: {x: 10, y: 1.5},
     },
@@ -121,7 +123,7 @@ HR_LEVELS.hop = [
         start: {x: -14, y: -2.5},
         solids: [
             {l: -16, r: -12, top: -2.5},
-            {l: -9.5, r: -3, top: -4, ice: true},
+            {l: -10, r: -3, top: -4, ice: true},
             {l: -7, r: -2.6, top: 20, bottom: -1.8},
             {l: 0, r: 7.5, top: -4},
             {l: 3.5, r: 4.5, top: 2, bottom: -2, grip: true},
