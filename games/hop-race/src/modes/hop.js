@@ -68,8 +68,8 @@ HR_MODES.hop = {
     },
 
     // level 1's prompt when auto-run replaces the level's own
-    prompt: HR_HOP.autoRun ? 'Press A to jump!' : undefined,
-    countdown: HR_HOP.autoRun,   // 3-2-1-GO before every solo level too, then the run starts by itself
+    prompt: HR_HOP.autoRun ? 'Press A to run, press again to jump!' : undefined,
+    countdown: HR_HOP.autoRun,   // 3-2-1-GO before every solo level too, then a press starts the run
 
     aim(p)
     {
@@ -198,7 +198,7 @@ HR_MODES.hop = {
             }
     },
 
-    // auto-run: the run starts by itself at GO; a press jumps at once (on the ground, or just after
+    // auto-run: after GO a press starts the run (so Versus starts aren't in sync); then a press jumps at once (on the ground, or just after
     // running off an edge) and holding keeps rising higher, up to holdTime. Walls turn you around
     run(p, input)
     {
@@ -207,9 +207,10 @@ HR_MODES.hop = {
         p.down = input.down;
         if (!p.running)
         {
-            if (hrCountdown > 0) return;   // waiting for GO (main.js); after a fall you run again at once
+            if (hrCountdown > 0 || !press) return;   // waiting for GO (main.js), then for a press, after a fall too
             p.running = true;
             p.pupilKick(-p.dir * .2, 0);
+            return;   // the starting press doesn't also jump
         }
 
         p.coyote = p.grounded ? H.coyote : max(0, p.coyote - dt);

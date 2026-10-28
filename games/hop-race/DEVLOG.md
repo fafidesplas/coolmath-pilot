@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-10-28 — Hop: press to start the run after GO
+- Owner: players should still press to start moving, so Versus starts aren't in perfect sync. After the 3-2-1-GO the runner waits for a fresh press (`run()` in `modes/hop.js`), and that press only starts the run, it doesn't jump. The same after a fall. The solo timer still starts at GO, so a slow start costs time. Level 1's prompt is back to "Press A to run, press again to jump!".
+- Checked in Chrome: solo 1-2 stands still 1 s past GO with the clock running, then runs on a press; the starting press leaves you grounded and the next one jumps; 2P, A starts while L stays put until L presses.
+- Next: decide if a restart should skip or shorten the countdown (restart under 1 s).
+
 ## 2026-10-25 — Hop: countdown, then the run starts by itself
 - Owner: no press to start; count 3-2-1 and start running, in 2P too. The Versus countdown moved out of `hrMatch` into shared `hrCountdown` / `hrCountBeep` (`main.js`), set for every Versus round and for solo levels of a mode with `countdown: true` (Hop while `autoRun` is on). Solo starts its timer and ghost at GO. `run()` waits while `hrCountdown > 0`, then runs; after a fall you run again at once. The 3-2-1-GO drawing is now `hrDrawCountdown()` in `ui.js`, used by both HUDs. Level 1's prompt is "Press A to jump!".
 - Checked in Chrome: solo 1-2 shows the countdown with the runner still, GO at 2.40 s with the clock at 0, 300 ms on the clock 0.3 s later; 2P both runners start at GO; after a fall on 1-1 the runner sets off again; Rocket solo has no countdown. No console errors.
