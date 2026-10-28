@@ -1,44 +1,83 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
-  <!-- Daily Community Game: votes fill, block B (top pick) slides out and lands on top. Loop 6s. -->
-  <style>.b{fill:#E8B86D;stroke:#2B2233;stroke-width:2.5} text{font:bold 13px system-ui,sans-serif;fill:#2B2233}</style>
+  <!-- Daily Community Game: votes pour into a poll (A leads, C overtakes), C wins, then the character walks the C path. Loop 8s. -->
+  <style>text{font:bold 13px system-ui,sans-serif;fill:#2B2233}.t{font-size:12px;text-anchor:middle}.s{font-size:11px;font-weight:600}</style>
   <rect width="480" height="270" fill="#2F5A9E"/>
-  <rect x="30" y="236" width="220" height="20" rx="4" fill="#8A5A2B" stroke="#2B2233" stroke-width="2.5"/>
-  <rect x="80" y="218" width="120" height="18" rx="3" class="b"/>
-  <rect x="80" y="200" width="40" height="18" rx="3" class="b"/>
-  <rect x="120" y="200" width="40" height="18" rx="3" class="b"/>
-  <rect x="160" y="200" width="40" height="18" rx="3" class="b"/>
-  <rect x="80" y="182" width="120" height="18" rx="3" class="b"/>
-  <rect x="80" y="164" width="40" height="18" rx="3" class="b"/>
-  <rect x="160" y="164" width="40" height="18" rx="3" class="b"/>
-  <rect x="80" y="146" width="120" height="18" rx="3" class="b"/>
-  <rect x="80" y="128" width="40" height="18" rx="3" class="b"/>
-  <rect x="120" y="128" width="40" height="18" rx="3" class="b"/>
-  <rect x="160" y="128" width="40" height="18" rx="3" class="b"/>
-  <rect x="80" y="110" width="120" height="18" rx="3" class="b"/>
-  <rect x="80" y="92" width="40" height="18" rx="3" class="b"/>
-  <rect x="120" y="92" width="40" height="18" rx="3" class="b"/>
-  <rect x="160" y="92" width="40" height="18" rx="3" class="b"/>
-  <!-- Block B: slides right out of the tower, then lands on top -->
-  <rect x="120" y="164" width="40" height="18" rx="3" class="b">
-    <animate attributeName="x" dur="6s" repeatCount="indefinite" values="120;120;200;200;80;80" keyTimes="0;0.5;0.62;0.68;0.8;1"/>
-    <animate attributeName="y" dur="6s" repeatCount="indefinite" values="164;164;164;50;56;56" keyTimes="0;0.5;0.62;0.72;0.8;1"/>
-    <animate attributeName="opacity" dur="6s" repeatCount="indefinite" values="1;1;1;1;0" keyTimes="0;0.9;0.95;0.97;1"/>
-  </rect>
-  <!-- Candidate tags -->
-  <g><rect x="166" y="200" width="26" height="18" rx="9" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text x="174" y="214">A</text></g>
-  <g><rect x="208" y="164" width="26" height="18" rx="9" fill="#5CB85C" stroke="#2B2233" stroke-width="2"/><text x="216" y="178">B</text>
-    <animate attributeName="opacity" dur="6s" repeatCount="indefinite" values="1;1;0;0;1" keyTimes="0;0.5;0.52;0.95;1"/></g>
-  <g><rect x="208" y="110" width="26" height="18" rx="9" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text x="216" y="124">C</text></g>
+
   <!-- Vote panel -->
-  <rect x="270" y="60" width="180" height="130" rx="8" fill="#FFF3DC" stroke="#2B2233" stroke-width="2.5"/>
-  <text x="284" y="84">Which block?</text>
-  <text x="284" y="112">A</text><text x="284" y="140">B ✓</text><text x="284" y="168">C</text>
-  <rect x="320" y="100" width="0" height="14" rx="3" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
-    <animate attributeName="width" dur="6s" repeatCount="indefinite" values="0;60;60;0" keyTimes="0;0.45;0.95;1"/></rect>
-  <rect x="320" y="128" width="0" height="14" rx="3" fill="#5CB85C" stroke="#2B2233" stroke-width="1.5">
-    <animate attributeName="width" dur="6s" repeatCount="indefinite" values="0;110;110;0" keyTimes="0;0.45;0.95;1"/></rect>
-  <rect x="320" y="156" width="0" height="14" rx="3" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
-    <animate attributeName="width" dur="6s" repeatCount="indefinite" values="0;35;35;0" keyTimes="0;0.45;0.95;1"/></rect>
-  <text x="284" y="222" style="fill:#FFF3DC">Top pick is pulled.</text>
-  <text x="284" y="240" style="fill:#FFF3DC">Falls? Falls for everyone.</text>
+  <rect x="20" y="36" width="200" height="198" rx="10" fill="#FFF3DC" stroke="#2B2233" stroke-width="2.5"/>
+  <text x="36" y="62">Which way today?</text>
+  <!-- rows: tag, track, growing bar (votes arrive in uneven bursts) -->
+  <g>
+    <circle cx="44" cy="96" r="11" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text class="t" x="44" y="100">A</text>
+    <rect x="62" y="88" width="140" height="16" rx="4" fill="#2B2233" opacity=".12"/>
+    <rect x="62" y="88" width="0" height="16" rx="4" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
+      <animate attributeName="width" dur="8s" repeatCount="indefinite" values="0;34;40;62;66;78;80;80;0" keyTimes="0;.08;.15;.22;.3;.4;.5;.95;1"/></rect>
+  </g>
+  <g>
+    <circle cx="44" cy="132" r="11" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text class="t" x="44" y="136">B</text>
+    <rect x="62" y="124" width="140" height="16" rx="4" fill="#2B2233" opacity=".12"/>
+    <rect x="62" y="124" width="0" height="16" rx="4" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
+      <animate attributeName="width" dur="8s" repeatCount="indefinite" values="0;12;24;28;40;44;50;50;0" keyTimes="0;.08;.15;.22;.3;.4;.5;.95;1"/></rect>
+  </g>
+  <g>
+    <circle cx="44" cy="168" r="11" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text class="t" x="44" y="172">C</text>
+    <rect x="62" y="160" width="140" height="16" rx="4" fill="#2B2233" opacity=".12"/>
+    <rect x="62" y="160" width="0" height="16" rx="4" fill="#FFD23F" stroke="#2B2233" stroke-width="1.5">
+      <animate attributeName="width" dur="8s" repeatCount="indefinite" values="0;18;30;52;80;104;126;126;0" keyTimes="0;.08;.15;.22;.3;.4;.5;.95;1"/>
+      <animate attributeName="fill" dur="8s" repeatCount="indefinite" values="#FFD23F;#FFD23F;#5CB85C;#5CB85C;#FFD23F" keyTimes="0;.54;.56;.95;1" calcMode="discrete"/></rect>
+    <!-- winner check: a shape, not only the color change -->
+    <text x="205" y="173" opacity="0">✓
+      <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;.54;.56;.95;1" calcMode="discrete"/></text>
+  </g>
+  <!-- vote total ticks up -->
+  <g class="s">
+    <text x="36" y="212" opacity="0">12 votes<animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="1;0;0" keyTimes="0;.12;1" calcMode="discrete"/></text>
+    <text x="36" y="212" opacity="0">318 votes<animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;0;0" keyTimes="0;.12;.24;1" calcMode="discrete"/></text>
+    <text x="36" y="212" opacity="0">1,207 votes<animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;0;0" keyTimes="0;.24;.36;1" calcMode="discrete"/></text>
+    <text x="36" y="212" opacity="0">2,954 votes<animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;0;0" keyTimes="0;.36;.54;1" calcMode="discrete"/></text>
+    <text x="36" y="212" opacity="0">3,110 votes · C wins!<animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;0" keyTimes="0;.54;.95" calcMode="discrete"/></text>
+  </g>
+  <!-- votes flying in from below -->
+  <g fill="#FFF3DC" stroke="#2B2233" stroke-width="1.5">
+    <circle r="5" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" path="M90 270 L170 168" keyPoints="0;0;1;1" keyTimes="0;.02;.1;1"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.02;.08;.1;1"/></circle>
+    <circle r="5" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" path="M140 270 L120 96" keyPoints="0;0;1;1" keyTimes="0;.06;.15;1"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.06;.13;.15;1"/></circle>
+    <circle r="5" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" path="M60 270 L150 168" keyPoints="0;0;1;1" keyTimes="0;.13;.22;1"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.13;.2;.22;1"/></circle>
+    <circle r="5" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" path="M190 270 L110 132" keyPoints="0;0;1;1" keyTimes="0;.2;.3;1"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.2;.28;.3;1"/></circle>
+    <circle r="5" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" path="M110 270 L180 168" keyPoints="0;0;1;1" keyTimes="0;.3;.4;1"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.3;.38;.4;1"/></circle>
+    <circle r="5" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" path="M170 270 L190 168" keyPoints="0;0;1;1" keyTimes="0;.4;.5;1"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.4;.48;.5;1"/></circle>
+  </g>
+
+  <!-- Paths: a fork into three, each ending at a letter tag -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#2B2233" stroke-width="20">
+      <path d="M345 250 L345 190 Q300 170 275 92"/><path d="M345 190 L345 82"/><path d="M345 190 Q390 170 415 92"/>
+    </g>
+    <g stroke="#E8B86D" stroke-width="14">
+      <path d="M345 250 L345 190 Q300 170 275 92"/><path d="M345 190 L345 82"/><path d="M345 190 Q390 170 415 92"/>
+    </g>
+    <!-- the winning path lights up -->
+    <path d="M345 250 L345 190 Q390 170 415 92" stroke="#5CB85C" stroke-width="8" stroke-dasharray="2 10" opacity="0">
+      <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;.55;.58;.95;1"/></path>
+  </g>
+  <g>
+    <circle cx="275" cy="72" r="13" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text class="t" x="275" y="77">A</text>
+    <circle cx="345" cy="62" r="13" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text class="t" x="345" y="67">B</text>
+    <circle cx="415" cy="72" r="13" fill="#FFD23F" stroke="#2B2233" stroke-width="2"/><text class="t" x="415" y="77">C</text>
+  </g>
+
+  <!-- The character: waits at the fork while the vote runs, then walks the winning path -->
+  <g>
+    <animateMotion dur="8s" repeatCount="indefinite" path="M345 238 L345 190 Q390 170 415 100" keyPoints="0;0;1;1" keyTimes="0;.58;.86;1" calcMode="linear"/>
+    <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="1;1;0;0;1" keyTimes="0;.93;.96;.99;1"/>
+    <g>
+      <!-- a little walk bob -->
+      <animateTransform attributeName="transform" type="translate" dur="8s" repeatCount="indefinite"
+        values="0 0;0 0;0 -4;0 0;0 -4;0 0;0 -4;0 0;0 -4;0 0;0 0" keyTimes="0;.58;.615;.645;.68;.71;.745;.775;.81;.84;1"/>
+      <ellipse cx="0" cy="12" rx="11" ry="3.5" fill="#2B2233" opacity=".3"/>
+      <rect x="-11" y="-14" width="22" height="24" rx="9" fill="#FF7A59" stroke="#2B2233" stroke-width="2.5"/>
+      <circle cx="-4" cy="-4" r="3.6" fill="#FFF3DC" stroke="#2B2233" stroke-width="1.5"/>
+      <circle cx="5" cy="-4" r="3.6" fill="#FFF3DC" stroke="#2B2233" stroke-width="1.5"/>
+      <circle cx="-3" cy="-4" r="1.6" fill="#2B2233"/><circle cx="6" cy="-4" r="1.6" fill="#2B2233"/>
+    </g>
+  </g>
 </svg>

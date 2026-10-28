@@ -4,6 +4,8 @@
 
 ![How Daily Community Game plays](mechanic.svg)
 
+**New direction (thumbnail, 2026-10-28):** the thumbnail now shows where the rethink is heading: the community votes in a daily poll (A, B or C), votes pile up through the day, and when the round closes a character takes the path that won. The sections below still describe the old tower design until the new brief is written.
+
 **Rank:** Community idea · **Genre:** Community vote, stacking tower, **3D** · **Art family:** Toybox Flat · **Audience habit:** Come back daily
 
 @../../STANDARDS.md

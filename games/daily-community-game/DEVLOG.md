@@ -1,5 +1,10 @@
 # Daily Community Game — devlog
 
+## 2026-10-28 — New thumbnail: poll, then the winning path
+- `mechanic.svg` (the dashboard thumbnail) no longer shows the tower. Now: votes fly into a poll and the bars grow in bursts (A leads, C overtakes), C wins with a ✓, then a character walks up the C path of a three-way fork. Loops every 8 s.
+- Brief: a note under the thumbnail says this is the new direction; the rest still describes the tower until it is rewritten.
+- Next: rewrite the brief around voting on the character's path, then the GDD.
+
 ## 2026-10-27 — Renamed from Crowd Tower
 - New name: Daily Community Game; folder moved to `games/daily-community-game/`, save keys now `cm_daily-community-game_*`.
 - Decided the Jenga-style tower is not the way to go: the vote has no real choice, luck decides, and the payoff comes only every two weeks. The design needs a major rethink.
