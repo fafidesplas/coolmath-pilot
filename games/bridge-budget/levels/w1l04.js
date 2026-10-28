@@ -1,0 +1,27 @@
+// Big Wheels (GDD 6, level 4, the vertical slice level): 6 m, the first truck (3 t).
+export default {
+  id: 'w1l04',
+  number: 4,
+  name: 'Big Wheels',
+  world: 'river',
+  terrain: [
+    [[-8, 7], [13, 7], [13, 14], [-8, 14]],
+    [[19, 7], [40, 7], [40, 14], [19, 14]],
+  ],
+  water: 10,
+  anchors: [[13, 7], [19, 7]],
+  buildArea: [11, 3, 10, 7],
+  noBuild: [],
+  prebuilt: [],
+  materials: ['road', 'wood'],
+  vehicles: ['truck'],
+  boat: null,
+  flag: 22,
+  reference: 2920,
+  budget: 3800,
+  target: 3100,
+  mirror: true,
+  hint: 'Taller triangles are stronger.',
+  hintMembers: [[13, 7, 14, 5], [14, 5, 15, 7], [14, 5, 16, 5]],
+  tutorial: null,
+};

@@ -1,0 +1,28 @@
+// First Road (GDD 6, level 1): a 4 m creek with a rock anchor in the middle, the car.
+export default {
+  id: 'w1l01',
+  number: 1,
+  name: 'First Road',
+  world: 'river',
+  terrain: [
+    [[-8, 7], [14, 7], [14, 14], [-8, 14]],
+    [[18, 7], [40, 7], [40, 14], [18, 14]],
+    [[16, 7], [16.8, 8], [17.2, 11], [14.8, 11], [15.2, 8]],
+  ],
+  water: 10,
+  anchors: [[14, 7], [16, 7], [18, 7]],
+  buildArea: [12, 4, 8, 6],
+  noBuild: [],
+  prebuilt: [],
+  materials: ['road'],
+  vehicles: ['car'],
+  boat: null,
+  flag: 21,
+  reference: 800,
+  budget: 1100,
+  target: 850,
+  mirror: false,
+  hint: 'Drag road from bolt to bolt.',
+  hintMembers: [[14, 7, 16, 7], [16, 7, 18, 7]],
+  tutorial: 'hand',
+};

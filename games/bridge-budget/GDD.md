@@ -1,7 +1,7 @@
 # Bridge Budget — Game design document
 
 **Status:** Approved
-**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-27
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-28
 
 > Drag beams, cables and road across a gap, press Test, and watch a little truck with a face drive over it. Will it hold, sag, or snap into the river? Then make it cheaper, because there is always a cheaper bridge.
 
@@ -49,17 +49,17 @@
 ### 3.3 Materials
 | Material | Cost | Max length | Mass | Stiffness (EA) | Tension limit | Compression limit | Notes |
 |---|---|---|---|---|---|---|---|
-| **Road** | $200 /m | 2.5 m | 60 kg/m | 2,000 kN | 40 kN | 40 kN | The deck. The only material wheels drive on |
+| **Road** | $200 /m | 2.5 m | 60 kg/m | 4,000 kN | 40 kN | 40 kN | The deck. The only material wheels drive on |
 | **Wood** | $100 /m | 3 m | 20 kg/m | 1,000 kN | 30 kN | 30 kN | Cheap, light, weak |
 | **Steel** | $250 /m | 4 m | 40 kg/m | 3,000 kN | 90 kN | 90 kN | 3× wood's strength for 2.5× the price, twice the weight |
 | **Cable** | $60 /m | 14 m | 6 kg/m | 3,000 kN | 80 kN | 0 (goes slack) | Tension only. Long, light and cheap, but needs something high to hang from |
 
 - **Piece cost** = cost per meter × length, rounded to the nearest $10 (a 2.24 m wood piece costs $220). The bridge cost is the sum of its pieces; locked pre-built pieces cost $0.
-- **Strain at the breaking point:** road 2%, wood and steel 3%, cable 2.7%. A loaded 12 m bridge sags 5–13 px under the truck: visible, never jelly.
+- **Strain at the breaking point:** road 1%, wood and steel 3%, cable 2.7%. A loaded 12 m bridge sags 5–13 px under the truck: visible, never jelly.
 - **Road is deliberately weak.** A bare road deck breaks even under the car (level 2), and on long spans the road is often the first thing to go, so it must be held up every 2–2.5 m from above or below. The road can't be upgraded in v1 (one member per joint pair, 3.4); the fix is always better structure. Watch this in playtests (see 14).
 - **What the numbers create** (measured in the prototype with the final settings):
-  - Triangles: a 6 m bare road breaks under the car (needs 54 kN); a 1 m-tall wooden truss on the same gap holds it at 73%.
-  - Depth: under the truck (3 t), 1 m-tall trusses break (102–116%) and a 2 m-tall one holds (83%). A plain wooden truss can't carry the truck past about 6 m.
+  - Triangles: a 6 m bare road breaks under the car (it needs 48–56 kN however it is split); a 1 m-tall wooden truss on the same gap holds it at 70%.
+  - Depth: under the truck (3 t), 1 m-tall trusses break (unbreakable, level 2's would need 148%) and a 2 m-tall Warren truss holds (82%). A plain wooden truss can't carry the truck past about 6 m.
   - Mixing: on 8–10 m truck spans, steel goes where the force is (end diagonals, middle of the top chord) and wood elsewhere. The best mixes cost about 20–25% less than all steel.
   - Long spans: a plain steel truss over 20 m breaks under the bus (109%, $19,700). Cables from towers carry it at 53% for about half the price ($10,160).
 - **Materials unlock by level:** Road (1), Wood (2), Steel (5), Cable (14). Locked materials are hidden from the toolbar. A level can also restrict its materials (`materials` in the level data).
@@ -220,9 +220,9 @@
 - **Stars:** see 3.9.
 - **First 10 levels (River).** Costs are from the calibration prototype; final numbers come from the saved reference bridges in phase 3. "Peak" is the reference's highest stress ratio.
   1. **First Road** — 4 m creek with a rock anchor in the middle, car. Two road pieces, anchor to anchor (ghost hand). Reference $800; target $850, budget $1,100.
-  2. **Snap!** — 6 m, car. A bare road breaks (54 kN against its 40 kN limit); a 1 m-tall wooden truss above the road (two slanted ends, a top chord, two posts and one diagonal) holds. Reference $2,260 (peak 73%); target $2,400, budget $3,000.
+  2. **Snap!** — 6 m, car. A bare road breaks (about 50 kN against its 40 kN limit, ≥ 119% for every way to split it); a 1 m-tall wooden truss above the road (two slanted ends, a top chord, two posts and one diagonal) holds. Reference $2,260 (peak 70%); target $2,400, budget $3,000.
   3. **Under the Road** — 6 m, car, with anchors on both bank faces 2 m below the road. Two wood struts from below make it the cheapest bridge yet. Reference $1,760 (peak 44%). Level 2's truss also passes, but at $2,260, over the $1,850 target.
-  4. **Big Wheels** — 6 m, first truck (3 t). Level 2's 1 m truss breaks (116%); a 2 m-tall truss holds. Reference $2,920 (peak 83%); target $3,100, budget $3,800.
+  4. **Big Wheels** — 6 m, first truck (3 t). Level 2's 1 m truss breaks (it would need 148%); a 2 m-tall Warren truss (three road pieces, six diagonals, two top chords) holds. Reference $2,920 (peak 82%); target $3,100, budget $3,800.
   5. **Steel** — 8 m, truck, build area up to 2 m above the road. A 2 m all-wood truss breaks (109%). Steel unlocks: steel in the end diagonals and the middle of the top chord. Reference $5,620 (peak 86%); all steel passes at $7,580 (peak 40%), so the budget is set at × 1.35 ($7,600) to let it earn 2 stars.
   6. **Penny Pincher** — 10 m, truck. The level starts with an all-steel bridge of the player's own ($9,600, passes at 50%) that is over the $8,700 budget (× 1.15). The eye button pulses: draw wood over the green steel. Reference $7,560 (peak 71%).
   7. **Low Branches** — 10 m, truck, the build area stops 1 m above the road, anchors on both bank faces. A 1 m truss alone breaks (117% in steel); struts from both faces plus the 1 m truss hold. Reference $7,660 (peak 48%: steel top chord and inner diagonals, wood elsewhere). The optimizer already found $6,170 at 90%, so the target will drop in phase 3. A full truss under the deck also works at about $8,100.
@@ -277,11 +277,11 @@
   "target": 3100,
   "mirror": true,
   "hint": "Taller triangles are stronger.",
-  "hintMembers": [[13, 7, 14, 5], [14, 5, 15, 7]]
+  "hintMembers": [[13, 7, 14, 5], [14, 5, 15, 7], [14, 5, 16, 5]]
 }
 ```
 
-  All coordinates are grid cells (1 cell = 1 m = 40 px) from the playfield's top-left, y down. `terrain` is a list of solid polygons. `water` is the water row (omit for a canyon floor). `buildArea` and no-build `rect`s are `[x, y, w, h]`. A no-build zone is `{ "rect": [x, y, w, h], "kind": "waterfall" | "rock" | "lane" }`. A prebuilt piece is `[x1, y1, x2, y2, "wood", true]`, where the last value is `locked`. `vehicles` is the convoy order. `boat` is `{ "lane": [x, y, w, h], "start": 2.4, "speed": 2 }` (start in seconds of test time, speed in m/s). `flag` is the flag's x. `mirror` turns on the Mirror tool (symmetric terrain and anchors only; the editor checks it). `reference` and the two thresholds are written by the tools, not typed by hand.
+  All coordinates are grid cells (1 cell = 1 m = 40 px) from the playfield's top-left, y down. `terrain` is a list of solid polygons. `water` is the water row (omit for a canyon floor). `buildArea` and no-build `rect`s are `[x, y, w, h]`. A no-build zone is `{ "rect": [x, y, w, h], "kind": "waterfall" | "rock" | "lane" }`. A prebuilt piece is `[x1, y1, x2, y2, "wood", true]`, where the last value is `locked`. `vehicles` is the convoy order. `boat` is `{ "lane": [x, y, w, h], "start": 2.4, "speed": 2 }` (start in seconds of test time, speed in m/s). `flag` is the flag's x. Optional `start` / `startY` place the first vehicle's front wheel (default: 4 m before the left gap edge, on the left bank top); the tools use them for slope tests. `mirror` turns on the Mirror tool (symmetric terrain and anchors only; the editor checks it). `reference` and the two thresholds are written by the tools, not typed by hand.
 - **Solution files** (repo only, not shipped): `levels/solutions/<id>.json` = `{ "v": 1, "level": "w1l04", "cost": 2920, "peak": 0.85, "members": [[13, 7, 15, 7, "road"], …], "naive": [[13, 7, 15, 7, "road"], …] }`. `naive` is optional: a bridge that must fail.
 
 ## 7. Progression and retention
@@ -473,7 +473,7 @@ Music and sound effects have separate toggles, and both persist.
 ## 14. Open questions
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| Is a 40 kN road too weak on long spans, since it can't be reinforced? | Keep it; log the first broken material per failed test in the phase 2 sandbox. If the road breaks first in more than 30% of failed tests on World 2–3 references, raise it to 50 kN and re-run `simtest` (level 2 still fails: 54 kN against 50 kN) | Fafi | Open |
+| Is a 40 kN road too weak on long spans, since it can't be reinforced? | Keep it; log the first broken material per failed test in the phase 2 sandbox. If the road breaks first in more than 30% of failed tests on World 2–3 references, raise it to 50 kN and re-run `simtest` (level 2's bare road needs 48–56 kN, so check that it still fails) | Fafi | Open |
 | Should a pass over budget earn a star? | Yes (1 ★): nobody gets stuck. `level:optimize` will show whether players still chase the budget | Team | Open |
 | Music on by default in a calm builder? | Yes, quiet, with its own toggle; check in the first feel loop | Fafi | Open |
 | Do phones need zoom (25 px cells at 800×450)? | Not for v1 (nearest-joint picking, lifted labels); test on a phone in phase 2, add 2× zoom later if needed | Team | Open |
@@ -482,6 +482,12 @@ Music and sound effects have separate toggles, and both persist.
 | GameAnalytics game key and secret | One key per game in a config file | Team | Open |
 
 ## 15. Changelog
+- 2026-10-28 — Phase 2 vertical slice (built and checked in `tools/simtest.mjs`).
+  - **Road stiffness 2,000 → 4,000 kN** (strain at break 1%). In the shipped sim a bare 6 m road under the car only reached 101–107% of its limit, so level 2's lesson hung on a few percent; at 4,000 kN it needs 119–140% for every split, while the truss references move by under 3 points (level 2: 70%, level 3: 44%, level 4: 82%).
+  - **Level 4 reference** is a 2 m Warren truss ($2,920, peak 82%), and its hint pieces follow it. Its naive bridge (level 2's truss) would need 148%.
+  - **Drive:** the 3 m/s² acceleration is measured from the speed before gravity, so slopes slow the vehicle by gravity alone (1:2 and 2:3 ramps are climbed by every vehicle, a 4 m-high 45° ramp stalls them).
+  - Level data: optional `start` / `startY` for the vehicle start (test levels).
+  - Levels 5–10 still carry prototype numbers (old road stiffness); `simtest` re-checks each one when its level file is made in phase 3.
 - 2026-10-27 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-26 — Phase 1c review applied. Status set to In review.
   - **No more jelly:** soft members made the bridge bob at about 1 Hz for over 10 s; added a 1 s settle phase and raised axial damping to 100 /s.

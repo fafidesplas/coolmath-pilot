@@ -1,0 +1,27 @@
+// Snap! (GDD 6, level 2): 6 m, the car. A bare road breaks; a 1 m wooden truss holds.
+export default {
+  id: 'w1l02',
+  number: 2,
+  name: 'Snap!',
+  world: 'river',
+  terrain: [
+    [[-8, 7], [13, 7], [13, 14], [-8, 14]],
+    [[19, 7], [40, 7], [40, 14], [19, 14]],
+  ],
+  water: 10,
+  anchors: [[13, 7], [19, 7]],
+  buildArea: [11, 3, 10, 7],
+  noBuild: [],
+  prebuilt: [],
+  materials: ['road', 'wood'],
+  vehicles: ['car'],
+  boat: null,
+  flag: 22,
+  reference: 2260,
+  budget: 3000,
+  target: 2400,
+  mirror: true,
+  hint: 'Triangles don\'t bend. Build them above the road.',
+  hintMembers: [[13, 7, 15, 6], [15, 6, 15, 7], [15, 6, 17, 7]],
+  tutorial: 'triangles',
+};

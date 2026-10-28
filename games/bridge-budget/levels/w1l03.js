@@ -1,0 +1,27 @@
+// Under the Road (GDD 6, level 3): 6 m, the car, anchors on both bank faces 2 m down.
+export default {
+  id: 'w1l03',
+  number: 3,
+  name: 'Under the Road',
+  world: 'river',
+  terrain: [
+    [[-8, 7], [13, 7], [13, 14], [-8, 14]],
+    [[19, 7], [40, 7], [40, 14], [19, 14]],
+  ],
+  water: 10,
+  anchors: [[13, 7], [19, 7], [13, 9], [19, 9]],
+  buildArea: [11, 3, 10, 7],
+  noBuild: [],
+  prebuilt: [],
+  materials: ['road', 'wood'],
+  vehicles: ['car'],
+  boat: null,
+  flag: 22,
+  reference: 1760,
+  budget: 2300,
+  target: 1850,
+  mirror: true,
+  hint: 'Push the road up from the bolts below.',
+  hintMembers: [[13, 9, 15, 7], [19, 9, 17, 7]],
+  tutorial: 'below',
+};
