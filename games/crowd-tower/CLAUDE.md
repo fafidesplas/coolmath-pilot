@@ -1,6 +1,6 @@
 # Crowd Tower — game brief
 
-> Every hour, everyone votes on which block to pull from one shared tower. If it falls, it falls for everyone.
+> Every day, everyone votes on which block to pull from one shared tower. The next day, everyone sees if it stood. If it falls, it falls for everyone.
 
 ![How Crowd Tower plays](mechanic.svg)
 
@@ -15,10 +15,11 @@ A wooden block tower is instantly readable, and "will it stand?" is pure tension
 Working title: the idea slide calls it "Crowd Jenga". Jenga is a Hasbro trademark, so the game uses "Crowd Tower" and never says "Jenga" in the game or its store text.
 
 ## Core loop
-Open the game → watch the pulls since your last visit replay → vote on one of three blocks → the round closes, the top pick is pulled → the tower stands (block goes on top) or falls (a new tower starts, the record goes in the hall of fame) → come back later.
+Open the game → watch the reveal of yesterday's pull (and any others you missed) → vote on one of three blocks → the round closes at midnight Pacific, the top pick is pulled → the tower stands (block goes on top) or falls (a new tower starts, the record goes in the hall of fame) → come back tomorrow.
 
 ## Mechanics
 - One tower for all players, 18 layers of 3 blocks, layers crossed like the real thing.
+- One round per day (24 hours, closing at midnight Pacific), so one pull per day.
 - Each round the game offers 3 candidate blocks (A, B, C). Players vote; the top pick is pulled when the round ends. Players can change their vote until the round closes.
 - A pull either holds (the block goes on top) or makes the tower fall. The result comes from simple structure rules plus a seeded roll; the same rules run on the server and in the client.
 - The record is the number of pulls the tower survived (and the days it lasted).
@@ -56,7 +57,7 @@ Wood clack on pull, creak on wobble, soft thump when the block lands on top, com
 
 ## Risks and open questions
 - Needs a server for votes and tower state. STANDARDS allows no network calls except GameAnalytics and the Coolmath SDK, so this depends on a Coolmath community service [confirm].
-- Round length (hourly vs daily) changes the whole rhythm [confirm].
+- Round length is daily (decided in the GDD). With one pull a day, the fall odds must be high enough that a tower lasts about two weeks, not months; the simulator must prove it.
 - With few voters, percentages feel empty; with many, griefing (voting the risky block on purpose) must not end towers too fast.
 
 ## Definition of done
