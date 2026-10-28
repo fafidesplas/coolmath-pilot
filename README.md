@@ -71,7 +71,7 @@ git pull && git push                           # publish; the dashboard updates 
 
 Read [AGENTS.md](AGENTS.md) once: it has the house rules. The short version: **only touch your own game folder** (owners are in each game's `meta.json` and in the table above), commit small with the game name first (`Ice Slide: fish sink into holes`), push often, never force-push, everything in English. Since each person works in their own folders, pulls and pushes don't conflict.
 
-Dashboard: https://fafidesplas.github.io/coolmath-pilot/
+Dashboard: https://fafidesplas.github.io/coolmath-pilot/ · Showcase: https://fafidesplas.github.io/coolmath-pilot/showcase/
 
 ## How to work on a game with Claude Code
 
@@ -92,3 +92,10 @@ Anything marked **[confirm]** is still open and gets decided with the team.
 - **A game becomes playable** as soon as `games/<slug>/index.html` exists.
 - **Phase and owner** are edited by hand in each game's `meta.json` (`brief → gdd → slice → content → polish → done`, see `PHASES.md`). The GDD status (Draft / In review / Approved) is read from `GDD.md`. Last commit, commit count and devlog come from git automatically.
 - Write `DEVLOG.md` entries as `## <date> — <title>` with the newest entry at the top; the dashboard shows the latest one.
+
+## Showcase
+
+`showcase/index.html` is the outward-facing page for the catalog — the one to send to a publisher or an investor. Same data as the dashboard, no claims the repo can't back up: the playable builds run in the page, the rest show as *Soon* with the stage they are really in.
+
+- **Online:** https://fafidesplas.github.io/coolmath-pilot/showcase/ (same Pages build as the dashboard).
+- **Local:** `node scripts/build-status.mjs && python3 -m http.server 8000`, then open http://localhost:8000/showcase/.

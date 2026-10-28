@@ -1,7 +1,8 @@
 name: Dashboard
 
-# Rebuilds status.json from git history and publishes the dashboard
-# plus every game (as it is at that commit) to GitHub Pages.
+# Rebuilds status.json from git history and publishes the dashboard,
+# the showcase landing page (/showcase/) and every game (as it is at
+# that commit) to GitHub Pages.
 on:
   push:
     branches: [main]
@@ -35,7 +36,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html status.json _site/
-          cp -r games _site/
+          cp -r showcase games _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

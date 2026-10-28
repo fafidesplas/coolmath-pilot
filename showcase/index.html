@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coolmath pilot</title>
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="Coolmath pilot">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Cpath d='M13 10l9 6-9 6z' fill='%23000'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #000;
+    --ink: #fff;
+    --ink-2: rgba(255,255,255,.62);
+    --ink-3: rgba(255,255,255,.36);
+    --line: rgba(255,255,255,.1);
+    --gap: 10px;
+    --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .over { font: 600 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+
+  /* ---- top bar ---- */
+  .top {
+    position: fixed; inset: 0 0 auto 0; z-index: 30; height: 58px;
+    display: flex; align-items: center; gap: 18px; padding: 0 22px;
+    transition: background .3s ease, backdrop-filter .3s ease;
+  }
+  .top.solid { background: rgba(0,0,0,.72); backdrop-filter: saturate(180%) blur(14px); }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 590; letter-spacing: -.02em; font-size: 15px; }
+  .brand i { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: block; }
+  .top .right { margin-left: auto; display: flex; gap: 20px; font-size: 13px; color: var(--ink-2); }
+  .top .right a:hover { color: #fff; }
+
+  /* ---- hero ---- */
+  .hero { position: relative; height: clamp(520px, 82vh, 860px); overflow: hidden; background: #000; }
+  .hero-layer { position: absolute; inset: 0; will-change: transform; cursor: pointer; }
+  .hero .slide {
+    position: absolute; inset: 0; opacity: 0; transform: scale(1.03);
+    transition: opacity .9s ease, transform 1.4s cubic-bezier(.2,.7,.3,1);
+  }
+  .hero .slide.on { opacity: 1; transform: none; }
+  .hero, .top { opacity: 0; animation: wake .9s .05s ease forwards; }
+  .top { animation-delay: .35s; }
+  @keyframes wake { to { opacity: 1; } }
+  /* The art is a 16:9 schematic that already animates: show it whole (contain) over a
+     blurred copy of itself, so nothing important is ever cropped by the hero's shape. */
+  .hero .slide img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero .slide .bg { object-fit: cover; filter: blur(48px) saturate(1.25) brightness(.5); transform: scale(1.2); }
+  .hero .slide .fg { object-fit: contain; }
+  .hero::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(to top, #000 1%, rgba(0,0,0,.72) 26%, rgba(0,0,0,0) 58%),
+      linear-gradient(to right, rgba(0,0,0,.6) 0%, rgba(0,0,0,.12) 42%, rgba(0,0,0,0) 68%),
+      linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 20%);
+  }
+  .hero-body {
+    position: absolute; z-index: 2; left: 0; right: 0; bottom: 0;
+    padding: 0 22px 34px; display: flex; align-items: flex-end; gap: 24px;
+    will-change: opacity, transform;
+  }
+  .hero-txt > * { animation: liftIn .7s cubic-bezier(.2,.7,.3,1) both; }
+  .hero-txt .over { animation-delay: .25s; }
+  .hero-txt h1 { animation-delay: .32s; }
+  .hero-txt .cta { animation-delay: .42s; }
+  @keyframes liftIn { from { opacity: 0; transform: translateY(14px); } }
+  /* scroll hint */
+  .hint {
+    position: absolute; z-index: 2; left: 50%; bottom: 16px; width: 1px; height: 34px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.45));
+    overflow: hidden; pointer-events: none;
+  }
+  .hint::after {
+    content: ""; position: absolute; left: -1px; width: 3px; height: 10px; border-radius: 2px; background: #fff;
+    animation: drop 2.2s cubic-bezier(.6,0,.4,1) infinite;
+  }
+  @keyframes drop { 0% { top: -12px; opacity: 0 } 30% { opacity: 1 } 70% { opacity: 1 } 100% { top: 34px; opacity: 0 } }
+  .hero-txt { min-width: 0; }
+  .hero .over { color: var(--ink-2); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hero .over .n { color: #fff; }
+  .hero .over .sep { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .5; }
+  .hero h1 {
+    margin: 14px 0 0; font-size: clamp(40px, 7.4vw, 96px); font-weight: 620; letter-spacing: -.045em; line-height: .96;
+  }
+  .hero .cta { margin-top: 24px; display: flex; align-items: center; gap: 14px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 24px; border-radius: 999px;
+    background: #fff; color: #000; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .btn:hover { transform: scale(1.03); }
+  .btn .tri { width: 0; height: 0; border: 6px solid transparent; border-left: 10px solid #000; margin-left: -2px; }
+  .ticks { margin-left: auto; display: flex; gap: 8px; align-items: flex-end; flex: none; }
+  .ticks button {
+    width: 54px; height: 3px; background: rgba(255,255,255,.26); border-radius: 2px; position: relative; overflow: hidden;
+  }
+  .ticks button i { position: absolute; inset: 0 auto 0 0; width: 0; background: #fff; display: block; }
+  .ticks button[aria-current="true"] { background: rgba(255,255,255,.4); }
+  @media (max-width: 760px) {
+    .hero-body { flex-direction: column; align-items: flex-start; gap: 20px; padding-bottom: 26px; }
+    .ticks { margin-left: 0; }
+    .ticks button { width: 34px; }
+  }
+
+  /* ---- library ---- */
+  .lib-head {
+    display: flex; align-items: baseline; gap: 16px; padding: 44px 22px 16px; color: var(--ink-3);
+  }
+  .lib-head .over { color: var(--ink-2); }
+  .lib-head .stat { margin-left: auto; font: 500 12px/1 var(--mono); letter-spacing: .08em; }
+  .lib-head .stat b { color: #fff; font-weight: 600; }
+  .wall {
+    display: grid; gap: var(--gap); padding: 0 22px 22px;
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    grid-auto-rows: var(--row, 180px);
+    grid-auto-flow: dense;
+  }
+  .tile {
+    position: relative; overflow: hidden; border-radius: 10px; background: #0b0b0c;
+    display: block; width: 100%; height: 100%;
+    transition: transform .35s cubic-bezier(.2,.7,.3,1), opacity .35s ease;
+    content-visibility: auto; contain-intrinsic-size: 320px 180px;
+  }
+  .tile.big { grid-column: span 2; grid-row: span 2; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.3,1), filter .35s ease; }
+  .tile::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.18) 36%, rgba(0,0,0,0) 62%);
+    opacity: .9; transition: opacity .3s ease;
+  }
+  .tile { opacity: 0; transform: translateY(14px); }
+  .tile.in { opacity: 1; transform: none; transition-delay: var(--d, 0ms); }
+  .wall:hover .tile.in { opacity: .42; transition-delay: 0ms; }
+  .wall:hover .tile.in:hover, .tile.in:focus-visible { opacity: 1; transform: scale(1.012); z-index: 2; }
+  .tile:hover img { transform: scale(1.05); }
+  .tile.soon img { filter: grayscale(1) brightness(.5); }
+  .tile.soon:hover img { filter: grayscale(.55) brightness(.62); }
+  .tile .label {
+    position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 14px 15px;
+    display: flex; align-items: flex-end; gap: 10px; text-align: left;
+  }
+  .tile .nm { font-size: 14.5px; font-weight: 580; letter-spacing: -.012em; line-height: 1.2; }
+  .tile.big .nm { font-size: 20px; }
+  .tile .gn {
+    display: block; margin-top: 3px; font: 500 11px/1.3 var(--mono); letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-3); opacity: 0; transform: translateY(4px); transition: opacity .3s ease, transform .3s ease;
+  }
+  .tile:hover .gn, .tile:focus-visible .gn { opacity: 1; transform: none; }
+  .tile .circle {
+    margin-left: auto; flex: none; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.96);
+    display: grid; place-items: center; opacity: 0; transform: scale(.8); transition: opacity .25s ease, transform .25s ease;
+  }
+  .tile.big .circle { width: 46px; height: 46px; }
+  .tile:hover .circle, .tile:focus-visible .circle { opacity: 1; transform: none; }
+  .tile .circle::after { content: ""; width: 0; height: 0; border: 5px solid transparent; border-left: 9px solid #000; margin-left: 4px; }
+  .tile.soon .circle { display: none; }
+  .tile .soon-tag {
+    position: absolute; z-index: 2; top: 12px; left: 13px; color: var(--ink-2);
+    font: 600 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+  }
+  @media (max-width: 1500px) { .wall { --cols: 4; } }
+  @media (max-width: 1100px) { .wall { --cols: 3; } }
+  @media (max-width: 760px)  { .wall { --cols: 2; } .tile .nm { font-size: 13px; } .tile.big .nm { font-size: 15px; } }
+  @media (max-width: 460px)  { .wall { --cols: 1; } .tile.big { grid-column: span 1; grid-row: span 1; } }
+
+  /* ---- footer ---- */
+  footer {
+    display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center;
+    padding: 26px 22px 40px; border-top: 1px solid var(--line); margin-top: 24px;
+    font: 500 12px/1 var(--mono); letter-spacing: .06em; color: var(--ink-3);
+  }
+  footer .links { margin-left: auto; display: flex; gap: 22px; }
+  footer a:hover { color: #fff; }
+
+  /* ---- player ---- */
+  dialog { padding: 0; border: 0; background: transparent; width: min(1280px, 96vw); max-width: none; color: #fff; }
+  dialog::backdrop { background: rgba(0,0,0,.94); backdrop-filter: blur(8px); animation: fadeIn .3s ease; }
+  dialog[open] { animation: popIn .32s cubic-bezier(.2,.8,.3,1); }
+  @keyframes fadeIn { from { opacity: 0; } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.975) translateY(10px); } }
+  .pl { border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px var(--line); }
+  .pl-head { display: flex; align-items: center; gap: 16px; padding: 12px 16px; }
+  .pl-head .t { font-size: 14px; font-weight: 580; }
+  .pl-head .g { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .pl-head .s { flex: 1; }
+  .pl-head button, .pl-head a { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .pl-head button:hover, .pl-head a:hover { color: #fff; }
+  .pl-screen { position: relative; aspect-ratio: 16/9; max-height: 78vh; background: #000; }
+  .pl-screen iframe, .pl-screen img { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .pl-screen img { object-fit: cover; filter: grayscale(.4) brightness(.4); }
+  .pl-note {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; text-align: center; padding: 24px;
+  }
+  .pl-note p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 44ch; }
+  .pl-note .over { color: var(--ink-3); }
+</style>
+</head>
+<body>
+
+<div class="top" id="top">
+  <a class="brand" href="#"><i aria-hidden="true"></i> Coolmath pilot</a>
+  <div class="right">
+    <a href="../index.html">Dashboard</a>
+    <a id="repo" href="#" target="_blank" rel="noopener" hidden>GitHub</a>
+  </div>
+</div>
+
+<main>
+  <section class="hero" id="hero" aria-label="Featured">
+    <div class="hero-layer" id="slides"></div>
+    <span class="hint" id="hint" aria-hidden="true"></span>
+    <div class="hero-body">
+      <div class="hero-txt">
+        <div class="over" id="h-over"></div>
+        <h1 id="h-title"></h1>
+        <div class="cta">
+          <button class="btn" id="h-play"><span class="tri" aria-hidden="true"></span> Play</button>
+        </div>
+      </div>
+      <div class="ticks" id="ticks"></div>
+    </div>
+  </section>
+
+  <div class="lib-head">
+    <span class="over">All games</span>
+    <span class="stat" id="stat"></span>
+  </div>
+  <div class="wall" id="wall"></div>
+</main>
+
+<footer>
+  <span id="built">—</span>
+  <span class="links">
+    <a href="../index.html">Dashboard</a>
+    <a id="repo2" href="#" target="_blank" rel="noopener">Repository</a>
+  </span>
+</footer>
+
+<dialog id="player" aria-label="Game">
+  <div class="pl">
+    <div class="pl-head">
+      <span class="t" id="p-title"></span>
+      <span class="g" id="p-genre"></span>
+      <span class="s"></span>
+      <button id="p-restart" hidden>Restart</button>
+      <a id="p-newtab" target="_blank" rel="noopener" hidden>New tab</a>
+      <button id="p-close">Close</button>
+    </div>
+    <div class="pl-screen" id="p-screen"></div>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+
+const STAGE = { brief: 'In design', gdd: 'Design approved', slice: 'First level playable', content: 'Building levels', polish: 'In polish', done: 'Finished' };
+const SLIDE_MS = 6500;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const art = g => `../games/${g.slug}/mechanic.svg`;
+const play = g => `../games/${g.slug}/index.html`;
+
+const S = { games: [], hero: [], i: 0, t: null, t0: 0 };
+
+const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+function ago(iso) {
+  if (!iso) return '—';
+  const s = (new Date(iso) - Date.now()) / 1000;
+  for (const [u, n] of [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]])
+    if (Math.abs(s) >= n) return rtf.format(Math.round(s / n), u);
+  return 'just now';
+}
+
+async function load() {
+  let d = null;
+  for (const url of ['../status.json', 'status.json']) {
+    try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) { d = await r.json(); break; } } catch {}
+  }
+  if (!d) { $('wall').innerHTML = '<p style="color:#888;padding:40px 0">Could not load status.json.</p>'; return; }
+
+  S.games = d.games.slice().sort((a, b) =>
+    (b.playable - a.playable) ||
+    ((a.rank ?? 99) - (b.rank ?? 99)) ||
+    String(b.lastCommit?.date || '').localeCompare(String(a.lastCommit?.date || '')));
+  S.hero = S.games.filter(g => g.playable).slice(0, 5);
+
+  const playable = S.games.filter(g => g.playable).length;
+  $('stat').innerHTML = `<b>${playable}</b> playable · ${S.games.length - playable} soon`;
+  $('built').textContent = `Built from ${d.branch || 'main'} · updated ${ago(d.generatedAt)}`;
+  if (d.repoUrl) { $('repo').href = d.repoUrl; $('repo').hidden = false; $('repo2').href = d.repoUrl; }
+
+  buildHero();
+  buildWall();
+}
+
+/* ---------- hero ---------- */
+function buildHero() {
+  if (!S.hero.length) { $('hero').hidden = true; return; }
+  $('slides').innerHTML = S.hero.map((g, i) =>
+    `<div class="slide${i ? '' : ' on'}">
+       <img class="bg" src="${esc(art(g))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async" aria-hidden="true">
+       <img class="fg" src="${esc(art(g))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">
+     </div>`).join('');
+  $('ticks').innerHTML = S.hero.map((g, i) =>
+    `<button type="button" data-i="${i}" aria-label="Show ${esc(g.name)}" aria-current="${i === 0}"><i></i></button>`).join('');
+  $('ticks').querySelectorAll('button').forEach(b => b.onclick = () => show(+b.dataset.i));
+  $('h-play').onclick = () => openGame(S.hero[S.i].slug);
+  // The art itself is clickable; the ticks and the button sit on the layer above it.
+  $('slides').onclick = () => openGame(S.hero[S.i].slug);
+  addEventListener('keydown', e => {
+    if ($('player').open) return;
+    if (e.key === 'ArrowRight') show((S.i + 1) % S.hero.length);
+    if (e.key === 'ArrowLeft') show((S.i - 1 + S.hero.length) % S.hero.length);
+  });
+  show(0);
+}
+
+function show(i) {
+  S.i = i;
+  const g = S.hero[i];
+  $('slides').querySelectorAll('.slide').forEach((s, k) => s.classList.toggle('on', k === i));
+  $('h-over').innerHTML =
+    `<span class="n">${String(i + 1).padStart(2, '0')}</span> / ${String(S.hero.length).padStart(2, '0')}` +
+    `<span class="sep"></span>${esc(g.genre || '')}` +
+    `<span class="sep"></span>${esc(STAGE[g.stage] || '')}`;
+  $('h-title').textContent = g.name;
+  $('ticks').querySelectorAll('button').forEach((b, k) => {
+    b.setAttribute('aria-current', String(k === i));
+    b.firstElementChild.style.width = k < i ? '100%' : '0%';
+  });
+  tick();
+}
+
+function tick() {
+  clearInterval(S.t);
+  if (calm || S.hero.length < 2) return;
+  S.t0 = performance.now();
+  S.t = setInterval(() => {
+    const p = (performance.now() - S.t0) / SLIDE_MS;
+    const bar = $('ticks').children[S.i]?.firstElementChild;
+    if (bar) bar.style.width = `${Math.min(100, p * 100)}%`;
+    if (p >= 1) show((S.i + 1) % S.hero.length);
+  }, 60);
+}
+document.addEventListener('visibilitychange', () => document.hidden ? clearInterval(S.t) : tick());
+
+/* ---------- wall ---------- */
+function buildWall() {
+  // Two oversized tiles break the grid up; dense packing closes the holes they leave.
+  const big = new Set([0, 7]);
+  $('wall').innerHTML = S.games.map((g, i) => `
+    <button class="tile${big.has(i) ? ' big' : ''}${g.playable ? '' : ' soon'}" type="button" data-slug="${esc(g.slug)}"
+            aria-label="${esc(g.name)}${g.playable ? '' : ' — coming soon'}">
+      ${g.playable ? '' : '<span class="soon-tag">Soon</span>'}
+      <img src="${esc(art(g))}" alt="" loading="lazy" decoding="async">
+      <span class="label">
+        <span>
+          <span class="nm">${esc(g.name)}</span>
+          <span class="gn">${esc(g.playable ? g.genre : STAGE[g.stage] || 'In design')}</span>
+        </span>
+        <span class="circle" aria-hidden="true"></span>
+      </span>
+    </button>`).join('');
+  const tiles = $('wall').querySelectorAll('.tile');
+  tiles.forEach(el => el.onclick = () => openGame(el.dataset.slug));
+  sizeWall();
+  reveal(tiles);
+}
+
+// Rows are as tall as a 16:9 cell, so a 2x2 tile keeps the same shape as a 1x1 one.
+function sizeWall() {
+  const wall = $('wall');
+  const cs = getComputedStyle(wall);
+  const cols = cs.gridTemplateColumns.split(' ').filter(Boolean).length || 4;
+  const gap = parseFloat(cs.columnGap) || 10;
+  const inner = wall.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const cell = (inner - gap * (cols - 1)) / cols;
+  wall.style.setProperty('--row', `${Math.round(cell * 9 / 16)}px`);
+}
+addEventListener('resize', sizeWall);
+
+/* ---------- player ---------- */
+const dlg = $('player');
+function openGame(slug) {
+  const g = S.games.find(x => x.slug === slug);
+  if (!g) return;
+  $('p-title').textContent = g.name;
+  $('p-genre').textContent = g.genre || '';
+  const sc = $('p-screen');
+  sc.innerHTML = '';
+  if (g.playable) {
+    const f = document.createElement('iframe');
+    f.src = play(g); f.title = g.name; f.allow = 'autoplay; fullscreen; gamepad';
+    sc.append(f);
+    $('p-restart').hidden = false; $('p-newtab').hidden = false; $('p-newtab').href = play(g);
+    $('p-restart').onclick = () => { f.src = f.src; f.focus(); };
+    if (!dlg.open) dlg.showModal();
+    f.focus();
+  } else {
+    sc.innerHTML = `<img src="${esc(art(g))}" alt="">
+      <div class="pl-note"><span class="over">${esc(STAGE[g.stage] || 'In design')}</span><p>${esc(g.tagline)}</p></div>`;
+    $('p-restart').hidden = true; $('p-newtab').hidden = true;
+    if (!dlg.open) dlg.showModal();
+  }
+  clearInterval(S.t);
+}
+$('p-close').onclick = () => dlg.close();
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+dlg.addEventListener('close', () => {
+  const f = $('p-screen').querySelector('iframe');
+  if (f) f.src = 'about:blank';
+  tick();
+});
+
+// Tiles rise into place a beat apart, so the wall assembles instead of appearing.
+function reveal(tiles) {
+  if (calm) { tiles.forEach(t => t.classList.add('in')); return; }
+  const io = new IntersectionObserver((entries, obs) => {
+    let n = 0;
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      e.target.style.setProperty('--d', `${Math.min(n++, 7) * 45}ms`);
+      e.target.classList.add('in');
+      obs.unobserve(e.target);
+    }
+  }, { rootMargin: '0px 0px -8%' });
+  tiles.forEach(t => io.observe(t));
+}
+
+// The hero drifts and fades as the wall comes up over it.
+let queued = false;
+function onScroll() {
+  $('top').classList.toggle('solid', scrollY > 40);
+  if (calm || queued) return;
+  queued = true;
+  requestAnimationFrame(() => {
+    queued = false;
+    const h = $('hero').offsetHeight || 1;
+    const y = Math.min(scrollY, h);
+    $('slides').style.transform = `translate3d(0, ${(y * 0.3).toFixed(1)}px, 0)`;
+    const body = document.querySelector('.hero-body');
+    if (body) body.style.opacity = Math.max(0, 1 - y / (h * 0.68));
+    $('hint').style.opacity = Math.max(0, 1 - scrollY / 160);
+  });
+}
+addEventListener('scroll', onScroll, { passive: true });
+
+load();
+</script>
+</body>
+</html>
