@@ -40,7 +40,7 @@
 
   | Climb | Needs | Spare height | Time above the ledge |
   |---|---|---|---|
-  | 2-tile ledge (80 px) | a jump | 25 px | 275 ms |
+  | 2-tile ledge (80 px) | a jump | 25 px | 267 ms |
   | 3-tile ledge (120 px) | 1 echo to stand on | 21 px | 250 ms |
   | 4-tile ledge (160 px) | 2 stacked echoes | 17 px | 225 ms |
   | 5-tile ledge (200 px) | 3 stacked echoes | 13 px | 200 ms |
@@ -65,7 +65,7 @@
 ### 3.5 Echoes
 - **What an echo is:** the tape of one past loop: the live player's position, facing, pose and "what I stood on" at every step. Up to 1200 steps (10 s).
 - **Replay:** during its tape an echo **takes its recorded position every step**. It does not run physics, so it does exactly what you saw, every loop.
-- **Resting:** when an echo's tape ends (you pressed Loop, or were zapped), it **stays at its last spot**, standing still with a small ‖ on its badge, until the loop ends. If its tape ended in mid-air it drops straight down (gravity 3000 px/s²) and lands; a resting echo rides lifts and is pushed out by closing gates like the live player. So "walk to the plate, press Loop" makes a holder in 2 seconds, and a jump can't freeze an echo in mid-air.
+- **Resting:** when an echo's tape ends (you pressed Loop, or were zapped), it **stays at its last spot**, standing still with a small ‖ on its badge, until the loop ends. If its tape ended in mid-air it drops straight down (gravity 3000 px/s²) and lands (on the floor, a gate, or an **older** echo only, never a newer one, so deleting the latest echo can't change an older one); a resting echo rides lifts and is pushed out by closing gates like the live player. So "walk to the plate, press Loop" makes a holder in 2 seconds, and a jump can't freeze an echo in mid-air.
 - **What echoes do:** press plates, flip switches, block lasers, block lifts (a lift won't squeeze an echo), and are immune to lasers. They **can't** carry keys, open locks or use the exit.
 - **Standing on echoes:** the top of a standing echo (on the ground, a ledge, a lift or another echo, or resting) is a **one-way ledge 32 px wide** (4 px wider than its hitbox on each side) for the live player and for other echoes' recordings. You walk and jump through echoes from the side and from below. While an echo is in the air (jumping, falling) its top is not solid, so a rider drops off: echoes can't launch you. Standing on a walking echo carries you with it.
 - **No crush:** if an echo carries you into a ceiling you simply stop there; the echo's top passes through you.
@@ -164,7 +164,7 @@
 - **Room rules** (checked by `tools/simtest.mjs` where marked ✓):
   - **Solution recording ✓:** every room ships with a reference solution (12) that reaches the exit, uses exactly the echo par and sets the time par. A room is not done until it passes.
   - **No lone run ✓:** the lone-runner bot must fail to reach the exit with zero echoes (12). This catches walls that are jumpable after all and plates too close to their gates.
-  - **Timing tolerance ✓:** delaying all inputs of any one loop of the reference solution by 0.25 s (30 steps) must still solve the room. No timing needs better than a quarter of a second.
+  - **Timing tolerance ✓:** delaying all inputs of any one loop of the reference solution by 0.25 s (30 steps, the live player standing still right after that loop's clock starts) must still solve the room. No timing needs better than a quarter of a second.
   - **Short waits ✓:** no loop of the reference solution has the live player standing still for more than 3 s; the final loop no more than 1.5 s. Rooms are about doing, not waiting.
   - **Compact:** the spawn sits in the middle of the action; a good player does any one loop's job in 4 s or less. Loop lengths: Lab 5–10 s, Archive and Core 6–10 s.
   - **Heights and gaps:** the table in 3.3 is the law: 2 tiles = jump, 3 = one echo, 4 = two echoes, 5 = three; jumped gaps ≤ 4 tiles, blocking gaps ≥ 6.
@@ -213,7 +213,7 @@
   | 35 | Full House | All 4 slots needed: a tower plus a zap blocker |
   | 36 | Core Exam | Every element (par 3–4) |
 
-- **Level data format** (one JSON object per room in `levels/`, loaded by `levels/index.js`):
+- **Level data format** (one JSON object per room in `levels/`, loaded by `levels/index.js`; each file is a `.js` module that exports the object, so rooms load without `fetch` in the browser and in Node):
 
 ```json
 {
@@ -362,7 +362,7 @@ Counts are sent once per attempt with a value, never one event per action, to ke
 - **Stack:** vanilla Canvas 2D, ES modules, no build step, following `STANDARDS.md`. Useful code from Magnet Twins and Flip Runner is **copied** into this folder, not imported: the fixed-step loop with accumulator and `visibilitychange` pause, input recording (`record.js`), axis sweeps against tiles and boxes (`physics.js`), save, the analytics stub, the WebAudio synth and music sequencer, pooled particles and shake, and the canvas button UI.
 - **Modules (`src/`):** `main.js` (boot), `game.js` (frame loop, screens, HUD, event glue), `sim.js` (the deterministic room: live player, echoes, devices, channels, clock; no DOM), `physics.js` (sweeps against tiles, one-way ledges, gates, bridges, lifts and echo tops), `tape.js` (echo tapes in preallocated typed arrays: record, replay, rest, break checks), `forecast.js` (the echo-only pre-run for paths, arcs and timeline marks), `level.js` (parser), `render.js` (pre-rendered room layer, glow sprites, bodies, paths, ring, rewind), `hud.js` (timeline, slots, goals), `fx.js`, `input.js` (keys and touch buttons to one bitmask per step), `audio.js` (effects and echo-layered music), `record.js`, `hints.js` (runs a reference solution headless to get its tapes), `save.js`, `analytics.js` (GameAnalytics stub, console log).
 - **Echo storage:** each slot holds `Float32Array` x and y and a `Uint8Array` of pose and ground reference for 1200 steps (about 11 KB per echo). Nothing is allocated during play.
-- **Reference solutions:** recorded in the game with `?record` (the whole room, all loops, as one input stream, see 6) and shipped in the release build, because hints use them (36 files of a few KB).
+- **Reference solutions:** until rooms are recorded in the browser, `tools/make-solutions.mjs` steers the real sim with a short script per room and writes them; later recorded in the game with `?record` (the whole room, all loops, as one input stream, see 6) and shipped in the release build, because hints use them (36 files of a few KB).
 - **Tools (`tools/`, Node, same `sim.js`):**
   - `simtest.mjs`: mechanics checks against this GDD (jump apex 105 px, the reach table in 3.3, max gap, coyote and buffer, plate-to-gate timing, rest and drop, breaks, one-way echo tops, rewind restores the exact start state), then every room's reference solution: reaches the exit, echoes used = echo par, room time sets the time par, the 0.25 s timing tolerance and the short-wait rule from 6.
   - `lonebot.mjs`: the **lone-runner bot**. A breadth-first search over standing positions (tile column, floor height) using macro moves played through the real simulation (walk one tile, full jumps left, right and straight up, short hops), with no echoes and the live player free to press plates and flip switches. It must not reach the exit; if it does, the room can be solved without echoes and gets redesigned.
@@ -399,6 +399,7 @@ Counts are sent once per attempt with a value, never one event per action, to ke
 | GameAnalytics game key and secret | One key per game in a config file | Team | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Vertical slice build: rooms 1–3 built as data with pars from their reference solutions (echo par 1 / 1 / 2, time par 4 / 5 / 5 s). Resting echoes only land on older echoes (deleting the latest echo can never change an older one). 2-tile time above the ledge corrected to 267 ms (measured with the 120 Hz integration; the other rows match). Room files are `.js` modules exporting the JSON object. Reference solutions come from `tools/make-solutions.mjs` until they can be recorded in a browser. The 0.25 s tolerance test is defined as the live player standing still for 0.25 s after that loop's clock starts. A key still held when a room starts (Enter, Space from the menu) is ignored until released, so confirming a menu never makes an echo.
 - 2026-10-27 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-26 — Phase 1c review applied: room 3 gates made adjacent (one echo could hold both plates in turn while you waited between them, making the Loop-key room a two-jobs puzzle); room 10 replaced by Spawn Step (the old one-echo answer was the obvious one); room 26 lasers at foot and head height (a waist-high beam could be jumped); echo tops solid only while the echo stands (riding a jumping echo gave 6-tile boost jumps that broke the reach table); resting echoes drop if their tape ends mid-air (no floating platforms); fast-forward while standing still and the short-wait rule, because waiting for an echo's moment was the dullest part; timeline hidden in rooms 1–2 to keep the first minute clean; jitter test (0.25 s) and lone-runner bot so rooms are fair and need their echoes; hints from the reference solutions and a skip after 3 minutes, because a stuck puzzle player leaves; HUD hit areas never under 48 CSS px; Loop before moving records an empty tape; trails cut from 6 to 4; the brief's definition of done added as an acceptance test. Status set to In review.
 - 2026-10-26 — First draft from the brief and the phase 1a answers: echoes replay recorded positions and break visibly when the live player changes their past; a resting echo holds its last spot; the clock waits for the first move; Delete removes the latest echo and retries the loop; a laser zap ends the loop and its echo becomes a beam blocker; 280 px/s run and 105 px jump so each stacked echo is one more tile; paths, forecast arcs and timeline as previews; three independent stars (exit, echo par, time par = reference × 1.25); per-room loop length 5–10 s and 1–4 slots; Lab (plates, gates, steps), Archive (switches, bridges, keys), Core (lasers, lifts); music built from echo layers, on by default; reference solution per room replayed by `tools/simtest.mjs`; keyboard-first exception documented.
