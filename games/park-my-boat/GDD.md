@@ -134,6 +134,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 - **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 5 current levels pass; check new levels with the same test (park each boat, look for the next).
 - **Slip-in-view rule:** every boat starts with its whole slip on screen, at its own framing. No crossing open water with nothing happening: the challenge is stopping, turning and the obstacles around the slip, not distance. The one exception is a gauntlet level built around the trip itself, and even that fits on the player's screen (Rush Hour: 30 m, all in the jet ski's view). Together with the hand-off rule, this keeps each level's slips close together.
 - **Open-sea rule:** no level is a closed pool. Every harbor, marina or canal opens onto the sea somewhere, even off screen: a harbor mouth, an open side, lagoons that run out to sea. Boats come from somewhere and the water goes somewhere. (Done for all 5 levels: the `basin()` helper leaves the south side open, and Rush Hour's lagoons run out to sea.)
+- **Design note: first boat (Pao, 2026-10-28, from Fafi's playtest):** level 1's first boat should be the best-feeling boat in the game, since it is the player's first touch. In the current build, level 1 is Odd Couple (rowboat → cruise ship): for Fafi the big boat comes too early, and parking it doesn't feel good. The planned order above (one small boat per level until the first scale jump at level 4) already moves the ship later; which boat feels best still needs a decision (see 14).
 - **Difficulty curve:** a level gets harder with: more boats in the chain, bigger scale jumps, a narrower slip (less `pad`), a longer or bent route, moving things in the way, current across the approach. Add one of these per level, and never two new ones at once. A decent run should take at most 90 s (120 s for level 20). A level should take a first-time player at most 3 tries.
 - **Stars:** see 3.6. 3★ keeping 90% of the budget or more, 2★ 60% or more, 1★ for finishing.
 - **Levels:** (existing levels are named in quotes)
@@ -354,6 +355,7 @@ Still open:
 | Settings (stretch goal, 13): one palette per setting? | Keep ink, cream, sunny and coral shared; let each setting swap water, land and one accent. Ask the team, since `STANDARDS.md` says one palette chosen once | Pao, Fafi, Team | Open |
 | Coolmath SDK, ad breaks, branding, size limit, GA keys | Team-wide `[confirm]` items in `STANDARDS.md` | Team | Open |
 | Fafi's review | Fafi reads the GDD and agrees, or lists changes | Fafi | Open |
+| Best-feeling boat for level 1 | Playtest the small boats and give level 1 the one that feels best to steer and park; also make parking the cruise ship feel good before Odd Couple (Fafi, 2026-10-28) | Pao, Fafi | Open |
 
 **Economy (decided 2026-10-25, was a question for Fafi):** money kept is the score. Each level has a budget, damage comes off it, stars come from the share kept (3.6). Per level only, no wallet carried across levels, so nothing to spend it on. If a wallet ever comes, it buys only cosmetics, never advantages, and never random rewards (`STANDARDS.md`: no loot boxes).
 
@@ -367,6 +369,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-28 — Design note from Fafi's playtest: level 1's first boat should feel the best; the big boat comes too early and doesn't feel good to park.
 - 2026-10-25 — Unparking: two open-ocean jams, Open Water and Raft-Up.
 - 2026-10-25 — Unparking: boats can be shoved, paid by the meter.
 - 2026-10-25 — Unparking levels 2 and 3 (Fishing Port, Big Ship Day): wider spread of sizes, diagonal boats, buoys and ducks inside the jam.

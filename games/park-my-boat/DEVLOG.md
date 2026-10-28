@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-28 — Design note: the first boat should feel the best
+- From Fafi's playtest: in level 1 (Odd Couple in the current build) the big boat comes too early, and parking it doesn't feel good. Level 1's first boat should be the best-feeling boat in the game.
+- Added to the GDD (§6 design note, §14 open question). No code change.
+- Next: find the best-feeling boat for level 1, and work on how parking the cruise ship feels.
+
 ## 2026-10-25 — Unparking: jams in the open ocean
 - Owner: some Unparking levels should be in the middle of the ocean; walls shrink the solution space and give the answer away. Two new jams with no land at all, the dashed way-out line all round:
   - Open Water (Unparking 2): a 9-boat nested box, 0.6-0.8 m apart: trawler and a 30 m container ship outside, sailboats down the sides and across, rowboats, a swan in the middle. 5 rounds (2-2-2-2-1). A buoy and ducks outside it.
