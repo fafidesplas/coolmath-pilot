@@ -183,6 +183,61 @@ function hrSparkle(x, y)
         HR_WHITE, HR_WHITE, HR_WHITE.scale(1, 0), HR_WHITE.scale(1, 0), .3, .14, .02, .02, 0, .9, 1, 0, PI, .1, .5);
 }
 
+// ice droplets: white beads flicked off the ice that arc and fall back onto it. Hand-rolled because the engine's
+// particle gravity is the global one, which is zero here. Pooled, at most HR_DROPS_MAX alive
+const HR_DROPS_MAX = 64, HR_DROP_GRAVITY = 35;
+const hrDrops = [];
+let hrDropsAlive = 0;
+function hrDropAdd(x, y, vx, vy)
+{
+    if (hrDropsAlive >= HR_DROPS_MAX) return;
+    const d = hrDrops[hrDropsAlive] || (hrDrops[hrDropsAlive] = {pos: vec2(), vel: vec2()});
+    hrDropsAlive++;
+    d.pos.set(x, y); d.vel.set(vx, vy);
+    d.floor = y;
+    d.t = 0; d.T = rand(.25, .45); d.size = rand(.07, .13);
+}
+
+// one droplet while running on ice: up and back from the foot, faster with k (0-1, share of ice speed)
+function hrDroplet(x, y, dir, k) { hrDropAdd(x, y, -dir * rand(1, 2 + 3 * k), rand(2, 3.5 + 2 * k)); }
+
+// a splash of droplets both ways on landing on ice
+function hrSplash(x, y)
+{
+    for (let i = 6; i--;) hrDropAdd(x + rand(-.25, .25), y, rand(-4, 4), rand(2, 5));
+}
+
+function hrDropsStep()
+{
+    const dt = timeDelta;
+    for (let i = 0; i < hrDropsAlive;)
+    {
+        const d = hrDrops[i];
+        if ((d.t += dt) > d.T || d.pos.y < d.floor)   // gone when it lands back on the ice
+        {
+            // swap the dead one to the end of the live range so its object is reused
+            hrDrops[i] = hrDrops[--hrDropsAlive];
+            hrDrops[hrDropsAlive] = d;
+            continue;
+        }
+        d.vel.y -= HR_DROP_GRAVITY * dt;
+        d.pos.x += d.vel.x * dt; d.pos.y += d.vel.y * dt;
+        i++;
+    }
+}
+
+function hrDrawDrops()
+{
+    for (let i = 0; i < hrDropsAlive; i++)
+    {
+        // a bead stretched along its motion, shrinking and fading out
+        const d = hrDrops[i], k = 1 - d.t / d.T, s = d.size * (.5 + .5 * k);
+        drawEllipse(d.pos, vec2(s, s * 1.7), HR_WHITE.scale(1, min(1, k * 2)), d.vel.angle());
+    }
+}
+
+function hrClearDrops() { hrDropsAlive = 0; }
+
 // rocket blast: a splash in the owner's color
 function hrBlastFx(pos, color)
 {

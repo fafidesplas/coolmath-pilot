@@ -88,7 +88,7 @@ function hrPlayerStep(p, input)
     p.squash *= .85;
     if (p.landT >= 0 && (p.landT += timeDelta) > HR_LAND_T) p.landT = -1;
     if (p.finished && p.spin) p.spin *= .7;   // a somersault cut off by the finish settles upright
-    if (!p.down && !p.lunge && !p.running) { p.crouch *= .7; p.pinch *= .7; p.lean *= .7; p.squint *= .7; p.eyeDrop *= .7; }
+    if (!p.down && !p.lunge && (!p.running || p.finished)) { p.crouch *= .7; p.pinch *= .7; p.lean *= .7; p.squint *= .7; p.eyeDrop *= .7; }
 
     // trail while airborne
     if (!p.grounded && !p.cling && !p.finished) p.trail.push(vec2(p.x, p.y));

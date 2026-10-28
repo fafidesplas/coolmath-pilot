@@ -45,6 +45,8 @@ const HR_HOP = {
     coyote:    .08,     // a press this soon after running off an edge still jumps (s)
     runLean:   .15,     // on the ground the top leans into the run (u), more the faster you go...
     maxLean:   .26,     // ...up to this (u)
+    iceLean:   .42,     // on ice the lean grows past maxLean to this at full ice speed (u)...
+    iceCrouch: .2,      // ...and the runner squashes this much flatter, low to the ground
     flipTime:  .4,      // a hold that lasts the whole holdTime ends in a forward somersault this long (s)
     landSquash: .2,     // landing squeeze: this much flatter, plus more for a harder landing (up to .4)
 };
@@ -296,6 +298,7 @@ HR_MODES.hop = {
                         p.landT = 0;
                         hrSfx.land.play();
                         hrDust(p.x, p.y - HR_PSIZE / 2);
+                        if (s.ice) hrSplash(p.x, p.y - HR_PSIZE / 2);
                         hrEmit('land', p);
                     }
                     p.vy = 0;
@@ -315,9 +318,15 @@ HR_MODES.hop = {
             p.spin = k < 1 ? smoothStep(k) * 2 * PI * p.flipDir : 0;
             if (k >= 1) p.flipT = -1;
         }
-        // lean into the run on the ground (more the faster you go), straighten up in the air
-        p.lean += ((p.grounded && p.flipT < 0 ? min(H.maxLean, H.runLean * p.speed / H.runSpeed) : 0) - p.lean) * min(1, dt * 12);
+        // lean into the run on the ground (more the faster you go), straighten up in the air.
+        // On ice the ice speed pushes the lean further and squashes the runner low to the ground
+        const upright = p.grounded && p.flipT < 0, ice = upright && p.onIce ? clamp((p.speed - H.runSpeed) / (H.iceSpeed - H.runSpeed)) : 0;
+        const lean = min(H.maxLean, H.runLean * p.speed / H.runSpeed);
+        p.lean += ((upright ? lerp(lean, H.iceLean, ice) : 0) - p.lean) * min(1, dt * 12);
+        p.crouch += (H.iceCrouch * ice - p.crouch) * min(1, dt * 12);
         if (p.grounded && p.onIce && p.speed > H.runSpeed + 1 && rand() < .3) hrSparkle(p.x, p.y - HR_PSIZE / 2);
+        // droplets flicked up and back from the foot on the ice, more the faster you go
+        if (p.grounded && p.onIce && rand() < .25 + .6 * ice) hrDroplet(p.x - p.dir * HR_PSIZE * .3, p.y - HR_PSIZE / 2, p.dir, ice);
     },
 
     // the lunge pose in flight: held for lungeKeep of the airtime, then eased back to square

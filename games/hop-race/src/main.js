@@ -28,6 +28,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     hrMode().clear?.();
     hrCameraReset();
     clearParticles();
+    hrClearDrops();
     hrPlayers = versus ? [hrMakePlayer(0), hrMakePlayer(1)] : [hrMakePlayer(0)];
     hrPlayers.forEach(hrResetPlayer);
     hrRun = {started: false, frames: 0, best: 1e9, stuckT: 0, nudge: false,
@@ -190,6 +191,7 @@ function gameUpdate()
 
     if (hrScreen == 'playing')
     {
+        hrDropsStep();
         hrGatesUpdate();
         hrMode().update?.();
         hrPlayUpdate(racing);
@@ -273,6 +275,7 @@ function gameRender()
         const nudge = i == 1 && other && Math.hypot(p.x - other.x, p.y - other.y) < .4 ? -.45 : 0;
         hrMode().drawPlayer ? hrMode().drawPlayer(p, nudge) : hrDrawPlayer(p, nudge);
     }
+    hrDrawDrops();
     hrDrawPrompt();
     window.hrEditor?.render();
 }

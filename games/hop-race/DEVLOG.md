@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-10-28 — Hop: ice pose and droplets
+- Owner: on ice, lean further and squash lower to sell the speed, and add droplets from the contact point for slipperiness. On ice the lean now grows with ice speed past `maxLean` to `iceLean` 0.42 u, and the square squashes up to `iceCrouch` 0.2 flatter (and wider). Both ease out in the air and off the ice, and now also after the finish.
+- Droplets: white beads flicked up and back from the trailing foot, more and faster the closer you are to full ice speed, plus a 6-drop splash when landing on ice. They arc under their own gravity (the engine's particle gravity is global and zero here), so they're a small pooled system in `render.js` (`hrDroplet`, `hrSplash`, `hrDropsStep`, `hrDrawDrops`, max 64), gone when they fall back to the ice. The sparkles stay.
+- Checked in Chrome on 1-5 Thin Ice with frozen frames at full ice speed: lean, squash and droplet trail show; no console errors.
+- Next: owner to judge the amount (`iceLean`, `iceCrouch`, droplet rate in `run()`).
+
 ## 2026-10-28 — Hop: press to start the run after GO
 - Owner: players should still press to start moving, so Versus starts aren't in perfect sync. After the 3-2-1-GO the runner waits for a fresh press (`run()` in `modes/hop.js`), and that press only starts the run, it doesn't jump. The same after a fall. The solo timer still starts at GO, so a slow start costs time. Level 1's prompt is back to "Press A to run, press again to jump!".
 - Checked in Chrome: solo 1-2 stands still 1 s past GO with the clock running, then runs on a press; the starting press leaves you grounded and the next one jumps; 2P, A starts while L stays put until L presses.
