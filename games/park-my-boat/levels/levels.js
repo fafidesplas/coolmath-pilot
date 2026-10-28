@@ -112,20 +112,20 @@ const SCALE_LEVELS =
     {
         name: 'Odd Couple',
         land: [[-3000, -3020, 0, 3585], [1400, -3020, 4400, 3585], [-3000, 600, 4400, 3585]],
-        docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
+        docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }, { x0: 526.8, y0: 546, x1: 529.6, y1: 584.9 }],
         boats:
         [
-            { boat: 'dinghy', start: { x: 483, y: 579, a: PI }, slip: { x: 474, top: 585, a: PI/2 },
+            { boat: 'dinghy', start: { x: 492.2, y: 560.4, a: PI/2 }, slip: { x: 474, top: 585, a: PI/2 },
               hint: 'Hold the mouse to steer (or WASD). Stop in the box and let go.' },
-            { boat: 'cruise', start: { x: 466, y: 394.5, a: PI/2 }, slip: { x: 720, top: 585, a: 0, pad: [0.6, 0.3], fingers: 'none' },
-              hint: 'Park the cruise ship along the quay. Avoid the rowboat.' },
+            { boat: 'sailboat', start: { x: 455.4, y: 578, a: -PI/2 }, slip: { x: 519.2, y: 550.9, a: 0, pad: [1.4, 1] },
+              hint: '' },
         ],
         moored:
         [
             tiedUp('speedboat', 40, 585), tiedUp('sailboat', 60, 585), tiedUp('speedboat', 80, 585),
             // small boats tied up on both sides of the rowboat's slip, so it parks in a gap in the row
-            tiedUp('sailboat', 461, 585), tiedUp('speedboat', 464.8, 585), tiedUp('swan', 467.4, 585), tiedUp('dinghy', 469.4, 585), tiedUp('jetski', 471, 585),
-            tiedUp('jetski', 477, 585), tiedUp('dinghy', 478.6, 585), tiedUp('swan', 480.6, 585), tiedUp('dinghy', 482.6, 585), tiedUp('jetski', 484.4, 585), tiedUp('speedboat', 487, 585),
+            { boat: 'sailboat', x: 520, y: 557.66, a: -PI }, { boat: 'speedboat', x: 464.8, y: 580.9, a: -PI/2 }, tiedUp('swan', 467.4, 585), tiedUp('dinghy', 469.4, 585), tiedUp('jetski', 471, 585),
+            tiedUp('jetski', 477, 585), tiedUp('dinghy', 478.6, 585), { boat: 'swan', x: 524.6, y: 561.295, a: PI }, tiedUp('dinghy', 482.6, 585), tiedUp('jetski', 484.4, 585), tiedUp('speedboat', 487, 585),
         ],
         buoys: [[300, 380, 5], [900, 380, 5]],
         ducks: [{ x: 486, y: 566, kids: 3 }],
