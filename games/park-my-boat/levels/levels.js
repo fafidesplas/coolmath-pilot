@@ -138,26 +138,36 @@ const SCALE_LEVELS =
         ],
     },
     {
-        name: 'Way Down', ...basin(0, -20, 1700, 900),
+        name: 'Way Down',
+        land: [[-3000, -20, 320, 3900], [1470, -20, 4700, 3900], [-3000, 915, 4700, 3900]],
+        docks:
+        [
+            { x0: 320, y0: 900, x1: 1470, y1: 915, quay: true },
+            { x0: -30, y0: -20, x1: 1760, y1: 60 },
+            { x0: 506, y0: 891.5, x1: 547.5, y1: 900 },
+            { x0: 505.8, y0: 885.4, x1: 508, y1: 891.8 },
+            { x0: 518.4, y0: 885.2, x1: 520.6, y1: 891.6 },
+            { x0: 534.4, y0: 885.2, x1: 536.6, y1: 891.6 },
+            { x0: 545.4, y0: 885.2, x1: 547.6, y1: 891.6 },
+        ],
         boats:
         [
             { boat: 'container', start: { x: 1250, y: 780, a: PI }, slip: { x: 620, top: 900, a: -PI/2, pad: [0.5, 0.25], fingers: 'none' },
               hint: 'Big ships take a long time to stop. Slow down early.' },
-            { boat: 'trawler', start: { x: 368, y: 849, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] },
+            { boat: 'trawler', start: { x: 350, y: 873, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'Squeeze through the gap between the yachts, then turn into your slip.' },
-            { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 475, top: 900, a: PI/2, pad: [1.4, 1] },
+            { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 571.5, top: 900, a: PI/2, pad: [1.4, 1] },
               hint: '' },
         ],
         // the trawler's tight squeeze on the way to its slip: two 40 m yachts in a line west of it, one
         // nose-in to the quay, leave a 13 m gap (y 845-858) for a 9.6 m boat
-        moored: [{ boat: 'yacht', k: 5, x: 410, y: 878.25, a: PI/2 }, { boat: 'yacht', k: 5, x: 410, y: 825.25, a: PI/2 }],
+        moored: [{ boat: 'yacht', k: 5, x: 419, y: 841.25, a: PI*11/12 }, { boat: 'yacht', k: 5, x: 410, y: 812.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 401, y: 793.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 397, y: 776.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 423, y: 857.25, a: PI*11/12 }],
         ducks: [{ x: 466, y: 868, kids: 2 }],
         traffic:
         [
-            { boat: 'dinghy', path: [[300, 790], [360, 790], [1320, 460], [1060, 380], [560, 380], [950.2, 700]], end: 'back', speed: 0.6 },
             { boat: 'yacht', path: [[1160, 620], [1015, 755], [1020, 885]], end: 'back', speed: 0.8, during: [1] },
-            { boat: 'pontoon', path: [[170, 786], [219.6, 747]], end: 'back', speed: 0.6 },
-            { boat: 'sailboat', path: [[240, 706], [188, 700], [104, 724], [76, 786], [146, 846], [260, 832], [272, 748], [240, 704]], end: 'back', speed: 0.6 },
+            { boat: 'speedboat', path: [[510, 879.4], [501.4, 882.6], [498.6, 898.2]], end: 'back', speed: 0.6 },
+            { boat: 'trawler', path: [[556.5, 887.5], [530.5, 859.5], [456, 811], [441, 831], [470, 846], [514, 873]], end: 'loop', speed: 0.6 },
         ],
     },
     {
