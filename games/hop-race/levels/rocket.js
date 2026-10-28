@@ -25,9 +25,9 @@ HR_LEVELS.rocket = [
         size: 26,
         start: {x: -10.5, y: -4},
         solids: [
-            {l: -14, r: -5, top: -4},
-            {l: -5, r: 1, top: -1.5},
-            {l: 1, r: 14, top: 1},
+            {l: -14, r: -3.75, top: -4},
+            {l: -5, r: 3.25, top: -1.5},
+            {l: 2, r: 14, top: 1},
         ],
         flag: {x: 10, y: 1},
     },
@@ -36,7 +36,7 @@ HR_LEVELS.rocket = [
         size: 26,
         start: {x: -10.5, y: -4},
         solids: [
-            {l: -14, r: 5, top: -4},
+            {l: -14, r: 4, top: -4},
             {l: 8, r: 14, top: -4},
             {l: -14, r: 14, top: 5.4, bottom: 5},
         ],
