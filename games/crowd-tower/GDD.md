@@ -16,7 +16,7 @@
 
 ## 2. Core loop
 - **Moment (seconds):** Look at the three tagged blocks → pick one → watch the vote bars move.
-- **Round (1 hour):** Votes come in → the round closes on the hour → the top pick slides out → the tower stands (block goes on top) or falls.
+- **Round (24 hours):** Votes come in → the round closes every 24 hours → the top pick slides out → the tower stands (block goes on top) or falls. The next day, everyone watches what happens, then they vote again. Basically, you see the results of the previous day, then you vote again. 
 - **Meta (days):** Come back → replay the pulls you missed → vote again and keep your streak → the tower climbs toward the record → it falls, enters the hall of fame, and a new tower starts.
 
 ## 3. Mechanics
