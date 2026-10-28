@@ -1,0 +1,20 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #080B1C;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+canvas {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  touch-action: none;
+  outline: none;
+}
+#bg, #gl { pointer-events: none; }
+#ui { z-index: 2; }
+#gl { z-index: 1; }
