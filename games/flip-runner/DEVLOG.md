@@ -1,5 +1,12 @@
 # Flip Runner — devlog
 
+## 2026-10-28 — Bat theme
+- Fafi: the game looked flat and generic. New theme: a lilac baby bat racing home before sunrise. It explains the mechanics: bats live upside down (Flip), fly (Glider: the bat spreads its wings) and travel with family (Twin: its orange sibling).
+- Worlds renamed Crystal Cave, Bell Tower, Firefly Forest, Night Fair, each with a night sky gradient that warms towards dawn, two silhouette layers (stalactites, bells, trees, a ferris wheel), the moon and drifting motes of light instead of speed lines.
+- Rock tiles with lit lips, little stalactites and crystal veins; crystal-shard spikes; glowing dashed edges on wall faces; lantern checkpoints; a moonlit home roost as the goal; moonlight portals; glowing stars. Title and menus sit in the cave too.
+- Only visuals changed: the sim, the levels and the solver are untouched (simtest and the smoke test still pass). GDD art direction, world names and prompts updated.
+- Not seen in a browser yet. Next: Fafi checks the look; then phase 3 (editor and the Crystal Cave levels).
+
 ## 2026-10-27 — Slice gate passed
 - Pao played the vertical slice and gave the OK; stage moves to `content`.
 - Next: phase 3a, the content tools, then the levels world by world.

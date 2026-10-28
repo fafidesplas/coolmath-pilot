@@ -530,20 +530,20 @@ export class Game {
   drawTitle() {
     const ctx = this.ctx, t = this.t;
     const col = WORLD_COLORS[0];
-    ctx.fillStyle = col.bg; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    // A strip of corridor along the bottom, scrolling under a runner that runs in place.
+    this.drawMenuBackdrop(t * 260);
+    // A strip of cave along the bottom, scrolling under a bat that runs in place.
     const floorY = 640, ceilY = 500;
     ctx.fillStyle = col.ceiling; ctx.fillRect(0, 470, VIEW_W, ceilY - 470);
     ctx.fillStyle = col.floor; ctx.fillRect(0, floorY, VIEW_W, VIEW_H - floorY);
     ctx.strokeStyle = C.ink; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(0, ceilY); ctx.lineTo(VIEW_W, ceilY); ctx.moveTo(0, floorY); ctx.lineTo(VIEW_W, floorY); ctx.stroke();
     const scroll = (t * 320) % 80;
-    ctx.fillStyle = 'rgba(43,34,56,0.25)';
-    for (let x = -scroll; x < VIEW_W; x += 80) { ctx.fillRect(x, floorY + 14, 30, 5); ctx.fillRect(x + 40, ceilY - 19, 30, 5); }
+    ctx.fillStyle = col.accent;
+    for (let x = -scroll; x < VIEW_W; x += 80) { ctx.fillRect(x, floorY + 14, 20, 4); ctx.fillRect(x + 40, ceilY - 18, 20, 4); }
     const ry = this.titleG > 0 ? floorY - 18 : ceilY + 18;
     const cy = ry + (this.titleFlip - this.titleG) * -60;
     drawRunner(ctx, 250, cy, this.titleFlip, { t, running: true, blink: (t % 3.5) < 0.1 });
-    text(ctx, 'click here to flip', 250, 452, 18, '#6B7894', 'center', 700);
+    text(ctx, 'click here to flip', 250, 452, 18, col.accent, 'center', 700);
 
     // Logo: FLIP the right way up, RUNNER upside down.
     ctx.save();
@@ -553,6 +553,7 @@ export class Game {
     text(ctx, 'RUNNER', 0, 0, 80, C.scarf, 'center', 900, 18);
     ctx.restore();
     ctx.restore();
+    text(ctx, 'Race home before sunrise!', VIEW_W / 2, 232, 22, C.moon, 'center', 800, 5);
 
     this.addButton({ x: VIEW_W / 2 - 160, y: 262, w: 320, h: 92, label: 'PLAY', size: 44, color: C.star, isDefault: true,
       action: () => this.startLevel(this.nextLevel()) });
@@ -564,7 +565,21 @@ export class Game {
       label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
     this.addButton({ key: 'music', x: VIEW_W - 250, y: 96, w: 220, h: 56, size: 22,
       label: this.settings.music ? 'MUSIC: ON' : 'MUSIC: OFF', action: () => this.toggleMusic() });
-    text(ctx, 'Daily and Endless open after the Lab', VIEW_W / 2 + 115, 456, 16, '#6B7894', 'center', 700);
+    text(ctx, 'Daily and Endless open after the Crystal Cave', VIEW_W / 2 + 115, 456, 16, col.accent, 'center', 700);
+  }
+
+  // Menus sit in the Crystal Cave too: sky, moon and silhouettes, drifting slowly.
+  drawMenuBackdrop(scroll) {
+    const key = this.scale * this.dpr;
+    if (!this.menuBackdrop || this.menuBackdropKey !== key) {
+      this.menuBackdrop = renderBackdrop(WORLD_COLORS[0], key);
+      this.menuBackdropKey = key;
+    }
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.scale(1, VIEW_H / (ROWS * T));
+    drawBackdrop(ctx, this.menuBackdrop, WORLD_COLORS[0], scroll, this.t, 120);
+    ctx.restore();
   }
 
   toggleMusic() {
@@ -583,7 +598,7 @@ export class Game {
 
   drawLevels() {
     const ctx = this.ctx, t = this.t;
-    ctx.fillStyle = WORLD_COLORS[0].bg; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    this.drawMenuBackdrop(0);
     this.addButton({ x: 30, y: 26, w: 150, h: 60, label: '‹ BACK', size: 24, action: () => { this.screen = 'title'; this.focus = -1; } });
 
     WORLDS.forEach((w, i) => {
@@ -627,7 +642,7 @@ export class Game {
         },
       });
     }
-    text(ctx, world.levels[0].name, VIEW_W / 2, VIEW_H - 45, 24, C.ink, 'center', 700);
+    text(ctx, world.levels[0].name, VIEW_W / 2, VIEW_H - 45, 24, C.panel, 'center', 700);
   }
 
   drawWorld() {

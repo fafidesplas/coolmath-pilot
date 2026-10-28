@@ -4,10 +4,10 @@ import w1l01 from './w1l01.js';
 import proto from './proto.js';
 
 export const WORLDS = [
-  { name: 'Lab', levels: [w1l01, proto] },   // proto: forms prototype, not a final level
-  { name: 'Caves', levels: [] },
-  { name: 'Sky Factory', levels: [] },
-  { name: 'Space Station', levels: [] },
+  { name: 'Crystal Cave', levels: [w1l01, proto] },   // proto: forms prototype, not a final level
+  { name: 'Bell Tower', levels: [] },
+  { name: 'Firefly Forest', levels: [] },
+  { name: 'Night Fair', levels: [] },
 ];
 
 export const LEVELS_PER_WORLD = 10;

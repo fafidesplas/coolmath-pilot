@@ -33,20 +33,26 @@ export const CAMERA = { lead: 0.30, leadFast: 0.22, fastSpeed: 700 };
 export const WORLD_SPEED = [440, 470, 500, 530];
 export const NEAR_MISS = 10;   // px around a spike's deadly area that counts as a close call
 
+// Bat theme (GDD 9): a little bat racing home through the night before sunrise.
 export const COLORS = {
-  ink: '#2B2238',
-  runner: '#3DBE8B',
+  ink: '#1B1430',      // outlines, text, HUD
+  runner: '#B79CFF',   // the bat (lilac)
+  belly: '#E9DFFF',
+  ear: '#FF8FB1',
   scarf: '#FF5A4E',
-  star: '#FFC531',
-  spike: '#EEF1F6',
+  star: '#FFD45C',
+  spike: '#7FF3E4',
   panel: '#FFF7EC',
+  moon: '#FFF3C4',
 };
 
+// Each world: sky gradient (bg → bg2), rock shades, an accent light and a
+// backdrop kind. The sky warms world by world towards dawn.
 export const WORLD_COLORS = [
-  { name: 'Lab', bg: '#EAF4FF', floor: '#8FAAD0', ceiling: '#BACCE6' },
-  { name: 'Caves', bg: '#F3E6D3', floor: '#B48455', ceiling: '#D6AF85' },
-  { name: 'Sky Factory', bg: '#FFE9D6', floor: '#E0915E', ceiling: '#F2C29C' },
-  { name: 'Space Station', bg: '#232A4A', floor: '#5F70A6', ceiling: '#8696C9' },
+  { name: 'Crystal Cave', kind: 'cave', bg: '#1E1740', bg2: '#35266A', floor: '#4B3D7C', ceiling: '#3B2F68', accent: '#5FF0D8', spike: '#7FF3E4' },
+  { name: 'Bell Tower', kind: 'tower', bg: '#241E4E', bg2: '#4B3B82', floor: '#6E5E93', ceiling: '#5A4B7E', accent: '#FFC857', spike: '#E9E2FF' },
+  { name: 'Firefly Forest', kind: 'forest', bg: '#132B3C', bg2: '#235A5C', floor: '#3E6B4F', ceiling: '#2E5641', accent: '#D7FF6B', spike: '#C9F28A' },
+  { name: 'Night Fair', kind: 'fair', bg: '#3A2050', bg2: '#C46A6A', floor: '#5B3A6E', ceiling: '#4A2E5E', accent: '#FF9B4A', spike: '#FFE3F0' },
 ];
 
 export const SAVE_KEY = 'cm_flip-runner_save';

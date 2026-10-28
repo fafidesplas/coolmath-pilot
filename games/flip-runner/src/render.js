@@ -73,46 +73,55 @@ export class Strips {
     const c0 = i * STRIP, c1 = Math.min(lv.cols, c0 + STRIP + 1);
     const solid = (x, y) => isSolid(lv, x, y);
 
+    const hash = (x, y) => ((x * 73856093) ^ (y * 19349663)) >>> 0;
     for (let y = 0; y < ROWS; y++) for (let x = c0 - 1; x < c1; x++) {
       const t = tileAt(lv, x, y), px = x * T, py = y * T;
       if (t === TILE.SOLID) {
-        const floorMass = y >= 8;
-        ctx.fillStyle = floorMass ? col.floor : col.ceiling;
+        const floorMass = y >= 8, base = floorMass ? col.floor : col.ceiling;
+        ctx.fillStyle = base;
         ctx.fillRect(px, py, T, T);
-        if (!solid(x, y - 1)) { ctx.fillStyle = shade(floorMass ? col.floor : col.ceiling, 1.18); ctx.fillRect(px, py, T, 9); }
+        // rock facets
+        const h = hash(x, y);
+        ctx.fillStyle = shade(base, 0.86);
+        ctx.beginPath(); ctx.moveTo(px + (h % 20), py + T); ctx.lineTo(px + 12 + (h % 17), py + 14 + (h % 9)); ctx.lineTo(px + T, py + 26 + (h % 11)); ctx.lineTo(px + T, py + T); ctx.fill();
+        if (!solid(x, y - 1)) { ctx.fillStyle = shade(base, 1.25); ctx.fillRect(px, py, T, 8); }
         if (!solid(x, y + 1)) {
-          ctx.fillStyle = shade(floorMass ? col.floor : col.ceiling, 0.82); ctx.fillRect(px, py + T - 9, T, 9);
-          ctx.fillStyle = C.ink;
-          ctx.beginPath(); ctx.arc(px + 20, py + T - 4, 2.5, 0, 7); ctx.fill();
+          // underside: a lip and a little hanging stalactite now and then
+          ctx.fillStyle = shade(base, 0.78); ctx.fillRect(px, py + T - 8, T, 8);
+          if (h % 3 === 0 && !solid(x, y + 2) && y < ROWS - 2) {
+            ctx.fillStyle = shade(base, 0.92);
+            ctx.beginPath(); ctx.moveTo(px + 8, py + T); ctx.lineTo(px + 15, py + T + 12 + (h % 8)); ctx.lineTo(px + 22, py + T); ctx.fill();
+          }
         }
-        if ((x * 7 + y * 3) % 6 === 0) {
-          ctx.fillStyle = shade(floorMass ? col.floor : col.ceiling, 0.9);
-          ctx.fillRect(px + 10, py + 16, 20, 4);
+        // glowing crystal vein
+        if (h % 7 === 0) {
+          ctx.fillStyle = col.accent; ctx.globalAlpha = 0.55;
+          ctx.beginPath(); ctx.moveTo(px + 10, py + 30); ctx.lineTo(px + 16, py + 14); ctx.lineTo(px + 22, py + 30); ctx.fill();
+          ctx.globalAlpha = 1;
         }
       } else if (t === TILE.SPIKE_UP || t === TILE.SPIKE_DOWN) {
-        ctx.fillStyle = C.spike; ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+        // crystal shards (spikes): faceted, with a bright edge
+        ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
         for (let k = 0; k < 3; k++) {
-          const sx = px + 1 + k * 12.7;
-          ctx.beginPath();
-          if (t === TILE.SPIKE_UP) { ctx.moveTo(sx, py + T); ctx.lineTo(sx + 6.3, py + T - SPIKE_H); ctx.lineTo(sx + 12.7, py + T); }
-          else { ctx.moveTo(sx, py); ctx.lineTo(sx + 6.3, py + SPIKE_H); ctx.lineTo(sx + 12.7, py); }
-          ctx.closePath(); ctx.fill(); ctx.stroke();
+          const sx = px + 1 + k * 12.7, hgt = SPIKE_H - (k === 1 ? 0 : 3);
+          const tipY = t === TILE.SPIKE_UP ? py + T - hgt : py + hgt, baseY = t === TILE.SPIKE_UP ? py + T : py;
+          ctx.fillStyle = col.spike;
+          ctx.beginPath(); ctx.moveTo(sx, baseY); ctx.lineTo(sx + 6.3, tipY); ctx.lineTo(sx + 12.7, baseY); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = shade(col.spike, 0.75);
+          ctx.beginPath(); ctx.moveTo(sx + 6.3, tipY); ctx.lineTo(sx + 12.7, baseY); ctx.lineTo(sx + 6.3, baseY); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(sx, baseY); ctx.lineTo(sx + 6.3, tipY); ctx.lineTo(sx + 12.7, baseY); ctx.closePath(); ctx.stroke();
         }
       }
     }
 
-    // Warning stripes on exposed vertical faces (walls and gap edges).
+    // Glowing edges on exposed vertical faces (walls and gap edges): a dashed crystal line.
     for (let y = 0; y < ROWS; y++) for (let x = c0 - 1; x < c1; x++) {
       if (!solid(x, y)) continue;
       for (const side of [-1, 1]) {
         if (solid(x + side, y) || x + side < 0) continue;
-        const fx = side < 0 ? x * T : x * T + T - 7;
-        ctx.save();
-        ctx.beginPath(); ctx.rect(fx, y * T, 7, T); ctx.clip();
-        ctx.fillStyle = C.star; ctx.fillRect(fx, y * T, 7, T);
-        ctx.fillStyle = C.ink;
-        for (let k = -1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(fx, y * T + k * 14); ctx.lineTo(fx + 7, y * T + k * 14 - 7); ctx.lineTo(fx + 7, y * T + k * 14); ctx.lineTo(fx, y * T + k * 14 + 7); ctx.fill(); }
-        ctx.restore();
+        const fx = side < 0 ? x * T + 2 : x * T + T - 7;
+        ctx.fillStyle = col.accent;
+        for (let k = 0; k < 3; k++) ctx.fillRect(fx, y * T + 3 + k * 13, 5, 8);
       }
     }
 
@@ -131,7 +140,46 @@ export class Strips {
   }
 }
 
-// ---- Background (two parallax layers, pre-rendered once) -------------------------
+// ---- Background (sky gradient plus two silhouette layers, pre-rendered once) ----
+
+function silhouette(ctx, kind, rnd, color, big) {
+  const H = ROWS * T;
+  ctx.fillStyle = color;
+  if (kind === 'cave' || kind === 'forest') {
+    // stalactites / hanging roots from the top, stalagmites / trees from the bottom
+    for (let i = 0; i < (big ? 10 : 16); i++) {
+      const x = rnd() * VIEW_W, w = big ? 60 + rnd() * 90 : 24 + rnd() * 40, h = big ? 120 + rnd() * 200 : 50 + rnd() * 110;
+      const top = rnd() < 0.5;
+      for (const ox of [0, -VIEW_W, VIEW_W]) {
+        ctx.beginPath();
+        if (kind === 'forest' && !top) {
+          ctx.moveTo(x + ox - w / 2, H); ctx.lineTo(x + ox - w * 0.1, H - h * 0.4);
+          ctx.arc(x + ox, H - h * 0.7, w * 0.6, Math.PI * 0.9, Math.PI * 2.1); ctx.lineTo(x + ox + w / 2, H);
+        } else if (top) { ctx.moveTo(x + ox - w / 2, 0); ctx.lineTo(x + ox, h); ctx.lineTo(x + ox + w / 2, 0); }
+        else { ctx.moveTo(x + ox - w / 2, H); ctx.lineTo(x + ox, H - h); ctx.lineTo(x + ox + w / 2, H); }
+        ctx.fill();
+      }
+    }
+  } else if (kind === 'tower') {
+    // arched windows and hanging bells
+    for (let i = 0; i < (big ? 5 : 8); i++) {
+      const x = (i + rnd() * 0.5) * VIEW_W / (big ? 5 : 8), w = big ? 110 : 50, top = big ? 120 + rnd() * 80 : 60 + rnd() * 200;
+      if (big) { rrect(ctx, x, top, w, H - top + 40, w / 2); ctx.fill(); }
+      else { ctx.fillRect(x - 2, 0, 4, top); ctx.beginPath(); ctx.arc(x, top + 20, 22, Math.PI, 0); ctx.lineTo(x + 26, top + 40); ctx.lineTo(x - 26, top + 40); ctx.fill(); }
+    }
+  } else {
+    // fair: a ferris wheel and tents
+    if (big) {
+      const cx = VIEW_W * 0.65, cy = H * 0.45, r = 210;
+      ctx.lineWidth = 10; ctx.strokeStyle = color;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); ctx.stroke(); ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 16, 0, 7); ctx.fill(); }
+      ctx.beginPath(); ctx.moveTo(cx - 120, H); ctx.lineTo(cx, cy); ctx.lineTo(cx + 120, H); ctx.stroke();
+    } else {
+      for (let i = 0; i < 5; i++) { const x = rnd() * VIEW_W, w = 120 + rnd() * 80, h = 90 + rnd() * 60; ctx.beginPath(); ctx.moveTo(x - w / 2, H); ctx.lineTo(x - w / 2, H - h * 0.5); ctx.lineTo(x, H - h); ctx.lineTo(x + w / 2, H - h * 0.5); ctx.lineTo(x + w / 2, H); ctx.fill(); }
+    }
+  }
+}
 
 export function renderBackdrop(colors, pixelScale) {
   const make = (alpha, seed, big) => {
@@ -142,51 +190,55 @@ export function renderBackdrop(colors, pixelScale) {
     ctx.scale(pixelScale, pixelScale);
     let s = seed;
     const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    ctx.fillStyle = shade(colors.bg, 0.9);
     ctx.globalAlpha = alpha;
-    for (let i = 0; i < 9; i++) {
-      const w = big ? 120 + rnd() * 160 : 50 + rnd() * 80, h = big ? 200 + rnd() * 260 : 60 + rnd() * 120;
-      const x = rnd() * VIEW_W, y = 60 + rnd() * (ROWS * T - h - 60);
-      rrect(ctx, x, y, w, h, 18); ctx.fill();
-      if (x + w > VIEW_W) { rrect(ctx, x - VIEW_W, y, w, h, 18); ctx.fill(); }
+    silhouette(ctx, colors.kind, rnd, shade(colors.bg, big ? 0.7 : 0.55), big);
+    if (!big) {
+      // little glowing crystals / fireflies / lanterns stuck in the near layer
+      ctx.globalAlpha = 0.8;
+      for (let i = 0; i < 14; i++) {
+        const x = rnd() * VIEW_W, y = 40 + rnd() * (ROWS * T - 80);
+        ctx.fillStyle = colors.accent;
+        ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 5, y); ctx.fill();
+      }
     }
     return cv;
   };
-  return { far: make(0.5, 7, true), near: make(0.7, 31, false) };
+  // The sky gradient is pre-rendered too, so no full-screen gradient is redrawn per frame.
+  const sky = document.createElement('canvas');
+  sky.width = 4; sky.height = Math.ceil(ROWS * T * pixelScale);
+  const sc = sky.getContext('2d');
+  const g = sc.createLinearGradient(0, 0, 0, sky.height);
+  g.addColorStop(0, colors.bg); g.addColorStop(1, colors.bg2);
+  sc.fillStyle = g; sc.fillRect(0, 0, 4, sky.height);
+  return { sky, far: make(1, 7, true), near: make(1, 31, false) };
 }
 
 export function drawBackdrop(ctx, bg, colors, camX, t, speed) {
-  ctx.fillStyle = colors.bg;
-  ctx.fillRect(0, 0, VIEW_W, ROWS * T);
+  ctx.drawImage(bg.sky, 0, 0, VIEW_W, ROWS * T);
+  // the moon, far away (barely moves)
+  const mx = 980 - (camX * 0.02) % 200, my = 120;
+  ctx.fillStyle = C.moon; ctx.globalAlpha = 0.18;
+  ctx.beginPath(); ctx.arc(mx, my, 90, 0, 7); ctx.fill();
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath(); ctx.arc(mx, my, 54, 0, 7); ctx.fill();
+  ctx.globalAlpha = 1;
   for (const [layer, k] of [[bg.far, 0.2], [bg.near, 0.45]]) {
     const off = -((camX * k) % VIEW_W);
     ctx.drawImage(layer, off, 0, VIEW_W, ROWS * T);
     ctx.drawImage(layer, off + VIEW_W, 0, VIEW_W, ROWS * T);
   }
-  // Fast layer: lab pillars with blinking lights
-  const gap = 360, off = -((camX * 0.75) % gap);
-  for (let x = off - gap; x < VIEW_W + gap; x += gap) {
-    ctx.fillStyle = 'rgba(43,34,56,0.07)';
-    ctx.fillRect(x, 0, 30, ROWS * T);
-    const id = Math.round((x - off) / gap + camX * 0.75 / gap);
-    for (let j = 0; j < 4; j++) {
-      const on = Math.sin(t * 4 + id * 1.7 + j * 2.1) > 0.2;
-      ctx.fillStyle = on ? 'rgba(255,197,49,0.75)' : 'rgba(43,34,56,0.12)';
-      ctx.beginPath(); ctx.arc(x + 15, 130 + j * 110, 5, 0, 7); ctx.fill();
-    }
-  }
-  // Speed lines, faster than the world
-  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-  ctx.lineCap = 'round';
-  for (let i = 0; i < 16; i++) {
+  // Drifting motes of light (crystal dust, fireflies), faster than the world: the speed feel
+  ctx.fillStyle = colors.accent;
+  for (let i = 0; i < 22; i++) {
     const h1 = ((i * 7919) % 1000) / 1000, h2 = ((i * 104729) % 1000) / 1000;
-    const len = 60 + h2 * 140;
-    const span = VIEW_W + len + 200;
-    const x = VIEW_W + 100 - ((t * speed * 1.7 + h2 * span * 3) % span);
-    const y = 40 + h1 * (ROWS * T - 80);
-    ctx.lineWidth = 2 + h2 * 3;
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+    const span = VIEW_W + 300;
+    const x = VIEW_W + 100 - ((t * speed * (0.9 + h2) + h2 * span * 3) % span);
+    const y = 40 + h1 * (ROWS * T - 80) + Math.sin(t * 2 + i) * 10;
+    const len = 6 + h2 * 30;
+    ctx.globalAlpha = 0.35 + 0.4 * Math.abs(Math.sin(t * 3 + i * 1.3));
+    rrect(ctx, x, y - 1.5, len, 3, 1.5); ctx.fill();
   }
+  ctx.globalAlpha = 1;
 }
 
 // ---- Runner and scarf --------------------------------------------------------------
@@ -224,106 +276,154 @@ export class Scarf {
   }
 }
 
-// x, y: center of the hitbox. flip: 1 upright … −1 upside down (tweened).
+function batEars(ctx, color) {
+  for (const ex of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(ex * 4, -15); ctx.lineTo(ex * 13, -30); ctx.lineTo(ex * 15, -11); ctx.closePath();
+    ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex * 7, -16); ctx.lineTo(ex * 12, -25); ctx.lineTo(ex * 12.5, -14); ctx.closePath();
+    ctx.fillStyle = C.ear; ctx.fill();
+  }
+}
+
+function batFace(ctx, blink) {
+  for (const ex of [1, 10]) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(ex, -2, 5.5, blink ? 1 : 7, 0, 0, 7); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = C.ink; ctx.stroke();
+    if (!blink) {
+      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(ex + 2, -2, 3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex + 3, -4, 1.1, 0, 7); ctx.fill();
+    }
+  }
+  // tiny fangs
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+  for (const fx of [4, 8]) { ctx.beginPath(); ctx.moveTo(fx - 2, 8); ctx.lineTo(fx, 12); ctx.lineTo(fx + 2, 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+}
+
+// The bat. x, y: center of the hitbox. flip: 1 upright … −1 upside down (tweened).
 export function drawRunner(ctx, x, y, flip, opt = {}) {
   const sx = opt.sx ?? 1, sy = opt.sy ?? 1, t = opt.t ?? 0;
+  const color = opt.color || C.runner;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(sx, sy * (Math.abs(flip) < 0.15 ? 0.15 * Math.sign(flip || 1) : flip));
-  const r = 18;
-  // feet
-  const run = opt.running ? Math.sin(t * 22) * 4 : 0;
+  const r = 17;
+  // little feet scurrying
+  const run = opt.running ? Math.sin(t * 24) * 4 : 0;
   ctx.fillStyle = C.ink;
-  ctx.beginPath(); ctx.ellipse(-6 + run, r - 1, 6, 3.5, 0, 0, 7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(6 - run, r - 1, 6, 3.5, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-5 + run, r, 5, 3, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(6 - run, r, 5, 3, 0, 0, 7); ctx.fill();
+  // folded wing behind, flapping a little
+  const flap = Math.sin(t * (opt.running ? 18 : 6)) * 0.25;
+  ctx.save(); ctx.translate(-10, 2); ctx.rotate(-0.5 + flap);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-20, -6, -22, 8); ctx.quadraticCurveTo(-14, 6, -12, 12); ctx.quadraticCurveTo(-6, 8, 0, 10); ctx.closePath();
+  ctx.fillStyle = shade(color, 0.72); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.restore();
+  batEars(ctx, color);
   // body
   ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.fillStyle = opt.color || C.runner; ctx.fill();
+  ctx.fillStyle = color; ctx.fill();
   ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.beginPath(); ctx.ellipse(-7, -9, 6, 3.5, -0.5, 0, 7); ctx.fill();
-  // eyes, looking ahead
-  for (const ex of [3, 11]) {
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.ellipse(ex, -3, 5, opt.blink ? 1 : 6.5, 0, 0, 7); ctx.fill();
-    ctx.lineWidth = 2; ctx.stroke();
-    if (!opt.blink) { ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(ex + 2, -3, 2.6, 0, 7); ctx.fill(); }
-  }
-  // determined brow
-  ctx.strokeStyle = C.ink; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(14, -9); ctx.stroke();
+  ctx.fillStyle = C.belly;
+  ctx.beginPath(); ctx.ellipse(-2, 7, 9, 7, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath(); ctx.ellipse(-8, -8, 5, 3, -0.5, 0, 7); ctx.fill();
+  batFace(ctx, opt.blink);
   ctx.restore();
 }
 
-// Glider form: a dart that points where it is going.
+// Glider form: the bat with its wings spread, pointing where it is going.
 export function drawGlider(ctx, x, y, angle, t, color = C.runner) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  ctx.moveTo(22, 0); ctx.lineTo(-16, -15); ctx.quadraticCurveTo(-8, 0, -16, 15); ctx.closePath();
-  ctx.fillStyle = color; ctx.fill();
-  ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.ellipse(4, -2, 5, 5.5, 0, 0, 7); ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(6, -2, 2.5, 0, 7); ctx.fill();
+  ctx.rotate(angle * 0.8);
+  const beat = Math.sin(t * 14) * 5;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(-4, 0);
+    ctx.quadraticCurveTo(-14, side * (26 + beat), -30, side * (22 + beat));
+    ctx.quadraticCurveTo(-26, side * 14, -22, side * 12);
+    ctx.quadraticCurveTo(-18, side * 16, -14, side * 10);
+    ctx.quadraticCurveTo(-10, side * 14, -6, side * 8);
+    ctx.closePath();
+    ctx.fillStyle = shade(color, 0.75); ctx.fill();
+    ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+  }
+  ctx.scale(0.85, 0.85);
+  batEars(ctx, color);
+  ctx.beginPath(); ctx.arc(0, 0, 15, 0, 7);
+  ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
+  batFace(ctx, false);
   ctx.restore();
 }
 
 export const FORM_STYLE = {
   flip: { color: C.runner, label: 'FLIP' },
-  glider: { color: '#9B6BFF', label: 'GLIDE' },
-  twin: { color: '#FF8A3D', label: 'TWIN' },
+  glider: { color: '#5FC8FF', label: 'GLIDE' },
+  twin: { color: '#FFB05F', label: 'TWIN' },
 };
 
-// A portal: a glowing band across the playfield with the form's name top and bottom.
+// A portal: a shimmering band of moonlight across the playfield with the form's
+// name in a tag at the top and bottom (shape and text, not only color).
 export function drawPortal(ctx, x, form, t) {
   const st = FORM_STYLE[form];
   ctx.save();
-  ctx.globalAlpha = 0.18 + Math.sin(t * 6) * 0.05;
+  ctx.globalAlpha = 0.16 + Math.sin(t * 6) * 0.05;
   ctx.fillStyle = st.color;
-  ctx.fillRect(x - 18, 0, 36, ROWS * T);
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = st.color; ctx.lineWidth = 4;
+  ctx.fillRect(x - 22, 0, 44, ROWS * T);
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = st.color; ctx.lineWidth = 3;
+  // swirling motes rising through the band
+  for (let k = 0; k < 10; k++) {
+    const yy = ROWS * T - ((t * 160 + k * 64) % (ROWS * T));
+    ctx.beginPath(); ctx.arc(x + Math.sin(t * 4 + k) * 12, yy, 3, 0, 7); ctx.stroke();
+  }
   ctx.setLineDash([12, 10]); ctx.lineDashOffset = -t * 60;
   ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ROWS * T); ctx.stroke();
   ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
   for (const y of [T * 0.9, ROWS * T - T * 0.9]) {
-    rrect(ctx, x - 42, y - 16, 84, 32, 10);
+    rrect(ctx, x - 44, y - 16, 88, 32, 10);
     ctx.fillStyle = st.color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
     text(ctx, st.label, x, y + 1, 16, '#fff', 'center', 900, 4);
   }
   ctx.restore();
 }
 
+// Checkpoint: a lantern on a post that lights up when you pass it.
 export function drawFlag(ctx, x, surfaceY, g, active, t) {
-  const top = surfaceY - g * 64;
+  const top = surfaceY - g * 58;
   ctx.strokeStyle = C.ink; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(x, surfaceY); ctx.lineTo(x, top); ctx.stroke();
-  const fy = active ? top : surfaceY - g * 24;
-  const wave = Math.sin(t * 8) * 3;
-  ctx.fillStyle = active ? C.star : '#C9CED8';
-  ctx.beginPath();
-  ctx.moveTo(x, fy); ctx.lineTo(x + 30, fy + g * (8 + wave)); ctx.lineTo(x, fy + g * 18);
-  ctx.closePath(); ctx.fill(); ctx.lineWidth = 3; ctx.stroke();
-  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x, top, 4, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x, surfaceY); ctx.lineTo(x, top); ctx.lineTo(x + 14, top); ctx.stroke();
+  const lx = x + 14, ly = top + g * 14 + Math.sin(t * 3) * 1.5;
+  if (active) {
+    ctx.fillStyle = C.star; ctx.globalAlpha = 0.22 + Math.sin(t * 5) * 0.05;
+    ctx.beginPath(); ctx.arc(lx, ly, 34, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  rrect(ctx, lx - 9, ly - 12, 18, 24, 6);
+  ctx.fillStyle = active ? C.star : '#5A5478'; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.fillStyle = C.ink; ctx.fillRect(lx - 7, ly - 15, 14, 4); ctx.fillRect(lx - 7, ly + 11, 14, 4);
 }
 
+// Goal: the roost, a ring of rock around the full moon spanning the corridor.
 export function drawGoal(ctx, x, t) {
-  // A striped arch across the whole corridor.
-  const y0 = 2 * T, y1 = 13 * T, w = 28;
-  for (const px of [x - w, x + 70]) {
-    ctx.save();
-    ctx.beginPath(); ctx.rect(px, y0, w, y1 - y0); ctx.clip();
-    ctx.fillStyle = '#fff'; ctx.fillRect(px, y0, w, y1 - y0);
-    ctx.fillStyle = C.scarf;
-    for (let k = -2; k < 14; k++) { const yy = y0 + k * 40 + (t * 40) % 40; ctx.beginPath(); ctx.moveTo(px, yy); ctx.lineTo(px + w, yy - 20); ctx.lineTo(px + w, yy); ctx.lineTo(px, yy + 20); ctx.fill(); }
-    ctx.restore();
-    ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.strokeRect(px, y0, w, y1 - y0);
-  }
-  rrect(ctx, x - w - 10, y0 - 40, 70 + 2 * w + 20, 50, 14);
+  const cx = x + 20, cy = 7.5 * T, r = 4.2 * T;
+  ctx.fillStyle = C.moon; ctx.globalAlpha = 0.2 + Math.sin(t * 3) * 0.05;
+  ctx.beginPath(); ctx.arc(cx, cy, r + 30, 0, 7); ctx.fill();
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 14; ctx.strokeStyle = '#5A4B7E';
+  ctx.beginPath(); ctx.arc(cx, cy, r + 6, 0, 7); ctx.stroke();
+  ctx.lineWidth = 4; ctx.strokeStyle = C.ink;
+  ctx.beginPath(); ctx.arc(cx, cy, r + 13, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r - 1, 0, 7); ctx.stroke();
+  rrect(ctx, cx - 54, cy - r - 46, 108, 40, 12);
   ctx.fillStyle = C.star; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
-  text(ctx, 'GOAL', x + 35, y0 - 15, 26, C.ink, 'center', 900);
+  text(ctx, 'HOME', cx, cy - r - 25, 24, C.ink, 'center', 900);
 }
 
 export function drawLevelStar(ctx, x, y, t, ghost) {
@@ -332,7 +432,12 @@ export function drawLevelStar(ctx, x, y, t, ghost) {
     ctx.globalAlpha = 0.6;
     drawStarShape(ctx, x, y + bob, 15, C.star, Math.cos(t * 2.5 + y), true);
     ctx.globalAlpha = 1;
-  } else drawStarShape(ctx, x, y + bob, 15, C.star, Math.cos(t * 2.5 + y));
+  } else {
+    ctx.fillStyle = C.star; ctx.globalAlpha = 0.25;
+    ctx.beginPath(); ctx.arc(x, y + bob, 24, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1;
+    drawStarShape(ctx, x, y + bob, 15, C.star, Math.cos(t * 2.5 + y));
+  }
 }
 
 export { RUNNER };
