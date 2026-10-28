@@ -59,6 +59,7 @@ Each legal pull has a fall chance `p`. The round's seed decides the roll: the to
 - `p` is never shown as a number during a vote. After a reveal, the pulled block gets a label: **Steady** (p < 2%, one bar icon), **Shaky** (2–6%, two bars) or **Risky** (> 6%, three bars). The crowd learns to read the tower from these labels.
 
 ### 3.5 Rounds and voting
+- **Round length: 24 hours**, starting at 12 midnight pacific. As long as you open the game before the window ends, you can vote.
 - **Round length: 60 minutes**, closing on the hour (UTC). Rounds with **zero votes are skipped**: no pull happens, so the tower rests at night.
 - Each round offers **3 candidates**, tagged **A, B, C** from lowest to highest on the tower. The round seed picks them from the legal pulls: one from the safest third, one from the middle third, one from the riskiest third (by `p`). With fewer than 3 legal pulls, all of them are offered.
 - One vote per player per round, keyed to an anonymous device token (12). A vote can be changed until the round closes; the latest one counts.
