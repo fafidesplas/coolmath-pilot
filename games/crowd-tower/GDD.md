@@ -3,7 +3,7 @@
 **Status:** Draft
 **Owner:** Pao · **Reviewed by:** — · **Last updated:** 2026-10-27
 
-> Every hour, thousands of players vote on which block to pull from one shared wooden tower; if it falls, it falls for everyone, and the next tower tries to beat its record.
+> Every day, thousands of players vote on which block to pull from one shared wooden tower; the next day, everyone sees if it stood. If it falls, it falls for everyone, and the next tower tries to beat its record.
 
 ## 1. Summary
 - **Pillars:**
@@ -11,13 +11,13 @@
   2. **Will it stand?** Every pull is a small moment of suspense: the block slides, the tower wobbles, then it settles or crashes.
   3. **Ten seconds is enough.** Open, see what happened, vote, leave. Anything longer (replays, solo practice) is optional.
 - **Player:** Coolmath players aged 10–24 on a school Chromebook or phone, often with the sound off, opening the game between classes or from the Coolmath home page.
-- **Session:** A quick visit is 20–60 s (replay of missed pulls + one vote). A long visit adds the live reveal of the current round and solo practice towers (3–5 min each), so 5–10 minutes.
-- **Hook:** "Did it survive?" brings you back. The live record race ("pull 143, last tower fell at 187") and seeing *your* pick get pulled make you vote again.
+- **Session:** A quick visit is 20–60 s (the reveal of yesterday's pull + one vote). A long visit adds solo practice towers (2–4 min each), so 5–10 minutes.
+- **Hook:** "Did it survive?" brings you back every day. The record race ("pull 14, last tower fell at 19") and seeing *your* pick get pulled make you vote again.
 
 ## 2. Core loop
 - **Moment (seconds):** Look at the three tagged blocks → pick one → watch the vote bars move.
-- **Round (24 hours):** Votes come in → the round closes every 24 hours → the top pick slides out → the tower stands (block goes on top) or falls. The next day, everyone watches what happens, then they vote again. Basically, you see the results of the previous day, then you vote again. 
-- **Meta (days):** Come back → replay the pulls you missed → vote again and keep your streak → the tower climbs toward the record → it falls, enters the hall of fame, and a new tower starts.
+- **Round (24 hours):** Votes come in all day → the round closes at midnight Pacific → the top pick slides out → the tower stands (block goes on top) or falls. The next day, everyone opens the game to the reveal of yesterday's pull, then votes again.
+- **Meta (weeks):** Come back each day → watch the pulls you missed → vote again and keep your streak → the tower climbs toward the record → it falls, enters the hall of fame, and a new tower starts.
 
 ## 3. Mechanics
 
@@ -41,26 +41,26 @@
 ### 3.3 Pull outcome (deterministic rules plus one seeded roll)
 Each legal pull has a fall chance `p`. The round's seed decides the roll: the tower falls if `rand(seed) < p`.
 
-`p = clamp(0.004 + K + S + L + H, 0, 0.6)`
+`p = clamp(0.016 + K + S + L + H, 0, 0.6)`
 
 | Term | Meaning | Value |
 |---|---|---|
-| **K** (kind) | What the pull leaves | Full → Bridge (middle pulled): 0.000 · Full → Center (edge pulled): 0.010 · Center → Pillar: 0.025 |
-| **S** (stress) | Weight above the block | 0.030 × (layers above ÷ total layers) |
-| **L** (lean) | Lean on the block's axis after the pull | 0.012 × lean² |
-| **H** (height) | Taller towers sway | 0.0015 × max(0, layers − 18) |
+| **K** (kind) | What the pull leaves | Full → Bridge (middle pulled): 0.00 · Full → Center (edge pulled): 0.04 · Center → Pillar: 0.10 |
+| **S** (stress) | Weight above the block | 0.12 × (layers above ÷ total layers) |
+| **L** (lean) | Lean on the block's axis after the pull | 0.048 × lean² |
+| **H** (height) | Taller towers sway | 0.006 × max(0, layers − 18) |
 
 - **Lean** per axis = sum of the offsets of that axis's Center layers (an L+M layer = −1, an M+R layer = +1). Layers on top can cancel lean by being pulled the other way.
-- Starting values give a crowd that picks the safest candidate half the time a **median life of ~55 pulls**. The headless simulator (12) tunes the constants; the target is in 13.
+- With one pull a day, a tower must fall in weeks, not months, so these odds are high. Starting values (about 4× the first hourly draft) aim for a crowd that picks the safest candidate half the time to reach a **median life of ~14 pulls (about two weeks)**. The headless simulator (12) tunes the constants; the target is in 13.
 - The seed per round is `hash(towerId, roundNumber, serverSecret)`. The server publishes the secret for a round after it closes, so anyone (and the client) can check the result.
 
 ### 3.4 Lean you can see
 - The tower is drawn leaning by **1.5° per lean point**, so off-center choices show at a glance. Blocks in a Center layer show a small crack mark on the empty side.
-- `p` is never shown as a number during a vote. After a reveal, the pulled block gets a label: **Steady** (p < 2%, one bar icon), **Shaky** (2–6%, two bars) or **Risky** (> 6%, three bars). The crowd learns to read the tower from these labels.
+- `p` is never shown as a number during a vote. After a reveal, the pulled block gets a label: **Steady** (p < 5%, one bar icon), **Shaky** (5–15%, two bars) or **Risky** (> 15%, three bars). The crowd learns to read the tower from these labels.
 
 ### 3.5 Rounds and voting
-- **Round length: 24 hours**, starting at 12 midnight pacific. As long as you open the game before the window ends, you can vote.
-- **Round length: 60 minutes**, closing on the hour (UTC). Rounds with **zero votes are skipped**: no pull happens, so the tower rests at night.
+- **Round length: 24 hours**, from midnight to midnight Pacific time (`America/Los_Angeles`, so it follows daylight saving). You can vote any time before the round closes. Midnight Pacific is 3 a.m. Eastern, so in every US time zone the close falls outside the school day and the new round is open before school starts.
+- One pull per round, so **one pull per day**. A round with **zero votes is skipped**: no pull happens. With daily rounds this should almost never happen; it is a safeguard for launch and quiet holidays.
 - Each round offers **3 candidates**, tagged **A, B, C** from lowest to highest on the tower. The round seed picks them from the legal pulls: one from the safest third, one from the middle third, one from the riskiest third (by `p`). With fewer than 3 legal pulls, all of them are offered.
 - One vote per player per round, keyed to an anonymous device token (12). A vote can be changed until the round closes; the latest one counts.
 - **Top pick wins.** A tie goes to the candidate with the lower `p`.
@@ -70,19 +70,22 @@ Each legal pull has a fall chance `p`. The round's seed decides the roll: the to
 1. The winning block glows; its tag pops (300 ms).
 2. It slides out along its axis over 1200 ms with an ease-in-out, with three small judders.
 3. The tower wobbles: amplitude 1° + 25° × p, damped over 800 ms.
-4. **Stand:** the block arcs up and lands on the open top layer (500 ms, squash on landing), then "Pull 144 — it stands!".
+4. **Stand:** the block arcs up and lands on the open top layer (500 ms, squash on landing), then "Pull 14 — it stands!".
 5. **Fall:** the tower breaks at the pulled layer; the blocks above tumble as scripted rigid bodies (gravity 2400 px/s², bounce 0.3, spin), bounce on the table, and settle in 2 s. Then the **Tower fell** panel (8).
 
 The collapse is a scripted animation drawn from the seed, not a physics simulation; the result is already decided by 3.3.
 
+The round closes at midnight Pacific, so almost nobody sees the reveal live. The reveal is the first thing you see on your first visit after the close (3.7): this is the daily "did it stand?" moment.
+
 ### 3.7 Since your last visit
 - On opening, the client compares the last pull it showed (saved) with the server's current pull.
-- 1–10 missed pulls: each replays at 3× speed (about 0.9 s each) with a counter "Pull 132 → 141". A **Skip** button jumps to now.
-- More than 10: show a summary card ("27 pulls while you were away") and replay only the last 3.
-- If the tower fell while you were away: replay the last pull at normal speed, then the Tower fell panel.
+- 1 missed pull (the usual daily visit): it plays as the full reveal (3.6), then the new round's vote.
+- 2–10 missed pulls: the older ones replay at 3× speed (about 0.9 s each) with a counter "Pull 9 → 13", then the newest plays as the full reveal. A **Skip** button jumps to the vote.
+- More than 10: show a summary card ("12 pulls while you were away") and play only the newest as the full reveal.
+- If the tower fell while you were away: replay the fatal pull at normal speed, then the Tower fell panel.
 
 ### 3.8 Towers, records and the hall of fame
-- **Record = pulls survived.** Days lasted are shown too ("Tower #12 — 143 pulls, 4 days").
+- **Record = pulls survived.** Days lasted are shown too ("Tower #12 — 13 pulls, 13 days"); they differ only when rounds were skipped.
 - When a tower falls, the next one starts at the next round, with the same 18-layer setup.
 - A **Perfect Tower** (no legal pulls left) gets a gold crown in the hall of fame and is retired the same way.
 - The hall of fame lists the last 30 towers: number, pulls, days, and the block that ended it with its vote share ("Block B, 35%").
@@ -91,7 +94,7 @@ The collapse is a scripted animation drawn from the seed, not a physics simulati
 - The same rules, but you choose every pull from all legal blocks (not just 3), and each reveal is 1.5 s.
 - The seed is random per tower, so solo play has no daily or shared state.
 - During solo play, selecting a block shows its Steady / Shaky / Risky label before you confirm, so solo play teaches the risk rules the community vote hides.
-- Score = pulls survived. **Stars per tower: 1★ at 20 pulls, 2★ at 40, 3★ at 60.** Best score is saved.
+- Score = pulls survived. **Stars per tower: 1★ at 10 pulls, 2★ at 20, 3★ at 30** (to be checked with the simulator's "safest" player). Best score is saved.
 
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
@@ -113,8 +116,8 @@ The collapse is a scripted animation drawn from the seed, not a physics simulati
 | Vote bar | Share of votes | First community vote | Bar length plus % text |
 | Crack mark | Center layer's empty side | First edge pull | Zig-zag line |
 | Risk label | Steady / Shaky / Risky | First reveal | 1, 2 or 3 bars |
-| Round timer | Time to close | Community screen | Clock icon + "12:04" |
-| Record line | Last tower's pulls, drawn on the tower's side as a height | Tower #2 | Flag icon + "187" |
+| Round timer | Time to close | Community screen | Clock icon + "5h 12m" (mm:ss in the last hour) |
+| Record line | Last tower's pulls, drawn on the tower's side as a height | Tower #2 | Flag icon + "19" |
 | Perfect crown | Tower with no legal pulls left | Hall of fame | Crown |
 
 ## 6. Level design
@@ -123,19 +126,19 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
 - **Structure:** Community tower (main mode) and Solo practice (endless towers, best score).
 - **Teaching order** (first community visit, 3 steps, each a one-line hint over the play area):
   1. "Pick the block you want pulled." (tags bounce)
-  2. "Everyone votes. The top pick is pulled on the hour." (panel bar animates)
+  2. "Everyone votes. Tomorrow, the top pick is pulled." (panel bar animates)
   3. "If it falls, it falls for everyone." (shows the record line)
   The first solo tower adds: "Pull blocks yourself. Watch the lean."
 - **Difficulty curve:** the tower itself gets harder: `S` and `H` grow with height, legal pulls run out, lean builds up. The crowd does not choose difficulty.
-- **Stars:** solo only: 20 / 40 / 60 pulls (3.9). Community play has no stars; its result is the tower's record.
-- **First 10 levels:** not applicable. The first 10 *community rounds* of every tower are the safe part (p < 3%) and are good moments for new players to join.
+- **Stars:** solo only: 10 / 20 / 30 pulls (3.9). Community play has no stars; its result is the tower's record.
+- **First 10 levels:** not applicable. The first days of every tower are the safest part (mostly Steady candidates) and are good moments for new players to join.
 - **Data format** (server response, also used by the local fake crowd):
 
 ```json
 {
   "towerId": 12,
   "round": 144,
-  "closesAt": "2026-10-27T15:00:00Z",
+  "closesAt": "2026-10-28T07:00:00Z",
   "layers": ["LMR", "LMR", "LM.", "L.R", ".M.", "..."],
   "candidates": [
     { "tag": "A", "layer": 2, "slot": "L" },
@@ -146,18 +149,18 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
   "history": [
     { "round": 143, "pulled": { "layer": 4, "slot": "R" }, "share": 0.51, "p": 0.018, "fell": false, "secret": "…" }
   ],
-  "record": { "towerId": 11, "pulls": 187 }
+  "record": { "towerId": 11, "pulls": 19 }
 }
 ```
-`layers[0]` is the bottom; `.` is an empty slot; odd/even index gives the direction.
+`layers[0]` is the bottom; `.` is an empty slot; odd/even index gives the direction. `round` counts every round since launch (it feeds the seed); the pull number counts per tower. `closesAt` is midnight Pacific in UTC (07:00Z in daylight saving time, 08:00Z in standard time).
 
 ## 7. Progression and retention
-- **Vote streak:** consecutive local days with at least one vote. Missing a day resets it.
+- **Vote streak:** consecutive rounds (Pacific days) with a vote. Missing a round resets it; a skipped round does not.
 - **Emoji result line** (Copy button, clipboard only, no link):
   ```
-  Crowd Tower #12 🧱 Pull 144 stands
+  Crowd Tower #12 🧱 Pull 14 stands
   🟫🟫🟫🟫🟫⬛ I voted B (35%)
-  Record 187 · Streak 5 🔥
+  Record 19 · Streak 5 🔥
   ```
   The row is the last 6 pulls: 🟫 stand, ⬛ the round you voted in, 💥 fall.
 - **Your pick:** when the pull you voted for wins and stands, the reveal says "Your pick! It stands." This is the main personal reward.
@@ -167,10 +170,10 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
 ## 8. Screens and UI flow
 `Title → Community tower ⇄ Hall of fame` and `Title → Solo practice → Tower over`
 
-- **Title:** logo built of blocks, big **Play** (goes to the community tower), **Solo practice** (with best score and stars), **Hall of fame**, settings cog (music, sound). A live line: "Tower #12 · Pull 144 · Record 187".
-- **Community tower (main screen):** tower on the left half on a wooden table; HUD top-left: "Round 144" and "Vote closes in 12:04"; vote panel on the right: "Which block gets pulled?", the 3 rows with bars, "N players voted", **Vote** / **Change vote**; status box below: "This tower has survived 143 pulls · Last tower fell after 187 pulls"; Copy result button; streak flame. Matches the idea slide's mockup.
-- **Reveal:** plays in place when the round closes while the screen is open (3.6).
-- **Tower fell panel:** "Tower #12 fell after 143 pulls (4 days)", the fatal block with its vote share, NEW RECORD badge if it beat the last one, count-up of the pulls, **See the new tower**.
+- **Title:** logo built of blocks, big **Play** (goes to the community tower), **Solo practice** (with best score and stars), **Hall of fame**, settings cog (music, sound). A live line: "Tower #12 · Pull 14 · Record 19".
+- **Community tower (main screen):** tower on the left half on a wooden table; HUD top-left: "Tower #12 · Pull 14" and "Vote closes in 5h 12m"; vote panel on the right: "Which block gets pulled?", the 3 rows with bars, "N players voted", **Vote** / **Change vote**; status box below: "This tower has survived 13 pulls · Last tower fell after 19 pulls"; Copy result button; streak flame. Matches the idea slide's mockup.
+- **Reveal:** plays on your first visit after a round closes (3.7), or in place if the screen is open at midnight Pacific (3.6).
+- **Tower fell panel:** "Tower #12 fell after 13 pulls (13 days)", the fatal block with its vote share, NEW RECORD badge if it beat the last one, count-up of the pulls, **See the new tower**.
 - **Hall of fame:** list of the last 30 towers (3.8), the record on top.
 - **Solo practice:** same tower view; HUD with pulls counter and the 3 star marks; Pause, Restart.
 - **Solo tower over:** pulls count-up, stars, best, **Again** / **Menu**.
@@ -215,7 +218,7 @@ All sounds are synthesized with WebAudio and stay under 500 ms unless noted.
 | Slide | Block sliding out | Scraping wood, 3 small knocks for the judders |
 | Creak | Wobble | Low wooden creak, louder with p |
 | Land | Block on top | Hollow thump |
-| Stands | Pull holds | Short rising two-note chime; crowd "ooh" if p > 6% |
+| Stands | Pull holds | Short rising two-note chime; crowd "ooh" if the pull was Risky |
 | Collapse | Tower falls | Cascade of wood clatters, 1.2 s |
 | Record | New record | Small fanfare, 1 s |
 
@@ -227,15 +230,15 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
 | Progression `Start` `solo` | Solo tower starts | — |
 | Progression `Complete` `solo` | Solo tower falls or is perfect | pulls survived |
 | `tutorial:step01` … `step03`, `tutorial:done` | Community hints (6) | — |
-| `daily:start` | First community screen of the local day | — |
-| `daily:complete` | First vote of the local day | — |
-| `daily:streak:<n>` | Streak count after the first vote of the day | n |
+| `daily:start` | First community screen of the round | — |
+| `daily:complete` | First vote of the round | — |
+| `daily:streak:<n>` | Streak count after the first vote of the round | n |
 | `vote:cast` | Vote sent | tower pull number |
 | `vote:change` | Vote changed | — |
 | `vote:pick:<tag>:<band>` | Vote sent: tag and its risk band (`low` `mid` `high`) | — |
 | `replay:seen:<n>` | Missed pulls replayed on open (n capped at 10, `summary` above) | n |
 | `replay:skip` | Skip pressed | — |
-| `reveal:live` | Player watched a reveal live | 1 if your pick |
+| `reveal:seen` | Player watched the round's full reveal (on open or live) | 1 if your pick |
 | `tower:fell:seen` | Player saw a tower fall (live or replay) | pulls of that tower |
 | `share:copy` | Result line copied | — |
 | `ui:restart` | Solo restart | — |
@@ -250,40 +253,41 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
   - `rng.js`: seeded generator (mulberry32 over a 32-bit hash of the seed string).
   - `community/service.js`: the interface `getState()`, `vote(tag)`, `onUpdate(cb)`. Two versions:
     - `localCrowd.js`: fake crowd in the browser, 60 s rounds, 500–5000 simulated voters with a bias toward safer picks, for development and the slice.
-    - `remote.js`: Coolmath community service (contract in 6, to be agreed). Polls every 30 s and 2 s around round close.
+    - `remote.js`: Coolmath community service (contract in 6, to be agreed). Fetches state on open, then polls every 5 minutes, and every 2 s in the last minute before the close.
   - `render.js` (isometric tower, sprites pre-rendered once), `reveal.js` (scripted pull, wobble, collapse), `ui.js`, `audio.js`, `analytics.js`, `main.js`.
 - **Simulation:** no physics engine. The result of a pull is fixed by `tower.js` + seed; all motion is animation. The game loop runs on `dt` capped at 0.05.
-- **Server (outside this repo, needs Coolmath):** stores towers, rounds and votes; closes rounds on the hour; runs the same `tower.js`; dedupes votes per device token; publishes each round's secret after close; rate-limits votes.
-- **Save keys:** `cm_crowd-tower_settings`, `cm_crowd-tower_solo` (best, stars), `cm_crowd-tower_community` (`lastSeen: { towerId, round }`, `myVotes` for the last 48 rounds, streak, last vote day), `cm_crowd-tower_device` (random anonymous token; no personal data).
+- **Server (outside this repo, needs Coolmath):** stores towers, rounds and votes; closes each round at midnight Pacific; runs the same `tower.js`; dedupes votes per device token; publishes each round's secret after close; rate-limits votes.
+- **Save keys:** `cm_crowd-tower_settings`, `cm_crowd-tower_solo` (best, stars), `cm_crowd-tower_community` (`lastSeen: { towerId, round }`, `myVotes` for the last 30 rounds, streak, last vote day), `cm_crowd-tower_device` (random anonymous token; no personal data).
 - **Tools:** `tools/simulate.mjs` (Node, headless): runs 10 000 towers with crowd models (safest, random, 50/50, 10% griefers) and prints the median, 10th and 90th percentile life. Used to tune 3.3.
 - **Riskiest pieces:**
   1. **The backend does not exist yet.** STANDARDS.md allows no network calls except GameAnalytics and the Coolmath SDK. Build everything against `localCrowd.js` so the slice is playable without a server; the service is a swap.
   2. **Is voting enough fun?** Prove it in the slice with the fake crowd at 60 s rounds before investing in the server.
-  3. **Tuning:** prove with `simulate.mjs` before the slice that a tower lasts days, not hours.
+  3. **Tuning:** prove with `simulate.mjs` before the slice that a tower lasts about two weeks: not a few days, not months.
 
 ## 13. Scope
 - **v1:** community tower (rounds, vote, reveal, replay, fell panel), hall of fame, solo practice tower, emoji line and streak, local fake crowd, simulator, remote service against the agreed contract.
-- **Later:** event towers (double-speed weekend tower, giant 30-layer tower), community-voted tower skins, "predict: will it stand?" side vote, per-class (teacher) towers.
+- **Later:** event towers (an hourly tower for a special day, giant 30-layer tower), community-voted tower skins, "predict: will it stand?" side vote, per-class (teacher) towers.
 - **Cut:**
   - Free choice of any block in the community vote: too easy to grief, too hard to read with thousands of voters. Three candidates keep the vote readable.
   - Real rigid-body physics: results would differ between devices and the server could not decide them.
   - Player names, chat or comments on the leaderboard: kid-safety. The hall of fame lists towers, not people.
   - Drag-to-pull skill in solo: adds a second game; revisit after the slice.
 
-**Tuning targets:** median tower life 55 pulls (10th percentile ≥ 20, 90th ≤ 95) with the 50/50 crowd; with 10% griefers the median drops by less than 15%. At hourly rounds with nights mostly skipped (~14 rounds a day), a tower lasts about 3–5 days.
+**Tuning targets:** median tower life 14 pulls (10th percentile ≥ 5, 90th ≤ 30) with the 50/50 crowd; with 10% griefers the median drops by less than 15%. At one round a day, a tower lasts about two weeks (10th percentile ~1 week, 90th ~1 month), so a regular player sees a fall about twice a month.
 
 ## 14. Open questions
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| Round length: daily (as the idea slide says), hourly, or shorter? | Hourly: a daily pull makes a tower last months and nobody ever sees a reveal live; hourly gives 3–5-day towers and a live reveal most school periods | Pao + Coolmath | Open |
+| Round length: daily (as the idea slide says), hourly, or shorter? | Daily: 24-hour rounds closing at midnight Pacific. You see yesterday's result, then vote. Odds are retuned for ~2-week towers (3.3, 13). Trade-off: almost nobody sees a reveal live, so the reveal plays on your first visit after the close | Pao | Decided |
 | Who runs the backend (votes, tower state, rounds)? STANDARDS.md forbids other servers | A Coolmath community service; we write the contract (6) and the shared `tower.js` | Coolmath | Open |
 | Identity for one-vote-per-round: Coolmath account, or anonymous device token? | Device token for v1 (no personal data); Coolmath account if they have one | Coolmath | Open |
-| Record in pulls or in days (the slide says days, the mockup says pulls)? | Pulls as the record, days shown alongside; pulls don't depend on round length | Pao | Open |
+| Record in pulls or in days (the slide says days, the mockup says pulls)? | Pulls as the record, days shown alongside. With daily rounds they are almost the same; they differ only when rounds are skipped | Pao | Open |
 | Show risk (`p`) during the vote? | No number; Steady / Shaky / Risky labels only after a reveal, and before a pull in solo | Pao | Open |
 | Is solo practice in v1? It replaces the level-select shell from STANDARDS.md | Yes, small (same rules); it gives the shell stars and teaches the rules | Pao + team | Open |
-| Skip rounds with zero votes? | Yes, so towers don't die at night when no one is watching | Pao | Open |
+| Skip rounds with zero votes? | Yes, as a safeguard for launch and quiet holidays; with daily rounds it should almost never happen | Pao | Open |
 | Name: "Crowd Tower" vs other options | Crowd Tower; never "Jenga" (trademark) | Team | Open |
 | Ad breaks | After a replay or a fell panel, never during a reveal | Coolmath | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Rounds changed from hourly to daily (24 h, closing at midnight Pacific). Retuned the fall odds, risk labels, solo stars and tuning targets for ~2-week towers; the reveal now plays on your first visit after the close.
 - 2026-10-27 — First draft from the "CMG Community Features (part 3)" idea slide.
