@@ -1,4 +1,4 @@
-# Crowd Tower — Game design document
+# Daily Community Game — Game design document
 
 **Status:** Draft
 **Owner:** Pao · **Reviewed by:** — · **Last updated:** 2026-10-27
@@ -125,7 +125,7 @@ The round closes at midnight Pacific, so almost nobody sees the reveal live. The
 | Perfect crown | Tower with no legal pulls left | Hall of fame | Crown |
 
 ## 6. Level design
-Crowd Tower has no level list. The community tower is the "daily", and the solo practice tower is endless with stars per run. This replaces the worlds-of-levels shell in STANDARDS.md (see 14).
+Daily Community Game has no level list. The community tower is the "daily", and the solo practice tower is endless with stars per run. This replaces the worlds-of-levels shell in STANDARDS.md (see 14).
 
 - **Structure:** Community tower (main mode) and Solo practice (endless towers, best score).
 - **Teaching order** (first community visit, 3 steps, each a one-line hint over the play area):
@@ -162,7 +162,7 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
 - **Vote streak:** consecutive rounds (Pacific days) with a vote. Missing a round resets it; a skipped round does not.
 - **Emoji result line** (Copy button, clipboard only, no link):
   ```
-  Crowd Tower #12 🧱 Pull 14 stands
+  Daily Community Game #12 🧱 Pull 14 stands
   🟫🟫🟫🟫🟫⬛ I voted B (35%)
   Record 19 · Streak 5 🔥
   ```
@@ -209,7 +209,7 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
   - **Gameplay screenshot (16:9):** *"Stylized 3D cartoon wooden block tower in a 3/4 isometric view on a wooden table, deep blue background, one layer missing blocks and leaning slightly, three blocks marked with yellow speech-bubble tags A, B and C, a vote panel with yellow and green bars on the right, thick dark outlines, soft shadows, stylized 3D game screenshot, 16:9"*
   - **Key art / thumbnail (16:9 and 1:1, no text):** *"a tall slightly leaning wooden block tower on a table, one block halfway pulled out, yellow speech-bubble tags with letters on three blocks, many small cartoon hands raised below like a crowd voting, deep blue background with soft spotlights, flat vector cartoon style, warm wood colors, thick dark outlines, soft drop shadows, toy-like and clean, room for a title, game key art"*
   - **Element sheet:** *"game pieces on a plain background: wooden blocks in isometric view from three angles, a block with a zig-zag crack mark, yellow speech-bubble tags with A, B, C, a green check mark badge, a gold crown, a small flag, a clock icon, one, two and three bar icons, flat vector cartoon style, thick dark outlines, soft drop shadows, game asset sheet, evenly spaced, consistent scale"*
-  - **Logo:** *"the words "CROWD TOWER" built from stacked wooden blocks, one block half pulled out, flat vector cartoon style, thick dark outlines, soft drop shadows, plain background, bold and readable at small size"*
+  - **Logo:** *"the words "DAILY COMMUNITY GAME" built from stacked wooden blocks, one block half pulled out, flat vector cartoon style, thick dark outlines, soft drop shadows, plain background, bold and readable at small size"*
   - **Negative prompt:** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, UI buttons"*
 
 ## 10. Audio
@@ -267,7 +267,7 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
 - **Simulation:** two kinds of motion. Keyframed animation for the slide, wobble and stand; cannon-es physics only for the collapse. The result of a pull is fixed by `tower.js` + seed before any motion starts; `tower.js` and `rng.js` never import Three.js or cannon-es, so the server runs the same files. The game loop runs on `dt` capped at 0.05; physics steps at a fixed 1/60 s.
 - **Performance:** at most 54 physics bodies, with sleeping on; one shadow-casting light with a 1024 px shadow map on the table only; pixel ratio capped at 2. Target: 60 fps during a full collapse on a 4 GB Chromebook.
 - **Server (outside this repo, needs Coolmath):** stores towers, rounds and votes; closes each round at midnight Pacific; runs the same `tower.js`; dedupes votes per device token; publishes each round's secret after close; rate-limits votes.
-- **Save keys:** `cm_crowd-tower_settings`, `cm_crowd-tower_solo` (best, stars), `cm_crowd-tower_community` (`lastSeen: { towerId, round }`, `myVotes` for the last 30 rounds, streak, last vote day), `cm_crowd-tower_device` (random anonymous token; no personal data).
+- **Save keys:** `cm_daily-community-game_settings`, `cm_daily-community-game_solo` (best, stars), `cm_daily-community-game_community` (`lastSeen: { towerId, round }`, `myVotes` for the last 30 rounds, streak, last vote day), `cm_daily-community-game_device` (random anonymous token; no personal data).
 - **Tools:** `tools/simulate.mjs` (Node, headless): runs 10 000 towers with crowd models (safest, random, 50/50, 10% griefers) and prints the median, 10th and 90th percentile life. Used to tune 3.3.
 - **Riskiest pieces:**
   1. **The backend does not exist yet.** STANDARDS.md allows no network calls except GameAnalytics and the Coolmath SDK. Build everything against `localCrowd.js` so the slice is playable without a server; the service is a swap.
@@ -296,10 +296,11 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
 | Show risk (`p`) during the vote? | No number; Steady / Shaky / Risky labels only after a reveal, and before a pull in solo | Pao | Open |
 | Is solo practice in v1? It replaces the level-select shell from STANDARDS.md | Yes, small (same rules); it gives the shell stars and teaches the rules | Pao + team | Open |
 | Skip rounds with zero votes? | Yes, as a safeguard for launch and quiet holidays; with daily rounds it should almost never happen | Pao | Open |
-| Name: "Crowd Tower" vs other options | Crowd Tower; never "Jenga" (trademark) | Team | Open |
+| Name | Daily Community Game (renamed from Crowd Tower); never "Jenga" (trademark) | Pao | Decided |
 | Ad breaks | After a replay or a fell panel, never during a reveal | Coolmath | Open |
 
 ## 15. Changelog
+- 2026-10-27 — Renamed from Crowd Tower to Daily Community Game (folder `games/daily-community-game/`). The Jenga-style design is up for a major rethink.
 - 2026-10-27 — The game is 3D (brief): Three.js rendering with an orthographic 3/4 camera, and a cannon-es physics collapse (tip, break, crash, settle) with Watch again. Physics only plays the crash; the rules still decide every result.
 - 2026-10-27 — Rounds changed from hourly to daily (24 h, closing at midnight Pacific). Retuned the fall odds, risk labels, solo stars and tuning targets for ~2-week towers; the reveal now plays on your first visit after the close.
 - 2026-10-27 — First draft from the "CMG Community Features (part 3)" idea slide.

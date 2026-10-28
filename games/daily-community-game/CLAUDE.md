@@ -1,8 +1,8 @@
-# Crowd Tower — game brief
+# Daily Community Game — game brief
 
 > Every day, everyone votes on which block to pull from one shared tower. The next day, everyone sees if it stood. If it falls, it falls for everyone.
 
-![How Crowd Tower plays](mechanic.svg)
+![How Daily Community Game plays](mechanic.svg)
 
 **Rank:** Community idea · **Genre:** Community vote, stacking tower, **3D** · **Art family:** Toybox Flat · **Audience habit:** Come back daily
 
@@ -12,7 +12,7 @@
 ## Why it works for Coolmath
 A wooden block tower is instantly readable, and "will it stand?" is pure tension. One tower shared by thousands of players turns one small click into a shared event: you come back to see if it survived, and to beat the last tower's record. It is the first of the "CMG Community Features" ideas (turnaround review, October 2026, slide 4), where the community decides the actions.
 
-Working title: the idea slide calls it "Crowd Jenga". Jenga is a Hasbro trademark, so the game uses "Crowd Tower" and never says "Jenga" in the game or its store text.
+Name: **Daily Community Game** (renamed from Crowd Tower; the Jenga-style tower design is being rethought). The idea slide called it "Crowd Jenga"; Jenga is a Hasbro trademark, so the game never says "Jenga" in the game or its store text.
 
 ## Core loop
 Open the game → watch the reveal of yesterday's pull (and any others you missed) → vote on one of three blocks → the round closes at midnight Pacific, the top pick is pulled → the tower stands (block goes on top) or falls (a new tower starts, the record goes in the hall of fame) → come back tomorrow.
@@ -49,7 +49,7 @@ Toybox Flat in 3D: warm wooden blocks as real 3D boxes with flat, toy-like shadi
 ### Concept art prompts
 - **Gameplay screenshot (16:9):** *"Flat cartoon wooden block stacking tower seen in a 3/4 view on a wooden table, deep blue background, three blocks marked with letter tags A, B and C, a vote panel with bars on the right, thick dark outlines, soft shadows, stylized 3D game screenshot, 16:9"*
 - **Key art / thumbnail (16:9 and 1:1, no text):** *"a tall wobbly wooden block tower on a table, one block sliding out, many small cartoon hands pointing at it from below, deep blue background with soft spotlights, flat vector cartoon style, warm wood colors, thick dark outlines, soft drop shadows, toy-like and clean, room for a title, game key art"*
-- **Logo:** *"the words "CROWD TOWER" built from stacked wooden blocks, one block half pulled out, flat vector cartoon style, thick dark outlines, soft drop shadows, plain background, bold and readable at small size"*
+- **Logo:** *"the words "DAILY COMMUNITY GAME" built from stacked wooden blocks, one block half pulled out, flat vector cartoon style, thick dark outlines, soft drop shadows, plain background, bold and readable at small size"*
 - **Negative prompt:** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, weapons, blood, cluttered background, blurry, low contrast, UI buttons"*
 
 ## Audio

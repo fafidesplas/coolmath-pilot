@@ -1,4 +1,9 @@
-# Crowd Tower — devlog
+# Daily Community Game — devlog
+
+## 2026-10-27 — Renamed from Crowd Tower
+- New name: Daily Community Game; folder moved to `games/daily-community-game/`, save keys now `cm_daily-community-game_*`.
+- Decided the Jenga-style tower is not the way to go: the vote has no real choice, luck decides, and the payoff comes only every two weeks. The design needs a major rethink.
+- Next: pick a new direction (Storm Island, Crowd Climb or One Shared Puzzle), rewrite the brief, then the GDD.
 
 ## 2026-10-27 — 3D and a physics collapse
 - The game must be 3D: brief and GDD now use Three.js (orthographic 3/4 camera, flat toy shading, outlines, table shadows) and cannon-es for the collapse.
