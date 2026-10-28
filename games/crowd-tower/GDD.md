@@ -66,14 +66,18 @@ Each legal pull has a fall chance `p`. The round's seed decides the roll: the to
 - **Top pick wins.** A tie goes to the candidate with the lower `p`.
 - The panel shows each candidate's share as a bar and a percentage, rounded to whole numbers, plus "**N players voted this round**". Below 20 voters the panel shows bars without percentages and "A few players voted", so small numbers do not look empty.
 
-### 3.6 The reveal (2.5–4 s)
+### 3.6 The reveal (stand 2.5–4 s, fall 6–7 s)
 1. The winning block glows; its tag pops (300 ms).
 2. It slides out along its axis over 1200 ms with an ease-in-out, with three small judders.
 3. The tower wobbles: amplitude 1° + 25° × p, damped over 800 ms.
 4. **Stand:** the block arcs up and lands on the open top layer (500 ms, squash on landing), then "Pull 14 — it stands!".
-5. **Fall:** the tower breaks at the pulled layer; the blocks above tumble as scripted rigid bodies (gravity 2400 px/s², bounce 0.3, spin), bounce on the table, and settle in 2 s. Then the **Tower fell** panel (8).
+5. **Fall:** the collapse is the payoff of a whole tower, so it gets the full show:
+   1. **Tip (0.4 s, slow motion at 0.3×):** the part above the pulled layer tips as one piece, pivoting on the edge of the layer below, toward its lean (or toward the pulled block's side if there is no lean). Crowd gasp.
+   2. **Break:** at 15° of tilt, every block above the break becomes its own **cannon-es** physics body, keeping its current velocity. Blocks below the break stay still until something hits them.
+   3. **Crash (about 3 s, normal speed):** blocks tumble, hit each other, bounce on the table, pile up, and some slide off the edge. Block 3 × 1 × 0.6 units, friction 0.5, bounce 0.25, gravity tuned so the top of an 18-layer tower reaches the table in about 1.2 s. Screen shake when the top section hits the table. The camera pulls back over 1 s to frame the whole table.
+   4. **Settle:** when every body sleeps, or after 4 s at most, 0.5 s of stillness, then the **Tower fell** panel (8).
 
-The collapse is a scripted animation drawn from the seed, not a physics simulation; the result is already decided by 3.3.
+Physics only shows *how* the tower falls; 3.3 has already decided *that* it falls, and the physics starts only after that. Stand and fall look the same up to the end of step 3, so nobody can tell early; the wobble and the stand are keyframed animation, never physics, so a tower that stands can never fall by accident. The tip direction and small starting nudges come from the round seed, so every player sees about the same crash; exact paths may differ a little between devices, which is fine. The crash records each block's position and rotation per frame (54 blocks × about 240 frames), so **Watch again** replays it exactly.
 
 The round closes at midnight Pacific, so almost nobody sees the reveal live. The reveal is the first thing you see on your first visit after the close (3.7): this is the daily "did it stand?" moment.
 
@@ -173,7 +177,7 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
 - **Title:** logo built of blocks, big **Play** (goes to the community tower), **Solo practice** (with best score and stars), **Hall of fame**, settings cog (music, sound). A live line: "Tower #12 · Pull 14 · Record 19".
 - **Community tower (main screen):** tower on the left half on a wooden table; HUD top-left: "Tower #12 · Pull 14" and "Vote closes in 5h 12m"; vote panel on the right: "Which block gets pulled?", the 3 rows with bars, "N players voted", **Vote** / **Change vote**; status box below: "This tower has survived 13 pulls · Last tower fell after 19 pulls"; Copy result button; streak flame. Matches the idea slide's mockup.
 - **Reveal:** plays on your first visit after a round closes (3.7), or in place if the screen is open at midnight Pacific (3.6).
-- **Tower fell panel:** "Tower #12 fell after 13 pulls (13 days)", the fatal block with its vote share, NEW RECORD badge if it beat the last one, count-up of the pulls, **See the new tower**.
+- **Tower fell panel:** "Tower #12 fell after 13 pulls (13 days)", the fatal block with its vote share, NEW RECORD badge if it beat the last one, count-up of the pulls, **Watch again** (replays the crash, 3.6), **See the new tower**.
 - **Hall of fame:** list of the last 30 towers (3.8), the record on top.
 - **Solo practice:** same tower view; HUD with pulls counter and the 3 star marks; Pause, Restart.
 - **Solo tower over:** pulls count-up, stars, best, **Again** / **Menu**.
@@ -185,24 +189,24 @@ Crowd Tower has no level list. The community tower is the "daily", and the solo 
 - **Palette:**
   | Hex | Role |
   |---|---|
-  | `#2F5A9E` | Stage blue: background (darker `#1F3F73` vignette pre-rendered once) |
+  | `#2F5A9E` | Stage blue: background (darker `#1F3F73` vignette as a CSS gradient behind the 3D canvas) |
   | `#E8B86D` | Wood: blocks (lighter top faces `#F3CF8E`, side faces `#C9944D`) |
   | `#8A5A2B` | Table and panel headers |
   | `#2B2233` | Ink: outlines (3 px), text, shadows at 25% |
   | `#FFD23F` | Vote accent: candidate tags, bars, timer digits |
   | `#5CB85C` | Your vote: your check mark, Vote button |
-- **Key visuals:** the tower in a fixed **3/4 isometric view** so both faces show block ends: X layers show 3 ends on the left face, Z layers on the right face. This keeps every block clickable (a straight front view, as in the mockup, hides 2 of the 3 blocks in every other layer). Blocks are pre-rendered sprites (3 faces). The camera zooms to keep the whole tower in the 560 px play height down to a 14 px layer, then scrolls with the tower top pinned.
+- **Key visuals:** the game is **3D** (brief). Blocks are real 3D boxes (3 × 1 × 0.6 units) in **Three.js**, with flat toy shading so the top, long side and end read as `#F3CF8E`, `#E8B86D` and `#C9944D`, dark outlines (inverted hull, about 3 px), and soft shadows on the table only. An **orthographic camera** at a fixed 3/4 angle (45° around, 30° down) makes the tower read like isometric art and shows both faces with block ends: X layers show 3 ends on the left face, Z layers on the right face. This keeps every block clickable (a straight front view, as in the mockup, hides 2 of the 3 blocks in every other layer). The camera zooms to keep the whole tower in the 560 px play height down to a 14 px layer, then follows the tower top. It moves only for the collapse (3.6).
 - **Juice list:**
   - Vote: the tag pops with squash, the bar grows with ease-out, "+1" floats up.
   - Pull: three judders as the block slides, dust puff from the hole.
   - Wobble: tower sways (3.6), creak sound in sync.
   - Stand: block lands on top with squash and a dust ring, "It stands!" stamp, confetti if it was your pick.
-  - Fall: blocks tumble and bounce, 10 px screen shake for 300 ms, dust cloud, then the panel slides in.
+  - Fall: slow-motion tip with a gasp, the top section slams the table (10 px screen shake for 300 ms), blocks scatter and pile up, dust puffs on big impacts, the camera pulls back, then the panel slides in.
   - Record broken: gold flag on the record line rises past the old one with sparkles.
   - Replays: counter ticks up with each pull.
   - UI: buttons press down 4 px, panels slide in with ease-out.
 - **Concept art prompts** (updated from the brief):
-  - **Gameplay screenshot (16:9):** *"Flat cartoon wooden block tower in a 3/4 isometric view on a wooden table, deep blue background, one layer missing blocks and leaning slightly, three blocks marked with yellow speech-bubble tags A, B and C, a vote panel with yellow and green bars on the right, thick dark outlines, soft shadows, 2D game screenshot, 16:9"*
+  - **Gameplay screenshot (16:9):** *"Stylized 3D cartoon wooden block tower in a 3/4 isometric view on a wooden table, deep blue background, one layer missing blocks and leaning slightly, three blocks marked with yellow speech-bubble tags A, B and C, a vote panel with yellow and green bars on the right, thick dark outlines, soft shadows, stylized 3D game screenshot, 16:9"*
   - **Key art / thumbnail (16:9 and 1:1, no text):** *"a tall slightly leaning wooden block tower on a table, one block halfway pulled out, yellow speech-bubble tags with letters on three blocks, many small cartoon hands raised below like a crowd voting, deep blue background with soft spotlights, flat vector cartoon style, warm wood colors, thick dark outlines, soft drop shadows, toy-like and clean, room for a title, game key art"*
   - **Element sheet:** *"game pieces on a plain background: wooden blocks in isometric view from three angles, a block with a zig-zag crack mark, yellow speech-bubble tags with A, B, C, a green check mark badge, a gold crown, a small flag, a clock icon, one, two and three bar icons, flat vector cartoon style, thick dark outlines, soft drop shadows, game asset sheet, evenly spaced, consistent scale"*
   - **Logo:** *"the words "CROWD TOWER" built from stacked wooden blocks, one block half pulled out, flat vector cartoon style, thick dark outlines, soft drop shadows, plain background, bold and readable at small size"*
@@ -219,7 +223,8 @@ All sounds are synthesized with WebAudio and stay under 500 ms unless noted.
 | Creak | Wobble | Low wooden creak, louder with p |
 | Land | Block on top | Hollow thump |
 | Stands | Pull holds | Short rising two-note chime; crowd "ooh" if the pull was Risky |
-| Collapse | Tower falls | Cascade of wood clatters, 1.2 s |
+| Gasp | Collapse slow-motion tip | Short crowd gasp |
+| Collapse | Tower falls | A deep thud when the top section hits the table, then wood clatters played on physics impacts (louder with impact speed, at most 8 at once), about 3 s |
 | Record | New record | Small fanfare, 1 s |
 
 Music: optional, off by default. A light lo-fi loop (30 s) on the community screen.
@@ -240,6 +245,7 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
 | `replay:skip` | Skip pressed | — |
 | `reveal:seen` | Player watched the round's full reveal (on open or live) | 1 if your pick |
 | `tower:fell:seen` | Player saw a tower fall (live or replay) | pulls of that tower |
+| `tower:fell:watchagain` | Watch again pressed on the Tower fell panel | — |
 | `share:copy` | Result line copied | — |
 | `ui:restart` | Solo restart | — |
 | `settings:music:off`, `settings:sfx:off` | Toggles | — |
@@ -254,8 +260,12 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
   - `community/service.js`: the interface `getState()`, `vote(tag)`, `onUpdate(cb)`. Two versions:
     - `localCrowd.js`: fake crowd in the browser, 60 s rounds, 500–5000 simulated voters with a bias toward safer picks, for development and the slice.
     - `remote.js`: Coolmath community service (contract in 6, to be agreed). Fetches state on open, then polls every 5 minutes, and every 2 s in the last minute before the close.
-  - `render.js` (isometric tower, sprites pre-rendered once), `reveal.js` (scripted pull, wobble, collapse), `ui.js`, `audio.js`, `analytics.js`, `main.js`.
-- **Simulation:** no physics engine. The result of a pull is fixed by `tower.js` + seed; all motion is animation. The game loop runs on `dt` capped at 0.05.
+  - `render.js`: Three.js scene: table, blocks (one instanced mesh), outlines, shadow, orthographic camera, raycast picking for clicks and taps.
+  - `reveal.js`: keyframed pull, wobble and stand. `collapse.js`: the cannon-es world for the fall only (tip, break, crash, settle) and the recorded frames for Watch again.
+  - `ui.js` (HTML/CSS panels over the 3D canvas), `audio.js`, `analytics.js`, `main.js`.
+  - `vendor/three.module.min.js` and `vendor/cannon-es.js`, stored in the game folder and loaded as ES modules with an import map (no CDN, no build step).
+- **Simulation:** two kinds of motion. Keyframed animation for the slide, wobble and stand; cannon-es physics only for the collapse. The result of a pull is fixed by `tower.js` + seed before any motion starts; `tower.js` and `rng.js` never import Three.js or cannon-es, so the server runs the same files. The game loop runs on `dt` capped at 0.05; physics steps at a fixed 1/60 s.
+- **Performance:** at most 54 physics bodies, with sleeping on; one shadow-casting light with a 1024 px shadow map on the table only; pixel ratio capped at 2. Target: 60 fps during a full collapse on a 4 GB Chromebook.
 - **Server (outside this repo, needs Coolmath):** stores towers, rounds and votes; closes each round at midnight Pacific; runs the same `tower.js`; dedupes votes per device token; publishes each round's secret after close; rate-limits votes.
 - **Save keys:** `cm_crowd-tower_settings`, `cm_crowd-tower_solo` (best, stars), `cm_crowd-tower_community` (`lastSeen: { towerId, round }`, `myVotes` for the last 30 rounds, streak, last vote day), `cm_crowd-tower_device` (random anonymous token; no personal data).
 - **Tools:** `tools/simulate.mjs` (Node, headless): runs 10 000 towers with crowd models (safest, random, 50/50, 10% griefers) and prints the median, 10th and 90th percentile life. Used to tune 3.3.
@@ -263,13 +273,14 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
   1. **The backend does not exist yet.** STANDARDS.md allows no network calls except GameAnalytics and the Coolmath SDK. Build everything against `localCrowd.js` so the slice is playable without a server; the service is a swap.
   2. **Is voting enough fun?** Prove it in the slice with the fake crowd at 60 s rounds before investing in the server.
   3. **Tuning:** prove with `simulate.mjs` before the slice that a tower lasts about two weeks: not a few days, not months.
+  4. **3D collapse:** look, speed and size. Before the slice, build a throwaway collapse prototype (18-layer tower, pull, fall, Watch again) and check it is fun to watch, holds 60 fps on a 4 GB Chromebook, and keeps the game under 2 MB.
 
 ## 13. Scope
 - **v1:** community tower (rounds, vote, reveal, replay, fell panel), hall of fame, solo practice tower, emoji line and streak, local fake crowd, simulator, remote service against the agreed contract.
 - **Later:** event towers (an hourly tower for a special day, giant 30-layer tower), community-voted tower skins, "predict: will it stand?" side vote, per-class (teacher) towers.
 - **Cut:**
   - Free choice of any block in the community vote: too easy to grief, too hard to read with thousands of voters. Three candidates keep the vote readable.
-  - Real rigid-body physics: results would differ between devices and the server could not decide them.
+  - Physics deciding whether a pull stands: results would differ between devices and the server could not decide them. Physics only plays the crash after the rules decide (3.6).
   - Player names, chat or comments on the leaderboard: kid-safety. The hall of fame lists towers, not people.
   - Drag-to-pull skill in solo: adds a second game; revisit after the slice.
 
@@ -289,5 +300,6 @@ Music: optional, off by default. A light lo-fi loop (30 s) on the community scre
 | Ad breaks | After a replay or a fell panel, never during a reveal | Coolmath | Open |
 
 ## 15. Changelog
+- 2026-10-27 — The game is 3D (brief): Three.js rendering with an orthographic 3/4 camera, and a cannon-es physics collapse (tip, break, crash, settle) with Watch again. Physics only plays the crash; the rules still decide every result.
 - 2026-10-27 — Rounds changed from hourly to daily (24 h, closing at midnight Pacific). Retuned the fall odds, risk labels, solo stars and tuning targets for ~2-week towers; the reveal now plays on your first visit after the close.
 - 2026-10-27 — First draft from the "CMG Community Features (part 3)" idea slide.
