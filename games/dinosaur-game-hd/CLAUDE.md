@@ -10,7 +10,7 @@
 @../../PHASES.md
 
 ## Why it works for Coolmath
-Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: coins, unlockable runners (classic dinosaurs and characters from our game Tag), a daily run, and a 2-player race on one keyboard.
+Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: coins, unlockable runners (classic dinosaurs and characters from our games Tag and Hangman), a daily run, and a 2-player race on one keyboard.
 
 **Codename:** "Dinosaur Game: HD Edition". The original belongs to Google: the final name, the logo and the store text never say "Chrome", "Google" or "T-Rex Runner", and the dino and its sprites are original art, not traced from Chrome **[confirm final name]**.
 
@@ -66,15 +66,18 @@ The characters from our game **Tag** (a work-for-hire project we own) are the re
 | Purple hood, dark hood with white eyes | Reach 3000 m in one run |
 | Red dino, one big eye, jagged teeth | Unlock every other runner (the completionist prize) |
 
+### Hangman beast (achievement)
+The furry beast from **Coolmath Hangman** (also ours) joins as one more achievement runner: a round black fur ball with two horns, sleepy white eyes and one fang (reference: `reference/hangman-beast.png`, redrawn as pixel art). Achievement **[confirm]**: reach the 5th night in one run, since it is a creature of the dark. Its sprite needs a light rim or outline so it stays visible against the night sky.
+
 The achievements are tracked only in the save file: no separate achievements screen, the Runners screen is the list.
 
 ## Progression and content (v1)
 - Endless 1P run, 2P race, daily run.
-- 11 runners: the T-Rex, 3 classic dinosaurs bought with coins, and 7 Tag characters unlocked by achievements.
+- 12 runners: the T-Rex, 3 classic dinosaurs bought with coins, and 8 crossover characters (7 from Tag, the Hangman beast) unlocked by achievements.
 - One desert scene with day and night.
 
 ## Retention
-Best distance, daily run streak, saving up for the next dinosaur, chasing the Tag characters, and the friend you just lost to sitting next to you.
+Best distance, daily run streak, saving up for the next dinosaur, chasing the crossover characters, and the friend you just lost to sitting next to you.
 
 ## Art direction
 **Open: two candidates, picked in the GDD [confirm].**
@@ -99,7 +102,7 @@ Jump "boop", duck swoosh, coin chime (pitch rises on a coin streak), 100 m miles
 - Questions to answer: do coins and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
 
 ## Scope
-- **v1:** 1P endless, 2P race, daily run, coins, 11 runners (4 dinosaurs, 7 Tag characters with achievements), day/night, one desert scene.
+- **v1:** 1P endless, 2P race, daily run, coins, 12 runners (4 dinosaurs, 8 crossover characters with achievements), day/night, one desert scene.
 - **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as a coin sink once all 3 are bought. Not planned: power-ups, missions, upgrades, lives, loot boxes.
 
 ## Risks and open questions
