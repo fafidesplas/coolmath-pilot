@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-28 — Mixed Nuts deleted
+- Owner request: removed the level "Mixed Nuts" (mega yacht → cruise ship → swan) from `levels/levels.js`. World 1 is now Odd Couple, Way Down, Rush Hour and Marina. Docs that count the levels updated.
+- Level numbers after it each moved down by one, and saved stars and best scores are stored by level number (`saveData.stars[i]`), so a save from before this change shows its old Rush Hour and Marina results on the wrong levels. Fine for the prototype; a release save would need keys by level name.
+- GDD §6 still plans "Mixed Nuts" as level 10, the world finale. Open: keep it in the plan or cut it.
+
 ## 2026-10-28 — Editor: hierarchy on the left, inspector on the right
 - Owner request: the editor's one right-hand panel is now two, like Unity. Left, the hierarchy: the chain in parking order (with the up/down buttons), then every other object by kind in foldable groups, and the Add buttons on top. Right, the inspector: level picker, name, Play / Undo / Save, then the selected thing's fields and the keys.
 - Picking something on the canvas highlights its row and scrolls it into view; picking a row selects and frames it. Rows are one line each (30 traffic boats fit without wrapping). Both panels hide in test play and come back with `E`. The camera framing, the title text and the "mouse is over a panel" check account for both sides.

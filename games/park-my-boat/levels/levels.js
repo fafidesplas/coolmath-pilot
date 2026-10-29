@@ -177,17 +177,6 @@ const SCALE_LEVELS =
         ],
     },
     {
-        name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
-        boats:
-        [
-            { boat: 'yacht', start: { x: 964, y: 656, a: 0 }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] } },
-            { boat: 'cruise', start: { x: 796, y: 546, a: -PI/2 }, slip: { x: 522, top: 700, a: 0, pad: [0.6, 0.3], fingers: 'none' } },
-            { boat: 'swan', start: { x: 316.8, y: 690.4, a: PI }, slip: { x: 309, top: 700, a: PI/2, pad: [1, 0.9] } },
-        ],
-        ducks: [{ x: 780, y: 690, kids: 3 }, { x: 300.7, y: 694, kids: 3 }],
-        buoys: [[1000, 300, 5]],
-    },
-    {
         // a short channel east to the slip, crossed by three narrow canals of looping traffic, faster each
         // time; all of it fits in the jet ski's view. The 3.5 m of sand between canals is where you wait for
         // a gap. The loops turn round in lagoons just off screen to the north and south, which run out to sea.

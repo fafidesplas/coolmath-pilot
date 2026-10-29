@@ -131,7 +131,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
   - **World 2, Big & Small:** chains of 2–5 boats with big scale jumps, traffic, crowded marinas and currents together.
   - **Bonus, Continental Drift:** rowboat → cruise ship → island → continent, 100x each step. Unlocks when all 20 levels are finished.
 - **Teaching order:** each new element first appears where it can't hurt (ducks away from the line to the slip), next in the way (ducks crossing the fairway), then with an earlier element (ducks plus moored boats).
-- **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 5 current levels pass; check new levels with the same test (park each boat, look for the next).
+- **Hand-off rule:** when a boat parks, the next boat in the chain must be on screen in the parked boat's framing. A small next boat shows whole; a big one shows at least a part (a cruise ship next to a rowboat's slip shows as a wall of hull). The player sees what comes next before the camera moves, and big boats waiting their turn become obstacles for the boats before them. All 4 current levels pass; check new levels with the same test (park each boat, look for the next).
 - **Slip-in-view rule:** every boat starts with its whole slip on screen, at its own framing. No crossing open water with nothing happening: the challenge is stopping, turning and the obstacles around the slip, not distance. The one exception is a gauntlet level built around the trip itself, and even that fits on the player's screen (Rush Hour: 30 m, all in the jet ski's view). Together with the hand-off rule, this keeps each level's slips close together.
 - **Open-sea rule:** no level is a closed pool. Every harbor, marina or canal opens onto the sea somewhere, even off screen: a harbor mouth, an open side, lagoons that run out to sea. Boats come from somewhere and the water goes somewhere. (Done for all 5 levels: the `basin()` helper leaves the south side open, and Rush Hour's lagoons run out to sea.)
 - **Design note: first boat (Pao, 2026-10-28, from Fafi's playtest):** level 1's first boat should be the best-feeling boat in the game, since it is the player's first touch. In the current build, level 1 is Odd Couple (rowboat → cruise ship): for Fafi the big boat comes too early, and parking it doesn't feel good. The planned order above (one small boat per level until the first scale jump at level 4) already moves the ship later; which boat feels best still needs a decision (see 14).
@@ -283,7 +283,7 @@ No daily events (no daily in v1).
 - **Second risk:** budgets that feel fair: bumps are the comedy, so a light scrape must not sink three stars. The `boat:…:park` damage from playtests sets them.
 
 ## 13. Scope
-- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart without preview, clearing the slip, miss feedback (no text), automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new levels come in phase 3. Gate: a teammate plays it cold and wants more.
+- **Vertical slice (phase 2):** the 4 existing levels (Odd Couple, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart without preview, clearing the slip, miss feedback (no text), automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new levels come in phase 3. Gate: a teammate plays it cold and wants more.
 - **v1:**
   - 20 levels in 2 worlds, plus the hidden bonus.
   - Money and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
@@ -335,7 +335,7 @@ Decided in review 1 (2026-10-25):
 |---|---|---|---|
 | Something blocks the slip | Boats in it start their engines and drive out; logs and buoys drift out (3.8) | Pao | Decided |
 | Inside but under 50% accuracy | A message per cause, with the slip showing what's wrong (3.5) | Pao | Decided |
-| Vertical slice | The 5 existing levels in the full v1 shell (13) | Pao | Decided |
+| Vertical slice | The 4 existing levels in the full v1 shell (13) | Pao | Decided |
 | Players who close the tab | `boat:…:start` events; `stars:…` dropped (11) | Pao | Decided |
 | Teaching order | Jet ski gets level 5; level 9 is Zippy → Party Barge; traffic first at 11 | Pao | Decided |
 | Edge arrows | Size-aware warning, at most 2 traffic arrows (3.7) | Pao | Decided |
@@ -370,6 +370,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-28 — Level "Mixed Nuts" deleted from the build (it stays in the §6 plan as level 10 until decided). The prototype has 4 regular levels.
 - 2026-10-28 — Level 1 tutorial cut (ghost pointer, key icons, "Park in the box."). The game shows no instruction or flavor text: no hints, tagline or miss message. Text is menu buttons, labels and numbers only.
 - 2026-10-28 — Design note from Fafi's playtest: level 1's first boat should feel the best; the big boat comes too early and doesn't feel good to park.
 - 2026-10-25 — Unparking: two open-ocean jams, Open Water and Raft-Up.
