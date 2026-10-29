@@ -139,35 +139,43 @@ const SCALE_LEVELS =
     },
     {
         name: 'Way Down',
-        land: [[-3000, -20, 320, 3900], [1470, -20, 4700, 3900], [-3000, 915, 4700, 3900]],
+        land: [[-3000, -110, 320, 3900], [900, -80, 3990, 3920], [-3000, 915, 4700, 3900]],
         docks:
         [
             { x0: 320, y0: 900, x1: 1470, y1: 915, quay: true },
-            { x0: -30, y0: -20, x1: 1760, y1: 60 },
+            { x0: -20, y0: -180, x1: 1770, y1: -100 },
             { x0: 506, y0: 891.5, x1: 547.5, y1: 900 },
             { x0: 505.8, y0: 885.4, x1: 508, y1: 891.8 },
             { x0: 518.4, y0: 885.2, x1: 520.6, y1: 891.6 },
             { x0: 534.4, y0: 885.2, x1: 536.6, y1: 891.6 },
             { x0: 545.4, y0: 885.2, x1: 547.6, y1: 891.6 },
+            { x0: 304, y0: 786, x1: 432, y1: 800 },
         ],
         boats:
         [
-            { boat: 'container', start: { x: 1250, y: 780, a: PI }, slip: { x: 620, top: 900, a: -PI/2, pad: [0.5, 0.25], fingers: 'none' },
-              hint: 'Big ships take a long time to stop. Slow down early.' },
             { boat: 'trawler', start: { x: 350, y: 873, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] },
               hint: 'Squeeze through the gap between the yachts, then turn into your slip.' },
             { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 571.5, top: 900, a: PI/2, pad: [1.4, 1] },
               hint: '' },
+            { boat: 'container', start: { x: 615, y: 698, a: -PI/2 }, slip: { x: 616, y: 136, a: -PI/2, pad: [1.4, 1] },
+              hint: '' },
         ],
         // the trawler's tight squeeze on the way to its slip: two 40 m yachts in a line west of it, one
         // nose-in to the quay, leave a 13 m gap (y 845-858) for a 9.6 m boat
-        moored: [{ boat: 'yacht', k: 5, x: 419, y: 841.25, a: PI*11/12 }, { boat: 'yacht', k: 5, x: 410, y: 812.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 401, y: 793.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 397, y: 776.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 423, y: 857.25, a: PI*11/12 }],
+        moored: [{ boat: 'yacht', k: 5, x: 419, y: 841.25, a: PI*11/12 }, { boat: 'yacht', k: 5, x: 410, y: 812.25, a: PI/12 }, { boat: 'yacht', k: 5, x: 353, y: 762.25, a: -PI/2 }, { boat: 'yacht', k: 5, x: 423, y: 857.25, a: PI*11/12 }, { boat: 'yacht', k: 5, x: 335, y: 762.25, a: -PI/2 }, { boat: 'yacht', k: 5, x: 371, y: 762.25, a: -PI/2 }, { boat: 'yacht', k: 5, x: 412, y: 762.25, a: -PI/2 }],
         ducks: [{ x: 466, y: 868, kids: 2 }],
         traffic:
         [
-            { boat: 'yacht', path: [[1160, 620], [1015, 755], [1020, 885]], end: 'back', speed: 0.8, during: [1] },
-            { boat: 'speedboat', path: [[510, 879.4], [501.4, 882.6], [498.6, 898.2]], end: 'back', speed: 0.6 },
-            { boat: 'trawler', path: [[556.5, 887.5], [530.5, 859.5], [456, 811], [441, 831], [470, 846], [514, 873]], end: 'loop', speed: 0.6 },
+            { boat: 'speedboat', path: [[510, 879.4], [501.4, 882.6], [498.6, 898.2]], end: 'back', speed: 0.6, during: [3] },
+            { boat: 'trawler', path: [[560.5, 811.5], [564, 894]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'sailboat', path: [[523.5, 885], [522, 867], [504, 855.5]], end: 'stop', speed: 0.6, during: [2] },
+            { boat: 'speedboat', path: [[534.5, 863], [529, 874], [529.5, 889.5]], end: 'stop', speed: 0.6, during: [2] },
+            { boat: 'dinghy', path: [[539, 847.5], [538, 890]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'dinghy', path: [[542, 846.5], [540.5, 890]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'dinghy', path: [[544.5, 844.5], [543.5, 889.5]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'jetski', path: [[549.5, 852], [551, 897]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'jetski', path: [[551.7, 849.8], [553.2, 896.8]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'jetski', path: [[554.5, 847.2], [556, 897.2]], end: 'back', speed: 0.6, during: [2] },
         ],
     },
     {
