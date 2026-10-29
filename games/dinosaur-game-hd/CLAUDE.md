@@ -25,7 +25,7 @@ Title (the dino sleeps; any key wakes it) → run starts → jump and duck throu
 - **Jump:** tap to jump; hold for a higher jump (variable height, as in the original).
 - **Duck:** hold down to duck under flying obstacles. Down in the air does a fast-fall.
 - **Obstacles:** small and large cacti (single and in groups), and pterodactyls at three heights (jump, duck, or either). Obstacles are generated from a seed; gaps are always clearable at the current speed.
-- **Eggs:** small speckled eggs (more "in-world" than coins), placed in short arcs and lines, often on the riskier path (over a tall cactus group, at duck height under a pterodactyl). Eggs never block or change the run. They are counted and banked at the end of the run, crash or not.
+- **Eggs:** small speckled eggs (more "in-world" than coins), placed in arcs, lines, grids and big bunches (like Jetpack Joyride's coins), often on the riskier path (over a tall cactus group, at duck height under a pterodactyl). Eggs never block or change the run. They are counted and banked at the end of the run, crash or not.
 - **Day and night:** the scene changes from day to night and back every few hundred meters, like the original, with a smooth color change.
 - **Milestones:** a short flash and chime every 100 m.
 
@@ -67,7 +67,7 @@ The characters from our game **Tag** (a work-for-hire project we own) are the re
 | **Dragon** | red, one big eye, jagged teeth | Unlock every other runner except Alien (the completionist prize) |
 
 ### Hangman beast (achievement)
-The furry beast from **Coolmath Hangman** (also ours) joins as one more achievement runner: a round black fur ball with two horns, sleepy white eyes and one fang (reference: `reference/hangman-beast.png`, redrawn as pixel art). Achievement: reach the 4th night (2800 m) in one run, since it is a creature of the dark. Its sprite needs a light rim or outline so it stays visible against the night sky.
+The furry beast from **Coolmath Hangman** (also ours) joins as one more achievement runner: a round black fur ball with two horns, sleepy white eyes and one fang (reference: `reference/hangman-beast.png`, redrawn as pixel art). Achievement: see 10 nights in total, since it is a creature of the dark. Its sprite needs a light rim or outline so it stays visible against the night sky.
 
 The achievements are tracked only in the save file: no separate achievements screen, the Runners screen is the list.
 

@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-29 — GDD review applied
+- Phase 1c critical review: 13 of 14 fixes applied (hitbox template, frame budget, Hangman beast at 10 nights in total, fuller sky framing, integer scaling, Joyride-style egg grids and nests, analytics, STANDARDS test hook, HUD layout, separate RNG streams). Solo farming of the Alien achievement is accepted.
+- Prototype art: best-effort placeholders; final art as a sprite sheet later.
+- Next: a teammate reads `GDD.md`; when approved, set Status: Approved and stage `slice`.
+
 ## 2026-10-29 — GDD first draft
 - Phase 1a answered: HD Pixel in Canvas 2D, the original's tuning numbers, name "Dinosaur Game: Cool Edition", eggs instead of coins (dinosaurs hatch from them), 2P speed same as 1P, single races with a rematch tally, touch 2P split left/right with a duck corner each.
 - Tag characters now use their real names: Squatch, Griffin, Unicorn, Kraken, Pixie, Alien (2P-only bonus), Dragon (needs everything but Alien). Hangman beast unlocks at the 4th night. Name references saved as `reference/tag-roster.png` and `reference/tag-kraken.png`.
