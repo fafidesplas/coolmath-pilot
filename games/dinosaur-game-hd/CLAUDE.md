@@ -10,15 +10,15 @@
 @../../PHASES.md
 
 ## Why it works for Coolmath
-Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: coins, skins, a daily run, and a 2-player race on one keyboard.
+Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: coins, unlockable runners (classic dinosaurs and characters from our game Tag), a daily run, and a 2-player race on one keyboard.
 
 **Codename:** "Dinosaur Game: HD Edition". The original belongs to Google: the final name, the logo and the store text never say "Chrome", "Google" or "T-Rex Runner", and the dino and its sprites are original art, not traced from Chrome **[confirm final name]**.
 
 ## The design rule: no bloat
-The first 10 seconds must feel exactly like the original: the same two inputs, the same speed curve, the same "you missed one jump and it's over". Every addition must pass this test: *does it change what a run feels like?* If yes, it is out of v1. Coins and skins are on top of the run, never inside it: no power-ups, no upgrades that change physics, no lives, no levels.
+The first 10 seconds must feel exactly like the original: the same two inputs, the same speed curve, the same "you missed one jump and it's over". Every addition must pass this test: *does it change what a run feels like?* If yes, it is out of v1. Coins, runners and achievements are on top of the run, never inside it: no power-ups, no upgrades that change physics, no lives, no levels.
 
 ## Core loop
-Title (the dino sleeps; any key wakes it) → run starts → jump and duck through obstacles as the speed rises, grab coins on the way → one hit ends the run → results: distance, coins, best → instant restart (under 1 s), or spend coins on a skin.
+Title (the dino sleeps; any key wakes it) → run starts → jump and duck through obstacles as the speed rises, grab coins on the way → one hit ends the run → results: distance, coins, best → instant restart (under 1 s), or spend coins on a new runner.
 
 ## Mechanics
 - **Run:** the dino runs automatically. Speed starts slow and rises steadily up to a cap, like the original. Score is distance.
@@ -41,40 +41,52 @@ Title (the dino sleeps; any key wakes it) → run starts → jump and duck throu
 
 ## Shell (differs from STANDARDS)
 An endless runner has no levels, so the level-select and star screens are replaced:
-- **Title:** logo, **Play** (1P), **2 Players**, **Skins**, settings.
-- **Skins:** a row of dinos with prices in coins; locked ones show as silhouettes. About 8 skins in v1 (for example: classic, robo-dino, dino in a hoodie, golden, ghost, lava, ice, pixel-original), all cosmetic **[confirm list]**. The characters from our game **Tag** (a work-for-hire project we own) are planned as crossover runners. They keep the same hitbox as the dino.
-
-### Tag crossover characters
-There is no source art; the screengrabs in `reference/` (`tag-forest.png`, `tag-tower.png`) are the reference, and the sprites are redrawn from them. Names come from the team **[confirm]**. From the screengrabs:
-- **Red dino:** one big eye, jagged teeth. It is a dinosaur, so it could be the default runner instead of a new dino **[confirm]**.
-- **Pink unicorn:** white horn, big eye.
-- **Blue blob:** a droplet shape with a worried face.
-- **Teal squid:** round head, droopy eyes, tentacle mustache.
-- **Green frog in a cap:** glasses and a dark cap.
-- **Purple hood:** a dark hooded shape with white eyes.
-- **Orange fox:** big eye, white muzzle and tail.
-- **Results:** distance and coins count up, best distance, **Retry** (big) / **Skins** / **Menu**.
+- **Title:** logo, **Play** (1P), **2 Players**, **Runners**, settings.
+- **Runners:** a row of all the runners. Locked ones show as silhouettes, with their price in coins or their achievement and progress (for example "Reach 2000 m: 1450 / 2000").
+- **Results:** distance and coins count up, best distance, any achievement earned in this run, **Retry** (big) / **Runners** / **Menu**.
 - **Daily run:** one date-seeded run per day, same for everyone, with a streak and an emoji result line (STANDARDS daily challenge).
+
+## Runners
+All runners are cosmetic: same jump, same speed, same hitbox. Each one has its own run, jump, duck and crash frames, drawn to fit the T-Rex's footprint.
+
+### Classic dinosaurs (coins)
+- **T-Rex:** the default, free from the start.
+- **Triceratops**, **Pachycephalosaurus** and **Stegosaurus:** bought with coins, at rising prices **[confirm prices]**. Their duck pose lowers the head (horns, dome, plates), so the four-legged dinos still fit under a pterodactyl.
+
+### Tag crossover characters (achievements)
+The characters from our game **Tag** (a work-for-hire project we own) are the rewards for achievers and completionists: each one unlocks with one achievement and can't be bought. There is no source art; the screengrabs in `reference/` (`tag-forest.png`, `tag-tower.png`) are the reference, and the sprites are redrawn from them. Names come from the team **[confirm]**.
+
+| Character (from the screengrabs) | Achievement **[confirm]** |
+|---|---|
+| Blue blob, a droplet with a worried face | Reach 1000 m in one run |
+| Orange fox, big eye, white muzzle and tail | Collect 1000 coins in total |
+| Green frog in a cap, glasses and a dark cap | Win 10 two-player races |
+| Pink unicorn, white horn, big eye | Play the daily run 7 days in a row |
+| Teal squid, round head, tentacle mustache | Run 50 km in total |
+| Purple hood, dark hood with white eyes | Reach 3000 m in one run |
+| Red dino, one big eye, jagged teeth | Unlock every other runner (the completionist prize) |
+
+The achievements are tracked only in the save file: no separate achievements screen, the Runners screen is the list.
 
 ## Progression and content (v1)
 - Endless 1P run, 2P race, daily run.
-- About 8 skins bought with coins; a few unlocked by distance (first 1000 m) instead of coins.
+- 11 runners: the T-Rex, 3 classic dinosaurs bought with coins, and 7 Tag characters unlocked by achievements.
 - One desert scene with day and night.
 
 ## Retention
-Best distance, daily run streak, saving up for the next skin, and the friend you just lost to sitting next to you.
+Best distance, daily run streak, saving up for the next dinosaur, chasing the Tag characters, and the friend you just lost to sitting next to you.
 
 ## Art direction
 **Open: two candidates, picked in the GDD [confirm].**
 1. **HD Pixel (recommended, and the style of Tag, see `reference/`):** a 16-bit SNES look. The dino is a chunky pixel sprite with more frames than the original (run, jump, duck, crash with a dizzy face), a few colors per sprite instead of one gray, parallax desert layers (dunes, mesas, clouds), and a warm sunset to deep blue night. Drawn in code or a small sprite sheet, Canvas 2D, stays well under 2 MB.
 2. **Voxel 3D:** the same side-on game rendered as voxel models with a slightly tilted camera, soft shadows and depth. Needs Three.js bundled locally, costs more size and Chromebook performance, and more art time.
 
-Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstacles have strong silhouettes, coins spin and sparkle, and skins change color and shape, never the hitbox.
+Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstacles have strong silhouettes, coins spin and sparkle, and runners change the look, never the hitbox.
 
 ### Concept art prompts
 - **Gameplay screenshot (16:9):** *"16-bit pixel art side-scrolling runner, a cute green pixel dinosaur with a big head and tiny arms jumping over a cactus in a desert, a line of spinning gold coins in an arc above the cactus, a pterodactyl flying ahead, parallax dunes and mesas, warm sunset sky, crisp SNES-style pixel art, 16:9 game screenshot"*
 - **Key art / thumbnail (16:9 and 1:1, no text):** *"a cute pixel art dinosaur mid-jump over a cactus, gold coins flying around it, a second dinosaur in another color running below, desert at sunset turning to night with stars, crisp 16-bit SNES-style pixel art, saturated colors, room for a title, game key art"*
-- **Character sheet:** *"pixel art dinosaur sprite sheet: run cycle, jump, duck, crash with dizzy eyes; plus skin variants (robot, hoodie, golden, lava, ice), 16-bit SNES style, consistent size, plain light background, evenly spaced"*
+- **Character sheet:** *"pixel art dinosaur sprite sheet: run cycle, jump, duck, crash with dizzy eyes; plus a triceratops, a pachycephalosaurus and a stegosaurus in the same poses, 16-bit SNES style, consistent size, plain light background, evenly spaced"*
 - **Logo:** *"the words "DINOSAUR GAME" in chunky pixel letters with a small "HD EDITION" banner, a pixel dinosaur head peeking over the letters, 16-bit pixel art, plain background, bold and readable at small size"*
 - **Negative prompt:** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, blood, Google logo, Chrome logo, cluttered background, blurry, low contrast, UI buttons"*
 
@@ -83,17 +95,20 @@ Jump "boop", duck swoosh, coin chime (pitch rises on a coin streak), 100 m miles
 
 ## GameAnalytics
 - No levels, so progression events use one id per mode: `endless`, `versus`, `daily`, with the distance as score on `Fail`.
-- Extra events: `run:death:<obstacle-type>`, `run:distance` (value), `coins:earned` (value), `skin:buy:<id>`, `skin:equip:<id>`, `versus:start`, `versus:winner:<p1|p2>`.
-- Questions to answer: do coins and skins make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
+- Extra events: `run:death:<obstacle-type>`, `run:distance` (value), `coins:earned` (value), `runner:buy:<id>`, `runner:equip:<id>`, `achievement:<id>`, `versus:start`, `versus:winner:<p1|p2>`.
+- Questions to answer: do coins and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
 
 ## Scope
-- **v1:** 1P endless, 2P race, daily run, coins, about 8 skins, day/night, one desert scene.
-- **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, more skins. Not planned: power-ups, missions, upgrades, lives, loot boxes.
+- **v1:** 1P endless, 2P race, daily run, coins, 11 runners (4 dinosaurs, 7 Tag characters with achievements), day/night, one desert scene.
+- **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as a coin sink once all 3 are bought. Not planned: power-ups, missions, upgrades, lives, loot boxes.
 
 ## Risks and open questions
 - **Feel:** the original's jump arc, hitbox forgiveness and speed curve are what make it work. Measure them by playing the original side by side and match them before adding anything.
 - **IP:** keep the name and art clearly original (see above); [confirm] with the team before any public build.
-- **Tag crossover:** decide in the GDD whether the Tag characters are unlocked with coins, by distance, or from the start, and whether Tag's red dino is the default runner. Tag is chunky pixel art with dark outlines and soft-dark backgrounds, which matches the HD Pixel direction; that is one more reason to pick it over voxel.
+- **Coin sink:** with only 3 dinosaurs to buy, coins lose their purpose once they are bought. Set prices so that takes a while, and keep color variants for later if the data shows players stop caring about coins.
+- **Achievement tuning:** each Tag achievement must be reachable by a committed player without grinding for hours; check the targets against real run data in phase 4.
+- **Four-legged hitbox:** the triceratops and stegosaurus are long; drawing them inside the T-Rex footprint may look cramped. Test the sprites early.
+- **Tag art style:** Tag is chunky pixel art with dark outlines and soft-dark backgrounds, which matches the HD Pixel direction; that is one more reason to pick it over voxel.
 - **2P on touch:** two players on one tablet with ducking may not work; 2P might be keyboard only.
 - **Art style:** HD pixel vs voxel decides the tech (Canvas 2D or LittleJS vs Three.js). Decide in the GDD.
 - **Coin placement:** coins must tempt, not distract. If players die chasing coins in the first 30 s, move them.
@@ -102,7 +117,7 @@ Jump "boop", duck swoosh, coin chime (pitch rises on a coin streak), 100 m miles
 `STANDARDS.md` checklist, plus: a player who knows the original says it "feels the same, but better" within one run; two players can start a race from the title in two clicks.
 
 ## Vertical slice (phase 2)
-1P run with jump (variable height), duck and fast-fall; cacti and pterodactyls from a seed; speed ramp; coins; day/night; crash, results and instant restart; best distance saved; the title with the sleeping dino; GameAnalytics stubs. 2P and skins come in phase 3.
+1P run with jump (variable height), duck and fast-fall; cacti and pterodactyls from a seed; speed ramp; coins; day/night; crash, results and instant restart; best distance saved; the title with the sleeping dino; GameAnalytics stubs. 2P, runners and achievements come in phase 3.
 
 ## How to start
 Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.
