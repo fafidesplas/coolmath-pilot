@@ -990,7 +990,7 @@ function pressButton(id)
     else if (id.startsWith('level')) loadLevel(+id.slice(5));
     else if (id == 'pause') isPaused = !isPaused;
     else if (id == 'resume') isPaused = false;
-    else if (id == 'restart' || id == 'retry') { track('design', 'ui:restart'); loadLevel(levelIndex); }
+    else if (id == 'restart' || id == 'retry') { track('design', 'ui:restart'); if (window.pmbEditor?.testing) pmbEditor.restartTest(); else loadLevel(levelIndex); }
     else if (id == 'next') nextInMode() === undefined ? setScreen('levels') : loadLevel(nextInMode());
 }
 

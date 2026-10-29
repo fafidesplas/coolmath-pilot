@@ -18,6 +18,9 @@
     Two panels: the hierarchy on the left (the chain in parking order, then every other object by kind;
     click a group's header to fold it, a row to select and frame it, the buttons at the top to add things)
     and the inspector on the right (the level, the selected thing's fields, the keys).
+
+    Test play: E from the first boat, Shift+E or the ▶ button on a chain boat from that boat (earlier boats
+    parked for you); R restarts from the same boat.
 */
 
 'use strict';
@@ -83,20 +86,24 @@ window.pmbEditor = (() =>
         cam.pos = keep.pos; cam.wu = keep.wu;
     }
 
-    function play(fromSel)
+    // test play from boat `from` of the chain: the earlier boats are parked in their slips for you, and R restarts from the same boat
+    let playFrom = 0;
+    function play(fromSel) { startTest(fromSel && (sel?.kind == 'start' || sel?.kind == 'slip') ? sel.i : 0); }
+    function startTest(from)
     {
-        const from = fromSel && sel?.kind == 'start' ? sel.i : 0;
+        playFrom = from = clamp(from, 0, Math.max(0, (def.boats?.length || 1) - 1));
         ED.active = false; ED.testing = true; drag = null;
         loadLevel(li);
-        // earlier boats are parked in their slips for you
         for (let n = 0; n < from; n++)
         {
             fleet[n].pos = slips[n].pos.copy(); fleet[n].angle = slips[n].a; fleet[n].updateWorld();
             startBoat(n + 1);
         }
         updateCamera(0, true);
+        testTag.textContent = `TEST PLAY${from ? ` from boat ${from + 1}` : ''} · R restarts it · E to edit`;
         showPanels(false); testTag.style.display = 'block';
     }
+    ED.restartTest = () => startTest(playFrom);
 
     function backToEdit(msg)
     {
@@ -1143,7 +1150,7 @@ window.pmbEditor = (() =>
         selectionFields();
 
         panel.append(el('h3', { textContent: 'Keys' }), el('div', { className: 'keys', innerHTML: `
-            <b>E</b> play / edit · <b>Shift+E</b> play from the selected boat<br>
+            <b>E</b> play / edit · <b>Shift+E</b> play from the selected boat (or ▶ in the hierarchy) · <b>R</b> restarts from that boat<br>
             <b>drag empty</b> pan · <b>wheel</b> zoom · <b>click</b> select · <b>drag</b> move<br>
             <b>drag an edge</b> resize sand, dock, current · <b>Shift+drag empty</b> new sand<br>
             Slips under a pier slide along it; <b>Shift</b> moves them off it<br>
@@ -1207,7 +1214,9 @@ window.pmbEditor = (() =>
                 const t = BOATS[e.boat], here = cur?.kind == 'start' && cur.i == n;
                 const b = button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}`, () => { sel = { kind: 'start', i: n }; frameBoat(n); refreshPanel(); }, here ? 'on' : '');
                 if (here) on = b;
-                box.append(el('div', { className: 'boat' }, [b, button('↑', () => moveBoat(n, -1)), button('↓', () => moveBoat(n, 1))]));
+                box.append(el('div', { className: 'boat' }, [b,
+                    Object.assign(button('▶', () => startTest(n)), { title: 'Test play from this boat' }),
+                    button('↑', () => moveBoat(n, -1)), button('↓', () => moveBoat(n, 1))]));
             });
         for (const [kind, title, label] of OBJECTS)
         {
@@ -1250,7 +1259,7 @@ window.pmbEditor = (() =>
             panel.append(el('div', { className: 'row' }, [
                 button('Start', () => { sel = { kind: 'start', i }; refreshPanel(); }, sel.kind == 'start' ? 'on' : ''),
                 button('Slip', () => { sel = { kind: 'slip', i }; refreshPanel(); }, sel.kind == 'slip' ? 'on' : ''),
-                button('Frame (F)', frameSel), button('Play from here', () => { sel = { kind: 'start', i }; play(true); })]));
+                button('Frame (F)', frameSel), button('Play from here', () => startTest(i))]));
             panel.append(field('boat', select(boatOptions(), () => e.boat, v => { e.boat = v; })));
             panel.append(field('size k', input('number', () => e.k, v => { if (v === undefined) delete e.k; else e.k = v; }, { placeholder: `real size (${t.k})`, step: 'any' })));
             if (sel.kind == 'start')

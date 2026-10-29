@@ -1,5 +1,9 @@
 # Dock All The Boats — devlog
 
+## 2026-10-28 — Editor: test from any boat
+- Owner TODO: Shift+E and the inspector's "Play from here" already started a test at the selected boat; now there is also a ▶ button on every chain row in the hierarchy, Shift+E works with a slip selected, and the test remembers its boat: R or RETRY restart from it instead of boat 1 (new `pmbEditor.restartTest()` hook in `src/main.js`). The on-screen tag says "TEST PLAY from boat N".
+- Checked in Chrome: ▶ from boat 2 of Odd Couple (boat 1 parked in its slip; R restarts at boat 2 and re-parks boat 1); no console errors.
+
 ## 2026-10-28 — Mixed Nuts deleted
 - Owner request: removed the level "Mixed Nuts" (mega yacht → cruise ship → swan) from `levels/levels.js`. World 1 is now Odd Couple, Way Down, Rush Hour and Marina. Docs that count the levels updated.
 - Level numbers after it each moved down by one, and saved stars and best scores are stored by level number (`saveData.stars[i]`), so a save from before this change shows its old Rush Hour and Marina results on the wrong levels. Fine for the prototype; a release save would need keys by level name.
