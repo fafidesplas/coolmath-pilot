@@ -3,22 +3,22 @@
 **Status:** Draft
 **Owner:** Pao · **Reviewed by:** — · **Last updated:** 2026-10-29
 
-> The offline browser dino you already know, with the same jump, the same speed and the same "one mistake and it's over". Now in 16-bit pixel art, with eggs to collect, new runners to hatch and unlock, a daily run, and a race against a friend on the same keyboard.
+> The offline browser dino you already know, with the same jump, the same speed and the same "one mistake and it's over". Now in 16-bit pixel art, with eggs to collect, new runners to hatch and unlock, a golden egg that earns a bonus pterodactyl flight, a daily run, and a race against a friend on the same keyboard.
 
 **Folder slug:** `dinosaur-game-hd` (kept so links don't break; the game's name is **Dinosaur Game: Cool Edition**).
 
 ## 1. Summary
 - **Pillars:**
   1. **It feels exactly like the original.** The jump, duck, speed curve, obstacle rules and hitboxes are the original's numbers. A player who knows it is at home in one second.
-  2. **No bloat.** Everything new sits on top of the run, never inside it: no power-ups, no upgrades, no lives, no levels. Every runner is cosmetic.
+  2. **No bloat.** Everything new sits on top of the run, never inside it: no power-ups, no upgrades, no lives, no levels. Every runner is cosmetic. The one bonus round, the pterodactyl flight (3.8), plays **after** a run ends, never during it.
   3. **One more run, under a second away.** A crash shows the result over the frozen scene; Space starts the next run at once.
 - **Player:** Coolmath players aged 10–24, on a school Chromebook with a keyboard or trackpad, or a tablet, sound often off. Almost all of them have played the no-internet dino.
 - **Session:** One run lasts 20–90 s (a 1000 m run takes about 80 s). A typical visit is 10–20 runs, or a few 2P races: 10–15 minutes.
-- **Hook:** "My best is 1,240, I can beat that." Then: "38 more eggs and the Stegosaurus hatches", "Squatch unlocks at 1000 m", the daily run's streak, and the friend next to you who just won.
+- **Hook:** "My best is 1,240, I can beat that." Then: "38 more eggs and the Stegosaurus hatches", "I grabbed the golden egg, bonus flight!", "Squatch unlocks at 1000 m", the daily run's streak, and the friend next to you who just won.
 
 ## 2. Core loop
 - **Moment (seconds):** see the obstacle → jump (tap or hold) or duck → grab the eggs on the riskier path, or play it safe.
-- **Run (a minute):** sleeping dino → any key → run as the speed rises and day turns to night → one hit ends it → distance and eggs count up → Space, and you are running again.
+- **Run (a minute):** sleeping dino → any key → run as the speed rises and day turns to night → one hit ends it → distance and eggs count up → Space, and you are running again. If the golden egg was grabbed, the results offer a 20 s **bonus flight** first (3.8).
 - **Meta (days):** eggs hatch the 3 classic dinosaurs → achievements unlock the 7 Tag characters and the Hangman beast → daily run streak → 2P races with a friend.
 
 ## 3. Mechanics
@@ -32,7 +32,7 @@ All tuning numbers are the original game's values (Chromium `offline.js`, the "T
 
 ### 3.2 Simulation
 - **Fixed step at 60 Hz** with an accumulator (frame `dt` capped at 0.05 s). Since the original's numbers are per frame at 60 fps, one step = one original frame, so the numbers apply unchanged and the game plays the same at 60 Hz and 144 Hz.
-- Deterministic: obstacles and eggs come from seeded PRNGs (mulberry32), in **two separate streams** derived from the run seed: one for obstacles, one for eggs. A change to egg logic can never change the obstacles of a daily seed or a 2P lane, and nothing the player does ever consumes a random number. The same seed and the same inputs give the same run (daily run, 2P lanes, replays in tests).
+- Deterministic: obstacles and eggs come from seeded PRNGs (mulberry32), in **separate streams** derived from the run seed: one for obstacles, one for eggs (including the golden egg), and one for the bonus flight. A change to egg logic can never change the obstacles of a daily seed or a 2P lane, and nothing the player does ever consumes a random number. The same seed and the same inputs give the same run (daily run, 2P lanes, replays in tests).
 
 ### 3.3 Speed and distance
 - **Start speed:** 6 px/frame (360 px/s). **Acceleration:** +0.001 px/frame every frame. **Cap:** 13 px/frame (780 px/s), reached after about **117 s / 1,660 m**.
@@ -90,6 +90,31 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 - **Target:** a typical 400 m run collects **20–50 eggs**, a great run about 150 (grids and nests raise the rate). Tune in the slice. If playtesters die chasing eggs in the first 30 s, the patterns there get easier.
 - **Egg streak:** eggs picked up less than 0.6 s apart raise the pickup sound's pitch one step each, up to 8 steps.
 
+#### Golden egg
+- **What:** a gold egg with a sparkle (12×15 px), the ticket to the bonus flight (3.8). Worth no eggs by itself.
+- **When:** at most **one per run**. The egg stream picks a distance between **500 and 900 m**; the first gap after it that is long enough gets the golden egg. So every run that passes 900 m sees one.
+- **Where:** alone, at the **apex of a held jump** (about 84 px up) in an empty gap, so it takes a full jump to get. Missed is missed: it doesn't come back in that run.
+- **Grabbing it** never changes the run: a chime, a sparkle, and a gold egg icon appears next to the HUD egg count. The run carries on as normal.
+- **Modes:** endless and daily (same seed, so everyone's daily has the same golden egg). **Not in 2P races**, so a race stays a pure race.
+
+### 3.8 Bonus flight (pterodactyl, Jetpack Joyride style)
+A 20-second bonus round after the run, earned with the golden egg. It is the only "level" in the game, and it plays outside the run, so the run itself stays exactly like the original.
+
+- **Start:** after a run with the golden egg, the results panel shows a big **Fly!** button (Space) next to **Retry**. Fly starts the flight at once. **Retry skips it** and banks it: up to **3 flights** can be banked, and a **Fly** button on the title and results shows how many are waiting. Nothing is ever lost.
+- **The mount:** the equipped runner rides a pterodactyl. All runners use the same mount and the same hitbox (the pterodactyl's body plus the rider, 56×40 px).
+- **Controls, Joyride-style:** hold (Space, Up, W, mouse or touch anywhere) to flap up; release to glide down. Values at 60 Hz: **gravity 0.45** px/frame², **flap 0.9** px/frame² upward while held (net 0.45 up), vertical speed capped at **±7** px/frame. The play area is the full 640×360 frame: the ceiling is y = 40 (below the HUD), the floor is the ground at y = 300; touching either is safe, the mount skims along it.
+- **Scroll:** a fixed **8 px/frame** (480 px/s), no ramp. The flight lasts **20 s** (about 9,600 px). Distance in the flight does **not** count for the score, the best or any distance achievement.
+- **Hazards** (each with its own shape, not color alone):
+  - **Thunderclouds:** a cloud with a lightning bar hanging under it (static, like Joyride's zappers): vertical 60–140 px, horizontal 100–160 px, or diagonal. They scroll with the world.
+  - **Wild pterodactyls:** fly straight left at 14 px/frame at your current height, like Joyride's missiles. A flashing **!** at the right edge warns **1 s** before one arrives, at the height it will fly.
+- **Eggs:** Joyride's coin shapes, built from eggs: lines, sine waves, blocks (5×8), staircases and arrows, placed between hazards. A full flight holds **about 120 eggs**; a good flight gets 60–90.
+- **Difficulty:** the first **3 s** are hazard-free eggs only; hazard density rises over the 20 s, from one hazard every ~1.5 s to one every ~0.7 s. The gap rules guarantee a path: a hazard never closes more than 60% of the height, and two hazards are never closer than the time needed to cross the free height at full flap.
+- **A hit ends the flight:** the rider tumbles off and the pterodactyl flaps away (no crash shake). **Every egg grabbed so far is kept.**
+- **End:** after 20 s (or a hit), "+N eggs" counts up over the sky, then back to the results, with the egg total and hatch progress updated. Space retries the run.
+- **First flight:** a "Hold to fly up" icon for the first 3 s.
+- **Seed:** the flight has its own PRNG stream derived from the run seed, so the daily run's flight is the same for everyone and replays are deterministic.
+- **Achievements:** flight eggs count for everything eggs count for (hatching, Griffin's 1000 eggs). Nothing else in the flight counts.
+
 ## 4. Controls
 
 ### 1 player
@@ -99,6 +124,8 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 | Duck / fast-fall | press and hold in the bottom ⅓ | Down, S |
 | Pause | pause button (top right, 48 px) | P, Esc |
 | Restart | Retry button on the results | R, or Space on the results |
+
+**Bonus flight:** hold Space, Up, W, the mouse button or anywhere on the screen to flap up; release to glide down. P or Esc pauses.
 
 During a player's **first run only**, faint jump (up arrow) and duck (down arrow) icons show in the two touch zones and fade out after the first jump or after 5 s. Before the first pterodactyl, the duck icon shows again for 2 s.
 
@@ -125,6 +152,9 @@ The lanes are stacked (P1 top, P2 bottom) but the touch zones are split left and
 | Large cactus | static, 1–3 in a row | 3 s | thick column with arms, taller |
 | Pterodactyl | flies at 3 heights, flapping | ~450 m | wide flapping wings, beak |
 | Egg | +1 egg when touched | 30 m | oval with speckles and a glint |
+| Golden egg | earns a bonus flight; at most one per run | 500–900 m | bigger egg with a sparkle and no speckles |
+| Thundercloud (flight) | static lightning bar; a hit ends the flight | bonus flight | dark cloud with a zigzag bar |
+| Wild pterodactyl (flight) | flies straight at you after a 1 s warning | bonus flight | flashing **!** at the edge, then a pterodactyl |
 | Night | 12 s of dark sky every 700 m | 700 m | stars and moon |
 | Ghost (2P) | the crashed player's runner stays faded in its lane | 2P | 50% opacity, X eyes |
 
@@ -145,6 +175,7 @@ An endless runner has no levels: the run itself is the level, and the original's
 | ~160 m | 17 s | groups of large cacti |
 | 300 m | | big arcs |
 | ~450 m | 42 s | first pterodactyl (mid); duck lines |
+| 500–900 m | | the golden egg (once per run) |
 | 700 m | 60 s | first night |
 | 1000 m | 80 s | Squatch's achievement |
 | ~1660 m | 117 s | top speed |
@@ -188,22 +219,25 @@ An endless runner has no levels: the run itself is the level, and the original's
 - **Emoji result line** (copy button on the daily results): `🦖 Daily #12 — 1,840 m 🥚32 🔥5` (distance, eggs from the best run, streak).
 
 ### 7.3 What brings players back
-Best distance, the next egg hatch (the results show "Stegosaurus: 1,230 / 1,500 🥚"), the next achievement (the Runners screen shows each one's progress), the daily streak, and 2P rematches.
+Best distance, the golden egg and its bonus flight (a reason to take the full jump), the next egg hatch (the results show "Stegosaurus: 1,230 / 1,500 🥚"), the next achievement (the Runners screen shows each one's progress), the daily streak, and 2P rematches.
 
 ## 8. Screens and UI flow
 ```
 Title ──Play / Space──▶ Playing ──crash──▶ Results ──Retry / Space / R──▶ Playing
+  │                        │                  ├──Fly! (golden egg)──▶ Bonus flight ──end or hit──▶ Results
   │                        │                  ├──Runners──▶ Runners
   │                        └─P─▶ Paused       └──Menu──▶ Title
   ├──2 Players──▶ Race setup ──Race!──▶ 3-2-1 ──▶ Racing ──first crash──▶ Race results ──Rematch──▶ 3-2-1
   ├──Daily──▶ Playing (daily seed) ──crash──▶ Daily results (+ copy emoji line)
   ├──Runners──▶ Runners (hatch / equip)
+  ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound, music)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, and sound and music toggles. Pressing Space, Up or W starts a 1P run, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and sound and music toggles. Pressing Space, Up or W starts a 1P run, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
+- **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
-- **Results (1P and daily):** the panel slides up over the frozen scene **500 ms** after the crash (the original's lock against accidental restarts). Distance and eggs count up, best distance, "NEW BEST" if it is one, any runner unlocked in this run (sprite and name), the next hatch's progress bar. Buttons: **Retry** (big) / **Runners** / **Menu**. Space or R retries; the new run starts in under 1 s.
+- **Results (1P and daily):** the panel slides up over the frozen scene **500 ms** after the crash (the original's lock against accidental restarts). Distance and eggs count up, best distance, "NEW BEST" if it is one, any runner unlocked in this run (sprite and name), the next hatch's progress bar. Buttons: **Retry** (big) / **Runners** / **Menu**. Space or R retries; the new run starts in under 1 s. **After a run with the golden egg**, **Fly!** becomes the big button and takes Space; R and Retry still start a run at once and bank the flight.
 - **Race setup (2P):** both lanes with their runners. P1 changes runner with A/D, P2 with Left/Right; on touch, arrows beside each runner. P1 starts with the equipped runner, P2 with the last runner P2 used (or the T-Rex with a "P2" badge). One big **Race!** button: two clicks from the title.
 - **Racing:** a 3-2-1 countdown (1.5 s), then both lanes run from the same seed at the same speed. **The first crash ends the race:** the crashed runner stays in its lane as a ghost (faded, X eyes) and the lane freezes; the winner keeps running for a 1.5 s victory lap. Both crashing in the same step is a **Draw**.
 - **Race results:** "P1 WINS" (or P2, or DRAW) with a crown on the winner, the winner's distance, both players' eggs (they go to the shared bank), and a running tally ("P1 2 – 1 P2") kept until you return to the menu. **Rematch** (big) / **Runners** / **Menu**. No best-of-3.
@@ -226,6 +260,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 - **Key visuals:**
   - **Runners:** about 44×47 logical px each, 1 px Night Ink outline, 3–5 colors each. The crash frame has dizzy eyes. Final art is a PNG sprite sheet in `assets/` (about 100 KB) drawn in a pixel editor; until then, the prototype uses best-effort placeholder sprites drawn in code.
   - **Obstacles:** cacti with strong silhouettes and arms; a pterodactyl with a big wing flap.
+  - **Bonus flight:** a bigger pterodactyl mount (about 56×32 px) with the equipped runner's jump frame on its back; the golden egg in gold (`#F5C542`) with a white sparkle; thunderclouds in Night Ink with a cream zigzag bar; the same desert sky, seen higher up (more sky, the mesas low).
   - **Background:** 3 parallax layers (dunes at 0.2×, mesas at 0.1×, clouds at 0.05× the scroll speed), each pre-rendered once to an offscreen canvas. A warm sunset band by day; stars and a moon at night.
   - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
@@ -237,7 +272,9 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - hatching: wobble, 3 cracks, shell pieces fly, the dinosaur pops out;
   - achievement unlock: the runner's sprite bounces in with sparkles;
   - 2P win: a crown drops onto the winner, confetti in their lane;
-  - night: a 1 s sky fade, stars twinkling in.
+  - night: a 1 s sky fade, stars twinkling in;
+  - golden egg: a sparkle burst and a gold icon popping in next to the HUD egg count;
+  - bonus flight: wing flap on every press, wind streaks, egg trails pop as you sweep them, "+N eggs" counts up at the end.
 - **Concept art prompts:**
   - **Gameplay screenshot (16:9):** *"16-bit pixel art side-scrolling runner, a cute slate-gray pixel dinosaur with a big head and tiny arms jumping over a green cactus in a desert, an arc of small cream eggs with orange speckles above the cactus, a pterodactyl flying ahead, parallax sand dunes and mesas, warm orange sunset sky, dark outlines, crisp SNES-style pixel art, 16:9 game screenshot"*
   - **Key art / thumbnail (16:9 and 1:1, no text):** *"a cute slate-gray pixel art dinosaur mid-jump over a cactus, speckled eggs flying around it, a second dinosaur and a cracked eggshell below, desert at sunset turning to night with stars, crisp 16-bit SNES-style pixel art, dark outlines, saturated colors, room for a title, game key art"*
@@ -256,6 +293,9 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 | Night | night begins | soft low chime |
 | Hatch | each crack, then the reveal | 3 clicks, then a 4-note jingle |
 | Achievement | runner unlocked (results) | rising 5-note fanfare |
+| Golden egg | golden egg picked up | bright 3-note chime with a shimmer |
+| Flap | each flap press in the bonus flight | soft "whup" |
+| Warning | wild pterodactyl warning in the flight | 2 short high blips |
 | Countdown | 3-2-1-GO in 2P | 3 beeps, a higher "go" |
 | Win | 2P race won | short victory jingle |
 | UI click | any button | soft tick |
@@ -280,6 +320,10 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | `runner:hatch:<id>` | an egg runner is hatched | eggs spent |
 | `runner:equip:<id>` | a runner is equipped | — |
 | `achievement:<id>` | a runner is unlocked by achievement | — |
+| `bonus:golden-egg` | golden egg picked up | distance (m) |
+| `bonus:start` | a bonus flight starts | flights still banked |
+| `bonus:end:<hit\|complete>` | a bonus flight ends | eggs in the flight |
+| `bonus:bank` | Retry skips an earned flight | flights banked |
 | `versus:start` | race starts | — |
 | `versus:winner:<p1\|p2\|draw>` | race ends | — |
 | `daily:start` | daily run starts | — |
@@ -292,23 +336,27 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 1. Do players play more runs per session when they are within 20% of the next hatch than when they aren't? (`eggs:progress` on each run start; a true A/B test of eggs vs no eggs is for later.)
 2. How often is 2P played, and are 2P sessions longer?
 3. Where do players die (`run:death` by type and distance)? Do eggs cause early deaths?
+4. How many runs reach the golden egg, and how many grab it? Do players who get a flight play more runs afterwards, or do they skip it (`bonus:bank`)?
 
 ## 12. Tech plan
 - **Stack:** static HTML5, ES modules, Canvas 2D, no engine, no build step.
-- **Modules (`src/`):** `main.js` (loop, screens), `sim.js` (runner physics, obstacles, eggs, collisions: no drawing), `gen.js` (seeded PRNG and obstacle/egg generator), `render.js` (scene, parallax, HUD), `sprites.js` (loads the sprite sheet and slices it into frames; in the prototype, placeholder sprites drawn in code), `input.js` (keys and pointers, 1P and 2P zones), `ui.js` (title, results, runners, race setup), `audio.js`, `save.js`, `analytics.js`.
+- **Modules (`src/`):** `main.js` (loop, screens), `sim.js` (runner physics, obstacles, eggs, collisions: no drawing), `gen.js` (seeded PRNG and obstacle/egg generator), `flight.js` (bonus flight physics, hazards and egg shapes: no drawing), `render.js` (scene, parallax, HUD), `sprites.js` (loads the sprite sheet and slices it into frames; in the prototype, placeholder sprites drawn in code), `input.js` (keys and pointers, 1P and 2P zones), `ui.js` (title, results, runners, race setup), `audio.js`, `save.js`, `analytics.js`.
 - **Rendering:** draw at 640×360 into an offscreen canvas, then scale up to the display canvas with smoothing off. Use the **largest integer scale that fills at least 85%** of the window, and fill the rest with the ground and sky colors (no black bars); at 800×450 that's ×1 with a sand and sky border. Only below ×1 (a window under 640 px wide) use a non-integer scale, with smoothing on. `devicePixelRatio` capped at 2.
 - **Simulation:** fixed 60 Hz step, deterministic (3.2). The sim runs headless, so a test can replay a seed and a list of inputs.
 - **Save:** one key, `cm_dinosaur-game-hd_save`:
-  `{ v: 1, best, eggs, totalEggs, totalDistance, totalNights, versusWins, unlocked: [ids], equipped, p2Runner, daily: { lastDate, streak, best, bestEggs }, firstRunDone, settings: { sfx, music } }`, read inside `try/catch` (a broken save resets to defaults). Saved after every run, hatch, equip and settings change.
-- **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'daily' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds.
+  `{ v: 1, best, eggs, flights, totalEggs, totalDistance, totalNights, versusWins, unlocked: [ids], equipped, p2Runner, daily: { lastDate, streak, best, bestEggs }, firstRunDone, settings: { sfx, music } }`, read inside `try/catch` (a broken save resets to defaults). Saved after every run, hatch, equip and settings change.
+- **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused' | 'bonus'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'daily' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds.
 - **Riskiest piece: matching the original's feel.** Prove it first: build `sim.js` with the original's numbers, then compare jump apex, airtime, the gap range at 3 speeds and the time to top speed against `chrome://dino` (frame-by-frame screen recordings), and log the measured values in `DEVLOG.md`. Only then add art and eggs.
 - **Second risk: runner art.** 3 dinosaurs × 8 frames plus 8 characters × 5 frames is 64 sprites, plus eggs, hatching, obstacles and backgrounds. Prototype with placeholders; draw the Triceratops and Stegosaurus early as rough sprites over the hitbox template to check that four-legged runners read well at 44×47.
+- **Third risk: the bonus flight's fairness.** Every flight must have a path through. `flight.js` runs headless, so a test flies 1,000 seeds with a simple bot and checks that each one can be finished.
 
 ## 13. Scope
-- **v1:** 1P endless, 2P race (keyboard and touch), daily run, eggs, 12 runners (4 dinosaurs at 8 frames, 7 Tag characters and the Hangman beast at 5 frames), day and night, one desert scene.
-- **Later (only if data says so):** more scenes (jungle, volcano, ice) every 1000 m; a ghost of your best run; color variants of each dinosaur as an egg sink once all 3 are hatched; a rare golden egg worth 10.
+- **v1:** 1P endless, 2P race (keyboard and touch), daily run, eggs, the golden egg and its 20 s bonus pterodactyl flight, 12 runners (4 dinosaurs at 8 frames, 7 Tag characters and the Hangman beast at 5 frames), day and night, one desert scene.
+- **Later (only if data says so):** more scenes (jungle, volcano, ice) every 1000 m; a ghost of your best run; color variants of each dinosaur as an egg sink once all 3 are hatched; more flight hazards or a longer flight.
 - **Cut:**
   - power-ups, upgrades, lives, missions, loot boxes: they break the "feels like the original" pillar;
+  - a bonus flight in the middle of a run: it plays after the run, so the run never changes;
+  - golden eggs in 2P races: a race stays a pure race;
   - a 2P speed ramp after the cap: 2P matches 1P exactly;
   - best-of-3 matches: single races with a rematch tally are faster;
   - a separate achievements screen: the Runners screen is the list;
@@ -324,8 +372,11 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Coolmath ad breaks | Only between runs, and never more often than every few minutes; never on Retry. | Coolmath | Open |
 | Daily seed: local date or UTC? | Local date: simpler for players, small differences around midnight don't matter. | Pao | Open |
 | Mouse and trackpad players rarely duck (they must move to the bottom third), so duck-line eggs mostly reward keyboard and touch players. OK? | Accept: the original never forces a duck (a mid pterodactyl can be jumped). Check in playtest. | Playtest | Open |
+| Bonus flight egg rate (~120 in a flight, 60–90 for a good one) | Keep; a flight should feel like a jackpot next to a 20–50 egg run, but not make hatching trivial. Retune with the hatch prices in phase 4. | Pao | Open |
+| Golden egg window (500–900 m) | Keep; most new players die before 500 m, so the flight is a goal to reach. If data shows few players ever see it, move it earlier. | Pao | Open |
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-29 — Bonus pterodactyl flight added (3.7 golden egg, 3.8 flight): a Jetpack Joyride-style 20 s flight after the run, earned with a golden egg grabbed between 500 and 900 m; hold to flap up, release to glide; thunderclouds and wild pterodactyls; a hit ends it but eggs are kept; up to 3 flights banked. Not in 2P. Pillar 2 reworded; controls, screens, art, audio, analytics, tech and scope updated.
 - 2026-10-29 — Phase 1c review applied: a hitbox template and an H debug view for every runner; 8 frames for the classic dinosaurs, 5 for the crossover characters, a PNG sprite sheet later and placeholders in the prototype; Hangman beast now unlocks at 10 nights in total; 1P ground moved up to y = 250 with a fuller sky; integer scaling with a filled border; Joyride-style egg grids and nests, and egg arcs placed on the simulated jump; analytics question 1 reworded with `eggs:progress`; `window.game` matches STANDARDS; HUD and pause layout; first-run icons; Space idle in 2P; separate RNG streams for eggs and obstacles. Not applied: a minimum race length for Alien (solo farming is accepted).
 - 2026-10-29 — First draft from the brief and the phase 1a answers: HD Pixel in Canvas 2D; the original's numbers; name **Dinosaur Game: Cool Edition**; **eggs** instead of coins, with hatching; 7 Tag characters with their real names (Squatch, Griffin, Unicorn, Kraken, Pixie, Alien, Dragon) plus the Hangman beast; Alien is the 2P-only bonus and Dragon needs every runner except Alien; Hangman beast at the 4th night; 2P speed matches 1P; no best-of-3; touch 2P with left/right halves; the first crash ends a race.

@@ -18,7 +18,7 @@ Almost every player has already played the dinosaur game in Chrome when the inte
 The first 10 seconds must feel exactly like the original: the same two inputs, the same speed curve, the same "you missed one jump and it's over". Every addition must pass this test: *does it change what a run feels like?* If yes, it is out of v1. Eggs, runners and achievements are on top of the run, never inside it: no power-ups, no upgrades that change physics, no lives, no levels.
 
 ## Core loop
-Title (the dino sleeps; any key wakes it) → run starts → jump and duck through obstacles as the speed rises, grab eggs on the way → one hit ends the run → results: distance, eggs, best → instant restart (under 1 s), or spend eggs to hatch a new runner.
+Title (the dino sleeps; any key wakes it) → run starts → jump and duck through obstacles as the speed rises, grab eggs on the way → one hit ends the run → results: distance, eggs, best → instant restart (under 1 s), or spend eggs to hatch a new runner. A run that grabbed the golden egg also earns a 20 s bonus pterodactyl flight after the results.
 
 ## Mechanics
 - **Run:** the dino runs automatically. Speed starts slow and rises steadily up to a cap, like the original. Score is distance.
@@ -102,8 +102,8 @@ Jump "boop", duck swoosh, egg "pip" (pitch rises on an egg streak), hatch crack 
 - Questions to answer: do eggs and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
 
 ## Scope
-- **v1:** 1P endless, 2P race, daily run, eggs, 12 runners (4 dinosaurs, 8 crossover characters with achievements), day/night, one desert scene.
-- **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as an egg sink once all 3 are hatched; a rare golden egg worth 10. Not planned: power-ups, missions, upgrades, lives, loot boxes.
+- **v1:** 1P endless, 2P race, daily run, eggs, a golden egg that earns a bonus pterodactyl flight (Jetpack Joyride style, after the run), 12 runners (4 dinosaurs, 8 crossover characters with achievements), day/night, one desert scene.
+- **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as an egg sink once all 3 are hatched. Not planned: power-ups, missions, upgrades, lives, loot boxes.
 
 ## Risks and open questions
 - **Feel:** the original's jump arc, hitbox forgiveness and speed curve are what make it work. Measure them by playing the original side by side and match them before adding anything.

@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-29 — Bonus pterodactyl flight
+- Added a Jetpack Joyride-style bonus flight to `GDD.md` (3.7 golden egg, 3.8 flight): a golden egg at the apex of a held jump, once per run between 500 and 900 m, earns a 20 s flight after the run. Hold to flap up, release to glide; thunderclouds and wild pterodactyls; a hit ends it, eggs are kept; up to 3 flights banked.
+- It plays after the run, never during it, so the "feels like the original" pillar holds. Not in 2P races.
+- Next: a teammate reads the updated GDD; tune the flight's egg rate against the hatch prices in phase 4.
+
 ## 2026-10-29 — GDD review applied
 - Phase 1c critical review: 13 of 14 fixes applied (hitbox template, frame budget, Hangman beast at 10 nights in total, fuller sky framing, integer scaling, Joyride-style egg grids and nests, analytics, STANDARDS test hook, HUD layout, separate RNG streams). Solo farming of the Alien achievement is accepted.
 - Prototype art: best-effort placeholders; final art as a sprite sheet later.
