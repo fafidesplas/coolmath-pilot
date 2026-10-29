@@ -42,7 +42,7 @@ Title (the dino sleeps; any key wakes it) → run starts → jump and duck throu
 ## Shell (differs from STANDARDS)
 An endless runner has no levels, so the level-select and star screens are replaced:
 - **Title:** logo, **Play** (1P), **2 Players**, **Skins**, settings.
-- **Skins:** a row of dinos with prices in coins; locked ones show as silhouettes. About 8 skins in v1 (for example: classic, robo-dino, dino in a hoodie, golden, ghost, lava, ice, pixel-original), all cosmetic **[confirm list]**.
+- **Skins:** a row of dinos with prices in coins; locked ones show as silhouettes. About 8 skins in v1 (for example: classic, robo-dino, dino in a hoodie, golden, ghost, lava, ice, pixel-original), all cosmetic **[confirm list]**. The characters from our game **Tag** (a work-for-hire project we own) are planned as crossover runners. They are redrawn in this game's art style from Tag's source art, and they keep the same hitbox as the dino.
 - **Results:** distance and coins count up, best distance, **Retry** (big) / **Skins** / **Menu**.
 - **Daily run:** one date-seeded run per day, same for everyone, with a streak and an emoji result line (STANDARDS daily challenge).
 
@@ -83,6 +83,7 @@ Jump "boop", duck swoosh, coin chime (pitch rises on a coin streak), 100 m miles
 ## Risks and open questions
 - **Feel:** the original's jump arc, hitbox forgiveness and speed curve are what make it work. Measure them by playing the original side by side and match them before adding anything.
 - **IP:** keep the name and art clearly original (see above); [confirm] with the team before any public build.
+- **Tag crossover:** get Tag's source art (character sheets, colors) from the team, not from the live site. Decide in the GDD whether the Tag characters are unlocked with coins, by distance, or from the start, and whether Tag's style should steer the art direction.
 - **2P on touch:** two players on one tablet with ducking may not work; 2P might be keyboard only.
 - **Art style:** HD pixel vs voxel decides the tech (Canvas 2D or LittleJS vs Three.js). Decide in the GDD.
 - **Coin placement:** coins must tempt, not distract. If players die chasing coins in the first 30 s, move them.
