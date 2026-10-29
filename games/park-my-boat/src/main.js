@@ -85,6 +85,7 @@ const modeLevels = (m = gameMode) => LEVELS.map((L, i) => i).filter(i => modeOf(
 const levelNumber = (i = levelIndex) => modeLevels(modeOf(LEVELS[i])).indexOf(i) + 1;
 let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip;
 let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
+let trafficBoats = [];      // the level's traffic boats, in the order of `traffic` in levels.js
 let anchor, judge, result, restT = 0, restArmed = true;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
 let popups = [], drops = [], wakes = [], foams = [];
@@ -237,7 +238,7 @@ function loadLevel(i)
     levelIndex = i;
     const L = level = LEVELS[i];
     gameMode = modeOf(L);
-    bodies = []; rects = []; posts = []; lands = []; currents = L.currents || [];
+    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; currents = L.currents || [];
     popups.length = drops.length = wakes.length = foams.length = 0;
     anchor = judge = result = intro = player = undefined;
     attempts = damages = ducksOffended = levelTime = 0;
@@ -246,6 +247,7 @@ function loadLevel(i)
 
     for (const r of L.land) rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], land:true });
     for (const d of L.docks) rects.push({ ...d, dock:true });
+    for (const w of L.walls || []) rects.push({ x0:w.x0, y0:w.y0, x1:w.x1, y1:w.y1, wall:true });    // invisible: collides, never drawn
     for (const m of L.lands || []) addLand(m);
 
     // a harbor jam (src/jam.js) has no chain of boats to park, only the boats to clear out
@@ -267,7 +269,7 @@ function loadLevel(i)
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
     for (const m of L.drifters || [])
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
-    (L.traffic || []).forEach((t, n) => makeTraffic(t, n));
+    (L.traffic || []).forEach((t, n) => trafficBoats.push(makeTraffic(t, n)));
     addFloaters(L);
 
     startBoat(0);
@@ -590,6 +592,21 @@ function makeTraffic(t, n)
     b.pace = t.pace; b.clock = 0;
     b.end = t.end || 'back';
     b.during = t.during;
+    // after: waits at its start until another traffic boat reaches one of its path points (numbers from 1)
+    b.after = t.after ? { n: t.after.boat - 1, j: (t.after.point || 1) - 1 } : null;
+    b.waiting = !!b.after;
+    return b;
+}
+
+// has traffic boat a come to path point j? Progress along its route is compared in distance, so a
+// boat that is itself still waiting doesn't count (that is what lets triggers chain).
+function trafficAt(a, j)
+{
+    if (!a || a.waiting) return false;
+    const r = a.route, at = r.cum[Math.min(8*j, r.cum.length - 1)];
+    let d = Math.abs(a.s - at);
+    if (r.loop) d = Math.min(d, r.total - d);
+    return d < .8*boatSize(a);
 }
 
 // aim at a point a little way ahead on the route; slow down for sharp turns. Outside its turns
@@ -598,7 +615,8 @@ function driveTraffic(b, dt)
 {
     const r = b.route, L = boatSize(b);
     let throttle = 0, rudder = 0;
-    if (!b.done && (!b.during || b.during.includes(boatIndex + 1)))
+    if (b.waiting && trafficAt(trafficBoats[b.after.n], b.after.j)) b.waiting = false;
+    if (!b.waiting && !b.done && (!b.during || b.during.includes(boatIndex + 1)))
     {
         b.s = routeProgress(r, b.pos, b.s, 3*L);
         if (!r.loop)

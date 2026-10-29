@@ -6,6 +6,19 @@
 - Checked in Chrome: title, level 1 and a jam level show no hint; `selfTest()` gives 10 levels, 0 problems; no console errors.
 - GDD: cut the level 1 tutorial (ghost pointer, key icons, "Park in the box."); level 1 is taught by play alone. Left the `tutorial:*` analytics events in §11, since STANDARDS.md lists them for every game.
 
+## 2026-10-28 — Invisible colliders
+- Owner TODO #1: a level can have `walls: [{x0, y0, x1, y1}]`. They are solid rects (boats, buoys, logs and ducks bump into them, and they count in the unparking jams too) and are never drawn in the game.
+- Editor: **Wall** button in the Add row, an "Invisible walls" group in the object list. Drag to move, drag an edge to resize, `D` duplicates, `Delete` removes, the panel has the four sides. The editor draws a wall as a tinted blue box, only while editing. Walls are axis-aligned only; round or rotated colliders would need a new shape.
+- Checked in Chrome: a rowboat fired at a wall bounced back, the same shot 20 m to the side passed through; `selfTest()` gives 10 levels, 0 problems with and without a wall. No level uses walls yet.
+- Testing note: a stale localhost port can serve another game's cached files (hop-race's `render.js` was served on `:8765`, which broke the page with "WU is not defined"). Use a fresh port when testing.
+- Next: decals and doodads (TODO #2), then starting a test at any boat in the chain (#4) and batch editing (#5).
+
+## 2026-10-28 — Traffic that waits for other traffic
+- Owner TODO: traffic boats can now be sequenced. A traffic boat has an optional `after: {boat, point}` (numbers from 1): it stays at the start of its path until traffic boat `boat` gets to path point `point`, then moves for good. A boat that is still waiting doesn't count as having arrived, so triggers chain (A starts B, B starts C). Two boats waiting on each other never start.
+- Editor: traffic panel has "starts: at once / when N reaches…" plus the point number; a dashed line links the waiting boat to its trigger point. Deleting a traffic boat drops the triggers on it and renumbers the others.
+- Checked in Chrome with a 3-boat chain: boat 2 left when boat 1 reached its end point, boat 3 when boat 2 did. Deleting boat 1 in the editor cleared boat 2's trigger and renumbered boat 3's. No console errors. No level uses it yet.
+- Next: invisible colliders in the editor (TODO #1).
+
 ## 2026-10-28 — Design note: the first boat should feel the best
 - From Fafi's playtest: in level 1 (Odd Couple in the current build) the big boat comes too early, and parking it doesn't feel good. Level 1's first boat should be the best-feeling boat in the game.
 - Added to the GDD (§6 design note, §14 open question). No code change.

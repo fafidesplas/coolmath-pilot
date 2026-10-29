@@ -10,7 +10,7 @@
     the parts you did touch are written out as numbers.
 
     Mouse: drag empty space to pan, wheel to zoom, click to select, drag to move, drag an edge of a
-    selected sand / dock / current rect to resize, Shift+drag on empty space for new sand. Traffic
+    selected sand / dock / current / wall rect to resize, Shift+drag on empty space for new sand. Traffic
     boats: P with one selected, then click to add path points (P, Enter or Esc to finish); drag a
     point to move it. A selected boat, slip or log has a rotate handle on an arm off its bow: drag it
     round (15° steps, Alt: free; slips 90°). Keys are listed in the panel.
@@ -32,7 +32,7 @@ window.pmbEditor = (() =>
     const owned = new WeakSet();
     function own(d) { if (owned.has(d)) return; for (const k of Object.keys(d)) if (d[k] && typeof d[k] == 'object') d[k] = structuredClone(d[k]); owned.add(d); }
     const fileName = new WeakMap();     // level -> its name in the file (missing: a new level, appended on save)
-    const ARRAYS = ['moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'lands', 'currents'];
+    const ARRAYS = ['moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'lands', 'currents', 'walls'];
     let pathMode = null;            // index of the traffic boat whose path is being drawn (clicks add points)
     let wheelPx = 0;                // scroll since last frame, in pixels (LittleJS only gives the sign per event)
 
@@ -193,7 +193,7 @@ window.pmbEditor = (() =>
             case 'ducks':   { const f = def.ducks[i]; return { type: 'circle', c: vec2(f.x - f.kids*.4, f.y), r: (f.kids + 1)*.4 + .4 }; }
             case 'lands':   { const m = def.lands[i]; return { type: 'blob', c: vec2(m.x, m.y), r: blobRadius(m), circles: m.circles.map(([x, y, r]) => ({ c: vec2(m.x + x*m.k, m.y + y*m.k), r: r*m.k })) }; }
             case 'land':    { const r = def.land[i]; return rectShape(r[0], r[1], r[2], r[3]); }
-            case 'docks': case 'currents': { const r = def[it.kind][i]; return rectShape(r.x0, r.y0, r.x1, r.y1); }
+            case 'docks': case 'currents': case 'walls': { const r = def[it.kind][i]; return rectShape(r.x0, r.y0, r.x1, r.y1); }
         }
     }
     function boundsOf(s)
@@ -225,7 +225,7 @@ window.pmbEditor = (() =>
     }
 
     // small things first, so they can be picked off the big things they sit on
-    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'currents', 'docks', 'lands', 'land'];
+    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'currents', 'walls', 'docks', 'lands', 'land'];
     function count(kind) { return kind == 'start' || kind == 'slip' ? def.boats.length : (def[kind] || []).length; }
     // which traffic boat's path points are showing: the selected boat's, or its point's
     const pathOf = () => sel?.kind == 'traffic' || sel?.kind == 'point' ? sel.i : null;
@@ -241,7 +241,7 @@ window.pmbEditor = (() =>
         return null;
     }
     const same = (a, b) => a && b && a.kind == b.kind && a.i == b.i && a.j == b.j;
-    const isRect = it => it && ['land', 'docks', 'currents'].includes(it.kind);
+    const isRect = it => it && ['land', 'docks', 'currents', 'walls'].includes(it.kind);
 
     ///////////////////////////////////////////////////////////////////////////
     // mouse
@@ -379,7 +379,7 @@ window.pmbEditor = (() =>
             case 'traffic': for (const q of def.traffic[it.i].path) { q[0] += dx; q[1] += dy; } break;
             case 'point': { const q = def.traffic[it.i].path[it.j]; q[0] += dx; q[1] += dy; break; }
             case 'land': { const r = def.land[it.i]; r[0] += dx; r[2] += dx; r[1] += dy; r[3] += dy; break; }
-            case 'docks': case 'currents': { const r = def[it.kind][it.i]; r.x0 += dx; r.x1 += dx; r.y0 += dy; r.y1 += dy; break; }
+            case 'docks': case 'currents': case 'walls': { const r = def[it.kind][it.i]; r.x0 += dx; r.x1 += dx; r.y0 += dy; r.y1 += dy; break; }
             default: { const o = def[it.kind][it.i]; o.x += dx; o.y += dy; }
         }
     }
@@ -456,6 +456,7 @@ window.pmbEditor = (() =>
         else if (kind == 'ducks') list.push({ x, y, kids: 3 });
         else if (kind == 'land') list.push([q(x - 2*w), q(y - w), q(x + 2*w), q(y + w)]);
         else if (kind == 'docks') list.push({ x0: q(x - 2*w), y0: q(y - .3*w), x1: q(x + 2*w), y1: q(y + .3*w) });
+        else if (kind == 'walls') list.push({ x0: q(x - 2*w), y0: q(y - .3*w), x1: q(x + 2*w), y1: q(y + .3*w) });
         else if (kind == 'currents') list.push({ x0: q(x - 3*w), y0: q(y - w), x1: q(x + 3*w), y1: q(y + w), dx: 1, dy: 0 });
         else if (kind == 'lands') list.push({ x, y, k: niceStep(2*w), grass: true, circles: [[0, 0, 1], [1.2, .3, .7], [-1.1, -.2, .8]] });
         sel = { kind, i: list.length - 1 };
@@ -494,6 +495,13 @@ window.pmbEditor = (() =>
         else
         {
             snapshot(); def[sel.kind].splice(sel.i, 1);
+            // traffic boats refer to each other by number: drop the triggers on the deleted one, renumber the rest
+            if (sel.kind == 'traffic') for (const t of def.traffic)
+            {
+                if (!t.after) continue;
+                if (t.after.boat == sel.i + 1) delete t.after;
+                else if (t.after.boat > sel.i + 1) t.after = { ...t.after, boat: t.after.boat - 1 };
+            }
             if (!def[sel.kind].length && ARRAYS.includes(sel.kind)) delete def[sel.kind];
         }
         sel = null;
@@ -667,7 +675,17 @@ window.pmbEditor = (() =>
                 drawCircle(pt, .5*W, picked ? C_ED : C_CREAM, .06*W, C_ED);
             });
         });
+        // a boat that waits for another: a line from its start to the point it waits for
+        (def.traffic || []).forEach(t =>
+        {
+            const o = t.after && def.traffic[t.after.boat - 1], q = o?.path[(t.after.point || 1) - 1];
+            if (!q) return;
+            drawLine(vec2(t.path[0][0], t.path[0][1]), vec2(q[0], q[1]), .04*W, C_ED.scale(1, .6));
+            drawCircle(vec2(q[0], q[1]), .35*W, C_CLEAR, .05*W, C_ED);
+        });
         for (const c of def.currents || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_CLEAR, .04*W, C_TEAL);
+        // invisible colliders: a tinted box, only ever seen here
+        for (const c of def.walls || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_ED.scale(1, .18), .05*W, C_ED.scale(1, .7));
         if (hover && !same(hover, sel)) outline(shapeOf(hover), .06*W, C_ED.scale(1, .5));
         if (sel)
         {
@@ -917,7 +935,7 @@ window.pmbEditor = (() =>
 
     function newLevelSource(d)
     {
-        const order = ['name', 'land', 'docks', 'boats', 'lands', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'currents'];
+        const order = ['name', 'land', 'docks', 'boats', 'lands', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'currents', 'walls'];
         const keys = [...order.filter(k => d[k] !== undefined), ...Object.keys(d).filter(k => !order.includes(k) && k != 'world' && d[k] !== undefined)];
         return '    {\n' + keys.map(k => `        ${k}:${fieldCode(k, d[k]).replace(/^(?!\n)/, ' ')},\n`).join('') + '    },\n';
     }
@@ -1120,7 +1138,7 @@ window.pmbEditor = (() =>
             button('Add loose', () => add('drifters', addBoatType)), button('Add traffic', () => add('traffic', addBoatType))]));
         panel.append(el('h3', { textContent: 'Add' }), el('div', { className: 'row' }, [
             button('Buoy', () => add('buoys')), button('Log', () => add('logs')), button('Ducks', () => add('ducks')),
-            button('Sand', () => add('land')), button('Dock', () => add('docks')), button('Landmass', () => add('lands')), button('Current', () => add('currents'))]));
+            button('Sand', () => add('land')), button('Dock', () => add('docks')), button('Landmass', () => add('lands')), button('Current', () => add('currents')), button('Wall', () => add('walls'))]));
 
         objectList();
 
@@ -1154,6 +1172,7 @@ window.pmbEditor = (() =>
         ['land', 'Sand', r => `Sand · ${size({ x0: r[0], y0: r[1], x1: r[2], y1: r[3] })}`],
         ['docks', 'Docks', r => `${r.quay ? 'Quay' : 'Dock'} · ${size(r)}`],
         ['currents', 'Currents', r => `Current · ${size(r)}`],
+        ['walls', 'Invisible walls', r => `Wall · ${size(r)}`],
     ];
     let objsScroll = 0, objsSel = null;
     function objectList()
@@ -1191,7 +1210,7 @@ window.pmbEditor = (() =>
         return {
             start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
             traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic?.[sel.i]?.path.length}`,
-            ducks: 'Duck family', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current',
+            ducks: 'Duck family', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current', walls: 'Invisible wall',
         }[sel.kind];
     }
 
@@ -1254,12 +1273,13 @@ window.pmbEditor = (() =>
                 el('div', { className: 'keys', textContent: 'Circles [x, y, r] in units of k; the first one sits on the center.' }), area);
             return;
         }
-        // rects: sand, docks, currents
+        // rects: sand, docks, currents, walls
         const r = sel.kind == 'land' ? def.land[i] : def[sel.kind][i];
         const side = (label, k, n) => field(label, sel.kind == 'land' ? input('number', () => r[n], v => { r[n] = v ?? 0; }, { step: 'any' }) : numIn(r, k, { step: 'any' }));
         panel.append(grid([side('left', 'x0', 0), side('right', 'x1', 2), side('bottom', 'y0', 1), side('top', 'y1', 3)]));
         if (sel.kind == 'currents') panel.append(grid([field('flow x', numIn(r, 'dx', { step: 'any' })), field('flow y', numIn(r, 'dy', { step: 'any' }))]));
-        if (sel.kind != 'currents') panel.append(el('div', { className: 'keys', textContent: 'T: sand → dock → quay → sand' }));
+        if (sel.kind == 'walls') panel.append(el('div', { className: 'keys', textContent: 'Boats and floaters bump into it, but it is never drawn in the game. Only the editor shows it.' }));
+        else if (sel.kind != 'currents') panel.append(el('div', { className: 'keys', textContent: 'T: sand → dock → quay → sand' }));
     }
 
     function trafficFields(t, i)
@@ -1279,6 +1299,16 @@ window.pmbEditor = (() =>
             field('speed %', input('number', () => Math.round((t.speed ?? .6)*100), v => { t.speed = clamp((v ?? 60)/100, .05, 1); }, { step: 5, min: 5, max: 100 })),
             field('pace m/s (loops)', input('number', () => t.pace, v => { if (v === undefined) delete t.pace; else t.pace = v; }, { placeholder: 'none', step: 'any', min: 0 })),
             field('at the end', select([['back', 'turn around (back and forth)'], ['loop', 'loop to the first point'], ['stop', 'stop']], () => t.end || 'back', v => { t.end = v; })));
+        // after: it waits at point 1 until another traffic boat reaches one of its points
+        const others = def.traffic.map((o, n) => [n + 1, `${n + 1}. ${BOATS[o.boat].name}`]).filter(([n]) => n != i + 1);
+        if (others.length)
+        {
+            const a = t.after, target = a && def.traffic[a.boat - 1];
+            panel.append(field('starts', select([['', 'at once'], ...others.map(([n, name]) => [String(n), `when ${name} reaches…`])], () => a ? String(a.boat) : '',
+                v => { if (!v) delete t.after; else t.after = { boat: +v, point: 1 }; })));
+            if (target) panel.append(field('…its point', input('number', () => a.point || 1, v => { a.point = clamp(Math.round(v ?? 1), 1, target.path.length); }, { step: 1, min: 1, max: target.path.length })),
+                el('div', { className: 'keys', textContent: `It stays put until ${BOATS[target.boat].name} gets to point ${a.point || 1} of its path, then moves for good. A boat that is itself waiting doesn't count, so boats can chain.` }));
+        }
         // the parking turns it moves during; all of them is the default (no during in the file)
         const turns = el('div', { className: 'row' });
         def.boats.forEach((e, n) =>

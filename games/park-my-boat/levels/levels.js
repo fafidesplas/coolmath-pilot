@@ -7,11 +7,14 @@
 //          (PI/2 = bow into a top pier; either end in is fine), pad = extra [length, width] room in
 //          toy units (times k), fingers = 'both' | 'none' (short docks along the slip's long sides)
 // land:    [x0, y0, x1, y1] sand;  docks: {x0, y0, x1, y1, quay?, plank?}
+// walls:   invisible colliders {x0, y0, x1, y1}: boats and floaters bump into them, nothing is drawn (the editor shows them)
 // lands:   blob landmasses {x, y, k, circles: [[x, y, r]] in units of k (first one on the center), grass?}
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
 // traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
 //          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn),
-//          pace?: m/s, loops only: keeps to a timetable so boats sharing a loop stay evenly spaced}
+//          pace?: m/s, loops only: keeps to a timetable so boats sharing a loop stay evenly spaced,
+//          after?: {boat: n, point: j} (from 1, n = place in this list): waits at its start until traffic boat n reaches
+//          its path point j, then moves for good; a boat still waiting doesn't count, so boats chain}
 // the camera follows the boat and its slip
 
 // harbor basin: a concrete quay along the top edge, sand on the sides down to y0, and open sea to the

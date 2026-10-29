@@ -122,7 +122,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | Drifting boat / log | Loose, can be pushed; drifts out of the current slip (3.8) | 8 | Log shape / empty boat |
 | Current | Zone that moves the water; arrows show the flow | 9 | Animated arrow stripes |
 | Scale jump | Next boat is much bigger or smaller; card shows "300 m · 105x BIGGER" | 4 | Card with size text |
-| Traffic | Boats that drive a path (back and forth, loop, stop at the end); a hit shoves them and they steer back | 11 | Boat shape with wake |
+| Traffic | Boats that drive a path (back and forth, loop, stop at the end), optionally held at the start until another traffic boat reaches a point of its path; a hit shoves them and they steer back | 11 | Boat shape with wake |
 | Big ship (≥ 50 m) | Wider slip and angle allowance | 4 | — |
 
 ## 6. Level design
@@ -174,10 +174,11 @@ Levels 1–3 and 5–9, 12–13, 15–17 and 19–20 are new.
     land: [[x0, y0, x1, y1], ...], // sand rects, meters
     docks: [{ x0, y0, x1, y1, quay?, plank? }],
     lands: [{ x, y, k, circles: [[x, y, r], ...], grass? }],
+    walls: [{ x0, y0, x1, y1 }],   // invisible colliders: solid to boats and floaters, never drawn (new)
     boats: [{ boat: 'dinghy', k?, start: { x, y, a }, slip: { x, y, a, pad?, fingers? } }],
     moored: [...], drifters: [...], buoys: [[x, y, scale]], ducks: [{ x, y, kids }],
     currents: [...],
-    traffic: [{ boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop', speed?, during?, pace? }],
+    traffic: [{ boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop', speed?, during?, pace?, after?: { boat: n, point: j } }],
 }
 ```
 
