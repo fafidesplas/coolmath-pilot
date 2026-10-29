@@ -42,7 +42,17 @@ Title (the dino sleeps; any key wakes it) → run starts → jump and duck throu
 ## Shell (differs from STANDARDS)
 An endless runner has no levels, so the level-select and star screens are replaced:
 - **Title:** logo, **Play** (1P), **2 Players**, **Skins**, settings.
-- **Skins:** a row of dinos with prices in coins; locked ones show as silhouettes. About 8 skins in v1 (for example: classic, robo-dino, dino in a hoodie, golden, ghost, lava, ice, pixel-original), all cosmetic **[confirm list]**. The characters from our game **Tag** (a work-for-hire project we own) are planned as crossover runners. They are redrawn in this game's art style from Tag's source art, and they keep the same hitbox as the dino.
+- **Skins:** a row of dinos with prices in coins; locked ones show as silhouettes. About 8 skins in v1 (for example: classic, robo-dino, dino in a hoodie, golden, ghost, lava, ice, pixel-original), all cosmetic **[confirm list]**. The characters from our game **Tag** (a work-for-hire project we own) are planned as crossover runners. They keep the same hitbox as the dino.
+
+### Tag crossover characters
+There is no source art; the screengrabs in `reference/` (`tag-forest.png`, `tag-tower.png`) are the reference, and the sprites are redrawn from them. Names come from the team **[confirm]**. From the screengrabs:
+- **Red dino:** one big eye, jagged teeth. It is a dinosaur, so it could be the default runner instead of a new dino **[confirm]**.
+- **Pink unicorn:** white horn, big eye.
+- **Blue blob:** a droplet shape with a worried face.
+- **Teal squid:** round head, droopy eyes, tentacle mustache.
+- **Green frog in a cap:** glasses and a dark cap.
+- **Purple hood:** a dark hooded shape with white eyes.
+- **Orange fox:** big eye, white muzzle and tail.
 - **Results:** distance and coins count up, best distance, **Retry** (big) / **Skins** / **Menu**.
 - **Daily run:** one date-seeded run per day, same for everyone, with a streak and an emoji result line (STANDARDS daily challenge).
 
@@ -56,7 +66,7 @@ Best distance, daily run streak, saving up for the next skin, and the friend you
 
 ## Art direction
 **Open: two candidates, picked in the GDD [confirm].**
-1. **HD Pixel (recommended):** a 16-bit SNES look. The dino is a chunky pixel sprite with more frames than the original (run, jump, duck, crash with a dizzy face), a few colors per sprite instead of one gray, parallax desert layers (dunes, mesas, clouds), and a warm sunset to deep blue night. Drawn in code or a small sprite sheet, Canvas 2D, stays well under 2 MB.
+1. **HD Pixel (recommended, and the style of Tag, see `reference/`):** a 16-bit SNES look. The dino is a chunky pixel sprite with more frames than the original (run, jump, duck, crash with a dizzy face), a few colors per sprite instead of one gray, parallax desert layers (dunes, mesas, clouds), and a warm sunset to deep blue night. Drawn in code or a small sprite sheet, Canvas 2D, stays well under 2 MB.
 2. **Voxel 3D:** the same side-on game rendered as voxel models with a slightly tilted camera, soft shadows and depth. Needs Three.js bundled locally, costs more size and Chromebook performance, and more art time.
 
 Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstacles have strong silhouettes, coins spin and sparkle, and skins change color and shape, never the hitbox.
@@ -83,7 +93,7 @@ Jump "boop", duck swoosh, coin chime (pitch rises on a coin streak), 100 m miles
 ## Risks and open questions
 - **Feel:** the original's jump arc, hitbox forgiveness and speed curve are what make it work. Measure them by playing the original side by side and match them before adding anything.
 - **IP:** keep the name and art clearly original (see above); [confirm] with the team before any public build.
-- **Tag crossover:** get Tag's source art (character sheets, colors) from the team, not from the live site. Decide in the GDD whether the Tag characters are unlocked with coins, by distance, or from the start, and whether Tag's style should steer the art direction.
+- **Tag crossover:** decide in the GDD whether the Tag characters are unlocked with coins, by distance, or from the start, and whether Tag's red dino is the default runner. Tag is chunky pixel art with dark outlines and soft-dark backgrounds, which matches the HD Pixel direction; that is one more reason to pick it over voxel.
 - **2P on touch:** two players on one tablet with ducking may not work; 2P might be keyboard only.
 - **Art style:** HD pixel vs voxel decides the tech (Canvas 2D or LittleJS vs Three.js). Decide in the GDD.
 - **Coin placement:** coins must tempt, not distract. If players die chasing coins in the first 30 s, move them.
