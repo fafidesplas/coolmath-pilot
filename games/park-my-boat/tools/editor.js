@@ -13,14 +13,19 @@
     selected sand / dock / current / wall rect to resize, Shift+drag on empty space for new sand. Traffic
     boats: P with one selected, then click to add path points (P, Enter or Esc to finish); drag a
     point to move it. A selected boat, slip or log has a rotate handle on an arm off its bow: drag it
-    round (15° steps, Alt: free; slips 90°). Keys are listed in the panel.
+    round (15° steps, Alt: free; slips 90°). Keys are listed in the inspector.
+
+    Two panels: the hierarchy on the left (the chain in parking order, then every other object by kind;
+    click a group's header to fold it, a row to select and frame it, the buttons at the top to add things)
+    and the inspector on the right (the level, the selected thing's fields, the keys).
 */
 
 'use strict';
 
 window.pmbEditor = (() =>
 {
-    const PANEL = 320;          // panel width in CSS px
+    const PANEL = 320;          // inspector (right) width in CSS px
+    const HIER = 270;           // hierarchy (left) width in CSS px
     const HERE = document.currentScript.src;
     const ED = { active: false, testing: false };
     const C_ED = rgb(.25, .55, 1);
@@ -64,7 +69,7 @@ window.pmbEditor = (() =>
         ED.active = true; ED.testing = false;
         load();
         if (def.boats?.length) frameBoat(0); else frameAll();
-        panel.style.display = 'block'; testTag.style.display = 'none';
+        showPanels(true); testTag.style.display = 'none';
         refreshPanel();
     }
 
@@ -90,7 +95,7 @@ window.pmbEditor = (() =>
             startBoat(n + 1);
         }
         updateCamera(0, true);
-        panel.style.display = 'none'; testTag.style.display = 'block';
+        showPanels(false); testTag.style.display = 'block';
     }
 
     function backToEdit(msg)
@@ -98,14 +103,14 @@ window.pmbEditor = (() =>
         ED.testing = false; ED.active = true;
         load();
         status = msg || '';
-        panel.style.display = 'block'; testTag.style.display = 'none';
+        showPanels(true); testTag.style.display = 'none';
         refreshPanel();
     }
 
     function close()
     {
         ED.active = ED.testing = false;
-        panel.style.display = testTag.style.display = 'none';
+        showPanels(false); testTag.style.display = 'none';
         setScreen('title');
     }
 
@@ -117,19 +122,24 @@ window.pmbEditor = (() =>
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // camera: pan, zoom, framing (the canvas left of the panel)
+    // camera: pan, zoom, framing (the canvas between the hierarchy and the inspector)
 
-    const panelUi = () => panel.style.display == 'none' ? 0 : PANEL * mainCanvasSize.x / innerWidth / uiScale();
-    const overPanel = () => panel.style.display != 'none' && mousePosScreen.x > mainCanvasSize.x - PANEL * mainCanvasSize.x / innerWidth;
-    const viewCenter = () => cam.pos.subtract(vec2(panelUi()/2*cam.wu, 0));
+    const panelsShown = () => panel.style.display != 'none';
+    const pxScale = () => mainCanvasSize.x / innerWidth;       // CSS px -> canvas px
+    const leftUi = () => panelsShown() ? HIER * pxScale() / uiScale() : 0;      // the hierarchy's width in UI units
+    const rightUi = () => panelsShown() ? PANEL * pxScale() / uiScale() : 0;    // the inspector's
+    const overPanel = () => panelsShown() && (mousePosScreen.x > mainCanvasSize.x - PANEL * pxScale() || mousePosScreen.x < HIER * pxScale());
+    // the canvas shows the level between the two panels: its middle sits (right - left)/2 off the screen's
+    const viewCenter = () => cam.pos.subtract(vec2((rightUi() - leftUi())/2*cam.wu, 0));
+    function showPanels(on) { panel.style.display = hier.style.display = on ? 'block' : 'none'; }
     const mouseWorld = () => uiToWorld(mousePos);
 
     function frame(b)
     {
-        const availW = (mainCanvasSize.x / uiScale()) - panelUi(), availH = mainCanvasSize.y / uiScale();
+        const availW = (mainCanvasSize.x / uiScale()) - leftUi() - rightUi(), availH = mainCanvasSize.y / uiScale();
         const w = Math.max(b.x1 - b.x0, 1e-3), h = Math.max(b.y1 - b.y0, 1e-3);
         cam.wu = Math.max(w / availW, h / availH) * 1.25;
-        cam.pos = vec2((b.x0 + b.x1)/2 + panelUi()/2*cam.wu, (b.y0 + b.y1)/2);
+        cam.pos = vec2((b.x0 + b.x1)/2 + (rightUi() - leftUi())/2*cam.wu, (b.y0 + b.y1)/2);
     }
     const slipBox = n => { const s = slips[n]; return { x0: s.pos.x - s.w/2, y0: s.pos.y - s.h/2, x1: s.pos.x + s.w/2, y1: s.pos.y + s.h/2 }; };
     function frameBoat(n)
@@ -719,7 +729,7 @@ window.pmbEditor = (() =>
         });
         const t = pathOf();
         if (t !== null) def.traffic[t].path.forEach((q, j) => { const u = worldToUi(vec2(q[0], q[1])); txt(String(j + 1), u.x, u.y - .02, .32, C_INK); });
-        const left = UI_CENTER.x - viewHalfUi().x + .5;
+        const left = UI_CENTER.x - viewHalfUi().x + leftUi() + .5;
         txt(`EDITOR · ${li + 1}. ${def.name} · grid ${fmtLen(step())}${noSnap() ? ' (no snap)' : ''}${pathMode !== null ? ' · CLICK TO ADD PATH POINTS (P to finish)' : ''}`, left, 21.75, .55, C_INK, 'left');
         if (drag?.mode == 'rotate')
         {
@@ -1031,14 +1041,17 @@ window.pmbEditor = (() =>
     };
 
     ///////////////////////////////////////////////////////////////////////////
-    // the panel (DOM, right side)
+    // the panels (DOM): the hierarchy on the left, the inspector on the right
 
     const panel = document.createElement('div');
     panel.style.cssText = `position:fixed;top:0;right:0;width:${PANEL}px;height:100%;overflow-y:auto;box-sizing:border-box;
         padding:14px;background:#1E2433;color:#EEF1F6;font:13px/1.4 system-ui,sans-serif;display:none;z-index:10`;
+    const hier = document.createElement('div');
+    hier.style.cssText = `position:fixed;top:0;left:0;width:${HIER}px;height:100%;overflow-y:auto;box-sizing:border-box;
+        padding:14px;background:#1E2433;color:#EEF1F6;font:13px/1.4 system-ui,sans-serif;display:none;z-index:10`;
     // LittleJS cancels every mousedown on the page, which would stop the fields from taking focus
-    for (const ev of ['mousedown', 'wheel']) panel.addEventListener(ev, e => e.stopPropagation());
-    document.body.appendChild(panel);
+    for (const p of [panel, hier]) for (const ev of ['mousedown', 'wheel']) p.addEventListener(ev, e => e.stopPropagation());
+    document.body.append(panel, hier);
     const testTag = document.createElement('div');
     testTag.textContent = 'TEST PLAY · E to edit';
     testTag.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:4px 10px;background:#1E2433;color:#FFCC47;font:600 12px system-ui,sans-serif;border-radius:4px;display:none;z-index:10;pointer-events:none';
@@ -1063,11 +1076,14 @@ window.pmbEditor = (() =>
         .pmbed .grid2 label span{width:auto;min-width:34px}
         .pmbed .boat{display:flex;gap:4px;align-items:center;margin:3px 0}
         .pmbed .boat button:first-child{flex:1;text-align:left}
-        .pmbed .objs{max-height:260px;overflow-y:auto;position:relative;border:1px solid #2B3346;padding:0 4px 4px}
-        .pmbed .objs .kind{color:#A8B0C0;font-size:11px;margin:8px 0 2px}
-        .pmbed .objs button{display:block;width:100%;text-align:left;margin:2px 0;padding:2px 8px}`;
+        .pmbed .tree .group{display:flex;gap:5px;align-items:center;margin:10px 0 2px;color:#A8B0C0;font-size:11px;letter-spacing:.04em;cursor:pointer;user-select:none}
+        .pmbed .tree .group:hover{color:#EEF1F6}
+        .pmbed .tree .group.has{color:#EEF1F6}
+        .pmbed .tree .group i{width:10px;font-style:normal}
+        .pmbed .tree > button{display:block;width:100%;text-align:left;margin:2px 0;padding:2px 8px 2px 18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .pmbed .tree .boat button:first-child{padding-left:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`;
     document.head.appendChild(css);
-    panel.className = 'pmbed';
+    panel.className = hier.className = 'pmbed';
 
     const el = (tag, attrs = {}, kids = []) =>
     {
@@ -1106,6 +1122,7 @@ window.pmbEditor = (() =>
     function refreshPanel()
     {
         if (!def) return;
+        refreshHierarchy();
         panel.replaceChildren();
         const unsaved = LEVELS.filter(d => dirty.has(d)).map(d => d.name);
         panel.append(el('h2', {}, [el('span', { textContent: 'Level editor' }), button('Close', close)]));
@@ -1121,26 +1138,6 @@ window.pmbEditor = (() =>
             button(`Save (⌘S)${unsaved.length ? ' •' : ''}`, save, unsaved.length ? 'go' : ''),
             button('New level', () => newLevel(false)), button('Duplicate level', () => newLevel(true))]));
         panel.append(el('div', { className: 'status', textContent: status || (unsaved.length ? 'Unsaved: ' + unsaved.join(', ') : 'No unsaved changes') }));
-
-        // the chain of boats, in parking order
-        panel.append(el('h3', { textContent: 'Boats (parking order)' }));
-        def.boats.forEach((e, n) =>
-        {
-            const t = BOATS[e.boat], on = (sel?.kind == 'start' || sel?.kind == 'slip') && sel.i == n;
-            panel.append(el('div', { className: 'boat' }, [
-                button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}`, () => { sel = { kind: 'start', i: n }; frameBoat(n); refreshPanel(); }, on ? 'on' : ''),
-                button('↑', () => moveBoat(n, -1)), button('↓', () => moveBoat(n, 1))]));
-        });
-        const typeSel = el('select', { onchange: () => { addBoatType = typeSel.value; } });
-        for (const [v, text] of boatOptions()) typeSel.append(el('option', { value: v, textContent: text, selected: v == addBoatType }));
-        panel.append(field('type', typeSel), el('div', { className: 'row' }, [
-            button('Add to chain', () => add('start', addBoatType)), button('Add moored', () => add('moored', addBoatType)),
-            button('Add loose', () => add('drifters', addBoatType)), button('Add traffic', () => add('traffic', addBoatType))]));
-        panel.append(el('h3', { textContent: 'Add' }), el('div', { className: 'row' }, [
-            button('Buoy', () => add('buoys')), button('Log', () => add('logs')), button('Ducks', () => add('ducks')),
-            button('Sand', () => add('land')), button('Dock', () => add('docks')), button('Landmass', () => add('lands')), button('Current', () => add('currents')), button('Wall', () => add('walls'))]));
-
-        objectList();
 
         panel.append(el('h3', { textContent: sel ? selTitle() : 'Selection' }));
         selectionFields();
@@ -1174,34 +1171,62 @@ window.pmbEditor = (() =>
         ['currents', 'Currents', r => `Current · ${size(r)}`],
         ['walls', 'Invisible walls', r => `Wall · ${size(r)}`],
     ];
-    let objsScroll = 0, objsSel = null;
-    function objectList()
+    // the hierarchy (left panel): the chain in parking order, then everything else by kind. A group folds
+    // when its header is clicked; clicking a row selects the thing and frames it.
+    const folded = new Set();
+    let treeSel = null;
+    function refreshHierarchy()
     {
-        const box = el('div', { className: 'objs', onscroll: () => { objsScroll = box.scrollTop; } });
-        // a traffic boat's path point counts as its boat
-        const cur = sel?.kind == 'point' ? { kind: 'traffic', i: sel.i } : sel;
+        hier.replaceChildren();
+        hier.append(el('h2', {}, [el('span', { textContent: 'Hierarchy' })]));
+
+        const typeSel = el('select', { onchange: () => { addBoatType = typeSel.value; } });
+        for (const [v, text] of boatOptions()) typeSel.append(el('option', { value: v, textContent: text, selected: v == addBoatType }));
+        hier.append(field('type', typeSel), el('div', { className: 'row' }, [
+            button('Add to chain', () => add('start', addBoatType)), button('Add moored', () => add('moored', addBoatType)),
+            button('Add loose', () => add('drifters', addBoatType)), button('Add traffic', () => add('traffic', addBoatType))]));
+        hier.append(el('div', { className: 'row' }, [
+            button('Buoy', () => add('buoys')), button('Log', () => add('logs')), button('Ducks', () => add('ducks')),
+            button('Sand', () => add('land')), button('Dock', () => add('docks')), button('Landmass', () => add('lands')), button('Current', () => add('currents')), button('Wall', () => add('walls'))]));
+
+        const box = el('div', { className: 'tree' });
+        // a traffic boat's path point counts as its boat, a slip as its chain boat
+        const cur = sel?.kind == 'point' ? { kind: 'traffic', i: sel.i } : sel?.kind == 'slip' ? { kind: 'start', i: sel.i } : sel;
         let on = null;
+        // a group header; true when its rows show
+        const group = (kind, title, n) =>
+        {
+            const open = !folded.has(kind);
+            box.append(el('div', { className: 'group' + (cur?.kind == kind ? ' has' : ''), onclick: () => { if (open) folded.add(kind); else folded.delete(kind); refreshPanel(); } },
+                [el('i', { textContent: open ? '▾' : '▸' }), `${title} (${n})`]));
+            return open;
+        };
+        if (group('start', 'Chain, in parking order', def.boats.length))
+            def.boats.forEach((e, n) =>
+            {
+                const t = BOATS[e.boat], here = cur?.kind == 'start' && cur.i == n;
+                const b = button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}`, () => { sel = { kind: 'start', i: n }; frameBoat(n); refreshPanel(); }, here ? 'on' : '');
+                if (here) on = b;
+                box.append(el('div', { className: 'boat' }, [b, button('↑', () => moveBoat(n, -1)), button('↓', () => moveBoat(n, 1))]));
+            });
         for (const [kind, title, label] of OBJECTS)
         {
             const list = def[kind] || [];
-            if (!list.length) continue;
-            box.append(el('div', { className: 'kind', textContent: `${title} (${list.length})` }));
+            if (!list.length || !group(kind, title, list.length)) continue;
             list.forEach((it, i) =>
             {
-                const b = button(`${i + 1}. ${label(it)}`, () => { sel = { kind, i }; frameSel(); refreshPanel(); }, same(cur, { kind, i }) ? 'on' : '');
-                if (b.className) on = b;
+                const here = same(cur, { kind, i });
+                const b = button(`${i + 1}. ${label(it)}`, () => { sel = { kind, i }; frameSel(); refreshPanel(); }, here ? 'on' : '');
+                if (here) on = b;
                 box.append(b);
             });
         }
-        panel.append(el('h3', { textContent: 'Objects' }));
-        if (!box.children.length) return panel.append(el('div', { className: 'keys', textContent: 'Nothing but the boats yet.' }));
-        panel.append(box);
-        // keep the list where it was, unless the selection changed: then bring the selected row into view
-        box.scrollTop = objsScroll;
+        hier.append(box);
+        // the panel keeps its scroll across a rebuild; when the selection changed, bring its row into view
         const key = cur && `${cur.kind}:${cur.i}`;
-        if (key != objsSel && on && (on.offsetTop < box.scrollTop || on.offsetTop + on.offsetHeight > box.scrollTop + box.clientHeight))
-            box.scrollTop = on.offsetTop - box.clientHeight/2;
-        objsScroll = box.scrollTop; objsSel = key;
+        if (key != treeSel && on && (on.offsetTop < hier.scrollTop || on.offsetTop + on.offsetHeight > hier.scrollTop + hier.clientHeight))
+            hier.scrollTop = on.offsetTop - hier.clientHeight/2;
+        treeSel = key;
     }
 
     function selTitle()
@@ -1217,7 +1242,7 @@ window.pmbEditor = (() =>
     function selectionFields()
     {
         const grid = kids => el('div', { className: 'grid2' }, kids);
-        if (!sel) return panel.append(el('div', { className: 'keys', textContent: 'Click something in the level, or a boat in the list.' }));
+        if (!sel) return panel.append(el('div', { className: 'keys', textContent: 'Click something in the level, or pick it in the hierarchy on the left.' }));
         const i = sel.i;
         if (sel.kind == 'start' || sel.kind == 'slip')
         {

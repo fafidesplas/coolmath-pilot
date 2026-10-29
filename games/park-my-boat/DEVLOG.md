@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-28 — Editor: hierarchy on the left, inspector on the right
+- Owner request: the editor's one right-hand panel is now two, like Unity. Left, the hierarchy: the chain in parking order (with the up/down buttons), then every other object by kind in foldable groups, and the Add buttons on top. Right, the inspector: level picker, name, Play / Undo / Save, then the selected thing's fields and the keys.
+- Picking something on the canvas highlights its row and scrolls it into view; picking a row selects and frames it. Rows are one line each (30 traffic boats fit without wrapping). Both panels hide in test play and come back with `E`. The camera framing, the title text and the "mouse is over a panel" check account for both sides.
+- Checked in Chrome on Rush Hour (30 traffic boats): select from the list, fold a group, click empty list space (no deselect, no pan), pick on the canvas, test play and back; `selfTest()` gives 10 levels, 0 problems; no console errors.
+
 ## 2026-10-28 — No instruction or flavor text
 - Owner request: the game shows no tutorial or flavor text. Removed the level hint panel (and every `hint` in `levels/levels.js`, in the editor's boat panel and in its save code), the title tagline, and the "Not in the slip. Try again." popup. A failed check now only plays the fail sound.
 - Kept as plain information, not instructions: menu buttons, level and boat names, size and money readouts, the size-jump card ("300 m · 105x BIGGER"), the scale bar, popups for money and results (PARKED!, BUMP, PUSH, QUACK, NEW BEST!), the YOU marker, PAUSED.
