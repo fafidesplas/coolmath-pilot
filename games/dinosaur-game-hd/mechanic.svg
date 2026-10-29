@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 480 270" width="480" height="270" shape-rendering="crispEdges">
-  <!-- Dinosaur Game: HD Edition: two lanes from the same seed. P1 (day) jumps a cactus through a coin arc; P2 (night) ducks a pterodactyl. Loop 4s. -->
+  <!-- Dinosaur Game: Cool Edition: two lanes from the same seed. P1 (day) jumps a cactus through a egg arc; P2 (night) ducks a pterodactyl. Loop 4s. -->
   <defs>
     <!-- Running dino, 48x48, feet at y=48, color from currentColor -->
     <symbol id="dino" viewBox="0 0 48 48" width="48" height="48" overflow="visible">
@@ -47,12 +47,14 @@
       <rect x="16" y="16" width="8" height="4" fill="#2f8a4a"/>
     </symbol>
 
-    <!-- Coin, 12x12, spins -->
-    <symbol id="coin" viewBox="-6 -6 12 12" width="12" height="12" overflow="visible">
+    <!-- Egg, 10x13, wobbles -->
+    <symbol id="egg" viewBox="-6 -7 12 14" width="12" height="14" overflow="visible">
       <g>
-        <animateTransform attributeName="transform" type="scale" values="1 1;0.3 1;1 1" dur="0.6s" repeatCount="indefinite"/>
-        <rect x="-6" y="-6" width="12" height="12" rx="3" fill="#f2b630"/>
-        <rect x="-3" y="-4" width="3" height="8" fill="#ffe27a"/>
+        <animateTransform attributeName="transform" type="rotate" values="-10;10;-10" dur="0.6s" repeatCount="indefinite"/>
+        <ellipse cx="0" cy="0.5" rx="5" ry="6.5" fill="#fff6e0" stroke="#1b2340" stroke-width="1"/>
+        <rect x="-2" y="-2" width="2" height="2" fill="#f08a24"/>
+        <rect x="1.5" y="2" width="2" height="2" fill="#f08a24"/>
+        <rect x="-3" y="-5" width="1.5" height="2.5" fill="#ffffff"/>
       </g>
     </symbol>
   </defs>
@@ -77,17 +79,17 @@
     <rect x="400" y="36" width="36" height="8"/><rect x="408" y="30" width="16" height="6"/>
   </g>
 
-  <!-- Cactus + coin arc, scrolling together -->
+  <!-- Cactus + egg arc, scrolling together -->
   <g>
     <animateTransform attributeName="transform" type="translate" values="500 0;-40 0" dur="4s" repeatCount="indefinite"/>
     <use xlink:href="#cactus" href="#cactus" x="0" y="78"/>
-    <use xlink:href="#coin" href="#coin" x="-30" y="58">
+    <use xlink:href="#egg" href="#egg" x="-30" y="58">
       <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.67;0.68;1" dur="4s" repeatCount="indefinite"/>
     </use>
-    <use xlink:href="#coin" href="#coin" x="6" y="40">
+    <use xlink:href="#egg" href="#egg" x="6" y="40">
       <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.735;0.745;1" dur="4s" repeatCount="indefinite"/>
     </use>
-    <use xlink:href="#coin" href="#coin" x="42" y="48">
+    <use xlink:href="#egg" href="#egg" x="42" y="48">
       <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.80;0.81;1" dur="4s" repeatCount="indefinite"/>
     </use>
   </g>
@@ -102,10 +104,10 @@
     </g>
   </g>
 
-  <!-- P1 tag and coin counter -->
+  <!-- P1 tag and egg counter -->
   <rect x="10" y="8" width="30" height="16" fill="#1d2433"/>
   <text x="25" y="20" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="bold" fill="#ffffff">P1</text>
-  <use xlink:href="#coin" href="#coin" x="420" y="16"/>
+  <use xlink:href="#egg" href="#egg" x="420" y="16"/>
   <text x="432" y="20" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="bold" fill="#1d2433">×12</text>
 
   <!-- Divider -->

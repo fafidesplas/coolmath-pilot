@@ -1,126 +1,125 @@
-# Dinosaur Game: HD Edition — game brief
+# Dinosaur Game: Cool Edition — game brief
 
-> The offline browser dino, remastered: jump the cacti, duck the pterodactyls, grab coins, and race a friend on the same keyboard.
+> The offline browser dino, remastered: jump the cacti, duck the pterodactyls, grab eggs, and race a friend on the same keyboard.
 
-![How Dinosaur Game: HD Edition plays](mechanic.svg)
+![How Dinosaur Game: Cool Edition plays](mechanic.svg)
 
-**Rank:** New idea · **Genre:** One-button endless runner, 1–2 players · **Art family:** HD Pixel (new, 16-bit SNES look) **[confirm]** · **Audience habit:** Coolmath nostalgia (everyone has played the no-internet dino)
+**Rank:** New idea · **Genre:** One-button endless runner, 1–2 players · **Art family:** HD Pixel (new, 16-bit SNES look) · **Audience habit:** Coolmath nostalgia (everyone has played the no-internet dino)
 
 @../../STANDARDS.md
 @../../PHASES.md
 
 ## Why it works for Coolmath
-Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: coins, unlockable runners (classic dinosaurs and characters from our games Tag and Hangman), a daily run, and a 2-player race on one keyboard.
+Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: eggs, unlockable runners (classic dinosaurs and characters from our games Tag and Hangman), a daily run, and a 2-player race on one keyboard.
 
-**Codename:** "Dinosaur Game: HD Edition". The original belongs to Google: the final name, the logo and the store text never say "Chrome", "Google" or "T-Rex Runner", and the dino and its sprites are original art, not traced from Chrome **[confirm final name]**.
+**Name:** "Dinosaur Game: Cool Edition" (the folder slug stays `dinosaur-game-hd`). The original belongs to Google: the name, the logo and the store text never say "Chrome", "Google" or "T-Rex Runner", and the dino and its sprites are original art, not traced from Chrome. We copy the original's tuning numbers, never its code or art.
 
 ## The design rule: no bloat
-The first 10 seconds must feel exactly like the original: the same two inputs, the same speed curve, the same "you missed one jump and it's over". Every addition must pass this test: *does it change what a run feels like?* If yes, it is out of v1. Coins, runners and achievements are on top of the run, never inside it: no power-ups, no upgrades that change physics, no lives, no levels.
+The first 10 seconds must feel exactly like the original: the same two inputs, the same speed curve, the same "you missed one jump and it's over". Every addition must pass this test: *does it change what a run feels like?* If yes, it is out of v1. Eggs, runners and achievements are on top of the run, never inside it: no power-ups, no upgrades that change physics, no lives, no levels.
 
 ## Core loop
-Title (the dino sleeps; any key wakes it) → run starts → jump and duck through obstacles as the speed rises, grab coins on the way → one hit ends the run → results: distance, coins, best → instant restart (under 1 s), or spend coins on a new runner.
+Title (the dino sleeps; any key wakes it) → run starts → jump and duck through obstacles as the speed rises, grab eggs on the way → one hit ends the run → results: distance, eggs, best → instant restart (under 1 s), or spend eggs to hatch a new runner.
 
 ## Mechanics
 - **Run:** the dino runs automatically. Speed starts slow and rises steadily up to a cap, like the original. Score is distance.
 - **Jump:** tap to jump; hold for a higher jump (variable height, as in the original).
 - **Duck:** hold down to duck under flying obstacles. Down in the air does a fast-fall.
 - **Obstacles:** small and large cacti (single and in groups), and pterodactyls at three heights (jump, duck, or either). Obstacles are generated from a seed; gaps are always clearable at the current speed.
-- **Coins:** placed in short arcs and lines, often on the riskier path (above a pterodactyl, over a tall cactus group). Coins never block or change the run. They are counted and banked at the end of the run.
+- **Eggs:** small speckled eggs (more "in-world" than coins), placed in short arcs and lines, often on the riskier path (over a tall cactus group, at duck height under a pterodactyl). Eggs never block or change the run. They are counted and banked at the end of the run, crash or not.
 - **Day and night:** the scene changes from day to night and back every few hundred meters, like the original, with a smooth color change.
 - **Milestones:** a short flash and chime every 100 m.
 
 ## 2-player mode
 - Two lanes stacked on one screen (P1 top, P2 bottom), both from the same seed, so both see the same obstacles at the same time.
-- Both run at the same speed. When one crashes, their dino stays on screen as a ghost; the other keeps running. The last dino running wins; the score is the distance gap.
-- A best-of-3 match is optional **[confirm]**. Coins earned in 2P go to the shared bank.
+- Both run at the same speed, the same curve as 1P. The first crash ends the race: the crashed dino stays in its lane as a ghost and the other wins after a short victory lap. Crashing in the same frame is a draw.
+- Single races, no best-of-3: a big Rematch button and a running tally ("P1 2 – 1 P2"). Eggs earned in 2P go to the shared bank.
 
 ## Controls
-- **1 player:** Space, Up or W to jump (hold for higher); Down or S to duck / fast-fall. Mouse/touch: tap to jump, hold the lower third of the screen to duck **[confirm]**.
-- **2 players:** P1 W (jump) and S (duck); P2 Up (jump) and Down (duck). Touch: tap your half of the screen to jump; ducking in 2P on touch is open **[confirm]**.
+- **1 player:** Space, Up or W to jump (hold for higher); Down or S to duck / fast-fall. Mouse/touch: press the top two thirds of the screen to jump, hold the bottom third to duck; faint icons show the zones in the first run.
+- **2 players:** P1 W (jump) and S (duck); P2 Up (jump) and Down (duck). Touch: P1 has the left half (press to jump, hold the bottom-left corner to duck), P2 the right half (bottom-right corner to duck).
 - P to pause, R to restart.
 
 ## Shell (differs from STANDARDS)
 An endless runner has no levels, so the level-select and star screens are replaced:
-- **Title:** logo, **Play** (1P), **2 Players**, **Runners**, settings.
-- **Runners:** a row of all the runners. Locked ones show as silhouettes, with their price in coins or their achievement and progress (for example "Reach 2000 m: 1450 / 2000").
-- **Results:** distance and coins count up, best distance, any achievement earned in this run, **Retry** (big) / **Runners** / **Menu**.
+- **Title:** logo, **Play** (1P), **2 Players**, **Daily**, **Runners**, settings.
+- **Runners:** a row of all the runners. Locked ones show as silhouettes, with their price in eggs (shown as an egg with a progress bar) or their achievement and progress (for example "Reach 2000 m: 1450 / 2000").
+- **Results:** distance and eggs count up, best distance, any achievement earned in this run, **Retry** (big) / **Runners** / **Menu**.
 - **Daily run:** one date-seeded run per day, same for everyone, with a streak and an emoji result line (STANDARDS daily challenge).
 
 ## Runners
 All runners are cosmetic: same jump, same speed, same hitbox. Each one has its own run, jump, duck and crash frames, drawn to fit the T-Rex's footprint.
 
-### Classic dinosaurs (coins)
+### Classic dinosaurs (hatched with eggs)
 - **T-Rex:** the default, free from the start.
-- **Triceratops**, **Pachycephalosaurus** and **Stegosaurus:** bought with coins, at rising prices **[confirm prices]**. Their duck pose lowers the head (horns, dome, plates), so the four-legged dinos still fit under a pterodactyl.
+- **Triceratops** (300 eggs), **Pachycephalosaurus** (750) and **Stegosaurus** (1500): spending the eggs plays a short hatch scene, and the dinosaur pops out. Their duck pose lowers the head (horns, dome, plates), so the four-legged dinos still fit under a pterodactyl.
 
 ### Tag crossover characters (achievements)
-The characters from our game **Tag** (a work-for-hire project we own) are the rewards for achievers and completionists: each one unlocks with one achievement and can't be bought. There is no source art; the screengrabs in `reference/` (`tag-forest.png`, `tag-tower.png`) are the reference, and the sprites are redrawn from them. Names come from the team **[confirm]**.
+The characters from our game **Tag** (a work-for-hire project we own) are the rewards for achievers and completionists: each one unlocks with one achievement and can't be bought. There is no source art; the screengrabs in `reference/` are the reference (`tag-roster.png` and `tag-kraken.png` show the names), and the sprites are redrawn from them.
 
-| Character (from the screengrabs) | Achievement **[confirm]** |
-|---|---|
-| Blue blob, a droplet with a worried face | Reach 1000 m in one run |
-| Orange fox, big eye, white muzzle and tail | Collect 1000 coins in total |
-| Green frog in a cap, glasses and a dark cap | Win 10 two-player races |
-| Pink unicorn, white horn, big eye | Play the daily run 7 days in a row |
-| Teal squid, round head, tentacle mustache | Run 50 km in total |
-| Purple hood, dark hood with white eyes | Reach 3000 m in one run |
-| Red dino, one big eye, jagged teeth | Unlock every other runner (the completionist prize) |
+| Character | Look | Achievement |
+|---|---|---|
+| **Squatch** | blue fuzzy head on little feet | Reach 1000 m in one run |
+| **Griffin** | orange bird-griffin, big eye, white chest | Collect 1000 eggs in total |
+| **Unicorn** | pink pony, white horn | Play the daily run 7 days in a row |
+| **Kraken** | teal octopus with glasses | Run 50 km in total |
+| **Pixie** | purple hooded droplet, white eyes | Reach 3000 m in one run |
+| **Alien** | mint green, dark cap and glasses | Win 10 two-player races (the 2P-only bonus) |
+| **Dragon** | red, one big eye, jagged teeth | Unlock every other runner except Alien (the completionist prize) |
 
 ### Hangman beast (achievement)
-The furry beast from **Coolmath Hangman** (also ours) joins as one more achievement runner: a round black fur ball with two horns, sleepy white eyes and one fang (reference: `reference/hangman-beast.png`, redrawn as pixel art). Achievement **[confirm]**: reach the 5th night in one run, since it is a creature of the dark. Its sprite needs a light rim or outline so it stays visible against the night sky.
+The furry beast from **Coolmath Hangman** (also ours) joins as one more achievement runner: a round black fur ball with two horns, sleepy white eyes and one fang (reference: `reference/hangman-beast.png`, redrawn as pixel art). Achievement: reach the 4th night (2800 m) in one run, since it is a creature of the dark. Its sprite needs a light rim or outline so it stays visible against the night sky.
 
 The achievements are tracked only in the save file: no separate achievements screen, the Runners screen is the list.
 
 ## Progression and content (v1)
 - Endless 1P run, 2P race, daily run.
-- 12 runners: the T-Rex, 3 classic dinosaurs bought with coins, and 8 crossover characters (7 from Tag, the Hangman beast) unlocked by achievements.
+- 12 runners: the T-Rex, 3 classic dinosaurs hatched with eggs, and 8 crossover characters (7 from Tag, the Hangman beast) unlocked by achievements.
 - One desert scene with day and night.
 
 ## Retention
-Best distance, daily run streak, saving up for the next dinosaur, chasing the crossover characters, and the friend you just lost to sitting next to you.
+Best distance, daily run streak, saving eggs for the next hatch, chasing the crossover characters, and the friend you just lost to sitting next to you.
 
 ## Art direction
-**Open: two candidates, picked in the GDD [confirm].**
-1. **HD Pixel (recommended, and the style of Tag, see `reference/`):** a 16-bit SNES look. The dino is a chunky pixel sprite with more frames than the original (run, jump, duck, crash with a dizzy face), a few colors per sprite instead of one gray, parallax desert layers (dunes, mesas, clouds), and a warm sunset to deep blue night. Drawn in code or a small sprite sheet, Canvas 2D, stays well under 2 MB.
-2. **Voxel 3D:** the same side-on game rendered as voxel models with a slightly tilted camera, soft shadows and depth. Needs Three.js bundled locally, costs more size and Chromebook performance, and more art time.
+**Decided: HD Pixel** (the style of Tag, see `reference/`). Voxel 3D was the other candidate and is not used.
+1. **HD Pixel:** a 16-bit SNES look. The dino is a chunky pixel sprite with more frames than the original (run, jump, duck, crash with a dizzy face), a few colors per sprite instead of one gray, parallax desert layers (dunes, mesas, clouds), and a warm sunset to deep blue night. Drawn in code or a small sprite sheet, Canvas 2D, stays well under 2 MB.
+2. **Voxel 3D (not chosen):** the same side-on game rendered as voxel models with a slightly tilted camera, soft shadows and depth. Needs Three.js bundled locally, costs more size and Chromebook performance, and more art time.
 
-Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstacles have strong silhouettes, coins spin and sparkle, and runners change the look, never the hitbox.
+Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstacles have strong silhouettes, eggs wobble and glint, and runners change the look, never the hitbox.
 
 ### Concept art prompts
-- **Gameplay screenshot (16:9):** *"16-bit pixel art side-scrolling runner, a cute green pixel dinosaur with a big head and tiny arms jumping over a cactus in a desert, a line of spinning gold coins in an arc above the cactus, a pterodactyl flying ahead, parallax dunes and mesas, warm sunset sky, crisp SNES-style pixel art, 16:9 game screenshot"*
-- **Key art / thumbnail (16:9 and 1:1, no text):** *"a cute pixel art dinosaur mid-jump over a cactus, gold coins flying around it, a second dinosaur in another color running below, desert at sunset turning to night with stars, crisp 16-bit SNES-style pixel art, saturated colors, room for a title, game key art"*
+- **Gameplay screenshot (16:9):** *"16-bit pixel art side-scrolling runner, a cute green pixel dinosaur with a big head and tiny arms jumping over a cactus in a desert, an arc of small speckled eggs above the cactus, a pterodactyl flying ahead, parallax dunes and mesas, warm sunset sky, crisp SNES-style pixel art, 16:9 game screenshot"*
+- **Key art / thumbnail (16:9 and 1:1, no text):** *"a cute pixel art dinosaur mid-jump over a cactus, speckled eggs flying around it, a second dinosaur in another color running below, desert at sunset turning to night with stars, crisp 16-bit SNES-style pixel art, saturated colors, room for a title, game key art"*
 - **Character sheet:** *"pixel art dinosaur sprite sheet: run cycle, jump, duck, crash with dizzy eyes; plus a triceratops, a pachycephalosaurus and a stegosaurus in the same poses, 16-bit SNES style, consistent size, plain light background, evenly spaced"*
-- **Logo:** *"the words "DINOSAUR GAME" in chunky pixel letters with a small "HD EDITION" banner, a pixel dinosaur head peeking over the letters, 16-bit pixel art, plain background, bold and readable at small size"*
+- **Logo:** *"the words "DINOSAUR GAME" in chunky pixel letters with a small "COOL EDITION" banner, a pixel dinosaur head peeking over the letters, 16-bit pixel art, plain background, bold and readable at small size"*
 - **Negative prompt:** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, blood, Google logo, Chrome logo, cluttered background, blurry, low contrast, UI buttons"*
 
 ## Audio
-Jump "boop", duck swoosh, coin chime (pitch rises on a coin streak), 100 m milestone beep, crash thud. A short chiptune loop, off by default.
+Jump "boop", duck swoosh, egg "pip" (pitch rises on an egg streak), hatch crack and jingle, 100 m milestone beep, crash thud. A short chiptune loop, off by default.
 
 ## GameAnalytics
 - No levels, so progression events use one id per mode: `endless`, `versus`, `daily`, with the distance as score on `Fail`.
-- Extra events: `run:death:<obstacle-type>`, `run:distance` (value), `coins:earned` (value), `runner:buy:<id>`, `runner:equip:<id>`, `achievement:<id>`, `versus:start`, `versus:winner:<p1|p2>`.
-- Questions to answer: do coins and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
+- Extra events: `run:death:<obstacle-type>`, `run:distance` (value), `eggs:earned` (value), `runner:hatch:<id>`, `runner:equip:<id>`, `achievement:<id>`, `versus:start`, `versus:winner:<p1|p2>`.
+- Questions to answer: do eggs and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
 
 ## Scope
-- **v1:** 1P endless, 2P race, daily run, coins, 12 runners (4 dinosaurs, 8 crossover characters with achievements), day/night, one desert scene.
-- **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as a coin sink once all 3 are bought. Not planned: power-ups, missions, upgrades, lives, loot boxes.
+- **v1:** 1P endless, 2P race, daily run, eggs, 12 runners (4 dinosaurs, 8 crossover characters with achievements), day/night, one desert scene.
+- **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as an egg sink once all 3 are hatched; a rare golden egg worth 10. Not planned: power-ups, missions, upgrades, lives, loot boxes.
 
 ## Risks and open questions
 - **Feel:** the original's jump arc, hitbox forgiveness and speed curve are what make it work. Measure them by playing the original side by side and match them before adding anything.
-- **IP:** keep the name and art clearly original (see above); [confirm] with the team before any public build.
-- **Coin sink:** with only 3 dinosaurs to buy, coins lose their purpose once they are bought. Set prices so that takes a while, and keep color variants for later if the data shows players stop caring about coins.
+- **IP:** keep the name and art clearly original (see above); check "Dinosaur Game" in the name with the team before any public build.
+- **Egg sink:** with only 3 dinosaurs to hatch, eggs lose their purpose once all are hatched. Set prices so that takes a while, and keep color variants for later if the data shows players stop caring about eggs.
 - **Achievement tuning:** each Tag achievement must be reachable by a committed player without grinding for hours; check the targets against real run data in phase 4.
 - **Four-legged hitbox:** the triceratops and stegosaurus are long; drawing them inside the T-Rex footprint may look cramped. Test the sprites early.
 - **Tag art style:** Tag is chunky pixel art with dark outlines and soft-dark backgrounds, which matches the HD Pixel direction; that is one more reason to pick it over voxel.
-- **2P on touch:** two players on one tablet with ducking may not work; 2P might be keyboard only.
-- **Art style:** HD pixel vs voxel decides the tech (Canvas 2D or LittleJS vs Three.js). Decide in the GDD.
-- **Coin placement:** coins must tempt, not distract. If players die chasing coins in the first 30 s, move them.
+- **2P on touch:** left and right halves with a duck corner each; if four hands on one tablet don't work in playtests, 2P becomes keyboard only.
+- **Egg placement:** eggs must tempt, not distract. If players die chasing eggs in the first 30 s, move them.
 
 ## Definition of done
 `STANDARDS.md` checklist, plus: a player who knows the original says it "feels the same, but better" within one run; two players can start a race from the title in two clicks.
 
 ## Vertical slice (phase 2)
-1P run with jump (variable height), duck and fast-fall; cacti and pterodactyls from a seed; speed ramp; coins; day/night; crash, results and instant restart; best distance saved; the title with the sleeping dino; GameAnalytics stubs. 2P, runners and achievements come in phase 3.
+1P run with jump (variable height), duck and fast-fall; cacti and pterodactyls from a seed; speed ramp; eggs; day/night; crash, results and instant restart; best distance saved; the title with the sleeping dino; GameAnalytics stubs. 2P, runners and achievements come in phase 3.
 
 ## How to start
-Don't start coding. Follow `../../PHASES.md` from phase 1: write and approve `GDD.md` first, then build the vertical slice above.
+Follow `../../PHASES.md`. `GDD.md` is the design source of truth; no code until it is Approved, then build the vertical slice above.

@@ -1,4 +1,10 @@
-# Dinosaur Game: HD Edition — devlog
+# Dinosaur Game: Cool Edition — devlog
+
+## 2026-10-29 — GDD first draft
+- Phase 1a answered: HD Pixel in Canvas 2D, the original's tuning numbers, name "Dinosaur Game: Cool Edition", eggs instead of coins (dinosaurs hatch from them), 2P speed same as 1P, single races with a rematch tally, touch 2P split left/right with a duck corner each.
+- Tag characters now use their real names: Squatch, Griffin, Unicorn, Kraken, Pixie, Alien (2P-only bonus), Dragon (needs everything but Alien). Hangman beast unlocks at the 4th night. Name references saved as `reference/tag-roster.png` and `reference/tag-kraken.png`.
+- Wrote `GDD.md` (Draft), updated the brief and the schematic (eggs, new name).
+- Next: phase 1c critical review, then a teammate reads and approves the GDD.
 
 ## 2026-10-29 — Brief written
 - New game: a remastered 1–2 player take on the offline browser dino, with coins, cosmetic skins, a daily run and a same-keyboard 2P race.
