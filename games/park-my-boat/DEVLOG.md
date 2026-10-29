@@ -1,5 +1,10 @@
 # Dock All The Boats — devlog
 
+## 2026-10-28 — Editor: batch editing
+- Owner TODO: batch editing. Select several things: Shift, Cmd or Ctrl+click on the canvas, or in the hierarchy Cmd/Ctrl-click to toggle, Shift-click for a range, and an "all" button on each group header. Dragging, arrow keys, `[ ]`, `D` and `Delete` act on all of them. The inspector shows the settings they share and a change goes to all of them in one undo step; a field where they differ reads "mixed". Covered: boat type and size (chain, moored, loose and traffic boats), traffic speed, pace, end behavior, "starts when boat N reaches point M" (a boat can't wait for itself, it keeps what it had) and the parking turns it moves in (half-ticked when they differ), headings, buoy scale, ducklings, quay, current flow, landmass scale and grass. Mixed kinds only share boat type and size.
+- Gotcha fixed on the way: traffic boats on one loop share their point arrays (Rush Hour: 30 boats on 3 loops), so a group move shifted shared points once per selected boat; it now shifts each once. Moving one boat of a loop still moves the whole loop, as before.
+- Checked in Chrome, on Rush Hour: Cmd-click three boats, set the end behavior for all three (one Undo reverts it), Shift-range, a mixed-boat range showing "mixed", group nudge, select all, duplicate and delete 30; on Way Down: Shift-click two moored yachts and drag them together, make three traffic boats wait for boat 1. `selfTest()` gives 9 levels, 0 problems; no console errors.
+
 ## 2026-10-28 — Editor: test from any boat
 - Owner TODO: Shift+E and the inspector's "Play from here" already started a test at the selected boat; now there is also a ▶ button on every chain row in the hierarchy, Shift+E works with a slip selected, and the test remembers its boat: R or RETRY restart from it instead of boat 1 (new `pmbEditor.restartTest()` hook in `src/main.js`). The on-screen tag says "TEST PLAY from boat N".
 - Checked in Chrome: ▶ from boat 2 of Odd Couple (boat 1 parked in its slip; R restarts at boat 2 and re-parks boat 1); no console errors.

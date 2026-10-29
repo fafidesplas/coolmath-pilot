@@ -20,7 +20,9 @@
     and the inspector on the right (the level, the selected thing's fields, the keys).
 
     Test play: E from the first boat, Shift+E or the ▶ button on a chain boat from that boat (earlier boats
-    parked for you); R restarts from the same boat.
+    parked for you); R restarts from the same boat. Batch editing: Shift / Cmd / Ctrl+click adds to or removes
+    from the selection (hierarchy: Cmd / Ctrl toggles, Shift a range, a group's "all" selects it); move, nudge,
+    rotate, D and Delete act on all, and the inspector edits what they share.
 */
 
 'use strict';
@@ -34,6 +36,9 @@ window.pmbEditor = (() =>
     const C_ED = rgb(.25, .55, 1);
     let li = 0, def = null, sel = null, hover = null, drag = null, status = '', dirHandle = null;
     let undo = [], redo = [];
+    // several things selected at once: `multi` holds them and `sel` is the last one added. The group only counts while
+    // it still holds the current `sel` object, so anything that selects something else drops it by itself.
+    let multi = [];
     const dirty = new Set();            // levels changed since the last save
     // a level's fields can be shared with levels.js's helpers (land: HARBOR_ISLAND.land): the editor
     // works on its own copies, so an edit never changes the helper (or what Save compares against)
@@ -42,6 +47,7 @@ window.pmbEditor = (() =>
     const fileName = new WeakMap();     // level -> its name in the file (missing: a new level, appended on save)
     const ARRAYS = ['moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'lands', 'currents', 'walls'];
     let pathMode = null;            // index of the traffic boat whose path is being drawn (clicks add points)
+    let clickAdds = false;          // the last mouse press had Shift, Cmd or Ctrl down (read off the event itself)
     let wheelPx = 0;                // scroll since last frame, in pixels (LittleJS only gives the sign per event)
 
     ///////////////////////////////////////////////////////////////////////////
@@ -165,7 +171,7 @@ window.pmbEditor = (() =>
     function frameSel()
     {
         if (!sel) return frameAll();
-        const s = shapeOf(sel), b = boundsOf(s);
+        const b = targets().map(it => boundsOf(shapeOf(it))).reduce(boxUnion);
         const big = Math.max(b.x1 - b.x0, b.y1 - b.y0);
         frame(boxUnion(b, boxAround(vec2((b.x0 + b.x1)/2, (b.y0 + b.y1)/2), big*2)));
     }
@@ -245,7 +251,7 @@ window.pmbEditor = (() =>
     const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'currents', 'walls', 'docks', 'lands', 'land'];
     function count(kind) { return kind == 'start' || kind == 'slip' ? def.boats.length : (def[kind] || []).length; }
     // which traffic boat's path points are showing: the selected boat's, or its point's
-    const pathOf = () => sel?.kind == 'traffic' || sel?.kind == 'point' ? sel.i : null;
+    const pathOf = () => !group() && (sel?.kind == 'traffic' || sel?.kind == 'point') ? sel.i : null;
     function pick(p)
     {
         const t = pathOf();
@@ -258,6 +264,27 @@ window.pmbEditor = (() =>
         return null;
     }
     const same = (a, b) => a && b && a.kind == b.kind && a.i == b.i && a.j == b.j;
+    // a path point stands for its traffic boat and a slip for its chain boat; those two are the only things that can't join a group alone
+    const GROUPABLE = k => k != 'point' && k != 'slip';
+    const normItem = x => x?.kind == 'point' ? { kind: 'traffic', i: x.i } : x?.kind == 'slip' ? { kind: 'start', i: x.i } : x;
+    const group = () => multi.length > 1 && multi.includes(sel) && multi.every(it => it.i < count(it.kind)) ? multi : null;
+    const targets = () => group() || (sel ? [sel] : []);
+    const inGroup = it => !!group()?.some(g => same(g, it));
+    function setSelection(list)
+    {
+        pathMode = null;
+        sel = list.length ? list[list.length - 1] : null;
+        multi = list.length > 1 ? list : [];
+    }
+    // Shift / Cmd / Ctrl+click: add the thing to the selection, or take it out
+    function toggleSel(it)
+    {
+        it = normItem(it);
+        const base = group() ? [...group()] : sel ? [normItem(sel)] : [];
+        const at = base.findIndex(g => same(g, it));
+        if (at >= 0) base.splice(at, 1); else base.push(it);
+        setSelection(base);
+    }
     const isRect = it => it && ['land', 'docks', 'currents', 'walls'].includes(it.kind);
 
     ///////////////////////////////////////////////////////////////////////////
@@ -265,7 +292,7 @@ window.pmbEditor = (() =>
 
     function edgesAt(p)
     {
-        if (!isRect(sel)) return null;
+        if (group() || !isRect(sel)) return null;
         const s = shapeOf(sel), d = .3*cam.wu, e = {};
         if (p.x < s.x0 - d || p.x > s.x1 + d || p.y < s.y0 - d || p.y > s.y1 + d) return null;
         if (Math.abs(p.x - s.x0) < d) e.x0 = 1;
@@ -298,12 +325,20 @@ window.pmbEditor = (() =>
         if (mouseWasPressed(0) && !overPanel())
         {
             const edges = edgesAt(p), shift = keyIsDown('ShiftLeft') || keyIsDown('ShiftRight');
+            const add = clickAdds || shift || keyIsDown('MetaLeft') || keyIsDown('MetaRight') || keyIsDown('ControlLeft') || keyIsDown('ControlRight');
             if (onKnob(p)) drag = { mode: 'rotate', c: rotHandle().c, snapped: false };
             else if (edges) drag = { mode: 'edge', edges, snapped: false };
             else
             {
                 const it = pick(p);
-                if (it) { sel = it; drag = { mode: 'move', from: vec2(snap(p.x), snap(p.y)), snapped: false }; }
+                if (it && add) toggleSel(it);
+                else if (it)
+                {
+                    // a click on a member of the group keeps the group (so it can be dragged as one); a plain click without a drag picks just that one
+                    const keep = inGroup(it);
+                    if (!keep) { sel = it; multi = []; }
+                    drag = { mode: 'move', from: vec2(snap(p.x), snap(p.y)), snapped: false, keep: keep ? it : null };
+                }
                 else if (shift) drag = { mode: 'new', from: vec2(snap(p.x), snap(p.y)) };
                 else drag = { mode: 'pan', mouse: mousePos.copy(), cam: cam.pos.copy(), moved: false };
             }
@@ -313,7 +348,8 @@ window.pmbEditor = (() =>
         if (drag && mouseWasReleased(0))
         {
             if (drag.mode == 'new') addRect(drag.from, vec2(snap(p.x), snap(p.y)));
-            if (drag.mode == 'pan' && !drag.moved) { sel = null; refreshPanel(); }   // a click on empty space deselects
+            if (drag.mode == 'pan' && !drag.moved) { sel = null; multi = []; refreshPanel(); }   // a click on empty space deselects
+            if (drag.mode == 'move' && drag.keep && !drag.snapped) { sel = drag.keep; multi = []; refreshPanel(); }
             drag = null;
         }
     }
@@ -346,7 +382,7 @@ window.pmbEditor = (() =>
             if (!d.x && !d.y) return;
             if (!drag.snapped) { snapshot(); drag.snapped = true; }
             drag.from = q;
-            move(sel, d.x, d.y);
+            moveAll(d.x, d.y);
             return changed();
         }
         // resize a rect by one or two edges
@@ -371,6 +407,17 @@ window.pmbEditor = (() =>
     function move(it, dx, dy)
     {
         moveRaw(it, dx, dy);
+        cleanAll(def);
+    }
+    // move everything selected. Traffic boats on one loop share their point arrays, so each point is shifted once, not once per boat
+    function moveAll(dx, dy)
+    {
+        const shifted = new Set();
+        for (const it of targets())
+        {
+            if (it.kind != 'traffic') { moveRaw(it, dx, dy); continue; }
+            for (const q of def.traffic[it.i].path) if (!shifted.has(q)) { shifted.add(q); q[0] += dx; q[1] += dy; }
+        }
         cleanAll(def);
     }
     function cleanAll(o)
@@ -419,7 +466,7 @@ window.pmbEditor = (() =>
     // rotate handle of the selection, like a transform box's: an arm out of the bow, a knob at its end
     function rotHandle()
     {
-        const a = sel && angleOf(sel);
+        const a = sel && !group() && angleOf(sel);
         if (a === undefined || a === null) return null;
         const s = shapeOf(sel), c = s.type == 'rect' ? vec2((s.x0 + s.x1)/2, (s.y0 + s.y1)/2) : s.c;
         const r = s.type == 'rect' ? Math.hypot(s.x1 - s.x0, s.y1 - s.y0)/2 : s.r;
@@ -482,18 +529,50 @@ window.pmbEditor = (() =>
 
     function duplicate()
     {
-        if (!sel || sel.kind == 'start' || sel.kind == 'slip' || sel.kind == 'point') return;
+        const items = targets().filter(it => !['start', 'slip', 'point'].includes(it.kind));
+        if (!items.length) return;
         snapshot();
-        const list = def[sel.kind], c = structuredClone(list[sel.i]), d = 4*step();
-        list.push(c);
-        sel = { kind: sel.kind, i: list.length - 1 };
-        move(sel, d, -d);
+        const d = 4*step(), made = [];
+        for (const it of items)
+        {
+            const list = def[it.kind];
+            list.push(structuredClone(list[it.i]));
+            const copy = { kind: it.kind, i: list.length - 1 };
+            move(copy, d, -d);
+            made.push(copy);
+        }
+        setSelection(made);
         changed();
+    }
+
+    // take one thing out of the level (no undo step, no refresh: the callers do that)
+    function removeItem(it)
+    {
+        if (it.kind == 'start') return def.boats.splice(it.i, 1);
+        def[it.kind].splice(it.i, 1);
+        // traffic boats refer to each other by number: drop the triggers on the deleted one, renumber the rest
+        if (it.kind == 'traffic') for (const t of def.traffic)
+        {
+            if (!t.after) continue;
+            if (t.after.boat == it.i + 1) delete t.after;
+            else if (t.after.boat > it.i + 1) t.after = { ...t.after, boat: t.after.boat - 1 };
+        }
+        if (!def[it.kind].length && ARRAYS.includes(it.kind)) delete def[it.kind];
     }
 
     function remove()
     {
         if (!sel) return;
+        const g = group();
+        if (g)
+        {
+            if (g.filter(it => it.kind == 'start').length >= def.boats.length) { status = 'A level needs at least one boat'; return refreshPanel(); }
+            snapshot();
+            // highest number first, so the ones still to go keep theirs
+            for (const it of [...g].sort((a, b) => b.i - a.i)) removeItem(it);
+            sel = null; multi = []; pathMode = null;
+            return changed();
+        }
         if (sel.kind == 'slip') { status = 'A slip belongs to its boat: delete the boat (its start) instead'; return refreshPanel(); }
         if (sel.kind == 'point')
         {
@@ -504,23 +583,9 @@ window.pmbEditor = (() =>
             return changed();
         }
         if (sel.kind == 'traffic') pathMode = null;
-        if (sel.kind == 'start')
-        {
-            if (def.boats.length < 2) { status = 'A level needs at least one boat'; return refreshPanel(); }
-            snapshot(); def.boats.splice(sel.i, 1);
-        }
-        else
-        {
-            snapshot(); def[sel.kind].splice(sel.i, 1);
-            // traffic boats refer to each other by number: drop the triggers on the deleted one, renumber the rest
-            if (sel.kind == 'traffic') for (const t of def.traffic)
-            {
-                if (!t.after) continue;
-                if (t.after.boat == sel.i + 1) delete t.after;
-                else if (t.after.boat > sel.i + 1) t.after = { ...t.after, boat: t.after.boat - 1 };
-            }
-            if (!def[sel.kind].length && ARRAYS.includes(sel.kind)) delete def[sel.kind];
-        }
+        if (sel.kind == 'start' && def.boats.length < 2) { status = 'A level needs at least one boat'; return refreshPanel(); }
+        snapshot();
+        removeItem(sel);
         sel = null;
         changed();
     }
@@ -528,7 +593,7 @@ window.pmbEditor = (() =>
     // T: sand -> dock -> quay -> sand
     function cycleRect()
     {
-        if (!['land', 'docks'].includes(sel?.kind)) return;
+        if (group() || !['land', 'docks'].includes(sel?.kind)) return;
         snapshot();
         const b = shapeOf(sel);
         if (sel.kind == 'land') { def.land.splice(sel.i, 1); def.docks.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }); sel = { kind: 'docks', i: def.docks.length - 1 }; }
@@ -610,12 +675,14 @@ window.pmbEditor = (() =>
         if (cmd && e.code == 'KeyZ') { e.preventDefault(); return e.shiftKey ? doRedo() : doUndo(); }
         if (cmd) return;
         const nudge = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.code];
-        if (nudge && sel) { e.preventDefault(); const k = step() * (e.shiftKey ? 10 : 1); snapshot(); move(sel, nudge[0]*k, nudge[1]*k); return changed(); }
+        if (nudge && sel) { e.preventDefault(); const k = step() * (e.shiftKey ? 10 : 1); snapshot(); moveAll(nudge[0]*k, nudge[1]*k); return changed(); }
         if ((e.code == 'BracketLeft' || e.code == 'BracketRight') && sel)
         {
             const da = (e.code == 'BracketLeft' ? 1 : -1) * (e.shiftKey ? PI/2 : PI/12);
             snapshot();
-            if (rotate(sel, da)) changed(); else undo.pop();
+            let turned = false;
+            for (const it of targets()) turned = rotate(it, da) || turned;
+            if (turned) changed(); else undo.pop();
             return;
         }
         const digit = e.code.match(/^Digit([1-9])$/);
@@ -624,7 +691,7 @@ window.pmbEditor = (() =>
         switch (e.code)
         {
             case 'Backspace': case 'Delete': return remove();
-            case 'Escape': sel = null; return refreshPanel();
+            case 'Escape': sel = null; multi = []; return refreshPanel();
             case 'KeyP': return togglePathMode();
             case 'KeyI': return insertPoint();
             case 'KeyD': return duplicate();
@@ -703,8 +770,9 @@ window.pmbEditor = (() =>
         for (const c of def.currents || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_CLEAR, .04*W, C_TEAL);
         // invisible colliders: a tinted box, only ever seen here
         for (const c of def.walls || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_ED.scale(1, .18), .05*W, C_ED.scale(1, .7));
-        if (hover && !same(hover, sel)) outline(shapeOf(hover), .06*W, C_ED.scale(1, .5));
-        if (sel)
+        if (hover && !same(hover, sel) && !inGroup(hover)) outline(shapeOf(hover), .06*W, C_ED.scale(1, .5));
+        if (group()) for (const it of group()) outline(shapeOf(it), .1*W, C_ED);
+        else if (sel)
         {
             const s = shapeOf(sel);
             outline(s, .1*W, C_ED);
@@ -1087,6 +1155,7 @@ window.pmbEditor = (() =>
         .pmbed .tree .group:hover{color:#EEF1F6}
         .pmbed .tree .group.has{color:#EEF1F6}
         .pmbed .tree .group i{width:10px;font-style:normal}
+        .pmbed .tree .group button{margin-left:auto;padding:0 6px;font-size:10px}
         .pmbed .tree > button{display:block;width:100%;text-align:left;margin:2px 0;padding:2px 8px 2px 18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .pmbed .tree .boat button:first-child{padding-left:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`;
     document.head.appendChild(css);
@@ -1157,6 +1226,7 @@ window.pmbEditor = (() =>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: ×10) · <b>[ ]</b> rotate 15° (Shift: 90°)<br>
             <b>drag the round handle</b> rotate (15° steps, Alt: free; slips 90°)<br>
             <b>1–9</b> select boat · <b>F</b> frame selection · <b>Shift+F</b> frame all<br>
+            <b>Shift / ⌘ / Ctrl+click</b> add to or remove from the selection (hierarchy: ⌘ / Ctrl toggles, Shift a range, <b>all</b> a whole group); move, nudge, rotate, <b>D</b> and <b>Delete</b> act on all, the inspector edits what they share<br>
             <b>D</b> duplicate · <b>Delete</b> remove · <b>T</b> sand → dock → quay<br>
             Traffic: <b>P</b> add path points (click; P to finish) · drag a point · <b>I</b> insert after<br>
             <b>, .</b> previous / next level · <b>⌘Z</b> undo · <b>⇧⌘Z</b> redo · <b>⌘S</b> save · <b>Esc</b> deselect` }));
@@ -1198,21 +1268,36 @@ window.pmbEditor = (() =>
 
         const box = el('div', { className: 'tree' });
         // a traffic boat's path point counts as its boat, a slip as its chain boat
-        const cur = sel?.kind == 'point' ? { kind: 'traffic', i: sel.i } : sel?.kind == 'slip' ? { kind: 'start', i: sel.i } : sel;
+        const cur = normItem(sel);
+        const picked = (kind, i) => group() ? inGroup({ kind, i }) : same(cur, { kind, i });
         let on = null;
-        // a group header; true when its rows show
-        const group = (kind, title, n) =>
+        // a click on a row: plain selects and frames it, Cmd/Ctrl adds it to or takes it out of the selection, Shift selects everything from the current one to it
+        const click = (kind, i, ev, frameIt) =>
+        {
+            if (ev.metaKey || ev.ctrlKey) toggleSel({ kind, i });
+            else if (ev.shiftKey && cur?.kind == kind && GROUPABLE(kind))
+            {
+                const a = Math.min(cur.i, i), b = Math.max(cur.i, i);
+                setSelection(Array.from({ length: b - a + 1 }, (_, n) => ({ kind, i: a + n })));
+            }
+            else { sel = { kind, i }; multi = []; frameIt(); }
+            refreshPanel();
+        };
+        // a group's header: true when its rows show
+        const header = (kind, title, n) =>
         {
             const open = !folded.has(kind);
-            box.append(el('div', { className: 'group' + (cur?.kind == kind ? ' has' : ''), onclick: () => { if (open) folded.add(kind); else folded.delete(kind); refreshPanel(); } },
-                [el('i', { textContent: open ? '▾' : '▸' }), `${title} (${n})`]));
+            const kids = [el('i', { textContent: open ? '▾' : '▸' }), `${title} (${n})`];
+            if (n > 1 && GROUPABLE(kind))
+                kids.push(Object.assign(button('all', ev => { ev.stopPropagation(); setSelection(Array.from({ length: n }, (_, i) => ({ kind, i }))); refreshPanel(); }), { title: 'Select all of these' }));
+            box.append(el('div', { className: 'group' + (cur?.kind == kind ? ' has' : ''), onclick: () => { if (open) folded.add(kind); else folded.delete(kind); refreshPanel(); } }, kids));
             return open;
         };
-        if (group('start', 'Chain, in parking order', def.boats.length))
+        if (header('start', 'Chain, in parking order', def.boats.length))
             def.boats.forEach((e, n) =>
             {
-                const t = BOATS[e.boat], here = cur?.kind == 'start' && cur.i == n;
-                const b = button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}`, () => { sel = { kind: 'start', i: n }; frameBoat(n); refreshPanel(); }, here ? 'on' : '');
+                const t = BOATS[e.boat], here = picked('start', n);
+                const b = button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}`, ev => click('start', n, ev, () => frameBoat(n)), here ? 'on' : '');
                 if (here) on = b;
                 box.append(el('div', { className: 'boat' }, [b,
                     Object.assign(button('▶', () => startTest(n)), { title: 'Test play from this boat' }),
@@ -1221,11 +1306,11 @@ window.pmbEditor = (() =>
         for (const [kind, title, label] of OBJECTS)
         {
             const list = def[kind] || [];
-            if (!list.length || !group(kind, title, list.length)) continue;
+            if (!list.length || !header(kind, title, list.length)) continue;
             list.forEach((it, i) =>
             {
-                const here = same(cur, { kind, i });
-                const b = button(`${i + 1}. ${label(it)}`, () => { sel = { kind, i }; frameSel(); refreshPanel(); }, here ? 'on' : '');
+                const here = picked(kind, i);
+                const b = button(`${i + 1}. ${label(it)}`, ev => click(kind, i, ev, frameSel), here ? 'on' : '');
                 if (here) on = b;
                 box.append(b);
             });
@@ -1240,6 +1325,7 @@ window.pmbEditor = (() =>
 
     function selTitle()
     {
+        if (group()) return `${group().length} selected`;
         const n = sel.i + 1;
         return {
             start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
@@ -1252,6 +1338,7 @@ window.pmbEditor = (() =>
     {
         const grid = kids => el('div', { className: 'grid2' }, kids);
         if (!sel) return panel.append(el('div', { className: 'keys', textContent: 'Click something in the level, or pick it in the hierarchy on the left.' }));
+        if (group()) return batchFields(group());
         const i = sel.i;
         if (sel.kind == 'start' || sel.kind == 'slip')
         {
@@ -1316,6 +1403,114 @@ window.pmbEditor = (() =>
         else if (sel.kind != 'currents') panel.append(el('div', { className: 'keys', textContent: 'T: sand → dock → quay → sand' }));
     }
 
+    // a traffic boat moves (or not) during parking turn n (from 0); all of them is the default, which has no `during` in the file
+    function setTurn(t, n, on)
+    {
+        const set = new Set(t.during || def.boats.map((_, m) => m + 1));
+        on ? set.add(n + 1) : set.delete(n + 1);
+        const list = [...set].sort((a, b) => a - b);
+        if (list.length == def.boats.length) delete t.during; else t.during = list;
+    }
+
+    // batch editing: each field shows what the selected things share (blank, "mixed", when they differ), and a change goes to all of them in one undo step
+    const KIND_NAMES = { start: 'Chain boat', moored: 'Moored boat', drifters: 'Loose boat', traffic: 'Traffic boat', buoys: 'Buoy', logs: 'Log', ducks: 'Duck family',
+        lands: 'Landmass', land: 'Sand', docks: 'Dock', currents: 'Current', walls: 'Invisible wall' };
+    const objOf = it => it.kind == 'start' ? def.boats[it.i] : def[it.kind][it.i];
+    function batchFields(items)
+    {
+        const kinds = [...new Set(items.map(it => it.kind))], objs = items.map(objOf);
+        const shared = get => { const v = objs.map(get); return v.every(x => deepEqual(x, v[0], 1e-9)) ? { v: v[0] } : null; };
+        const apply = (set, val) => { snapshot(); objs.forEach(o => set(o, val)); changed(); };
+        const bNum = (label, get, set, attrs = {}) =>
+        {
+            const s = shared(get), { placeholder = '', ...rest } = attrs;
+            const i = el('input', { type: 'number', value: s && s.v !== undefined ? num(s.v) : '', placeholder: s ? placeholder : 'mixed', ...rest });
+            i.onchange = () =>
+            {
+                const raw = i.value.trim(), val = raw === '' ? undefined : parseFloat(raw);
+                if (val !== undefined && !isFinite(val)) return refreshPanel();
+                apply(set, val);
+            };
+            return field(label, i);
+        };
+        const bSelect = (label, options, get, set) =>
+        {
+            const s = shared(get), sl = el('select', { onchange: () => apply(set, sl.value) });
+            if (!s) sl.append(el('option', { value: '\u0001', textContent: '— mixed —', selected: true, disabled: true }));
+            for (const [value, text] of options) sl.append(el('option', { value, textContent: text, selected: !!s && String(s.v) == String(value) }));
+            return field(label, sl);
+        };
+        // a box that is half-ticked when only some of them have it
+        const tri = (flags, onChange) =>
+        {
+            const all = flags.every(Boolean), none = !flags.some(Boolean);
+            const cb = el('input', { type: 'checkbox', checked: all, indeterminate: !all && !none });
+            cb.onchange = () => onChange(cb.checked);
+            return cb;
+        };
+        const bCheck = (label, get, set) => el('label', {}, [tri(objs.map(o => !!get(o)), v => apply(set, v)), label]);
+        const keys = text => el('div', { className: 'keys', textContent: text });
+        const deg = a => Math.round((a || 0)*180/PI*100)/100;
+
+        panel.append(el('div', { className: 'row' }, [button('Frame (F)', frameSel), button('Duplicate (D)', duplicate), button('Delete', remove)]),
+            keys(kinds.map(k => `${items.filter(it => it.kind == k).length} × ${KIND_NAMES[k]}`).join(', ') + '. A change here goes to all of them; "mixed" means they differ.'));
+        const boatLike = k => ['start', 'moored', 'drifters', 'traffic'].includes(k);
+        if (kinds.every(boatLike))
+            panel.append(bSelect('boat', boatOptions(), o => o.boat, (o, v) => { o.boat = v; }),
+                bNum('size k', o => o.k, (o, v) => { if (v === undefined) delete o.k; else o.k = v; }, { placeholder: 'real size', step: 'any' }));
+        if (kinds.length > 1)
+            return panel.append(keys(kinds.every(boatLike) ? 'Pick things of one kind for their other settings.' : 'Pick things of one kind to edit their settings. Moving, rotating, duplicating and deleting still work on all of them.'));
+        switch (kinds[0])
+        {
+            case 'traffic':
+            {
+                panel.append(
+                    bNum('speed %', o => Math.round((o.speed ?? .6)*100), (o, v) => { o.speed = clamp((v ?? 60)/100, .05, 1); }, { step: 5, min: 5, max: 100 }),
+                    bNum('pace m/s (loops)', o => o.pace, (o, v) => { if (v === undefined) delete o.pace; else o.pace = v; }, { placeholder: 'none', step: 'any', min: 0 }),
+                    bSelect('at the end', [['back', 'turn around (back and forth)'], ['loop', 'loop to the first point'], ['stop', 'stop']], o => o.end || 'back', (o, v) => { o.end = v; }));
+                // a boat can't wait for itself: it keeps what it had
+                const all = def.traffic;
+                panel.append(bSelect('starts', [['', 'at once'], ...all.map((o, n) => [String(n + 1), `when ${n + 1}. ${BOATS[o.boat].name} reaches…`])],
+                    o => o.after ? String(o.after.boat) : '',
+                    (o, v) => { if (!v) delete o.after; else if (+v != all.indexOf(o) + 1) o.after = { boat: +v, point: o.after?.point || 1 }; }));
+                const target = shared(o => o.after?.boat);
+                if (target?.v)
+                {
+                    const path = all[target.v - 1].path;
+                    panel.append(bNum('…its point', o => o.after?.point || 1, (o, v) => { if (o.after) o.after = { ...o.after, point: clamp(Math.round(v ?? 1), 1, path.length) }; }, { step: 1, min: 1, max: path.length }));
+                }
+                const turns = el('div', { className: 'row' });
+                def.boats.forEach((e, n) => turns.append(el('label', {}, [
+                    tri(objs.map(o => !o.during || o.during.includes(n + 1)), v => apply((o, on) => setTurn(o, n, on), v)), `${n + 1}. ${BOATS[e.boat].name}`])));
+                panel.append(keys('Move while you park:'), turns);
+                break;
+            }
+            case 'moored': case 'drifters':
+                panel.append(bNum('heading°', o => deg(o.a), (o, v) => { o.a = (v || 0)*PI/180; }, { step: 15 }));
+                break;
+            case 'buoys':
+                panel.append(bNum('scale', o => o[2] ?? 1, (o, v) => { o[2] = v ?? 1; }, { step: 'any' }));
+                break;
+            case 'logs':
+                panel.append(bNum('heading°', o => deg(o[2]), (o, v) => { o[2] = (v || 0)*PI/180; }, { step: 15 }));
+                break;
+            case 'ducks':
+                panel.append(bNum('ducklings', o => o.kids, (o, v) => { o.kids = clamp(Math.round(v ?? 0), 0, 8); }, { step: 1, min: 0, max: 8 }));
+                break;
+            case 'docks':
+                panel.append(bCheck('quay (concrete)', o => o.quay, (o, v) => { if (v) o.quay = true; else delete o.quay; }));
+                break;
+            case 'currents':
+                panel.append(bNum('flow x', o => o.dx, (o, v) => { o.dx = v ?? 0; }, { step: 'any' }), bNum('flow y', o => o.dy, (o, v) => { o.dy = v ?? 0; }, { step: 'any' }));
+                break;
+            case 'lands':
+                panel.append(bNum('scale k', o => o.k, (o, v) => { o.k = v ?? 1; }, { step: 'any' }), bCheck('grass', o => o.grass, (o, v) => { if (v) o.grass = true; else delete o.grass; }));
+                break;
+            case 'start': break;
+            default: panel.append(keys('Nothing here is shared. Move or delete them together.'));
+        }
+    }
+
     function trafficFields(t, i)
     {
         const grid = kids => el('div', { className: 'grid2' }, kids);
@@ -1348,15 +1543,7 @@ window.pmbEditor = (() =>
         def.boats.forEach((e, n) =>
         {
             const on = !t.during || t.during.includes(n + 1);
-            turns.append(el('label', {}, [el('input', { type: 'checkbox', checked: on, onchange: ev =>
-            {
-                snapshot();
-                const set = new Set(t.during || def.boats.map((_, m) => m + 1));
-                ev.target.checked ? set.add(n + 1) : set.delete(n + 1);
-                const list = [...set].sort((a, b) => a - b);
-                if (list.length == def.boats.length) delete t.during; else t.during = list;
-                changed();
-            } }), `${n + 1}. ${BOATS[e.boat].name}`]));
+            turns.append(el('label', {}, [el('input', { type: 'checkbox', checked: on, onchange: ev => { snapshot(); setTurn(t, n, ev.target.checked); changed(); } }), `${n + 1}. ${BOATS[e.boat].name}`]));
         });
         panel.append(el('div', { className: 'keys', textContent: 'Moves while you park:' }), turns,
             el('div', { className: 'keys', textContent: `${t.path.length} points. It starts on point 1 and follows a smooth curve through them. Outside its turns it cuts the engine and coasts to a stop.` }));
@@ -1389,6 +1576,7 @@ window.pmbEditor = (() =>
     }
 
     addEventListener('keydown', key);
+    addEventListener('mousedown', e => { clickAdds = e.shiftKey || e.metaKey || e.ctrlKey; }, true);
     // lines and pages to pixels; a fast flick is capped per event so it can't jump several zoom levels
     addEventListener('wheel', e => { if (ED.active) wheelPx += clamp(e.deltaY * [1, 16, 400][e.deltaMode], -120, 120); });
     // ?edit or ?edit=<level number> opens the editor once the game is running
