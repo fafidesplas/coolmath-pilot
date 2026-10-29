@@ -444,7 +444,7 @@ window.pmbEditor = (() =>
         if (kind == 'start')
         {
             const k = BOATS[boat].k, L = BOATS[boat].L*k;
-            def.boats.push({ boat, start: { x: q(x - L*2), y, a: 0 }, slip: { x, y, a: 0, pad: [1.4, 1] }, hint: '' });
+            def.boats.push({ boat, start: { x: q(x - L*2), y, a: 0 }, slip: { x, y, a: 0, pad: [1.4, 1] } });
             sel = { kind: 'start', i: def.boats.length - 1 };
             return changed();
         }
@@ -559,7 +559,7 @@ window.pmbEditor = (() =>
             name: 'New Level',
             land: [[-3000, -3020, 0, 3585], [1400, -3020, 4400, 3585], [-3000, -3020, 4400, -20], [-3000, 600, 4400, 3585]],
             docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
-            boats: [{ boat: 'dinghy', start: { x: 400, y: 300, a: 0 }, slip: { x: 700, top: 585, a: PI/2 }, hint: '' }],
+            boats: [{ boat: 'dinghy', start: { x: 400, y: 300, a: 0 }, slip: { x: 700, top: 585, a: PI/2 } }],
         };
         let name = copy ? def.name + ' copy' : 'New Level', n = 2;
         while (LEVELS.some(L => L.name == name)) name = (copy ? def.name + ' copy ' : 'New Level ') + n++;
@@ -750,14 +750,6 @@ window.pmbEditor = (() =>
         return String(v);
     }
 
-    // one element of a list, one per line; a chain boat's hint goes on a second line, like the file
-    function entry(v, indent)
-    {
-        if (!v || typeof v != 'object' || Array.isArray(v) || v.hint === undefined) return lit(v);
-        const { hint, ...rest } = v;
-        return lit(rest).replace(/ \}$/, `,\n${indent}  hint: ${str(hint)} }`);
-    }
-
     // tol: how far numbers may be apart (the self-test allows for the rounding Save does)
     function deepEqual(a, b, tol = 0)
     {
@@ -838,7 +830,7 @@ window.pmbEditor = (() =>
         const indent = indentOf(pieces) || '            ';
         const out = [];
         let j = 0, carry = '';
-        const fresh = v => ({ lead: multi ? indent : '', code: multi ? entry(v, indent) : lit(v), tail: multi ? ',\n' : '', fresh: true });
+        const fresh = v => ({ lead: multi ? indent : '', code: lit(v), tail: multi ? ',\n' : '', fresh: true });
         // a removed or rewritten spread's comment moves onto whatever comes next (its lead ends with the indent)
         const withCarry = q => { if (carry) { q.lead = carry + q.lead.replace(/^[ \t]*/, ''); carry = ''; } return q; };
         real.forEach((p, n) =>
@@ -850,7 +842,7 @@ window.pmbEditor = (() =>
             // this piece was removed (the next piece's values are here already) or edited
             const next = real[n + 1];
             if (next && runAt(next.vals, j)) { carry = carry || p.lead; return; }
-            if (p.vals.length == 1 && j < cur.length) { out.push(withCarry({ lead: p.lead, code: entry(cur[j++], indent), tail: p.tail })); return; }
+            if (p.vals.length == 1 && j < cur.length) { out.push(withCarry({ lead: p.lead, code: lit(cur[j++]), tail: p.tail })); return; }
             carry = carry || p.lead;
         });
         while (j < cur.length) out.push(withCarry(fresh(cur[j++])));
@@ -919,7 +911,7 @@ window.pmbEditor = (() =>
     function fieldCode(k, v)
     {
         if (Array.isArray(v) && (v.length > 1 || k == 'boats') && v.length && v.every(x => x && typeof x == 'object' && !Array.isArray(x)))
-            return `\n        [\n${v.map(x => '            ' + entry(x, '            ') + ',').join('\n')}\n        ]`;
+            return `\n        [\n${v.map(x => '            ' + lit(x) + ',').join('\n')}\n        ]`;
         return lit(v);
     }
 
@@ -1217,7 +1209,6 @@ window.pmbEditor = (() =>
                 button('Frame (F)', frameSel), button('Play from here', () => { sel = { kind: 'start', i }; play(true); })]));
             panel.append(field('boat', select(boatOptions(), () => e.boat, v => { e.boat = v; })));
             panel.append(field('size k', input('number', () => e.k, v => { if (v === undefined) delete e.k; else e.k = v; }, { placeholder: `real size (${t.k})`, step: 'any' })));
-            panel.append(field('hint', input('text', () => e.hint, v => { if (v) e.hint = v; else delete e.hint; })));
             if (sel.kind == 'start')
                 panel.append(grid([field('x', numIn(e.start, 'x', { step: 'any' })), field('y', numIn(e.start, 'y', { step: 'any' }))]),
                     field('heading°', degIn(() => e.start.a, v => { e.start.a = v; })));

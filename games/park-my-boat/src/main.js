@@ -724,7 +724,6 @@ function judgeBoat()
     {
         judge.result = 'fail';
         sfx('fail');
-        popup('Not in the slip. Try again.', player.pos, C_CREAM, .8, 2);
         track('progression', 'Fail', levelId());
     }
 }
@@ -1304,24 +1303,13 @@ function drawHud()
     drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), C_CREAM);
     drawLine(vec2(20 - wide/2, PLAY_TOP), vec2(20 + wide/2, PLAY_TOP), LINE_W, C_INK);
     txt(`${levelNumber()}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
-    // a jam's hint stays up until the first tap
-    if (L.jam) { drawJamHud(); drawHint(L.hint, attempts || gameScreen != 'playing' ? 0 : 1); return; }
+    if (L.jam) return drawJamHud();
     let boat = player.type.name;
     boat += ` · ${fmtLen(boatSize(player))}`;
     if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
     txt(boat, 10, 21.75, .55, C_TEAL, 'left');
     if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
     drawScaleBar();
-
-    // hint fades after a few seconds
-    drawHint(L.boats[boatIndex].hint, intro || gameScreen != 'playing' ? 0 : clamp(6 - boatTime, 0, 1));
-}
-
-function drawHint(hint, a)
-{
-    if (!(a > 0 && hint)) return;
-    drawPanel(vec2(20, 1.6), Math.min(36, hint.length*.33 + 2), 1.5, C_CREAM.scale(1, a), .5, false);
-    txt(hint, 20, 1.6, .58, C_INK.scale(1, a));
 }
 
 function drawTitle()
@@ -1340,7 +1328,6 @@ function drawTitle()
     const bob = Math.sin(time*2)*.2;
     txt('DOCK ALL THE BOATS', 20.2, 15.1 + bob, 2.8, C_INK);
     txt('DOCK ALL THE BOATS', 20, 15.4 + bob, 2.8, C_SUNNY, 'center', .25, C_INK);
-    txt('Park boats of every size. Or get them all out.', 20, 12.7, .8, C_INK);
 }
 
 function drawComplete()

@@ -65,7 +65,7 @@ Mass and power are toy values before scaling. A level can set its own `k` for a 
 - **Accuracy:** 60% position (0.8 toy units off = 0) + 40% angle (20° off = 0). Boats 50 m and longer get a slip 15% longer and wider and a 23° angle allowance (`BIG_SHIP_LENGTH`, `BIG_SHIP_LEEWAY`).
 - **(new) Parked:** inside and accuracy ≥ 50%. The slip turns solid, a check mark pops up, and the next boat starts.
 - **Not parked (new: a message per cause):** the player keeps going from where the boat is, and pays a miss fee (3.6). The message says what was wrong, and the slip shows the matching cue:
-  - a hull circle is outside the slip: "Not in the slip." (the slip outline flashes);
+  - a hull circle is outside the slip: no text (the slip outline flashes);
   - inside, but the angle part is the bigger loss: "Line it up straighter." (the slip's long sides flash);
   - inside, but the position part is the bigger loss: "Closer to the middle." (a mark at the slip's center flashes).
 
@@ -141,7 +141,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 
 | # | Name | Boats | What it teaches |
 |---|---|---|---|
-| 1 | First Mooring | Rowboat | Empty harbor, big slip straight ahead at a dock. Taught by play: a ghost pointer holds and drags from the boat toward the slip until the player moves; when the boat is inside the slip, the rest ring fills and a "let go" pointer-up icon pulses. Text: "Park in the box." |
+| 1 | First Mooring | Rowboat | Empty harbor, big slip straight ahead at a dock. Taught by play alone: no tutorial overlay, pointer, icon or text. The rest ring filling is the only cue. |
 | 2 | Easy Does It | Rowboat | Slip to the side past two pilings: turn 90° and let go early. Hint: "Let go early. Boats keep gliding." |
 | 3 | No Brakes | Zippy | Long straight run, slip at the end: a fast boat overshoots unless you let go early and use reverse. Hint: "Pull back to slow down." |
 | 4 | "Odd Couple" | Rowboat → Cruise Ship | The first scale jump. The parked rowboat sits next to the cruise ship's slip. |
@@ -174,7 +174,7 @@ Levels 1–3 and 5–9, 12–13, 15–17 and 19–20 are new.
     land: [[x0, y0, x1, y1], ...], // sand rects, meters
     docks: [{ x0, y0, x1, y1, quay?, plank? }],
     lands: [{ x, y, k, circles: [[x, y, r], ...], grass? }],
-    boats: [{ boat: 'dinghy', k?, start: { x, y, a }, slip: { x, y, a, pad?, fingers? }, hint? }],
+    boats: [{ boat: 'dinghy', k?, start: { x, y, a }, slip: { x, y, a, pad?, fingers? } }],
     moored: [...], drifters: [...], buoys: [[x, y, scale]], ducks: [{ x, y, kids }],
     currents: [...],
     traffic: [{ boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop', speed?, during?, pace? }],
@@ -196,7 +196,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 
 - **Title:** logo with a bobbing title, a boat parade doing donuts and a cruise ship passing behind. two modes, PARKING and UNPARKING (each opens its own level select), SOUND toggle, **(new)** MUSIC toggle once the music is in (see 10).
 - **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the most money kept. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
-- **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the money left with the 3★ line marked ("$9,400 of $10,000 · ★★★ $9,000"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). The hint shows at the bottom for 6 s. Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
+- **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the money left with the 3★ line marked ("$9,400 of $10,000 · ★★★ $9,000"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
 - **Pause:** dims the screen. RESUME, RESTART, MENU.
 - **Level complete:** "PARKED!", 3 stars that pop in one by one, **(new)** money kept counting up, the 3★ and 2★ lines, "NEW BEST!", damage per boat, "Clean!" boats, accuracy per boat, misses, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
 
@@ -282,7 +282,7 @@ No daily events (no daily in v1).
 - **Second risk:** budgets that feel fair: bumps are the comedy, so a light scrape must not sink three stars. The `boat:…:park` damage from playtests sets them.
 
 ## 13. Scope
-- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart without preview, clearing the slip, miss messages, automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new tutorial levels come in phase 3. Gate: a teammate plays it cold and wants more.
+- **Vertical slice (phase 2):** the 5 existing levels (Odd Couple, Mixed Nuts, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart without preview, clearing the slip, miss feedback (no text), automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new levels come in phase 3. Gate: a teammate plays it cold and wants more.
 - **v1:**
   - 20 levels in 2 worlds, plus the hidden bonus.
   - Money and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
@@ -338,7 +338,7 @@ Decided in review 1 (2026-10-25):
 | Players who close the tab | `boat:…:start` events; `stars:…` dropped (11) | Pao | Decided |
 | Teaching order | Jet ski gets level 5; level 9 is Zippy → Party Barge; traffic first at 11 | Pao | Decided |
 | Edge arrows | Size-aware warning, at most 2 traffic arrows (3.7) | Pao | Decided |
-| Level 1 tutorial | Ghost pointer and key icons, 3-word text (6) | Pao | Decided |
+| Level 1 tutorial | Cut: the game shows no instruction or flavor text (see changelog) | Pao | Decided |
 | Level length | A decent run takes at most 90 s (120 s for level 20) | Pao | Decided |
 | RETRY and hidden tab | RETRY skips the preview; a hidden tab pauses the game | Pao | Decided |
 | Swan Lake, Night Shift | Swan Lake gets 3 different small boats; Night Shift renamed Busy Harbor | Pao | Decided |
@@ -369,6 +369,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-10-28 — Level 1 tutorial cut (ghost pointer, key icons, "Park in the box."). The game shows no instruction or flavor text: no hints, tagline or miss message. Text is menu buttons, labels and numbers only.
 - 2026-10-28 — Design note from Fafi's playtest: level 1's first boat should feel the best; the big boat comes too early and doesn't feel good to park.
 - 2026-10-25 — Unparking: two open-ocean jams, Open Water and Raft-Up.
 - 2026-10-25 — Unparking: boats can be shoved, paid by the meter.

@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-10-28 — No instruction or flavor text
+- Owner request: the game shows no tutorial or flavor text. Removed the level hint panel (and every `hint` in `levels/levels.js`, in the editor's boat panel and in its save code), the title tagline, and the "Not in the slip. Try again." popup. A failed check now only plays the fail sound.
+- Kept as plain information, not instructions: menu buttons, level and boat names, size and money readouts, the size-jump card ("300 m · 105x BIGGER"), the scale bar, popups for money and results (PARKED!, BUMP, PUSH, QUACK, NEW BEST!), the YOU marker, PAUSED.
+- Checked in Chrome: title, level 1 and a jam level show no hint; `selfTest()` gives 10 levels, 0 problems; no console errors.
+- GDD: cut the level 1 tutorial (ghost pointer, key icons, "Park in the box."); level 1 is taught by play alone. Left the `tutorial:*` analytics events in §11, since STANDARDS.md lists them for every game.
+
 ## 2026-10-28 — Design note: the first boat should feel the best
 - From Fafi's playtest: in level 1 (Odd Couple in the current build) the big boat comes too early, and parking it doesn't feel good. Level 1's first boat should be the best-feeling boat in the game.
 - Added to the GDD (§6 design note, §14 open question). No code change.

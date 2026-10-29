@@ -2,7 +2,7 @@
 // Levels. Units are meters (y up). A level is a list of boats parked one after the other in the
 // same harbor; boats waiting their turn sit at their start, parked boats stay where they stopped.
 //
-// boats:   [{ boat, k?, start:{x,y,a}, slip, hint? }]   k defaults to the boat's real size (BOATS[boat].k)
+// boats:   [{ boat, k?, start:{x,y,a}, slip }]   k defaults to the boat's real size (BOATS[boat].k)
 // slip:    x/y center, or top/right = the pier edge it hangs from; a = heading the boat must face
 //          (PI/2 = bow into a top pier; either end in is fine), pad = extra [length, width] room in
 //          toy units (times k), fingers = 'both' | 'none' (short docks along the slip's long sides)
@@ -115,10 +115,8 @@ const SCALE_LEVELS =
         docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }, { x0: 526.8, y0: 546, x1: 529.6, y1: 584.9 }],
         boats:
         [
-            { boat: 'dinghy', start: { x: 492.2, y: 560.4, a: PI/2 }, slip: { x: 474, top: 585, a: PI/2 },
-              hint: 'Hold the mouse to steer (or WASD). Stop in the box and let go.' },
-            { boat: 'sailboat', start: { x: 455.4, y: 578, a: -PI/2 }, slip: { x: 519.2, y: 550.9, a: 0, pad: [1.4, 1] },
-              hint: '' },
+            { boat: 'dinghy', start: { x: 492.2, y: 560.4, a: PI/2 }, slip: { x: 474, top: 585, a: PI/2 } },
+            { boat: 'sailboat', start: { x: 455.4, y: 578, a: -PI/2 }, slip: { x: 519.2, y: 550.9, a: 0, pad: [1.4, 1] } },
         ],
         moored:
         [
@@ -153,12 +151,9 @@ const SCALE_LEVELS =
         ],
         boats:
         [
-            { boat: 'trawler', start: { x: 350, y: 873, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] },
-              hint: 'Squeeze through the gap between the yachts, then turn into your slip.' },
-            { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 571.5, top: 900, a: PI/2, pad: [1.4, 1] },
-              hint: '' },
-            { boat: 'container', start: { x: 615, y: 698, a: -PI/2 }, slip: { x: 616, y: 136, a: -PI/2, pad: [1.4, 1] },
-              hint: '' },
+            { boat: 'trawler', start: { x: 350, y: 873, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] } },
+            { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 571.5, top: 900, a: PI/2, pad: [1.4, 1] } },
+            { boat: 'container', start: { x: 615, y: 698, a: -PI/2 }, slip: { x: 616, y: 136, a: -PI/2, pad: [1.4, 1] } },
         ],
         // the trawler's tight squeeze on the way to its slip: two 40 m yachts in a line west of it, one
         // nose-in to the quay, leave a 13 m gap (y 845-858) for a 9.6 m boat
@@ -182,12 +177,9 @@ const SCALE_LEVELS =
         name: 'Mixed Nuts', ...basin(0, -20, 1300, 700),
         boats:
         [
-            { boat: 'yacht', start: { x: 964, y: 656, a: 0 }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] },
-              hint: 'Start turning early.' },
-            { boat: 'cruise', start: { x: 796, y: 546, a: -PI/2 }, slip: { x: 522, top: 700, a: 0, pad: [0.6, 0.3], fingers: 'none' },
-              hint: 'Park the cruise ship along the quay.' },
-            { boat: 'swan', start: { x: 316.8, y: 690.4, a: PI }, slip: { x: 309, top: 700, a: PI/2, pad: [1, 0.9] },
-              hint: 'The swan pedalo turns very quickly.' },
+            { boat: 'yacht', start: { x: 964, y: 656, a: 0 }, slip: { x: 735, top: 700, a: PI/2, pad: [1.2, 1] } },
+            { boat: 'cruise', start: { x: 796, y: 546, a: -PI/2 }, slip: { x: 522, top: 700, a: 0, pad: [0.6, 0.3], fingers: 'none' } },
+            { boat: 'swan', start: { x: 316.8, y: 690.4, a: PI }, slip: { x: 309, top: 700, a: PI/2, pad: [1, 0.9] } },
         ],
         ducks: [{ x: 780, y: 690, kids: 3 }, { x: 300.7, y: 694, kids: 3 }],
         buoys: [[1000, 300, 5]],
@@ -206,8 +198,7 @@ const SCALE_LEVELS =
         docks: [{ x0: 30.5, y0: -6, x1: 32, y1: 6, quay: true }],
         boats:
         [
-            { boat: 'jetski', start: { x: -1, y: 0, a: 0 }, slip: { right: 30.5, y: 0, a: 0, pad: [1.4, 1] },
-              hint: 'Stop between the canals and wait for a gap.' },
+            { boat: 'jetski', start: { x: -1, y: 0, a: 0 }, slip: { right: 30.5, y: 0, a: 0, pad: [1.4, 1] } },
         ],
         traffic:
         [
@@ -229,12 +220,9 @@ const SCALE_LEVELS =
         ],
         boats:
         [
-            { boat: 'jetski', start: { x: 215, y: 91, a: 0 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' },
-              hint: 'Find the free spot on the lower pier.' },
-            { boat: 'sailboat', start: { x: 255, y: 93, a: 0 }, slip: { x: 290, y: 83.2, a: PI/2, pad: [.8, .5], fingers: 'none' },
-              hint: 'Your berth is on the lower pier too.' },
-            { boat: 'yacht', k: 6, start: { x: 280, y: 110, a: PI }, slip: { x: 150, y: 173.5, a: PI/2, pad: [.8, .6], fingers: 'none' },
-              hint: 'Squeeze the yacht in under the upper pier. Watch for the tenders.' },
+            { boat: 'jetski', start: { x: 215, y: 91, a: 0 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' } },
+            { boat: 'sailboat', start: { x: 255, y: 93, a: 0 }, slip: { x: 290, y: 83.2, a: PI/2, pad: [.8, .5], fingers: 'none' } },
+            { boat: 'yacht', k: 6, start: { x: 280, y: 110, a: PI }, slip: { x: 150, y: 173.5, a: PI/2, pad: [.8, .6], fingers: 'none' } },
         ],
         moored:
         [
@@ -271,7 +259,6 @@ const SCALE_LEVELS =
             { boat: 'yacht', k: 2, x: 12, y: 18.5, a: 0 },
             { boat: 'speedboat', x: 8, y: 12.5, a: PI },
         ],
-        hint: 'Tap a boat to pick it, then drive it out of the harbor.',
     },
     {
         // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
@@ -292,7 +279,6 @@ const SCALE_LEVELS =
         ],
         buoys: [[14.5, 37.5, 1.5]],
         ducks: [{ x: 44, y: 6.5, kids: 2 }],
-        hint: 'Open water: you can leave any way. Work from the outside in.',
     },
     {
         // jam 2: ten boats from a 40 m container ship to jet skis, one parked on the diagonal; buoys and
@@ -315,7 +301,6 @@ const SCALE_LEVELS =
         ],
         buoys: [[34, 31, 2], [14, 26, 2]],
         ducks: [{ x: 20, y: 30, kids: 3 }],
-        hint: 'Buoys float out of your way. Ducks cost a little if you hit them.',
     },
     {
         // jam 3: big ships and small fry. A 50 m cruise ship and a 45 m container ship, a yacht on the
@@ -339,7 +324,6 @@ const SCALE_LEVELS =
         ],
         buoys: [[22, 30, 2.5], [55, 12, 2], [74, 22, 2]],
         ducks: [{ x: 18, y: 12, kids: 3 }, { x: 46, y: 42, kids: 2 }],
-        hint: 'Big ships need room. Clear the way first.',
     },
     {
         // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats, party barges,
@@ -363,7 +347,6 @@ const SCALE_LEVELS =
         ],
         buoys: [[18, 46, 2], [48, 16, 2]],
         ducks: [{ x: 46, y: 46, kids: 3 }],
-        hint: 'Find the boats that are free, then peel the raft from the outside in.',
     },
     {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a
@@ -371,14 +354,10 @@ const SCALE_LEVELS =
         name: 'Continental Drift', bonus: true, land: HARBOR_ISLAND.land, docks: HARBOR_ISLAND.docks,
         boats:
         [
-            { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 },
-              hint: 'Park the rowboat.' },
-            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [.6, .3], fingers: 'none' },
-              hint: 'Park the cruise ship along the quay.' },
-            { boat: 'island', start: { x: 95000, y: 1500, a: PI }, slip: { x: 36000, y: 0, a: 0, pad: [1.2, 1], fingers: 'none' },
-              hint: 'Park the island in the bay.' },
-            { boat: 'continent', start: { x: -.5e6, y: 3.5e6, a: 0 }, slip: { x: 5e6, y: 3.5e6, a: 0, pad: [1.2, 1], fingers: 'none' },
-              hint: 'Park the continent in the gap.' },
+            { boat: 'dinghy', start: { x: 452, y: 566, a: .3 }, slip: { x: 474, top: 585, a: PI/2 } },
+            { boat: 'cruise', start: { x: 1180, y: 470, a: PI }, slip: { x: 680, top: 585, a: 0, pad: [.6, .3], fingers: 'none' } },
+            { boat: 'island', start: { x: 95000, y: 1500, a: PI }, slip: { x: 36000, y: 0, a: 0, pad: [1.2, 1], fingers: 'none' } },
+            { boat: 'continent', start: { x: -.5e6, y: 3.5e6, a: 0 }, slip: { x: 5e6, y: 3.5e6, a: 0, pad: [1.2, 1], fingers: 'none' } },
         ],
         lands:
         [

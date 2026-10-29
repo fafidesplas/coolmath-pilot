@@ -7,7 +7,7 @@
 // open to the sea elsewhere; a boat is out once it is wholly past the level's view box.
 //
 // level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows, and the harbor's edge),
-//               budget ($), moored: the boats in the jam, hint. The view box's edge is drawn as a dashed
+//               budget ($), moored: the boats in the jam. The view box's edge is drawn as a dashed
 //               line over open water: a boat is out once its whole hull is past it.
 
 const JAM_BUMP = .1;            // share of the budget one bump costs
