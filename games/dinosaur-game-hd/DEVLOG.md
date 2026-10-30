@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — New dinosaur roster
+- Removed the Tag characters and the Triceratops and Stegosaurus (four legs don't fit the T-Rex silhouette) from `GDD.md`. The Hangman beast stays.
+- 11 runners: T-Rex (free); Velociraptor, Pachycephalosaurus, Parasaurolophus hatched with eggs (300 / 750 / 1500); Hadrosaur, Ceratosaurus, Megalosaurus, Therizinosaurus, Hangman beast, Allosaurus (2P bonus) and Spinosaurus (completionist) by achievement. "1000 eggs in total" is dropped; all dinosaurs get 8 frames.
+- Next: update the brief and `mechanic.svg` to match; a teammate reads the GDD.
+
 ## 2026-10-29 — Bonus pterodactyl flight
 - Added a Jetpack Joyride-style bonus flight to `GDD.md` (3.7 golden egg, 3.8 flight): a golden egg at the apex of a held jump, once per run between 500 and 900 m, earns a 20 s flight after the run. Hold to flap up, release to glide; thunderclouds and wild pterodactyls; a hit ends it, eggs are kept; up to 3 flights banked.
 - It plays after the run, never during it, so the "feels like the original" pillar holds. Not in 2P races.
