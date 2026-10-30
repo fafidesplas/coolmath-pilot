@@ -1,5 +1,14 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slice step 2: shell and first playable build
+- Pao checked `physics.html` against `chrome://dino` on a 60 Hz display: it feels the same.
+- `index.html` is now playable: title with the sleeping T-Rex, run, pause (P, Esc, button, hidden tab), crash with shake and dizzy stars, results panel (count-up, NEW BEST, Retry/Menu), R/Enter/Retry restart at once, Space/Up/W on release after the 1.2 s lock.
+- New modules: `main.js` (60 Hz steps, render interpolation), `render.js` (banded sky, sun, clouds, mesas, dunes, sand; 1 s night fade with stars and moon), `ui.js`, `sprites.js` (placeholder T-Rex, cacti, pterodactyl drawn over the hitbox template), `font.js` (5×7 pixel font), `input.js`, `audio.js` (jump, duck, milestone, crash, night, click), `save.js`, `analytics.js` (console stubs).
+- First-run jump and duck zone hints, best distance saved, sound toggle, `window.game` hook; H shows hitboxes and I toggles invincibility (debug only).
+- Checked in Chrome: title, run, crash, results, pause, menu, keyboard and pointer zones, GA logs; no console errors. `tools/physics-test.mjs` still 40/40.
+- Not in yet: eggs, music, landing dust and squash, night rims on obstacles, the pterodactyl duck reminder.
+- Next: step 3, eggs (patterns, pickup, HUD count, egg stream), then the feel loop.
+
 ## 2026-10-30 — Slice step 1: physics sim
 - `src/sim.js` (no drawing), `src/gen.js` (seeded obstacles) and `src/config.js` (the original's numbers) run one original frame per 60 Hz step, with whole-pixel rounding and `floor(speed)` scrolling.
 - `tools/physics-test.mjs`: 40 checks pass. Measured: jumps 62 px / 0.47 s (shortest) to 91 px / 0.58 s (held) at speed 6, 87 px / 0.55 s at 9.5, 90 px / 0.57 s at 13; fast-fall from frame 10 lands at 0.28 s; top speed after 7,001 frames at 1,663 m; first obstacle at 3 s; night lasts 12 s; generator rules hold over 300 seeds; every cactus group clearable at its speed; pterodactyl heights hit and miss as in the original.

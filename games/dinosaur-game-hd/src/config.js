@@ -3,6 +3,8 @@
 // 150 px tall playfield (y down, feet rest on y = 140); the renderer places the
 // lane on screen.
 
+export const DEBUG = true;                 // debug keys and window.game.crash(); false in release builds
+
 export const HZ = 60;
 export const STEP_MS = 1000 / HZ;
 export const MAX_FRAME_DT = 0.05;          // s, frame dt cap (STANDARDS)

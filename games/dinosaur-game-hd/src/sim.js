@@ -21,6 +21,7 @@ export class Run {
     this.speed = RUN.speed;
     this.distancePx = 0;
     this.scrollPx = 0;          // ground scroll, whole px
+    this.prevScrollPx = 0;      // last step's values, for render interpolation
     this.obstacles = [];
     this.crashed = false;
     this.hit = null;            // obstacle that ended the run
@@ -33,6 +34,7 @@ export class Run {
     // Runner, in the original's terms: y is the sprite top, y down, vy < 0 is up.
     this.groundY = LANE.ground - RUNNER.height;
     this.y = this.groundY;
+    this.prevY = this.y;
     this.vy = 0;
     this.jumping = false;
     this.ducking = false;
@@ -96,6 +98,8 @@ export class Run {
   step() {
     if (this.crashed) return;
     this.frame++;
+    this.prevY = this.y;
+    this.prevScrollPx = this.scrollPx;
     if (this.jumpRepeat && !this.jumping && !this.ducking) this.startJump();
     if (this.jumping) this.updateJump();
 
@@ -147,15 +151,17 @@ export class Run {
   updateObstacles() {
     const obs = this.obstacles;
     for (const o of obs) {
+      o.prevX = o.x;
       o.x -= scroll(this.speed + o.speedOffset);
       o.flapMs += STEP_MS;
     }
     while (obs.length && obs[0].x + obs[0].w <= 0) obs.shift();
     const last = obs[obs.length - 1];
-    if (!last) obs.push(this.gen.next(this.speed, VIEW_W));
-    else if (!last.followed && last.x + last.w + last.gap < VIEW_W) {
-      obs.push(this.gen.next(this.speed, VIEW_W));
-      last.followed = true;
+    if (!last || (!last.followed && last.x + last.w + last.gap < VIEW_W)) {
+      const o = this.gen.next(this.speed, VIEW_W);
+      o.prevX = o.x;
+      obs.push(o);
+      if (last) last.followed = true;
     }
   }
 
