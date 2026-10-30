@@ -59,7 +59,7 @@ const TAIL_OUT = 8;
 const TAIL = [], TAIL_SHADE = [];
 for (let x = -TAIL_OUT; x <= 9; x++) {
   const top = Math.min(17, 10 + Math.floor((x + TAIL_OUT) / 2));
-  const steep = x >= 0, bot = steep ? Math.min(28, 20 + 2 * x) : 19 + x;
+  const steep = x >= 0, bot = steep ? Math.min(28, 20 + 2 * x) : 20 + x;
   TAIL.push([x, top, 1, bot - top + 1, 'slate']);
   if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (steep ? 1 : 0), 1, steep ? 2 : 1, 'slateDark']);
 }
