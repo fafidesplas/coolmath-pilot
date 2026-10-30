@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Jump pose: sloped back, from Pao's paint-over
+- New paint-over page (a private artifact for Pao): every sprite on a pixel grid with the game's palette and hitboxes; saved paint-overs are read back pixel by pixel.
+- First one used: the jump frame's square rump is cut away, so the back slopes in one line from the neck down to the tail tip (`JUMP_BACK` in `sprites.js`).
+- Open: the original's back hitbox now reaches past the slope at the top-left of the jump frame (up to ~11 px at the top). Pao to decide: keep it (as the original) or trim the jump frame's boxes.
+- Physics and egg tests still pass.
+
 ## 2026-10-30 — Running dust, takeoff puff, jump pose
 - Pao liked the landing. Now: 2 small puffs kicked back at each footfall (run frames 0 and 2), 6 puffs out both sides of the feet on takeoff.
 - New jump frame: legs stretched long with the toes pointing down, the tail drooping to a point down and back. Checked over the hitbox template: every box stays inside the outline.

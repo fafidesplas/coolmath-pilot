@@ -61,7 +61,21 @@ for (let y = 18; y <= 41; y++) {   // a rounded root on the back, tapering down 
   TAIL_DOWN.push([left, y, right - left + 1, 1, 'slate']);
 }
 const TREX_JUMP = TREX.filter(r => r[0] > 4);   // the standing tail out, the drooping one in
-const jumpPose = face => sprite(44, 47, [...legLong(9, 'slateDark'), ...legLong(19, 'slate'), ...TAIL_DOWN, ...TREX_JUMP], [...BODY_MARKS, ...face]);
+// The back slopes in one line from the neck down to the tail tip (Pao's
+// paint-over): [y, first x] per row, everything left of it cut away.
+const JUMP_BACK = new Map([[16, 14], [17, 13], [18, 12], [19, 9], [20, 8], [21, 7], [22, 6], [23, 5], [24, 4],
+  [25, 4], [26, 4], [27, 3], [28, 3], [29, 3], [30, 2], [31, 2], [32, 1]]);
+function clipBack(rects) {
+  const out = [];
+  for (const [x, y, w, h, c] of rects) for (let j = 0; j < h; j++) {
+    const x0 = Math.max(x, JUMP_BACK.get(y + j) ?? 0);
+    if (x0 < x + w) out.push([x0, y + j, x + w - x0, 1, c]);
+  }
+  return out;
+}
+const jumpPose = face => sprite(44, 47,
+  clipBack([...legLong(9, 'slateDark'), ...legLong(19, 'slate'), ...TAIL_DOWN, ...TREX_JUMP]),
+  [...clipBack(BODY_MARKS), ...face]);
 
 // ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------
 // Same footprint and hitbox as the original's duck; only the pose changes.
