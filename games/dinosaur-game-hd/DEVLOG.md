@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slide frames, second paint-over pass
+- Slide 1: the tail slimmed again (top edge shaved 1–4 px more). Slide 2: the tip trimmed by a pixel, the far leg's top made smaller. The slide crash frame follows slide 1.
+
 ## 2026-10-30 — Slide frames from Pao's paint-overs
 - Both slide frames now come from Pao's paint-overs: a slimmer tail (top edge shaved 1–3 px) with Slate dark shading on its underside, the far leg's top reshaped; frame 2 flicks the tail tip higher, up to the frame edge. The slide crash frame uses frame 1 with the dizzy eye.
 - The slides are stored as pixel maps (`SLIDE_MAPS` in `sprites.js`) instead of rects, so paint-overs go in exactly. Same 59×25 footprint and hitbox.
