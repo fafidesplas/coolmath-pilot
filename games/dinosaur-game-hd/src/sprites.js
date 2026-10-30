@@ -52,17 +52,22 @@ const leg = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 7, c], [x + 1, 44, 7, 3,
 const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 2, c]];
 const trex = (legs, face) => sprite(44, 47, [...legs, ...TREX], [...BODY_MARKS, ...face]);
 
-// ---- T-Rex ducking, 59×25 --------------------------------------------------------------
-const DUCK = [
-  [41, 1, 17, 9, 'slate'], [41, 10, 13, 3, 'slate'],   // head, jaw
-  [9, 4, 34, 12, 'slate'],                             // body
-  [1, 5, 9, 5, 'slate'],                               // tail
-  [42, 13, 3, 2, 'slate'],                             // arm
+// ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------
+// Same footprint and hitbox as the original's duck; only the pose changes.
+const SLIDE = [
+  [40, 1, 18, 10, 'slate'], [40, 11, 14, 3, 'slate'],   // head, jaw, low and forward
+  [8, 7, 34, 15, 'slate'], [10, 22, 30, 3, 'slate'],    // body, belly on the ground
+  [44, 15, 4, 2, 'slate'], [47, 16, 2, 2, 'slate'],     // arm reaching forward
 ];
-const DUCK_MARKS = [[11, 4, 20, 2, 'slateDark'], [20, 10, 18, 5, 'cream'], [44, 3, 3, 3, 'cream'], [45, 4, 2, 2, 'ink'], [48, 10, 6, 1, 'ink'], [56, 3, 1, 1, 'ink']];
-const duckLeg = (x, c) => [[x, 14, 6, 5, c], [x + 1, 19, 4, 3, c], [x + 1, 22, 7, 3, c]];
-const duckLegUp = (x, c) => [[x, 14, 6, 4, c], [x + 2, 18, 6, 2, c]];
-const duck = legs => sprite(59, 25, [...legs, ...DUCK], DUCK_MARKS);
+const SLIDE_MARKS = [[12, 7, 22, 2, 'slateDark'], [14, 17, 24, 6, 'cream'], [56, 4, 1, 1, 'ink'], [47, 11, 7, 1, 'ink']];
+const SLIDE_EYE = [[44, 3, 3, 3, 'cream'], [45, 4, 2, 2, 'ink']];
+const SLIDE_DIZZY = [[44, 3, 3, 3, 'cream'], [44, 3, 1, 1, 'ink'], [46, 3, 1, 1, 'ink'], [45, 4, 1, 1, 'ink'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink']];
+// Tail out straight behind and legs tucked back; the two frames flick the tail and feet.
+const slideBack = flick => [
+  [0, 11 + flick, 10, 4, 'slate'], [3, 9 + flick, 6, 2, 'slate'],     // tail
+  [12, 16, 9, 6, 'slateDark'], [2 + flick, 20, 11, 3, 'slateDark'],   // tucked leg, foot pointing back
+];
+const slide = (flick, eye) => sprite(59, 25, [...slideBack(flick), ...SLIDE], [...SLIDE_MARKS, ...eye]);
 
 // ---- Cacti ------------------------------------------------------------------------------
 const CACTUS_SMALL = sprite(17, 35, [
@@ -109,10 +114,8 @@ export const SPR = {
     jump: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_OPEN, ...MOUTH]),
     crash: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_DIZZY, ...MOUTH_OPEN]),
     sleep: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_SHUT, ...MOUTH]),
-    duck: [
-      duck([...duckLeg(13, 'slateDark'), ...duckLegUp(27, 'slate')]),
-      duck([...duckLegUp(13, 'slateDark'), ...duckLeg(27, 'slate')]),
-    ],
+    slide: [slide(0, SLIDE_EYE), slide(1, SLIDE_EYE)],
+    slideCrash: slide(0, SLIDE_DIZZY),
   },
   'cactus-small': CACTUS_SMALL,
   'cactus-large': CACTUS_LARGE,

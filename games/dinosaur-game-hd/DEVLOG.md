@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — The duck becomes a belly slide
+- Pao's idea: the duck is now drawn as a belly slide (2 frames: tail and feet flick), with a dizzy slide frame for crashes mid-slide. Same 59×25 footprint and hitbox; input and timing are the original's duck (held as long as down is held).
+- Dust: a sand burst when the slide starts, a bigger one when a jump or fast-fall lands into it, a trail while sliding; a fixed pool of 48 puffs, dimmed at night. A quiet looping scrape while sliding. The first-run hint says SLIDE.
+- Physics and egg tests unchanged and passing.
+- Next: Pao plays the slide; rest of the feel loop.
+
 ## 2026-10-30 — Longer lines under pterodactyls
 - Pao: placement feels good now; the 3-egg lines were the least satisfying. Duck and head lines are now 6 eggs, 12 px apart, centered under the pterodactyl (`EGGS.lineCount`).
 - `tools/egg-test.mjs` still passes: ducking takes every duck line and staying down every head line, never touching the pterodactyl.

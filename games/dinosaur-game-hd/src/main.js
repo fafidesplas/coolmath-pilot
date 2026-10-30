@@ -28,6 +28,7 @@ const g = {
   crashAt: 0, result: 0, newBest: false, runEggs: 0,
   fx: [],               // egg pickup pops: { x, y, t, n }
   eggBumpAt: 0, lastEggAt: 0, streak: 0,
+  sliding: false, wasInAir: false,
   flashUntil: 0, shakeUntil: 0,
   showBoxes: false, invincible: false,
 };
@@ -231,6 +232,18 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
+// The slide (the duck, drawn as a belly slide): dust and a scrape while it
+// lasts, and a bigger burst when a jump or fast-fall lands into it.
+function updateSlide(dt) {
+  const run = g.run, sliding = g.screen === 'playing' && !!run && run.ducking && !run.crashed;
+  const scroll = run ? run.speed * 60 : 0;
+  if (sliding && !g.sliding) r.dust.burst(g.wasInAir ? 12 : 6, scroll, g.wasInAir ? 1.5 : 1);
+  if (sliding) r.dust.trail(dt, scroll);
+  sfx.slide(sliding);
+  g.sliding = sliding;
+  g.wasInAir = !!run?.jumping;
+}
+
 // ---- loop ----------------------------------------------------------------------------------
 function frame(now) {
   const dt = Math.min((now - last) / 1000, MAX_FRAME_DT);
@@ -244,6 +257,7 @@ function frame(now) {
     }
     g.alpha = g.screen === 'playing' ? acc / STEP_MS : 1;
   }
+  updateSlide(dt);
   while (g.fx.length && now - g.fx[0].t > FX_MS) g.fx.shift();
   g.buttons = layout(g, now, r);
   r.draw(g, now, dt);

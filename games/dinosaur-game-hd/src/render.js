@@ -129,12 +129,70 @@ function buildLayers() {
   return L;
 }
 
+// Sand kicked up by the slide (GDD 9 juice): a burst when it starts, a trail
+// while it lasts. A fixed pool, so nothing is allocated per frame.
+const DUST_MAX = 48, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGHT = ['#A9A08A', '#8C8471', '#6B6556'];
+class Dust {
+  constructor() {
+    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
+    this.next = 0;
+    this.carry = 0;
+  }
+
+  // One puff at the tail. scroll: the ground's speed in px/s.
+  emit(scroll, kick) {
+    const d = this.p[this.next];
+    this.next = (this.next + 1) % DUST_MAX;
+    d.on = true;
+    d.x = RUNNER.x + 2 + Math.random() * 10;
+    d.y = GROUND - 2 - Math.random() * 3;
+    d.vx = -scroll * (0.25 + Math.random() * 0.35) - Math.random() * 40 * kick;
+    d.vy = -(15 + Math.random() * 45) * kick;
+    d.age = 0;
+    d.life = 0.3 + Math.random() * 0.25;
+    d.c = Math.floor(Math.random() * DUST_COLORS.length);
+  }
+
+  burst(n, scroll, kick) { for (let i = 0; i < n; i++) this.emit(scroll, kick); }
+
+  // Puffs per second while sliding.
+  trail(dt, scroll) {
+    this.carry += dt * 40;
+    while (this.carry >= 1) { this.emit(scroll, 0.6); this.carry--; }
+  }
+
+  update(dt) {
+    for (const d of this.p) {
+      if (!d.on) continue;
+      d.age += dt;
+      if (d.age >= d.life) { d.on = false; continue; }
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      d.vy += 120 * dt;   // settles back down
+      if (d.y > GROUND - 1) d.y = GROUND - 1;
+    }
+  }
+
+  draw(ctx, night) {
+    const colors = night > 0.5 ? DUST_NIGHT : DUST_COLORS;
+    for (const d of this.p) {
+      if (!d.on) continue;
+      const t = d.age / d.life, size = 3 + Math.round(t * 4);
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = colors[d.c];
+      ctx.fillRect(Math.round(d.x - size / 2), Math.round(d.y - size), size, size);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
 export class Renderer {
   constructor(cv) {
     this.cv = cv;
     this.ctx = cv.getContext('2d');
     this.L = buildLayers();
     this.night = 0;          // 0 day … 1 night, faded over 1 s (GDD 3.6)
+    this.dust = new Dust();
     this.bounds = { x0: 0, x1: VIEW_W, y0: 0, y1: VIEW_H };
     this.resize();
     addEventListener('resize', () => this.resize());
@@ -195,6 +253,8 @@ export class Renderer {
       for (const e of run.eggs) if (!e.taken) this.drawEgg(e, this.snap(lerp(e.prevX, e.x)), now);
     }
     const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
+    if (g.screen !== 'paused') this.dust.update(dt);
+    this.dust.draw(ctx, this.night);
     this.drawRunner(run, y, now, g.showBoxes);
     this.drawPickups(g.fx, now);
     ctx.restore();
@@ -299,11 +359,11 @@ export class Renderer {
     const ctx = this.ctx, T = SPR.trex, top = LANE.top1P;
     let img, dy = top + y;
     if (!run) img = T.sleep;
-    else if (run.crashed) img = T.crash;
     else if (run.ducking) {
-      img = T.duck[Math.floor(run.timeMs / ANIM.duck) % 2];
+      img = run.crashed ? T.slideCrash : T.slide[Math.floor(run.timeMs / ANIM.duck) % 2];
       dy = top + LANE.ground - RUNNER.heightDuck;
-    } else if (run.jumping) img = T.jump;
+    } else if (run.crashed) img = T.crash;
+    else if (run.jumping) img = T.jump;
     else img = T.run[Math.floor(run.timeMs / ANIM.run) % 4];
     ctx.drawImage(img, RUNNER.x - 1, dy - 1);
 
@@ -313,11 +373,12 @@ export class Renderer {
         const p = (now / 1600 + i / 3) % 1, size = 3 + i;
         this.zee(RUNNER.x + 40 + p * 14 + i * 2, top + y - 6 - p * 26, size, 1 - p);
       }
-    } else if (run.crashed) {   // dizzy stars over the head
+    } else if (run.crashed) {   // dizzy stars over the head (standing or sliding)
+      const hx = RUNNER.x + (run.ducking ? 48 : 32), hy = run.ducking ? dy - 4 : top + y - 5;
       for (let i = 0; i < 3; i++) {
         const ang = now / 180 + i * Math.PI * 2 / 3;
         ctx.fillStyle = i % 2 ? PAL.orange : PAL.cream;
-        ctx.fillRect(Math.round(RUNNER.x + 32 + Math.cos(ang) * 10), Math.round(top + y - 5 + Math.sin(ang) * 3), 2, 2);
+        ctx.fillRect(Math.round(hx + Math.cos(ang) * 10), Math.round(hy + Math.sin(ang) * 3), 2, 2);
       }
     }
     if (boxes && run) {

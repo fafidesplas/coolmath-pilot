@@ -105,7 +105,7 @@ function drawHud(ctx, g, now, r) {
   ctx.drawImage(SPR.egg[0], 11, 13 - bump);
   drawText(ctx, String(run.eggCount), 28, 14, 2, text);
 
-  // First run only: faint jump and duck zones, until the first jump or 5 s (GDD 4).
+  // First run only: faint jump and slide (duck) zones, until the first jump or 5 s (GDD 4).
   if (g.firstRun && g.screen === 'playing') {
     const t = now - g.runStart, end = g.jumpedAt ?? g.runStart + HINT_MS;
     const alpha = 0.7 * (now < end ? Math.min(1, t / 300) : Math.max(0, 1 - (now - end) / 400));
@@ -114,7 +114,7 @@ function drawHud(ctx, g, now, r) {
       arrow(ctx, VIEW_W / 2, 92, -1);
       drawText(ctx, 'JUMP', VIEW_W / 2, 136, 2, PAL.ink, 'center');
       arrow(ctx, VIEW_W / 2, 330, 1);
-      drawText(ctx, 'DUCK', VIEW_W / 2, 272, 2, PAL.ink, 'center');
+      drawText(ctx, 'SLIDE', VIEW_W / 2, 272, 2, PAL.ink, 'center');
       ctx.globalAlpha = 1;
     }
   }

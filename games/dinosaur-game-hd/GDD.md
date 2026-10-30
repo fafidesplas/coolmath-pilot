@@ -49,7 +49,7 @@ All tuning numbers are the original game's values (Chromium `components/neterror
   - **Maximum height:** at more than **63 px** up the velocity is cut to 5 px/frame anyway, held or not.
   - **Result at 60 Hz (simulated from the source rules):** the shortest jump (released at 67 ms) peaks at **62 px**, airtime **0.47 s**; a held jump peaks at **87–91 px**, airtime **0.55–0.58 s** (slightly different at each speed because of the rounding). Releases between 67 and 133 ms give everything in between (70, 78, 85 px).
   - **Holding the jump key** makes the runner jump again as soon as it lands: the original gets this from keyboard auto-repeat. We repeat the jump on landing while a jump key is held. Touch and mouse don't repeat, as in the original.
-- **Duck:** hold down on the ground. The runner switches to the low pose and hitbox for as long as down is held. A jump can't start while ducking.
+- **Duck (drawn as a belly slide):** hold down on the ground. The runner drops onto its belly and slides, with the original's duck hitbox, for as long as down is held, exactly like the original's duck: same input, same timing, no time limit. A jump can't start while sliding. Sand puffs up when the slide starts (a bigger burst when a jump or fast-fall lands into it) and trails behind it. Players see "slide"; code and analytics keep the name `duck`.
 - **Fast-fall:** down in the air sets the vertical velocity to 1 px/frame downward, and while down is held each frame's movement is the velocity × **3** (the original's speed-drop coefficient); gravity keeps adding to the velocity. **Releasing down ends the fast-fall** and the jump continues normally. On landing, the runner ducks if down is still held.
 - **No input buffer and no coyote time**, as in the original. A jump pressed in the air is ignored.
 - **Hitboxes:** the original's T-Rex collision boxes (6 boxes standing, 1 box ducking: 55×25 at (1, 18)), checked only when the outer boxes overlap. The outer box is the runner's **standing** 44×47 box shrunk by 1 px on each side, **also while ducking**, and the obstacle's box shrunk the same way. **Only the nearest obstacle** is checked each frame. The same boxes are used for every runner, so **every sprite is drawn over a hitbox template**: each frame's outline must cover every box to within 2 px, so no runner can die without visibly touching something. A debug key (**H**, removed in release builds) draws the boxes over the runner and the obstacles.
@@ -195,8 +195,8 @@ An endless runner has no levels: the run itself is the level, and the original's
 
 ### 7.1 Runners
 11 runners: 10 dinosaurs and the Hangman beast. All are cosmetic: same jump, same speed, same hitbox. Each is drawn inside the 44×47 / 59×25 footprint, over the hitbox template (3.4). Every dinosaur is a two-legged runner, so it fits the T-Rex's silhouette; four-legged dinosaurs (Triceratops, Stegosaurus) are out because they can't.
-- **Dinosaurs: 8 frames** (4 run, 1 jump, 2 duck, 1 crash). They share one two-legged run cycle, redrawn per species.
-- **Hangman beast: 5 frames** (2 run, 1 jump, 1 duck, 1 crash). It bounces instead of running.
+- **Dinosaurs: 8 frames** (4 run, 1 jump, 2 slide, 1 crash; a crash while sliding reuses a slide frame with dizzy eyes). They share one two-legged run cycle, redrawn per species.
+- **Hangman beast: 5 frames** (2 run, 1 jump, 1 slide, 1 crash). It bounces instead of running.
 
 | Runner | Unlock | How it moves |
 |---|---|---|
@@ -215,7 +215,7 @@ An endless runner has no levels: the run itself is the level, and the original's
 - **Hatching:** spending eggs plays a short scene: the egg wobbles, cracks in 3 steps, and the dinosaur pops out with a jingle. The hatched runner is equipped right away.
 - **Allosaurus and 2P:** any race that ends with a winner counts (P1 or P2 wins, not a draw), since both players share one save. A solo player can farm it by playing both lanes alone; that's accepted, it's a bonus. Spinosaurus doesn't need Allosaurus, so a solo player can finish the collection.
 - **Achievement runners** unlock when the condition is met. They are announced on the results screen, not during the run.
-- **Fitting the footprint:** the Spinosaurus's sail and the Parasaurolophus's crest stay inside the 47 px height (a smaller head and body under them); the Therizinosaurus's claws stay inside the front of the box. Every duck pose lowers the head and flattens the sail, crest or claws, so each one passes under a mid pterodactyl like the T-Rex.
+- **Fitting the footprint:** the Spinosaurus's sail and the Parasaurolophus's crest stay inside the 47 px height (a smaller head and body under them); the Therizinosaurus's claws stay inside the front of the box. Every slide pose lays the body flat on its belly and flattens the sail, crest or claws, so each one passes under a mid pterodactyl like the T-Rex.
 - **Telling them apart:** several are big two-legged meat-eaters, so each one gets one clear head feature (Ceratosaurus nose horn, Allosaurus eye crests, Megalosaurus plain heavy head and dark stripe) and its own main color. The Hadrosaur and the Parasaurolophus differ by the crest.
 - **Reference for the redraw:** `reference/hangman-beast.png`.
 
@@ -273,6 +273,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
   - run cycle dust puffs; landing squash (2 frames) and jump stretch;
+  - slide: a sand burst on entry (bigger when landing into it) and a dust trail while it lasts;
   - egg pickup: a pop, "+1" floating up, the egg icon in the HUD bumps;
   - 100 m: the score flashes 4 times;
   - crash: a 150 ms screen shake (4 px), dizzy stars over the runner;
@@ -294,7 +295,8 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 | Sound | When | Character |
 |---|---|---|
 | Jump | jump starts | short square-wave "boop" rising |
-| Duck | duck or fast-fall starts | soft noise swoosh |
+| Duck | slide or fast-fall starts | soft noise swoosh |
+| Slide | while sliding | quiet looping sandy scrape |
 | Egg | egg picked up | bright "pip", one step higher per egg in a streak (up to 8) |
 | Milestone | every 100 m | the original-style two-tone beep |
 | Crash | runner hits an obstacle | low thud plus a short wobble |
@@ -385,6 +387,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — The duck is drawn as a belly slide with dust (3.4, 7.1, 9, 10), Pao's idea from the feel loop. Hitbox, input and timing are the original's duck, unchanged.
 - 2026-10-30 — Eggs (3.7): duck and head lines grow from 3 to 6 eggs (3 felt unsatisfying in play).
 - 2026-10-30 — Eggs (3.7): grids and nests moved from the gaps onto the jump that clears a cactus; nothing goes in the gaps, since a real gap is at most ~660 px and an extra jump there could land on the next obstacle.
 - 2026-10-30 — Eggs (3.7) after Pao's play test: the flat ground line is cut (boring); jump arcs unlock at 30 m; new pterodactyl patterns: an arc over low and mid ones, a head line under high ones, the duck line stays for mid ones.
