@@ -1,14 +1,15 @@
-// Placeholder sprites drawn in code (GDD 9): the T-Rex, the cacti and the
-// pterodactyl, flat shapes with a 1 px Night Ink outline, each drawn over its
+// Placeholder sprites drawn in code (GDD 9): the T-Rex (from rex.js), the
+// cacti and the pterodactyl, flat shapes with a 1 px Night Ink outline, each drawn over its
 // collision boxes (GDD 3.4). The final art replaces them with a sprite sheet.
 // Every sprite canvas has a 1 px margin for the outline: draw it at (x - 1, y - 1).
+import { REX } from './rex.js';
 
 export const PAL = {
   ink: '#1B2340', sand: '#F2C879', orange: '#F08A24', green: '#3FA34D', slate: '#5A6B7D', cream: '#FFF6E0',
 };
 const C = {
   ...PAL,
-  slateDark: '#46546A',
+  slateDark: '#46546A', slateLight: '#9AA9B8',
   greenDark: '#2C7D3A', greenLight: '#6CC46F',
   ptero: '#C8662A', pteroDark: '#9E4F22',
   white: '#FFFFFF',
@@ -33,125 +34,8 @@ function sprite(w, h, shape, details = []) {
   return out;
 }
 
-// ---- T-Rex, 44×47 standing (faces right) ------------------------------------------------
-const TREX = [
-  [25, 0, 17, 1, 'slate'], [24, 1, 20, 9, 'slate'], [24, 10, 16, 4, 'slate'],   // head, jaw
-  [20, 12, 10, 8, 'slate'],                                                      // neck
-  [8, 17, 22, 17, 'slate'],                                                      // body
-  [30, 21, 5, 2, 'slate'], [33, 23, 2, 2, 'slate'],                              // arm
-];
-const BODY_MARKS = [[10, 17, 16, 2, 'slateDark'], [17, 23, 11, 10, 'cream'], [42, 3, 1, 1, 'ink']];
-const EYE_OPEN = [[28, 3, 4, 4, 'cream'], [30, 4, 2, 2, 'ink']];
-const EYE_SHUT = [[28, 5, 4, 1, 'ink']];
-const EYE_DIZZY = [[28, 3, 4, 4, 'cream'], [28, 3, 1, 1, 'ink'], [31, 3, 1, 1, 'ink'], [29, 4, 2, 2, 'ink'], [28, 6, 1, 1, 'ink'], [31, 6, 1, 1, 'ink']];
-const MOUTH = [[33, 10, 7, 1, 'ink']];
-const MOUTH_OPEN = [[33, 10, 7, 2, 'ink'], [35, 10, 1, 1, 'cream'], [38, 10, 1, 1, 'cream']];
-
-const leg = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 7, c], [x + 1, 44, 7, 3, c]];
-const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 2, c]];
-// The standing tail points straight back: a full rump tapering to a rounded
-// point, Slate dark on its underside. Its edges are clean pixel lines: the top
-// runs level with the back (1 px lower past the rump), the underside rises 1
-// every 3 px to the tip and drops 2:1 into the rump. The tip reaches TAIL_OUT px past the 44×47 footprint, so these frames
-// are wider; draw them TAIL_OUT px further left (canvas.ox). The rump still
-// covers the original's tail boxes to within 2 px.
-const TAIL_OUT = 7;
-const TAIL = [], TAIL_SHADE = [];
-for (let x = -TAIL_OUT; x <= 9; x++) {
-  const top = x > 0 ? 17 : 18;
-  const steep = x > 0, bot = steep ? Math.min(28, 22 + 2 * x) : 20 + Math.floor((x + TAIL_OUT) / 3);
-  TAIL.push([x, top, 1, bot - top + 1, 'slate']);
-  if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (steep ? 1 : 0), 1, steep ? 2 : 1, 'slateDark']);
-}
-const shift = rects => rects.map(([x, y, w, h, c]) => [x + TAIL_OUT, y, w, h, c]);
-function trex(legs, face) {
-  const img = sprite(44 + TAIL_OUT, 47, shift([...legs, ...TAIL, ...TREX]), shift([...TAIL_SHADE, ...BODY_MARKS, ...face]));
-  img.ox = TAIL_OUT;
-  return img;
-}
-
-// The jump: legs stretched long with the toes pointing down, the tail
-// drooping to a point down and back. Same outline over the hitbox template.
-const legLong = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 8, c], [x + 2, 45, 3, 2, c]];
-// The back slopes in one line from the neck down to the tail tip (Pao's
-// paint-over), in clean pixel steps: 1:1 from the neck, then 3 rows per
-// pixel, then straight down. The tail's underside comes back 1:1 to the tip.
-const backX = y => y < 17 ? 0 : y <= 25 ? 28 - y : y <= 27 ? 3 : y <= 30 ? 2 : 1;
-const TAIL_DOWN = [];
-for (let y = 18; y <= 40; y++) TAIL_DOWN.push([1, y, Math.min(9, 41 - y), 1, 'slate']);
-function clipBack(rects) {
-  const out = [];
-  for (const [x, y, w, h, c] of rects) for (let j = 0; j < h; j++) {
-    const x0 = Math.max(x, backX(y + j));
-    if (x0 < x + w) out.push([x0, y + j, x + w - x0, 1, c]);
-  }
-  return out;
-}
-const jumpPose = face => sprite(44, 47,
-  clipBack([...legLong(9, 'slateDark'), ...legLong(19, 'slate'), ...TAIL_DOWN, ...TREX]),
-  [...clipBack(BODY_MARKS), ...face]);
-
-// ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------
-// Same footprint and hitbox as the original's duck; only the pose changes.
-// Head raised and leading, belly on the sand, both back legs stretched out
-// with toes up, a slim tail tapering to a point up and back; the two frames
-// flick the tail tip. The tail's edges are clean pixel lines: steps of 2, 2, 1
-// on top, 4 steps then a hold underneath. Drawn as pixel maps from Pao's paint-overs:
-// b slate, c slate dark, d cream, a ink, '.' empty.
-const SLIDE_MAPS = [[
-  '...........................................................',
-  '...........................................................',
-  '...........................................................',
-  '.bb......................................bbbbbbbbbbbbbbbb..',
-  '..bbb....................................bbbbbbbbbbbbbbbb..',
-  '...bbbb..................................bbbdddbbbbbbbbab..',
-  '....bbbb.................................bbbdaabbbbbbbbbb..',
-  '.....bbbbb...............................bbbdaabbbbbbbbbb..',
-  '.....bbbbbbb.............................bbbbbbbbbbbbbbbb..',
-  '......ccbbbbb.......................bbbbbbbbbbbbbbbbbbbbb..',
-  '.......ccbbbbbb.....................bbbbbbbbbbbbbbbbbbbbb..',
-  '........ccbbbbbbb...................bbbbbbbbbbbaaaaaa......',
-  '.........ccbbbbbbb..................bbbbbbbbbbbbbbbbb......',
-  '.........ccccbbbbbbbcccccccccccccccccbbbbbbbbbbbbbbbb......',
-  '..........cccccbbbbbcccccccccccccccccbbbbbb................',
-  '...........cccccbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '...cc.......cccccbbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '...cc........cccccbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '...ccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.............',
-  '....cbbccccccccbbbbbbbddddddddddddddddddbbbbbbb............',
-  '.....bbaaaaaaaabbbbbbbddddddddddddddddddbbb..bb............',
-  '.....bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb..................',
-  '......bbbbbbbbbbb...bbbbbbbbbbbbbbbbbbbbb..................',
-  '...........................................................',
-  '...........................................................',
-], [
-  '...........................................................',
-  '...........................................................',
-  '.bb........................................................',
-  '..bbb....................................bbbbbbbbbbbbbbbb..',
-  '...bbbb..................................bbbbbbbbbbbbbbbb..',
-  '....bbbb.................................bbbdddbbbbbbbbab..',
-  '.....bbbbb...............................bbbdaabbbbbbbbbb..',
-  '.....bbbbbbb.............................bbbdaabbbbbbbbbb..',
-  '......bbbbbbb............................bbbbbbbbbbbbbbbb..',
-  '.......ccbbbbbb.....................bbbbbbbbbbbbbbbbbbbbb..',
-  '........ccbbbbbbb...................bbbbbbbbbbbbbbbbbbbbb..',
-  '.........ccbbbbbbb..................bbbbbbbbbbbaaaaaa......',
-  '.........ccbbbbbbbbb................bbbbbbbbbbbbbbbbb......',
-  '..........ccbbbbbbbbcccccccccccccccccbbbbbbbbbbbbbbbb......',
-  '...........cccbbbbbbcccccccccccccccccbbbbbb................',
-  '............ccccbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '....cc.......ccccbbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '....cc.......ccccbbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '....cccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.............',
-  '....bbcccccccccbbbbbbbddddddddddddddddddbbbbbbb............',
-  '....bb.aaaaaaaabbbbbbbddddddddddddddddddbbb..bb............',
-  '....bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb..................',
-  '.....bbbbbbbbbbb....bbbbbbbbbbbbbbbbbbbbb..................',
-  '...........................................................',
-  '...........................................................',
-]];
-const SLIDE_COLOR = { a: 'ink', b: 'slate', c: 'slateDark', d: 'cream' };
+// ---- T-Rex: pixel maps from rex.js (run 44×47, slide 56×25) ------------------------------
+const REX_COLOR = { S: 'slate', s: 'slateDark', b: 'slateLight', w: 'cream', k: 'ink' };
 // One rect per run of same-colored pixels.
 function mapRects(rows) {
   const out = [];
@@ -160,14 +44,13 @@ function mapRects(rows) {
       const v = row[x];
       let n = 1;
       while (row[x + n] === v) n++;
-      if (v !== '.') out.push([x, y, n, 1, SLIDE_COLOR[v]]);
+      if (v !== '.') out.push([x, y, n, 1, REX_COLOR[v]]);
       x += n;
     }
   });
   return out;
 }
-const SLIDE_DIZZY = [[44, 5, 3, 3, 'cream'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink'], [45, 6, 1, 1, 'ink'], [44, 7, 1, 1, 'ink'], [46, 7, 1, 1, 'ink']];
-const slide = (frame, eye = []) => sprite(59, 25, mapRects(SLIDE_MAPS[frame]), eye);
+const rex = rows => sprite(rows[0].length, rows.length, mapRects(rows));
 
 // ---- Cacti ------------------------------------------------------------------------------
 const CACTUS_SMALL = sprite(17, 35, [
@@ -218,17 +101,12 @@ function rim(img) {
 
 export const SPR = {
   trex: {
-    run: [
-      trex([...leg(10, 'slateDark'), ...legUp(20, 'slate')], [...EYE_OPEN, ...MOUTH]),
-      trex([...leg(11, 'slateDark'), ...leg(18, 'slate')], [...EYE_OPEN, ...MOUTH]),
-      trex([...legUp(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_OPEN, ...MOUTH]),
-      trex([...leg(13, 'slateDark'), ...leg(16, 'slate')], [...EYE_OPEN, ...MOUTH]),
-    ],
-    jump: jumpPose([...EYE_OPEN, ...MOUTH]),
-    crash: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_DIZZY, ...MOUTH_OPEN]),
-    sleep: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_SHUT, ...MOUTH]),
-    slide: [slide(0), slide(1)],
-    slideCrash: slide(0, SLIDE_DIZZY),
+    run: REX.run.map(rex),
+    jump: rex(REX.jump),
+    crash: rex(REX.crash),
+    sleep: rex(REX.sleep),
+    slide: REX.slide.map(rex),
+    slideCrash: rex(REX.slideCrash),
   },
   'cactus-small': CACTUS_SMALL,
   'cactus-large': CACTUS_LARGE,

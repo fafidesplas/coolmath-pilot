@@ -1,5 +1,13 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — T-Rex redrawn from the one-pager
+- Pao liked the one-pager's T-Rex silhouette much more than the game's (which was a rect placeholder reshaped by paint-overs). Every frame now comes from the one-pager's art: a boxy head with a jaw line, a body tapering into a tail that rises up and back, a light slate belly, thin legs. Run is the one-pager's 2 leg poses alternating; jump uses the standing pose (like the original); crash has the dizzy eye and open mouth; sleep shuts the eye.
+- Slide: the one-pager's low duck, 3 cells longer, with both legs laid back along the sand; frame 2 flicks the tail tip and toes. This replaces Pao's slide and jump paint-overs (Pao's call).
+- The one-pager draws 2 px per cell; the maps are scaled with Scale2x, so the diagonals are clean 1 px steps, and keep the game's 1 px outline. Data in `src/rex.js` (no DOM).
+- Hitbox: the inner corner between the tail and the body is filled, and the slide got a fuller throat, so every run box is within 2 px of the outline (the jump frame's old exception is gone). New `tools/rex-test.mjs` checks every frame.
+- Footfall dust: one puff per run frame (the planted foot alternates every frame now), same total as before.
+- Physics, egg and rex tests pass; checked every frame and a run in Chrome, no console errors.
+
 ## 2026-10-30 — Belly dust on the slide
 - Pao: more dust from the belly, to show the whole body is sliding. The slide trail is now 120 puffs a second (was 40): a third from the tail as before, two thirds spread along the belly. Belly puffs are drawn over the runner, so the sand sprays over the belly's lower edge and streams back.
 - The slide start burst is bigger (14 puffs, 24 landing into it, was 6 and 12), half of them along the belly. The dust pool grew from 48 to 128 puffs.

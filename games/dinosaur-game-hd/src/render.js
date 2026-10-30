@@ -178,14 +178,12 @@ class Dust {
     }
   }
 
-  // A footfall of the run: 2 small puffs kicked back from the planted foot (x).
+  // A footfall of the run: a small puff kicked back from the planted foot (x).
   step(x, scroll) {
-    for (let i = 0; i < 2; i++) {
-      this.emit(scroll, 0.4);
-      const d = this.last;
-      d.x = RUNNER.x + x + Math.random() * 4;
-      d.life = 0.15 + Math.random() * 0.15;
-    }
+    this.emit(scroll, 0.4);
+    const d = this.last;
+    d.x = RUNNER.x + x + Math.random() * 4;
+    d.life = 0.15 + Math.random() * 0.15;
   }
 
   // While sliding: puffs from the tail, and more along the whole belly

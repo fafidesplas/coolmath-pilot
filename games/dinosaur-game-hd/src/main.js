@@ -8,6 +8,7 @@ import * as sfx from './audio.js';
 import { GA } from './analytics.js';
 import { Keys, JUMP_KEYS, DUCK_KEYS } from './input.js';
 import { Renderer, FX_MS } from './render.js';
+import { FOOTFALL_X } from './rex.js';
 import { layout, hitButton } from './ui.js';
 
 const canvas = document.getElementById('view');
@@ -238,14 +239,13 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
-// Running dust: a puff from the planted foot as each foot comes down (run
-// frames 0 and 2, GDD 9).
-const FOOTFALL_X = [13, null, 23, null];
+// Running dust: a puff from the planted foot as each foot comes down (every
+// run frame, GDD 9).
 function updateRunDust() {
   const run = g.run;
   if (g.screen !== 'playing' || !run || run.jumping || run.ducking || run.crashed) { g.runFrame = -1; return; }
   const f = Math.floor(run.timeMs / ANIM.run) % 4;
-  if (f !== g.runFrame && FOOTFALL_X[f] !== null) r.dust.step(FOOTFALL_X[f], run.speed * 60);
+  if (f !== g.runFrame) r.dust.step(FOOTFALL_X[f], run.speed * 60);
   g.runFrame = f;
 }
 
