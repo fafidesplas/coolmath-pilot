@@ -2,7 +2,7 @@
 // The sim runs fixed 60 Hz steps from an accumulator (GDD 3.2); the renderer
 // draws every display frame, interpolating between the last two steps.
 import { Run } from './sim.js';
-import { STEP_MS, MAX_FRAME_DT, VIEW_H, LANE, RUN, EGGS, HATCH, ANIM, DEBUG } from './config.js';
+import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RUN, EGGS, HATCH, ANIM, DEBUG } from './config.js';
 import { load, save } from './save.js';
 import * as sfx from './audio.js';
 import { GA } from './analytics.js';
@@ -25,6 +25,7 @@ const g = {
   data,
   buttons: [],
   runStart: 0, jumpedAt: null, firstRun: false,
+  slideHintAt: null, slidAt: null,   // the slide reminder before the first pterodactyl (GDD 4)
   crashAt: 0, result: 0, newBest: false, runEggs: 0,
   fx: [],               // egg pickup pops: { x, y, t, n }
   eggBumpAt: 0, lastEggAt: 0, streak: 0,
@@ -41,6 +42,7 @@ function startRun(withJump) {
   g.screen = 'playing';
   g.alpha = 0; acc = 0;
   g.runStart = performance.now(); g.jumpedAt = null;
+  g.slideHintAt = g.slidAt = null;
   g.firstRun = !data.firstRunDone;
   g.flashUntil = 0;
   g.fx.length = 0;
@@ -142,7 +144,7 @@ function handleEvents() {
   for (const e of run.events) {
     if (e === 'jump') {
       sfx.jump();
-      r.dust.feet(6, run.speed * 60);
+      r.takeoff(run.speed * 60);
       g.jumpedAt ??= performance.now();
       tutorial('jump', 'tutorial:step01');
     } else if (e === 'egg') {
@@ -152,6 +154,7 @@ function handleEvents() {
       sfx.egg(g.streak);
     } else if (e === 'duck') {
       sfx.duck();
+      g.slidAt ??= performance.now();
       tutorial('duck', 'tutorial:step02');
     } else if (e === 'milestone') {
       sfx.milestone();
@@ -258,6 +261,15 @@ function updateSlide(dt) {
   g.wasInAir = !!run?.jumping;
 }
 
+// Until the player has slid once, the slide hint shows again for 2 s as the
+// run's first pterodactyl comes: from one view-width before it comes into
+// view, about 2 s before it reaches the runner (GDD 4).
+function updateSlideHint(now) {
+  const run = g.run;
+  if (g.screen !== 'playing' || g.slideHintAt !== null || data.tutorial.duck) return;
+  if (run.obstacles.some(o => o.id === 'ptero' && o.x < VIEW_W * 2)) g.slideHintAt = now;
+}
+
 // ---- loop ----------------------------------------------------------------------------------
 function frame(now) {
   const dt = Math.min((now - last) / 1000, MAX_FRAME_DT);
@@ -273,6 +285,7 @@ function frame(now) {
   }
   updateSlide(dt);
   updateRunDust();
+  updateSlideHint(now);
   while (g.fx.length && now - g.fx[0].t > FX_MS) g.fx.shift();
   g.buttons = layout(g, now, r);
   r.draw(g, now, dt);

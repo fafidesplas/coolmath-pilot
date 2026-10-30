@@ -203,6 +203,19 @@ const EGG = [
 const EGG_MARKS = [[7, 3, 1, 1, 'orange'], [3, 5, 1, 1, 'orange'], [6, 6, 2, 1, 'orange'], [2, 8, 1, 1, 'orange'], [5, 9, 2, 1, 'orange'], [7, 9, 1, 1, 'orange'], [6, 10, 3, 1, 'sand'], [3, 11, 4, 1, 'sand']];
 const GLINT = [[2, 3, 1, 2, 'white']];
 
+// A night rim (GDD 3.6): the sprite's outlined shape grown by 1 px, in Egg
+// Cream. Draw it at (x - 2, y - 2) under the sprite, so only the 1 px ring shows.
+function rim(img) {
+  const out = document.createElement('canvas');
+  out.width = img.width + 2; out.height = img.height + 2;
+  const o = out.getContext('2d');
+  for (let dy = 0; dy <= 2; dy++) for (let dx = 0; dx <= 2; dx++) if (dx !== 1 || dy !== 1) o.drawImage(img, dx, dy);
+  o.globalCompositeOperation = 'source-in';
+  o.fillStyle = C.cream;
+  o.fillRect(0, 0, out.width, out.height);
+  return out;
+}
+
 export const SPR = {
   trex: {
     run: [
@@ -221,4 +234,10 @@ export const SPR = {
   'cactus-large': CACTUS_LARGE,
   ptero: [sprite(46, 40, [...WING_UP, ...PTERO], PTERO_MARKS), sprite(46, 40, [...WING_DOWN, ...PTERO], PTERO_MARKS)],
   egg: [sprite(10, 13, EGG, EGG_MARKS), sprite(10, 13, EGG, [...EGG_MARKS, ...GLINT])],   // plain, glinting
+};
+SPR.rim = {
+  'cactus-small': rim(SPR['cactus-small']),
+  'cactus-large': rim(SPR['cactus-large']),
+  ptero: SPR.ptero.map(rim),
+  egg: rim(SPR.egg[0]),   // both egg frames have the same shape
 };

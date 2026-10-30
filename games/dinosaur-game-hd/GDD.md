@@ -135,7 +135,7 @@ A 20-second bonus round after the run, earned with the golden egg. It is the onl
 
 **Bonus flight:** hold Space, Up, W, the mouse button or anywhere on the screen to flap up; release to glide down. P or Esc pauses.
 
-During a player's **first run only**, faint jump (up arrow) and duck (down arrow) icons show in the two touch zones and fade out after the first jump or after 5 s. Before the first pterodactyl, the duck icon shows again for 2 s.
+During a player's **first run only**, faint jump (up arrow) and duck (down arrow) icons show in the two touch zones and fade out after the first jump or after 5 s. Until the player has slid once, the duck icon shows again for 2 s (or until they slide) as each run's first pterodactyl comes: it appears one view-width before the pterodactyl comes into view, about 2 s before it reaches the runner. (Not first run only: most first runs end before the first pterodactyl at ~450 m.)
 
 A 64 px square around the pause button is not part of the jump zone: pressing pause never jumps.
 
@@ -272,7 +272,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - **Background:** 3 parallax layers (dunes at 0.2×, mesas at 0.1×, clouds at 0.05× the scroll speed), each pre-rendered once to an offscreen canvas. A warm sunset band by day; stars and a moon at night.
   - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
-  - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames) and jump stretch;
+  - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames, 50 ms each: 6 px wider and lower, then 2 px) and takeoff stretch (the same, narrower and taller), feet kept in place;
   - jump frame: legs stretched long with the toes pointing down, the tail drooping to a point;
   - slide: a sand burst on entry (bigger when landing into it) and a dust trail while it lasts;
   - egg pickup: a pop, "+1" floating up, the egg icon in the HUD bumps;

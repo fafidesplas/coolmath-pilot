@@ -6,7 +6,7 @@ import { drawText } from './font.js';
 import { PAL, SPR } from './sprites.js';
 
 export const RESULTS_DELAY_MS = 500;   // the panel slides up this long after the crash
-const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, BUMP_MS = 150;
+const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, SLIDE_HINT_MS = 2000, BUMP_MS = 150;
 const PANEL_Y = 46, PANEL_H = 198;
 const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 const pad = n => String(n).padStart(5, '0');
@@ -105,19 +105,37 @@ function drawHud(ctx, g, now, r) {
   ctx.drawImage(SPR.egg[0], 11, 13 - bump);
   drawText(ctx, String(run.eggCount), 28, 14, 2, text);
 
+  if (g.screen !== 'playing') return;
   // First run only: faint jump and slide (duck) zones, until the first jump or 5 s (GDD 4).
-  if (g.firstRun && g.screen === 'playing') {
-    const t = now - g.runStart, end = g.jumpedAt ?? g.runStart + HINT_MS;
-    const alpha = 0.7 * (now < end ? Math.min(1, t / 300) : Math.max(0, 1 - (now - end) / 400));
+  if (g.firstRun) {
+    const alpha = hintAlpha(now, g.runStart, g.jumpedAt ?? g.runStart + HINT_MS);
     if (alpha > 0) {
       ctx.globalAlpha = alpha;
       arrow(ctx, VIEW_W / 2, 92, -1);
       drawText(ctx, 'JUMP', VIEW_W / 2, 136, 2, PAL.ink, 'center');
-      arrow(ctx, VIEW_W / 2, 330, 1);
-      drawText(ctx, 'SLIDE', VIEW_W / 2, 272, 2, PAL.ink, 'center');
       ctx.globalAlpha = 1;
+      slideHint(ctx, alpha);
     }
   }
+  // Until the first slide: the slide zone again as the first pterodactyl comes,
+  // for 2 s or until the player slides.
+  if (g.slideHintAt !== null) {
+    const end = Math.min(g.slideHintAt + SLIDE_HINT_MS, g.slidAt ?? Infinity);
+    slideHint(ctx, hintAlpha(now, g.slideHintAt, end));
+  }
+}
+
+// A hint fades in over 300 ms from `start` and out over 400 ms from `end`.
+function hintAlpha(now, start, end) {
+  return 0.7 * (now < end ? Math.min(1, (now - start) / 300) : Math.max(0, 1 - (now - end) / 400));
+}
+
+function slideHint(ctx, alpha) {
+  if (alpha <= 0) return;
+  ctx.globalAlpha = alpha;
+  arrow(ctx, VIEW_W / 2, 330, 1);
+  drawText(ctx, 'SLIDE', VIEW_W / 2, 272, 2, PAL.ink, 'center');
+  ctx.globalAlpha = 1;
 }
 
 // A pixel arrow with its tip at (x, y); dir -1 points up, 1 down.

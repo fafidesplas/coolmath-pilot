@@ -1,5 +1,12 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Jump stretch, night rims, slide reminder
+- Takeoff stretch: 2 frames (50 ms each: 6 px narrower and taller, then 2 px) with the feet kept in place, the mirror of the landing squash. Drawing only; the hitbox doesn't change.
+- Night rims: at night every cactus, pterodactyl and egg gets a 1 px Egg Cream rim outside its outline, faded in and out with the night (GDD 3.6). Pre-rendered once per sprite (`SPR.rim`).
+- Slide reminder: until the player has slid once, the SLIDE arrow shows again for 2 s (or until they slide) as the run's first pterodactyl comes, starting one view-width before it comes into view. GDD 4 said "first run only", but most first runs end before ~450 m, so it now keys off the first slide instead (GDD updated).
+- Physics and egg tests pass; checked in Chrome (reminder timing, rims at 745 m, stretch frame), no console errors.
+- Next: music (20–30 s chiptune loop, off by default, with its toggle), then a cold playtest by a teammate for the slice gate.
+
 ## 2026-10-30 — Run tail points straight back
 - Pao: the run tail should point straight back, not up. Run, crash and sleep frames: the top runs level with the back, the underside rises 1 px every 3 px to a 3 px rounded tip and drops 2:1 into the rump. Same length (7 px past the footprint), still clean pixel lines, still covers the tail boxes to within 2 px.
 

@@ -212,6 +212,7 @@ class Dust {
 }
 
 const SQUASH_MS = 50, SQUASH = [[6, 6], [2, 2]];   // per frame: extra width, lost height (px)
+const STRETCH = [[-6, -6], [-2, -2]];                 // takeoff: narrower and taller, same timing
 
 export class Renderer {
   constructor(cv) {
@@ -221,6 +222,7 @@ export class Renderer {
     this.night = 0;          // 0 day … 1 night, faded over 1 s (GDD 3.6)
     this.dust = new Dust();
     this.landAt = -1e9;      // performance.now() of the last landing on the feet
+    this.jumpAt = -1e9;      // performance.now() of the last takeoff
     this.bounds = { x0: 0, x1: VIEW_W, y0: 0, y1: VIEW_H };
     this.resize();
     addEventListener('resize', () => this.resize());
@@ -338,8 +340,14 @@ export class Renderer {
 
   drawObstacle(o, x, boxes) {
     const ctx = this.ctx, t = OBSTACLES[o.id], y = LANE.top1P + o.y;
-    if (o.id === 'ptero') ctx.drawImage(SPR.ptero[Math.floor(o.flapMs / t.flapMs) % 2], x - 1, y - 1);
-    else for (let i = 0; i < o.size; i++) ctx.drawImage(SPR[o.id], x + i * t.w - 1, y - 1);
+    if (o.id === 'ptero') {
+      const f = Math.floor(o.flapMs / t.flapMs) % 2;
+      this.rim(SPR.rim.ptero[f], x, y, 1);
+      ctx.drawImage(SPR.ptero[f], x - 1, y - 1);
+    } else {   // a group's rims first, so they never cover a neighbour's outline
+      for (let i = 0; i < o.size; i++) this.rim(SPR.rim[o.id], x + i * t.w, y, 1);
+      for (let i = 0; i < o.size; i++) ctx.drawImage(SPR[o.id], x + i * t.w - 1, y - 1);
+    }
     if (boxes) {
       this.boxes(x + 1, y + 1, o.boxes, '#e0303a');
       this.boxes(x + 1, y + 1, [[0, 0, o.w - 2, o.h - 2]], '#2a7de1');
@@ -356,9 +364,19 @@ export class Renderer {
       if (!born.has(e)) born.set(e, now);
       alpha = Math.min(1, (now - born.get(e)) / 200);
     }
+    const y = LANE.top1P + e.y + bob;
+    this.rim(SPR.rim.egg, x, y, alpha);
     ctx.globalAlpha = alpha;
-    ctx.drawImage(SPR.egg[glint], x - 1, LANE.top1P + e.y + bob - 1);
+    ctx.drawImage(SPR.egg[glint], x - 1, y - 1);
     ctx.globalAlpha = 1;
+  }
+
+  // The night rim under a sprite whose box starts at (x, y), faded in with the night.
+  rim(img, x, y, alpha) {
+    if (this.night <= 0) return;
+    this.ctx.globalAlpha = this.night * alpha;
+    this.ctx.drawImage(img, x - 2, y - 2);
+    this.ctx.globalAlpha = 1;
   }
 
   // A pop of 4 sparks and a "+1" rising from each egg picked up.
@@ -388,10 +406,13 @@ export class Renderer {
     } else if (run.crashed) img = T.crash;
     else if (run.jumping) img = T.jump;
     else img = T.run[Math.floor(run.timeMs / ANIM.run) % 4];
-    // Landing squash (GDD 9): 2 frames, wider and lower, feet kept on the
-    // ground. Drawing only; the hitbox doesn't change.
-    const f = run && !run.jumping && !run.ducking && !run.crashed ? Math.floor((now - this.landAt) / SQUASH_MS) : -1;
-    const [sw, sh] = SQUASH[f] || [0, 0];
+    // Landing squash and takeoff stretch (GDD 9): 2 frames each, wider and
+    // lower on landing, narrower and taller on takeoff, the feet kept where
+    // they are. Drawing only; the hitbox doesn't change.
+    const live = run && !run.ducking && !run.crashed;
+    const [sw, sh] = !live ? [0, 0]
+      : run.jumping ? STRETCH[Math.floor((now - this.jumpAt) / SQUASH_MS)] || [0, 0]
+      : SQUASH[Math.floor((now - this.landAt) / SQUASH_MS)] || [0, 0];
     ctx.drawImage(img, RUNNER.x - 1 - (img.ox || 0) - sw / 2, dy - 1 + sh, img.width + sw, img.height - sh);
 
     if (!run) {   // asleep on the title: Zz
@@ -412,6 +433,12 @@ export class Renderer {
       this.boxes(RUNNER.x + 1, top + y + 1, run.ducking ? RUNNER_BOXES.duck : RUNNER_BOXES.run, PAL.cream);
       this.boxes(RUNNER.x + 1, top + y + 1, [[0, 0, RUNNER.width - 2, RUNNER.height - 2]], '#2a7de1');
     }
+  }
+
+  // The runner takes off: dust and the stretch start now.
+  takeoff(scroll) {
+    this.dust.feet(6, scroll);
+    this.jumpAt = performance.now();
   }
 
   // The runner lands on its feet: dust and the squash start now.
