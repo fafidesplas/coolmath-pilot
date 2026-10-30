@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Belly dust on the slide
+- Pao: more dust from the belly, to show the whole body is sliding. The slide trail is now 120 puffs a second (was 40): a third from the tail as before, two thirds spread along the belly. Belly puffs are drawn over the runner, so the sand sprays over the belly's lower edge and streams back.
+- The slide start burst is bigger (14 puffs, 24 landing into it, was 6 and 12), half of them along the belly. The dust pool grew from 48 to 128 puffs.
+- Physics and egg tests pass; checked mid-slide in Chrome, no console errors.
+
 ## 2026-10-30 — Hatch prices raised
 - Pao collected ~207 eggs in a 3000 m run, so the old prices (300 / 750 / 1500) hatched all three in about 12 runs. Rather than cut eggs, the prices are now 300 / 1200 / 3000: the Velociraptor stays an early reward for new players (~10 runs at ~30 eggs), the later two are long-term goals.
 - GDD 14 now targets runs to hatch instead of eggs per run; the egg rate is unchanged. Check against `eggs:earned` in phase 4.

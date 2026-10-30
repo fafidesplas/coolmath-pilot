@@ -129,16 +129,18 @@ function buildLayers() {
   return L;
 }
 
-// Sand kicked up by the slide (GDD 9 juice): a burst when it starts, a trail
-// while it lasts; a puff out both sides of the feet on takeoff and landing; a
+// Sand kicked up by the slide (GDD 9 juice): a burst along the belly when it
+// starts, a trail from the tail and the whole belly while it lasts; a puff out both sides of the feet on takeoff and landing; a
 // little kick at each footfall of the run. A fixed pool, so nothing is
 // allocated per frame.
-const DUST_MAX = 48, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGHT = ['#A9A08A', '#8C8471', '#6B6556'];
+const DUST_MAX = 128, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGHT = ['#A9A08A', '#8C8471', '#6B6556'];
+const BELLY_X0 = 8, BELLY_X1 = 40;   // the slide's belly on the sand, from the runner's x
 class Dust {
   constructor() {
-    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
+    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
     this.next = 0;
     this.carry = 0;
+    this.n = 0;
   }
 
   // One puff at the tail. scroll: the ground's speed in px/s.
@@ -146,6 +148,7 @@ class Dust {
     const d = this.p[this.next];
     this.next = (this.next + 1) % DUST_MAX;
     d.on = true;
+    d.front = false;
     d.x = RUNNER.x + 2 + Math.random() * 10;
     d.y = GROUND - 2 - Math.random() * 3;
     d.vx = -scroll * (0.25 + Math.random() * 0.35) - Math.random() * 40 * kick;
@@ -155,7 +158,12 @@ class Dust {
     d.c = Math.floor(Math.random() * DUST_COLORS.length);
   }
 
-  burst(n, scroll, kick) { for (let i = 0; i < n; i++) this.emit(scroll, kick); }
+  burst(n, scroll, kick) {
+    for (let i = 0; i < n; i++) {
+      this.emit(scroll, kick);
+      if (i % 2) this.belly(this.last);
+    }
+  }
 
   get last() { return this.p[(this.next + DUST_MAX - 1) % DUST_MAX]; }
 
@@ -180,10 +188,26 @@ class Dust {
     }
   }
 
-  // Puffs per second while sliding.
+  // While sliding: puffs from the tail, and more along the whole belly
+  // dragging on the sand (2 of every 3 puffs).
   trail(dt, scroll) {
-    this.carry += dt * 40;
-    while (this.carry >= 1) { this.emit(scroll, 0.6); this.carry--; }
+    this.carry += dt * 120;
+    while (this.carry >= 1) {
+      this.carry--;
+      if (++this.n % 3 === 0) { this.emit(scroll, 0.6); continue; }
+      this.emit(scroll, 0.5);
+      this.belly(this.last);
+    }
+  }
+
+  // Moves a puff under the belly. Belly puffs are drawn in front of the
+  // runner, so the sand sprays over the belly's lower edge.
+  belly(d) {
+    d.front = true;
+    d.x = RUNNER.x + BELLY_X0 + Math.random() * (BELLY_X1 - BELLY_X0);
+    d.y = GROUND - Math.random() * 2;
+    d.vx -= Math.random() * 30;
+    d.life = 0.2 + Math.random() * 0.25;
   }
 
   update(dt) {
@@ -198,10 +222,11 @@ class Dust {
     }
   }
 
-  draw(ctx, night) {
+  // front: the belly puffs, drawn over the runner; otherwise the rest, under it.
+  draw(ctx, night, front) {
     const colors = night > 0.5 ? DUST_NIGHT : DUST_COLORS;
     for (const d of this.p) {
-      if (!d.on) continue;
+      if (!d.on || d.front !== front) continue;
       const t = d.age / d.life, size = 3 + Math.round(t * 4);
       ctx.globalAlpha = 1 - t;
       ctx.fillStyle = colors[d.c];
@@ -280,8 +305,9 @@ export class Renderer {
     }
     const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
     if (g.screen !== 'paused') this.dust.update(dt);
-    this.dust.draw(ctx, this.night);
+    this.dust.draw(ctx, this.night, false);
     this.drawRunner(run, y, now, g.showBoxes);
+    this.dust.draw(ctx, this.night, true);
     this.drawPickups(g.fx, now);
 
     drawUI(ctx, g, now, this);

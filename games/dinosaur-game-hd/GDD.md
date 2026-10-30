@@ -274,7 +274,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 - **Juice list:**
   - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames, 50 ms each: 6 px wider and lower, then 2 px) and takeoff stretch (3 frames, 50 ms each: 8 px narrower and 10 px taller, then 4 and 5, then 2 and 2), feet kept in place;
   - jump frame: legs stretched long with the toes pointing down, the tail drooping to a point;
-  - slide: a sand burst on entry (bigger when landing into it) and a dust trail while it lasts;
+  - slide: a sand burst along the belly on entry (bigger when landing into it) and, while it lasts, a dust trail from the tail and sand spraying off the whole belly (drawn over the runner's lower edge);
   - egg pickup: a pop, "+1" floating up, the egg icon in the HUD bumps;
   - 100 m: the score flashes 4 times;
   - crash: a 150 ms screen shake (4 px), dizzy stars over the runner;

@@ -254,7 +254,7 @@ function updateRunDust() {
 function updateSlide(dt) {
   const run = g.run, sliding = g.screen === 'playing' && !!run && run.ducking && !run.crashed;
   const scroll = run ? run.speed * 60 : 0;
-  if (sliding && !g.sliding) r.dust.burst(g.wasInAir ? 12 : 6, scroll, g.wasInAir ? 1.5 : 1);
+  if (sliding && !g.sliding) r.dust.burst(g.wasInAir ? 24 : 14, scroll, g.wasInAir ? 1.5 : 1);
   if (sliding) r.dust.trail(dt, scroll);
   sfx.slide(sliding);
   g.sliding = sliding;
