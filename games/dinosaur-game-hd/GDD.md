@@ -11,7 +11,7 @@
 - **Pillars:**
   1. **It feels exactly like the original.** The jump, duck, speed curve, obstacle rules and hitboxes are the original's numbers. A player who knows it is at home in one second.
   2. **No bloat.** Everything new sits on top of the run, never inside it: no power-ups, no upgrades, no lives, no levels. Every runner is cosmetic. The one bonus round, the pterodactyl flight (3.8), plays **after** a run ends, never during it.
-  3. **One more run, under a second away.** A crash shows the result over the frozen scene; Space starts the next run at once.
+  3. **One more run, under a second away.** A crash shows the result over the frozen scene; R or Retry starts the next run at once, and Space does after the original's 1.2 s lock.
 - **Player:** Coolmath players aged 10–24, on a school Chromebook with a keyboard or trackpad, or a tablet, sound often off. Almost all of them have played the no-internet dino.
 - **Session:** One run lasts 20–90 s (a 1000 m run takes about 80 s). A typical visit is 10–20 runs, or a few 2P races: 10–15 minutes.
 - **Hook:** "My best is 1,240, I can beat that." Then: "38 more eggs and the Parasaurolophus hatches", "I grabbed the golden egg, bonus flight!", "the Hadrosaur unlocks at 1000 m", the daily run's streak, and the friend next to you who just won.
@@ -23,7 +23,7 @@
 
 ## 3. Mechanics
 
-All tuning numbers are the original game's values (Chromium `offline.js`, the "T-Rex runner"), in its own units: **logical pixels** and **per frame at 60 fps**. They are recalled here and **must be checked against the Chromium source and by playing `chrome://dino` side by side** in the first slice step (see 12). We copy numbers only, never code or art.
+All tuning numbers are the original game's values (Chromium `components/neterror/resources/dino_game/`, the "T-Rex runner"), in its own units: **logical pixels** and **per frame at 60 fps**. They were **checked against the Chromium source on 2026-10-30**, and the jump heights and airtimes below come from a frame-by-frame simulation of its rules. The slice still compares them with `chrome://dino` side by side (see 12). We copy numbers and rules only, never code or art.
 
 ### 3.1 Space and scale
 - **Logical resolution 640×360**, drawn crisp (`imageSmoothingEnabled = false`) and scaled up to the window: ×2 at 1280×720, ×3 at 1920×1080, letterboxed. The original's playfield is 600×150 logical px, so ours shows a little more ahead (640 vs 600) and has room above for sky and parallax.
@@ -35,21 +35,25 @@ All tuning numbers are the original game's values (Chromium `offline.js`, the "T
 - Deterministic: obstacles and eggs come from seeded PRNGs (mulberry32), in **separate streams** derived from the run seed: one for obstacles, one for eggs (including the golden egg), and one for the bonus flight. A change to egg logic can never change the obstacles of a daily seed or a 2P lane, and nothing the player does ever consumes a random number. The same seed and the same inputs give the same run (daily run, 2P lanes, replays in tests).
 
 ### 3.3 Speed and distance
-- **Start speed:** 6 px/frame (360 px/s). **Acceleration:** +0.001 px/frame every frame. **Cap:** 13 px/frame (780 px/s), reached after about **117 s / 1,660 m**.
-- **Distance:** 1 m = 40 px travelled (the original's score coefficient of 0.025), so our metres equal the original's points. The score starts at 9 m/s and reaches 19.5 m/s at the cap.
+- **Start speed:** 6 px/frame (360 px/s). **Acceleration:** +0.001 px/frame every frame from the first frame of the run, including the 3 s clear time. **Cap:** 13 px/frame (780 px/s), reached after **7,000 frames: about 117 s / 1,660 m**.
+- **Whole-pixel scrolling:** obstacles and the ground move `floor(speed)` px per frame (so 6 px per frame until the speed reaches 7, and so on), as in the original. Distance uses the exact speed.
+- **Distance:** 1 m = 40 px travelled (the original's score coefficient of 0.025, shown as `round(ceil(px) × 0.025)`), so our metres equal the original's points. The score starts at 9 m/s and reaches 19.5 m/s at the cap.
 - **Reference times:** 100 m ≈ 10 s, 500 m ≈ 46 s, 1000 m ≈ 80 s, 2000 m ≈ 135 s, 3000 m ≈ 185 s.
 - **Clear time:** no obstacles for the first **3 s** of a run.
 - **Milestones:** every 100 m the score flashes 4 times and a beep plays (as in the original).
 
 ### 3.4 The runner (jump, duck, fast-fall)
 - **Size:** 44×47 px standing, 59×25 ducking (the original's T-Rex footprint). Every runner is drawn inside this footprint.
-- **Jump:** only from the ground. The start velocity is **10 + speed/10** px/frame upwards; **gravity 0.6** px/frame².
-  - **Tap:** the jump always rises at least **30 px**. If the button is already released by then, the upward velocity is cut to 5 px/frame: apex about **51 px**, airtime about **0.41 s**.
-  - **Hold:** the jump is cut at **63 px** above the ground (the original's `MAX_JUMP_HEIGHT`) the same way: apex about **84 px**, airtime about **0.54 s**.
-- **Duck:** hold down on the ground. The runner switches to the low pose and hitbox for as long as down is held.
-- **Fast-fall:** down in the air sets the vertical velocity to 1 px/frame downward and multiplies it by **3** (the original's `SPEED_DROP_COEFFICIENT`); on landing, the runner ducks if down is still held.
+- **Jump:** only from the ground and not while ducking. The start velocity is **10 + speed/10** px/frame upwards; **gravity 0.6** px/frame². Each frame the height moves by the velocity **rounded to a whole pixel**, then gravity is added.
+  - **Minimum height:** once the runner is more than **30 px** up, releasing the button cuts the upward velocity to **5 px/frame** (if it is faster). A release before 30 px does nothing, so a very short tap (under about 50 ms) gives a full jump, exactly like the original.
+  - **Maximum height:** at more than **63 px** up the velocity is cut to 5 px/frame anyway, held or not.
+  - **Result at 60 Hz (simulated from the source rules):** the shortest jump (released at 67 ms) peaks at **62 px**, airtime **0.47 s**; a held jump peaks at **87–91 px**, airtime **0.55–0.58 s** (slightly different at each speed because of the rounding). Releases between 67 and 133 ms give everything in between (70, 78, 85 px).
+  - **Holding the jump key** makes the runner jump again as soon as it lands: the original gets this from keyboard auto-repeat. We repeat the jump on landing while a jump key is held. Touch and mouse don't repeat, as in the original.
+- **Duck:** hold down on the ground. The runner switches to the low pose and hitbox for as long as down is held. A jump can't start while ducking.
+- **Fast-fall:** down in the air sets the vertical velocity to 1 px/frame downward, and while down is held each frame's movement is the velocity × **3** (the original's speed-drop coefficient); gravity keeps adding to the velocity. **Releasing down ends the fast-fall** and the jump continues normally. On landing, the runner ducks if down is still held.
 - **No input buffer and no coyote time**, as in the original. A jump pressed in the air is ignored.
-- **Hitboxes:** the original's T-Rex collision boxes (6 boxes standing, 1 box ducking), checked only when the outer box (shrunk by 1 px) overlaps. The same boxes are used for every runner, so **every sprite is drawn over a hitbox template**: each frame's outline must cover every box to within 2 px, so no runner can die without visibly touching something. A debug key (**H**, removed in release builds) draws the boxes over the runner and the obstacles.
+- **Hitboxes:** the original's T-Rex collision boxes (6 boxes standing, 1 box ducking: 55×25 at (1, 18)), checked only when the outer boxes overlap. The outer box is the runner's **standing** 44×47 box shrunk by 1 px on each side, **also while ducking**, and the obstacle's box shrunk the same way. **Only the nearest obstacle** is checked each frame. The same boxes are used for every runner, so **every sprite is drawn over a hitbox template**: each frame's outline must cover every box to within 2 px, so no runner can die without visibly touching something. A debug key (**H**, removed in release builds) draws the boxes over the runner and the obstacles.
+- **Animation rates:** run cycle 12 fps, duck cycle 8 fps, pterodactyl flap 6 fps (the original's). Our 4-frame run cycle keeps 12 fps per frame step.
 - **Crash:** the runner shows its crash frame (dizzy face), the scene freezes, and a short shake and thud play.
 
 ### 3.5 Obstacles
@@ -61,9 +65,10 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 | Large cactus | 25×50 each | on the ground | 1 at first; 1–3 once speed > 7 | 3 s; groups from about 160 m |
 | Pterodactyl | 46×40, 2-frame flap | low (jump), mid (duck or jump), high (run under, don't jump) | single | speed ≥ 8.5: about **450 m** |
 
-- **Gap:** after each obstacle, the next one comes after a random gap between `minGap = width × speed + obstacleMinGap × 0.6` and `1.5 × minGap` (obstacleMinGap 120 for cacti, 150 for pterodactyls). This is what keeps every gap clearable at the current speed.
+- **Choice:** each new obstacle picks one of the 3 types at random (equal odds). If the type is not allowed yet (pterodactyl below speed 8.5) or would be the 3rd of its type in a row, it picks again. The group size is 1–3 at random, cut to 1 below the type's group speed (4 small, 7 large). Groups of 2–3 widen the middle collision box to fill the group.
+- **Gap:** after each obstacle, the next one comes after a random whole-pixel gap between `minGap = round(groupWidth × speed + obstacleMinGap × 0.6)` and `round(1.5 × minGap)` (obstacleMinGap 120 for cacti, 150 for pterodactyls), using the speed when the obstacle spawned. The next obstacle spawns just off the right edge once the last one's right end plus its gap is inside the view. This is what keeps every gap clearable at the current speed.
 - **No more than 2** obstacles of the same type in a row.
-- **Pterodactyl heights** (bottom of the sprite above the ground): low **0 px**, mid **25 px** (a standing runner hits it, a ducking runner passes), high **50 px** (a standing runner passes under; a jump hits it). Each flies at the scroll speed **±0.8** px/frame, picked at random.
+- **Pterodactyl heights** (bottom of the sprite above the ground): low **0 px**, mid **25 px** (a standing runner hits it, a ducking runner passes), high **50 px** (a standing runner passes under; a jump hits it), equal odds. Each flies at the scroll speed **±0.8** px/frame, picked at random, also moved in whole pixels (`floor(speed ± 0.8)`).
 - **Teaching order (the only change from the original):** the first obstacle of every run is a **single small cactus**, and the first pterodactyl of every run flies at **mid** height, where both ducking and jumping work. After that it's random.
 
 ### 3.6 Day and night
@@ -79,12 +84,12 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 |---|---|---|---|---|
 | Ground line | 3 | at ground level in a long gap | nothing, it's free | 30 m |
 | Jump arc | 5 | along the full-jump arc over a small cactus | hold the jump (a tap gets the lower 2–3) | 150 m |
-| Grid | 3 rows × 4–6 | in an empty gap; rows at the ground, the tap apex (~45 px) and the full apex (~80 px) | choose your row: run, tap or hold | 200 m |
-| Big arc | 5 | above a large cactus group, top egg near the 84 px apex | a perfectly timed full jump | 300 m |
+| Grid | 3 rows × 4–6 | in an empty gap; rows at the ground, the short-jump apex (~58 px) and the full apex (~86 px) | choose your row: run, tap or hold | 200 m |
+| Big arc | 5 | above a large cactus group, top egg near the ~89 px apex | a perfectly timed full jump | 300 m |
 | Duck line | 3 | at duck height under a mid pterodactyl | duck rather than jump | 450 m |
 | Nest | 15–20 in a tight egg-shaped bunch | in a long empty gap, centered on the full-jump arc, at most once per 500 m | one well-timed held jump through the middle | 500 m |
 
-- **Arcs follow the real jump.** A held jump lasts 0.54 s, so it covers about 195 px at the start speed and 420 px at the cap. Arc, grid and nest eggs are placed along the **simulated jump curve at the speed when the pattern spawns**, centered on the jump that clears the obstacle by the widest margin. A test checks that, at that moment, a held jump collects every arc egg.
+- **Arcs follow the real jump.** A held jump lasts about 0.58 s (34–35 frames), so it covers about 210 px at the start speed and 440 px at the cap. Arc, grid and nest eggs are placed along the **simulated jump curve at the speed when the pattern spawns**, centered on the jump that clears the obstacle by the widest margin. A test checks that, at that moment, a held jump collects every arc egg.
 
 - Eggs are generated from the same seed as the obstacles, so the daily run and both 2P lanes have the same eggs.
 - **Target:** a typical 400 m run collects **20–50 eggs**, a great run about 150 (grids and nests raise the rate). Tune in the slice. If playtesters die chasing eggs in the first 30 s, the patterns there get easier.
@@ -93,7 +98,7 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 #### Golden egg
 - **What:** a gold egg with a sparkle (12×15 px), the ticket to the bonus flight (3.8). Worth no eggs by itself.
 - **When:** at most **one per run**. The egg stream picks a distance between **500 and 900 m**; the first gap after it that is long enough gets the golden egg. So every run that passes 900 m sees one.
-- **Where:** alone, at the **apex of a held jump** (about 84 px up) in an empty gap, so it takes a full jump to get. Missed is missed: it doesn't come back in that run.
+- **Where:** alone, at the **apex of a held jump** (about 87 px up) in an empty gap, so it takes a full jump to get. Missed is missed: it doesn't come back in that run.
 - **Grabbing it** never changes the run: a chime, a sparkle, and a gold egg icon appears next to the HUD egg count. The run carries on as normal.
 - **Modes:** endless and daily (same seed, so everyone's daily has the same golden egg). **Not in 2P races**, so a race stays a pure race.
 
@@ -234,11 +239,11 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound, music)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and sound and music toggles. Pressing Space, Up or W starts a 1P run, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and sound and music toggles. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
-- **Results (1P and daily):** the panel slides up over the frozen scene **500 ms** after the crash (the original's lock against accidental restarts). Distance and eggs count up, best distance, "NEW BEST" if it is one, any runner unlocked in this run (sprite and name), the next hatch's progress bar. Buttons: **Retry** (big) / **Runners** / **Menu**. Space or R retries; the new run starts in under 1 s. **After a run with the golden egg**, **Fly!** becomes the big button and takes Space; R and Retry still start a run at once and bank the flight.
+- **Results (1P and daily):** the panel slides up over the frozen scene **500 ms** after the crash. Space, Up and W can't restart for **1.2 s** after the crash (the original's lock against accidental restarts) and restart on key release, as in the original; R, Enter and the Retry button work at once. Distance and eggs count up, best distance, "NEW BEST" if it is one, any runner unlocked in this run (sprite and name), the next hatch's progress bar. Buttons: **Retry** (big) / **Runners** / **Menu**. Space (after the lock), R or Enter retries; the new run starts in under 1 s. **After a run with the golden egg**, **Fly!** becomes the big button and takes Space; R and Retry still start a run at once and bank the flight.
 - **Race setup (2P):** both lanes with their runners. P1 changes runner with A/D, P2 with Left/Right; on touch, arrows beside each runner. P1 starts with the equipped runner, P2 with the last runner P2 used (or the T-Rex with a "P2" badge). One big **Race!** button: two clicks from the title.
 - **Racing:** a 3-2-1 countdown (1.5 s), then both lanes run from the same seed at the same speed. **The first crash ends the race:** the crashed runner stays in its lane as a ghost (faded, X eyes) and the lane freezes; the winner keeps running for a 1.5 s victory lap. Both crashing in the same step is a **Draw**.
 - **Race results:** "P1 WINS" (or P2, or DRAW) with a crown on the winner, the winner's distance, both players' eggs (they go to the shared bank), and a running tally ("P1 2 – 1 P2") kept until you return to the menu. **Rematch** (big) / **Runners** / **Menu**. No best-of-3.
@@ -366,7 +371,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 ## 14. Open questions
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
-| Are the recalled original numbers (3.3–3.5) exact? | Check them against the Chromium source and `chrome://dino` in slice step 1 and update this GDD. | Pao | Open |
+| Are the recalled original numbers (3.3–3.5) exact? | Checked against the Chromium source on 2026-10-30 and corrected (jump heights, minimum-height rule, fast-fall, whole-pixel scrolling, restart lock). Still compare with `chrome://dino` side by side in the slice. | Pao | Closed |
 | Is "Dinosaur Game" in the name OK to publish? | It's the generic name players use; keep "Chrome", "Google" and "T-Rex Runner" out. Ask the team before any public build. | Team | Open |
 | Egg rate and prices (300 / 750 / 1500) | Keep; check that a typical run gives 15–40 eggs in the slice, retune in phase 4. | Pao | Open |
 | Achievement targets | Keep; check against real run data in phase 4. | Pao | Open |
@@ -378,6 +383,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Physics checked against the Chromium source (3.3–3.5): the jump peaks at 62 px (shortest) to 87–91 px (held), not 51 / 84; a release before 30 px gives a full jump; holding the jump key re-jumps on landing; fast-fall ends when down is released; positions round to whole pixels and obstacles scroll `floor(speed)` px per frame; the outer hitbox stays standing-size while ducking and only the nearest obstacle is checked; obstacle type choice and group rules spelled out. Egg grid, big arc and golden egg heights follow the new apex. Space restart is locked for 1.2 s after a crash (the original's value), R, Enter and Retry work at once.
 - 2026-10-30 — Approved by Fafi.
 - 2026-10-30 — Roster changed: the Tag characters are out, and the Triceratops and Stegosaurus are out (four legs don't fit the T-Rex silhouette). 11 runners: the T-Rex; Velociraptor, Pachycephalosaurus and Parasaurolophus hatched with eggs (300 / 750 / 1500); Hadrosaur (1000 m), Ceratosaurus (7-day daily streak), Megalosaurus (50 km), Therizinosaurus (3000 m), the Hangman beast (10 nights), Allosaurus (10 2P wins, the 2P-only bonus) and Spinosaurus (completionist) by achievement. The "1000 eggs in total" achievement is dropped. Every dinosaur now has 8 frames.
 - 2026-10-29 — Bonus pterodactyl flight added (3.7 golden egg, 3.8 flight): a Jetpack Joyride-style 20 s flight after the run, earned with a golden egg grabbed between 500 and 900 m; hold to flap up, release to glide; thunderclouds and wild pterodactyls; a hit ends it but eggs are kept; up to 3 flights banked. Not in 2P. Pillar 2 reworded; controls, screens, art, audio, analytics, tech and scope updated.

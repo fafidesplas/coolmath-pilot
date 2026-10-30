@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Physics checked against the original
+- Read the Chromium dino source (numbers and rules only) and simulated its jump frame by frame. Speed, acceleration, cap, gaps, obstacle sizes, pterodactyl heights, night and distance were right in `GDD.md`.
+- Corrected in `GDD.md` 3.3–3.5: jump apex 62 px (shortest) to 87–91 px (held), airtime 0.47–0.58 s; a release before 30 px gives a full jump; a held jump key re-jumps on landing; fast-fall ends when down is released; whole-pixel positions and `floor(speed)` scrolling; standing-size outer hitbox while ducking; only the nearest obstacle is checked; 1.2 s Space restart lock. Egg and golden egg heights follow the new apex.
+- Next: phase 2a build plan, with `sim.js` and a headless physics test first.
+
 ## 2026-10-30 — GDD approved
 - Fafi read `GDD.md` and approved it. Status: Approved, stage `slice`.
 - Next: phase 2a, the vertical slice build plan (match the original's feel first, in `sim.js`).
