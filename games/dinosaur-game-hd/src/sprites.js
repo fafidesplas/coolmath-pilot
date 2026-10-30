@@ -79,33 +79,80 @@ const jumpPose = face => sprite(44, 47,
 
 // ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------
 // Same footprint and hitbox as the original's duck; only the pose changes.
-const SLIDE = [
-  [41, 3, 16, 8, 'slate'], [41, 11, 12, 3, 'slate'],    // head raised a little, leading the slide; jaw
-  [36, 9, 7, 8, 'slate'],                               // neck
-  [18, 13, 25, 8, 'slate'], [20, 21, 21, 2, 'slate'],   // short body, belly on the ground
-  [42, 18, 4, 2, 'slate'], [45, 19, 2, 2, 'slate'],     // arm reaching forward
-];
-const SLIDE_MARKS = [[20, 13, 17, 2, 'slateDark'], [22, 19, 18, 2, 'cream'], [55, 5, 1, 1, 'ink'], [47, 11, 6, 1, 'ink']];
-const SLIDE_EYE = [[44, 5, 3, 3, 'cream'], [45, 6, 2, 2, 'ink']];
-const SLIDE_DIZZY = [[44, 5, 3, 3, 'cream'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink'], [45, 6, 1, 1, 'ink'], [44, 7, 1, 1, 'ink'], [46, 7, 1, 1, 'ink']];
-// A long tail tapering to a sharp point up and back, both back legs stretched
-// out along the sand; the two frames flick the tail tip and the feet.
-function slideTail(flick) {
-  const rows = [], tip = 3 - flick;
-  for (let y = tip; y <= 16; y++) {
-    const t = (y - tip) / (16 - tip);
-    const left = Math.round(1 + t * 11), right = Math.min(24, Math.round(2 + t * 36));
-    rows.push([left, y, right - left + 1, 1, 'slate']);
-  }
-  return rows;
+// Head raised and leading, belly on the sand, both back legs stretched out
+// with toes up, a slim tail tapering to a point up and back; the two frames
+// flick the tail tip. Drawn as pixel maps from Pao's paint-overs:
+// b slate, c slate dark, d cream, a ink, '.' empty.
+const SLIDE_MAPS = [[
+  '...........................................................',
+  '...........................................................',
+  '...........................................................',
+  '.bb......................................bbbbbbbbbbbbbbbb..',
+  '..bbbb...................................bbbbbbbbbbbbbbbb..',
+  '...bbbbbb................................bbbdddbbbbbbbbab..',
+  '....bbbbbbb..............................bbbdaabbbbbbbbbb..',
+  '....bbbbbbbbbb...........................bbbdaabbbbbbbbbb..',
+  '.....cbbbbbbbbb..........................bbbbbbbbbbbbbbbb..',
+  '......cbbbbbbbbb....................bbbbbbbbbbbbbbbbbbbbb..',
+  '.......ccbbbbbbbb...................bbbbbbbbbbbbbbbbbbbbb..',
+  '........ccbbbbbbbbb.................bbbbbbbbbbbaaaaaa......',
+  '.........ccbbbbbbbbbbb..............bbbbbbbbbbbbbbbbb......',
+  '.........ccccbbbbbbbcccccccccccccccccbbbbbbbbbbbbbbbb......',
+  '..........cccccbbbbbcccccccccccccccccbbbbbb................',
+  '...........cccccbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '...cc.......cccccbbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '...cc........cccccbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '...ccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.............',
+  '....cbbccccccccbbbbbbbddddddddddddddddddbbbbbbb............',
+  '.....bbaaaaaaaabbbbbbbddddddddddddddddddbbb..bb............',
+  '.....bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb..................',
+  '......bbbbbbbbbbb...bbbbbbbbbbbbbbbbbbbbb..................',
+  '...........................................................',
+  '...........................................................',
+], [
+  '...........................................................',
+  '...........................................................',
+  'bbb........................................................',
+  '.bbb.....................................bbbbbbbbbbbbbbbb..',
+  '..bbb....................................bbbbbbbbbbbbbbbb..',
+  '...bbbb..................................bbbdddbbbbbbbbab..',
+  '....bbbb.................................bbbdaabbbbbbbbbb..',
+  '.....bbbbb...............................bbbdaabbbbbbbbbb..',
+  '......bbbbb..............................bbbbbbbbbbbbbbbb..',
+  '.......cbbbbb.......................bbbbbbbbbbbbbbbbbbbbb..',
+  '.......ccbbbbbb.....................bbbbbbbbbbbbbbbbbbbbb..',
+  '........ccbbbbbbb...................bbbbbbbbbbbaaaaaa......',
+  '.........ccbbbbbbbbb................bbbbbbbbbbbbbbbbb......',
+  '..........ccbbbbbbbbcccccccccccccccccbbbbbbbbbbbbbbbb......',
+  '...........cccbbbbbbcccccccccccccccccbbbbbb................',
+  '...........cccccccbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '....cc......ccccccbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '....cc.......cccccbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '....cccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.............',
+  '....bbcccccccccbbbbbbbddddddddddddddddddbbbbbbb............',
+  '....bb.aaaaaaaabbbbbbbddddddddddddddddddbbb..bb............',
+  '....bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb..................',
+  '.....bbbbbbbbbbb....bbbbbbbbbbbbbbbbbbbbb..................',
+  '...........................................................',
+  '...........................................................',
+]];
+const SLIDE_COLOR = { a: 'ink', b: 'slate', c: 'slateDark', d: 'cream' };
+// One rect per run of same-colored pixels.
+function mapRects(rows) {
+  const out = [];
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length;) {
+      const v = row[x];
+      let n = 1;
+      while (row[x + n] === v) n++;
+      if (v !== '.') out.push([x, y, n, 1, SLIDE_COLOR[v]]);
+      x += n;
+    }
+  });
+  return out;
 }
-const slideBack = flick => [
-  ...slideTail(flick),
-  [13, 15, 8, 5, 'slateDark'], [4 + flick, 18, 11, 2, 'slateDark'], [3 + flick, 16, 2, 3, 'slateDark'],   // far leg, toes up
-  [15, 18, 8, 4, 'slate'], [6 - flick, 21, 11, 2, 'slate'], [5 - flick, 19, 2, 3, 'slate'],               // near leg, toes up
-];
-const LEG_GAP = [[7, 20, 8, 1, 'ink']];   // keeps the two legs apart
-const slide = (flick, eye) => sprite(59, 25, [...slideBack(flick), ...SLIDE], [...SLIDE_MARKS, ...LEG_GAP, ...eye]);
+const SLIDE_DIZZY = [[44, 5, 3, 3, 'cream'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink'], [45, 6, 1, 1, 'ink'], [44, 7, 1, 1, 'ink'], [46, 7, 1, 1, 'ink']];
+const slide = (frame, eye = []) => sprite(59, 25, mapRects(SLIDE_MAPS[frame]), eye);
 
 // ---- Cacti ------------------------------------------------------------------------------
 const CACTUS_SMALL = sprite(17, 35, [
@@ -152,7 +199,7 @@ export const SPR = {
     jump: jumpPose([...EYE_OPEN, ...MOUTH]),
     crash: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_DIZZY, ...MOUTH_OPEN]),
     sleep: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_SHUT, ...MOUTH]),
-    slide: [slide(0, SLIDE_EYE), slide(1, SLIDE_EYE)],
+    slide: [slide(0), slide(1)],
     slideCrash: slide(0, SLIDE_DIZZY),
   },
   'cactus-small': CACTUS_SMALL,

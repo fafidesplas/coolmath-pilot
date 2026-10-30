@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slide frames from Pao's paint-overs
+- Both slide frames now come from Pao's paint-overs: a slimmer tail (top edge shaved 1–3 px) with Slate dark shading on its underside, the far leg's top reshaped; frame 2 flicks the tail tip higher, up to the frame edge. The slide crash frame uses frame 1 with the dizzy eye.
+- The slides are stored as pixel maps (`SLIDE_MAPS` in `sprites.js`) instead of rects, so paint-overs go in exactly. Same 59×25 footprint and hitbox.
+- Paint-over page: overlay any other frame (with its paint-over) and set each layer's opacity.
+- Physics and egg tests still pass.
+
 ## 2026-10-30 — Jump pose: sloped back, from Pao's paint-over
 - New paint-over page (a private artifact for Pao): every sprite on a pixel grid with the game's palette and hitboxes; saved paint-overs are read back pixel by pixel.
 - First one used: the jump frame's square rump is cut away, so the back slopes in one line from the neck down to the tail tip (`JUMP_BACK` in `sprites.js`).
