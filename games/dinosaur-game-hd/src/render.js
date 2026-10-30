@@ -130,7 +130,8 @@ function buildLayers() {
 }
 
 // Sand kicked up by the slide (GDD 9 juice): a burst when it starts, a trail
-// while it lasts. A fixed pool, so nothing is allocated per frame.
+// while it lasts; and a puff out both sides of the feet on landing. A fixed
+// pool, so nothing is allocated per frame.
 const DUST_MAX = 48, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGHT = ['#A9A08A', '#8C8471', '#6B6556'];
 class Dust {
   constructor() {
@@ -154,6 +155,17 @@ class Dust {
   }
 
   burst(n, scroll, kick) { for (let i = 0; i < n; i++) this.emit(scroll, kick); }
+
+  // A landing on the feet: puffs spread forward and back, low and quick.
+  land(scroll) {
+    for (let i = 0; i < 10; i++) {
+      this.emit(scroll, 1.2);
+      const d = this.p[(this.next + DUST_MAX - 1) % DUST_MAX], side = i % 2 ? 1 : -1;
+      d.x = RUNNER.x + 22 + side * (4 + Math.random() * 8);
+      d.vx = -scroll * 0.3 + side * (30 + Math.random() * 50);
+      d.life = 0.25 + Math.random() * 0.2;
+    }
+  }
 
   // Puffs per second while sliding.
   trail(dt, scroll) {
@@ -186,6 +198,8 @@ class Dust {
   }
 }
 
+const SQUASH_MS = 50, SQUASH = [[6, 6], [2, 2]];   // per frame: extra width, lost height (px)
+
 export class Renderer {
   constructor(cv) {
     this.cv = cv;
@@ -193,6 +207,7 @@ export class Renderer {
     this.L = buildLayers();
     this.night = 0;          // 0 day … 1 night, faded over 1 s (GDD 3.6)
     this.dust = new Dust();
+    this.landAt = -1e9;      // performance.now() of the last landing on the feet
     this.bounds = { x0: 0, x1: VIEW_W, y0: 0, y1: VIEW_H };
     this.resize();
     addEventListener('resize', () => this.resize());
@@ -365,7 +380,11 @@ export class Renderer {
     } else if (run.crashed) img = T.crash;
     else if (run.jumping) img = T.jump;
     else img = T.run[Math.floor(run.timeMs / ANIM.run) % 4];
-    ctx.drawImage(img, RUNNER.x - 1, dy - 1);
+    // Landing squash (GDD 9): 2 frames, wider and lower, feet kept on the
+    // ground. Drawing only; the hitbox doesn't change.
+    const f = run && !run.jumping && !run.ducking && !run.crashed ? Math.floor((now - this.landAt) / SQUASH_MS) : -1;
+    const [sw, sh] = SQUASH[f] || [0, 0];
+    ctx.drawImage(img, RUNNER.x - 1 - sw / 2, dy - 1 + sh, img.width + sw, img.height - sh);
 
     if (!run) {   // asleep on the title: Zz
       ctx.fillStyle = PAL.ink;
@@ -385,6 +404,12 @@ export class Renderer {
       this.boxes(RUNNER.x + 1, top + y + 1, run.ducking ? RUNNER_BOXES.duck : RUNNER_BOXES.run, PAL.cream);
       this.boxes(RUNNER.x + 1, top + y + 1, [[0, 0, RUNNER.width - 2, RUNNER.height - 2]], '#2a7de1');
     }
+  }
+
+  // The runner lands on its feet: dust and the squash start now.
+  land(scroll) {
+    this.dust.land(scroll);
+    this.landAt = performance.now();
   }
 
   zee(x, y, size, alpha) {

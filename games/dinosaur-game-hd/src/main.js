@@ -156,6 +156,8 @@ function handleEvents() {
       sfx.milestone();
       g.flashUntil = performance.now() + 2000;
       tutorial('done', 'tutorial:done');
+    } else if (e === 'land') {
+      if (!run.ducking) r.land(run.speed * 60);   // landing into a slide gets the slide's burst
     } else if (e === 'night') sfx.night();
     else if (e === 'crash') onCrash();
   }
