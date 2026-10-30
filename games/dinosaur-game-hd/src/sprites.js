@@ -55,11 +55,11 @@ const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 
 // down into it. The tip reaches TAIL_OUT px past the 44×47 footprint, so these
 // frames are wider; draw them TAIL_OUT px further left (canvas.ox). The rump
 // still covers the original's tail boxes to within 2 px.
-const TAIL_OUT = 8;
+const TAIL_OUT = 7;
 const TAIL = [], TAIL_SHADE = [];
 for (let x = -TAIL_OUT; x <= 9; x++) {
   const top = Math.min(17, 10 + Math.floor((x + TAIL_OUT) / 2));
-  const steep = x >= 0, bot = steep ? Math.min(28, 20 + 2 * x) : 20 + x;
+  const steep = x >= 0, bot = steep ? Math.min(28, 20 + 2 * x) : 12 + x + TAIL_OUT;
   TAIL.push([x, top, 1, bot - top + 1, 'slate']);
   if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (steep ? 1 : 0), 1, steep ? 2 : 1, 'slateDark']);
 }

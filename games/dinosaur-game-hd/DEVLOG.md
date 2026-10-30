@@ -5,6 +5,7 @@
 - Run: top 1 px down every 2 px; underside 1:1 from the tip, then 2:1 into the rump. Jump: back 1:1 from the neck (the old kink at the neck is gone), then 3 rows per pixel, then straight down; underside 1:1 back to the tip, which ends 1 px higher. Slides: top steps of 2, 2, 1; underside 4 steps then a hold (the slide maps were edited row by row).
 - Hitbox coverage unchanged; physics and egg tests pass; checked in Chrome.
 - Pao: the run tail was too pointy. Its underside moved down 1 px, so the tip is 3 px thick instead of 2 and the slim part is 1 px fuller.
+- Pao: then a teeny bit shorter. The tip is 1 px shorter (now 7 px past the footprint, `TAIL_OUT` 7), same 3 px rounded tip and same lines.
 
 ## 2026-10-30 — Longer, pointier running tail
 - Run, crash and sleep frames: the blocky tail is now a slim point sweeping up and back like the slide's, with Slate dark on its underside. The tip reaches 8 px past the 44×47 footprint, so these frames are 52 px wide and drawn 8 px further left (`TAIL_OUT`, `canvas.ox`); the body doesn't move.
