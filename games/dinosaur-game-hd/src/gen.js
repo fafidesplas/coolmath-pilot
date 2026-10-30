@@ -80,9 +80,12 @@ export class ObstacleGen {
 }
 
 // ---- Eggs (GDD 3.7) ---------------------------------------------------------------------
-// After each obstacle spawns, the egg stream may put a pattern over it or in
-// the gap after it. Patterns only use gaps the obstacle generator already
-// made, and the obstacles never read the egg stream.
+// After each obstacle spawns, the egg stream may put a pattern over or under
+// it, so the move that collects the eggs is the move that clears it. Nothing
+// goes in the gaps: the next obstacle spawns as soon as the last one leaves
+// the view, so a gap is never longer than about 660 px, and an extra jump
+// for eggs there would land on the next obstacle. The obstacles never read
+// the egg stream.
 
 const RUNNER_TOP = LANE.ground - RUNNER.height;   // runner's top on the ground
 
@@ -109,18 +112,17 @@ export class EggGen {
     if (slot === this.lastSlot + 1 || this.rand() >= EGGS.chance) return [];
     const h = this.curve(speed);
     const v = Math.floor(speed + o.speedOffset);  // how fast the obstacle (and its eggs) come
-    const jump = h.length * Math.floor(speed);    // ground a held jump covers
     const ptero = o.id === 'ptero';
     // Each pterodactyl height gets the eggs that reward its answer (GDD 3.7):
     // low: jump over; mid: duck under or jump over; high: stay on the ground.
     const fits = {
       'jump-arc': o.id === 'cactus-small',
-      'grid': !ptero && o.gap >= 2 * jump,
+      'grid': !ptero && o.size >= 2,
       'big-arc': o.id === 'cactus-large',
       'ptero-arc': ptero && o.y !== 50,
       'duck-line': ptero && o.y === 75,
       'head-line': ptero && o.y === 50,
-      'nest': !ptero && o.gap >= 2 * jump + 40 && m - this.lastNest >= EGGS.nestEvery,
+      'nest': !ptero && m - this.lastNest >= EGGS.nestEvery,
     };
     const options = Object.keys(EGG_PATTERNS).filter(p => m >= EGG_PATTERNS[p] && fits[p]);
     if (!options.length) return [];
@@ -129,7 +131,7 @@ export class EggGen {
     if (p === 'nest') this.lastNest = m;
     const group = this.groups++, out = [];
     const add = (cx, y) => out.push(egg(cx, y, p, group, o.speedOffset));
-    const gapX = o.x + o.w + o.gap / 2;        // middle of the gap after o
+    const midX = o.x + o.w / 2;
     const apex = h.indexOf(Math.max(...h)) + 1;
     const onCurve = f => RUNNER_TOP - h[f - 1] + EGGS.bodyY;
 
@@ -139,22 +141,24 @@ export class EggGen {
       const step = Math.round(h.length / 7);
       for (let k = -2; k <= 2; k++) {
         const f = apex + k * step;
-        add(o.x + o.w / 2 + (f - apex) * v, onCurve(f));
+        add(midX + (f - apex) * v, onCurve(f));
       }
     } else if (p === 'grid') {
-      const cols = randInt(this.rand, 4, 6);
-      const rows = [EGGS.groundY, RUNNER_TOP - 58 + EGGS.bodyY, RUNNER_TOP - 86 + EGGS.bodyY];
-      for (const y of rows) for (let i = 0; i < cols; i++) add(gapX + (i - (cols - 1) / 2) * EGGS.spacing, y);
+      // A block of 3 rows on the held jump's apex over the group; a held jump sweeps it all.
+      const cols = randInt(this.rand, 4, 6), top = onCurve(apex) - 6;
+      for (let row = 0; row < 3; row++) {
+        for (let i = 0; i < cols; i++) add(midX + (i - (cols - 1) / 2) * EGGS.gridSpacing, top + row * EGGS.gridSpacing);
+      }
     } else if (p === 'duck-line') {
       for (let i = 0; i < 3; i++) add(o.x + 9 + i * 14, EGGS.groundY);
     } else if (p === 'head-line') {
       for (let i = 0; i < 3; i++) add(o.x + 9 + i * 14, EGGS.headY);
     } else if (p === 'nest') {
-      // An egg-shaped bunch on the held jump's apex: 17 eggs in an ellipse.
+      // An egg-shaped bunch on the held jump's apex over the cactus: 17 eggs in an ellipse.
       const cy = onCurve(apex);
       for (let y = -20; y <= 20; y += 10) {
         for (let x = -36; x <= 36; x += 12) {
-          if ((x / 34) ** 2 + (y / 20) ** 2 <= 1) add(gapX + x, cy + y);
+          if ((x / 34) ** 2 + (y / 20) ** 2 <= 1) add(midX + x, cy + y);
         }
       }
     }

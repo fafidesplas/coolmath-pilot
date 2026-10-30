@@ -78,7 +78,7 @@ export const EGGS = {
   w: 10, h: 13,
   pickup: 16,              // pickup box, centered on the egg
   chance: 0.5,             // a pattern after an obstacle, never two in a row (GDD said 0.25: too few)
-  spacing: 20,             // px between eggs in lines and grids
+  gridSpacing: 12,         // px between eggs in a grid block
   groundY: 120,            // sprite top of an egg a runner on the ground picks up (also ducking)
   headY: 96,               // sprite top of an egg at a standing runner's head, under a high pterodactyl
   bodyY: 14,               // sprite top below the runner's top, for eggs on the jump curve

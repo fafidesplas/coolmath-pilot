@@ -71,10 +71,10 @@ const all = [];   // every pattern placed, over all seeds, up to 3000 m
 }
 
 // ---- 3. The move a pattern asks for collects all of it and clears the obstacle -------------
-// Replays the seed. Arcs: at the frame that centers a held jump's apex over
-// the obstacle, press jump and hold it. Duck line: duck under. Head line:
+// Replays the seed. Arcs, grids and nests: at the frame that centers a held
+// jump's apex over the obstacle, press jump and hold it. Duck line: duck under. Head line:
 // keep running under the high pterodactyl.
-const MOVES = { 'jump-arc': 'jump', 'big-arc': 'jump', 'ptero-arc': 'jump', 'duck-line': 'duck', 'head-line': 'run' };
+const MOVES = { 'jump-arc': 'jump', 'big-arc': 'jump', 'ptero-arc': 'jump', 'grid': 'jump', 'nest': 'jump', 'duck-line': 'duck', 'head-line': 'run' };
 function tryMove(seed, group) {
   const r = recorded(seed);
   let g;

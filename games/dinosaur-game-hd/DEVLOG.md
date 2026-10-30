@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Grids and nests moved onto the obstacle jump
+- Pao died on a pterodactyl right after a nest: grids and nests sat in gaps and asked for their own jump. Cause: the original (and our sim) spawns the next obstacle as soon as the last one leaves the view, so a real gap is at most ~660 px whatever `gap` says; there's never room for a third jump.
+- Now every pattern sits over or under an obstacle, and the move that collects it is the one that clears it. Grid: a 3-row block on the held-jump apex over a cactus group (from 200 m). Nest: 17 eggs on the apex over a cactus (from 500 m, one per 500 m).
+- `tools/egg-test.mjs`: all 17,734 patterns over 300 seeds are fully collected by their move without touching the obstacle; 60 eggs placed in 400 m (40–80).
+- Next: Pao plays again; then the rest of the feel loop.
+
 ## 2026-10-30 — Eggs that answer the pterodactyls
 - Pao played: arcs and big bunches tempt, the flat 3-egg ground lines were boring. High pterodactyls (fly over, don't jump) are the original's and stay.
 - Cut the ground line; jump arcs now unlock at 30 m. New: an arc over low and mid pterodactyls, a head-height line under high ones; mid ones get the duck line or an arc. Pterodactyl eggs move with their pterodactyl.
