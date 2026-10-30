@@ -1,5 +1,13 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slice step 3: eggs
+- `gen.js` `EggGen`: its own seeded stream; after each obstacle spawns it may place a pattern (ground line, jump arc, grid, big arc, duck line, nest) unlocked by distance, only where the existing gap fits. Arcs follow `jumpCurve()`, the sim's own held jump, with the apex over the obstacle.
+- `sim.js`: eggs scroll with the world (duck lines with their pterodactyl), the runner's full footprint picks them up through a 16×16 box, `eggCount` and `pickups`.
+- Game: egg sprite with wobble and glint, "+1" pop, HUD count with a hop, pickup pitch rising on a streak, results count up "+N EGGS" and the Velociraptor progress bar; eggs banked to the save after every run; `eggs:earned` and `eggs:progress:*` events.
+- `tools/egg-test.mjs` (5 checks, 300 seeds): obstacles identical with and without eggs; no egg on an obstacle; unlock distances, spacing and nest rules; a held jump timed to the obstacle collects all 7,007 arcs, ducking all 1,805 duck lines; 41 eggs placed in 400 m (25–59).
+- Changed: pattern chance 25% → 50% (at 25% only 24 eggs were placed in 400 m). GDD 3.7 updated.
+- Next: Pao plays it (2c feel loop): do eggs tempt without distracting, and is the count right? Then a teammate plays it cold.
+
 ## 2026-10-30 — Slice step 2: shell and first playable build
 - Pao checked `physics.html` against `chrome://dino` on a 60 Hz display: it feels the same.
 - `index.html` is now playable: title with the sleeping T-Rex, run, pause (P, Esc, button, hidden tab), crash with shake and dizzy stars, results panel (count-up, NEW BEST, Retry/Menu), R/Enter/Retry restart at once, Space/Up/W on release after the 1.2 s lock.

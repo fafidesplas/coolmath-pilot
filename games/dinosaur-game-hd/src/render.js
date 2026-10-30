@@ -2,7 +2,8 @@
 // Everything is drawn straight onto the display canvas through a scale
 // transform, so positions interpolated between 60 Hz steps land on device
 // pixels and 144 Hz screens don't judder. The layers are pre-rendered once.
-import { VIEW_W, VIEW_H, LANE, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM } from './config.js';
+import { VIEW_W, VIEW_H, LANE, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS } from './config.js';
+import { drawText } from './font.js';
 import { mulberry32 } from './gen.js';
 import { SPR, PAL } from './sprites.js';
 import { drawUI } from './ui.js';
@@ -12,6 +13,8 @@ const SKY_DAY = ['#FFEFC9', '#FFE6B0', '#FDDA97', '#FBCB80', '#F8B96A', '#F5A55A
 const SKY_NIGHT = ['#0F1530', '#141B3A', '#1B2340', '#222B4D', '#2B355C', '#36406A'];
 const NIGHT_TINT = 0.55;       // Night Ink over the background layers at night
 const SHAKE_MS = 150, SHAKE_PX = 4;
+export const FX_MS = 500;                  // egg pickup pop and "+1"
+const born = new WeakMap();                // when an egg that starts inside the view was first drawn
 
 function canvas(w, h) {
   const c = document.createElement('canvas');
@@ -187,9 +190,13 @@ export class Renderer {
     ctx.beginPath();
     ctx.rect(0, b.y0, VIEW_W, b.y1 - b.y0);   // obstacles spawn just past x = 640
     ctx.clip();
-    if (run) for (const o of run.obstacles) this.drawObstacle(o, this.snap(lerp(o.prevX, o.x)), g.showBoxes);
+    if (run) {
+      for (const o of run.obstacles) this.drawObstacle(o, this.snap(lerp(o.prevX, o.x)), g.showBoxes);
+      for (const e of run.eggs) if (!e.taken) this.drawEgg(e, this.snap(lerp(e.prevX, e.x)), now);
+    }
     const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
     this.drawRunner(run, y, now, g.showBoxes);
+    this.drawPickups(g.fx, now);
     ctx.restore();
 
     drawUI(ctx, g, now, this);
@@ -253,6 +260,38 @@ export class Renderer {
     if (boxes) {
       this.boxes(x + 1, y + 1, o.boxes, '#e0303a');
       this.boxes(x + 1, y + 1, [[0, 0, o.w - 2, o.h - 2]], '#2a7de1');
+    }
+  }
+
+  // Eggs wobble 1 px and glint now and then, each on its own phase.
+  drawEgg(e, x, now) {
+    const ctx = this.ctx, phase = e.y * 0.37 + e.group * 1.7;
+    const bob = Math.sin(now / 220 + phase) > 0.3 ? -1 : 0;
+    const glint = (now / 90 + phase * 10) % 30 < 3 ? 1 : 0;
+    let alpha = 1;
+    if (e.fade) {
+      if (!born.has(e)) born.set(e, now);
+      alpha = Math.min(1, (now - born.get(e)) / 200);
+    }
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(SPR.egg[glint], x - 1, LANE.top1P + e.y + bob - 1);
+    ctx.globalAlpha = 1;
+  }
+
+  // A pop of 4 sparks and a "+1" rising from each egg picked up.
+  drawPickups(fx, now) {
+    const ctx = this.ctx;
+    for (const f of fx) {
+      const t = (now - f.t) / FX_MS;
+      if (t >= 1) continue;
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = f.n % 2 ? PAL.orange : PAL.cream;
+      const d = 3 + t * 10;
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(Math.round(f.x + dx * d), Math.round(f.y + dy * d), 2, 2);
+      const ty = Math.round(f.y - 12 - t * 14);
+      drawText(ctx, '+1', Math.round(f.x) + 1, ty + 1, 1, PAL.ink, 'center');   // shadow: readable day and night
+      drawText(ctx, '+1', Math.round(f.x), ty, 1, PAL.cream, 'center');
+      ctx.globalAlpha = 1;
     }
   }
 

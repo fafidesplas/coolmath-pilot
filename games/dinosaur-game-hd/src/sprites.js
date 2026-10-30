@@ -11,6 +11,7 @@ const C = {
   slateDark: '#46546A',
   greenDark: '#2C7D3A', greenLight: '#6CC46F',
   ptero: '#C8662A', pteroDark: '#9E4F22',
+  white: '#FFFFFF',
 };
 
 // shape: [x, y, w, h, color] rects, outlined together; details: drawn on top, inside the shape.
@@ -89,6 +90,14 @@ const PTERO_MARKS = [[10, 11, 2, 2, 'cream'], [10, 12, 1, 1, 'ink'], [20, 24, 18
 const WING_UP = [[20, 4, 11, 12, 'pteroDark'], [22, 0, 7, 4, 'pteroDark']];
 const WING_DOWN = [[20, 26, 11, 8, 'pteroDark'], [22, 34, 7, 6, 'pteroDark']];
 
+// ---- Egg, 10×13: cream with orange speckles and a glint ------------------------------------
+const EGG = [
+  [3, 0, 4, 1, 'cream'], [2, 1, 6, 1, 'cream'], [1, 2, 8, 3, 'cream'], [0, 5, 10, 6, 'cream'],
+  [1, 11, 8, 1, 'cream'], [2, 12, 6, 1, 'cream'],
+];
+const EGG_MARKS = [[7, 3, 1, 1, 'orange'], [3, 5, 1, 1, 'orange'], [6, 6, 2, 1, 'orange'], [2, 8, 1, 1, 'orange'], [5, 9, 2, 1, 'orange'], [7, 9, 1, 1, 'orange'], [6, 10, 3, 1, 'sand'], [3, 11, 4, 1, 'sand']];
+const GLINT = [[2, 3, 1, 2, 'white']];
+
 export const SPR = {
   trex: {
     run: [
@@ -108,4 +117,5 @@ export const SPR = {
   'cactus-small': CACTUS_SMALL,
   'cactus-large': CACTUS_LARGE,
   ptero: [sprite(46, 40, [...WING_UP, ...PTERO], PTERO_MARKS), sprite(46, 40, [...WING_DOWN, ...PTERO], PTERO_MARKS)],
+  egg: [sprite(10, 13, EGG, EGG_MARKS), sprite(10, 13, EGG, [...EGG_MARKS, ...GLINT])],   // plain, glinting
 };

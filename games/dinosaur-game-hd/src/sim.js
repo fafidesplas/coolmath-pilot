@@ -1,8 +1,8 @@
 // One run's simulation: runner physics, obstacles, collisions, score, night.
 // No drawing. One step() is one frame of the original at 60 Hz (GDD 3.2–3.6),
 // so its rules apply unchanged, including whole-pixel rounding.
-import { HZ, STEP_MS, VIEW_W, LANE, RUN, RUNNER, RUNNER_BOXES, PTERO_HEIGHTS } from './config.js';
-import { ObstacleGen, stream, STREAM } from './gen.js';
+import { HZ, STEP_MS, VIEW_W, LANE, RUN, RUNNER, RUNNER_BOXES, PTERO_HEIGHTS, EGGS } from './config.js';
+import { ObstacleGen, EggGen, stream, STREAM } from './gen.js';
 
 const overlap = (ax, ay, aw, ah, bx, by, bw, bh) =>
   ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
@@ -11,11 +11,15 @@ const overlap = (ax, ay, aw, ah, bx, by, bw, bh) =>
 const scroll = speed => Math.floor((speed * HZ / 1000) * STEP_MS);
 
 export class Run {
-  // opts.invincible: no crashes (debug and tests only).
+  // opts.invincible: no crashes (debug and tests only). opts.noEggs: no egg stream.
   constructor(seed, opts = {}) {
     this.seed = seed >>> 0;
     this.invincible = !!opts.invincible;
     this.gen = new ObstacleGen(stream(this.seed, STREAM.obstacles));
+    this.eggGen = opts.noEggs ? null : new EggGen(stream(this.seed, STREAM.eggs), jumpCurve);
+    this.eggs = [];
+    this.eggCount = 0;
+    this.pickups = [];          // eggs picked up; the caller empties it after reading
     this.frame = 0;
     this.timeMs = 0;
     this.speed = RUN.speed;
@@ -29,7 +33,7 @@ export class Run {
     this.nightMs = 0;
     this.nights = 0;
     this.lastMilestone = 0;
-    this.events = [];           // jump, land, duck, milestone, night, day, crash; the caller empties it after reading
+    this.events = [];           // jump, land, duck, egg, milestone, night, day, crash; the caller empties it after reading
 
     // Runner, in the original's terms: y is the sprite top, y down, vy < 0 is up.
     this.groundY = LANE.ground - RUNNER.height;
@@ -115,6 +119,7 @@ export class Run {
       this.events.push('crash');
       return;
     }
+    this.collectEggs();
     this.distancePx += this.speed;
     if (this.speed < RUN.maxSpeed) this.speed += RUN.acceleration;
 
@@ -156,12 +161,43 @@ export class Run {
       o.flapMs += STEP_MS;
     }
     while (obs.length && obs[0].x + obs[0].w <= 0) obs.shift();
+
+    const eggs = this.eggs;
+    let n = 0;
+    for (const e of eggs) {
+      e.prevX = e.x;
+      e.x -= scroll(this.speed + e.speedOffset);
+      if (!e.taken && e.x + EGGS.w > 0) eggs[n++] = e;
+    }
+    eggs.length = n;
+
     const last = obs[obs.length - 1];
     if (!last || (!last.followed && last.x + last.w + last.gap < VIEW_W)) {
       const o = this.gen.next(this.speed, VIEW_W);
       o.prevX = o.x;
       obs.push(o);
       if (last) last.followed = true;
+      if (this.eggGen) {
+        for (const e of this.eggGen.place(o, this.speed, this.score)) {
+          e.fade = e.x < VIEW_W;    // an arc's first eggs start inside the view: fade them in
+          eggs.push(e);
+        }
+      }
+    }
+  }
+
+  // The runner's whole footprint picks up any egg whose pickup box it touches.
+  collectEggs() {
+    const P = EGGS.pickup, duck = this.ducking;
+    const ry = duck ? LANE.ground - RUNNER.heightDuck : this.y;
+    const rw = duck ? RUNNER.widthDuck : RUNNER.width, rh = duck ? RUNNER.heightDuck : RUNNER.height;
+    for (const e of this.eggs) {
+      if (!e.taken && overlap(RUNNER.x, ry, rw, rh, e.x + (EGGS.w - P) / 2, e.y + (EGGS.h - P) / 2, P, P)) {
+        e.taken = true;
+        this.eggCount++;
+        this.pickups.push(e);
+        this.events.push('egg');
+      }
     }
   }
 
@@ -193,4 +229,15 @@ export class Run {
       this.events.push('night');
     }
   }
+}
+
+// The runner's height (px) after each frame of a held jump at `speed`, by the
+// sim's own rules. Egg arcs are placed on it.
+export function jumpCurve(speed) {
+  const r = new Run(0, { noEggs: true });
+  r.speed = speed;
+  r.press('jump');
+  const h = [];
+  while (r.jumping) { r.step(); h.push(r.height); }
+  return h;
 }

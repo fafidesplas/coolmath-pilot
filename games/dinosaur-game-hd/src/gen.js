@@ -1,5 +1,5 @@
 // Seeded random streams and the obstacle generator (GDD 3.2, 3.5).
-import { RUN, OBSTACLES, OBSTACLE_IDS } from './config.js';
+import { RUN, OBSTACLES, OBSTACLE_IDS, LANE, RUNNER, EGGS, EGG_PATTERNS } from './config.js';
 
 export function mulberry32(a) {
   return () => {
@@ -76,5 +76,84 @@ export class ObstacleGen {
     this.history.length = Math.min(this.history.length, RUN.maxObstacleDuplication);
     this.count++;
     return o;
+  }
+}
+
+// ---- Eggs (GDD 3.7) ---------------------------------------------------------------------
+// After each obstacle spawns, the egg stream may put a pattern over it or in
+// the gap after it. Patterns only use gaps the obstacle generator already
+// made, and the obstacles never read the egg stream.
+
+const RUNNER_TOP = LANE.ground - RUNNER.height;   // runner's top on the ground
+
+// An egg centered on (cx, y top), moving with the scroll (+ speedOffset).
+function egg(cx, y, pattern, group, speedOffset = 0) {
+  const x = Math.round(cx - EGGS.w / 2);
+  return { x, y: Math.round(y), prevX: x, pattern, group, speedOffset, taken: false, fade: false };
+}
+
+export class EggGen {
+  // curve(speed): the runner's height after each frame of a held jump (sim.js).
+  constructor(rand, curve) {
+    this.rand = rand;
+    this.curve = curve;
+    this.slot = 0;
+    this.lastSlot = -2;
+    this.lastNest = -Infinity;
+    this.groups = 0;
+  }
+
+  // Eggs for obstacle `o`, which has just spawned, `m` metres into the run.
+  place(o, speed, m) {
+    const slot = this.slot++;
+    if (slot === this.lastSlot + 1 || this.rand() >= EGGS.chance) return [];
+    const h = this.curve(speed), v = Math.floor(speed);
+    const jump = h.length * v;                 // ground a held jump covers
+    const ptero = o.id === 'ptero';
+    const fits = {
+      'ground-line': !ptero && o.gap >= jump + 80,
+      'jump-arc': o.id === 'cactus-small',
+      'grid': !ptero && o.gap >= 2 * jump,
+      'big-arc': o.id === 'cactus-large',
+      'duck-line': ptero && o.y === 75,
+      'nest': !ptero && o.gap >= 2 * jump + 40 && m - this.lastNest >= EGGS.nestEvery,
+    };
+    const options = Object.keys(EGG_PATTERNS).filter(p => m >= EGG_PATTERNS[p] && fits[p]);
+    if (!options.length) return [];
+    const p = options[randInt(this.rand, 0, options.length - 1)];
+    this.lastSlot = slot;
+    if (p === 'nest') this.lastNest = m;
+    const group = this.groups++, out = [];
+    const add = (cx, y, off) => out.push(egg(cx, y, p, group, off));
+    const gapX = o.x + o.w + o.gap / 2;        // middle of the gap after o
+    const apex = h.indexOf(Math.max(...h)) + 1;
+    const onCurve = f => RUNNER_TOP - h[f - 1] + EGGS.bodyY;
+
+    if (p === 'jump-arc' || p === 'big-arc') {
+      // Along the held jump whose apex is right over the obstacle: at frame f
+      // the runner's middle is (f - apex) * v px from the obstacle's middle.
+      const step = Math.round(h.length / 7);
+      for (let k = -2; k <= 2; k++) {
+        const f = apex + k * step;
+        add(o.x + o.w / 2 + (f - apex) * v, onCurve(f));
+      }
+    } else if (p === 'ground-line') {
+      for (let i = -1; i <= 1; i++) add(gapX + i * EGGS.spacing, EGGS.groundY);
+    } else if (p === 'grid') {
+      const cols = randInt(this.rand, 4, 6);
+      const rows = [EGGS.groundY, RUNNER_TOP - 58 + EGGS.bodyY, RUNNER_TOP - 86 + EGGS.bodyY];
+      for (const y of rows) for (let i = 0; i < cols; i++) add(gapX + (i - (cols - 1) / 2) * EGGS.spacing, y);
+    } else if (p === 'duck-line') {
+      for (let i = 0; i < 3; i++) add(o.x + 9 + i * 14, EGGS.groundY, o.speedOffset);
+    } else if (p === 'nest') {
+      // An egg-shaped bunch on the held jump's apex: 17 eggs in an ellipse.
+      const cy = onCurve(apex);
+      for (let y = -20; y <= 20; y += 10) {
+        for (let x = -36; x <= 36; x += 12) {
+          if ((x / 34) ** 2 + (y / 20) ** 2 <= 1) add(gapX + x, cy + y);
+        }
+      }
+    }
+    return out;
   }
 }

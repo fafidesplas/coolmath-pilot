@@ -1,17 +1,18 @@
 // HUD and screens (GDD 8): title, pause and results. layout() returns this
 // frame's buttons, and main.js hit-tests pointers against the same list, so a
 // sliding panel's buttons are always where they are drawn.
-import { VIEW_W, VIEW_H, RUN } from './config.js';
+import { VIEW_W, VIEW_H, RUN, HATCH } from './config.js';
 import { drawText } from './font.js';
-import { PAL } from './sprites.js';
+import { PAL, SPR } from './sprites.js';
 
 export const RESULTS_DELAY_MS = 500;   // the panel slides up this long after the crash
-const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000;
+const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, BUMP_MS = 150;
+const PANEL_Y = 46, PANEL_H = 198;
 const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 const pad = n => String(n).padStart(5, '0');
 
 function panelY(g, now) {
-  return Math.round(VIEW_H + 10 - (VIEW_H + 10 - 56) * ease((now - g.crashAt - RESULTS_DELAY_MS) / PANEL_MS));
+  return Math.round(VIEW_H + 10 - (VIEW_H + 10 - PANEL_Y) * ease((now - g.crashAt - RESULTS_DELAY_MS) / PANEL_MS));
 }
 
 // The pause and sound buttons sit in the top-right corner; their hit square is
@@ -34,8 +35,8 @@ export function layout(g, now, r) {
     B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 216, w: 160, h: 30 });
   } else if (g.screen === 'complete' && now - g.crashAt >= RESULTS_DELAY_MS) {
     const y = panelY(g, now);
-    B.push({ id: 'retry', label: 'RETRY', size: 3, big: true, x: 200, y: y + 104, w: 140, h: 40 });
-    B.push({ id: 'menu', label: 'MENU', size: 2, x: 356, y: y + 108, w: 84, h: 32 });
+    B.push({ id: 'retry', label: 'RETRY', size: 3, big: true, x: 200, y: y + 136, w: 140, h: 40 });
+    B.push({ id: 'menu', label: 'MENU', size: 2, x: 356, y: y + 140, w: 84, h: 32 });
   }
   return B;
 }
@@ -99,6 +100,11 @@ function drawHud(ctx, g, now, r) {
   const score = flashing ? '     ' : pad(run.score);
   drawText(ctx, g.data.best ? `HI ${pad(g.data.best)}  ${score}` : score, VIEW_W / 2, 14, 2, text, 'center');
 
+  // This run's eggs, top left; the icon hops on each pickup.
+  const bump = now - g.eggBumpAt < BUMP_MS ? 2 : 0;
+  ctx.drawImage(SPR.egg[0], 11, 13 - bump);
+  drawText(ctx, String(run.eggCount), 28, 14, 2, text);
+
   // First run only: faint jump and duck zones, until the first jump or 5 s (GDD 4).
   if (g.firstRun && g.screen === 'playing') {
     const t = now - g.runStart, end = g.jumpedAt ?? g.runStart + HINT_MS;
@@ -139,11 +145,26 @@ function drawPause(ctx, r) {
 function drawResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
   const x = 170, w = 300, y = panelY(g, now), cx = x + w / 2;
-  box(ctx, x, y, w, 168, PAL.ink, PAL.slate, '#46546A');
-  drawText(ctx, 'GAME OVER', cx, y + 12, 3, PAL.cream, 'center');
+  box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
+  drawText(ctx, 'GAME OVER', cx, y + 10, 3, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
-  drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 40, 4, PAL.cream, 'center');
-  drawText(ctx, `BEST ${g.data.best} M`, cx, y + 78, 2, PAL.sand, 'center');
+  drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 38, 4, PAL.cream, 'center');
+  drawText(ctx, `BEST ${g.data.best} M`, cx, y + 72, 2, PAL.sand, 'center');
+
+  // Eggs from this run count up, then the next hatch's progress (GDD 7.3).
+  const eggs = Math.round(g.runEggs * p), label = `+${eggs} EGGS`;
+  ctx.drawImage(SPR.egg[0], cx - 44 - 1, y + 93);
+  drawText(ctx, label, cx - 30, y + 94, 2, PAL.cream);
+  const next = HATCH.find(h => !g.data.unlocked.includes(h.id));
+  if (next) {
+    const bank = g.data.eggs - g.runEggs + eggs, fill = Math.min(1, bank / next.price);
+    const text = bank >= next.price ? `${next.name}: ready to hatch!` : `${next.name}: ${bank} / ${next.price}`;
+    drawText(ctx, text, cx, y + 113, 1, PAL.sand, 'center');
+    ctx.fillStyle = PAL.ink;
+    ctx.fillRect(cx - 100, y + 123, 200, 6);
+    ctx.fillStyle = PAL.orange;
+    ctx.fillRect(cx - 99, y + 124, Math.round(198 * fill), 4);
+  }
   if (g.newBest && p >= 1) {   // the banner bounces in once the count-up ends
     const t = (now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS - COUNT_MS) / 400;
     const bounce = t < 1 ? Math.round(-Math.abs(Math.sin(t * Math.PI * 2)) * 8 * (1 - t)) : 0;
@@ -151,7 +172,7 @@ function drawResults(ctx, g, now) {
     drawText(ctx, 'NEW BEST!', x + w - 45, y - 9 + bounce, 2, PAL.cream, 'center');
   }
   const ready = now - g.crashAt >= RUN.restartLockMs;
-  drawText(ctx, ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY', cx, y + 152, 1, PAL.sand, 'center');
+  drawText(ctx, ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY', cx, y + 184, 1, PAL.sand, 'center');
 }
 
 export function drawUI(ctx, g, now, r) {

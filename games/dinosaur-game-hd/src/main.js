@@ -2,12 +2,12 @@
 // The sim runs fixed 60 Hz steps from an accumulator (GDD 3.2); the renderer
 // draws every display frame, interpolating between the last two steps.
 import { Run } from './sim.js';
-import { STEP_MS, MAX_FRAME_DT, VIEW_H, RUN, DEBUG } from './config.js';
+import { STEP_MS, MAX_FRAME_DT, VIEW_H, LANE, RUN, EGGS, HATCH, DEBUG } from './config.js';
 import { load, save } from './save.js';
 import * as sfx from './audio.js';
 import { GA } from './analytics.js';
 import { Keys, JUMP_KEYS, DUCK_KEYS } from './input.js';
-import { Renderer } from './render.js';
+import { Renderer, FX_MS } from './render.js';
 import { layout, hitButton } from './ui.js';
 
 const canvas = document.getElementById('view');
@@ -25,7 +25,9 @@ const g = {
   data,
   buttons: [],
   runStart: 0, jumpedAt: null, firstRun: false,
-  crashAt: 0, result: 0, newBest: false,
+  crashAt: 0, result: 0, newBest: false, runEggs: 0,
+  fx: [],               // egg pickup pops: { x, y, t, n }
+  eggBumpAt: 0, lastEggAt: 0, streak: 0,
   flashUntil: 0, shakeUntil: 0,
   showBoxes: false, invincible: false,
 };
@@ -40,9 +42,12 @@ function startRun(withJump) {
   g.runStart = performance.now(); g.jumpedAt = null;
   g.firstRun = !data.firstRunDone;
   g.flashUntil = 0;
+  g.fx.length = 0;
+  g.streak = 0;
   pointers.clear();
   r.resetNight();
   GA.progression('Start', g.mode);
+  GA.design(`eggs:progress:${hatchBucket()}`);
   if (withJump) press('jump', true);
 }
 
@@ -87,6 +92,9 @@ function onCrash() {
   if (g.newBest) data.best = m;
   data.totalDistance += m;
   data.totalNights += run.nights;
+  g.runEggs = run.eggCount;              // every egg is banked, crash or not
+  data.eggs += run.eggCount;
+  data.totalEggs += run.eggCount;
   data.firstRunDone = true;
   save(data);
   pointers.clear();
@@ -94,6 +102,15 @@ function onCrash() {
   GA.progression('Fail', g.mode, m);
   if (run.deathId) GA.design(`run:death:${run.deathId}`, m);
   GA.design('run:distance', m);
+  GA.design('eggs:earned', run.eggCount);
+}
+
+// How far the bank is towards the next hatch, in 20% buckets (GDD 11).
+function hatchBucket() {
+  const next = HATCH.find(h => !data.unlocked.includes(h.id));
+  if (!next) return 'done';
+  const b = Math.min(4, Math.floor(data.eggs / next.price * 5)) * 20;
+  return `${b}-${b + 20}`;
 }
 
 function tutorial(step, id) {
@@ -126,6 +143,11 @@ function handleEvents() {
       sfx.jump();
       g.jumpedAt ??= performance.now();
       tutorial('jump', 'tutorial:step01');
+    } else if (e === 'egg') {
+      const now = performance.now();
+      g.streak = now - g.lastEggAt < EGGS.streakMs ? Math.min(8, g.streak + 1) : 0;
+      g.lastEggAt = g.eggBumpAt = now;
+      sfx.egg(g.streak);
     } else if (e === 'duck') {
       sfx.duck();
       tutorial('duck', 'tutorial:step02');
@@ -137,6 +159,10 @@ function handleEvents() {
     else if (e === 'crash') onCrash();
   }
   run.events.length = 0;
+  for (const e of run.pickups) {
+    g.fx.push({ x: e.x + EGGS.w / 2, y: LANE.top1P + e.y + EGGS.h / 2, t: performance.now(), n: g.fx.length });
+  }
+  run.pickups.length = 0;
 }
 
 // ---- input ---------------------------------------------------------------------------------
@@ -218,6 +244,7 @@ function frame(now) {
     }
     g.alpha = g.screen === 'playing' ? acc / STEP_MS : 1;
   }
+  while (g.fx.length && now - g.fx[0].t > FX_MS) g.fx.shift();
   g.buttons = layout(g, now, r);
   r.draw(g, now, dt);
   requestAnimationFrame(frame);
@@ -231,7 +258,7 @@ window.game = {
   get level() { return g.mode; },
   get mode() { return g.mode; },
   get score() { return g.run ? g.run.score : 0; },
-  get eggs() { return 0; },
+  get eggs() { return g.run ? g.run.eggCount : 0; },
   start() { startRun(false); },
   restart() { retry(); },
 };

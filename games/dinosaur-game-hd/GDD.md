@@ -78,7 +78,7 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 ### 3.7 Eggs
 - **What:** small cream eggs with orange speckles (10×13 px), wobbling gently with a glint. Picking one up gives +1 egg; the pickup box is **16×16 px** around the egg, bigger than the egg, so a near miss still counts.
 - **Eggs never block or change the run.** All eggs from a run are banked when it ends, crash or not. Nothing is lost.
-- **Placement:** after an obstacle, the next gap may get an egg pattern (25% chance, never two gaps in a row), chosen from the patterns unlocked at the current distance. Like Jetpack Joyride's coins, the bigger patterns are dense bunches and grids that look generous and are fun to sweep through. **Patterns never change the obstacle gaps:** a pattern is only picked if the gap the generator already made is long enough for it.
+- **Placement:** after an obstacle, each new obstacle may get an egg pattern, over it or in the gap after it (**50% chance**, never after two obstacles in a row), chosen at random from the patterns unlocked at the current distance that fit. Like Jetpack Joyride's coins, the bigger patterns are dense bunches and grids that look generous and are fun to sweep through. **Patterns never change the obstacle gaps:** a pattern is only picked if the gap the generator already made is long enough for it (with J the ground a held jump covers at that speed: a ground line needs a gap of J + 80 px, a grid 2J, a nest 2J + 40). Arcs go over a small (jump arc) or large (big arc) cactus, the duck line under a mid pterodactyl, and the others in the gap. Arc eggs that start inside the view fade in.
 
 | Pattern | Eggs | Where | Asks you to | From |
 |---|---|---|---|---|
@@ -92,7 +92,7 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 - **Arcs follow the real jump.** A held jump lasts about 0.58 s (34–35 frames), so it covers about 210 px at the start speed and 440 px at the cap. Arc, grid and nest eggs are placed along the **simulated jump curve at the speed when the pattern spawns**, centered on the jump that clears the obstacle by the widest margin. A test checks that, at that moment, a held jump collects every arc egg.
 
 - Eggs are generated from the same seed as the obstacles, so the daily run and both 2P lanes have the same eggs.
-- **Target:** a typical 400 m run collects **20–50 eggs**, a great run about 150 (grids and nests raise the rate). Tune in the slice. If playtesters die chasing eggs in the first 30 s, the patterns there get easier.
+- **Target:** a typical 400 m run collects **20–50 eggs**, a great run about 150 (grids and nests raise the rate). Slice measurement (`tools/egg-test.mjs`, 300 seeds): at 25% only 24 eggs were placed in the first 400 m, so the chance went to 50%: now 41 placed on average (25–59), 19 of them reachable without jumping. If playtesters die chasing eggs in the first 30 s, the patterns there get easier.
 - **Egg streak:** eggs picked up less than 0.6 s apart raise the pickup sound's pitch one step each, up to 8 steps.
 
 #### Golden egg
@@ -383,6 +383,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Eggs (3.7): pattern chance raised from 25% to 50% after measuring the slice; fit rules for each pattern spelled out.
 - 2026-10-30 — Rendering (12): drawn straight to the display canvas with render interpolation; the exact fit is used when no integer scale fills 85% of the window. Save gains `tutorial` flags.
 - 2026-10-30 — Physics checked against the Chromium source (3.3–3.5): the jump peaks at 62 px (shortest) to 87–91 px (held), not 51 / 84; a release before 30 px gives a full jump; holding the jump key re-jumps on landing; fast-fall ends when down is released; positions round to whole pixels and obstacles scroll `floor(speed)` px per frame; the outer hitbox stays standing-size while ducking and only the nearest obstacle is checked; obstacle type choice and group rules spelled out. Egg grid, big arc and golden egg heights follow the new apex. Space restart is locked for 1.2 s after a crash (the original's value), R, Enter and Retry work at once.
 - 2026-10-30 — Approved by Fafi.

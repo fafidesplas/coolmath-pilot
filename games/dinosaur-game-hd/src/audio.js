@@ -47,6 +47,8 @@ function noise(dur, vol, freq, at = 0) {
 
 export const jump = () => tone('square', 380, 760, 0.09, 0.05);
 export const duck = () => noise(0.09, 0.15, 1800);
+// One whole tone higher per step of an egg streak (0–8).
+export const egg = step => tone('square', 1046 * 2 ** (step / 6), 1046 * 2 ** (step / 6) * 1.5, 0.06, 0.04);
 export const milestone = () => { tone('square', 784, 784, 0.07, 0.04); tone('square', 1046, 1046, 0.1, 0.04, 0.08); };
 export const crash = () => { tone('sine', 160, 45, 0.25, 0.3); noise(0.12, 0.2, 400); tone('triangle', 320, 180, 0.3, 0.07, 0.05); };
 export const night = () => { tone('sine', 330, 330, 0.6, 0.06); tone('sine', 494, 494, 0.7, 0.04, 0.15); };

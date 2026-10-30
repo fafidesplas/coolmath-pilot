@@ -72,3 +72,27 @@ export const ANIM = {           // ms per frame (GDD 3.4)
   run: 1000 / 12,
   duck: 1000 / 8,
 };
+
+// Eggs (GDD 3.7). Egg positions are lane coordinates of the sprite's top-left.
+export const EGGS = {
+  w: 10, h: 13,
+  pickup: 16,              // pickup box, centered on the egg
+  chance: 0.5,             // a pattern after an obstacle, never two in a row (GDD said 0.25: too few)
+  spacing: 20,             // px between eggs in lines and grids
+  groundY: 120,            // sprite top of an egg a runner on the ground picks up
+  bodyY: 14,               // sprite top below the runner's top, for eggs on the jump curve
+  nestEvery: 500,          // m, at most one nest per this distance
+  streakMs: 600,           // pickups closer than this raise the pitch (up to 8 steps)
+};
+
+// Egg patterns and the distance (m) each one unlocks at.
+export const EGG_PATTERNS = {
+  'ground-line': 30, 'jump-arc': 150, 'grid': 200, 'big-arc': 300, 'duck-line': 450, 'nest': 500,
+};
+
+// Dinosaurs hatched with eggs, in hatch order (GDD 7.1).
+export const HATCH = [
+  { id: 'velociraptor', name: 'Velociraptor', price: 300 },
+  { id: 'pachycephalosaurus', name: 'Pachycephalosaurus', price: 750 },
+  { id: 'parasaurolophus', name: 'Parasaurolophus', price: 1500 },
+];
