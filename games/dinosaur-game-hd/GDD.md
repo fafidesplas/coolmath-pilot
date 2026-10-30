@@ -78,21 +78,23 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 ### 3.7 Eggs
 - **What:** small cream eggs with orange speckles (10×13 px), wobbling gently with a glint. Picking one up gives +1 egg; the pickup box is **16×16 px** around the egg, bigger than the egg, so a near miss still counts.
 - **Eggs never block or change the run.** All eggs from a run are banked when it ends, crash or not. Nothing is lost.
-- **Placement:** after an obstacle, each new obstacle may get an egg pattern, over it or in the gap after it (**50% chance**, never after two obstacles in a row), chosen at random from the patterns unlocked at the current distance that fit. Like Jetpack Joyride's coins, the bigger patterns are dense bunches and grids that look generous and are fun to sweep through. **Patterns never change the obstacle gaps:** a pattern is only picked if the gap the generator already made is long enough for it (with J the ground a held jump covers at that speed: a ground line needs a gap of J + 80 px, a grid 2J, a nest 2J + 40). Arcs go over a small (jump arc) or large (big arc) cactus, the duck line under a mid pterodactyl, and the others in the gap. Arc eggs that start inside the view fade in.
+- **Placement:** after an obstacle, each new obstacle may get an egg pattern, over it or in the gap after it (**50% chance**, never after two obstacles in a row), chosen at random from the patterns unlocked at the current distance that fit. Like Jetpack Joyride's coins, the bigger patterns are dense bunches and grids that look generous and are fun to sweep through. **Patterns never change the obstacle gaps:** a pattern is only picked if the gap the generator already made is long enough for it (with J the ground a held jump covers at that speed: a grid needs a gap of 2J, a nest 2J + 40). Arcs go over a cactus or a low or mid pterodactyl, the duck and head lines under a pterodactyl (moving with it), and grids and nests in the gap. Arc eggs that start inside the view fade in.
 
 | Pattern | Eggs | Where | Asks you to | From |
 |---|---|---|---|---|
-| Ground line | 3 | at ground level in a long gap | nothing, it's free | 30 m |
-| Jump arc | 5 | along the full-jump arc over a small cactus | hold the jump (a tap gets the lower 2–3) | 150 m |
+| Jump arc | 5 | along the full-jump arc over a small cactus | hold the jump (a tap gets the lower 2–3) | 30 m |
 | Grid | 3 rows × 4–6 | in an empty gap; rows at the ground, the short-jump apex (~58 px) and the full apex (~86 px) | choose your row: run, tap or hold | 200 m |
 | Big arc | 5 | above a large cactus group, top egg near the ~89 px apex | a perfectly timed full jump | 300 m |
-| Duck line | 3 | at duck height under a mid pterodactyl | duck rather than jump | 450 m |
+| Pterodactyl arc | 5 | along the full-jump arc over a low or mid pterodactyl | jump over it | first pterodactyl (~450 m) |
+| Duck line | 3 | at duck height under a mid pterodactyl (a mid one gets this or an arc) | duck rather than jump | first pterodactyl |
+| Head line | 3 | at head height under a high pterodactyl | stay on the ground: jumping hits it | first pterodactyl |
 | Nest | 15–20 in a tight egg-shaped bunch | in a long empty gap, centered on the full-jump arc, at most once per 500 m | one well-timed held jump through the middle | 500 m |
 
+- **Every pterodactyl height gets eggs that reward its answer:** an arc over a low one (jump), a duck line or an arc for a mid one (duck or jump), a head line under a high one (stay down). The flat ground line was cut in the slice: eggs that ask nothing were boring.
 - **Arcs follow the real jump.** A held jump lasts about 0.58 s (34–35 frames), so it covers about 210 px at the start speed and 440 px at the cap. Arc, grid and nest eggs are placed along the **simulated jump curve at the speed when the pattern spawns**, centered on the jump that clears the obstacle by the widest margin. A test checks that, at that moment, a held jump collects every arc egg.
 
 - Eggs are generated from the same seed as the obstacles, so the daily run and both 2P lanes have the same eggs.
-- **Target:** a typical 400 m run collects **20–50 eggs**, a great run about 150 (grids and nests raise the rate). Slice measurement (`tools/egg-test.mjs`, 300 seeds): at 25% only 24 eggs were placed in the first 400 m, so the chance went to 50%: now 41 placed on average (25–59), 19 of them reachable without jumping. If playtesters die chasing eggs in the first 30 s, the patterns there get easier.
+- **Target:** a typical 400 m run collects **20–50 eggs**, a great run about 150 (grids and nests raise the rate). Slice measurement (`tools/egg-test.mjs`, 300 seeds): at 25% only 24 eggs were placed in the first 400 m, so the chance went to 50%. With the ground line cut and arcs from 30 m: 53.5 placed on average (35–72), nearly all in arcs, so a typical run's count depends on jumping well. If playtesters die chasing eggs in the first 30 s, the patterns there get easier.
 - **Egg streak:** eggs picked up less than 0.6 s apart raise the pickup sound's pitch one step each, up to 8 steps.
 
 #### Golden egg
@@ -174,12 +176,11 @@ An endless runner has no levels: the run itself is the level, and the original's
 |---|---|---|
 | 0 m | 0–3 s | empty desert, the runner wakes up |
 | ~25 m | 3 s | first obstacle: a single small cactus |
-| 30 m | | egg ground lines can appear |
+| 30 m | | egg arcs over cacti can appear |
 | 100 m | 10 s | first milestone flash |
-| 150 m | | jump arcs |
 | ~160 m | 17 s | groups of large cacti |
 | 300 m | | big arcs |
-| ~450 m | 42 s | first pterodactyl (mid); duck lines |
+| ~450 m | 42 s | first pterodactyl (mid); pterodactyl arcs, duck and head lines |
 | 500–900 m | | the golden egg (once per run) |
 | 700 m | 60 s | first night |
 | 1000 m | 80 s | the Hadrosaur's achievement |
@@ -383,6 +384,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Eggs (3.7) after Pao's play test: the flat ground line is cut (boring); jump arcs unlock at 30 m; new pterodactyl patterns: an arc over low and mid ones, a head line under high ones, the duck line stays for mid ones.
 - 2026-10-30 — Eggs (3.7): pattern chance raised from 25% to 50% after measuring the slice; fit rules for each pattern spelled out.
 - 2026-10-30 — Rendering (12): drawn straight to the display canvas with render interpolation; the exact fit is used when no integer scale fills 85% of the window. Save gains `tutorial` flags.
 - 2026-10-30 — Physics checked against the Chromium source (3.3–3.5): the jump peaks at 62 px (shortest) to 87–91 px (held), not 51 / 84; a release before 30 px gives a full jump; holding the jump key re-jumps on landing; fast-fall ends when down is released; positions round to whole pixels and obstacles scroll `floor(speed)` px per frame; the outer hitbox stays standing-size while ducking and only the nearest obstacle is checked; obstacle type choice and group rules spelled out. Egg grid, big arc and golden egg heights follow the new apex. Space restart is locked for 1.2 s after a crash (the original's value), R, Enter and Retry work at once.

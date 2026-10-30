@@ -1,5 +1,12 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Eggs that answer the pterodactyls
+- Pao played: arcs and big bunches tempt, the flat 3-egg ground lines were boring. High pterodactyls (fly over, don't jump) are the original's and stay.
+- Cut the ground line; jump arcs now unlock at 30 m. New: an arc over low and mid pterodactyls, a head-height line under high ones; mid ones get the duck line or an arc. Pterodactyl eggs move with their pterodactyl.
+- `tools/egg-test.mjs`: each pattern's move (held jump, duck, stay down) collects every egg and never touches the obstacle, over 14,881 patterns; 53.5 eggs placed in 400 m (35–72).
+- Local server now sends `Cache-Control: no-store` (stale modules hid the new eggs at first).
+- Next: Pao plays the pterodactyl patterns; then the rest of the 2c feel loop.
+
 ## 2026-10-30 — Slice step 3: eggs
 - `gen.js` `EggGen`: its own seeded stream; after each obstacle spawns it may place a pattern (ground line, jump arc, grid, big arc, duck line, nest) unlocked by distance, only where the existing gap fits. Arcs follow `jumpCurve()`, the sim's own held jump, with the apex over the obstacle.
 - `sim.js`: eggs scroll with the world (duck lines with their pterodactyl), the runner's full footprint picks them up through a 16×16 box, `eggCount` and `pickups`.

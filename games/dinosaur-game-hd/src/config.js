@@ -79,15 +79,17 @@ export const EGGS = {
   pickup: 16,              // pickup box, centered on the egg
   chance: 0.5,             // a pattern after an obstacle, never two in a row (GDD said 0.25: too few)
   spacing: 20,             // px between eggs in lines and grids
-  groundY: 120,            // sprite top of an egg a runner on the ground picks up
+  groundY: 120,            // sprite top of an egg a runner on the ground picks up (also ducking)
+  headY: 96,               // sprite top of an egg at a standing runner's head, under a high pterodactyl
   bodyY: 14,               // sprite top below the runner's top, for eggs on the jump curve
   nestEvery: 500,          // m, at most one nest per this distance
   streakMs: 600,           // pickups closer than this raise the pitch (up to 8 steps)
 };
 
-// Egg patterns and the distance (m) each one unlocks at.
+// Egg patterns and the distance (m) each one unlocks at. The pterodactyl
+// patterns come with the first pterodactyl (speed 8.5, about 450 m).
 export const EGG_PATTERNS = {
-  'ground-line': 30, 'jump-arc': 150, 'grid': 200, 'big-arc': 300, 'duck-line': 450, 'nest': 500,
+  'jump-arc': 30, 'grid': 200, 'big-arc': 300, 'ptero-arc': 0, 'duck-line': 0, 'head-line': 0, 'nest': 500,
 };
 
 // Dinosaurs hatched with eggs, in hatch order (GDD 7.1).

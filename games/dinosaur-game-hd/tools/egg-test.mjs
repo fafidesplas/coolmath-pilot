@@ -70,43 +70,46 @@ const all = [];   // every pattern placed, over all seeds, up to 3000 m
   ok(Object.keys(EGG_PATTERNS).every(p => counts[p] > 0), `every pattern appears: ${JSON.stringify(counts)}`);
 }
 
-// ---- 3. A held jump collects every arc egg; ducking collects the duck line -------------------
-// Replays the seed, and at the frame that centers the jump's apex over the
-// obstacle, presses jump and holds it (or ducks under the pterodactyl).
-function collects(seed, group) {
+// ---- 3. The move a pattern asks for collects all of it and clears the obstacle -------------
+// Replays the seed. Arcs: at the frame that centers a held jump's apex over
+// the obstacle, press jump and hold it. Duck line: duck under. Head line:
+// keep running under the high pterodactyl.
+const MOVES = { 'jump-arc': 'jump', 'big-arc': 'jump', 'ptero-arc': 'jump', 'duck-line': 'duck', 'head-line': 'run' };
+function tryMove(seed, group) {
   const r = recorded(seed);
   let g;
   while (!(g = r.groups.get(group))) r.step();
-  const o = g.o, cx = RUNNER.x + RUNNER.width / 2;
-  if (g.pattern === 'duck-line') {
-    r.press('duck');
-    while (o.x + o.w > RUNNER.x - 5) r.step();
-  } else {
+  const o = g.o, cx = RUNNER.x + RUNNER.width / 2, move = MOVES[g.pattern];
+  let hit = false;
+  const step = () => { r.step(); hit ||= r.collides(o); };
+  if (move === 'jump') {
     const h = [], probe = new Run(0, { noEggs: true });
     probe.speed = r.speed; probe.press('jump');
     while (probe.jumping) { probe.step(); h.push(probe.height); }
     const apex = h.indexOf(Math.max(...h)) + 1;
-    while (o.x + o.w / 2 - apex * Math.floor(r.speed) > cx) r.step();
+    while (o.x + o.w / 2 - apex * Math.floor(r.speed + o.speedOffset) > cx) r.step();
     r.press('jump');
-    do r.step(); while (r.jumping);
+    do step(); while (r.jumping);
+  } else {
+    if (move === 'duck') r.press('duck');
+    while (o.x + o.w > RUNNER.x - 5) step();
   }
-  return g.eggs.filter(e => e.taken).length;
+  return { got: g.eggs.filter(e => e.taken).length, hit };
 }
 {
-  const bad = [];
-  let arcs = 0, ducks = 0;
+  const bad = [], count = {};
   for (const g of all) {
-    if (!['jump-arc', 'big-arc', 'duck-line'].includes(g.pattern)) continue;
-    if (g.pattern === 'duck-line') ducks++; else arcs++;
-    const got = collects(g.seed, g.eggs[0].group);
-    if (got < g.eggs.length) bad.push(`seed ${g.seed} ${g.pattern} at ${g.m} m: ${got}/${g.eggs.length}`);
+    if (!MOVES[g.pattern]) continue;
+    count[g.pattern] = (count[g.pattern] || 0) + 1;
+    const { got, hit } = tryMove(g.seed, g.eggs[0].group);
+    if (got < g.eggs.length || hit) bad.push(`seed ${g.seed} ${g.pattern} (${g.o.id} y ${g.o.y}) at ${g.m} m: ${got}/${g.eggs.length}${hit ? ', hit' : ''}`);
   }
-  ok(bad.length === 0, `held jump collects every arc egg (${arcs} arcs), ducking every duck line (${ducks})${bad.length ? ': ' + bad.length + ' miss, e.g. ' + bad.slice(0, 3).join('; ') : ''}`);
+  ok(bad.length === 0, `its move collects every egg and clears the obstacle: ${JSON.stringify(count)}${bad.length ? ': ' + bad.length + ' fail, e.g. ' + bad.slice(0, 3).join('; ') : ''}`);
 }
 
 // ---- 4. Egg rate ---------------------------------------------------------------------------
 // Eggs placed in the first 400 m (what a perfect player could get), and what a
-// runner who never jumps picks up (ground lines, ground rows).
+// runner who never jumps picks up (grid ground rows).
 {
   let placed = 0, ground = 0;
   const per = [];
