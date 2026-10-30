@@ -1,7 +1,7 @@
 // One run's simulation: runner physics, obstacles, collisions, score, night.
 // No drawing. One step() is one frame of the original at 60 Hz (GDD 3.2–3.6),
 // so its rules apply unchanged, including whole-pixel rounding.
-import { HZ, STEP_MS, VIEW_W, LANE, RUN, RUNNER, RUNNER_BOXES, PTERO_HEIGHTS, EGGS } from './config.js';
+import { HZ, STEP_MS, VIEW_W, OFFSCREEN, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, PTERO_HEIGHTS, EGGS } from './config.js';
 import { ObstacleGen, EggGen, stream, STREAM } from './gen.js';
 
 const overlap = (ax, ay, aw, ah, bx, by, bw, bh) =>
@@ -108,12 +108,12 @@ export class Run {
     if (this.jumping) this.updateJump();
 
     this.timeMs += STEP_MS;
-    const hasObstacles = this.timeMs > RUN.clearTimeMs;
     this.scrollPx += scroll(this.speed);
-    if (hasObstacles) this.updateObstacles();
+    this.updateObstacles();
 
-    const first = this.obstacles[0];
-    if (hasObstacles && first && !this.invincible && this.collides(first)) {
+    // Only the nearest obstacle the runner hasn't passed is checked.
+    const first = this.obstacles.find(o => o.x + o.w > 0);
+    if (first && !this.invincible && this.collides(first)) {
       this.crashed = true;
       this.hit = first;
       this.events.push('crash');
@@ -153,37 +153,75 @@ export class Run {
     }
   }
 
+  // Obstacles and eggs live OFFSCREEN px past both sides of the view (GDD
+  // 3.5). Each obstacle spawns early, exactly as far out as the ground will
+  // scroll before the original would spawn it, so it reaches the original's
+  // spawn line on the frame the original spawns it, and the run is unchanged.
   updateObstacles() {
     const obs = this.obstacles;
     for (const o of obs) {
       o.prevX = o.x;
-      o.x -= scroll(this.speed + o.speedOffset);
+      // A pterodactyl's speed offset starts at the original's spawn line.
+      if (!o.drifting && o.x <= VIEW_W + OBSTACLES[o.id].w) o.drifting = true;
+      o.x -= scroll(this.speed + (o.drifting ? o.speedOffset : 0));
       o.flapMs += STEP_MS;
     }
-    while (obs.length && obs[0].x + obs[0].w <= 0) obs.shift();
+    while (obs.length && obs[0].x + obs[0].w <= -OFFSCREEN) obs.shift();
 
     const eggs = this.eggs;
     let n = 0;
     for (const e of eggs) {
       e.prevX = e.x;
-      e.x -= scroll(this.speed + e.speedOffset);
-      if (!e.taken && e.x + EGGS.w > 0) eggs[n++] = e;
+      e.x -= scroll(this.speed + (!e.owner || e.owner.drifting ? e.speedOffset : 0));
+      if (!e.taken && e.x + EGGS.w > -OFFSCREEN) eggs[n++] = e;
     }
     eggs.length = n;
 
-    const last = obs[obs.length - 1];
-    if (!last || (!last.followed && last.x + last.w + last.gap < VIEW_W)) {
-      const o = this.gen.next(this.speed, VIEW_W);
+    // The original's spawn rule, checked on the frame `ahead.n` frames from
+    // now: after the clear time, once the last obstacle has left the view or
+    // its gap is inside it.
+    const ahead = this.lookahead();
+    if (this.timeMs + ahead.n * STEP_MS <= RUN.clearTimeMs) return;
+    const last = obs[obs.length - 1], lx = last && this.aheadX(last, ahead.n);
+    if (!last || (!last.followed && (lx + last.w <= 0 || lx + last.w + last.gap < VIEW_W))) {
+      const o = this.gen.next(ahead.speed, VIEW_W + ahead.px);
       o.prevX = o.x;
       obs.push(o);
       if (last) last.followed = true;
       if (this.eggGen) {
-        for (const e of this.eggGen.place(o, this.speed, this.score)) {
-          e.fade = e.x < VIEW_W;    // an arc's first eggs start inside the view: fade them in
+        const m = Math.round(Math.ceil(ahead.distancePx) * RUN.distanceCoefficient);
+        for (const e of this.eggGen.place(o, ahead.speed, m)) {
+          e.owner = o;
+          e.fade = e.x < VIEW_W + OFFSCREEN;   // an arc's first eggs may start inside a wide view: fade them in
           eggs.push(e);
         }
       }
     }
+  }
+
+  // The coming frames, replayed from the speed curve: how many until the
+  // ground has scrolled OFFSCREEN px, how far it scrolls in them, and the
+  // speed and distance on the last one.
+  lookahead() {
+    let s = this.speed, d = this.distancePx, px = 0, n = 0;
+    while (px < OFFSCREEN) {
+      d += s;
+      if (s < RUN.maxSpeed) s += RUN.acceleration;
+      px += scroll(s);
+      n++;
+    }
+    return { n, px, speed: s, distancePx: d };
+  }
+
+  // Where obstacle `o` will be `n` frames from now.
+  aheadX(o, n) {
+    let s = this.speed, x = o.x, drifting = o.drifting;
+    for (let i = 0; i < n; i++) {
+      if (s < RUN.maxSpeed) s += RUN.acceleration;
+      if (!drifting && x <= VIEW_W + OBSTACLES[o.id].w) drifting = true;
+      x -= scroll(s + (drifting ? o.speedOffset : 0));
+    }
+    return x;
   }
 
   // The runner's whole footprint picks up any egg whose pickup box it touches.

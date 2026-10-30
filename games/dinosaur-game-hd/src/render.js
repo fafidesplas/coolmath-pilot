@@ -272,10 +272,6 @@ export class Renderer {
     const scroll = run ? lerp(run.prevScrollPx, run.scrollPx) : 0;
     this.drawBackground(scroll, now);
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, b.y0, VIEW_W, b.y1 - b.y0);   // obstacles spawn just past x = 640
-    ctx.clip();
     if (run) {
       for (const o of run.obstacles) this.drawObstacle(o, this.snap(lerp(o.prevX, o.x)), g.showBoxes);
       for (const e of run.eggs) if (!e.taken) this.drawEgg(e, this.snap(lerp(e.prevX, e.x)), now);
@@ -285,7 +281,6 @@ export class Renderer {
     this.dust.draw(ctx, this.night);
     this.drawRunner(run, y, now, g.showBoxes);
     this.drawPickups(g.fx, now);
-    ctx.restore();
 
     drawUI(ctx, g, now, this);
   }

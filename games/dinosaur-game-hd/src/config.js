@@ -9,6 +9,9 @@ export const HZ = 60;
 export const STEP_MS = 1000 / HZ;
 export const MAX_FRAME_DT = 0.05;          // s, frame dt cap (STANDARDS)
 export const VIEW_W = 640, VIEW_H = 360;   // logical resolution (GDD 3.1)
+// Obstacles and eggs live this far past each side of the view, so wide windows
+// (which show more desert) never see one pop in or get cut (GDD 3.5).
+export const OFFSCREEN = 640;
 
 export const LANE = {
   ground: 140,      // y where feet and obstacle bottoms rest

@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Obstacles no longer cut on wide screens
+- Pao: on a 1440p monitor the obstacles were cut at the 640 px view's edges. The clip is gone; obstacles and eggs now live `OFFSCREEN` (640) px past both sides of the view, so they spawn and leave out of sight on any screen up to about 5:1.
+- The run is unchanged: each obstacle spawns early, exactly as far out as the ground will scroll (replayed from the speed curve) before the original would spawn it, so it crosses the original's spawn line on that very frame. Pterodactyls drift only from there. Collisions check the nearest obstacle not yet passed.
+- Checked against the old sim: 400 runs, about 1.27 million frames, every obstacle and egg in the same place on the same frame, same crashes, scores and eggs. Physics and egg tests pass (the clear-time test now times the original's spawn line); checked in a wide Chrome window.
+
 ## 2026-10-30 — Clean tail lines
 - Every new tail (run, jump, both slides) now has edges in regular pixel steps instead of uneven ones, so they read as straight diagonals. Same general shapes.
 - Run: top 1 px down every 2 px; underside 1:1 from the tip, then 2:1 into the rump. Jump: back 1:1 from the neck (the old kink at the neck is gone), then 3 rows per pixel, then straight down; underside 1:1 back to the tip, which ends 1 px higher. Slides: top steps of 2, 2, 1; underside 4 steps then a hold (the slide maps were edited row by row).

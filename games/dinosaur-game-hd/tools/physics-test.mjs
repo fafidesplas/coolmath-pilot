@@ -116,7 +116,7 @@ const show = j => `${j.apex} px / ${j.frames} f (${Math.round(j.frames * 1000 / 
   let firstObstacle = 0, milestone = 0, night = 0, day = 0;
   while (r.frame < 9000) {
     r.step();
-    if (!firstObstacle && r.obstacles.length) firstObstacle = r.frame;
+    if (!firstObstacle && r.obstacles.some(o => o.x <= VIEW_W + OBSTACLES[o.id].w)) firstObstacle = r.frame;   // at the original's spawn line
     if (!milestone && r.events.includes('milestone')) milestone = r.score;
     if (!night && r.events.includes('night')) night = r.frame;
     if (night && !day && r.events.includes('day')) day = r.frame;
