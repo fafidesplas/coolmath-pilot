@@ -63,10 +63,19 @@ const SLIDE = [
 const SLIDE_MARKS = [[20, 13, 17, 2, 'slateDark'], [22, 19, 18, 2, 'cream'], [55, 5, 1, 1, 'ink'], [47, 11, 6, 1, 'ink']];
 const SLIDE_EYE = [[44, 5, 3, 3, 'cream'], [45, 6, 2, 2, 'ink']];
 const SLIDE_DIZZY = [[44, 5, 3, 3, 'cream'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink'], [45, 6, 1, 1, 'ink'], [44, 7, 1, 1, 'ink'], [46, 7, 1, 1, 'ink']];
-// A little tail curling up behind, both back legs stretched out along the sand;
-// the two frames flick the tail tip and the feet.
+// A long tail tapering to a sharp point up and back, both back legs stretched
+// out along the sand; the two frames flick the tail tip and the feet.
+function slideTail(flick) {
+  const rows = [], tip = 3 - flick;
+  for (let y = tip; y <= 16; y++) {
+    const t = (y - tip) / (16 - tip);
+    const left = Math.round(1 + t * 11), right = Math.min(24, Math.round(2 + t * 36));
+    rows.push([left, y, right - left + 1, 1, 'slate']);
+  }
+  return rows;
+}
 const slideBack = flick => [
-  [12, 13, 8, 5, 'slate'], [8, 10, 6, 5, 'slate'], [5, 7 + flick, 4, 4, 'slate'],   // tail, curling up
+  ...slideTail(flick),
   [13, 15, 8, 5, 'slateDark'], [4 + flick, 18, 11, 2, 'slateDark'], [3 + flick, 16, 2, 3, 'slateDark'],   // far leg, toes up
   [15, 18, 8, 4, 'slate'], [6 - flick, 21, 11, 2, 'slate'], [5 - flick, 19, 2, 3, 'slate'],               // near leg, toes up
 ];

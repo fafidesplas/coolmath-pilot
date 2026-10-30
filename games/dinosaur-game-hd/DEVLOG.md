@@ -1,7 +1,7 @@
 # Dinosaur Game: Cool Edition — devlog
 
 ## 2026-10-30 — Slide redrawn from Pao's sketch
-- Shorter body, a little tail curling up behind, both back legs stretched out along the sand with toes tipped up (a dark line keeps them apart); head, eye and arm unchanged. Same footprint and hitbox.
+- Shorter body, a long tail tapering to a sharp point up and back (second pass, from Pao's paint-over), both back legs stretched out along the sand with toes tipped up (a dark line keeps them apart); head, eye and arm unchanged. Same footprint and hitbox.
 - Hitbox overlay page (a private artifact for Pao) shows every pose with the boxes `Run.collides()` tests.
 
 ## 2026-10-30 — Slimmer slide
