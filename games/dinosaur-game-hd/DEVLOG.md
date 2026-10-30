@@ -5,6 +5,7 @@
 - Night rims: at night every cactus, pterodactyl and egg gets a 1 px Egg Cream rim outside its outline, faded in and out with the night (GDD 3.6). Pre-rendered once per sprite (`SPR.rim`).
 - Slide reminder: until the player has slid once, the SLIDE arrow shows again for 2 s (or until they slide) as the run's first pterodactyl comes, starting one view-width before it comes into view. GDD 4 said "first run only", but most first runs end before ~450 m, so it now keys off the first slide instead (GDD updated).
 - Physics and egg tests pass; checked in Chrome (reminder timing, rims at 745 m, stretch frame), no console errors.
+- Pao: the stretch was too subtle. Now 3 frames: 8 px narrower and 10 px taller, then 4 and 5, then 2 and 2 (about 150 ms).
 - Next: music (20–30 s chiptune loop, off by default, with its toggle), then a cold playtest by a teammate for the slice gate.
 
 ## 2026-10-30 — Run tail points straight back

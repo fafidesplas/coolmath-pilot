@@ -272,7 +272,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - **Background:** 3 parallax layers (dunes at 0.2×, mesas at 0.1×, clouds at 0.05× the scroll speed), each pre-rendered once to an offscreen canvas. A warm sunset band by day; stars and a moon at night.
   - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
-  - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames, 50 ms each: 6 px wider and lower, then 2 px) and takeoff stretch (the same, narrower and taller), feet kept in place;
+  - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames, 50 ms each: 6 px wider and lower, then 2 px) and takeoff stretch (3 frames, 50 ms each: 8 px narrower and 10 px taller, then 4 and 5, then 2 and 2), feet kept in place;
   - jump frame: legs stretched long with the toes pointing down, the tail drooping to a point;
   - slide: a sand burst on entry (bigger when landing into it) and a dust trail while it lasts;
   - egg pickup: a pop, "+1" floating up, the egg icon in the HUD bumps;

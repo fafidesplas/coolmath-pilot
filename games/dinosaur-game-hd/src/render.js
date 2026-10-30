@@ -212,7 +212,7 @@ class Dust {
 }
 
 const SQUASH_MS = 50, SQUASH = [[6, 6], [2, 2]];   // per frame: extra width, lost height (px)
-const STRETCH = [[-6, -6], [-2, -2]];                 // takeoff: narrower and taller, same timing
+const STRETCH = [[-8, -10], [-4, -5], [-2, -2]];      // takeoff: narrower and taller, one frame longer
 
 export class Renderer {
   constructor(cv) {
@@ -406,7 +406,7 @@ export class Renderer {
     } else if (run.crashed) img = T.crash;
     else if (run.jumping) img = T.jump;
     else img = T.run[Math.floor(run.timeMs / ANIM.run) % 4];
-    // Landing squash and takeoff stretch (GDD 9): 2 frames each, wider and
+    // Landing squash and takeoff stretch (GDD 9): 2 and 3 frames, wider and
     // lower on landing, narrower and taller on takeoff, the feet kept where
     // they are. Drawing only; the hitbox doesn't change.
     const live = run && !run.ducking && !run.crashed;
