@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Longer lines under pterodactyls
+- Pao: placement feels good now; the 3-egg lines were the least satisfying. Duck and head lines are now 6 eggs, 12 px apart, centered under the pterodactyl (`EGGS.lineCount`).
+- `tools/egg-test.mjs` still passes: ducking takes every duck line and staying down every head line, never touching the pterodactyl.
+- Next: rest of the feel loop.
+
 ## 2026-10-30 — Grids and nests moved onto the obstacle jump
 - Pao died on a pterodactyl right after a nest: grids and nests sat in gaps and asked for their own jump. Cause: the original (and our sim) spawns the next obstacle as soon as the last one leaves the view, so a real gap is at most ~660 px whatever `gap` says; there's never room for a third jump.
 - Now every pattern sits over or under an obstacle, and the move that collects it is the one that clears it. Grid: a 3-row block on the held-jump apex over a cactus group (from 200 m). Nest: 17 eggs on the apex over a cactus (from 500 m, one per 500 m).

@@ -150,9 +150,9 @@ export class EggGen {
         for (let i = 0; i < cols; i++) add(midX + (i - (cols - 1) / 2) * EGGS.gridSpacing, top + row * EGGS.gridSpacing);
       }
     } else if (p === 'duck-line') {
-      for (let i = 0; i < 3; i++) add(o.x + 9 + i * 14, EGGS.groundY);
+      for (let i = 0; i < EGGS.lineCount; i++) add(midX + (i - (EGGS.lineCount - 1) / 2) * EGGS.gridSpacing, EGGS.groundY);
     } else if (p === 'head-line') {
-      for (let i = 0; i < 3; i++) add(o.x + 9 + i * 14, EGGS.headY);
+      for (let i = 0; i < EGGS.lineCount; i++) add(midX + (i - (EGGS.lineCount - 1) / 2) * EGGS.gridSpacing, EGGS.headY);
     } else if (p === 'nest') {
       // An egg-shaped bunch on the held jump's apex over the cactus: 17 eggs in an ellipse.
       const cy = onCurve(apex);

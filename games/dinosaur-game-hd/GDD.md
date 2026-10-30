@@ -87,8 +87,8 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 | Grid | 3 rows × 4–6, 12 px apart | a block on the held jump's apex over a group of 2–3 cacti | hold the jump to sweep the whole block | 200 m |
 | Big arc | 5 | above a large cactus group, top egg near the ~89 px apex | a perfectly timed full jump | 300 m |
 | Pterodactyl arc | 5 | along the full-jump arc over a low or mid pterodactyl | jump over it | first pterodactyl (~450 m) |
-| Duck line | 3 | at duck height under a mid pterodactyl (a mid one gets this or an arc) | duck rather than jump | first pterodactyl |
-| Head line | 3 | at head height under a high pterodactyl | stay on the ground: jumping hits it | first pterodactyl |
+| Duck line | 6, 12 px apart | at duck height, centered under a mid pterodactyl (a mid one gets this or an arc) | duck rather than jump | first pterodactyl |
+| Head line | 6, 12 px apart | at head height, centered under a high pterodactyl | stay on the ground: jumping hits it | first pterodactyl |
 | Nest | 17 in a tight egg-shaped bunch | on the held jump's apex over a cactus, at most once per 500 m | one well-timed held jump through the middle | 500 m |
 
 - **Every pterodactyl height gets eggs that reward its answer:** an arc over a low one (jump), a duck line or an arc for a mid one (duck or jump), a head line under a high one (stay down). The flat ground line was cut in the slice: eggs that ask nothing were boring.
@@ -385,6 +385,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Eggs (3.7): duck and head lines grow from 3 to 6 eggs (3 felt unsatisfying in play).
 - 2026-10-30 — Eggs (3.7): grids and nests moved from the gaps onto the jump that clears a cactus; nothing goes in the gaps, since a real gap is at most ~660 px and an extra jump there could land on the next obstacle.
 - 2026-10-30 — Eggs (3.7) after Pao's play test: the flat ground line is cut (boring); jump arcs unlock at 30 m; new pterodactyl patterns: an arc over low and mid ones, a head line under high ones, the duck line stays for mid ones.
 - 2026-10-30 — Eggs (3.7): pattern chance raised from 25% to 50% after measuring the slice; fit rules for each pattern spelled out.
