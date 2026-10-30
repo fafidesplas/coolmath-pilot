@@ -50,17 +50,18 @@ const MOUTH_OPEN = [[33, 10, 7, 2, 'ink'], [35, 10, 1, 1, 'cream'], [38, 10, 1, 
 const leg = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 7, c], [x + 1, 44, 7, 3, c]];
 const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 2, c]];
 // The standing tail matches the slide's: a full rump tapering to a slim point
-// up and back, Slate dark on its underside. The tip reaches TAIL_OUT px past
-// the 44×47 footprint, so these frames are wider; draw them TAIL_OUT px further
-// left (canvas.ox). The rump still covers the original's tail boxes to within 2 px.
+// up and back, Slate dark on its underside. Its edges are clean pixel lines:
+// the top steps 1 down every 2 px, the underside 1:1 out to the rump, then 2:1
+// down into it. The tip reaches TAIL_OUT px past the 44×47 footprint, so these
+// frames are wider; draw them TAIL_OUT px further left (canvas.ox). The rump
+// still covers the original's tail boxes to within 2 px.
 const TAIL_OUT = 8;
 const TAIL = [], TAIL_SHADE = [];
 for (let x = -TAIL_OUT; x <= 9; x++) {
-  const t = (x + TAIL_OUT) / (9 + TAIL_OUT);
-  const top = Math.round(10 + t * 7);
-  const bot = Math.max(top + 1 + Math.round(t * 3), Math.round(28 - Math.pow(Math.max(0, 9 - x) / 12, 1.6) * 12));
+  const top = Math.min(17, 10 + Math.floor((x + TAIL_OUT) / 2));
+  const steep = x >= 0, bot = steep ? Math.min(28, 20 + 2 * x) : 19 + x;
   TAIL.push([x, top, 1, bot - top + 1, 'slate']);
-  if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (t < 0.4 ? 0 : 1), 1, t < 0.4 ? 1 : 2, 'slateDark']);
+  if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (steep ? 1 : 0), 1, steep ? 2 : 1, 'slateDark']);
 }
 const shift = rects => rects.map(([x, y, w, h, c]) => [x + TAIL_OUT, y, w, h, c]);
 function trex(legs, face) {
@@ -72,19 +73,16 @@ function trex(legs, face) {
 // The jump: legs stretched long with the toes pointing down, the tail
 // drooping to a point down and back. Same outline over the hitbox template.
 const legLong = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 8, c], [x + 2, 45, 3, 2, c]];
-const TAIL_DOWN = [];
-for (let y = 18; y <= 41; y++) {   // a rounded root on the back, tapering down to the tip
-  const t = Math.max(0, y - 24) / 17, left = y < 20 ? 21 - y : Math.round(1 + t * 1.5), right = Math.round(9 - t * 6);
-  TAIL_DOWN.push([left, y, right - left + 1, 1, 'slate']);
-}
 // The back slopes in one line from the neck down to the tail tip (Pao's
-// paint-over): [y, first x] per row, everything left of it cut away.
-const JUMP_BACK = new Map([[16, 14], [17, 13], [18, 12], [19, 9], [20, 8], [21, 7], [22, 6], [23, 5], [24, 4],
-  [25, 4], [26, 4], [27, 3], [28, 3], [29, 3], [30, 2], [31, 2], [32, 1]]);
+// paint-over), in clean pixel steps: 1:1 from the neck, then 3 rows per
+// pixel, then straight down. The tail's underside comes back 1:1 to the tip.
+const backX = y => y < 17 ? 0 : y <= 25 ? 28 - y : y <= 27 ? 3 : y <= 30 ? 2 : 1;
+const TAIL_DOWN = [];
+for (let y = 18; y <= 40; y++) TAIL_DOWN.push([1, y, Math.min(9, 41 - y), 1, 'slate']);
 function clipBack(rects) {
   const out = [];
   for (const [x, y, w, h, c] of rects) for (let j = 0; j < h; j++) {
-    const x0 = Math.max(x, JUMP_BACK.get(y + j) ?? 0);
+    const x0 = Math.max(x, backX(y + j));
     if (x0 < x + w) out.push([x0, y + j, x + w - x0, 1, c]);
   }
   return out;
@@ -97,7 +95,8 @@ const jumpPose = face => sprite(44, 47,
 // Same footprint and hitbox as the original's duck; only the pose changes.
 // Head raised and leading, belly on the sand, both back legs stretched out
 // with toes up, a slim tail tapering to a point up and back; the two frames
-// flick the tail tip. Drawn as pixel maps from Pao's paint-overs:
+// flick the tail tip. The tail's edges are clean pixel lines: steps of 2, 2, 1
+// on top, 4 steps then a hold underneath. Drawn as pixel maps from Pao's paint-overs:
 // b slate, c slate dark, d cream, a ink, '.' empty.
 const SLIDE_MAPS = [[
   '...........................................................',
@@ -107,12 +106,12 @@ const SLIDE_MAPS = [[
   '..bbb....................................bbbbbbbbbbbbbbbb..',
   '...bbbb..................................bbbdddbbbbbbbbab..',
   '....bbbb.................................bbbdaabbbbbbbbbb..',
-  '.....bbbb................................bbbdaabbbbbbbbbb..',
-  '......bbbbb..............................bbbbbbbbbbbbbbbb..',
-  '......cbbbbbb.......................bbbbbbbbbbbbbbbbbbbbb..',
-  '.......ccbbbbb......................bbbbbbbbbbbbbbbbbbbbb..',
+  '.....bbbbb...............................bbbdaabbbbbbbbbb..',
+  '.....bbbbbbb.............................bbbbbbbbbbbbbbbb..',
+  '......ccbbbbb.......................bbbbbbbbbbbbbbbbbbbbb..',
+  '.......ccbbbbbb.....................bbbbbbbbbbbbbbbbbbbbb..',
   '........ccbbbbbbb...................bbbbbbbbbbbaaaaaa......',
-  '.........ccbbbbbbbbb................bbbbbbbbbbbbbbbbb......',
+  '.........ccbbbbbbb..................bbbbbbbbbbbbbbbbb......',
   '.........ccccbbbbbbbcccccccccccccccccbbbbbbbbbbbbbbbb......',
   '..........cccccbbbbbcccccccccccccccccbbbbbb................',
   '...........cccccbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
@@ -129,20 +128,20 @@ const SLIDE_MAPS = [[
   '...........................................................',
   '...........................................................',
   '.bb........................................................',
-  '.bbb.....................................bbbbbbbbbbbbbbbb..',
   '..bbb....................................bbbbbbbbbbbbbbbb..',
-  '...bbbb..................................bbbdddbbbbbbbbab..',
-  '....bbbb.................................bbbdaabbbbbbbbbb..',
+  '...bbbb..................................bbbbbbbbbbbbbbbb..',
+  '....bbbb.................................bbbdddbbbbbbbbab..',
   '.....bbbbb...............................bbbdaabbbbbbbbbb..',
-  '......bbbbb..............................bbbbbbbbbbbbbbbb..',
-  '.......bbbbbb.......................bbbbbbbbbbbbbbbbbbbbb..',
+  '.....bbbbbbb.............................bbbdaabbbbbbbbbb..',
+  '......bbbbbbb............................bbbbbbbbbbbbbbbb..',
   '.......ccbbbbbb.....................bbbbbbbbbbbbbbbbbbbbb..',
-  '........ccbbbbbbb...................bbbbbbbbbbbaaaaaa......',
+  '........ccbbbbbbb...................bbbbbbbbbbbbbbbbbbbbb..',
+  '.........ccbbbbbbb..................bbbbbbbbbbbaaaaaa......',
   '.........ccbbbbbbbbb................bbbbbbbbbbbbbbbbb......',
   '..........ccbbbbbbbbcccccccccccccccccbbbbbbbbbbbbbbbb......',
   '...........cccbbbbbbcccccccccccccccccbbbbbb................',
-  '...........ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
-  '....cc......ccccbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '............ccccbbbbbbbbbbbbbbbbbbbbbbbbbbb................',
+  '....cc.......ccccbbbbbbbbbbbbbbbbbbbbbbbbbb................',
   '....cc.......ccccbbbbbbbbbbbbbbbbbbbbbbbbbb................',
   '....cccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.............',
   '....bbcccccccccbbbbbbbddddddddddddddddddbbbbbbb............',
