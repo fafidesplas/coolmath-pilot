@@ -1,7 +1,7 @@
 # Dinosaur Game: Cool Edition — Game design document
 
-**Status:** Draft
-**Owner:** Pao · **Reviewed by:** — · **Last updated:** 2026-10-30
+**Status:** Approved
+**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-10-30
 
 > The offline browser dino you already know, with the same jump, the same speed and the same "one mistake and it's over". Now in 16-bit pixel art, with eggs to collect, new runners to hatch and unlock, a golden egg that earns a bonus pterodactyl flight, a daily run, and a race against a friend on the same keyboard.
 
@@ -378,6 +378,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Approved by Fafi.
 - 2026-10-30 — Roster changed: the Tag characters are out, and the Triceratops and Stegosaurus are out (four legs don't fit the T-Rex silhouette). 11 runners: the T-Rex; Velociraptor, Pachycephalosaurus and Parasaurolophus hatched with eggs (300 / 750 / 1500); Hadrosaur (1000 m), Ceratosaurus (7-day daily streak), Megalosaurus (50 km), Therizinosaurus (3000 m), the Hangman beast (10 nights), Allosaurus (10 2P wins, the 2P-only bonus) and Spinosaurus (completionist) by achievement. The "1000 eggs in total" achievement is dropped. Every dinosaur now has 8 frames.
 - 2026-10-29 — Bonus pterodactyl flight added (3.7 golden egg, 3.8 flight): a Jetpack Joyride-style 20 s flight after the run, earned with a golden egg grabbed between 500 and 900 m; hold to flap up, release to glide; thunderclouds and wild pterodactyls; a hit ends it but eggs are kept; up to 3 flights banked. Not in 2P. Pillar 2 reworded; controls, screens, art, audio, analytics, tech and scope updated.
 - 2026-10-29 — Phase 1c review applied: a hitbox template and an H debug view for every runner; 8 frames for the classic dinosaurs, 5 for the crossover characters, a PNG sprite sheet later and placeholders in the prototype; Hangman beast now unlocks at 10 nights in total; 1P ground moved up to y = 250 with a fuller sky; integer scaling with a filled border; Joyride-style egg grids and nests, and egg arcs placed on the simulated jump; analytics question 1 reworded with `eggs:progress`; `window.game` matches STANDARDS; HUD and pause layout; first-run icons; Space idle in 2P; separate RNG streams for eggs and obstacles. Not applied: a minimum race length for Alien (solo farming is accepted).

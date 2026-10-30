@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — GDD approved
+- Fafi read `GDD.md` and approved it. Status: Approved, stage `slice`.
+- Next: phase 2a, the vertical slice build plan (match the original's feel first, in `sim.js`).
+
 ## 2026-10-30 — New dinosaur roster
 - Removed the Tag characters and the Triceratops and Stegosaurus (four legs don't fit the T-Rex silhouette) from `GDD.md`. The Hangman beast stays.
 - 11 runners: T-Rex (free); Velociraptor, Pachycephalosaurus, Parasaurolophus hatched with eggs (300 / 750 / 1500); Hadrosaur, Ceratosaurus, Megalosaurus, Therizinosaurus, Hangman beast, Allosaurus (2P bonus) and Spinosaurus (completionist) by achievement. "1000 eggs in total" is dropped; all dinosaurs get 8 frames.
