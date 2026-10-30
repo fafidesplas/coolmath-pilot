@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Tail notch as in the one-pager
+- Pao: a bump on the back that isn't in the one-pager. It was the corner filled between the tail and the back for the hitbox. The standing frames now use the one-pager's rows exactly, notch included.
+- The original's body box now reaches up to 4 px past the outline at the top of the notch (was within 2 px); a partial fill still left 3 px, so it wasn't worth the bump. Recorded as an exception in GDD 3.4; `tools/art-test.mjs` allows 4 px there.
+
 ## 2026-10-30 — Chunky pixels, like the one-pager
 - Pao: the pixels looked too small on a 1440p screen. The one-pager draws its whole scene at half resolution, so every art pixel is 2×2 game pixels; the game now does the same everywhere, so the pixel size stays consistent.
 - Sprites are cell maps in `src/art.js` (renamed from `rex.js`), each cell drawn 2×2 with a 1 cell (2 px) Night Ink outline. The T-Rex uses the one-pager's cells as they are (no more Scale2x). New cell maps for the small and large cactus, the pterodactyl (both wing frames) and the egg (plain and glinting), drawn over their hitboxes. Night rims are 1 art pixel too.

@@ -10,8 +10,8 @@ export const CELL = 2;   // logical px per art pixel
 // ---- T-Rex ------------------------------------------------------------------------------
 // From the one-pager. Cells: S slate, s slate dark, b slate light (belly),
 // w cream, k ink. Standing body, 22×19 cells; the tail rises up and back in
-// one diagonal, its inner corner filled so the original's body box never
-// reaches across an empty gap.
+// one diagonal, with the one-pager's notch between the tail and the back. The
+// original's body box reaches up to 4 px into that notch (GDD 3.4).
 const BODY = [
   '............SSSSSSSSS.',
   '...........SSSSSSSSSSS',
@@ -22,10 +22,10 @@ const BODY = [
   '...........SSSSSSkkkk.',
   '...........SSSSSSSSS..',
   '..........SSSSSSS.....',
-  'S....SSSSSSSSSSSSS....',
-  'SS....SSSSSSSSSSbSSS..',
-  'SSS.SSSSSSSSSSSbbS.S..',
-  'sSSSSSSSSSSSSSbbb.....',
+  'S........SSSSSSSSS....',
+  'SS......SSSSSSSSbSSS..',
+  'SSS....SSSSSSSSbbS.S..',
+  'sSSS..SSSSSSSSbbb.....',
   '.sSSSSSSSSSSSbbbb.....',
   '..ssSSSSSSSSSbbbb.....',
   '...ssSSSSSSSSbbb......',

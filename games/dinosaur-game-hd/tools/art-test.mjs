@@ -40,16 +40,18 @@ function gap(sprite, boxes) {
 }
 
 const same = rows => rows.every(r => r.length === rows[0].length);
-const check = (name, sprite, boxes) => {
+const check = (name, sprite, boxes, limit = 2) => {
   ok(same(sprite.rows), `${name}: rows all the same length`);
   const g = gap(sprite, boxes);
-  ok(g <= 2, `${name}: every box within 2 px of the outline (worst ${g} px)`);
+  ok(g <= limit, `${name}: every box within ${limit} px of the outline (worst ${g} px)`);
 };
 
 const standing = { ...Object.fromEntries(REX.run.map((s, i) => [`T-Rex run ${i}`, s])), 'T-Rex jump': REX.jump, 'T-Rex crash': REX.crash, 'T-Rex sleep': REX.sleep };
 for (const [name, s] of Object.entries(standing)) {
   ok(s.oy + s.rows.length * CELL === RUNNER.height, `${name}: feet on the footprint's bottom`);
-  check(name, s, RUNNER_BOXES.run);
+  // The one exception: the original's body box reaches up to 4 px into the
+  // notch between the tail and the back (GDD 3.4, Pao's call).
+  check(name, s, RUNNER_BOXES.run, 4);
 }
 
 // The duck box is placed from the standing top, 22 px above the duck
