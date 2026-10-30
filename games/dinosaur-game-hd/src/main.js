@@ -2,7 +2,7 @@
 // The sim runs fixed 60 Hz steps from an accumulator (GDD 3.2); the renderer
 // draws every display frame, interpolating between the last two steps.
 import { Run } from './sim.js';
-import { STEP_MS, MAX_FRAME_DT, VIEW_H, LANE, RUN, EGGS, HATCH, DEBUG } from './config.js';
+import { STEP_MS, MAX_FRAME_DT, VIEW_H, LANE, RUN, EGGS, HATCH, ANIM, DEBUG } from './config.js';
 import { load, save } from './save.js';
 import * as sfx from './audio.js';
 import { GA } from './analytics.js';
@@ -28,7 +28,7 @@ const g = {
   crashAt: 0, result: 0, newBest: false, runEggs: 0,
   fx: [],               // egg pickup pops: { x, y, t, n }
   eggBumpAt: 0, lastEggAt: 0, streak: 0,
-  sliding: false, wasInAir: false,
+  sliding: false, wasInAir: false, runFrame: -1,
   flashUntil: 0, shakeUntil: 0,
   showBoxes: false, invincible: false,
 };
@@ -142,6 +142,7 @@ function handleEvents() {
   for (const e of run.events) {
     if (e === 'jump') {
       sfx.jump();
+      r.dust.feet(6, run.speed * 60);
       g.jumpedAt ??= performance.now();
       tutorial('jump', 'tutorial:step01');
     } else if (e === 'egg') {
@@ -234,6 +235,17 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
+// Running dust: a puff from the planted foot as each foot comes down (run
+// frames 0 and 2, GDD 9).
+const FOOTFALL_X = [13, null, 23, null];
+function updateRunDust() {
+  const run = g.run;
+  if (g.screen !== 'playing' || !run || run.jumping || run.ducking || run.crashed) { g.runFrame = -1; return; }
+  const f = Math.floor(run.timeMs / ANIM.run) % 4;
+  if (f !== g.runFrame && FOOTFALL_X[f] !== null) r.dust.step(FOOTFALL_X[f], run.speed * 60);
+  g.runFrame = f;
+}
+
 // The slide (the duck, drawn as a belly slide): dust and a scrape while it
 // lasts, and a bigger burst when a jump or fast-fall lands into it.
 function updateSlide(dt) {
@@ -260,6 +272,7 @@ function frame(now) {
     g.alpha = g.screen === 'playing' ? acc / STEP_MS : 1;
   }
   updateSlide(dt);
+  updateRunDust();
   while (g.fx.length && now - g.fx[0].t > FX_MS) g.fx.shift();
   g.buttons = layout(g, now, r);
   r.draw(g, now, dt);

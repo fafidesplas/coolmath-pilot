@@ -52,6 +52,17 @@ const leg = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 7, c], [x + 1, 44, 7, 3,
 const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 2, c]];
 const trex = (legs, face) => sprite(44, 47, [...legs, ...TREX], [...BODY_MARKS, ...face]);
 
+// The jump: legs stretched long with the toes pointing down, the tail
+// drooping to a point down and back. Same outline over the hitbox template.
+const legLong = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 8, c], [x + 2, 45, 3, 2, c]];
+const TAIL_DOWN = [];
+for (let y = 18; y <= 41; y++) {   // a rounded root on the back, tapering down to the tip
+  const t = Math.max(0, y - 24) / 17, left = y < 20 ? 21 - y : Math.round(1 + t * 1.5), right = Math.round(9 - t * 6);
+  TAIL_DOWN.push([left, y, right - left + 1, 1, 'slate']);
+}
+const TREX_JUMP = TREX.filter(r => r[0] > 4);   // the standing tail out, the drooping one in
+const jumpPose = face => sprite(44, 47, [...legLong(9, 'slateDark'), ...legLong(19, 'slate'), ...TAIL_DOWN, ...TREX_JUMP], [...BODY_MARKS, ...face]);
+
 // ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------
 // Same footprint and hitbox as the original's duck; only the pose changes.
 const SLIDE = [
@@ -124,7 +135,7 @@ export const SPR = {
       trex([...legUp(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_OPEN, ...MOUTH]),
       trex([...leg(13, 'slateDark'), ...leg(16, 'slate')], [...EYE_OPEN, ...MOUTH]),
     ],
-    jump: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_OPEN, ...MOUTH]),
+    jump: jumpPose([...EYE_OPEN, ...MOUTH]),
     crash: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_DIZZY, ...MOUTH_OPEN]),
     sleep: trex([...leg(10, 'slateDark'), ...leg(20, 'slate')], [...EYE_SHUT, ...MOUTH]),
     slide: [slide(0, SLIDE_EYE), slide(1, SLIDE_EYE)],

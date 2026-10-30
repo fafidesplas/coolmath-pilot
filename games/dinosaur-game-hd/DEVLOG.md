@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Running dust, takeoff puff, jump pose
+- Pao liked the landing. Now: 2 small puffs kicked back at each footfall (run frames 0 and 2), 6 puffs out both sides of the feet on takeoff.
+- New jump frame: legs stretched long with the toes pointing down, the tail drooping to a point down and back. Checked over the hitbox template: every box stays inside the outline.
+- Physics and egg tests still pass; checked in Chrome frame by frame.
+- Next: jump stretch, night rims on obstacles, the pterodactyl duck reminder, music.
+
 ## 2026-10-30 — Landing dust and squash
 - Landing on the feet: 10 sand puffs spread out both sides of the feet and drift back with the ground, and a 2-frame squash (50 ms each: 6 px wider and lower, then 2 px) with the feet kept on the ground. Drawing only; the hitbox and the sim don't change.
 - Landing into a slide keeps the slide's bigger burst, with no squash.

@@ -130,8 +130,9 @@ function buildLayers() {
 }
 
 // Sand kicked up by the slide (GDD 9 juice): a burst when it starts, a trail
-// while it lasts; and a puff out both sides of the feet on landing. A fixed
-// pool, so nothing is allocated per frame.
+// while it lasts; a puff out both sides of the feet on takeoff and landing; a
+// little kick at each footfall of the run. A fixed pool, so nothing is
+// allocated per frame.
 const DUST_MAX = 48, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGHT = ['#A9A08A', '#8C8471', '#6B6556'];
 class Dust {
   constructor() {
@@ -156,14 +157,26 @@ class Dust {
 
   burst(n, scroll, kick) { for (let i = 0; i < n; i++) this.emit(scroll, kick); }
 
-  // A landing on the feet: puffs spread forward and back, low and quick.
-  land(scroll) {
-    for (let i = 0; i < 10; i++) {
+  get last() { return this.p[(this.next + DUST_MAX - 1) % DUST_MAX]; }
+
+  // Takeoff or landing: n puffs spread forward and back from the feet, low and quick.
+  feet(n, scroll) {
+    for (let i = 0; i < n; i++) {
       this.emit(scroll, 1.2);
-      const d = this.p[(this.next + DUST_MAX - 1) % DUST_MAX], side = i % 2 ? 1 : -1;
+      const d = this.last, side = i % 2 ? 1 : -1;
       d.x = RUNNER.x + 22 + side * (4 + Math.random() * 8);
       d.vx = -scroll * 0.3 + side * (30 + Math.random() * 50);
       d.life = 0.25 + Math.random() * 0.2;
+    }
+  }
+
+  // A footfall of the run: 2 small puffs kicked back from the planted foot (x).
+  step(x, scroll) {
+    for (let i = 0; i < 2; i++) {
+      this.emit(scroll, 0.4);
+      const d = this.last;
+      d.x = RUNNER.x + x + Math.random() * 4;
+      d.life = 0.15 + Math.random() * 0.15;
     }
   }
 
@@ -408,7 +421,7 @@ export class Renderer {
 
   // The runner lands on its feet: dust and the squash start now.
   land(scroll) {
-    this.dust.land(scroll);
+    this.dust.feet(10, scroll);
     this.landAt = performance.now();
   }
 

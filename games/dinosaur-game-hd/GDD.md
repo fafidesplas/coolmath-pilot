@@ -272,7 +272,8 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - **Background:** 3 parallax layers (dunes at 0.2×, mesas at 0.1×, clouds at 0.05× the scroll speed), each pre-rendered once to an offscreen canvas. A warm sunset band by day; stars and a moon at night.
   - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
-  - run cycle dust puffs; landing squash (2 frames) and jump stretch;
+  - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames) and jump stretch;
+  - jump frame: legs stretched long with the toes pointing down, the tail drooping to a point;
   - slide: a sand burst on entry (bigger when landing into it) and a dust trail while it lasts;
   - egg pickup: a pop, "+1" floating up, the egg icon in the HUD bumps;
   - 100 m: the score flashes 4 times;
@@ -387,6 +388,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Juice (9): footfall dust, takeoff and landing puffs, a jump frame with long legs and a drooping tail (Pao).
 - 2026-10-30 — Slide pose slimmed (the belly looked huge); the duck box exception noted in 3.4.
 - 2026-10-30 — The duck is drawn as a belly slide with dust (3.4, 7.1, 9, 10), Pao's idea from the feel loop. Hitbox, input and timing are the original's duck, unchanged.
 - 2026-10-30 — Eggs (3.7): duck and head lines grow from 3 to 6 eggs (3 felt unsatisfying in play).
