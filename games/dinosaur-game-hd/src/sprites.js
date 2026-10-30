@@ -49,17 +49,17 @@ const MOUTH_OPEN = [[33, 10, 7, 2, 'ink'], [35, 10, 1, 1, 'cream'], [38, 10, 1, 
 
 const leg = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 7, c], [x + 1, 44, 7, 3, c]];
 const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 2, c]];
-// The standing tail matches the slide's: a full rump tapering to a slim point
-// up and back, Slate dark on its underside. Its edges are clean pixel lines:
-// the top steps 1 down every 2 px, the underside 1:1 out to the rump, then 2:1
-// down into it. The tip reaches TAIL_OUT px past the 44×47 footprint, so these
-// frames are wider; draw them TAIL_OUT px further left (canvas.ox). The rump
-// still covers the original's tail boxes to within 2 px.
+// The standing tail points straight back: a full rump tapering to a rounded
+// point, Slate dark on its underside. Its edges are clean pixel lines: the top
+// runs level with the back (1 px lower past the rump), the underside rises 1
+// every 3 px to the tip and drops 2:1 into the rump. The tip reaches TAIL_OUT px past the 44×47 footprint, so these frames
+// are wider; draw them TAIL_OUT px further left (canvas.ox). The rump still
+// covers the original's tail boxes to within 2 px.
 const TAIL_OUT = 7;
 const TAIL = [], TAIL_SHADE = [];
 for (let x = -TAIL_OUT; x <= 9; x++) {
-  const top = Math.min(17, 10 + Math.floor((x + TAIL_OUT) / 2));
-  const steep = x >= 0, bot = steep ? Math.min(28, 20 + 2 * x) : 12 + x + TAIL_OUT;
+  const top = x > 0 ? 17 : 18;
+  const steep = x > 0, bot = steep ? Math.min(28, 22 + 2 * x) : 20 + Math.floor((x + TAIL_OUT) / 3);
   TAIL.push([x, top, 1, bot - top + 1, 'slate']);
   if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (steep ? 1 : 0), 1, steep ? 2 : 1, 'slateDark']);
 }

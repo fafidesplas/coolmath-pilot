@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Run tail points straight back
+- Pao: the run tail should point straight back, not up. Run, crash and sleep frames: the top runs level with the back, the underside rises 1 px every 3 px to a 3 px rounded tip and drops 2:1 into the rump. Same length (7 px past the footprint), still clean pixel lines, still covers the tail boxes to within 2 px.
+
 ## 2026-10-30 — Obstacles no longer cut on wide screens
 - Pao: on a 1440p monitor the obstacles were cut at the 640 px view's edges. The clip is gone; obstacles and eggs now live `OFFSCREEN` (640) px past both sides of the view, so they spawn and leave out of sight on any screen up to about 5:1.
 - The run is unchanged: each obstacle spawns early, exactly as far out as the ground will scroll (replayed from the speed curve) before the original would spawn it, so it crosses the original's spawn line on that very frame. Pterodactyls drift only from there. Collisions check the nearest obstacle not yet passed.
