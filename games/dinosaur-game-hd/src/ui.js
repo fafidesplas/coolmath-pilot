@@ -1,15 +1,25 @@
-// HUD and screens (GDD 8): title, pause and results. layout() returns this
+// HUD and screens (GDD 8): title, pause, results and runners. layout() returns this
 // frame's buttons, and main.js hit-tests pointers against the same list, so a
 // sliding panel's buttons are always where they are drawn.
-import { VIEW_W, VIEW_H, RUN, HATCH } from './config.js';
-import { drawText } from './font.js';
-import { PAL, SPR } from './sprites.js';
+import { VIEW_W, VIEW_H, RUN, HATCH, RUNNER_LIST } from './config.js';
+import { drawText, textWidth } from './font.js';
+import { PAL, SPR, MARGIN } from './sprites.js';
+import { CELL } from './art.js';
 
 export const RESULTS_DELAY_MS = 500;   // the panel slides up this long after the crash
 const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, SLIDE_HINT_MS = 2000, BUMP_MS = 150;
 const PANEL_Y = 34, PANEL_H = 242;
 const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 const pad = n => String(n).padStart(5, '0');
+const grid = v => Math.round(v / CELL) * CELL;
+
+// The Runners screen (GDD 8): one card per runner, centered in a row.
+const CARD = { y: 50, w: 120, h: 120, gap: 12 };
+const cardX = i => (VIEW_W - RUNNER_LIST.length * (CARD.w + CARD.gap) + CARD.gap) / 2 + i * (CARD.w + CARD.gap);
+export const canHatch = (data, R) => R.price > 0 && !data.unlocked.includes(R.id) && data.eggs >= R.price;
+// The hatch scene (GDD 7.1), in ms from the Hatch press: the egg wobbles,
+// cracks 3 times, opens, and a press closes it once the runner has landed.
+export const HATCH_MS = { crack: [700, 1100, 1500], open: 1900, done: 2500 };
 
 function panelY(g, now) {
   return Math.round(VIEW_H + 10 - (VIEW_H + 10 - PANEL_Y) * ease((now - g.crashAt - RESULTS_DELAY_MS) / PANEL_MS));
@@ -26,6 +36,7 @@ export function layout(g, now, r) {
   const B = [];
   if (g.screen === 'title') {
     B.push({ id: 'play', label: 'PLAY', size: 4, big: true, x: 250, y: 102, w: 140, h: 44 });
+    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 260, y: 200, w: 120, h: 30 });
     B.push({ ...corner('sound', r), on: g.data.settings.sfx });
   } else if (g.screen === 'playing') {
     B.push(corner('pause', r));
@@ -35,8 +46,16 @@ export function layout(g, now, r) {
     B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 218, w: 160, h: 30 });
   } else if (g.screen === 'complete' && now - g.crashAt >= RESULTS_DELAY_MS) {
     const y = panelY(g, now);
-    B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 186, y: y + 166, w: 160, h: 44 });
-    B.push({ id: 'menu', label: 'MENU', size: 2, x: 362, y: y + 172, w: 92, h: 32 });
+    B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 152, y: y + 166, w: 150, h: 44 });
+    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
+    B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+  } else if (g.screen === 'runners' && !g.hatch) {
+    RUNNER_LIST.forEach((R, i) => {   // a Hatch button before its card, so it wins the hit test
+      const x = cardX(i);
+      if (canHatch(g.data, R)) B.push({ id: 'hatch', i, label: 'HATCH', size: 2, big: true, x: x + 14, y: CARD.y + 82, w: 92, h: 30 });
+      B.push({ id: 'card', i, card: true, x, y: CARD.y, w: CARD.w, h: CARD.h });
+    });
+    B.push({ id: 'back', label: 'BACK', size: 2, x: 504, y: 304, w: 112, h: 32 });
   }
   return B;
 }
@@ -61,6 +80,7 @@ function box(ctx, x, y, w, h, border, fill, lip) {
 }
 
 function drawButton(ctx, b) {
+  if (b.card) return;   // drawn by drawRunners
   if (b.icon) return drawIcon(ctx, b);
   box(ctx, b.x, b.y, b.w, b.h, PAL.ink, b.big ? PAL.orange : PAL.slate, b.big ? '#C46A12' : '#46546A');
   ctx.fillStyle = 'rgba(255,246,224,0.35)';
@@ -194,10 +214,86 @@ function drawResults(ctx, g, now) {
   drawText(ctx, ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY', cx, y + 220, 2, PAL.sand, 'center');
 }
 
+// One card per runner: the runner if unlocked, else its egg with the bank's
+// progress towards its price. The focused card has a cream frame.
+function drawRunners(ctx, g, now) {
+  const d = g.data, cx = VIEW_W / 2;
+  drawText(ctx, 'RUNNERS', cx + 2, 14, 4, PAL.orange, 'center');
+  drawText(ctx, 'RUNNERS', cx, 12, 4, PAL.ink, 'center');
+  const bank = String(d.eggs);   // the egg bank, top right
+  ctx.drawImage(SPR.egg[0], VIEW_W - 34 - textWidth(bank, 2), 14);
+  drawText(ctx, bank, VIEW_W - 16, 16, 2, PAL.ink, 'right');
+
+  RUNNER_LIST.forEach((R, i) => {
+    const x = cardX(i), y = CARD.y, mid = x + CARD.w / 2;
+    if (i === g.pick) box(ctx, x - 4, y - 4, CARD.w + 8, CARD.h + 8, PAL.ink, PAL.cream, PAL.cream);
+    box(ctx, x, y, CARD.w, CARD.h, PAL.ink, PAL.slate, '#46546A');
+    if (d.unlocked.includes(R.id)) {
+      const img = SPR.runners[R.id].jump;
+      ctx.drawImage(img, mid - 22 - MARGIN, y + 14 + img.oy - MARGIN);
+      if (d.equipped === R.id) drawText(ctx, 'EQUIPPED', mid, y + 84, 2, PAL.cream, 'center');
+      return;
+    }
+    // A locked egg: it rocks now and then once there are enough eggs to hatch it.
+    const egg = SPR.hatchEgg.stages[0], ready = d.eggs >= R.price, beat = Math.floor(now / 110) % 9;
+    const rock = ready && beat < 3 ? [-2, 2, 0][beat] : 0;
+    ctx.drawImage(egg, mid - 22 + rock - MARGIN, y + 10 - MARGIN);
+    ctx.fillStyle = PAL.ink;
+    ctx.fillRect(x + 12, y + 70, 96, 8);
+    ctx.fillStyle = PAL.orange;
+    ctx.fillRect(x + 14, y + 72, 2 * Math.round(46 * Math.min(1, d.eggs / R.price)), 4);
+    if (!ready) drawText(ctx, `${d.eggs}/${R.price}`, mid, y + 86, 2, PAL.cream, 'center');
+  });
+
+  const R = RUNNER_LIST[g.pick], open = d.unlocked.includes(R.id);
+  const hint = open ? (d.equipped === R.id ? 'NOW RUNNING' : 'SPACE OR CLICK TO RUN WITH IT')
+    : d.eggs >= R.price ? `HATCH IT FOR ${R.price} EGGS` : `${R.price - d.eggs} MORE EGGS TO HATCH IT`;
+  drawText(ctx, R.name, cx, 182, 2, PAL.ink, 'center');
+  drawText(ctx, hint, cx, 200, 2, PAL.ink, 'center');
+}
+
+// The hatch scene over the dimmed desert, alone so nothing gives the runner away (GDD 7.1, 9).
+function drawHatch(ctx, g, now, r) {
+  const h = g.hatch, t = now - h.at, cx = VIEW_W / 2, ground = 236;
+  const E = SPR.hatchEgg, ex = cx - 22, ey = ground - 56;
+  dim(ctx, r, 0.7);
+  if (t < HATCH_MS.open) {
+    // Wobbles harder up to the first crack, then a jolt on each crack.
+    const step = HATCH_MS.crack.filter(c => t >= c).length;
+    const k = step ? Math.max(0, 1 - (t - HATCH_MS.crack[step - 1]) / 200) : Math.min(1, t / HATCH_MS.crack[0]);
+    ctx.drawImage(E.stages[step], grid(ex + Math.sin(t / 35) * 4 * k) - MARGIN, ey - MARGIN);
+    return;
+  }
+  // Open: the top flies off in two halves, sparks burst, and the runner pops
+  // out in a hop, landing in the bottom shell.
+  const s = (t - HATCH_MS.open) / 1000;
+  ctx.globalAlpha = Math.max(0, 1 - s / 0.8);
+  for (const [img, dir] of [[E.left, -1], [E.right, 1]]) {
+    ctx.drawImage(img, grid(ex + dir * 90 * s) - MARGIN, grid(ey - 220 * s + 500 * s * s) - MARGIN);
+  }
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2, d = 10 + 70 * Math.min(1, s * 2);
+    ctx.fillStyle = i % 2 ? PAL.orange : PAL.cream;
+    ctx.fillRect(grid(cx + Math.cos(a) * d), grid(ey + 20 + Math.sin(a) * d * 0.7), CELL, CELL);
+  }
+  ctx.globalAlpha = 1;
+  const img = SPR.runners[h.id].jump, hop = Math.min(1, s / 0.45);
+  // It stands in the bottom shell, its feet hidden by the shell's front.
+  ctx.drawImage(img, cx - 22 - MARGIN, grid(ground - 61 - Math.sin(hop * Math.PI) * 40 + 20 * (1 - Math.min(1, s * 8))) + img.oy - MARGIN);
+  ctx.drawImage(E.bottom, ex - MARGIN, ey - MARGIN);
+
+  const pop = 2 * Math.round(-Math.abs(Math.sin(Math.min(1, s / 0.4) * Math.PI)) * 4);
+  drawText(ctx, `${h.name}!`, cx, 70 + pop, 4, PAL.cream, 'center');
+  drawText(ctx, 'HATCHED AND READY TO RUN', cx, 110, 2, PAL.sand, 'center');
+  if (t >= HATCH_MS.done && Math.floor(now / 500) % 2 === 0) drawText(ctx, 'CLICK OR PRESS ANY KEY', cx, 280, 2, PAL.cream, 'center');
+}
+
 export function drawUI(ctx, g, now, r) {
   if (g.screen === 'title') drawTitle(ctx, g, now);
+  else if (g.screen === 'runners') { if (!g.hatch) drawRunners(ctx, g, now); }
   else drawHud(ctx, g, now, r);
   if (g.screen === 'paused') drawPause(ctx, r);
   if (g.screen === 'complete') drawResults(ctx, g, now);
   for (const b of g.buttons) drawButton(ctx, b);
+  if (g.hatch) drawHatch(ctx, g, now, r);
 }

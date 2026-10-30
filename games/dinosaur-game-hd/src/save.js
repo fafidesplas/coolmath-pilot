@@ -1,5 +1,7 @@
 // The save, one localStorage key (GDD 12). A broken or old save resets to the
 // defaults, field by field, and never crashes the game.
+import { RUNNER_IDS } from './config.js';
+
 const KEY = 'cm_dinosaur-game-hd_save';
 
 export const defaults = () => ({
@@ -24,10 +26,19 @@ function merge(def, saved) {
   return def;
 }
 
+// Only known runners stay unlocked, the T-Rex always is, and the equipped
+// runner must be an unlocked one.
+function check(data) {
+  data.unlocked = ['trex', ...new Set(data.unlocked.filter(id => id !== 'trex' && RUNNER_IDS.includes(id)))];
+  if (!data.unlocked.includes(data.equipped)) data.equipped = 'trex';
+  if (!data.unlocked.includes(data.p2Runner)) data.p2Runner = 'trex';
+  return data;
+}
+
 export function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY));
-    return saved && saved.v === 1 ? merge(defaults(), saved) : defaults();
+    return saved && saved.v === 1 ? check(merge(defaults(), saved)) : defaults();
   } catch {
     return defaults();
   }

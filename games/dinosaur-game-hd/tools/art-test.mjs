@@ -3,7 +3,7 @@
 // touching something. Sprites are cell maps (art.js) drawn CELL px per cell
 // with a 1 cell outline.
 //   node tools/art-test.mjs
-import { REX, ART, CELL } from '../src/art.js';
+import { RUNNERS, ART, CELL } from '../src/art.js';
 import { RUNNER, RUNNER_BOXES, OBSTACLES } from '../src/config.js';
 
 let failed = 0, passed = 0;
@@ -46,23 +46,28 @@ const check = (name, sprite, boxes, limit = 2) => {
   ok(g <= limit, `${name}: every box within ${limit} px of the outline (worst ${g} px)`);
 };
 
-const standing = { ...Object.fromEntries(REX.run.map((s, i) => [`T-Rex run ${i}`, s])), 'T-Rex jump': REX.jump, 'T-Rex crash': REX.crash, 'T-Rex sleep': REX.sleep };
-for (const [name, s] of Object.entries(standing)) {
-  ok(s.oy + s.rows.length * CELL === RUNNER.height, `${name}: feet on the footprint's bottom`);
-  // The one exception: the original's body box reaches up to 4 px into the
-  // notch between the tail and the back (GDD 3.4, Pao's call).
-  check(name, s, RUNNER_BOXES.run, 4);
-}
+for (const [id, R] of Object.entries(RUNNERS)) {
+  const standing = { ...Object.fromEntries(R.run.map((s, i) => [`${id} run ${i}`, s])), [`${id} jump`]: R.jump, [`${id} crash`]: R.crash, [`${id} sleep`]: R.sleep };
+  for (const [name, s] of Object.entries(standing)) {
+    ok(s.oy + s.rows.length * CELL === RUNNER.height, `${name}: feet on the footprint's bottom`);
+    // The one exception: the original's body box reaches up to 4 px into the
+    // notch between the tail and the back, on every runner with the T-Rex's
+    // back (GDD 3.4, Pao's call).
+    check(name, s, RUNNER_BOXES.run, 4);
+  }
 
-// The duck box is placed from the standing top, 22 px above the duck
-// footprint's. The flat slide can't fill the top of the box (GDD 3.4): check
-// the part below the slide's top.
-const shift = RUNNER.height - RUNNER.heightDuck;
-const slides = { 'T-Rex slide 0': REX.slide[0], 'T-Rex slide 1': REX.slide[1], 'T-Rex slide crash': REX.slideCrash };
-for (const [name, s] of Object.entries(slides)) {
-  ok(s.oy + s.rows.length * CELL === RUNNER.heightDuck, `${name}: on the duck footprint's bottom`);
-  const low = RUNNER_BOXES.duck.map(([x, y, w, h]) => [x, Math.max(y - shift, s.oy), w, y - shift + h - Math.max(y - shift, s.oy)]);
-  check(name, s, low);
+  // The duck box is placed from the standing top, 22 px above the duck
+  // footprint's. The flat slide can't fill the top of the box (GDD 3.4): check
+  // the part below the slide's top.
+  const shift = RUNNER.height - RUNNER.heightDuck;
+  const slides = { [`${id} slide 0`]: R.slide[0], [`${id} slide 1`]: R.slide[1], [`${id} slide crash`]: R.slideCrash };
+  for (const [name, s] of Object.entries(slides)) {
+    ok(s.oy + s.rows.length * CELL === RUNNER.heightDuck, `${name}: on the duck footprint's bottom`);
+    const low = RUNNER_BOXES.duck.map(([x, y, w, h]) => [x, Math.max(y - shift, s.oy), w, y - shift + h - Math.max(y - shift, s.oy)]);
+    check(name, s, low);
+  }
+  for (const k of new Set(R.slide.concat(R.run, [R.jump]).flatMap(s => [...s.rows.join('')])))
+    ok(k === '.' || k === 'w' || k === 'k' || k in R.colors, `${id}: cell '${k}' has a color`);
 }
 
 for (const id of ['cactus-small', 'cactus-large']) {
@@ -72,6 +77,7 @@ for (const id of ['cactus-small', 'cactus-large']) {
 }
 ART.ptero.forEach((s, i) => check(`ptero ${i}`, s, OBSTACLES.ptero.boxes));
 ART.egg.forEach((s, i) => ok(same(s.rows), `egg ${i}: rows all the same length`));
+for (const [k, v] of Object.entries(ART.hatchEgg)) [].concat(v).forEach((s, i) => ok(same(s.rows), `hatch egg ${k} ${i}: rows all the same length`));
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -202,8 +202,8 @@ An endless runner has no levels: the run itself is the level, and the original's
 |---|---|---|
 | **T-Rex** | free | big head, tiny arms, the classic |
 | **Velociraptor** | hatch for **300 eggs** | small and quick, long stiff tail, sickle claw; feathered, rust brown; ducks low and flat |
-| **Pachycephalosaurus** | hatch for **1200 eggs** | ducks with its dome forward |
-| **Parasaurolophus** | hatch for **3000 eggs** | long tube crest swept back, teal; ducks with the crest flat along its back |
+| **Pachycephalosaurus** | hatch for **1200 eggs** | thick bone dome ringed with knobs, dusty rose; ducks with its dome forward |
+| **Parasaurolophus** | hatch for **3000 eggs** | long orange tube crest swept back, teal, cream duck bill; ducks with the crest flat along its back |
 | **Hadrosaur** | reach **1000 m** in one run | flat duck bill, no crest, olive and cream; ducks with its bill forward |
 | **Ceratosaurus** | play the daily run **7 days in a row** | nose horn and a bumpy back, red-orange stripes |
 | **Megalosaurus** | run **50 km** in total | the first dinosaur ever named: a plain, heavy theropod, brown with a cream belly |
@@ -212,7 +212,7 @@ An endless runner has no levels: the run itself is the level, and the original's
 | **Allosaurus** | win **10 two-player races** | horn crests over the eyes, purple-gray; the **2P-only bonus** |
 | **Spinosaurus** | unlock every other runner **except Allosaurus** | tall back sail, long croc snout, deep blue with an orange sail; the completionist prize |
 
-- **Hatching:** spending eggs plays a short scene: the egg wobbles, cracks in 3 steps, and the dinosaur pops out with a jingle. The hatched runner is equipped right away.
+- **Hatching:** spending eggs plays a short scene over the dimmed desert, with nothing else on screen so the runner stays a surprise: the egg wobbles harder for 0.7 s, cracks at 0.7, 1.1 and 1.5 s (a click each), the top flies off in two halves at 1.9 s with a spark burst and a jingle, and the dinosaur hops out and lands in the bottom shell with its name. Any key or click closes it from 2.5 s. The eggs are spent and the runner unlocked and equipped the moment Hatch is pressed, so closing early loses nothing. Any egg dinosaur there are enough eggs for can be hatched, in any order.
 - **Allosaurus and 2P:** any race that ends with a winner counts (P1 or P2 wins, not a draw), since both players share one save. A solo player can farm it by playing both lanes alone; that's accepted, it's a bonus. Spinosaurus doesn't need Allosaurus, so a solo player can finish the collection.
 - **Achievement runners** unlock when the condition is met. They are announced on the results screen, not during the run.
 - **Fitting the footprint:** the Spinosaurus's sail and the Parasaurolophus's crest stay inside the 47 px height (a smaller head and body under them); the Therizinosaurus's claws stay inside the front of the box. Every slide pose lays the body flat on its belly and flattens the sail, crest or claws, so each one passes under a mid pterodactyl like the T-Rex.
@@ -249,7 +249,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 - **Race setup (2P):** both lanes with their runners. P1 changes runner with A/D, P2 with Left/Right; on touch, arrows beside each runner. P1 starts with the equipped runner, P2 with the last runner P2 used (or the T-Rex with a "P2" badge). One big **Race!** button: two clicks from the title.
 - **Racing:** a 3-2-1 countdown (1.5 s), then both lanes run from the same seed at the same speed. **The first crash ends the race:** the crashed runner stays in its lane as a ghost (faded, X eyes) and the lane freezes; the winner keeps running for a 1.5 s victory lap. Both crashing in the same step is a **Draw**.
 - **Race results:** "P1 WINS" (or P2, or DRAW) with a crown on the winner, the winner's distance, both players' eggs (they go to the shared bank), and a running tally ("P1 2 – 1 P2") kept until you return to the menu. **Rematch** (big) / **Runners** / **Menu**. No best-of-3.
-- **Runners:** a 6×2 grid of the 11 runners (one slot empty). Unlocked ones show their sprite; a selected runner runs on a treadmill strip at the top. Locked egg dinosaurs show as an egg with a progress bar ("Velociraptor 180 / 300 🥚") and a **Hatch** button when there are enough eggs; locked achievement runners show as a silhouette with their condition and progress ("Reach 1000 m: best 640"). Click an unlocked runner to equip it. The total egg bank is shown top right.
+- **Runners:** a row of cards, one per runner (4 so far: the T-Rex and the 3 egg dinosaurs; a 6×2 grid once all 11 exist). The focused runner runs on a treadmill on the desert below the cards (the scene scrolls behind it), with its name and a hint line under the cards. Unlocked ones show their sprite; the equipped one says EQUIPPED. Left/Right (or A/D) move the focus, Space or Enter equips or hatches, Esc or Back returns to the screen it was opened from (the title, or the results with their run). Locked egg dinosaurs show as an egg with a progress bar ("Velociraptor 180 / 300 🥚") and a **Hatch** button when there are enough eggs; locked achievement runners show as a silhouette with their condition and progress ("Reach 1000 m: best 640"). Click an unlocked runner to equip it. The total egg bank is shown top right.
 
 ## 9. Art direction
 - **Family:** HD Pixel (new): a 16-bit SNES look, chunky sprites with dark outlines.
@@ -388,6 +388,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — The 3 egg dinosaurs and the Runners screen built (7.1, 8): placeholder cell-map sprites for the Velociraptor, Pachycephalosaurus (dusty rose, bone dome) and Parasaurolophus (orange crest), each covering the T-Rex's hitboxes; hatch scene timings; a Runners button on the title and the results.
 - 2026-10-30 — The T-Rex's back keeps the one-pager's notch between the tail and the back (3.4); the original's body box reaches up to 4 px into it, Pao's call.
 - 2026-10-30 — Chunky pixels (9): every art pixel is 2×2 logical px, like the one-pager: sprites, background, dust and UI. Cacti, pterodactyl and egg redrawn as cell maps over their hitboxes. Physics unchanged. Pao's call.
 - 2026-10-30 — The T-Rex redrawn from the one-pager's art sample, every frame (3.4, 9): the tail rises up and back again, the jump uses the standing pose, the slide is the one-pager's low duck with the legs laid back. The jump frame's hitbox exception is gone. Pao's call.

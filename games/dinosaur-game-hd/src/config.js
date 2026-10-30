@@ -102,3 +102,6 @@ export const HATCH = [
   { id: 'pachycephalosaurus', name: 'Pachycephalosaurus', price: 1200 },
   { id: 'parasaurolophus', name: 'Parasaurolophus', price: 3000 },
 ];
+// Every runner built so far, in the Runners screen's order.
+export const RUNNER_LIST = [{ id: 'trex', name: 'T-Rex', price: 0 }, ...HATCH];
+export const RUNNER_IDS = RUNNER_LIST.map(r => r.id);

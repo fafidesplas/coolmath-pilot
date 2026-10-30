@@ -2,7 +2,7 @@
 // Everything is drawn straight onto the display canvas through a scale
 // transform, so positions interpolated between 60 Hz steps land on device
 // pixels and 144 Hz screens don't judder. The layers are pre-rendered once.
-import { VIEW_W, VIEW_H, LANE, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS } from './config.js';
+import { VIEW_W, VIEW_H, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS, RUNNER_IDS } from './config.js';
 import { drawText } from './font.js';
 import { mulberry32 } from './gen.js';
 import { SPR, PAL, MARGIN, up } from './sprites.js';
@@ -286,7 +286,8 @@ export class Renderer {
   resetNight() { this.night = 0; }
 
   draw(g, now, dt) {
-    const { ctx, s } = this, run = g.run;
+    // The Runners screen hides the run: the runner runs on a treadmill instead.
+    const { ctx, s } = this, menu = g.screen === 'runners', run = menu ? null : g.run;
     const target = run?.night ? 1 : 0;
     this.night += Math.max(-dt, Math.min(dt, target - this.night));
 
@@ -302,7 +303,7 @@ export class Renderer {
     b.x0 = -ox / s; b.x1 = (this.cv.width - ox) / s; b.y0 = -oy / s; b.y1 = (this.cv.height - oy) / s;
 
     const a = g.alpha, lerp = (p, c) => p + (c - p) * a;
-    const scroll = run ? lerp(run.prevScrollPx, run.scrollPx) : 0;
+    const scroll = run ? lerp(run.prevScrollPx, run.scrollPx) : menu ? Math.max(0, now - g.screenAt) * RUN.speed * 60 / 1000 : 0;
     this.drawBackground(scroll, now);
 
     if (run) {
@@ -312,7 +313,8 @@ export class Renderer {
     const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
     if (g.screen !== 'paused') this.dust.update(dt);
     this.dust.draw(ctx, this.night, false);
-    this.drawRunner(run, y, now, g.showBoxes);
+    const focus = RUNNER_IDS[g.pick], shown = menu && g.data.unlocked.includes(focus) ? focus : g.data.equipped;
+    if (!(menu && g.hatch)) this.drawRunner(SPR.runners[shown], menu ? { timeMs: Math.max(0, now - g.screenAt) } : run, y, now, g.showBoxes && !menu);
     this.dust.draw(ctx, this.night, true);
     this.drawPickups(g.fx, now);
 
@@ -432,8 +434,8 @@ export class Renderer {
     }
   }
 
-  drawRunner(run, y, now, boxes) {
-    const ctx = this.ctx, T = SPR.trex, top = LANE.top1P;
+  drawRunner(T, run, y, now, boxes) {
+    const ctx = this.ctx, top = LANE.top1P;
     let img, dy = top + y;
     if (!run) img = T.sleep;
     else if (run.ducking) {

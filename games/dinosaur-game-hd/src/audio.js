@@ -76,3 +76,6 @@ export function slide(sliding) {
     scrape = null;
   }
 }
+// Hatching: a dry click per crack, then a 4-note jingle as the runner pops out.
+export const crack = () => { noise(0.05, 0.25, 2600); tone('square', 900, 600, 0.04, 0.03); };
+export const hatch = () => [523, 659, 784, 1046].forEach((f, i) => tone('square', f, f, i === 3 ? 0.22 : 0.09, 0.045, i * 0.09));

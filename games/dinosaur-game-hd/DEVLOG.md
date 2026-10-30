@@ -1,5 +1,13 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — The first 3 runners to hatch
+- Velociraptor, Pachycephalosaurus and Parasaurolophus, as cell maps in `src/art.js` like the T-Rex: every runner is now an entry in `RUNNERS` with its own colors, body, legs and slide. All keep the T-Rex's silhouette, so the hitboxes are unchanged. Velociraptor: rust with feather bands, flat toothy snout, a stiff straight tail, sickle claws. Pachycephalosaurus: dusty rose with a bone dome; it slides dome first. Parasaurolophus: teal with an orange tube crest and a cream bill; the crest lies flat along its back in the slide. Placeholders until the final sprite sheet.
+- Runners screen (title and results have a RUNNERS button): one card per runner, egg cards with a progress bar and a HATCH button once there are enough eggs, the egg bank top right, and the focused runner on a treadmill. Mouse or Left/Right + Space; Esc goes back where you came from.
+- Hatch scene: a big egg (22×28 art px) wobbles, cracks 3 times, the top flies off, and the runner hops out. New `crack` and `hatch` sounds. The eggs are spent, the runner unlocked and equipped, and the save written the moment Hatch is pressed. `runner:hatch:<id>` and `runner:equip:<id>` events.
+- The save drops unknown runner ids and falls back to the T-Rex if the equipped runner isn't unlocked.
+- `tools/art-test.mjs` checks every runner's frames against the hitboxes (168 checks pass): the Velociraptor is within 2 px everywhere; the Pachycephalosaurus and Parasaurolophus keep the T-Rex's back, so they share its 4 px notch exception (GDD 3.4); physics and egg tests pass. Hatched all 3 in Chrome, then ran with each; no console errors.
+- Next: Pao to judge the 3 looks; then the night ground seam and the cold playtest.
+
 ## 2026-10-30 — Tail notch as in the one-pager
 - Pao: a bump on the back that isn't in the one-pager. It was the corner filled between the tail and the back for the hitbox. The standing frames now use the one-pager's rows exactly, notch included.
 - The original's body box now reaches up to 4 px past the outline at the top of the notch (was within 2 px); a partial fill still left 3 px, so it wasn't worth the bump. Recorded as an exception in GDD 3.4; `tools/art-test.mjs` allows 4 px there.

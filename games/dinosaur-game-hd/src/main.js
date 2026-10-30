@@ -2,14 +2,14 @@
 // The sim runs fixed 60 Hz steps from an accumulator (GDD 3.2); the renderer
 // draws every display frame, interpolating between the last two steps.
 import { Run } from './sim.js';
-import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RUN, EGGS, HATCH, ANIM, DEBUG } from './config.js';
+import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RUN, EGGS, HATCH, RUNNER_LIST, RUNNER_IDS, ANIM, DEBUG } from './config.js';
 import { load, save } from './save.js';
 import * as sfx from './audio.js';
 import { GA } from './analytics.js';
 import { Keys, JUMP_KEYS, DUCK_KEYS } from './input.js';
 import { Renderer, FX_MS } from './render.js';
 import { FOOTFALL_X } from './art.js';
-import { layout, hitButton } from './ui.js';
+import { layout, hitButton, canHatch, HATCH_MS } from './ui.js';
 
 const canvas = document.getElementById('view');
 const r = new Renderer(canvas);
@@ -19,7 +19,7 @@ sfx.setEnabled(data.settings.sfx);
 
 // Everything the renderer and UI read.
 const g = {
-  screen: 'title',      // 'title' | 'playing' | 'paused' | 'complete'
+  screen: 'title',      // 'title' | 'playing' | 'paused' | 'complete' | 'runners'
   mode: 'endless',
   run: null,
   alpha: 0,             // how far between the last two steps
@@ -33,6 +33,8 @@ const g = {
   sliding: false, wasInAir: false, runFrame: -1,
   flashUntil: 0, shakeUntil: 0,
   showBoxes: false, invincible: false,
+  pick: 0, screenAt: 0, runnersFrom: 'title',   // the Runners screen: focused card, when it opened, where Back goes
+  hatch: null,          // the hatch scene: { id, name, at, step }
 };
 const pointers = new Map();   // pointerId -> 'jump' | 'duck'
 let acc = 0, last = performance.now();
@@ -63,6 +65,68 @@ function retry() {
 function menu() {
   g.screen = 'title';
   g.run = null;
+}
+
+// ---- runners (GDD 7.1, 8) ------------------------------------------------------------------
+function openRunners() {
+  g.runnersFrom = g.screen;
+  g.screen = 'runners';
+  g.screenAt = performance.now();
+  g.pick = RUNNER_IDS.indexOf(data.equipped);
+  pointers.clear();
+}
+
+function back() {
+  if (g.hatch) return;
+  g.screen = g.runnersFrom;   // the results keep their run
+}
+
+// Equips an unlocked runner, or hatches a locked one there are eggs for.
+function choose(i) {
+  const R = RUNNER_LIST[i];
+  g.pick = i;
+  if (data.unlocked.includes(R.id)) equip(R.id);
+  else if (canHatch(data, R)) hatch(R);
+}
+
+function equip(id) {
+  if (data.equipped === id) return;
+  data.equipped = id;
+  save(data);
+  GA.design(`runner:equip:${id}`);
+}
+
+// The eggs are spent and the runner unlocked and equipped at once, so closing
+// the scene early never loses it.
+function hatch(R) {
+  data.eggs -= R.price;
+  data.unlocked.push(R.id);
+  save(data);
+  GA.design(`runner:hatch:${R.id}`, R.price);
+  equip(R.id);
+  g.hatch = { id: R.id, name: R.name, at: performance.now(), step: 0 };
+}
+
+// A click per crack, then the jingle as it opens.
+function updateHatch(now) {
+  const h = g.hatch;
+  if (!h) return;
+  const due = HATCH_MS.crack.filter(c => now - h.at >= c).length + (now - h.at >= HATCH_MS.open ? 1 : 0);
+  for (; h.step < due; h.step++) h.step < 3 ? sfx.crack() : sfx.hatch();
+}
+
+function closeHatch() {
+  if (performance.now() - g.hatch.at >= HATCH_MS.done) g.hatch = null;
+}
+
+function runnersKey(code) {
+  const n = RUNNER_LIST.length;
+  if (code === 'ArrowLeft' || code === 'KeyA') g.pick = (g.pick + n - 1) % n;
+  else if (code === 'ArrowRight' || code === 'KeyD') g.pick = (g.pick + 1) % n;
+  else if (code === 'Space' || code === 'Enter') choose(g.pick);
+  else if (code === 'Escape' || code === 'Backspace') back();
+  else return;
+  sfx.click();
 }
 
 function pause() {
@@ -177,6 +241,8 @@ function handleEvents() {
 keys.onDown = (code, first) => {
   sfx.unlock();
   const s = g.screen;
+  if (g.hatch) return closeHatch();
+  if (s === 'runners') return runnersKey(code);
   if (JUMP_KEYS.includes(code)) {
     if (!first) return;
     if (s === 'title') startRun(true);   // the first press is also the first jump
@@ -209,17 +275,21 @@ keys.onUp = (code, lastOfGroup) => {
   } else if (DUCK_KEYS.includes(code) && lastOfGroup) release('duck');
 };
 
-const ACTIONS = { play: () => startRun(false), sound: toggleSound, pause, resume, restart: retry, retry, menu };
+const ACTIONS = {
+  play: () => startRun(false), sound: toggleSound, pause, resume, restart: retry, retry, menu,
+  runners: openRunners, back, card: b => choose(b.i), hatch: b => choose(b.i),
+};
 
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault();
   sfx.unlock();
   try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic pointers (tests) */ }
+  if (g.hatch) return closeHatch();
   const [x, y] = r.toLogical(e.clientX, e.clientY);
   const b = hitButton(layout(g, performance.now(), r), x, y);
   if (b) {
     sfx.click();
-    ACTIONS[b.id]();
+    ACTIONS[b.id](b);
   } else if (g.screen === 'playing') {
     const action = y >= VIEW_H * 2 / 3 ? 'duck' : 'jump';   // bottom third ducks (GDD 4)
     pointers.set(e.pointerId, action);
@@ -286,6 +356,7 @@ function frame(now) {
   updateSlide(dt);
   updateRunDust();
   updateSlideHint(now);
+  updateHatch(now);
   while (g.fx.length && now - g.fx[0].t > FX_MS) g.fx.shift();
   g.buttons = layout(g, now, r);
   r.draw(g, now, dt);
