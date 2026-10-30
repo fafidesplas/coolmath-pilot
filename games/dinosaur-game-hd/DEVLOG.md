@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Longer, pointier running tail
+- Run, crash and sleep frames: the blocky tail is now a slim point sweeping up and back like the slide's, with Slate dark on its underside. The tip reaches 8 px past the 44×47 footprint, so these frames are 52 px wide and drawn 8 px further left (`TAIL_OUT`, `canvas.ox`); the body doesn't move.
+- The rump stays full, so the original's tail boxes are still covered to within 2 px; the hitbox doesn't change (GDD 3.4 notes it).
+- Physics and egg tests still pass; checked in Chrome.
+
 ## 2026-10-30 — Slide frames, second paint-over pass
 - Slide 1: the tail slimmed again (top edge shaved 1–4 px more). Slide 2: the tip trimmed by a pixel, the far leg's top made smaller. The slide crash frame follows slide 1.
 

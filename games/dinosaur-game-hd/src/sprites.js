@@ -38,7 +38,6 @@ const TREX = [
   [25, 0, 17, 1, 'slate'], [24, 1, 20, 9, 'slate'], [24, 10, 16, 4, 'slate'],   // head, jaw
   [20, 12, 10, 8, 'slate'],                                                      // neck
   [8, 17, 22, 17, 'slate'],                                                      // body
-  [1, 18, 8, 8, 'slate'], [4, 26, 5, 3, 'slate'],                                // tail
   [30, 21, 5, 2, 'slate'], [33, 23, 2, 2, 'slate'],                              // arm
 ];
 const BODY_MARKS = [[10, 17, 16, 2, 'slateDark'], [17, 23, 11, 10, 'cream'], [42, 3, 1, 1, 'ink']];
@@ -50,7 +49,25 @@ const MOUTH_OPEN = [[33, 10, 7, 2, 'ink'], [35, 10, 1, 1, 'cream'], [38, 10, 1, 
 
 const leg = (x, c) => [[x, 31, 6, 6, c], [x + 1, 37, 4, 7, c], [x + 1, 44, 7, 3, c]];
 const legUp = (x, c) => [[x, 31, 6, 5, c], [x + 2, 36, 4, 4, c], [x + 2, 40, 7, 2, c]];
-const trex = (legs, face) => sprite(44, 47, [...legs, ...TREX], [...BODY_MARKS, ...face]);
+// The standing tail matches the slide's: a full rump tapering to a slim point
+// up and back, Slate dark on its underside. The tip reaches TAIL_OUT px past
+// the 44×47 footprint, so these frames are wider; draw them TAIL_OUT px further
+// left (canvas.ox). The rump still covers the original's tail boxes to within 2 px.
+const TAIL_OUT = 8;
+const TAIL = [], TAIL_SHADE = [];
+for (let x = -TAIL_OUT; x <= 9; x++) {
+  const t = (x + TAIL_OUT) / (9 + TAIL_OUT);
+  const top = Math.round(10 + t * 7);
+  const bot = Math.max(top + 1 + Math.round(t * 3), Math.round(28 - Math.pow(Math.max(0, 9 - x) / 12, 1.6) * 12));
+  TAIL.push([x, top, 1, bot - top + 1, 'slate']);
+  if (x > -TAIL_OUT + 1 && x < 4) TAIL_SHADE.push([x, bot - (t < 0.4 ? 0 : 1), 1, t < 0.4 ? 1 : 2, 'slateDark']);
+}
+const shift = rects => rects.map(([x, y, w, h, c]) => [x + TAIL_OUT, y, w, h, c]);
+function trex(legs, face) {
+  const img = sprite(44 + TAIL_OUT, 47, shift([...legs, ...TAIL, ...TREX]), shift([...TAIL_SHADE, ...BODY_MARKS, ...face]));
+  img.ox = TAIL_OUT;
+  return img;
+}
 
 // The jump: legs stretched long with the toes pointing down, the tail
 // drooping to a point down and back. Same outline over the hitbox template.
@@ -60,7 +77,6 @@ for (let y = 18; y <= 41; y++) {   // a rounded root on the back, tapering down 
   const t = Math.max(0, y - 24) / 17, left = y < 20 ? 21 - y : Math.round(1 + t * 1.5), right = Math.round(9 - t * 6);
   TAIL_DOWN.push([left, y, right - left + 1, 1, 'slate']);
 }
-const TREX_JUMP = TREX.filter(r => r[0] > 4);   // the standing tail out, the drooping one in
 // The back slopes in one line from the neck down to the tail tip (Pao's
 // paint-over): [y, first x] per row, everything left of it cut away.
 const JUMP_BACK = new Map([[16, 14], [17, 13], [18, 12], [19, 9], [20, 8], [21, 7], [22, 6], [23, 5], [24, 4],
@@ -74,7 +90,7 @@ function clipBack(rects) {
   return out;
 }
 const jumpPose = face => sprite(44, 47,
-  clipBack([...legLong(9, 'slateDark'), ...legLong(19, 'slate'), ...TAIL_DOWN, ...TREX_JUMP]),
+  clipBack([...legLong(9, 'slateDark'), ...legLong(19, 'slate'), ...TAIL_DOWN, ...TREX]),
   [...clipBack(BODY_MARKS), ...face]);
 
 // ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------

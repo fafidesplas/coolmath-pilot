@@ -397,7 +397,7 @@ export class Renderer {
     // ground. Drawing only; the hitbox doesn't change.
     const f = run && !run.jumping && !run.ducking && !run.crashed ? Math.floor((now - this.landAt) / SQUASH_MS) : -1;
     const [sw, sh] = SQUASH[f] || [0, 0];
-    ctx.drawImage(img, RUNNER.x - 1 - sw / 2, dy - 1 + sh, img.width + sw, img.height - sh);
+    ctx.drawImage(img, RUNNER.x - 1 - (img.ox || 0) - sw / 2, dy - 1 + sh, img.width + sw, img.height - sh);
 
     if (!run) {   // asleep on the title: Zz
       ctx.fillStyle = PAL.ink;
