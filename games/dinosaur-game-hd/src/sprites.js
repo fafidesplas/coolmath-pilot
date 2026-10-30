@@ -55,17 +55,18 @@ const trex = (legs, face) => sprite(44, 47, [...legs, ...TREX], [...BODY_MARKS, 
 // ---- T-Rex sliding on its belly (the duck), 59×25 -------------------------------------------
 // Same footprint and hitbox as the original's duck; only the pose changes.
 const SLIDE = [
-  [40, 1, 18, 10, 'slate'], [40, 11, 14, 3, 'slate'],   // head, jaw, low and forward
-  [8, 7, 34, 15, 'slate'], [10, 22, 30, 3, 'slate'],    // body, belly on the ground
-  [44, 15, 4, 2, 'slate'], [47, 16, 2, 2, 'slate'],     // arm reaching forward
+  [41, 3, 16, 8, 'slate'], [41, 11, 12, 3, 'slate'],    // head raised a little, leading the slide; jaw
+  [36, 9, 7, 8, 'slate'],                               // neck
+  [9, 13, 34, 8, 'slate'], [11, 21, 30, 2, 'slate'],    // long flat body, belly on the ground
+  [42, 18, 4, 2, 'slate'], [45, 19, 2, 2, 'slate'],     // arm reaching forward
 ];
-const SLIDE_MARKS = [[12, 7, 22, 2, 'slateDark'], [14, 17, 24, 6, 'cream'], [56, 4, 1, 1, 'ink'], [47, 11, 7, 1, 'ink']];
-const SLIDE_EYE = [[44, 3, 3, 3, 'cream'], [45, 4, 2, 2, 'ink']];
-const SLIDE_DIZZY = [[44, 3, 3, 3, 'cream'], [44, 3, 1, 1, 'ink'], [46, 3, 1, 1, 'ink'], [45, 4, 1, 1, 'ink'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink']];
+const SLIDE_MARKS = [[13, 13, 22, 2, 'slateDark'], [15, 19, 24, 2, 'cream'], [55, 5, 1, 1, 'ink'], [47, 11, 6, 1, 'ink']];
+const SLIDE_EYE = [[44, 5, 3, 3, 'cream'], [45, 6, 2, 2, 'ink']];
+const SLIDE_DIZZY = [[44, 5, 3, 3, 'cream'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink'], [45, 6, 1, 1, 'ink'], [44, 7, 1, 1, 'ink'], [46, 7, 1, 1, 'ink']];
 // Tail out straight behind and legs tucked back; the two frames flick the tail and feet.
 const slideBack = flick => [
-  [0, 11 + flick, 10, 4, 'slate'], [3, 9 + flick, 6, 2, 'slate'],     // tail
-  [12, 16, 9, 6, 'slateDark'], [2 + flick, 20, 11, 3, 'slateDark'],   // tucked leg, foot pointing back
+  [0, 15 + flick, 11, 3, 'slate'], [3, 14 + flick, 7, 1, 'slate'],   // tail
+  [14, 18, 8, 4, 'slateDark'], [3 + flick, 20, 12, 3, 'slateDark'],  // tucked leg, foot pointing back
 ];
 const slide = (flick, eye) => sprite(59, 25, [...slideBack(flick), ...SLIDE], [...SLIDE_MARKS, ...eye]);
 

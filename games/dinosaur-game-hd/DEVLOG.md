@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slimmer slide
+- Pao: the belly looked huge. The slide body is now long and flat (about half as tall) with a thin belly stripe, the head raised a little and leading. Same footprint and hitbox; GDD 3.4 notes why the flat pose can't fill the top of the duck box and why that never causes an unseen hit.
+
 ## 2026-10-30 — The duck becomes a belly slide
 - Pao's idea: the duck is now drawn as a belly slide (2 frames: tail and feet flick), with a dizzy slide frame for crashes mid-slide. Same 59×25 footprint and hitbox; input and timing are the original's duck (held as long as down is held).
 - Dust: a sand burst when the slide starts, a bigger one when a jump or fast-fall lands into it, a trail while sliding; a fixed pool of 48 puffs, dimmed at night. A quiet looping scrape while sliding. The first-run hint says SLIDE.
