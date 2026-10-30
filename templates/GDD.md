@@ -1,7 +1,9 @@
 # <Game name> — Game design document
 
 **Status:** Draft | In review | Approved
-**Owner:** <name> · **Reviewed by:** <name> · **Last updated:** <YYYY-MM-DD>
+**Owner:** <name>
+**Reviewed by:** <name>
+**Last updated:** <YYYY-MM-DD>
 
 > One line: what the player does and why it's fun.
 
