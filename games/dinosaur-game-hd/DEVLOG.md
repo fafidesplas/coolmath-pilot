@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slice step 1: physics sim
+- `src/sim.js` (no drawing), `src/gen.js` (seeded obstacles) and `src/config.js` (the original's numbers) run one original frame per 60 Hz step, with whole-pixel rounding and `floor(speed)` scrolling.
+- `tools/physics-test.mjs`: 40 checks pass. Measured: jumps 62 px / 0.47 s (shortest) to 91 px / 0.58 s (held) at speed 6, 87 px / 0.55 s at 9.5, 90 px / 0.57 s at 13; fast-fall from frame 10 lands at 0.28 s; top speed after 7,001 frames at 1,663 m; first obstacle at 3 s; night lasts 12 s; generator rules hold over 300 seeds; every cactus group clearable at its speed; pterodactyl heights hit and miss as in the original.
+- `physics.html`: boxes only, for a side-by-side check with `chrome://dino` (H boxes, P pause, . one frame, , slow motion, I invincible, `?seed=`). Not the game, so `index.html` doesn't exist yet.
+- Next: Pao plays `physics.html` next to the original; once it feels the same, step 2 (shell).
+
 ## 2026-10-30 — Physics checked against the original
 - Read the Chromium dino source (numbers and rules only) and simulated its jump frame by frame. Speed, acceleration, cap, gaps, obstacle sizes, pterodactyl heights, night and distance were right in `GDD.md`.
 - Corrected in `GDD.md` 3.3–3.5: jump apex 62 px (shortest) to 87–91 px (held), airtime 0.47–0.58 s; a release before 30 px gives a full jump; a held jump key re-jumps on landing; fast-fall ends when down is released; whole-pixel positions and `floor(speed)` scrolling; standing-size outer hitbox while ducking; only the nearest obstacle is checked; 1.2 s Space restart lock. Egg and golden egg heights follow the new apex.
