@@ -57,18 +57,21 @@ const trex = (legs, face) => sprite(44, 47, [...legs, ...TREX], [...BODY_MARKS, 
 const SLIDE = [
   [41, 3, 16, 8, 'slate'], [41, 11, 12, 3, 'slate'],    // head raised a little, leading the slide; jaw
   [36, 9, 7, 8, 'slate'],                               // neck
-  [9, 13, 34, 8, 'slate'], [11, 21, 30, 2, 'slate'],    // long flat body, belly on the ground
+  [18, 13, 25, 8, 'slate'], [20, 21, 21, 2, 'slate'],   // short body, belly on the ground
   [42, 18, 4, 2, 'slate'], [45, 19, 2, 2, 'slate'],     // arm reaching forward
 ];
-const SLIDE_MARKS = [[13, 13, 22, 2, 'slateDark'], [15, 19, 24, 2, 'cream'], [55, 5, 1, 1, 'ink'], [47, 11, 6, 1, 'ink']];
+const SLIDE_MARKS = [[20, 13, 17, 2, 'slateDark'], [22, 19, 18, 2, 'cream'], [55, 5, 1, 1, 'ink'], [47, 11, 6, 1, 'ink']];
 const SLIDE_EYE = [[44, 5, 3, 3, 'cream'], [45, 6, 2, 2, 'ink']];
 const SLIDE_DIZZY = [[44, 5, 3, 3, 'cream'], [44, 5, 1, 1, 'ink'], [46, 5, 1, 1, 'ink'], [45, 6, 1, 1, 'ink'], [44, 7, 1, 1, 'ink'], [46, 7, 1, 1, 'ink']];
-// Tail out straight behind and legs tucked back; the two frames flick the tail and feet.
+// A little tail curling up behind, both back legs stretched out along the sand;
+// the two frames flick the tail tip and the feet.
 const slideBack = flick => [
-  [0, 15 + flick, 11, 3, 'slate'], [3, 14 + flick, 7, 1, 'slate'],   // tail
-  [14, 18, 8, 4, 'slateDark'], [3 + flick, 20, 12, 3, 'slateDark'],  // tucked leg, foot pointing back
+  [12, 13, 8, 5, 'slate'], [8, 10, 6, 5, 'slate'], [5, 7 + flick, 4, 4, 'slate'],   // tail, curling up
+  [13, 15, 8, 5, 'slateDark'], [4 + flick, 18, 11, 2, 'slateDark'], [3 + flick, 16, 2, 3, 'slateDark'],   // far leg, toes up
+  [15, 18, 8, 4, 'slate'], [6 - flick, 21, 11, 2, 'slate'], [5 - flick, 19, 2, 3, 'slate'],               // near leg, toes up
 ];
-const slide = (flick, eye) => sprite(59, 25, [...slideBack(flick), ...SLIDE], [...SLIDE_MARKS, ...eye]);
+const LEG_GAP = [[7, 20, 8, 1, 'ink']];   // keeps the two legs apart
+const slide = (flick, eye) => sprite(59, 25, [...slideBack(flick), ...SLIDE], [...SLIDE_MARKS, ...LEG_GAP, ...eye]);
 
 // ---- Cacti ------------------------------------------------------------------------------
 const CACTUS_SMALL = sprite(17, 35, [

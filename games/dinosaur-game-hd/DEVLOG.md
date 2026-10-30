@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Slide redrawn from Pao's sketch
+- Shorter body, a little tail curling up behind, both back legs stretched out along the sand with toes tipped up (a dark line keeps them apart); head, eye and arm unchanged. Same footprint and hitbox.
+- Hitbox overlay page (a private artifact for Pao) shows every pose with the boxes `Run.collides()` tests.
+
 ## 2026-10-30 — Slimmer slide
 - Pao: the belly looked huge. The slide body is now long and flat (about half as tall) with a thin belly stripe, the head raised a little and leading. Same footprint and hitbox; GDD 3.4 notes why the flat pose can't fill the top of the duck box and why that never causes an unseen hit.
 
