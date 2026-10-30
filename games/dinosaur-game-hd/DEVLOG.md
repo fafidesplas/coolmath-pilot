@@ -5,6 +5,7 @@
 - The slides are stored as pixel maps (`SLIDE_MAPS` in `sprites.js`) instead of rects, so paint-overs go in exactly. Same 59×25 footprint and hitbox.
 - Paint-over page: overlay any other frame (with its paint-over) and set each layer's opacity.
 - Physics and egg tests still pass.
+- Pao: keep the original's hitbox on the jump frame (GDD 3.4 notes the exception). Paint-over page: empty pixels are now a sand checker in both themes (the dark-mode navy was too close to the slate body).
 
 ## 2026-10-30 — Jump pose: sloped back, from Pao's paint-over
 - New paint-over page (a private artifact for Pao): every sprite on a pixel grid with the game's palette and hitboxes; saved paint-overs are read back pixel by pixel.
