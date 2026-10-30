@@ -8,7 +8,7 @@ export const defaults = () => ({
   daily: { lastDate: null, streak: 0, best: 0, bestEggs: 0 },
   firstRunDone: false,
   tutorial: { jump: false, duck: false, done: false },
-  settings: { sfx: true, music: false },
+  settings: { sfx: true },
 });
 
 // Keep each saved field only if it has the default's type.

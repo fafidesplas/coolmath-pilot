@@ -93,7 +93,7 @@ Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstac
 - **Negative prompt:** *"text, letters, watermark, signature, photorealistic, gritty, horror, violence, blood, Google logo, Chrome logo, cluttered background, blurry, low contrast, UI buttons"*
 
 ## Audio
-Jump "boop", duck swoosh, egg "pip" (pitch rises on an egg streak), hatch crack and jingle, 100 m milestone beep, crash thud. A short chiptune loop, off by default.
+Jump "boop", duck swoosh, egg "pip" (pitch rises on an egg streak), hatch crack and jingle, 100 m milestone beep, crash thud. No music.
 
 ## GameAnalytics
 - No levels, so progression events use one id per mode: `endless`, `versus`, `daily`, with the distance as score on `Fail`.

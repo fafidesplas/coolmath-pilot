@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — No music
+- Pao: no music in the game. Cut from the GDD (audio, title, settings, save, the `settings:music:off` event) and the brief; the save no longer has a `music` setting. Sound effects stay, with their toggle.
+- Next: a cold playtest by a teammate for the slice gate; before it, check the night ground seam and the egg rate per run (GDD 14).
+
 ## 2026-10-30 — Jump stretch, night rims, slide reminder
 - Takeoff stretch: 2 frames (50 ms each: 6 px narrower and taller, then 2 px) with the feet kept in place, the mirror of the landing squash. Drawing only; the hitbox doesn't change.
 - Night rims: at night every cactus, pterodactyl and egg gets a 1 px Egg Cream rim outside its outline, faded in and out with the night (GDD 3.6). Pre-rendered once per sprite (`SPR.rim`).

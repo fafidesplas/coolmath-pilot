@@ -239,9 +239,9 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   ├──Daily──▶ Playing (daily seed) ──crash──▶ Daily results (+ copy emoji line)
   ├──Runners──▶ Runners (hatch / equip)
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
-  └──Settings (sound, music)
+  └──Settings (sound)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and sound and music toggles. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
@@ -311,7 +311,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 | Win | 2P race won | short victory jingle |
 | UI click | any button | soft tick |
 
-All synthesized with WebAudio. **Music:** a 20–30 s chiptune desert loop, light and bouncy, **off by default**, toggle in settings.
+All synthesized with WebAudio. **No music:** sound effects only (Pao's call, 2026-10-30), so there is no music toggle.
 
 ## 11. GameAnalytics
 Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "complete", so every run ends with `Fail` and the distance as score.
@@ -341,7 +341,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | `daily:complete` | first daily run of the day ends | distance (m) |
 | `daily:streak:<n>` | the streak goes up | n |
 | `ui:restart` | Retry, Space or R after a run | — |
-| `settings:music:off` / `settings:sfx:off` | a toggle is switched off | — |
+| `settings:sfx:off` | the sound toggle is switched off | — |
 
 **Questions the data must answer:**
 1. Do players play more runs per session when they are within 20% of the next hatch than when they aren't? (`eggs:progress` on each run start; a true A/B test of eggs vs no eggs is for later.)
@@ -355,7 +355,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 - **Rendering:** draw the 640×360 scene straight onto the display canvas through a scale transform, with smoothing off, and draw each frame between the last two sim steps (render interpolation) snapped to device pixels, so 144 Hz screens don't judder. Use the **largest integer scale that fills at least 85%** of the window; when no integer scale does, use the exact fit. The rest of the window shows more sky and sand (no black bars); obstacles and eggs are not clipped: they spawn and leave 640 px past the view (3.5). `devicePixelRatio` capped at 2. Background layers are pre-rendered once, with a night-tinted copy of each faded in at night.
 - **Simulation:** fixed 60 Hz step, deterministic (3.2). The sim runs headless, so a test can replay a seed and a list of inputs.
 - **Save:** one key, `cm_dinosaur-game-hd_save`:
-  `{ v: 1, best, eggs, flights, totalEggs, totalDistance, totalNights, versusWins, unlocked: [ids], equipped, p2Runner, daily: { lastDate, streak, best, bestEggs }, firstRunDone, tutorial: { jump, duck, done }, settings: { sfx, music } }` (`tutorial` remembers which `tutorial:*` events were sent), read inside `try/catch` (a broken save resets to defaults). Saved after every run, hatch, equip and settings change.
+  `{ v: 1, best, eggs, flights, totalEggs, totalDistance, totalNights, versusWins, unlocked: [ids], equipped, p2Runner, daily: { lastDate, streak, best, bestEggs }, firstRunDone, tutorial: { jump, duck, done }, settings: { sfx } }` (`tutorial` remembers which `tutorial:*` events were sent), read inside `try/catch` (a broken save resets to defaults). Saved after every run, hatch, equip and settings change.
 - **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused' | 'bonus'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'daily' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds.
 - **Riskiest piece: matching the original's feel.** Prove it first: build `sim.js` with the original's numbers, then compare jump apex, airtime, the gap range at 3 speeds and the time to top speed against `chrome://dino` (frame-by-frame screen recordings), and log the measured values in `DEVLOG.md`. Only then add art and eggs.
 - **Second risk: runner art.** 10 dinosaurs × 8 frames plus the Hangman beast × 5 frames is 85 sprites, plus eggs, hatching, obstacles and backgrounds. The shared run cycle keeps that manageable. Prototype with placeholders; draw the Spinosaurus and the Parasaurolophus early as rough sprites over the hitbox template to check that the sail and the crest fit at 44×47, and put the 4 big theropods side by side to check that they read as different dinosaurs.
