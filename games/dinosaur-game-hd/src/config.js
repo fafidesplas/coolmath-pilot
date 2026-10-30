@@ -99,6 +99,6 @@ export const EGG_PATTERNS = {
 // Dinosaurs hatched with eggs, in hatch order (GDD 7.1).
 export const HATCH = [
   { id: 'velociraptor', name: 'Velociraptor', price: 300 },
-  { id: 'pachycephalosaurus', name: 'Pachycephalosaurus', price: 750 },
-  { id: 'parasaurolophus', name: 'Parasaurolophus', price: 1500 },
+  { id: 'pachycephalosaurus', name: 'Pachycephalosaurus', price: 1200 },
+  { id: 'parasaurolophus', name: 'Parasaurolophus', price: 3000 },
 ];

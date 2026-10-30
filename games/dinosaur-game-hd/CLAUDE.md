@@ -51,7 +51,7 @@ All runners are cosmetic: same jump, same speed, same hitbox. Each one has its o
 
 ### Dinosaurs hatched with eggs
 - **T-Rex:** the default, free from the start.
-- **Velociraptor** (300 eggs), **Pachycephalosaurus** (750) and **Parasaurolophus** (1500): spending the eggs plays a short hatch scene, and the dinosaur pops out.
+- **Velociraptor** (300 eggs), **Pachycephalosaurus** (1200) and **Parasaurolophus** (3000): spending the eggs plays a short hatch scene, and the dinosaur pops out.
 
 ### Dinosaurs unlocked by achievements
 The rewards for achievers and completionists: each one unlocks with one achievement and can't be bought.

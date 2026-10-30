@@ -1,5 +1,10 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Hatch prices raised
+- Pao collected ~207 eggs in a 3000 m run, so the old prices (300 / 750 / 1500) hatched all three in about 12 runs. Rather than cut eggs, the prices are now 300 / 1200 / 3000: the Velociraptor stays an early reward for new players (~10 runs at ~30 eggs), the later two are long-term goals.
+- GDD 14 now targets runs to hatch instead of eggs per run; the egg rate is unchanged. Check against `eggs:earned` in phase 4.
+- Next: the night ground seam, then a cold playtest by a teammate for the slice gate.
+
 ## 2026-10-30 — No music
 - Pao: no music in the game. Cut from the GDD (audio, title, settings, save, the `settings:music:off` event) and the brief; the save no longer has a `music` setting. Sound effects stay, with their toggle.
 - Next: a cold playtest by a teammate for the slice gate; before it, check the night ground seam and the egg rate per run (GDD 14).

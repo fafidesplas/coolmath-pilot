@@ -202,8 +202,8 @@ An endless runner has no levels: the run itself is the level, and the original's
 |---|---|---|
 | **T-Rex** | free | big head, tiny arms, the classic |
 | **Velociraptor** | hatch for **300 eggs** | small and quick, long stiff tail, sickle claw; feathered, rust brown; ducks low and flat |
-| **Pachycephalosaurus** | hatch for **750 eggs** | ducks with its dome forward |
-| **Parasaurolophus** | hatch for **1500 eggs** | long tube crest swept back, teal; ducks with the crest flat along its back |
+| **Pachycephalosaurus** | hatch for **1200 eggs** | ducks with its dome forward |
+| **Parasaurolophus** | hatch for **3000 eggs** | long tube crest swept back, teal; ducks with the crest flat along its back |
 | **Hadrosaur** | reach **1000 m** in one run | flat duck bill, no crest, olive and cream; ducks with its bill forward |
 | **Ceratosaurus** | play the daily run **7 days in a row** | nose horn and a bumpy back, red-orange stripes |
 | **Megalosaurus** | run **50 km** in total | the first dinosaur ever named: a plain, heavy theropod, brown with a cream belly |
@@ -227,7 +227,7 @@ An endless runner has no levels: the run itself is the level, and the original's
 - **Emoji result line** (copy button on the daily results): `🦖 Daily #12 — 1,840 m 🥚32 🔥5` (distance, eggs from the best run, streak).
 
 ### 7.3 What brings players back
-Best distance, the golden egg and its bonus flight (a reason to take the full jump), the next egg hatch (the results show "Parasaurolophus: 1,230 / 1,500 🥚"), the next achievement (the Runners screen shows each one's progress), the daily streak, and 2P rematches.
+Best distance, the golden egg and its bonus flight (a reason to take the full jump), the next egg hatch (the results show "Parasaurolophus: 2,230 / 3,000 🥚"), the next achievement (the Runners screen shows each one's progress), the daily streak, and 2P rematches.
 
 ## 8. Screens and UI flow
 ```
@@ -378,7 +378,7 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 |---|---|---|---|
 | Are the recalled original numbers (3.3–3.5) exact? | Checked against the Chromium source on 2026-10-30 and corrected (jump heights, minimum-height rule, fast-fall, whole-pixel scrolling, restart lock). Still compare with `chrome://dino` side by side in the slice. | Pao | Closed |
 | Is "Dinosaur Game" in the name OK to publish? | It's the generic name players use; keep "Chrome", "Google" and "T-Rex Runner" out. Ask the team before any public build. | Team | Open |
-| Egg rate and prices (300 / 750 / 1500) | Keep; check that a typical run gives 15–40 eggs in the slice, retune in phase 4. | Pao | Open |
+| Egg rate and prices (300 / 1200 / 3000) | Priced by runs to hatch, not eggs per run: the egg rate stays generous and the prices set the pace. Targets: a new player (~30 eggs a run, most runs under 500 m) hatches the Velociraptor in about 10 runs, the Pachycephalosaurus 40 runs later, the Parasaurolophus 100 runs after that; a strong player (~200 eggs at 3000 m, Pao in the slice) in about 2, 6 and 15. Check against `eggs:earned` in phase 4. | Pao | Open |
 | Achievement targets | Keep; check against real run data in phase 4. | Pao | Open |
 | Coolmath ad breaks | Only between runs, and never more often than every few minutes; never on Retry. | Coolmath | Open |
 | Daily seed: local date or UTC? | Local date: simpler for players, small differences around midnight don't matter. | Pao | Open |
@@ -388,6 +388,8 @@ Progression ids are one per mode: `endless`, `versus`, `daily`. A run has no "co
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-10-30 — Hatch prices 300 / 750 / 1500 → 300 / 1200 / 3000 (7.1, 14): priced by runs to hatch instead of trimming eggs per run. Pao collected ~207 eggs in a 3000 m run, which hatched all three in about 12 runs. The egg rate is unchanged.
+- 2026-10-30 — No music: sound effects only (10).
 - 2026-10-30 — Obstacles and eggs spawn and leave 640 px past the view instead of being clipped to it, so wide windows never see them cut or pop in (3.5, 12); the run itself is unchanged.
 - 2026-10-30 — Standing tail drawn like the slide's, its tip 7 px past the footprint (3.4); hitbox unchanged.
 - 2026-10-30 — Jump frame hitbox: the original's box is kept although the sloped back leaves its top-left corner empty (3.4), Pao's call.
