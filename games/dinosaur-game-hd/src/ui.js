@@ -7,7 +7,7 @@ import { PAL, SPR } from './sprites.js';
 
 export const RESULTS_DELAY_MS = 500;   // the panel slides up this long after the crash
 const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, SLIDE_HINT_MS = 2000, BUMP_MS = 150;
-const PANEL_Y = 46, PANEL_H = 198;
+const PANEL_Y = 34, PANEL_H = 242;
 const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 const pad = n => String(n).padStart(5, '0');
 
@@ -25,18 +25,18 @@ function corner(id, r) {
 export function layout(g, now, r) {
   const B = [];
   if (g.screen === 'title') {
-    B.push({ id: 'play', label: 'PLAY', size: 3, big: true, x: 250, y: 104, w: 140, h: 40 });
+    B.push({ id: 'play', label: 'PLAY', size: 4, big: true, x: 250, y: 102, w: 140, h: 44 });
     B.push({ ...corner('sound', r), on: g.data.settings.sfx });
   } else if (g.screen === 'playing') {
     B.push(corner('pause', r));
   } else if (g.screen === 'paused') {
-    B.push({ id: 'resume', label: 'RESUME', size: 3, big: true, x: 240, y: 132, w: 160, h: 40 });
-    B.push({ id: 'restart', label: 'RESTART', size: 2, x: 240, y: 180, w: 160, h: 30 });
-    B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 216, w: 160, h: 30 });
+    B.push({ id: 'resume', label: 'RESUME', size: 4, big: true, x: 224, y: 130, w: 192, h: 44 });
+    B.push({ id: 'restart', label: 'RESTART', size: 2, x: 240, y: 182, w: 160, h: 30 });
+    B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 218, w: 160, h: 30 });
   } else if (g.screen === 'complete' && now - g.crashAt >= RESULTS_DELAY_MS) {
     const y = panelY(g, now);
-    B.push({ id: 'retry', label: 'RETRY', size: 3, big: true, x: 200, y: y + 136, w: 140, h: 40 });
-    B.push({ id: 'menu', label: 'MENU', size: 2, x: 356, y: y + 140, w: 84, h: 32 });
+    B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 186, y: y + 166, w: 160, h: 44 });
+    B.push({ id: 'menu', label: 'MENU', size: 2, x: 362, y: y + 172, w: 92, h: 32 });
   }
   return B;
 }
@@ -49,22 +49,23 @@ export function hitButton(buttons, x, y) {
 }
 
 // ---- drawing ------------------------------------------------------------------------------
+// A panel or button in 2 px art pixels: border with cut corners, and a darker lip along the bottom.
 function box(ctx, x, y, w, h, border, fill, lip) {
   ctx.fillStyle = border;
-  ctx.fillRect(x + 1, y, w - 2, h);
-  ctx.fillRect(x, y + 1, w, h - 2);
+  ctx.fillRect(x + 2, y, w - 4, h);
+  ctx.fillRect(x, y + 2, w, h - 4);
   ctx.fillStyle = lip;
   ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
   ctx.fillStyle = fill;
-  ctx.fillRect(x + 2, y + 2, w - 4, h - 7);
+  ctx.fillRect(x + 2, y + 2, w - 4, h - 8);
 }
 
 function drawButton(ctx, b) {
   if (b.icon) return drawIcon(ctx, b);
   box(ctx, b.x, b.y, b.w, b.h, PAL.ink, b.big ? PAL.orange : PAL.slate, b.big ? '#C46A12' : '#46546A');
   ctx.fillStyle = 'rgba(255,246,224,0.35)';
-  ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, 1);
-  drawText(ctx, b.label, b.x + b.w / 2, b.y + Math.round((b.h - 3 - 7 * b.size) / 2), b.size, PAL.cream, 'center');
+  ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, 2);
+  drawText(ctx, b.label, b.x + b.w / 2, b.y + 2 * Math.round((b.h - 4 - 7 * b.size) / 4), b.size, PAL.cream, 'center');
 }
 
 function drawIcon(ctx, b) {
@@ -72,16 +73,16 @@ function drawIcon(ctx, b) {
   ctx.fillStyle = PAL.cream;
   const x = b.x, y = b.y;
   if (b.icon === 'pause') {
-    ctx.fillRect(x + 8, y + 6, 3, 10);
-    ctx.fillRect(x + 13, y + 6, 3, 10);
+    ctx.fillRect(x + 6, y + 6, 4, 10);
+    ctx.fillRect(x + 14, y + 6, 4, 10);
   } else if (b.icon === 'sound') {
-    ctx.fillRect(x + 5, y + 9, 3, 5);                       // speaker
-    for (let i = 0; i < 4; i++) ctx.fillRect(x + 8 + i, y + 8 - i, 1, 7 + i * 2);
+    ctx.fillRect(x + 4, y + 8, 2, 6);                       // speaker
+    for (let i = 0; i < 2; i++) ctx.fillRect(x + 6 + i * 2, y + 6 - i * 2, 2, 10 + i * 4);
     if (b.on) {
-      ctx.fillRect(x + 14, y + 9, 1, 4);
-      ctx.fillRect(x + 16, y + 7, 1, 8);
+      ctx.fillRect(x + 14, y + 8, 2, 6);
+      ctx.fillRect(x + 18, y + 6, 2, 10);
     } else {
-      for (let i = 0; i < 5; i++) { ctx.fillRect(x + 14 + i, y + 8 + i, 1, 1); ctx.fillRect(x + 18 - i, y + 8 + i, 1, 1); }
+      for (let i = 0; i < 3; i++) { ctx.fillRect(x + 13 + i * 2, y + 7 + i * 2, 2, 2); ctx.fillRect(x + 17 - i * 2, y + 7 + i * 2, 2, 2); }
     }
   }
 }
@@ -102,7 +103,7 @@ function drawHud(ctx, g, now, r) {
 
   // This run's eggs, top left; the icon hops on each pickup.
   const bump = now - g.eggBumpAt < BUMP_MS ? 2 : 0;
-  ctx.drawImage(SPR.egg[0], 11, 13 - bump);
+  ctx.drawImage(SPR.egg[0], 10, 12 - bump);
   drawText(ctx, String(run.eggCount), 28, 14, 2, text);
 
   if (g.screen !== 'playing') return;
@@ -138,11 +139,11 @@ function slideHint(ctx, alpha) {
   ctx.globalAlpha = 1;
 }
 
-// A pixel arrow with its tip at (x, y); dir -1 points up, 1 down.
+// A pixel arrow with its tip at (x, y), in 2 px art pixels; dir -1 points up, 1 down.
 function arrow(ctx, x, y, dir) {
   ctx.fillStyle = PAL.ink;
-  for (let i = 0; i < 10; i++) ctx.fillRect(x - i - 1, y - dir * i, i * 2 + 2, 1);
-  ctx.fillRect(x - 4, dir < 0 ? y + 10 : y - 24, 8, 15);
+  for (let i = 0; i < 5; i++) ctx.fillRect(x - 2 * i - 2, dir < 0 ? y + 2 * i : y - 2 * i - 2, 4 * i + 4, 2);
+  ctx.fillRect(x - 4, dir < 0 ? y + 10 : y - 26, 8, 16);
 }
 
 function drawTitle(ctx, g, now) {
@@ -151,8 +152,8 @@ function drawTitle(ctx, g, now) {
   drawText(ctx, 'DINOSAUR GAME', cx, 28, 4, PAL.ink, 'center');
   box(ctx, cx - 76, 66, 152, 24, PAL.ink, PAL.orange, '#C46A12');
   drawText(ctx, 'COOL EDITION', cx, 70, 2, PAL.cream, 'center');
-  if (Math.floor(now / 600) % 2 === 0) drawText(ctx, 'SPACE, UP OR W TO START', cx, 156, 1, PAL.ink, 'center');
-  if (g.data.best) drawText(ctx, `BEST ${g.data.best} M`, cx, 172, 2, PAL.ink, 'center');
+  if (Math.floor(now / 600) % 2 === 0) drawText(ctx, 'SPACE, UP OR W TO START', cx, 156, 2, PAL.ink, 'center');
+  if (g.data.best) drawText(ctx, `BEST ${g.data.best} M`, cx, 178, 2, PAL.ink, 'center');
 }
 
 function drawPause(ctx, r) {
@@ -162,35 +163,35 @@ function drawPause(ctx, r) {
 
 function drawResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
-  const x = 170, w = 300, y = panelY(g, now), cx = x + w / 2;
+  const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2;
   box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
-  drawText(ctx, 'GAME OVER', cx, y + 10, 3, PAL.cream, 'center');
+  drawText(ctx, 'GAME OVER', cx, y + 12, 4, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
-  drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 38, 4, PAL.cream, 'center');
-  drawText(ctx, `BEST ${g.data.best} M`, cx, y + 72, 2, PAL.sand, 'center');
+  drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
+  drawText(ctx, `BEST ${g.data.best} M`, cx, y + 84, 2, PAL.sand, 'center');
 
   // Eggs from this run count up, then the next hatch's progress (GDD 7.3).
   const eggs = Math.round(g.runEggs * p), label = `+${eggs} EGGS`;
-  ctx.drawImage(SPR.egg[0], cx - 44 - 1, y + 93);
-  drawText(ctx, label, cx - 30, y + 94, 2, PAL.cream);
+  ctx.drawImage(SPR.egg[0], cx - 46, y + 102);
+  drawText(ctx, label, cx - 30, y + 106, 2, PAL.cream);
   const next = HATCH.find(h => !g.data.unlocked.includes(h.id));
   if (next) {
     const bank = g.data.eggs - g.runEggs + eggs, fill = Math.min(1, bank / next.price);
     const text = bank >= next.price ? `${next.name}: ready to hatch!` : `${next.name}: ${bank} / ${next.price}`;
-    drawText(ctx, text, cx, y + 113, 1, PAL.sand, 'center');
+    drawText(ctx, text, cx, y + 128, 2, PAL.sand, 'center');
     ctx.fillStyle = PAL.ink;
-    ctx.fillRect(cx - 100, y + 123, 200, 6);
+    ctx.fillRect(cx - 100, y + 148, 200, 8);
     ctx.fillStyle = PAL.orange;
-    ctx.fillRect(cx - 99, y + 124, Math.round(198 * fill), 4);
+    ctx.fillRect(cx - 98, y + 150, 2 * Math.round(98 * fill), 4);
   }
   if (g.newBest && p >= 1) {   // the banner bounces in once the count-up ends
     const t = (now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS - COUNT_MS) / 400;
-    const bounce = t < 1 ? Math.round(-Math.abs(Math.sin(t * Math.PI * 2)) * 8 * (1 - t)) : 0;
+    const bounce = t < 1 ? 2 * Math.round(-Math.abs(Math.sin(t * Math.PI * 2)) * 4 * (1 - t)) : 0;
     box(ctx, x + w - 104, y - 14 + bounce, 118, 24, PAL.ink, PAL.orange, '#C46A12');
     drawText(ctx, 'NEW BEST!', x + w - 45, y - 9 + bounce, 2, PAL.cream, 'center');
   }
   const ready = now - g.crashAt >= RUN.restartLockMs;
-  drawText(ctx, ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY', cx, y + 184, 1, PAL.sand, 'center');
+  drawText(ctx, ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY', cx, y + 220, 2, PAL.sand, 'center');
 }
 
 export function drawUI(ctx, g, now, r) {

@@ -8,7 +8,7 @@ import * as sfx from './audio.js';
 import { GA } from './analytics.js';
 import { Keys, JUMP_KEYS, DUCK_KEYS } from './input.js';
 import { Renderer, FX_MS } from './render.js';
-import { FOOTFALL_X } from './rex.js';
+import { FOOTFALL_X } from './art.js';
 import { layout, hitButton } from './ui.js';
 
 const canvas = document.getElementById('view');

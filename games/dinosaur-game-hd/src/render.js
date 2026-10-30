@@ -5,7 +5,8 @@
 import { VIEW_W, VIEW_H, LANE, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS } from './config.js';
 import { drawText } from './font.js';
 import { mulberry32 } from './gen.js';
-import { SPR, PAL } from './sprites.js';
+import { SPR, PAL, MARGIN, up } from './sprites.js';
+import { CELL } from './art.js';
 import { drawUI } from './ui.js';
 
 const GROUND = LANE.top1P + LANE.ground;   // 250
@@ -15,6 +16,7 @@ const NIGHT_TINT = 0.55;       // Night Ink over the background layers at night
 const SHAKE_MS = 150, SHAKE_PX = 4;
 export const FX_MS = 500;                  // egg pickup pop and "+1"
 const born = new WeakMap();                // when an egg that starts inside the view was first drawn
+const grid = v => Math.round(v / CELL) * CELL;   // snapped to the art pixel grid
 
 function canvas(w, h) {
   const c = document.createElement('canvas');
@@ -22,11 +24,16 @@ function canvas(w, h) {
   return [c, c.getContext('2d')];
 }
 
+// The background layers are drawn at art resolution (1 px per art pixel,
+// half the logical size) and scaled up CELL times, so they are as chunky as
+// the sprites. A = art px; W, H, GA = the view width, height and ground in art px.
+const W = VIEW_W / CELL, H = VIEW_H / CELL, GA = GROUND / CELL;
+
 // Stepped bands, top to bottom: the 16-bit look of a gradient.
 function bands(h, colors) {
   const [c, g] = canvas(1, h), bh = h / colors.length;
   colors.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, Math.round(i * bh), 1, Math.ceil(bh)); });
-  return c;
+  return up(c);
 }
 
 function disc(r, fill, rim) {
@@ -34,9 +41,9 @@ function disc(r, fill, rim) {
   for (let y = 0; y < r * 2; y++) {
     const half = Math.round(Math.sqrt(r * r - (y + 0.5 - r) ** 2));
     g.fillStyle = rim; g.fillRect(r - half, y, half * 2, 1);
-    g.fillStyle = fill; g.fillRect(r - half + 2, y, Math.max(0, half * 2 - 4), 1);
+    g.fillStyle = fill; g.fillRect(r - half + 1, y, Math.max(0, half * 2 - 2), 1);
   }
-  return c;
+  return [c, g];
 }
 
 function tinted(src) {
@@ -51,80 +58,81 @@ function tinted(src) {
 
 function buildLayers() {
   const rand = mulberry32(7);
-  const L = { skyDay: bands(GROUND, SKY_DAY), skyNight: bands(GROUND, SKY_NIGHT) };
+  const L = { skyDay: bands(GA, SKY_DAY), skyNight: bands(GA, SKY_NIGHT) };
 
   // Stars, a 640 px tile over the sky.
   {
-    const [c, g] = canvas(VIEW_W, 200);
+    const [c, g] = canvas(W, 100);
     for (let i = 0; i < 70; i++) {
       g.fillStyle = i % 5 ? 'rgba(255,246,224,0.7)' : PAL.cream;
-      const s = i % 9 ? 1 : 2;
-      g.fillRect(Math.floor(rand() * VIEW_W), Math.floor(rand() * 200), s, s);
+      const x = Math.floor(rand() * W), y = Math.floor(rand() * 100);
+      if (i % 9) g.fillRect(x, y, 1, 1);
+      else { g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); }   // a bright one: a little cross
     }
-    L.stars = c;
+    L.stars = up(c);
   }
-  L.sun = disc(22, '#FFF1C2', '#FDD27E');
+  L.sun = up(disc(11, '#FFF1C2', '#FDD27E')[0]);
   {
-    const moon = disc(14, PAL.cream, '#D8D2C0'), g = moon.getContext('2d');
+    const [moon, g] = disc(7, PAL.cream, '#D8D2C0');
     g.fillStyle = '#E4DDC8';
-    g.fillRect(8, 9, 4, 4); g.fillRect(17, 16, 5, 4); g.fillRect(12, 20, 3, 3);
-    L.moon = moon;
+    g.fillRect(4, 4, 2, 2); g.fillRect(8, 8, 3, 2); g.fillRect(6, 10, 2, 2);
+    L.moon = up(moon);
   }
 
   // Clouds (0.05×), a 640×60 tile with its top at y = 24.
   {
-    const [c, g] = canvas(VIEW_W, 60);
+    const [c, g] = canvas(W, 30);
     g.fillStyle = 'rgba(255,246,224,0.85)';
-    for (const [x, y, w] of [[30, 30, 56], [190, 8, 40], [330, 36, 70], [470, 14, 48], [580, 40, 36]]) {
-      g.fillRect(x, y + 6, w, 6);
-      g.fillRect(x + 6, y + 2, w - 16, 4);
-      g.fillRect(x + Math.round(w * 0.3), y, Math.round(w * 0.3), 2);
+    for (const [x, y, w] of [[15, 15, 28], [95, 4, 20], [165, 18, 35], [235, 7, 24], [290, 20, 18]]) {
+      g.fillRect(x, y + 3, w, 3);
+      g.fillRect(x + 3, y + 1, w - 8, 2);
+      g.fillRect(x + Math.round(w * 0.3), y, Math.round(w * 0.3), 1);
     }
-    L.clouds = c; L.cloudsN = tinted(c);
+    L.clouds = up(c); L.cloudsN = tinted(L.clouds);
   }
 
   // Mesas (0.1×), flat-topped, a 640×110 tile resting on the ground.
   {
-    const [c, g] = canvas(VIEW_W, 110);
-    for (const [x, w, h] of [[20, 120, 70], [210, 70, 44], [330, 160, 92], [540, 80, 56]]) {
+    const [c, g] = canvas(W, 55);
+    for (const [x, w, h] of [[10, 60, 35], [105, 35, 22], [165, 80, 46], [270, 40, 28]]) {
       for (let row = 0; row < h; row++) {
-        const grow = Math.floor(row / 6) * 2;
-        g.fillStyle = row < 3 ? '#EDB073' : '#E39A57';
-        g.fillRect(x - grow, 110 - h + row, w + grow * 2, 1);
+        const grow = Math.floor(row / 3);
+        g.fillStyle = row < 2 ? '#EDB073' : '#E39A57';
+        g.fillRect(x - grow, 55 - h + row, w + grow * 2, 1);
         g.fillStyle = '#CF844A';
-        g.fillRect(x + w + grow - 8, 110 - h + row, 8, 1);
+        g.fillRect(x + w + grow - 4, 55 - h + row, 4, 1);
       }
     }
-    L.mesas = c; L.mesasN = tinted(c);
+    L.mesas = up(c); L.mesasN = tinted(L.mesas);
   }
 
   // Dunes (0.2×), a 640×50 tile resting on the ground; the curve repeats every 640 px.
   {
-    const [c, g] = canvas(VIEW_W, 50);
-    for (let x = 0; x < VIEW_W; x++) {
-      const h = Math.round(20 + 9 * Math.sin(x / VIEW_W * Math.PI * 6) + 6 * Math.sin(x / VIEW_W * Math.PI * 10 + 1));
-      g.fillStyle = '#EDBE6E'; g.fillRect(x, 50 - h, 1, h);
-      g.fillStyle = '#F6D592'; g.fillRect(x, 50 - h, 1, 1);
+    const [c, g] = canvas(W, 25);
+    for (let x = 0; x < W; x++) {
+      const h = Math.round(10 + 4.5 * Math.sin(x / W * Math.PI * 6) + 3 * Math.sin(x / W * Math.PI * 10 + 1));
+      g.fillStyle = '#EDBE6E'; g.fillRect(x, 25 - h, 1, h);
+      g.fillStyle = '#F6D592'; g.fillRect(x, 25 - h, 1, 1);
     }
-    L.dunes = c; L.dunesN = tinted(c);
+    L.dunes = up(c); L.dunesN = tinted(L.dunes);
   }
 
   // Ground (1×): sand with pebbles, a 640×110 tile from the ground line down.
   {
-    const [c, g] = canvas(VIEW_W, VIEW_H - GROUND);
+    const [c, g] = canvas(W, H - GA);
     g.fillStyle = PAL.sand; g.fillRect(0, 0, c.width, c.height);
     g.fillStyle = '#B07A3A'; g.fillRect(0, 0, c.width, 1);
-    g.fillStyle = '#D7A458'; g.fillRect(0, 1, c.width, 2);
-    for (let i = 0; i < 90; i++) {
-      const x = Math.floor(rand() * VIEW_W), y = 5 + Math.floor(rand() * (c.height - 6));
+    g.fillStyle = '#D7A458'; g.fillRect(0, 1, c.width, 1);
+    for (let i = 0; i < 60; i++) {
+      const x = Math.floor(rand() * W), y = 3 + Math.floor(rand() * (c.height - 4));
       g.fillStyle = i % 4 ? '#D7A458' : '#B07A3A';
-      g.fillRect(x, y, i % 3 ? 2 : 3, 1);
+      g.fillRect(x, y, i % 3 ? 1 : 2, 1);
     }
     for (let i = 0; i < 12; i++) {   // bumps on the ground line
       g.fillStyle = '#B07A3A';
-      g.fillRect(Math.floor(rand() * VIEW_W), 1, 2 + Math.floor(rand() * 3), 1);
+      g.fillRect(Math.floor(rand() * W), 1, 1 + Math.floor(rand() * 2), 1);
     }
-    L.ground = c; L.groundN = tinted(c);
+    L.ground = up(c); L.groundN = tinted(L.ground);
   }
   return L;
 }
@@ -225,10 +233,10 @@ class Dust {
     const colors = night > 0.5 ? DUST_NIGHT : DUST_COLORS;
     for (const d of this.p) {
       if (!d.on || d.front !== front) continue;
-      const t = d.age / d.life, size = 3 + Math.round(t * 4);
+      const t = d.age / d.life, size = CELL * (2 + Math.round(t * 2));   // 2 to 4 art px
       ctx.globalAlpha = 1 - t;
       ctx.fillStyle = colors[d.c];
-      ctx.fillRect(Math.round(d.x - size / 2), Math.round(d.y - size), size, size);
+      ctx.fillRect(grid(d.x - size / 2), grid(d.y - size), size, size);
     }
     ctx.globalAlpha = 1;
   }
@@ -365,12 +373,13 @@ export class Renderer {
   drawObstacle(o, x, boxes) {
     const ctx = this.ctx, t = OBSTACLES[o.id], y = LANE.top1P + o.y;
     if (o.id === 'ptero') {
-      const f = Math.floor(o.flapMs / t.flapMs) % 2;
-      this.rim(SPR.rim.ptero[f], x, y, 1);
-      ctx.drawImage(SPR.ptero[f], x - 1, y - 1);
+      const img = SPR.ptero[Math.floor(o.flapMs / t.flapMs) % 2];
+      this.rim(img, x, y, 1);
+      this.sprite(img, x, y);
     } else {   // a group's rims first, so they never cover a neighbour's outline
-      for (let i = 0; i < o.size; i++) this.rim(SPR.rim[o.id], x + i * t.w, y, 1);
-      for (let i = 0; i < o.size; i++) ctx.drawImage(SPR[o.id], x + i * t.w - 1, y - 1);
+      const img = SPR[o.id];
+      for (let i = 0; i < o.size; i++) this.rim(img, x + i * t.w, y, 1);
+      for (let i = 0; i < o.size; i++) this.sprite(img, x + i * t.w, y);
     }
     if (boxes) {
       this.boxes(x + 1, y + 1, o.boxes, '#e0303a');
@@ -378,10 +387,10 @@ export class Renderer {
     }
   }
 
-  // Eggs wobble 1 px and glint now and then, each on its own phase.
+  // Eggs wobble 1 art px and glint now and then, each on its own phase.
   drawEgg(e, x, now) {
     const ctx = this.ctx, phase = e.y * 0.37 + e.group * 1.7;
-    const bob = Math.sin(now / 220 + phase) > 0.3 ? -1 : 0;
+    const bob = Math.sin(now / 220 + phase) > 0.3 ? -CELL : 0;
     const glint = (now / 90 + phase * 10) % 30 < 3 ? 1 : 0;
     let alpha = 1;
     if (e.fade) {
@@ -389,17 +398,20 @@ export class Renderer {
       alpha = Math.min(1, (now - born.get(e)) / 200);
     }
     const y = LANE.top1P + e.y + bob;
-    this.rim(SPR.rim.egg, x, y, alpha);
+    this.rim(SPR.egg[glint], x, y, alpha);
     ctx.globalAlpha = alpha;
-    ctx.drawImage(SPR.egg[glint], x - 1, y - 1);
+    this.sprite(SPR.egg[glint], x, y);
     ctx.globalAlpha = 1;
   }
+
+  // A sprite whose box starts at (x, y).
+  sprite(img, x, y) { this.ctx.drawImage(img, x - MARGIN, y + img.oy - MARGIN); }
 
   // The night rim under a sprite whose box starts at (x, y), faded in with the night.
   rim(img, x, y, alpha) {
     if (this.night <= 0) return;
     this.ctx.globalAlpha = this.night * alpha;
-    this.ctx.drawImage(img, x - 2, y - 2);
+    this.ctx.drawImage(img.rim, x - 2 * MARGIN, y + img.oy - 2 * MARGIN);
     this.ctx.globalAlpha = 1;
   }
 
@@ -412,10 +424,10 @@ export class Renderer {
       ctx.globalAlpha = 1 - t;
       ctx.fillStyle = f.n % 2 ? PAL.orange : PAL.cream;
       const d = 3 + t * 10;
-      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(Math.round(f.x + dx * d), Math.round(f.y + dy * d), 2, 2);
-      const ty = Math.round(f.y - 12 - t * 14);
-      drawText(ctx, '+1', Math.round(f.x) + 1, ty + 1, 1, PAL.ink, 'center');   // shadow: readable day and night
-      drawText(ctx, '+1', Math.round(f.x), ty, 1, PAL.cream, 'center');
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(grid(f.x + dx * d), grid(f.y + dy * d), CELL, CELL);
+      const ty = grid(f.y - 16 - t * 14);
+      drawText(ctx, '+1', grid(f.x) + CELL, ty + CELL, 2, PAL.ink, 'center');   // shadow: readable day and night
+      drawText(ctx, '+1', grid(f.x), ty, 2, PAL.cream, 'center');
       ctx.globalAlpha = 1;
     }
   }
@@ -437,12 +449,12 @@ export class Renderer {
     const [sw, sh] = !live ? [0, 0]
       : run.jumping ? STRETCH[Math.floor((now - this.jumpAt) / SQUASH_MS)] || [0, 0]
       : SQUASH[Math.floor((now - this.landAt) / SQUASH_MS)] || [0, 0];
-    ctx.drawImage(img, RUNNER.x - 1 - (img.ox || 0) - sw / 2, dy - 1 + sh, img.width + sw, img.height - sh);
+    ctx.drawImage(img, RUNNER.x - MARGIN - sw / 2, dy + img.oy - MARGIN + sh, img.width + sw, img.height - sh);
 
     if (!run) {   // asleep on the title: Zz
       ctx.fillStyle = PAL.ink;
       for (let i = 0; i < 3; i++) {
-        const p = (now / 1600 + i / 3) % 1, size = 3 + i;
+        const p = (now / 1600 + i / 3) % 1, size = 3 + i;   // in art px
         this.zee(RUNNER.x + 40 + p * 14 + i * 2, top + y - 6 - p * 26, size, 1 - p);
       }
     } else if (run.crashed) {   // dizzy stars over the head (standing or sliding)
@@ -471,13 +483,14 @@ export class Renderer {
     this.landAt = performance.now();
   }
 
+  // A "Z" `size` art px wide.
   zee(x, y, size, alpha) {
-    const ctx = this.ctx;
-    x = Math.round(x); y = Math.round(y);
+    const ctx = this.ctx, c = CELL;
+    x = grid(x); y = grid(y);
     ctx.globalAlpha = alpha;
-    ctx.fillRect(x, y, size, 1);
-    for (let i = 1; i < size - 1; i++) ctx.fillRect(x + size - 1 - i, y + i, 1, 1);
-    ctx.fillRect(x, y + size - 1, size, 1);
+    ctx.fillRect(x, y, size * c, c);
+    for (let i = 1; i < size - 1; i++) ctx.fillRect(x + (size - 1 - i) * c, y + i * c, c, c);
+    ctx.fillRect(x, y + (size - 1) * c, size * c, c);
     ctx.globalAlpha = 1;
   }
 

@@ -1,5 +1,12 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-30 — Chunky pixels, like the one-pager
+- Pao: the pixels looked too small on a 1440p screen. The one-pager draws its whole scene at half resolution, so every art pixel is 2×2 game pixels; the game now does the same everywhere, so the pixel size stays consistent.
+- Sprites are cell maps in `src/art.js` (renamed from `rex.js`), each cell drawn 2×2 with a 1 cell (2 px) Night Ink outline. The T-Rex uses the one-pager's cells as they are (no more Scale2x). New cell maps for the small and large cactus, the pterodactyl (both wing frames) and the egg (plain and glinting), drawn over their hitboxes. Night rims are 1 art pixel too.
+- Background layers (sky bands, stars, sun, moon, clouds, mesas, dunes, ground) are built at half resolution and scaled up. Dust, the Zz, sparks and "+1" snap to the 2 px grid; icons, arrows, panels and buttons step in 2 px; text sizes are even (1 → 2, 3 → 4). The results panel is wider and taller to fit.
+- Physics, positions and hitboxes are unchanged (640×360 logical), and motion stays smooth.
+- `tools/art-test.mjs` (was `rex-test.mjs`) checks every sprite against its hitboxes: all within 2 px. Physics, egg and art tests pass; checked title, run, slide, night, results and pause in Chrome, no console errors.
+
 ## 2026-10-30 — T-Rex redrawn from the one-pager
 - Pao liked the one-pager's T-Rex silhouette much more than the game's (which was a rect placeholder reshaped by paint-overs). Every frame now comes from the one-pager's art: a boxy head with a jaw line, a body tapering into a tail that rises up and back, a light slate belly, thin legs. Run is the one-pager's 2 leg poses alternating; jump uses the standing pose (like the original); crash has the dizzy eye and open mouth; sleep shuts the eye.
 - Slide: the one-pager's low duck, 3 cells longer, with both legs laid back along the sand; frame 2 flicks the tail tip and toes. This replaces Pao's slide and jump paint-overs (Pao's call).
