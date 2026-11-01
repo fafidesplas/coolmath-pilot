@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — No daily run
+- Pao: the game has no daily run. Cut from the GDD (summary, hook, meta loop, seeds, golden egg modes, title, screen flow, results, analytics events, save, testing hook, scope, open questions; 7.2 removed) and from the brief. The save no longer has a `daily` field.
+- The Ceratosaurus now unlocks at 2000 m in one run (was a 7-day daily streak), between the Hadrosaur (1000 m) and the Therizinosaurus (3000 m).
+
 ## 2026-11-01 — All 10 dinosaurs on the Runners screen
 - The 6 achievement dinosaurs as placeholder cell maps in `src/art.js`, on the T-Rex's body, legs and slide: Hadrosaur (olive, cream duck bill), Ceratosaurus (red-orange, nose horn, bumps and stripes), Megalosaurus (brown, dark stripe from the eye down the back), Therizinosaurus (pale gold, cream scythe claws), Allosaurus (purple-gray, red crest over the eye), Spinosaurus (deep blue, orange sail, croc teeth). All 10 runners pass `tools/art-test.mjs` (391 checks).
 - Runners screen: pages of 2 rows of 4 cards (104×96), arrows beside the grid to turn the page; Up/Down move a row. 10 runners: 8 on page 1, Allosaurus and Spinosaurus on page 2. Unlocked sprites now at 1.5× (3×3 px art pixels) to fit the smaller cards.

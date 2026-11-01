@@ -10,7 +10,7 @@
 @../../PHASES.md
 
 ## Why it works for Coolmath
-Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: eggs, unlockable runners (more dinosaurs, plus the beast from our game Hangman), a daily run, and a 2-player race on one keyboard.
+Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: eggs, unlockable runners (more dinosaurs, plus the beast from our game Hangman), and a 2-player race on one keyboard.
 
 **Name:** "Dinosaur Game: Cool Edition" (the folder slug stays `dinosaur-game-hd`). The original belongs to Google: the name, the logo and the store text never say "Chrome", "Google" or "T-Rex Runner", and the dino and its sprites are original art, not traced from Chrome. We copy the original's tuning numbers, never its code or art.
 
@@ -41,10 +41,9 @@ Title (the dino sleeps; any key wakes it) → run starts → jump and duck throu
 
 ## Shell (differs from STANDARDS)
 An endless runner has no levels, so the level-select and star screens are replaced:
-- **Title:** logo, **Play** (1P), **2 Players**, **Daily**, **Runners**, settings.
+- **Title:** logo, **Play** (1P), **2 Players**, **Runners**, settings.
 - **Runners:** a row of all the runners. Locked ones show as silhouettes, with their price in eggs (shown as an egg with a progress bar) or their achievement and progress (for example "Reach 2000 m: 1450 / 2000").
 - **Results:** distance and eggs count up, best distance, any achievement earned in this run, **Retry** (big) / **Runners** / **Menu**.
-- **Daily run:** one date-seeded run per day, same for everyone, with a streak and an emoji result line (STANDARDS daily challenge).
 
 ## Runners
 All runners are cosmetic: same jump, same speed, same hitbox. Each one has its own run, jump, duck and crash frames, drawn to fit the T-Rex's footprint. Every dinosaur runs on two legs, so it fits the T-Rex's silhouette; four-legged dinosaurs (Triceratops, Stegosaurus) are left out because they don't.
@@ -59,7 +58,7 @@ The rewards for achievers and completionists: each one unlocks with one achievem
 | Dinosaur | Look | Achievement |
 |---|---|---|
 | **Hadrosaur** | flat duck bill, no crest | Reach 1000 m in one run |
-| **Ceratosaurus** | nose horn, bumpy back | Play the daily run 7 days in a row |
+| **Ceratosaurus** | nose horn, bumpy back | Reach 2000 m in one run |
 | **Megalosaurus** | plain, heavy meat-eater | Run 50 km in total |
 | **Therizinosaurus** | pot belly, giant scythe claws | Reach 3000 m in one run |
 | **Allosaurus** | horn crests over the eyes | Win 10 two-player races (the 2P-only bonus) |
@@ -71,12 +70,12 @@ The furry beast from **Coolmath Hangman** (also ours) joins as one more achievem
 The achievements are tracked only in the save file: no separate achievements screen, the Runners screen is the list.
 
 ## Progression and content (v1)
-- Endless 1P run, 2P race, daily run.
+- Endless 1P run, 2P race.
 - 11 runners: the T-Rex, 3 dinosaurs hatched with eggs, and 6 dinosaurs plus the Hangman beast unlocked by achievements.
 - One desert scene with day and night.
 
 ## Retention
-Best distance, daily run streak, saving eggs for the next hatch, chasing the achievement runners, and the friend you just lost to sitting next to you.
+Best distance, saving eggs for the next hatch, chasing the achievement runners, and the friend you just lost to sitting next to you.
 
 ## Art direction
 **Decided: HD Pixel.** Voxel 3D was the other candidate and is not used.
@@ -96,12 +95,12 @@ Either way: the dino reads instantly as "the dino" (big head, tiny arms), obstac
 Jump "boop", duck swoosh, egg "pip" (pitch rises on an egg streak), hatch crack and jingle, 100 m milestone beep, crash thud. No music.
 
 ## GameAnalytics
-- No levels, so progression events use one id per mode: `endless`, `versus`, `daily`, with the distance as score on `Fail`.
+- No levels, so progression events use one id per mode: `endless`, `versus`, with the distance as score on `Fail`.
 - Extra events: `run:death:<obstacle-type>`, `run:distance` (value), `eggs:earned` (value), `runner:hatch:<id>`, `runner:equip:<id>`, `achievement:<id>`, `versus:start`, `versus:winner:<p1|p2>`.
 - Questions to answer: do eggs and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
 
 ## Scope
-- **v1:** 1P endless, 2P race, daily run, eggs, a golden egg that earns a bonus pterodactyl flight (Jetpack Joyride style, after the run), 11 runners (4 dinosaurs, 6 achievement dinosaurs and the Hangman beast), day/night, one desert scene.
+- **v1:** 1P endless, 2P race, eggs, a golden egg that earns a bonus pterodactyl flight (Jetpack Joyride style, after the run), 11 runners (4 dinosaurs, 6 achievement dinosaurs and the Hangman beast), day/night, one desert scene.
 - **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as an egg sink once all 3 are hatched. Not planned: power-ups, missions, upgrades, lives, loot boxes.
 
 ## Risks and open questions

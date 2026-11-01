@@ -106,7 +106,7 @@ export const HATCH = [
 // the card, and how far the save is towards it. Not unlocked in play yet.
 export const ACHIEVE = [
   { id: 'hadrosaur', name: 'Hadrosaur', goal: 'REACH 1000 M IN ONE RUN', label: '1000 M', target: 1000, progress: d => d.best },
-  { id: 'ceratosaurus', name: 'Ceratosaurus', goal: 'PLAY THE DAILY RUN 7 DAYS IN A ROW', label: '7 DAYS', target: 7, progress: d => d.daily.streak },
+  { id: 'ceratosaurus', name: 'Ceratosaurus', goal: 'REACH 2000 M IN ONE RUN', label: '2000 M', target: 2000, progress: d => d.best },
   { id: 'megalosaurus', name: 'Megalosaurus', goal: 'RUN 50 KM IN TOTAL', label: '50 KM', target: 50, progress: d => Math.floor(d.totalDistance / 1000) },
   { id: 'therizinosaurus', name: 'Therizinosaurus', goal: 'REACH 3000 M IN ONE RUN', label: '3000 M', target: 3000, progress: d => d.best },
   { id: 'allosaurus', name: 'Allosaurus', goal: 'WIN 10 TWO-PLAYER RACES', label: '10 WINS', target: 10, progress: d => d.versusWins },

@@ -7,7 +7,6 @@ const KEY = 'cm_dinosaur-game-hd_save';
 export const defaults = () => ({
   v: 1, best: 0, eggs: 0, flights: 0, totalEggs: 0, totalDistance: 0, totalNights: 0, versusWins: 0,
   unlocked: ['trex'], equipped: 'trex', p2Runner: 'trex',
-  daily: { lastDate: null, streak: 0, best: 0, bestEggs: 0 },
   firstRunDone: false,
   tutorial: { jump: false, duck: false, done: false },
   settings: { sfx: true },
