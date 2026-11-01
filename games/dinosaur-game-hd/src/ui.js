@@ -246,7 +246,7 @@ function drawRunners(ctx, g, now) {
 
   const R = RUNNER_LIST[g.pick], open = d.unlocked.includes(R.id);
   const hint = open ? (d.equipped === R.id ? '' : 'SPACE OR CLICK TO RUN WITH IT')
-    : d.eggs >= R.price ? `HATCH IT FOR ${R.price} EGGS` : `${R.price - d.eggs} MORE EGGS TO HATCH IT`;
+    : d.eggs >= R.price ? `HATCH IT FOR ${R.price} EGGS` : '';
   drawText(ctx, R.name, cx, 182, 2, PAL.ink, 'center');
   drawText(ctx, hint, cx, 200, 2, PAL.ink, 'center');
 }

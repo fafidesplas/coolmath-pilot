@@ -2,6 +2,7 @@
 
 ## 2026-10-31 — Fewer labels on the Runners screen
 - Pao: no "EQUIPPED" on the cards and no "NOW RUNNING" under the name. The equipped runner's hint line is now empty; the others still say SPACE OR CLICK TO RUN WITH IT. GDD 8 updated.
+- Also no "N MORE EGGS TO HATCH IT" under a locked egg; its card already shows the eggs and the price (130/3000). Once there are enough eggs, it still says HATCH IT FOR N EGGS.
 
 ## 2026-10-31 — Subtitle, not a button
 - Pao: the orange "COOL EDITION" box on the title read as a button. It is now plain text in the main title's style (Night Ink with an orange drop shadow), at the smaller size. GDD 8 updated.
