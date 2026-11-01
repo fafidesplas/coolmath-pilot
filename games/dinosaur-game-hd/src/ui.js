@@ -231,7 +231,6 @@ function drawRunners(ctx, g, now) {
     if (d.unlocked.includes(R.id)) {
       const img = SPR.runners[R.id].jump;
       ctx.drawImage(img, mid - 22 - MARGIN, y + 14 + img.oy - MARGIN);
-      if (d.equipped === R.id) drawText(ctx, 'EQUIPPED', mid, y + 84, 2, PAL.cream, 'center');
       return;
     }
     // A locked egg: it rocks now and then once there are enough eggs to hatch it.
@@ -246,7 +245,7 @@ function drawRunners(ctx, g, now) {
   });
 
   const R = RUNNER_LIST[g.pick], open = d.unlocked.includes(R.id);
-  const hint = open ? (d.equipped === R.id ? 'NOW RUNNING' : 'SPACE OR CLICK TO RUN WITH IT')
+  const hint = open ? (d.equipped === R.id ? '' : 'SPACE OR CLICK TO RUN WITH IT')
     : d.eggs >= R.price ? `HATCH IT FOR ${R.price} EGGS` : `${R.price - d.eggs} MORE EGGS TO HATCH IT`;
   drawText(ctx, R.name, cx, 182, 2, PAL.ink, 'center');
   drawText(ctx, hint, cx, 200, 2, PAL.ink, 'center');
