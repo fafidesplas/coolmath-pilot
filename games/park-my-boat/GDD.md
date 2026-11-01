@@ -1,7 +1,7 @@
 # Dock All The Boats — Game design document
 
 **Status:** In review
-**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-10-25
+**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-01
 
 > Park a rowboat, then a cruise ship 100x bigger right next to it without a scratch, in a harbor where nothing has brakes.
 
@@ -18,7 +18,7 @@ This GDD describes the prototype that is already built (`src/`, `levels/levels.j
 
 ## 2. Core loop
 - **Moment (seconds):** steer → let go early → coast → line up → back off with reverse → come to rest inside the slip → parked.
-- **Level (20–90 s, plus camera moves):** the camera shows the slip → glides back to the boat → park it → the camera zooms to the next boat, bigger or smaller → … → results with money kept and stars.
+- **Level (20–90 s, plus camera moves):** park the first boat → the camera zooms to the next boat, bigger or smaller → … → results with money kept and stars.
 - **Meta (days):** unlock the next level, replay for three stars, keep more money than last time, find the bonus level.
 
 ## 3. Mechanics
@@ -80,8 +80,9 @@ Mass and power are toy values before scaling. A level can set its own `k` for a 
 
 ### 3.7 Camera
 - Each boat has a set framing ("a few boat lengths") and the player can't zoom. The jet ski multiplies its framing by `view` (3 today, **(new)** 2 with look-ahead). Ships of 50 m and longer use `BIG_SHIP_VIEW = 3.5`.
-- **Slip preview:** when a boat starts, the camera shows its slip for 3 s (`SLIP_SHOW`), then glides back to the boat at 40% speed (`SLIP_GLIDE`). Control starts when the camera is within 10% of the view and 20% of the zoom (capped at 6 s, `SLIP_MAX`). A click, Space or Enter cuts to the glide.
-- **(new) Restart skips the boat 1 preview:** after R, RESTART or RETRY (results screen), boat 1 has control at once (restart < 1 s). Later boats still get their preview.
+- **No slip preview:** the camera never leaves the boat to show its slip (cut 2026-11-01: it broke the rhythm mid-level). The edge arrow points to an off-screen slip.
+- **Hand-off:** at a level's start the camera is on boat 1 and it has control at once (so restart is under 1 s). When a boat parks, the camera moves and zooms from it to the next boat at its normal speed; the next boat gets control when the camera is within 10% of the view and 20% of the zoom, at most 3 s later (`HANDOFF_MAX`). The card with the boat's name and size shows for at least 2.5 s (`CARD_SHOW`), and 1 s more after control if the camera took longer (`CARD_AFTER`).
+- **Nothing moves before control:** traffic sets off only once the player has control of a boat in one of its turns. While the camera travels to the next boat, a stopped traffic boat stays put; one already moving keeps going if the next turn is one of its turns too.
 - **(new) Look-ahead:** the camera leads the boat by up to 25% of the view in its direction of travel, eased over 0.5 s.
 - **(new) Edge arrows:** when the slip is off screen, an arrow with a slip icon at the screen edge points to it. Traffic on course to come within (the player's length + its own length) of the player in the next 3 s gets a coral arrow with a boat icon. At most 2 traffic arrows show, for the nearest threats.
 - Zoom moves are in log space. A scale bar shows the zoom. Boats too small to see draw as dots, and the player gets a ring when tiny. Outlines, shadows, popups and UI stay the same size on screen.
@@ -103,7 +104,6 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | Throttle and steer | Hold anywhere on the water: the boat steers toward the pointer. Farther = more throttle | W / Up |
 | Reverse | Hold behind the boat | S / Down |
 | Rudder | (by pointer position) | A / D, Left / Right |
-| Skip slip preview | Click or tap | Space / Enter |
 | Restart level | RESTART button | R |
 | Pause | II button | P / Esc |
 
@@ -264,7 +264,6 @@ Level ids: `world01:level04` (`bonus:level01` for the bonus).
 | `boat:world01:level04:b2:park` | Boat 2 parked | Damage during that boat's turn, % of the budget |
 | `boat:world01:level04:b2:miss` | Boat 2 checked and not parked | Miss count for this boat so far |
 | `ui:restart` | R or RESTART | — |
-| `ui:skip` | Slip preview skipped | — |
 | `settings:sfx:off` | Sound toggled off | — |
 | `settings:music:off` | Music toggled off | — |
 
@@ -283,10 +282,10 @@ No daily events (no daily in v1).
 - **Second risk:** budgets that feel fair: bumps are the comedy, so a light scrape must not sink three stars. The `boat:…:park` damage from playtests sets them.
 
 ## 13. Scope
-- **Vertical slice (phase 2):** the 4 existing levels (Odd Couple, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart without preview, clearing the slip, miss feedback (no text), automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new levels come in phase 3. Gate: a teammate plays it cold and wants more.
+- **Vertical slice (phase 2):** the 4 existing levels (Odd Couple, Way Down, Rush Hour, Marina, in that order) inside the full v1 shell: money and stars, unlocks, restart under 1 s, clearing the slip, miss feedback (no text), automatic parking with the rest ring, look-ahead and edge arrows, the new results screen, save, and analytics stubs that log to the console. The new levels come in phase 3. Gate: a teammate plays it cold and wants more.
 - **v1:**
   - 20 levels in 2 worlds, plus the hidden bonus.
-  - Money and stars (3.6), unlocks (7), restart without preview, look-ahead camera and edge arrows.
+  - Money and stars (3.6), unlocks (7), restart under 1 s, look-ahead camera and edge arrows.
   - Level select by world; results with money kept.
   - Music and its toggle, added by Pao later in production.
   - GameAnalytics events (11); 48 px touch targets; the full shell from `STANDARDS.md`.
@@ -317,7 +316,7 @@ Decided with the owner on 2026-10-25:
 |---|---|---|---|
 | How is a level scored? | Money kept from a per-level budget; a boat needs 50% accuracy to count; no clock (3.6). Changed from time on 2026-10-25 | Pao | Decided |
 | What happens on a miss? | Retry from where you are; no fail state | Pao | Decided |
-| Restart under 1 s? | Restart skips the boat 1 slip preview; later boats keep theirs | Pao | Decided |
+| Restart under 1 s? | No slip preview at all (2026-11-01): boat 1 has control at once | Pao | Decided |
 | v1 size? | 2 worlds of 10 levels | Pao | Decided |
 | When is the first scale jump? | Level 4 (Odd Couple); levels 1–3 teach the controls | Pao | Decided |
 | Unlocks? | Finish to unlock the next; no star gates; bonus after all 20 | Pao | Decided |
@@ -341,7 +340,7 @@ Decided in review 1 (2026-10-25):
 | Edge arrows | Size-aware warning, at most 2 traffic arrows (3.7) | Pao | Decided |
 | Level 1 tutorial | Cut: the game shows no instruction or flavor text (see changelog) | Pao | Decided |
 | Level length | A decent run takes at most 90 s (120 s for level 20) | Pao | Decided |
-| RETRY and hidden tab | RETRY skips the preview; a hidden tab pauses the game | Pao | Decided |
+| RETRY and hidden tab | RETRY starts with control at once (no slip preview); a hidden tab pauses the game | Pao | Decided |
 | Swan Lake, Night Shift | Swan Lake gets 3 different small boats; Night Shift renamed Busy Harbor | Pao | Decided |
 | When to split `main.js` | First step of phase 2, own commit | Pao | Decided |
 | Daily checklist item | Noted as not applying (13) | Pao | Decided |
@@ -370,6 +369,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-11-01 — Slip preview cut (3.7, 4, 11): the camera no longer shows the slip at the start of a boat's turn, it moves straight from the parked boat to the next one; no skip control and no `ui:skip`. Traffic only sets off once the player has control (3.7).
 - 2026-10-28 — Level "Mixed Nuts" deleted from the build (it stays in the §6 plan as level 10 until decided). The prototype has 4 regular levels.
 - 2026-10-28 — Level 1 tutorial cut (ghost pointer, key icons, "Park in the box."). The game shows no instruction or flavor text: no hints, tagline or miss message. Text is menu buttons, labels and numbers only.
 - 2026-10-28 — Design note from Fafi's playtest: level 1's first boat should feel the best; the big boat comes too early and doesn't feel good to park.

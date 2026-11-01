@@ -29,11 +29,10 @@ const BIG_SHIP_VIEW = +new URLSearchParams(location.search).get('shipview') || 3
 // full forward drag and SETTLE_SPIN times the spin drag, so a nearly stopped ship doesn't creep for ages
 const REST_SPEED = .25, REST_SPIN = .25, REST_TIME = .5;
 const SETTLE_SPEED = +new URLSearchParams(location.search).get('settle') || 1, SETTLE_SPIN = 2;
-// each boat's turn opens on its slip for this many seconds (camera travel included), then the camera
-// glides back to the boat at SLIP_GLIDE of its normal speed; the boat takes control when the camera is
-// nearly there (at most SLIP_MAX seconds later), and the camera eases back to full speed as the intro
-// fades out; a click, Space or Enter cuts to the glide
-const SLIP_SHOW = 3, SLIP_GLIDE = .4, SLIP_MAX = 6;
+// a new boat's turn: the camera moves from the boat just parked to the new one, and the boat (and the
+// traffic) starts once the camera is nearly there, at most HANDOFF_MAX seconds later. The card with the
+// boat's size shows for at least CARD_SHOW seconds, and CARD_AFTER more once the boat has control.
+const HANDOFF_MAX = 3, CARD_SHOW = 2.5, CARD_AFTER = 1;
 // a cheat so buoys stay visible next to big ships: each buoy is at least this share of the current
 // boat's length (wide), growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
 const BUOY_SHARE = +new URLSearchParams(location.search).get('buoy') || 1/12;
@@ -296,9 +295,12 @@ function startBoat(n)
     anchor = judge = undefined;
     restT = 0; restArmed = true;
     boatTime = 0;
-    intro = { t:0, prev, dur: SLIP_SHOW + SLIP_MAX };
+    intro = { t:0, prev, ctrlAt: undefined };
     if (fleet.length > 1) sfx('horn', undefined, .7, clamp(3 / Math.pow(boatSize(player), .3), .35, 3));
 }
+
+// the player steers the current boat: false while the camera is still on its way to a new boat
+function hasControl() { return !intro || intro.ctrlAt !== undefined; }
 
 function levelId()
 {
@@ -332,9 +334,7 @@ function cameraGoal()
     const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.type.view || 1);
     const minW = boatSize(player) * lens, pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
-    let box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
-    // a new boat's turn opens on its slip, at the boat's own framing
-    if (intro && intro.t < SLIP_SHOW) box = boxAround(slip.pos, Math.max(slip.w, slip.h)/2);
+    const box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
     const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);
     const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3));
     // centered in the play area below the HUD bar
@@ -344,9 +344,9 @@ function cameraGoal()
 function updateCamera(dt, snap)
 {
     const g = cameraGoal();
-    if (snap) { cam.pos = g.pos; cam.wu = g.wu; return; }
-    const gliding = intro && intro.t >= SLIP_SHOW && intro.t < intro.dur;
-    if (intro && intro.t >= SLIP_SHOW) dt *= lerp(SLIP_GLIDE, 1, clamp((intro.t - intro.dur)/.4, 0, 1));
+    if (snap) { cam.pos = g.pos; cam.wu = g.wu; }
+    else
+    {
     // while the goal is far, stay zoomed out enough to see it: big moves read as zoom out, pan, zoom in
     const dist = cam.pos.distance(g.pos);
     const wuGoal = Math.max(g.wu, dist / 14);
@@ -355,8 +355,11 @@ function updateCamera(dt, snap)
     // panning speed is relative to the zoom
     const step = Math.min(dist * Math.min(1, dt*3), 30 * cam.wu * dt);
     if (dist > 1e-9) cam.pos = cam.pos.add(g.pos.subtract(cam.pos).scale(step/dist));
-    // back at the boat: the intro ends and the boat takes control
-    if (gliding && cam.pos.distance(g.pos) < .1*g.wu*UI_SIZE.x && Math.abs(Math.log(cam.wu/g.wu)) < .2) intro.dur = intro.t;
+    }
+    // at the new boat (or out of time): the boat takes control
+    if (intro && !hasControl() && !level?.jam
+        && (intro.t >= HANDOFF_MAX || (cam.pos.distance(g.pos) < .1*g.wu*UI_SIZE.x && Math.abs(Math.log(cam.wu/g.wu)) < .2)))
+        intro.ctrlAt = intro.t;
 }
 
 function viewHalfUi() { return vec2(mainCanvasSize.x, mainCanvasSize.y).scale(.5 / uiScale()); }
@@ -514,7 +517,7 @@ function controlPlayer(dt)
             }
         }
     }
-    if (anchor || (intro && intro.t < intro.dur)) throttle = rudder = 0;
+    if (anchor || !hasControl()) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;
     const settling = !throttle && player.speed() < SETTLE_SPEED*player.vs;
@@ -595,6 +598,7 @@ function makeTraffic(t, n)
     // after: waits at its start until another traffic boat reaches one of its path points (numbers from 1)
     b.after = t.after ? { n: t.after.boat - 1, j: (t.after.point || 1) - 1 } : null;
     b.waiting = !!b.after;
+    b.moving = false;           // set off in a turn of its own, once the player had control
     return b;
 }
 
@@ -610,13 +614,17 @@ function trafficAt(a, j)
 }
 
 // aim at a point a little way ahead on the route; slow down for sharp turns. Outside its turns
-// (during) a boat cuts the engine and coasts to a stop where it is.
+// (during) a boat cuts the engine and coasts to a stop where it is. A boat that is stopped only sets
+// off once the player has control, so nothing moves while the camera travels to a new boat; one
+// already moving when the next turn starts (and that turn is one of its turns too) keeps going.
 function driveTraffic(b, dt)
 {
     const r = b.route, L = boatSize(b);
     let throttle = 0, rudder = 0;
     if (b.waiting && trafficAt(trafficBoats[b.after.n], b.after.j)) b.waiting = false;
-    if (!b.waiting && !b.done && (!b.during || b.during.includes(boatIndex + 1)))
+    const inTurn = !b.done && (!b.during || b.during.includes(boatIndex + 1));
+    b.moving = inTurn && (b.moving || hasControl());
+    if (!b.waiting && b.moving)
     {
         b.s = routeProgress(r, b.pos, b.s, 3*L);
         if (!r.loop)
@@ -716,7 +724,7 @@ function updateJudge(dt)
         else if (judge.result == 'fail' && judge.t > 1.8) judge = undefined;
         if (judge) return;
     }
-    if (intro && intro.t < intro.dur) return;
+    if (!hasControl()) return;
     if (!isResting()) { restT = 0; restArmed = true; return; }
     if (!restArmed || !boatInSlip(false)) { restT = 0; return; }
     restT += dt;
@@ -1039,14 +1047,12 @@ function gameUpdate()
             if (level.jam) jamUpdate(timeDelta);
             else
             {
-            if (intro && intro.t < SLIP_SHOW && (mouseWasPressed(0) || keyWasPressed('Space') || keyWasPressed('Enter')))
-                intro.t = SLIP_SHOW;
             if (intro)
             {
                 intro.t += timeDelta;
-                if (intro.t > intro.dur + .4) intro = undefined;
+                if (hasControl() && intro.t > Math.max(CARD_SHOW, intro.ctrlAt + CARD_AFTER) + .25) intro = undefined;
             }
-            else boatTime += timeDelta;
+            if (hasControl()) boatTime += timeDelta;
             stepWorld();
             updateJudge(timeDelta);
             }
@@ -1296,7 +1302,7 @@ function drawIntro()
 {
     if (!intro) return;
     if (fleet.length < 2) return;
-    const t = intro.t, out = intro.dur + .4;
+    const t = intro.t, out = hasControl() ? Math.max(CARD_SHOW, intro.ctrlAt + CARD_AFTER) + .25 : Infinity;
     const k = Math.min(1, t*4) * clamp((out - t)*4, 0, 1);
     if (k <= 0) return;
     // at the bottom: piers and the boat just parked are usually up top
@@ -1434,7 +1440,7 @@ window.game =
     win()
     {
         if (level.jam) return jamWin();
-        if (intro) intro.t = intro.dur;
+        if (intro && !hasControl()) intro.ctrlAt = intro.t;
         player.pos = slip.pos.copy(); player.angle = slip.a; player.vel = vec2(); player.angVel = 0;
         player.updateWorld();
         if (!judge) judgeBoat();
