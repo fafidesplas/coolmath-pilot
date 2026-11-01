@@ -102,6 +102,18 @@ export const HATCH = [
   { id: 'pachycephalosaurus', name: 'Pachycephalosaurus', price: 1200 },
   { id: 'parasaurolophus', name: 'Parasaurolophus', price: 3000 },
 ];
+// Dinosaurs unlocked by achievements (GDD 7.1): the goal, a short label for
+// the card, and how far the save is towards it. Not unlocked in play yet.
+export const ACHIEVE = [
+  { id: 'hadrosaur', name: 'Hadrosaur', goal: 'REACH 1000 M IN ONE RUN', label: '1000 M', target: 1000, progress: d => d.best },
+  { id: 'ceratosaurus', name: 'Ceratosaurus', goal: 'PLAY THE DAILY RUN 7 DAYS IN A ROW', label: '7 DAYS', target: 7, progress: d => d.daily.streak },
+  { id: 'megalosaurus', name: 'Megalosaurus', goal: 'RUN 50 KM IN TOTAL', label: '50 KM', target: 50, progress: d => Math.floor(d.totalDistance / 1000) },
+  { id: 'therizinosaurus', name: 'Therizinosaurus', goal: 'REACH 3000 M IN ONE RUN', label: '3000 M', target: 3000, progress: d => d.best },
+  { id: 'allosaurus', name: 'Allosaurus', goal: 'WIN 10 TWO-PLAYER RACES', label: '10 WINS', target: 10, progress: d => d.versusWins },
+  // Every other runner except the Allosaurus (and itself).
+  { id: 'spinosaurus', name: 'Spinosaurus', goal: 'UNLOCK ALL BUT THE ALLOSAURUS', label: 'ALL', get target() { return RUNNER_LIST.length - 2; },
+    progress: d => d.unlocked.filter(id => id !== 'allosaurus' && id !== 'spinosaurus').length },
+];
 // Every runner built so far, in the Runners screen's order.
-export const RUNNER_LIST = [{ id: 'trex', name: 'T-Rex', price: 0 }, ...HATCH];
+export const RUNNER_LIST = [{ id: 'trex', name: 'T-Rex', price: 0 }, ...HATCH, ...ACHIEVE];
 export const RUNNER_IDS = RUNNER_LIST.map(r => r.id);

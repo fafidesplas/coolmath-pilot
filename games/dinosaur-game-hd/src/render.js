@@ -313,7 +313,7 @@ export class Renderer {
     const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
     if (g.screen !== 'paused') this.dust.update(dt);
     this.dust.draw(ctx, this.night, false);
-    const focus = RUNNER_IDS[g.pick], shown = menu && g.data.unlocked.includes(focus) ? focus : g.data.equipped;
+    const focus = RUNNER_IDS[g.pick], shown = menu && (g.data.unlocked.includes(focus) || g.peek) ? focus : g.data.equipped;
     if (!(menu && g.hatch)) this.drawRunner(SPR.runners[shown], menu ? { timeMs: Math.max(0, now - g.screenAt) } : run, y, now, g.showBoxes && !menu);
     this.dust.draw(ctx, this.night, true);
     this.drawPickups(g.fx, now);

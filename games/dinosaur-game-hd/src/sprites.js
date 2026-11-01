@@ -77,7 +77,18 @@ function runner(R) {
     sleep: one(R.sleep),
     slide: R.slide.map(one),
     slideCrash: one(R.slideCrash),
+    shadow: silhouette(one(R.jump)),   // a locked achievement runner's card
   };
+}
+
+// The sprite filled with Night Ink.
+function silhouette(img) {
+  const [c, g] = canvas(img.width, img.height);
+  g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'source-in';
+  g.fillStyle = PAL.ink;
+  g.fillRect(0, 0, c.width, c.height);
+  return c;
 }
 
 export const SPR = {

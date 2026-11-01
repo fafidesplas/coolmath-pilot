@@ -9,7 +9,7 @@ import { GA } from './analytics.js';
 import { Keys, JUMP_KEYS, DUCK_KEYS } from './input.js';
 import { Renderer, FX_MS } from './render.js';
 import { FOOTFALL_X } from './art.js';
-import { layout, hitButton, canHatch, HATCH_MS } from './ui.js';
+import { layout, hitButton, canHatch, HATCH_MS, PAGE } from './ui.js';
 
 const canvas = document.getElementById('view');
 const r = new Renderer(canvas);
@@ -34,6 +34,7 @@ const g = {
   flashUntil: 0, shakeUntil: 0,
   showBoxes: false, invincible: false,
   pick: 0, screenAt: 0, runnersFrom: 'title',   // the Runners screen: focused card, when it opened, where Back goes
+  peek: false,          // debug: the Runners screen shows every runner as unlocked
   hatch: null,          // the hatch scene: { id, name, at, step }
 };
 const pointers = new Map();   // pointerId -> 'jump' | 'duck'
@@ -119,10 +120,18 @@ function closeHatch() {
   if (performance.now() - g.hatch.at >= HATCH_MS.done) g.hatch = null;
 }
 
+// The same slot on the next or previous page, or its last card.
+function turnPage(dir) {
+  g.pick = Math.min(RUNNER_LIST.length - 1, (Math.floor(g.pick / PAGE) + dir) * PAGE + g.pick % PAGE);
+}
+
 function runnersKey(code) {
-  const n = RUNNER_LIST.length;
+  const n = RUNNER_LIST.length, row = PAGE / 2;
   if (code === 'ArrowLeft' || code === 'KeyA') g.pick = (g.pick + n - 1) % n;
   else if (code === 'ArrowRight' || code === 'KeyD') g.pick = (g.pick + 1) % n;
+  else if ((code === 'ArrowUp' || code === 'KeyW') && g.pick >= row) g.pick -= row;
+  else if ((code === 'ArrowDown' || code === 'KeyS') && g.pick + row < n) g.pick += row;
+  else if (DEBUG && code === 'KeyU') g.peek = !g.peek;   // show every runner as if unlocked
   else if (code === 'Space' || code === 'Enter') choose(g.pick);
   else if (code === 'Escape' || code === 'Backspace') back();
   else return;
@@ -277,7 +286,7 @@ keys.onUp = (code, lastOfGroup) => {
 
 const ACTIONS = {
   play: () => startRun(false), sound: toggleSound, pause, resume, restart: retry, retry, menu,
-  runners: openRunners, back, card: b => choose(b.i), hatch: b => choose(b.i),
+  runners: openRunners, back, card: b => choose(b.i), hatch: b => choose(b.i), page: b => turnPage(b.dir),
 };
 
 canvas.addEventListener('pointerdown', e => {

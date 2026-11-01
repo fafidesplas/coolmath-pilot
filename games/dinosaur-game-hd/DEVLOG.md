@@ -1,5 +1,13 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — All 10 dinosaurs on the Runners screen
+- The 6 achievement dinosaurs as placeholder cell maps in `src/art.js`, on the T-Rex's body, legs and slide: Hadrosaur (olive, cream duck bill), Ceratosaurus (red-orange, nose horn, bumps and stripes), Megalosaurus (brown, dark stripe from the eye down the back), Therizinosaurus (pale gold, cream scythe claws), Allosaurus (purple-gray, red crest over the eye), Spinosaurus (deep blue, orange sail, croc teeth). All 10 runners pass `tools/art-test.mjs` (391 checks).
+- Runners screen: pages of 2 rows of 4 cards (104×96), arrows beside the grid to turn the page; Up/Down move a row. 10 runners: 8 on page 1, Allosaurus and Spinosaurus on page 2. Unlocked sprites now at 1.5× (3×3 px art pixels) to fit the smaller cards.
+- Locked achievement runners: a Night Ink silhouette, a progress bar and a short goal on the card ("1000 M"), the full goal on the hint line. The egg cards show the price with an egg icon instead of "130/3000" (a 4-digit bank didn't fit the narrower card).
+- Achievements don't unlock in play yet (phase 3). Debug: U on the Runners screen shows every runner as unlocked.
+- Physics, egg and art tests pass; checked both pages in Chrome, no console errors.
+- Next: Pao to judge the layout and the 6 looks.
+
 ## 2026-10-31 — Fewer labels on the Runners screen
 - Pao: no "EQUIPPED" on the cards and no "NOW RUNNING" under the name. The equipped runner's hint line is now empty; the others still say SPACE OR CLICK TO RUN WITH IT. GDD 8 updated.
 - Pao: the runner sprites in the cards were small and sat high. They're now drawn at double size (96×100, each art pixel 4×4) and centered in the card's face.
