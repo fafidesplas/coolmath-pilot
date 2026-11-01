@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-10-31 — Subtitle, not a button
+- Pao: the orange "COOL EDITION" box on the title read as a button. It is now plain text in the main title's style (Night Ink with an orange drop shadow), at the smaller size. GDD 8 updated.
+- Next: Pao to judge the 3 runners' looks; then the night ground seam and the cold playtest.
+
 ## 2026-10-30 — The first 3 runners to hatch
 - Velociraptor, Pachycephalosaurus and Parasaurolophus, as cell maps in `src/art.js` like the T-Rex: every runner is now an entry in `RUNNERS` with its own colors, body, legs and slide. All keep the T-Rex's silhouette, so the hitboxes are unchanged. Velociraptor: rust with feather bands, flat toothy snout, a stiff straight tail, sickle claws. Pachycephalosaurus: dusty rose with a bone dome; it slides dome first. Parasaurolophus: teal with an orange tube crest and a cream bill; the crest lies flat along its back in the slide. Placeholders until the final sprite sheet.
 - Runners screen (title and results have a RUNNERS button): one card per runner, egg cards with a progress bar and a HATCH button once there are enough eggs, the egg bank top right, and the focused runner on a treadmill. Mouse or Left/Right + Space; Esc goes back where you came from.

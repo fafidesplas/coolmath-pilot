@@ -241,7 +241,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with a "COOL EDITION" banner, the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with "COOL EDITION" under it in the same style (Night Ink with an orange drop shadow, smaller), the buttons **Play** (big), **2 Players**, **Daily** (with the streak 🔥), **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
