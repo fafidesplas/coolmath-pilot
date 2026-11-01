@@ -164,7 +164,7 @@ const SCALE_LEVELS =
         ducks: [{ x: 466, y: 868, kids: 2 }],
         traffic:
         [
-            { boat: 'speedboat', path: [[510, 879.4], [501.4, 882.6], [498.6, 898.2]], end: 'back', speed: 0.6, during: [3] },
+            { boat: 'speedboat', path: [[510, 879.4], [501.4, 882.6], [498.6, 898.2]], end: 'back', speed: 0.6, during: [2] },
             { boat: 'trawler', path: [[560.5, 811.5], [564, 894]], end: 'back', speed: 0.6, during: [2] },
             { boat: 'sailboat', path: [[523.5, 885], [522, 867], [504, 855.5]], end: 'stop', speed: 0.6, during: [2] },
             { boat: 'speedboat', path: [[534.5, 863], [529, 874], [529.5, 889.5]], end: 'stop', speed: 0.6, during: [2] },
