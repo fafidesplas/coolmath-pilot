@@ -2,6 +2,7 @@
 
 ## 2026-10-31 — Fewer labels on the Runners screen
 - Pao: no "EQUIPPED" on the cards and no "NOW RUNNING" under the name. The equipped runner's hint line is now empty; the others still say SPACE OR CLICK TO RUN WITH IT. GDD 8 updated.
+- Pao: the runner sprites in the cards were small and sat high. They're now drawn at double size (96×100, each art pixel 4×4) and centered in the card's face.
 - Also no "N MORE EGGS TO HATCH IT" under a locked egg; its card already shows the eggs and the price (130/3000). Once there are enough eggs, it still says HATCH IT FOR N EGGS.
 
 ## 2026-10-31 — Subtitle, not a button

@@ -229,8 +229,9 @@ function drawRunners(ctx, g, now) {
     if (i === g.pick) box(ctx, x - 4, y - 4, CARD.w + 8, CARD.h + 8, PAL.ink, PAL.cream, PAL.cream);
     box(ctx, x, y, CARD.w, CARD.h, PAL.ink, PAL.slate, '#46546A');
     if (d.unlocked.includes(R.id)) {
-      const img = SPR.runners[R.id].jump;
-      ctx.drawImage(img, mid - 22 - MARGIN, y + 14 + img.oy - MARGIN);
+      // Doubled and centered in the card's face (above the lip), outline included.
+      const img = SPR.runners[R.id].jump, w = 2 * img.width, h = 2 * img.height;
+      ctx.drawImage(img, mid - w / 2, y + 2 + (CARD.h - 8 - h) / 2, w, h);
       return;
     }
     // A locked egg: it rocks now and then once there are enough eggs to hatch it.
