@@ -97,6 +97,8 @@ export const SPR = {
   'cactus-large': sprite(ART['cactus-large'], true),
   ptero: ART.ptero.map(s => sprite(s, true)),
   egg: ART.egg.map(s => sprite(s, true)),   // plain, glinting
+  goldEgg: ART.goldEgg.map(s => sprite(s, true, { ...COLOR, y: '#F5C542', Y: '#C9932A' })),
+  mount: ART.mount.map(s => sprite(s, false, { ...COLOR, P: '#3E8A9A', D: '#2C6474' })),
   hatchEgg: {
     stages: ART.hatchEgg.stages.map(s => sprite(s)),
     left: sprite(ART.hatchEgg.left),

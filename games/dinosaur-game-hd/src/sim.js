@@ -1,7 +1,7 @@
 // One run's simulation: runner physics, obstacles, collisions, score, night.
 // No drawing. One step() is one frame of the original at 60 Hz (GDD 3.2–3.6),
 // so its rules apply unchanged, including whole-pixel rounding.
-import { HZ, STEP_MS, VIEW_W, OFFSCREEN, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, PTERO_HEIGHTS, EGGS } from './config.js';
+import { HZ, STEP_MS, VIEW_W, OFFSCREEN, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, PTERO_HEIGHTS, EGGS, GOLD } from './config.js';
 import { ObstacleGen, EggGen, stream, STREAM } from './gen.js';
 
 const overlap = (ax, ay, aw, ah, bx, by, bw, bh) =>
@@ -17,6 +17,9 @@ export class Run {
     this.invincible = !!opts.invincible;
     this.gen = new ObstacleGen(stream(this.seed, STREAM.obstacles));
     this.eggGen = opts.noEggs ? null : new EggGen(stream(this.seed, STREAM.eggs), jumpCurve);
+    this.goldOn = !opts.noEggs && !opts.noGolden;   // endless only (GDD 3.7)
+    this.golden = null;         // the golden egg once placed: { x, y, prevX, taken, m }
+    this.goldenTaken = false;
     this.eggs = [];
     this.eggCount = 0;
     this.pickups = [];          // eggs picked up; the caller empties it after reading
@@ -176,6 +179,8 @@ export class Run {
       if (!e.taken && e.x + EGGS.w > -OFFSCREEN) eggs[n++] = e;
     }
     eggs.length = n;
+    const gold = this.golden;
+    if (gold) { gold.prevX = gold.x; gold.x -= scroll(this.speed); }
 
     // The original's spawn rule, checked on the frame `ahead.n` frames from
     // now: after the clear time, once the last obstacle has left the view or
@@ -195,7 +200,36 @@ export class Run {
           e.fade = e.x < VIEW_W + OFFSCREEN;   // an arc's first eggs may start inside a wide view: fade them in
           eggs.push(e);
         }
+        if (this.goldOn && !this.golden && last && m >= this.eggGen.goldenAt) this.placeGolden(last, o, m);
       }
+    }
+  }
+
+  // The golden egg (GDD 3.7), in the gap between `a` and the obstacle `b`
+  // that has just spawned, if the gap holds a whole held jump plus GOLD.slack
+  // frames of ground on each side when it reaches the runner. The egg sits
+  // where the runner's middle is at the apex of the jump centered in the gap.
+  // Only the egg stream decides when; the obstacles are never touched.
+  placeGolden(a, b, m) {
+    const mid = RUNNER.x + RUNNER.width / 2;
+    let s = this.speed, xa = a.x, xb = b.x, da = a.drifting, db = b.drifting, travelled = 0;
+    for (let k = 0; k < 2000; k++) {
+      if ((xa + a.w + xb) / 2 <= mid) {
+        const v = Math.floor(s), air = jumpCurve(s).length;
+        const ptero = a.id === 'ptero' || b.id === 'ptero';
+        const need = RUNNER.width + air * v + 2 * GOLD.slack * v + (ptero ? GOLD.pteroSlack : 0);
+        if (xb - (xa + a.w) < need) return;   // too short: try the next gap
+        const x = Math.round(mid + travelled - GOLD.w / 2);
+        this.golden = { x, y: GOLD.y, prevX: x, taken: false, m };
+        return;
+      }
+      if (s < RUN.maxSpeed) s += RUN.acceleration;
+      const sc = scroll(s);
+      if (!da && xa <= VIEW_W + OBSTACLES[a.id].w) da = true;
+      if (!db && xb <= VIEW_W + OBSTACLES[b.id].w) db = true;
+      xa -= scroll(s + (da ? a.speedOffset : 0));
+      xb -= scroll(s + (db ? b.speedOffset : 0));
+      travelled += sc;
     }
   }
 
@@ -236,6 +270,11 @@ export class Run {
         this.pickups.push(e);
         this.events.push('egg');
       }
+    }
+    const gold = this.golden, G = GOLD.pickup;
+    if (gold && !gold.taken && overlap(RUNNER.x, ry, rw, rh, gold.x + (GOLD.w - G) / 2, gold.y + (GOLD.h - G) / 2, G, G)) {
+      gold.taken = this.goldenTaken = true;
+      this.events.push('golden');
     }
   }
 

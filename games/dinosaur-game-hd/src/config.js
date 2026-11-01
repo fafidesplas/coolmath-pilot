@@ -90,6 +90,43 @@ export const EGGS = {
   streakMs: 600,           // pickups closer than this raise the pitch (up to 8 steps)
 };
 
+// The golden egg (GDD 3.7): once per run, in the first gap long enough after
+// a distance the egg stream picks between `from` and `to` metres, at the apex
+// of a held jump. The gap must hold the whole jump plus `slack` frames of
+// ground on each side (more when a pterodactyl's drift can narrow it).
+export const GOLD = {
+  from: 500, to: 900,
+  w: 12, h: 16,
+  y: -6,                   // sprite top, lane coordinates: only a near-full jump (over ~80 px) reaches it
+  pickup: 16,
+  slack: 10,               // frames
+  pteroSlack: 40,          // px more when either neighbour is a pterodactyl
+  maxFlights: 3,           // banked flights (GDD 3.8)
+};
+
+// The bonus flight (GDD 3.8), in screen px (640×360) and frames at 60 Hz.
+export const FLIGHT = {
+  frames: 1200,            // 20 s
+  scroll: 8,               // px/frame, no ramp
+  x: 100,                  // the mount's left edge on screen
+  gravity: 0.45, flap: 0.9, maxVy: 7,
+  ceiling: 40, floor: 300, // the hitbox stays between these; touching is safe
+  box: [4, -16, 38, 40],   // hitbox [x, y, w, h] from the mount sprite's top-left: the rider's body and the mount's
+  startY: 150,
+  clearFrames: 180,        // eggs only for the first 3 s
+  spacing: [720, 340],     // px between hazards, from the start to the end of the flight
+  boltR: 5, nodeR: 10,     // hit radius of a lightning bar and of the cloud at each end
+  maxBlock: 0.6,           // a hazard closes at most this much of the height
+  eggChance: 0.45,         // an egg shape in the space between two hazards
+  wildSpeed: 14,           // px/frame, straight left
+  warnFrames: 60,          // the ! shows this long before a wild pterodactyl reaches you
+  lockFrames: 25,          // ...and stops following your height after this many
+  wildFrom: 420,           // frame of the first wild pterodactyl
+  wildEvery: [200, 320],   // frames between wild pterodactyls
+  wildBox: [2, 8, 42, 16], // a wild pterodactyl's hitbox, from its sprite's top-left
+  outroFrames: 60,         // after a hit: the rider tumbles, the mount flaps away
+};
+
 // Egg patterns and the distance (m) each one unlocks at. The pterodactyl
 // patterns come with the first pterodactyl (speed 8.5, about 450 m).
 export const EGG_PATTERNS = {

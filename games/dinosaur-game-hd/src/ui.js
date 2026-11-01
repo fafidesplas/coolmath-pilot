@@ -1,14 +1,17 @@
 // HUD and screens (GDD 8): title, pause, results and runners. layout() returns this
 // frame's buttons, and main.js hit-tests pointers against the same list, so a
 // sliding panel's buttons are always where they are drawn.
-import { VIEW_W, VIEW_H, RUN, HATCH, RUNNER_LIST } from './config.js';
+import { VIEW_W, VIEW_H, RUN, HATCH, RUNNER_LIST, FLIGHT } from './config.js';
 import { drawText, textWidth } from './font.js';
 import { PAL, SPR, MARGIN } from './sprites.js';
 import { CELL } from './art.js';
 
 export const RESULTS_DELAY_MS = 500;   // the panel slides up this long after the crash
+export const FLIGHT_END_MS = 1800;     // "+N eggs" over the sky after a flight, then back
+const FLIGHT_HINT_MS = 3000, GOLD_POP_MS = 400;
 const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, SLIDE_HINT_MS = 2000, BUMP_MS = 150;
 const PANEL_Y = 34, PANEL_H = 242;
+const GOLD_C = '#F5C542';
 const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 const pad = n => String(n).padStart(5, '0');
 const grid = v => Math.round(v / CELL) * CELL;
@@ -27,6 +30,9 @@ export const canHatch = (data, R) => R.price > 0 && !data.unlocked.includes(R.id
 // cracks 3 times, opens, and a press closes it once the runner has landed.
 export const HATCH_MS = { crack: [700, 1100, 1500], open: 1900, done: 2500 };
 
+// The results panel; wider when a Fly button joins the row.
+const panelBox = g => g.earned || g.data.flights ? { x: 120, w: 400 } : { x: 140, w: 360 };
+
 function panelY(g, now) {
   return Math.round(VIEW_H + 10 - (VIEW_H + 10 - PANEL_Y) * ease((now - g.crashAt - RESULTS_DELAY_MS) / PANEL_MS));
 }
@@ -43,18 +49,31 @@ export function layout(g, now, r) {
   if (g.screen === 'title') {
     B.push({ id: 'play', label: 'PLAY', size: 4, big: true, x: 250, y: 102, w: 140, h: 44 });
     B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 260, y: 200, w: 120, h: 30 });
+    if (g.data.flights) B.push({ id: 'fly', label: `FLY ${g.data.flights}`, gold: true, size: 2, x: 260, y: 238, w: 120, h: 30 });
     B.push({ ...corner('sound', r), on: g.data.settings.sfx });
-  } else if (g.screen === 'playing') {
+  } else if (g.screen === 'playing' || (g.screen === 'bonus' && !g.flightEndAt)) {
     B.push(corner('pause', r));
   } else if (g.screen === 'paused') {
     B.push({ id: 'resume', label: 'RESUME', size: 4, big: true, x: 224, y: 130, w: 192, h: 44 });
     B.push({ id: 'restart', label: 'RESTART', size: 2, x: 240, y: 182, w: 160, h: 30 });
     B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 218, w: 160, h: 30 });
   } else if (g.screen === 'complete' && now - g.crashAt >= RESULTS_DELAY_MS) {
-    const y = panelY(g, now);
-    B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 152, y: y + 166, w: 150, h: 44 });
-    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
-    B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+    const y = panelY(g, now), P = panelBox(g);
+    if (g.earned) {          // this run's golden egg: Fly! is the big button (GDD 8)
+      B.push({ id: 'fly', label: 'FLY!', size: 4, big: true, gold: true, x: P.x + 12, y: y + 166, w: 116, h: 44 });
+      B.push({ id: 'retry', label: 'RETRY', size: 2, x: P.x + 136, y: y + 172, w: 84, h: 32 });
+      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: P.x + 228, y: y + 172, w: 92, h: 32 });
+      B.push({ id: 'menu', label: 'MENU', size: 2, x: P.x + 328, y: y + 172, w: 60, h: 32 });
+    } else if (g.data.flights) {   // banked flights: a small Fly with the count
+      B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: P.x + 12, y: y + 166, w: 128, h: 44 });
+      B.push({ id: 'fly', label: `FLY ${g.data.flights}`, gold: true, size: 2, x: P.x + 148, y: y + 172, w: 76, h: 32 });
+      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: P.x + 232, y: y + 172, w: 92, h: 32 });
+      B.push({ id: 'menu', label: 'MENU', size: 2, x: P.x + 332, y: y + 172, w: 56, h: 32 });
+    } else {
+      B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 152, y: y + 166, w: 150, h: 44 });
+      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
+      B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+    }
   } else if (g.screen === 'runners' && !g.hatch) {
     for (const [R, i] of onPage(g)) {   // a Hatch button before its card, so it wins the hit test
       const [x, y] = cardPos(i);
@@ -91,10 +110,11 @@ function box(ctx, x, y, w, h, border, fill, lip) {
 function drawButton(ctx, b) {
   if (b.card) return;   // drawn by drawRunners
   if (b.icon) return drawIcon(ctx, b);
-  box(ctx, b.x, b.y, b.w, b.h, PAL.ink, b.big ? PAL.orange : PAL.slate, b.big ? '#C46A12' : '#46546A');
+  const [fill, lip] = b.gold ? [GOLD_C, '#C9932A'] : b.big ? [PAL.orange, '#C46A12'] : [PAL.slate, '#46546A'];
+  box(ctx, b.x, b.y, b.w, b.h, PAL.ink, fill, lip);
   ctx.fillStyle = 'rgba(255,246,224,0.35)';
   ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, 2);
-  drawText(ctx, b.label, b.x + b.w / 2, b.y + 2 * Math.round((b.h - 4 - 7 * b.size) / 4), b.size, PAL.cream, 'center');
+  drawText(ctx, b.label, b.x + b.w / 2, b.y + 2 * Math.round((b.h - 4 - 7 * b.size) / 4), b.size, b.gold ? PAL.ink : PAL.cream, 'center');
 }
 
 function drawIcon(ctx, b) {
@@ -137,6 +157,13 @@ function drawHud(ctx, g, now, r) {
   const bump = now - g.eggBumpAt < BUMP_MS ? 2 : 0;
   ctx.drawImage(SPR.egg[0], 10, 12 - bump);
   drawText(ctx, String(run.eggCount), 28, 14, 2, text);
+  // The golden egg, popping in next to the count once grabbed (GDD 9).
+  if (run.goldenTaken) {
+    const t = Math.min(1, (now - g.goldAt) / GOLD_POP_MS), img = SPR.goldEgg[Math.floor(now / 90) % 30 < 3 ? 1 : 0];
+    const k = t < 1 ? 1 + Math.sin(t * Math.PI) * 0.8 : 1, w = img.width * k, h = img.height * k;
+    const x = 28 + textWidth(String(run.eggCount), 2) + 14;
+    ctx.drawImage(img, x + (img.width - w) / 2, 10 + (img.height - h) / 2, w, h);
+  }
 
   if (g.screen !== 'playing') return;
   // First run only: faint jump and slide (duck) zones, until the first jump or 5 s (GDD 4).
@@ -195,7 +222,7 @@ function drawPause(ctx, r) {
 
 function drawResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
-  const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2;
+  const { x, w } = panelBox(g), y = panelY(g, now), cx = x + w / 2;
   box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
   drawText(ctx, 'GAME OVER', cx, y + 12, 4, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
@@ -223,7 +250,14 @@ function drawResults(ctx, g, now) {
     drawText(ctx, 'NEW BEST!', x + w - 45, y - 9 + bounce, 2, PAL.cream, 'center');
   }
   const ready = now - g.crashAt >= RUN.restartLockMs;
-  drawText(ctx, ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY', cx, y + 220, 2, PAL.sand, 'center');
+  const hint = g.earned ? (ready ? 'SPACE TO FLY, R TO RETRY' : 'R TO RETRY') : ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY';
+  drawText(ctx, hint, cx, y + 220, 2, PAL.sand, 'center');
+  if (g.earned) {   // the golden egg's reward, over the panel's top edge
+    const bob = Math.floor(now / 300) % 2 ? -2 : 0;
+    box(ctx, x + 8, y - 14 + bob, 196, 24, PAL.ink, GOLD_C, '#C9932A');
+    ctx.drawImage(SPR.goldEgg[0], x + 14, y - 12 + bob);
+    drawText(ctx, 'BONUS FLIGHT!', x + 34, y - 9 + bob, 2, PAL.ink);
+  }
 }
 
 // One card per runner on the page: the runner if unlocked; else its egg, or
@@ -312,8 +346,42 @@ function drawHatch(ctx, g, now, r) {
   if (t >= HATCH_MS.done && Math.floor(now / 500) % 2 === 0) drawText(ctx, 'CLICK OR PRESS ANY KEY', cx, 280, 2, PAL.cream, 'center');
 }
 
+// The bonus flight (GDD 8): the 20 s bar instead of the score, the eggs top
+// left, "hold to fly up" on the first flight, and "+N eggs" at the end.
+function drawFlightHud(ctx, g, now) {
+  const f = g.flight, cx = VIEW_W / 2;
+  ctx.fillStyle = PAL.ink;
+  ctx.fillRect(cx - 102, 14, 204, 12);
+  ctx.fillStyle = GOLD_C;
+  ctx.fillRect(cx - 100, 16, 2 * Math.round(100 * f.timeLeft / (FLIGHT.frames / 60)), 8);
+  const bump = now - g.eggBumpAt < BUMP_MS ? 2 : 0;
+  ctx.drawImage(SPR.egg[0], 10, 12 - bump);
+  drawText(ctx, String(f.eggCount), 28, 14, 2, PAL.ink);
+
+  if (g.flightHint) {
+    const alpha = hintAlpha(now, g.runStart, g.runStart + FLIGHT_HINT_MS);
+    if (alpha > 0) {
+      ctx.globalAlpha = alpha;
+      arrow(ctx, cx, 120, -1);
+      drawText(ctx, 'HOLD TO FLY UP', cx, 164, 2, PAL.ink, 'center');
+      ctx.globalAlpha = 1;
+    }
+  }
+  if (g.flightEndAt) {
+    const t = now - g.flightEndAt, p = ease(t / COUNT_MS);
+    const label = `+${Math.round(f.eggCount * p)} EGGS`, w = textWidth(label, 4) + 28, left = cx - w / 2;
+    const pop = 2 * Math.round(-Math.abs(Math.sin(Math.min(1, t / 400) * Math.PI)) * 4);
+    box(ctx, cx - 184, 76, 368, 100, PAL.ink, PAL.slate, '#46546A');
+    drawText(ctx, f.result === 'complete' ? 'WHAT A FLIGHT!' : 'OOF!', cx, 90 + pop, 4, PAL.cream, 'center');
+    ctx.drawImage(SPR.egg[0], left, 146);
+    drawText(ctx, label, left + 28, 142, 4, PAL.cream);
+  }
+}
+
 export function drawUI(ctx, g, now, r) {
-  if (g.screen === 'title') drawTitle(ctx, g, now);
+  const flying = g.screen === 'bonus' || (g.screen === 'paused' && g.pausedFrom === 'bonus');
+  if (flying) drawFlightHud(ctx, g, now);
+  else if (g.screen === 'title') drawTitle(ctx, g, now);
   else if (g.screen === 'runners') { if (!g.hatch) drawRunners(ctx, g, now); }
   else drawHud(ctx, g, now, r);
   if (g.screen === 'paused') drawPause(ctx, r);

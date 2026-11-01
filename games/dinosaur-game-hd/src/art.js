@@ -667,6 +667,10 @@ const PTERO = [{ oy: 0, rows: [   // wings up
 const EGG = ['.ccc.', 'ccccc', 'cccoc', 'ccccc', 'coccc', 'cccff', '.fff.'];
 const EGG_GLINT = EGG.map((r, i) => i === 1 ? 'cWccc' : i === 2 ? 'cWcoc' : r);
 
+// ---- Golden egg (GDD 3.7), 6×8 cells (12×16 px): y gold, Y dark gold, W white glint; no speckles
+const GOLD_EGG = ['..yy..', '.yyyy.', 'yWyyyy', 'yWyyyy', 'yyyyyy', 'yyyyYY', '.yyYY.', '..YY..'];
+const GOLD_EGG_GLINT = GOLD_EGG.map((r, i) => i === 1 ? '.WWyy.' : i === 2 ? 'WWyyyy' : r);
+
 // ---- Hatch egg (GDD 7.1), 22×28 cells, about a runner's size: the egg
 // wobbles, cracks in 3 steps along a zigzag, and the top flies off in two
 // halves. Built from its outline: narrower at the top, shaded bottom right.
@@ -698,4 +702,8 @@ export const ART = {
   'cactus-large': CACTUS_LARGE,
   ptero: PTERO,
   egg: [{ rows: EGG, oy: 0 }, { rows: EGG_GLINT, oy: 0 }],   // plain, glinting
+  goldEgg: [{ rows: GOLD_EGG, oy: 0 }, { rows: GOLD_EGG_GLINT, oy: 0 }],
+  // The bonus flight's mount (GDD 3.8, placeholder): the pterodactyl turned
+  // to face right, in its own colors (sprites.js).
+  mount: PTERO.map(f => ({ oy: 0, rows: f.rows.map(r => [...r].reverse().join('')) })),
 };

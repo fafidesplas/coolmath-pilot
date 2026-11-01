@@ -2,7 +2,7 @@
 // Everything is drawn straight onto the display canvas through a scale
 // transform, so positions interpolated between 60 Hz steps land on device
 // pixels and 144 Hz screens don't judder. The layers are pre-rendered once.
-import { VIEW_W, VIEW_H, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS, RUNNER_IDS } from './config.js';
+import { VIEW_W, VIEW_H, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS, RUNNER_IDS, FLIGHT } from './config.js';
 import { drawText } from './font.js';
 import { mulberry32 } from './gen.js';
 import { SPR, PAL, MARGIN, up } from './sprites.js';
@@ -17,6 +17,7 @@ const SHAKE_MS = 150, SHAKE_PX = 4;
 export const FX_MS = 500;                  // egg pickup pop and "+1"
 const born = new WeakMap();                // when an egg that starts inside the view was first drawn
 const grid = v => Math.round(v / CELL) * CELL;   // snapped to the art pixel grid
+const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 
 function canvas(w, h) {
   const c = document.createElement('canvas');
@@ -287,7 +288,9 @@ export class Renderer {
 
   draw(g, now, dt) {
     // The Runners screen hides the run: the runner runs on a treadmill instead.
-    const { ctx, s } = this, menu = g.screen === 'runners', run = menu ? null : g.run;
+    const { ctx, s } = this, menu = g.screen === 'runners';
+    const flying = !!g.flight && (g.screen === 'bonus' || g.screen === 'paused');
+    const run = menu || flying ? null : g.run;
     const target = run?.night ? 1 : 0;
     this.night += Math.max(-dt, Math.min(dt, target - this.night));
 
@@ -302,6 +305,7 @@ export class Renderer {
     const b = this.bounds;
     b.x0 = -ox / s; b.x1 = (this.cv.width - ox) / s; b.y0 = -oy / s; b.y1 = (this.cv.height - oy) / s;
 
+    if (flying) return this.drawFlight(g, now, dt);
     const a = g.alpha, lerp = (p, c) => p + (c - p) * a;
     const scroll = run ? lerp(run.prevScrollPx, run.scrollPx) : menu ? Math.max(0, now - g.screenAt) * RUN.speed * 60 / 1000 : 0;
     this.drawBackground(scroll, now);
@@ -309,6 +313,8 @@ export class Renderer {
     if (run) {
       for (const o of run.obstacles) this.drawObstacle(o, this.snap(lerp(o.prevX, o.x)), g.showBoxes);
       for (const e of run.eggs) if (!e.taken) this.drawEgg(e, this.snap(lerp(e.prevX, e.x)), now);
+      const gold = run.golden;
+      if (gold && !gold.taken) this.drawGold(this.snap(lerp(gold.prevX, gold.x)), LANE.top1P + gold.y, now);
     }
     const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
     if (g.screen !== 'paused') this.dust.update(dt);
@@ -317,8 +323,139 @@ export class Renderer {
     if (!(menu && g.hatch)) this.drawRunner(SPR.runners[shown], menu ? { timeMs: Math.max(0, now - g.screenAt) } : run, y, now, g.showBoxes && !menu);
     this.dust.draw(ctx, this.night, true);
     this.drawPickups(g.fx, now);
+    if (g.goldFx && run) this.drawGoldBurst(g.goldFx, now);
 
     drawUI(ctx, g, now, this);
+  }
+
+  // ---- the golden egg (GDD 3.7, 9) -------------------------------------------------------------
+  // A gold egg that wobbles, with a white sparkle twinkling around it.
+  drawGold(x, y, now) {
+    const ctx = this.ctx, bob = Math.sin(now / 200) > 0.2 ? -CELL : 0;
+    const img = SPR.goldEgg[(now / 90) % 30 < 3 ? 1 : 0];
+    this.rim(img, x, y + bob, 1);
+    this.sprite(img, x, y + bob);
+    const k = Math.floor(now / 160) % 4, sx = grid(x + [-6, 16, 14, -4][k]), sy = grid(y + bob + [-4, 0, 14, 10][k]);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(sx, sy - CELL, CELL, CELL * 3);
+    ctx.fillRect(sx - CELL, sy, CELL * 3, CELL);
+  }
+
+  // Grabbed: 12 gold and white sparks fly out (GDD 9).
+  drawGoldBurst(f, now) {
+    const t = (now - f.t) / 700, ctx = this.ctx;
+    if (t >= 1) return;
+    ctx.globalAlpha = 1 - t;
+    for (let i = 0; i < 12; i++) {
+      const a = i / 12 * Math.PI * 2, d = 6 + 40 * ease(t);
+      ctx.fillStyle = i % 2 ? '#F5C542' : '#FFFFFF';
+      ctx.fillRect(grid(f.x + Math.cos(a) * d), grid(f.y + Math.sin(a) * d), CELL * 2, CELL * 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- the bonus flight (GDD 3.8, 9) -----------------------------------------------------------
+  // The same desert seen from higher up: the whole background 50 px lower.
+  drawFlight(g, now, dt) {
+    const { ctx } = this, f = g.flight, b = this.bounds, a = g.alpha, lerp = (p, c) => p + (c - p) * a;
+    const scroll = this.snap(lerp(f.prevScroll, f.scroll)), DROP = FLIGHT.floor - GROUND;
+    ctx.save();
+    ctx.translate(0, DROP);
+    b.y0 -= DROP; b.y1 -= DROP;
+    this.drawBackground(scroll, now);
+    b.y0 += DROP; b.y1 += DROP;
+    ctx.restore();
+
+    this.drawStreaks(now);
+    for (const h of f.hazards) if (h.x1 - scroll > b.x0 && h.x0 - scroll < b.x1) this.drawCloud(h, scroll, now);
+    for (const e of f.eggs) {
+      const x = e.x - scroll;
+      if (e.taken || x < b.x0 - 20 || x > b.x1 + 20) continue;
+      const bob = Math.sin(now / 220 + e.x * 0.05) > 0.3 ? -CELL : 0;
+      this.sprite(SPR.egg[(now / 90 + e.x) % 30 < 3 ? 1 : 0], x, e.y + bob);
+    }
+    for (const w of f.wild) this.drawWild(w, lerp(w.prevX, w.x), now);
+    this.drawMount(g, f, lerp, now);
+    this.drawPickups(g.fx, now);
+    if (g.showBoxes) {
+      const [bx, by, bw, bh] = FLIGHT.box;
+      this.boxes(FLIGHT.x + bx, lerp(f.prevY, f.y) + by, [[0, 0, bw, bh]], '#2a7de1');
+    }
+    drawUI(ctx, g, now, this);
+  }
+
+  // Wind streaks blowing past (GDD 9).
+  drawStreaks(now) {
+    const { ctx } = this, { x0, x1 } = this.bounds, w = x1 - x0 + 80;
+    ctx.fillStyle = 'rgba(255,246,224,0.55)';
+    for (let i = 0; i < 9; i++) {
+      const x = x1 - ((now * 0.9 + i * 197) % w), y = 50 + (i * 71) % 230;
+      ctx.fillRect(grid(x), grid(y), 24 + (i % 3) * 8, CELL);
+    }
+  }
+
+  // A thundercloud: a Night Ink cloud at each end and a crackling cream zigzag bar between.
+  drawCloud(h, scroll, now) {
+    const { ctx } = this, ax = h.ax - scroll, bx = h.bx - scroll;
+    const len = Math.hypot(bx - ax, h.by - h.ay), n = Math.max(2, Math.round(len / 6));
+    const nx = -(h.by - h.ay) / len, ny = (bx - ax) / len, phase = Math.floor(now / 70) % 2;
+    ctx.fillStyle = PAL.ink;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      ctx.fillRect(grid(ax + (bx - ax) * t) - 4, grid(h.ay + (h.by - h.ay) * t) - 4, 8, 8);
+    }
+    ctx.fillStyle = (Math.floor(now / 50) % 7) ? PAL.cream : '#FFFFFF';
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, z = ((i + phase) % 2 ? 2 : -2);
+      ctx.fillRect(grid(ax + (bx - ax) * t + nx * z) - 1, grid(h.ay + (h.by - h.ay) * t + ny * z) - 1, CELL, CELL);
+    }
+    for (const [x, y] of [[ax, h.ay], [bx, h.by]]) this.puff(x, y);
+  }
+
+  puff(x, y) {
+    const { ctx } = this;
+    x = grid(x); y = grid(y);
+    ctx.fillStyle = PAL.ink;
+    ctx.fillRect(x - 14, y - 6, 28, 14);
+    ctx.fillRect(x - 10, y - 12, 14, 8);
+    ctx.fillRect(x - 2, y - 10, 12, 6);
+    ctx.fillStyle = '#3A4466';
+    ctx.fillRect(x - 12, y - 4, 24, 4);
+    ctx.fillRect(x - 8, y - 10, 10, 6);
+  }
+
+  // A wild pterodactyl: a flashing ! at the right edge while it is still out of view, then the pterodactyl.
+  drawWild(w, x, now) {
+    if (!w.on) return;
+    const { ctx } = this, edge = this.bounds.x1;
+    if (x > edge - 4) {
+      if (Math.floor(now / 120) % 2) return;
+      const ex = grid(edge - 28), ey = grid(w.y + 6);
+      ctx.fillStyle = PAL.ink; ctx.fillRect(ex - 4, ey - 4, 20, 36);
+      ctx.fillStyle = '#E0402A'; ctx.fillRect(ex, ey, 12, 28);
+      ctx.fillStyle = PAL.cream; ctx.fillRect(ex + 4, ey + 4, 4, 12); ctx.fillRect(ex + 4, ey + 20, 4, 4);
+      return;
+    }
+    if (x < this.bounds.x0 - 60) return;
+    this.sprite(SPR.ptero[Math.floor(now / 80) % 2], this.snap(x), w.y);
+  }
+
+  // The mount with the equipped runner on its back; after a hit the rider
+  // tumbles off and the mount flaps away to the right.
+  drawMount(g, f, lerp, now) {
+    const { ctx } = this, y = this.snap(lerp(f.prevY, f.y)), mx = this.snap(lerp(f.mountPrevX, f.mountX));
+    const T = SPR.runners[g.data.equipped];
+    const flapping = f.hit || f.holding || f.vy < -2;
+    const wing = SPR.mount[flapping ? Math.floor(now / 70) % 2 : 0];
+    if (f.rider) {
+      const r = f.rider, img = T.crash;
+      ctx.save();
+      ctx.translate(r.x + 22, r.y + 23);
+      ctx.rotate(r.spin * 0.15);
+      ctx.drawImage(img, -22 - MARGIN, -23 + img.oy - MARGIN);
+      ctx.restore();
+    } else this.sprite(T.jump, mx - 2, y - 26);
+    this.sprite(wing, mx, y);
   }
 
   // A layer tile repeated across the window, moved left by `offset`.

@@ -79,3 +79,12 @@ export function slide(sliding) {
 // Hatching: a dry click per crack, then a 4-note jingle as the runner pops out.
 export const crack = () => { noise(0.05, 0.25, 2600); tone('square', 900, 600, 0.04, 0.03); };
 export const hatch = () => [523, 659, 784, 1046].forEach((f, i) => tone('square', f, f, i === 3 ? 0.22 : 0.09, 0.045, i * 0.09));
+// The golden egg: a bright 3-note chime with a shimmer on top.
+export const golden = () => {
+  [1318, 1568, 2093].forEach((f, i) => tone('square', f, f, 0.12, 0.04, i * 0.07));
+  for (let i = 0; i < 6; i++) tone('sine', 3136 + i * 180, 3136 + i * 180, 0.05, 0.015, 0.2 + i * 0.04);
+};
+// The bonus flight: a soft "whup" per flap, 2 short high blips for a wild pterodactyl, a tumble on a hit.
+export const flap = () => { noise(0.08, 0.12, 500); tone('sine', 220, 140, 0.08, 0.05); };
+export const warn = () => { tone('square', 1760, 1760, 0.05, 0.035); tone('square', 1760, 1760, 0.05, 0.035, 0.09); };
+export const tumble = () => { tone('triangle', 520, 130, 0.45, 0.07); noise(0.1, 0.15, 900); };

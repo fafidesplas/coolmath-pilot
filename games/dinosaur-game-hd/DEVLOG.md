@@ -1,5 +1,14 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — Golden egg and bonus flight (prototype)
+- Golden egg (GDD 3.7): the egg stream picks 500–900 m; the first gap after it that holds a held jump plus 10 frames of ground each side gets a gold egg at the apex. Grabbing it plays a chime and a sparkle burst, and a gold egg pops in next to the HUD count. The obstacles are unchanged (checked). Debug: G in a run puts it in the next long gap.
+- The results after a golden egg run: a gold FLY! button (Space), a BONUS FLIGHT! tag; Retry or R banks the flight (up to 3). Banked flights show as FLY N on the title and the results. Debug: G on the title or the results banks one.
+- Bonus flight (GDD 3.8), new `src/flight.js`: hold to flap up, release to glide; thunderclouds (vertical, horizontal, diagonal), wild pterodactyls with a 1 s "!" warning, Joyride egg shapes (lines, waves, stairs, arrows, 5×8 blocks). A hit throws the rider off and the mount flies away; "+N EGGS" counts up, then back to the results (or the title). Flight eggs are banked. Pause works in the flight.
+- New sounds: golden chime, flap, warning blips, tumble. Events: `bonus:golden-egg`, `bonus:start`, `bonus:end:<hit|complete>`, `bonus:bank`.
+- Placeholders: the mount is the obstacle pterodactyl facing right in teal; thunderclouds are Night Ink puffs with a cream zigzag bar.
+- Tests: new `tools/golden-test.mjs` (placement 510–916 m in every run reaching 920 m, a held jump grabs it with an 11–17 frame takeoff window, a tap never does) and `tools/flight-test.mjs` (a search over every hold/release path: every flight of 300 seeds can be finished; ~120 eggs, ~16 thunderclouds and ~2.3 wild pterodactyls a flight; every wild pterodactyl dodgeable). Physics, egg and art tests still pass. Played the golden egg, results, a flight from the results and one from the title in Chrome; no console errors.
+- Next: Pao to play a flight and judge the feel (flap strength, density, egg count), and the mount and thunderclouds' looks.
+
 ## 2026-11-01 — No daily run
 - Pao: the game has no daily run. Cut from the GDD (summary, hook, meta loop, seeds, golden egg modes, title, screen flow, results, analytics events, save, testing hook, scope, open questions; 7.2 removed) and from the brief. The save no longer has a `daily` field.
 - The Ceratosaurus now unlocks at 2000 m in one run (was a 7-day daily streak), between the Hadrosaur (1000 m) and the Therizinosaurus (3000 m).

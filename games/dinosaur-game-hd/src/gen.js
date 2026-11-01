@@ -1,5 +1,5 @@
 // Seeded random streams and the obstacle generator (GDD 3.2, 3.5).
-import { RUN, OBSTACLES, OBSTACLE_IDS, LANE, RUNNER, EGGS, EGG_PATTERNS } from './config.js';
+import { RUN, OBSTACLES, OBSTACLE_IDS, LANE, RUNNER, EGGS, EGG_PATTERNS, GOLD } from './config.js';
 
 export function mulberry32(a) {
   return () => {
@@ -104,6 +104,8 @@ export class EggGen {
     this.lastSlot = -2;
     this.lastNest = -Infinity;
     this.groups = 0;
+    // The golden egg's distance (GDD 3.7): the first long enough gap after it gets it.
+    this.goldenAt = GOLD.from + this.rand() * (GOLD.to - GOLD.from);
   }
 
   // Eggs for obstacle `o`, which has just spawned, `m` metres into the run.

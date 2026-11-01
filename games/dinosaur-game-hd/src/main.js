@@ -2,14 +2,16 @@
 // The sim runs fixed 60 Hz steps from an accumulator (GDD 3.2); the renderer
 // draws every display frame, interpolating between the last two steps.
 import { Run } from './sim.js';
-import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RUN, EGGS, HATCH, RUNNER_LIST, RUNNER_IDS, ANIM, DEBUG } from './config.js';
+import { Flight } from './flight.js';
+import { stream, STREAM } from './gen.js';
+import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RUN, EGGS, HATCH, RUNNER_LIST, RUNNER_IDS, ANIM, DEBUG, GOLD } from './config.js';
 import { load, save } from './save.js';
 import * as sfx from './audio.js';
 import { GA } from './analytics.js';
 import { Keys, JUMP_KEYS, DUCK_KEYS } from './input.js';
 import { Renderer, FX_MS } from './render.js';
 import { FOOTFALL_X } from './art.js';
-import { layout, hitButton, canHatch, HATCH_MS, PAGE } from './ui.js';
+import { layout, hitButton, canHatch, HATCH_MS, PAGE, RESULTS_DELAY_MS, FLIGHT_END_MS } from './ui.js';
 
 const canvas = document.getElementById('view');
 const r = new Renderer(canvas);
@@ -19,7 +21,7 @@ sfx.setEnabled(data.settings.sfx);
 
 // Everything the renderer and UI read.
 const g = {
-  screen: 'title',      // 'title' | 'playing' | 'paused' | 'complete' | 'runners'
+  screen: 'title',      // 'title' | 'playing' | 'paused' | 'complete' | 'runners' | 'bonus'
   mode: 'endless',
   run: null,
   alpha: 0,             // how far between the last two steps
@@ -36,6 +38,14 @@ const g = {
   pick: 0, screenAt: 0, runnersFrom: 'title',   // the Runners screen: focused card, when it opened, where Back goes
   peek: false,          // debug: the Runners screen shows every runner as unlocked
   hatch: null,          // the hatch scene: { id, name, at, step }
+  goldAt: 0,            // when the golden egg was grabbed (HUD pop, sparkle burst)
+  goldFx: null,         // the sparkle burst: { x, y, t }
+  earned: false,        // the run on the results grabbed the golden egg and its flight is still banked
+  flight: null,         // the bonus flight (GDD 3.8)
+  flightFrom: 'title',  // where the flight returns: 'complete' (with its run) or 'title'
+  flightEndAt: 0,       // when "+N eggs" started counting up
+  flightHint: false,    // the first flight's "hold to fly up"
+  pausedFrom: 'playing',
 };
 const pointers = new Map();   // pointerId -> 'jump' | 'duck'
 let acc = 0, last = performance.now();
@@ -59,13 +69,88 @@ function startRun(withJump) {
 }
 
 function retry() {
+  leaveFlight();
+  if (g.screen === 'complete' && g.earned) GA.design('bonus:bank', data.flights);   // skipped: it stays banked
+  g.earned = false;
   GA.design('ui:restart');
   startRun(false);
 }
 
 function menu() {
+  leaveFlight();
+  g.earned = false;
   g.screen = 'title';
   g.run = null;
+}
+
+// ---- the golden egg and the bonus flight (GDD 3.7, 3.8) --------------------------------------
+// A banked flight starts at once; the run on the results (if any) gives its seed.
+function startFlight() {
+  if (data.flights <= 0) return;
+  data.flights--;
+  g.flightHint = !data.flown;
+  data.flown = true;
+  save(data);
+  g.flightFrom = g.screen === 'complete' ? 'complete' : 'title';
+  const seed = g.flightFrom === 'complete' ? g.run.seed : (Math.random() * 2 ** 32) >>> 0;
+  g.flight = new Flight(stream(seed, STREAM.flight));
+  g.earned = false;
+  g.screen = 'bonus';
+  g.flightEndAt = 0;
+  g.runStart = performance.now();
+  g.fx.length = 0;
+  g.streak = 0;
+  acc = 0; g.alpha = 0;
+  pointers.clear();
+  GA.design('bonus:start', data.flights);
+}
+
+// The flight is over: its eggs are banked, whatever ended it.
+function bankFlight() {
+  const f = g.flight;
+  if (!f || f.banked) return;
+  f.banked = true;
+  data.eggs += f.eggCount;
+  data.totalEggs += f.eggCount;
+  save(data);
+  GA.design(`bonus:end:${f.result || 'hit'}`, f.eggCount);
+}
+
+// Back to the results (with the eggs added) or the title, once "+N eggs" has counted up.
+function endFlight() {
+  const f = g.flight;
+  bankFlight();
+  g.flight = null;
+  if (g.flightFrom === 'complete') {
+    g.runEggs += f.eggCount;
+    g.newBest = false;
+    g.screen = 'complete';
+    g.crashAt = performance.now() - RESULTS_DELAY_MS;   // the panel slides up again; Space waits out the rest of the lock
+  } else g.screen = 'title';
+}
+
+function leaveFlight() {
+  if (!g.flight) return;
+  bankFlight();
+  if (g.flightFrom === 'complete') g.runEggs += g.flight.eggCount;
+  g.flight = null;
+}
+
+function flightEvents() {
+  const f = g.flight, now = performance.now();
+  for (const e of f.events) {
+    if (e === 'flap') sfx.flap();
+    else if (e === 'egg') {
+      g.streak = now - g.lastEggAt < EGGS.streakMs ? Math.min(8, g.streak + 1) : 0;
+      g.lastEggAt = g.eggBumpAt = now;
+      sfx.egg(g.streak);
+    } else if (e === 'warn') sfx.warn();
+    else if (e === 'hit') sfx.tumble();
+  }
+  f.events.length = 0;
+  for (const e of f.pickups) g.fx.push({ x: e.x - f.scroll + EGGS.w / 2, y: e.y + EGGS.h / 2, t: now, n: g.fx.length, flight: true });
+  f.pickups.length = 0;
+  if (f.done && !g.flightEndAt) { g.flightEndAt = now; bankFlight(); }
 }
 
 // ---- runners (GDD 7.1, 8) ------------------------------------------------------------------
@@ -139,16 +224,17 @@ function runnersKey(code) {
 }
 
 function pause() {
-  if (g.screen !== 'playing') return;
+  if (g.screen !== 'playing' && !(g.screen === 'bonus' && !g.flightEndAt)) return;
+  g.pausedFrom = g.screen;
   g.screen = 'paused';
-  g.run.release('jump');
-  g.run.release('duck');
+  if (g.flight) g.flight.release();
+  else { g.run.release('jump'); g.run.release('duck'); }
   pointers.clear();
   keys.clear();
 }
 
 function resume() {
-  g.screen = 'playing';
+  g.screen = g.pausedFrom;
   last = performance.now();
 }
 
@@ -170,6 +256,8 @@ function onCrash() {
   data.totalDistance += m;
   data.totalNights += run.nights;
   g.runEggs = run.eggCount;              // every egg is banked, crash or not
+  g.earned = run.goldenTaken && data.flights < GOLD.maxFlights;   // the flight is banked at once
+  if (g.earned) data.flights++;
   data.eggs += run.eggCount;
   data.totalEggs += run.eggCount;
   data.firstRunDone = true;
@@ -236,6 +324,11 @@ function handleEvents() {
       tutorial('done', 'tutorial:done');
     } else if (e === 'land') {
       if (!run.ducking) r.land(run.speed * 60);   // landing into a slide gets the slide's burst
+    } else if (e === 'golden') {
+      sfx.golden();
+      g.goldAt = performance.now();
+      g.goldFx = { x: run.golden.x + GOLD.w / 2, y: LANE.top1P + run.golden.y + GOLD.h / 2, t: g.goldAt };
+      GA.design('bonus:golden-egg', run.score);
     } else if (e === 'night') sfx.night();
     else if (e === 'crash') onCrash();
   }
@@ -252,6 +345,12 @@ keys.onDown = (code, first) => {
   const s = g.screen;
   if (g.hatch) return closeHatch();
   if (s === 'runners') return runnersKey(code);
+  if (s === 'bonus') {
+    if (JUMP_KEYS.includes(code) && first && !g.flightEndAt) g.flight.press();
+    else if (code === 'KeyP' || code === 'Escape') pause();
+    return;
+  }
+  if (DEBUG && code === 'KeyG') return debugGolden();
   if (JUMP_KEYS.includes(code)) {
     if (!first) return;
     if (s === 'title') startRun(true);   // the first press is also the first jump
@@ -279,14 +378,16 @@ keys.onUp = (code, lastOfGroup) => {
   if (JUMP_KEYS.includes(code)) {
     // Space, Up and W restart on release, after the original's lock (GDD 8).
     if (g.screen === 'complete') {
-      if (performance.now() - g.crashAt >= RUN.restartLockMs) retry();
+      if (performance.now() - g.crashAt >= RUN.restartLockMs) g.earned ? startFlight() : retry();   // Fly! takes Space (GDD 8)
+    } else if (g.screen === 'bonus') {
+      if (lastOfGroup && ![...pointers.values()].includes('flap')) g.flight.release();
     } else if (lastOfGroup) release('jump');
   } else if (DUCK_KEYS.includes(code) && lastOfGroup) release('duck');
 };
 
 const ACTIONS = {
   play: () => startRun(false), sound: toggleSound, pause, resume, restart: retry, retry, menu,
-  runners: openRunners, back, card: b => choose(b.i), hatch: b => choose(b.i), page: b => turnPage(b.dir),
+  runners: openRunners, back, fly: startFlight, card: b => choose(b.i), hatch: b => choose(b.i), page: b => turnPage(b.dir),
 };
 
 canvas.addEventListener('pointerdown', e => {
@@ -299,6 +400,10 @@ canvas.addEventListener('pointerdown', e => {
   if (b) {
     sfx.click();
     ACTIONS[b.id](b);
+  } else if (g.screen === 'bonus') {
+    if (g.flightEndAt) return;
+    pointers.set(e.pointerId, 'flap');
+    g.flight.press();
   } else if (g.screen === 'playing') {
     const action = y >= VIEW_H * 2 / 3 ? 'duck' : 'jump';   // bottom third ducks (GDD 4)
     pointers.set(e.pointerId, action);
@@ -310,7 +415,9 @@ const pointerEnd = e => {
   const action = pointers.get(e.pointerId);
   if (!action) return;
   pointers.delete(e.pointerId);
-  release(action);
+  if (action === 'flap') {
+    if (g.flight && !keys.holds('jump') && ![...pointers.values()].includes('flap')) g.flight.release();
+  } else release(action);
 };
 canvas.addEventListener('pointerup', pointerEnd);
 canvas.addEventListener('pointercancel', pointerEnd);
@@ -361,6 +468,15 @@ function frame(now) {
       acc -= STEP_MS;
     }
     g.alpha = g.screen === 'playing' ? acc / STEP_MS : 1;
+  } else if (g.screen === 'bonus') {
+    acc += dt * 1000;
+    while (acc >= STEP_MS) {
+      g.flight.step();
+      flightEvents();
+      acc -= STEP_MS;
+    }
+    g.alpha = acc / STEP_MS;
+    if (g.flightEndAt && now - g.flightEndAt >= FLIGHT_END_MS) endFlight();
   }
   updateSlide(dt);
   updateRunDust();
@@ -374,13 +490,23 @@ function frame(now) {
 requestAnimationFrame(frame);
 canvas.focus();
 
+// Debug (G): in a run, the golden egg goes in the next long enough gap;
+// elsewhere, a flight is banked.
+function debugGolden() {
+  if (g.screen === 'playing' && g.run.eggGen && !g.run.golden) g.run.eggGen.goldenAt = 0;
+  else if (g.screen === 'title' || g.screen === 'complete') { data.flights = Math.min(GOLD.maxFlights, data.flights + 1); save(data); }
+  else return;
+  console.log(g.screen === 'playing' ? 'golden egg: next long gap' : `flights banked: ${data.flights}`);
+}
+
 // ---- testing hook (STANDARDS, GDD 12) -----------------------------------------------------
 window.game = {
   get screen() { return g.screen; },
   get level() { return g.mode; },
   get mode() { return g.mode; },
   get score() { return g.run ? g.run.score : 0; },
-  get eggs() { return g.run ? g.run.eggCount : 0; },
+  get eggs() { return g.flight ? g.flight.eggCount : g.run ? g.run.eggCount : 0; },
+  get flights() { return data.flights; },
   start() { startRun(false); },
   restart() { retry(); },
 };
@@ -393,4 +519,6 @@ if (DEBUG) {
   };
   window.game.win = window.game.crash;
   window.game.run = () => g.run;
+  window.game.flight = () => g.flight;
+  window.game.fly = () => { data.flights = Math.max(1, data.flights); startFlight(); };
 }
