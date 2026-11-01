@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — The golden egg is the Fly button
+- Pao: instead of a FLY button, the golden egg stands on the sand beside the results panel, big (×4), hopping like an eager dog wanting to be clicked: squash on landing, stretch on takeoff, a lean toward the panel in the air, a double hop every third beat. Banked-only flights hop calmer; 2 or more show a number badge. Click it to fly (Space still flies after a golden egg run). The panel is back to its normal width and buttons; the BONUS FLIGHT! tag is gone. The title keeps its FLY N button.
+- Checked in Chrome: the egg pops in as the panel lands, hops, and a click starts the flight; no console errors.
+
 ## 2026-11-01 — Golden egg and bonus flight (prototype)
 - Golden egg (GDD 3.7): the egg stream picks 500–900 m; the first gap after it that holds a held jump plus 10 frames of ground each side gets a gold egg at the apex. Grabbing it plays a chime and a sparkle burst, and a gold egg pops in next to the HUD count. The obstacles are unchanged (checked). Debug: G in a run puts it in the next long gap.
 - The results after a golden egg run: a gold FLY! button (Space), a BONUS FLIGHT! tag; Retry or R banks the flight (up to 3). Banked flights show as FLY N on the title and the results. Debug: G on the title or the results banks one.

@@ -30,8 +30,11 @@ export const canHatch = (data, R) => R.price > 0 && !data.unlocked.includes(R.id
 // cracks 3 times, opens, and a press closes it once the runner has landed.
 export const HATCH_MS = { crack: [700, 1100, 1500], open: 1900, done: 2500 };
 
-// The results panel; wider when a Fly button joins the row.
-const panelBox = g => g.earned || g.data.flights ? { x: 120, w: 400 } : { x: 140, w: 360 };
+// The golden egg beside the results panel (GDD 8): it stands on the sand and
+// hops like an eager dog until clicked. Its hit box covers the whole hop.
+const EGG_X = 570, EGG_SCALE = 4, EGG_POP_MS = 300;
+const EGG_HIT = { x: EGG_X - 40, y: 140, w: 80, h: 116 };
+const eggShownAt = g => g.crashAt + RESULTS_DELAY_MS + PANEL_MS;   // it pops in as the panel lands
 
 function panelY(g, now) {
   return Math.round(VIEW_H + 10 - (VIEW_H + 10 - PANEL_Y) * ease((now - g.crashAt - RESULTS_DELAY_MS) / PANEL_MS));
@@ -58,22 +61,12 @@ export function layout(g, now, r) {
     B.push({ id: 'restart', label: 'RESTART', size: 2, x: 240, y: 182, w: 160, h: 30 });
     B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 218, w: 160, h: 30 });
   } else if (g.screen === 'complete' && now - g.crashAt >= RESULTS_DELAY_MS) {
-    const y = panelY(g, now), P = panelBox(g);
-    if (g.earned) {          // this run's golden egg: Fly! is the big button (GDD 8)
-      B.push({ id: 'fly', label: 'FLY!', size: 4, big: true, gold: true, x: P.x + 12, y: y + 166, w: 116, h: 44 });
-      B.push({ id: 'retry', label: 'RETRY', size: 2, x: P.x + 136, y: y + 172, w: 84, h: 32 });
-      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: P.x + 228, y: y + 172, w: 92, h: 32 });
-      B.push({ id: 'menu', label: 'MENU', size: 2, x: P.x + 328, y: y + 172, w: 60, h: 32 });
-    } else if (g.data.flights) {   // banked flights: a small Fly with the count
-      B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: P.x + 12, y: y + 166, w: 128, h: 44 });
-      B.push({ id: 'fly', label: `FLY ${g.data.flights}`, gold: true, size: 2, x: P.x + 148, y: y + 172, w: 76, h: 32 });
-      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: P.x + 232, y: y + 172, w: 92, h: 32 });
-      B.push({ id: 'menu', label: 'MENU', size: 2, x: P.x + 332, y: y + 172, w: 56, h: 32 });
-    } else {
-      B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 152, y: y + 166, w: 150, h: 44 });
-      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
-      B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
-    }
+    const y = panelY(g, now);
+    B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 152, y: y + 166, w: 150, h: 44 });
+    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
+    B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+    // A flight to take (this run's, or banked): the golden egg, beside the panel.
+    if ((g.earned || g.data.flights) && now >= eggShownAt(g)) B.push({ id: 'fly', egg: true, ...EGG_HIT, eager: g.earned, count: g.data.flights });
   } else if (g.screen === 'runners' && !g.hatch) {
     for (const [R, i] of onPage(g)) {   // a Hatch button before its card, so it wins the hit test
       const [x, y] = cardPos(i);
@@ -107,14 +100,54 @@ function box(ctx, x, y, w, h, border, fill, lip) {
   ctx.fillRect(x + 2, y + 2, w - 4, h - 8);
 }
 
-function drawButton(ctx, b) {
+function drawButton(ctx, b, now, g) {
   if (b.card) return;   // drawn by drawRunners
+  if (b.egg) return drawFlyEgg(ctx, b, now, g);
   if (b.icon) return drawIcon(ctx, b);
   const [fill, lip] = b.gold ? [GOLD_C, '#C9932A'] : b.big ? [PAL.orange, '#C46A12'] : [PAL.slate, '#46546A'];
   box(ctx, b.x, b.y, b.w, b.h, PAL.ink, fill, lip);
   ctx.fillStyle = 'rgba(255,246,224,0.35)';
   ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, 2);
   drawText(ctx, b.label, b.x + b.w / 2, b.y + 2 * Math.round((b.h - 4 - 7 * b.size) / 4), b.size, b.gold ? PAL.ink : PAL.cream, 'center');
+}
+
+// The golden egg asking to be clicked: quick hops with a squash on each
+// landing and a stretch on takeoff, leaning toward the panel in the air, and
+// every third hop an excited double hop. Calmer when the flight is a banked one.
+function drawFlyEgg(ctx, b, now, g) {
+  const img = SPR.goldEgg[Math.floor(now / 90) % 30 < 3 ? 1 : 0];
+  const beatMs = b.eager ? 560 : 900, t = now - eggShownAt(g);
+  const beat = Math.floor(t / beatMs), p = (t % beatMs) / beatMs;
+  const double = b.eager && beat % 3 === 2;
+  // Height: one hop over the first 60% of the beat (two smaller ones on a double), resting after.
+  const hopH = b.eager ? 26 : 14;
+  let lift = 0;
+  if (double) lift = p < 0.3 ? Math.sin(p / 0.3 * Math.PI) * hopH * 0.6 : p < 0.6 ? Math.sin((p - 0.3) / 0.3 * Math.PI) * hopH * 0.8 : 0;
+  else lift = p < 0.6 ? Math.sin(p / 0.6 * Math.PI) * hopH : 0;
+  // Squash just after landing, stretch just before and after takeoff.
+  const land = double ? Math.min(Math.abs(p - 0.3), Math.abs(p - 0.6)) : Math.abs(p - 0.6);
+  const squash = lift === 0 || land < 0.06 ? Math.max(0, 1 - land / 0.1) * 0.22 : 0;
+  const stretch = lift > 0 && lift < hopH * 0.5 ? 0.12 : 0;
+  const pop = ease(t / EGG_POP_MS) + (t < EGG_POP_MS * 2 ? Math.sin(Math.min(1, t / (EGG_POP_MS * 2)) * Math.PI) * 0.15 : 0);
+  const sx = EGG_SCALE * (1 + squash - stretch * 0.6) * pop, sy = EGG_SCALE * (1 - squash + stretch) * pop;
+  const w = img.width * sx, h = img.height * sy, ground = 252;
+
+  // A shadow on the sand, smaller the higher it hops.
+  const shadow = Math.round((1 - lift / (hopH * 1.6)) * 22 * pop) * 2;
+  ctx.fillStyle = 'rgba(27,35,64,0.25)';
+  ctx.fillRect(grid(EGG_X - shadow / 2), ground - 2, shadow, 4);
+
+  ctx.save();
+  ctx.translate(EGG_X, grid(ground - lift));
+  ctx.rotate(lift > 0 ? -0.18 * Math.min(1, lift / (hopH * 0.5)) : 0);   // leans toward the panel
+  ctx.drawImage(img, -w / 2, -h + MARGIN * sy, w, h);
+  ctx.restore();
+
+  if (b.count > 1) {   // banked flights waiting: their number on a badge
+    const label = String(b.count), bx = EGG_X + 18, by = grid(ground - lift) - 74;
+    box(ctx, bx, by, textWidth(label, 2) + 12, 22, PAL.ink, PAL.cream, '#D8D2C0');
+    drawText(ctx, label, bx + 6, by + 4, 2, PAL.ink);
+  }
 }
 
 function drawIcon(ctx, b) {
@@ -222,7 +255,7 @@ function drawPause(ctx, r) {
 
 function drawResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
-  const { x, w } = panelBox(g), y = panelY(g, now), cx = x + w / 2;
+  const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2;
   box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
   drawText(ctx, 'GAME OVER', cx, y + 12, 4, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
@@ -252,12 +285,6 @@ function drawResults(ctx, g, now) {
   const ready = now - g.crashAt >= RUN.restartLockMs;
   const hint = g.earned ? (ready ? 'SPACE TO FLY, R TO RETRY' : 'R TO RETRY') : ready ? 'SPACE OR R TO RETRY' : 'R TO RETRY';
   drawText(ctx, hint, cx, y + 220, 2, PAL.sand, 'center');
-  if (g.earned) {   // the golden egg's reward, over the panel's top edge
-    const bob = Math.floor(now / 300) % 2 ? -2 : 0;
-    box(ctx, x + 8, y - 14 + bob, 196, 24, PAL.ink, GOLD_C, '#C9932A');
-    ctx.drawImage(SPR.goldEgg[0], x + 14, y - 12 + bob);
-    drawText(ctx, 'BONUS FLIGHT!', x + 34, y - 9 + bob, 2, PAL.ink);
-  }
 }
 
 // One card per runner on the page: the runner if unlocked; else its egg, or
@@ -386,6 +413,6 @@ export function drawUI(ctx, g, now, r) {
   else drawHud(ctx, g, now, r);
   if (g.screen === 'paused') drawPause(ctx, r);
   if (g.screen === 'complete') drawResults(ctx, g, now);
-  for (const b of g.buttons) drawButton(ctx, b);
+  for (const b of g.buttons) drawButton(ctx, b, now, g);
   if (g.hatch) drawHatch(ctx, g, now, r);
 }
