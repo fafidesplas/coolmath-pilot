@@ -1,8 +1,5 @@
 # Dinosaur Game: Cool Edition — devlog
 
-## 2026-11-01 — Trophy outline
-- Pao: the HUD trophy has a 1 px black outline so it reads as a trophy. Next: check it in Chrome.
-
 ## 2026-11-01 — No 2P countdown
 - Pao: the 3-2-1 countdown (numbers and beeps) is gone. Both lanes run as soon as the race starts. GDD updated. Next: check it in Chrome.
 
