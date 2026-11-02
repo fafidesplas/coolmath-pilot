@@ -100,7 +100,7 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 
 #### Golden egg
 - **What:** a gold egg with a sparkle (12×15 px), the ticket to the bonus flight (3.8). Worth no eggs by itself.
-- **When:** at most **one per run**. The egg stream picks a distance between **500 and 900 m**; the first gap after it that is long enough gets the golden egg. "Long enough" means the gap holds a whole held jump plus **10 frames of ground on each side** (40 px more when either neighbour is a pterodactyl, whose drift can narrow it), measured when the gap reaches the runner. Prototype measurement (`tools/golden-test.mjs`, 300 seeds): placed at 510–916 m, median 720 m; every run that reaches 920 m sees one.
+- **When:** at most **one per run**. The egg stream picks a distance between **1000 and 1200 m**; the first gap after it that is long enough gets the golden egg. "Long enough" means the gap holds a whole held jump plus **10 frames of ground on each side** (40 px more when either neighbour is a pterodactyl, whose drift can narrow it), measured when the gap reaches the runner. Prototype measurement (`tools/golden-test.mjs`, 300 seeds): placed at 1006–1252 m, median 1127 m; every run that reaches 1500 m sees one. The window can't go much later: above about 1600 m the runner is too fast for any gap to hold a whole held jump plus the ground on each side (a window of 1500–1900 m placed only 5 eggs in 300 runs).
 - **Where:** alone, where the runner's middle is at the **apex of the held jump centered in that gap**, so it takes a near-full jump to get: its top is 6 px above the lane top (lane y −6), so only a jump higher than about 80 px reaches it, never the shortest jump. A held jump grabs it from a takeoff window of 11–17 frames (183–283 ms). This is the one egg in a gap (the rule above keeps the runner's landing clear of the next obstacle; a held key re-jumps on landing). Missed is missed: it doesn't come back in that run.
 - **Grabbing it** never changes the run: a chime, a sparkle, and a gold egg icon appears next to the HUD egg count. The run carries on as normal.
 - **Modes:** endless only. **Not in 2P races** (no eggs at all there), so a race stays a pure race.
@@ -159,7 +159,7 @@ The lanes are stacked (P1 top, P2 bottom) but the touch zones are split left and
 | Large cactus | static, 1–3 in a row | 3 s | thick column with arms, taller |
 | Pterodactyl | flies at 3 heights, flapping | ~450 m | wide flapping wings, beak |
 | Egg | +1 egg when touched | 30 m | oval with speckles and a glint |
-| Golden egg | earns a bonus flight; at most one per run | 500–900 m | bigger egg with a sparkle and no speckles |
+| Golden egg | earns a bonus flight; at most one per run | 1000–1200 m | bigger egg with a sparkle and no speckles |
 | Night | 12 s of dark sky every 700 m | 700 m | stars and moon |
 | Ghost (2P) | the crashed player's runner stays faded in its lane | 2P | 50% opacity, X eyes |
 
@@ -179,9 +179,9 @@ An endless runner has no levels: the run itself is the level, and the original's
 | ~160 m | 17 s | groups of large cacti |
 | 300 m | | big arcs |
 | ~450 m | 42 s | first pterodactyl (mid); pterodactyl arcs, duck and head lines |
-| 500–900 m | | the golden egg (once per run) |
 | 700 m | 60 s | first night |
 | 1000 m | 80 s | the Hadrosaur's achievement |
+| 1000–1200 m | | the golden egg (once per run) |
 | ~1660 m | 117 s | top speed |
 | 3000 m | 185 s | the Therizinosaurus's achievement |
 
@@ -368,10 +368,11 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | Coolmath ad breaks | Only between runs, and never more often than every few minutes; never on Retry. | Coolmath | Open |
 | Mouse and trackpad players rarely duck (they must move to the bottom third), so duck-line eggs mostly reward keyboard and touch players. OK? | Accept: the original never forces a duck (a mid pterodactyl can be jumped). Check in playtest. | Playtest | Open |
 | Bonus flight egg rate (~120 in a flight, 60–90 for a good one) | Keep; a flight should feel like a jackpot next to a 20–50 egg run, but not make hatching trivial. Retune with the hatch prices in phase 4. | Pao | Open |
-| Golden egg window (500–900 m) | Keep; most new players die before 500 m, so the flight is a goal to reach. If data shows few players ever see it, move it earlier. | Pao | Open |
+| Golden egg window (1000–1200 m) | Moved from 500–900 m (Pao's call). It can't go past about 1500 m with the gap rule; a jump-over-a-cactus placement would. If data shows few players ever see it, move it earlier. | Pao | Open |
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-11-02 — Golden egg window 500–900 m → 1000–1200 m (3.7, 5, 14; Pao's call): later windows can't be placed (see 3.7).
 - 2026-11-02 — Title screen text is "COOL DINO GAME" with no "COOL EDITION" line (8; Pao's call). The game's working name elsewhere (browser tab, docs) is unchanged.
 - 2026-11-02 — One banked flight at a time (3.7, 3.8, 8; Pao's call): `maxFlights` 3 → 1, and the golden egg doesn't appear while a flight is waiting. An older save with more is cut to 1.
 - 2026-11-01 — Race results: a smaller panel, Rematch and Home side by side at the same height, no Runners button and no "Space or R" hint line (Pao's call, from a mockup, 8).

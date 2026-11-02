@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-02 — Golden egg later
+- Pao: the golden egg now comes between 1000 and 1200 m (was 500 to 900). 1500 m and later can't work: the gap rule finds no gap above about 1600 m. `tools/golden-test.mjs` passes (every run reaching 1500 m gets one). GDD updated. Next: playtest it; the hatch prices are still open.
+
 ## 2026-11-02 — Title says Cool Dino Game
 - Pao: the title screen logo reads "COOL DINO GAME" and the "COOL EDITION" line is gone. The browser tab title and docs still say Dinosaur Game: Cool Edition. Next: check it in Chrome.
 

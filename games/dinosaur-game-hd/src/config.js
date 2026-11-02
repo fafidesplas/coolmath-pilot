@@ -104,7 +104,7 @@ export const EGGS = {
 // of a held jump. The gap must hold the whole jump plus `slack` frames of
 // ground on each side (more when a pterodactyl's drift can narrow it).
 export const GOLD = {
-  from: 500, to: 900,
+  from: 1000, to: 1200,
   w: 12, h: 16,
   y: -6,                   // sprite top, lane coordinates: only a near-full jump (over ~80 px) reaches it
   pickup: 16,
