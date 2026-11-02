@@ -252,10 +252,23 @@ class Dust {
     const colors = night > 0.5 ? DUST_NIGHT : DUST_COLORS;
     for (const d of this.p) {
       if (!d.on || d.front !== front) continue;
-      const t = d.age / d.life, size = CELL * (2 + Math.round(t * 2));   // 2 to 4 art px
-      ctx.globalAlpha = 1 - t;
-      ctx.fillStyle = colors[d.c];
-      ctx.fillRect(grid(d.x - size / 2), grid(d.y - size), size, size);
+      // A puff is a little cloud: a round body with a smaller bump on each side
+      // and a flat bottom on the sand, growing as it fades (1 to 3 art px radius).
+      const t = d.age / d.life, R = 1 + Math.floor(t * 2.5), r2 = Math.max(1, R - 1), off = R;
+      const bx = grid(d.x), by = grid(d.y);
+      ctx.globalAlpha = Math.min(1, (1 - t) * 1.6);
+      for (let j = 0; j < 2 * R; j++) {   // rows from the bottom up
+        let lo = 1e9, hi = -1e9;
+        for (const [cx, r] of [[0, R], [-off, r2], [off, r2]]) {
+          const dy = j + 0.5 - r;
+          if (Math.abs(dy) > r) continue;
+          const hw = Math.sqrt(r * r - dy * dy);
+          lo = Math.min(lo, Math.round(cx - hw)); hi = Math.max(hi, Math.round(cx + hw));
+        }
+        if (hi <= lo) continue;
+        ctx.fillStyle = j === 0 ? colors[2] : colors[d.c % 2];
+        ctx.fillRect(bx + lo * CELL, by - (j + 1) * CELL, (hi - lo) * CELL, CELL);
+      }
     }
     ctx.globalAlpha = 1;
   }
