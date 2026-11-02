@@ -232,7 +232,8 @@ class Dust {
     d.front = true;
     d.big = 1;   // belly clouds are bigger: they hide the legs
     d.x = RUNNER.x + BELLY_X0 + Math.random() * (BELLY_X1 - BELLY_X0);
-    d.y = GROUND - Math.random() * 2;
+    d.y = GROUND + 3 - Math.random() * 2;   // starts on the sand line, at the feet
+    d.vy *= 0.4;                           // and rises only a little
     d.vx -= Math.random() * 30;
     d.life = 0.3 + Math.random() * 0.25;
   }
@@ -245,7 +246,8 @@ class Dust {
       d.x += d.vx * dt;
       d.y += d.vy * dt;
       d.vy += 120 * dt;   // settles back down
-      if (d.y > GROUND - 1) d.y = GROUND - 1;
+      const floor = d.big ? GROUND + 3 : GROUND - 1;
+      if (d.y > floor) d.y = floor;
     }
   }
 
