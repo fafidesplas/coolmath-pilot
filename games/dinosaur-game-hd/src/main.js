@@ -61,7 +61,7 @@ let acc = 0, last = performance.now();
 function startRun(withJump) {
   g.mode = 'endless';
   g.runs = null;
-  g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible });
+  g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible, noGolden: data.flights >= GOLD.maxFlights });   // no golden egg while a flight is banked
   g.screen = 'playing';
   g.alpha = 0; acc = 0;
   g.runStart = performance.now(); g.jumpedAt = null;

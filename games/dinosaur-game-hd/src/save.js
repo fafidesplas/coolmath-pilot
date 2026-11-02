@@ -1,6 +1,6 @@
 // The save, one localStorage key (GDD 12). A broken or old save resets to the
 // defaults, field by field, and never crashes the game.
-import { RUNNER_IDS } from './config.js';
+import { RUNNER_IDS, GOLD } from './config.js';
 
 const KEY = 'cm_dinosaur-game-hd_save';
 
@@ -31,6 +31,7 @@ function check(data) {
   data.unlocked = ['trex', ...new Set(data.unlocked.filter(id => id !== 'trex' && RUNNER_IDS.includes(id)))];
   if (!data.unlocked.includes(data.equipped)) data.equipped = 'trex';
   if (!data.unlocked.includes(data.p2Runner)) data.p2Runner = 'trex';
+  data.flights = Math.max(0, Math.min(GOLD.maxFlights, data.flights | 0));   // an old save may hold more
   return data;
 }
 

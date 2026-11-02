@@ -110,7 +110,7 @@ export const GOLD = {
   pickup: 16,
   slack: 10,               // frames
   pteroSlack: 40,          // px more when either neighbour is a pterodactyl
-  maxFlights: 3,           // banked flights (GDD 3.8)
+  maxFlights: 1,           // banked flights (GDD 3.8): one at a time
 };
 
 // The bonus flight (GDD 3.8), in screen px (640×360) and frames at 60 Hz.

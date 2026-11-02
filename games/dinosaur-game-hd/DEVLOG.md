@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-02 — One flight at a time
+- Pao: only one bonus flight can be banked. `GOLD.maxFlights` is 1, no golden egg spawns in a run while a flight is waiting, and a save with more flights is cut to 1. GDD 3.7, 3.8, 8 updated. Next: playtest it (grab the golden egg, Retry, start another run: no golden egg), then the hatch prices.
+
 ## 2026-11-02 — Bonus flight is eggs only
 - Pao: the pterodactyl bonus flight was too hard, so it is now only eggs. Thunderclouds and wild pterodactyls are gone; the 20 s is egg shapes (lines, waves, blocks, walls, stairs, arrows) at random heights, about 810 eggs a flight (was about 120). GDD 3.8 and `tools/flight-test.mjs` updated (the test now checks egg count, bounds and that a simple bot can reach them). The cloud and wild drawing code in `render.js` is unused now. Next: playtest the egg amount; hatch prices may need a look.
 
