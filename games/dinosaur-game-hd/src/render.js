@@ -255,6 +255,7 @@ class Dust {
     d.big = 1;   // belly clouds are bigger: they hide the legs
     d.s = 0.85 + Math.random() * 0.4;   // but varied less, so the legs stay hidden
     d.x = RUNNER.x + BELLY_X0 + Math.random() * (BELLY_X1 - BELLY_X0);
+    d.s *= 1 - 0.55 * (d.x - RUNNER.x - BELLY_X0) / (BELLY_X1 - BELLY_X0);   // smaller toward the head
     d.y = GROUND + 3 - Math.random() * 2;   // starts on the sand line, at the feet
     d.vy *= 0.4;                           // and rises only a little
     d.vx -= Math.random() * 30;
