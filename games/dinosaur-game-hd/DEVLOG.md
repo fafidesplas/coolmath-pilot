@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — Race results layout
+- Pao's mockup: the race results panel is smaller (242×190) and centered. Rematch and Home sit side by side, both 32 px tall with size 2 text; Rematch stays orange. The Runners button and the "SPACE OR R FOR A REMATCH" line are gone (Space and R still rematch). Menu is labeled Home on this screen only. GDD 8 updated.
+
 ## 2026-11-01 — P1 / P2 labels aren't buttons
 - Pao: the P1 / P2 tags were drawn in the button style (border, fill and lip), so they looked pressable. They are now plain text with a drop shadow in the player's color (orange or teal), like the title: Night Ink in setup, the HUD's text color in a race, cream on the results panel. Checked setup, the race HUD and the results in Chrome.
 

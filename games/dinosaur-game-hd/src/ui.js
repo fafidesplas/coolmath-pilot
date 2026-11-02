@@ -11,6 +11,7 @@ export const FLIGHT_END_MS = 1800;     // "+N eggs" over the sky after a flight,
 const FLIGHT_HINT_MS = 3000, GOLD_POP_MS = 400;
 const PANEL_MS = 350, COUNT_MS = 700, FLASH_MS = 250, HINT_MS = 5000, SLIDE_HINT_MS = 2000, BUMP_MS = 150;
 const PANEL_Y = 34, PANEL_H = 242;
+const RACE_PANEL = { x: 199, w: 242, h: 190 };   // the race results panel, centered
 const GOLD_C = '#F5C542';
 const ease = t => 1 - (1 - Math.min(Math.max(t, 0), 1)) ** 3;
 const pad = n => String(n).padStart(5, '0');
@@ -79,9 +80,8 @@ export function layout(g, now, r) {
   } else if (g.screen === 'complete' && g.mode === 'versus') {
     if (now - g.crashAt >= RESULTS_DELAY_MS) {
       const y = panelY(g, now);
-      B.push({ id: 'retry', label: 'REMATCH', size: 3, big: true, x: 152, y: y + 166, w: 150, h: 44 });
-      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
-      B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+      B.push({ id: 'retry', label: 'REMATCH', size: 2, big: true, x: 217, y: y + 146, w: 134, h: 32 });
+      B.push({ id: 'menu', label: 'HOME', size: 2, x: 359, y: y + 146, w: 64, h: 32 });
     }
   } else if (g.screen === 'playing' || (g.screen === 'bonus' && !g.flightEndAt)) {
     B.push(corner('pause', r));
@@ -494,18 +494,17 @@ function drawRaceHud(ctx, g, now, r) {
 }
 
 // Race results (GDD 8): the winner (or a draw), the winner's distance, and
-// the tally kept until Menu, between the two players' tags.
+// the tally kept until Home, between the two players' tags.
 function drawRaceResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
-  const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2, win = g.winner;
-  box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
+  const { x, w, h } = RACE_PANEL, y = panelY(g, now), cx = x + w / 2, win = g.winner;
+  box(ctx, x, y, w, h, PAL.ink, PAL.slate, '#46546A');
   drawText(ctx, win === 'draw' ? 'DRAW!' : `${win.toUpperCase()} WINS!`, cx, y + 12, 4, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
   drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
   tag(ctx, 0, cx - 100, y + 110, PAL.cream, 3);
   tag(ctx, 1, cx + 66, y + 110, PAL.cream, 3);
   drawText(ctx, `${g.tally.p1} - ${g.tally.p2}`, cx, y + 110, 3, PAL.cream, 'center');
-  drawText(ctx, 'SPACE OR R FOR A REMATCH', cx, y + 220, 2, PAL.sand, 'center');
 }
 
 export function drawUI(ctx, g, now, r) {
