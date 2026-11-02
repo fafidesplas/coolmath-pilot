@@ -1,6 +1,7 @@
 # Dinosaur Game: Cool Edition — devlog
 
 ## 2026-11-01 — Cloud-like dust
+- Pao: more dust in the run: 4 puffs per footfall (was 1), and every other one is drawn in front of the runner, over its feet (checked in Chrome).
 - Pao: more varied clouds: each puff has its own size and 2 to 4 lobes of different offsets and radii. Shading: light on top, a mid tone, darker underside and right edge (checked in Chrome).
 - Pao: clouds for the slide only. The run footfalls, takeoff and landing use the old square sand again.
 - Pao: the belly clouds now spawn lower, on the sand line at the feet, and rise less, so they clearly come from the feet (checked in Chrome).
