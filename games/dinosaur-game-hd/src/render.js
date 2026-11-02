@@ -92,14 +92,14 @@ function buildLayers() {
     L.clouds = up(c); L.cloudsN = tinted(L.clouds);
   }
 
-  // Mountains (0.1×), a 640×110 tile resting on the ground: flat-topped mesas, rounded hills
-  // and pointed peaks of different heights. Each is [kind, x, width, height] in half-size pixels.
+  // Mountains (0.1×), a 640×110 tile resting on the ground: flat-topped mesas and rounded hills
+  // of different heights. Each is [kind, x, width, height] in half-size pixels.
   {
     const [c, g] = canvas(W, 55);
     const LIGHT = '#E39A57', TOP = '#EDB073', SHADE = '#CF844A';
     const shapes = [
-      ['mesa', 10, 54, 35], ['peak', 76, 40, 50], ['hill', 108, 44, 30], ['mesa', 156, 60, 40],
-      ['peak', 212, 44, 54], ['hill', 250, 38, 34], ['peak', 290, 28, 36],
+      ['mesa', 10, 54, 35], ['hill', 72, 46, 48], ['hill', 108, 44, 30], ['mesa', 156, 60, 40],
+      ['hill', 208, 40, 52], ['hill', 250, 38, 34], ['hill', 292, 26, 28],
     ];
     for (const [kind, x, w, h] of shapes) {
       for (let row = 0; row < h; row++) {
@@ -111,11 +111,11 @@ function buildLayers() {
           g.fillStyle = SHADE;
           g.fillRect(x + w + grow - 4, y, 4, 1);
         } else {
-          // 'peak' is pointed (straight slopes); 'hill' is rounded, between a peak and a mesa
+          // a rounded hill, between a mesa and a peak
           const cx = x + Math.floor(w / 2), t = (row + 0.5) / h;
-          const half = Math.round((w / 2) * (kind === 'hill' ? Math.pow(t, 0.55) : t));
+          const half = Math.round((w / 2) * Math.pow(t, 0.55));
           const l = cx - half, r = cx + half + 1;
-          g.fillStyle = row < (kind === 'hill' ? 2 : 3) ? TOP : LIGHT;
+          g.fillStyle = row < 2 ? TOP : LIGHT;
           g.fillRect(l, y, r - l, 1);
           const split = cx + Math.round(half * 0.2);   // the shaded side, a smooth diagonal
           if (row >= 3) { g.fillStyle = SHADE; g.fillRect(split, y, r - split, 1); }
