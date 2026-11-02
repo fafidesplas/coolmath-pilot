@@ -180,7 +180,7 @@ export class Run {
     }
     eggs.length = n;
     const gold = this.golden;
-    if (gold) { gold.prevX = gold.x; gold.x -= scroll(this.speed); }
+    if (gold) { gold.prevX = gold.x; gold.x -= scroll(this.speed + (gold.owner.drifting ? gold.speedOffset : 0)); }
 
     // The original's spawn rule, checked on the frame `ahead.n` frames from
     // now: after the clear time, once the last obstacle has left the view or
@@ -195,42 +195,27 @@ export class Run {
       if (last) last.followed = true;
       if (this.eggGen) {
         const m = Math.round(Math.ceil(ahead.distancePx) * RUN.distanceCoefficient);
-        for (const e of this.eggGen.place(o, ahead.speed, m)) {
+        const placed = this.eggGen.place(o, ahead.speed, m);
+        for (const e of placed) {
           e.owner = o;
           e.fade = e.x < VIEW_W + OFFSCREEN;   // an arc's first eggs may start inside a wide view: fade them in
           eggs.push(e);
         }
-        if (this.goldOn && !this.golden && last && m >= this.eggGen.goldenAt) this.placeGolden(last, o, m);
+        // The first cactus or low pterodactyl after the egg stream's pick that has no eggs of its own.
+        const jumpable = o.id !== 'ptero' || o.y === 100;
+        if (this.goldOn && !this.golden && m >= this.eggGen.goldenAt && !placed.length && jumpable) this.placeGolden(o, m);
       }
     }
   }
 
-  // The golden egg (GDD 3.7), in the gap between `a` and the obstacle `b`
-  // that has just spawned, if the gap holds a whole held jump plus GOLD.slack
-  // frames of ground on each side when it reaches the runner. The egg sits
-  // where the runner's middle is at the apex of the jump centered in the gap.
-  // Only the egg stream decides when; the obstacles are never touched.
-  placeGolden(a, b, m) {
-    const mid = RUNNER.x + RUNNER.width / 2;
-    let s = this.speed, xa = a.x, xb = b.x, da = a.drifting, db = b.drifting, travelled = 0;
-    for (let k = 0; k < 2000; k++) {
-      if ((xa + a.w + xb) / 2 <= mid) {
-        const v = Math.floor(s), air = jumpCurve(s).length;
-        const ptero = a.id === 'ptero' || b.id === 'ptero';
-        const need = RUNNER.width + air * v + 2 * GOLD.slack * v + (ptero ? GOLD.pteroSlack : 0);
-        if (xb - (xa + a.w) < need) return;   // too short: try the next gap
-        const x = Math.round(mid + travelled - GOLD.w / 2);
-        this.golden = { x, y: GOLD.y, prevX: x, taken: false, m };
-        return;
-      }
-      if (s < RUN.maxSpeed) s += RUN.acceleration;
-      const sc = scroll(s);
-      if (!da && xa <= VIEW_W + OBSTACLES[a.id].w) da = true;
-      if (!db && xb <= VIEW_W + OBSTACLES[b.id].w) db = true;
-      xa -= scroll(s + (da ? a.speedOffset : 0));
-      xb -= scroll(s + (db ? b.speedOffset : 0));
-      travelled += sc;
-    }
+  // The golden egg (GDD 3.7), on the apex of the held jump over the obstacle
+  // `o` that has just spawned: a cactus or a low pterodactyl, one a held jump
+  // clears. The egg sits where the runner's middle is at that apex, and drifts
+  // with `o` like its eggs do. Only the egg stream decides when; the obstacles
+  // are never touched.
+  placeGolden(o, m) {
+    const x = Math.round(o.x + o.w / 2 - GOLD.w / 2);
+    this.golden = { x, y: GOLD.y, prevX: x, taken: false, m, owner: o, speedOffset: o.speedOffset };
   }
 
   // The coming frames, replayed from the speed curve: how many until the

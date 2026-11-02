@@ -99,17 +99,14 @@ export const EGGS = {
   streakMs: 600,           // pickups closer than this raise the pitch (up to 8 steps)
 };
 
-// The golden egg (GDD 3.7): once per run, in the first gap long enough after
-// a distance the egg stream picks between `from` and `to` metres, at the apex
-// of a held jump. The gap must hold the whole jump plus `slack` frames of
-// ground on each side (more when a pterodactyl's drift can narrow it).
+// The golden egg (GDD 3.7): once per run, on the apex of the held jump over the
+// first cactus or low pterodactyl (with no eggs of its own) after a distance
+// the egg stream picks between `from` and `to` metres.
 export const GOLD = {
-  from: 1000, to: 1200,
+  from: 1500, to: 1900,
   w: 12, h: 16,
   y: -6,                   // sprite top, lane coordinates: only a near-full jump (over ~80 px) reaches it
   pickup: 16,
-  slack: 10,               // frames
-  pteroSlack: 40,          // px more when either neighbour is a pterodactyl
   maxFlights: 1,           // banked flights (GDD 3.8): one at a time
 };
 

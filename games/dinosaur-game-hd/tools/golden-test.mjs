@@ -24,18 +24,20 @@ const SEEDS = 300;
 const placed = [];
 {
   const ms = [], late = [];
-  let none = 0;
+  let none = 0, overPtero = 0;
   for (let seed = 1; seed <= SEEDS; seed++) {
     const r = new Run(seed, { invincible: true });
-    while (!r.golden && r.score < 1500) r.step();
+    while (!r.golden && r.score < 2300) r.step();
     if (!r.golden) { none++; continue; }
     ms.push(r.golden.m);
+    if (r.golden.owner.id === 'ptero') overPtero++;
     if (r.golden.m > GOLD.to) late.push(r.golden.m - r.eggGen.goldenAt);
     placed.push(seed);
   }
   ms.sort((a, b) => a - b);
   console.log(`      placed at ${ms[0]}–${ms[ms.length - 1]} m (median ${ms[ms.length >> 1]}); ${late.length} after ${GOLD.to} m (at most ${Math.round(Math.max(0, ...late))} m after its pick)`);
-  ok(none === 0, `every run reaching 1500 m gets a golden egg (${none} of ${SEEDS} don't)`);
+  console.log(`      over a pterodactyl: ${overPtero} of ${ms.length}`);
+  ok(none === 0, `every run reaching 2300 m gets a golden egg (${none} of ${SEEDS} don't)`);
   ok(ms[0] >= GOLD.from, `never before ${GOLD.from} m`);
   ok(late.length <= SEEDS * 0.1, `at most 10% placed after ${GOLD.to} m (${late.length})`);
 }

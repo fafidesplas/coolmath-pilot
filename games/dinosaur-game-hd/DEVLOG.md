@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-02 — Golden egg over obstacles, 1500–1900 m
+- Pao: the golden egg now comes between 1500 and 1900 m. It sits on the apex of the held jump over the first cactus or low pterodactyl (with no eggs of its own) after the pick, so it no longer needs a gap. About 15% land over a pterodactyl. `tools/golden-test.mjs` passes (every placement is grabbable by a held jump without a hit; a tap never reaches it), and the other tests pass. GDD updated. Next: playtest a late run, then the hatch prices.
+
 ## 2026-11-02 — Golden egg later
 - Pao: the golden egg now comes between 1000 and 1200 m (was 500 to 900). 1500 m and later can't work: the gap rule finds no gap above about 1600 m. `tools/golden-test.mjs` passes (every run reaching 1500 m gets one). GDD updated. Next: playtest it; the hatch prices are still open.
 
