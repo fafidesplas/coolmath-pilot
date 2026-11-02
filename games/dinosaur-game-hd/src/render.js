@@ -164,7 +164,7 @@ const DUST_MAX = 128, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGH
 const BELLY_X0 = 8, BELLY_X1 = 40;   // the slide's belly on the sand, from the runner's x
 class Dust {
   constructor() {
-    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, cloud: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
+    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, cloud: false, s: 1, ln: 0, lx: [0, 0, 0, 0], lr: [1, 1, 1, 1], x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
     this.next = 0;
     this.carry = 0;
     this.n = 0;
@@ -177,7 +177,8 @@ class Dust {
     d.on = true;
     d.front = false;
     d.big = 0;
-    d.cloud = cloud;   // slide puffs are clouds; the run, takeoff and landing keep the old square sand
+    d.cloud = cloud;
+    if (cloud) this.shape(d);   // slide puffs are clouds; the run, takeoff and landing keep the old square sand
     d.x = RUNNER.x + 2 + Math.random() * 10;
     d.y = GROUND - 2 - Math.random() * 3;
     d.vx = -scroll * (0.25 + Math.random() * 0.35) - Math.random() * 40 * kick;
@@ -185,6 +186,18 @@ class Dust {
     d.age = 0;
     d.life = 0.3 + Math.random() * 0.25;
     d.c = Math.floor(Math.random() * DUST_COLORS.length);
+  }
+
+  // Every cloud gets its own look: a size, and 2 to 4 lobes (offset and radius,
+  // both in units of the cloud's radius), so no two puffs match.
+  shape(d) {
+    d.s = 0.7 + Math.random() * 0.7;
+    d.ln = 2 + Math.floor(Math.random() * 3);
+    d.lx[0] = 0; d.lr[0] = 1;
+    for (let i = 1; i < d.ln; i++) {
+      d.lx[i] = (Math.random() * 2 - 1) * 1.4;
+      d.lr[i] = 0.45 + Math.random() * 0.5;
+    }
   }
 
   burst(n, scroll, kick) {
@@ -232,6 +245,7 @@ class Dust {
   belly(d) {
     d.front = true;
     d.big = 1;   // belly clouds are bigger: they hide the legs
+    d.s = 0.85 + Math.random() * 0.4;   // but varied less, so the legs stay hidden
     d.x = RUNNER.x + BELLY_X0 + Math.random() * (BELLY_X1 - BELLY_X0);
     d.y = GROUND + 3 - Math.random() * 2;   // starts on the sand line, at the feet
     d.vy *= 0.4;                           // and rises only a little
@@ -264,22 +278,30 @@ class Dust {
         ctx.fillRect(grid(d.x - size / 2), grid(d.y - size), size, size);
         continue;
       }
-      // A puff is a little cloud: a round body with a smaller bump on each side
-      // and a flat bottom on the sand, growing as it fades (2 to 4 art px radius, belly clouds 3 to 4, about leg height).
-      const t = d.age / d.life, R = d.big ? 3 + Math.floor(t * 1.3) : 2 + Math.floor(t * 2.5), r2 = Math.max(1, R - 1), off = R;
+      // A cloud: a round body with 1 to 3 bumps and a flat bottom on the sand, growing as it
+      // fades (belly clouds 3 to 4 art px radius, about leg height). Lit from the top:
+      // light on top, a mid tone, and shadow on the underside and the right edge.
+      const t = d.age / d.life, R = ((d.big ? 3 : 2) + t * (d.big ? 1.3 : 2.5)) * d.s;
       const bx = grid(d.x), by = grid(d.y);
       ctx.globalAlpha = Math.min(1, (1 - t) * (d.big ? 2.2 : 1.6));
-      for (let j = 0; j < 2 * R; j++) {   // rows from the bottom up
+      let top = 0;
+      for (let i = 0; i < d.ln; i++) top = Math.max(top, Math.ceil(2 * Math.max(1, d.lr[i] * R)));
+      for (let j = 0; j < top; j++) {   // rows from the bottom up
         let lo = 1e9, hi = -1e9;
-        for (const [cx, r] of [[0, R], [-off, r2], [off, r2]]) {
-          const dy = j + 0.5 - r;
+        for (let i = 0; i < d.ln; i++) {
+          const r = Math.max(1, d.lr[i] * R), dy = j + 0.5 - r;
           if (Math.abs(dy) > r) continue;
-          const hw = Math.sqrt(r * r - dy * dy);
+          const hw = Math.sqrt(r * r - dy * dy), cx = d.lx[i] * R;
           lo = Math.min(lo, Math.round(cx - hw)); hi = Math.max(hi, Math.round(cx + hw));
         }
         if (hi <= lo) continue;
-        ctx.fillStyle = j === 0 ? colors[2] : colors[d.c % 2];
-        ctx.fillRect(bx + lo * CELL, by - (j + 1) * CELL, (hi - lo) * CELL, CELL);
+        const x = bx + lo * CELL, y = by - (j + 1) * CELL, w = (hi - lo) * CELL;
+        ctx.fillStyle = j === 0 ? colors[2] : j >= top * 0.45 ? colors[0] : colors[1];
+        ctx.fillRect(x, y, w, CELL);
+        if (j > 0 && j <= top * 0.6 && hi - lo >= 3) {   // the shaded right edge
+          ctx.fillStyle = j <= 1 ? colors[2] : colors[1];   // darkest only near the bottom
+          ctx.fillRect(x + w - CELL, y, CELL, CELL);
+        }
       }
     }
     ctx.globalAlpha = 1;
