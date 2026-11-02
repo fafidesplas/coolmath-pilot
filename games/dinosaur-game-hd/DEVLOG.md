@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-02 — Bonus flight is eggs only
+- Pao: the pterodactyl bonus flight was too hard, so it is now only eggs. Thunderclouds and wild pterodactyls are gone; the 20 s is egg shapes (lines, waves, blocks, walls, stairs, arrows) at random heights, about 810 eggs a flight (was about 120). GDD 3.8 and `tools/flight-test.mjs` updated (the test now checks egg count, bounds and that a simple bot can reach them). The cloud and wild drawing code in `render.js` is unused now. Next: playtest the egg amount; hatch prices may need a look.
+
 ## 2026-11-01 — Cloud-like dust
 - Pao: the run dust is flush with the floor: each puff's bottom edge starts on the dino's bottom pixel row, and it lifts less (checked in Chrome).
 - Pao: the run dust follows the same rule: puffs kicked up near the front foot are smaller (half size) than those from the back foot.

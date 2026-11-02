@@ -112,12 +112,10 @@ A 20-second bonus round after the run, earned with the golden egg. It is the onl
 - **The mount:** the equipped runner rides a pterodactyl. All runners use the same mount and the same hitbox: the rider's body plus the pterodactyl's body, **38×40 px** (the wings and the rider's head stay outside it, Joyride-style forgiveness). Prototype: the mount is the obstacle pterodactyl (46×40) turned to face right, in teal, with the runner's jump frame on its back.
 - **Controls, Joyride-style:** hold (Space, Up, W, mouse or touch anywhere) to flap up; release to glide down. Values at 60 Hz: **gravity 0.45** px/frame², **flap 0.9** px/frame² upward while held (net 0.45 up), vertical speed capped at **±7** px/frame. The play area is the full 640×360 frame: the ceiling is y = 40 (below the HUD), the floor is the ground at y = 300; touching either is safe, the mount skims along it.
 - **Scroll:** a fixed **8 px/frame** (480 px/s), no ramp. The flight lasts **20 s** (about 9,600 px). Distance in the flight does **not** count for the score, the best or any distance achievement.
-- **Hazards** (each with its own shape, not color alone):
-  - **Thunderclouds:** a cloud with a lightning bar hanging under it (static, like Joyride's zappers): vertical 60–140 px, horizontal 100–160 px, or diagonal. They scroll with the world.
-  - **Wild pterodactyls:** fly straight left at 14 px/frame at your current height, like Joyride's missiles. A flashing **!** at the right edge warns **1 s** before one arrives; it follows your height for the first 25 frames, then locks at the height it will fly. One only arrives where no thundercloud is within about 0.4 s, so moving off its line always dodges it. About 2–3 per flight, from 7 s.
-- **Eggs:** Joyride's coin shapes, built from eggs: lines, sine waves, blocks (5×8), staircases and arrows, placed between hazards. A full flight holds **about 120 eggs**; a good flight gets 60–90.
-- **Difficulty:** the first **3 s** are hazard-free eggs only; hazard density rises over the 20 s, from one hazard every ~1.5 s to one every ~0.7 s (about 16 thunderclouds a flight). The gap rules guarantee a path: a hazard never closes more than 60% of the height, and two hazards are never closer than 1.5× the time needed to fly at full flap or glide from the free band past one to the nearest free band past the next. Egg shapes go in the space between some hazards (45%), never within 6 px of one. Measured (`tools/flight-test.mjs`): every flight has a path through, about 120 eggs a flight.
-- **A hit ends the flight:** the rider tumbles off and the pterodactyl flaps away (no crash shake). **Every egg grabbed so far is kept.**
+- **No hazards:** the flight is only about the eggs. No thunderclouds, no wild pterodactyls, nothing to dodge, nothing ends it early. (They were cut: the flight was too hard for a bonus.)
+- **Eggs:** Joyride's coin shapes, built from eggs: lines, sine waves, blocks (8×5), walls (10×6), staircases and arrows, one after the other for the whole 20 s at random heights, with a short gap (about 140 px) between shapes. A full flight holds **about 800 eggs** (600 to 1,100); a player flying well grabs a good part of them.
+- **Difficulty:** none by design. The only skill is steering up and down to sweep the shapes. Measured (`tools/flight-test.mjs`): about 810 eggs a flight, every egg inside the flying area, and a simple bot grabs about 40% of them.
+- **No hit:** nothing can end the flight early. **Every egg grabbed is kept**, also when the player leaves early.
 - **End:** after 20 s (or a hit), "+N eggs" counts up over the sky, then back to the results, with the egg total and hatch progress updated. Space retries the run.
 - **First flight:** a "Hold to fly up" icon for the first 3 s (the save's `flown` remembers it has shown).
 - **Leaving early:** Restart or Menu from the pause screen ends the flight; its eggs so far are kept, like a hit.
@@ -162,8 +160,6 @@ The lanes are stacked (P1 top, P2 bottom) but the touch zones are split left and
 | Pterodactyl | flies at 3 heights, flapping | ~450 m | wide flapping wings, beak |
 | Egg | +1 egg when touched | 30 m | oval with speckles and a glint |
 | Golden egg | earns a bonus flight; at most one per run | 500–900 m | bigger egg with a sparkle and no speckles |
-| Thundercloud (flight) | static lightning bar; a hit ends the flight | bonus flight | dark cloud with a zigzag bar |
-| Wild pterodactyl (flight) | flies straight at you after a 1 s warning | bonus flight | flashing **!** at the edge, then a pterodactyl |
 | Night | 12 s of dark sky every 700 m | 700 m | stars and moon |
 | Ghost (2P) | the crashed player's runner stays faded in its lane | 2P | 50% opacity, X eyes |
 
