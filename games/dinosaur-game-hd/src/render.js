@@ -164,19 +164,20 @@ const DUST_MAX = 128, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGH
 const BELLY_X0 = 8, BELLY_X1 = 40;   // the slide's belly on the sand, from the runner's x
 class Dust {
   constructor() {
-    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
+    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, cloud: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
     this.next = 0;
     this.carry = 0;
     this.n = 0;
   }
 
   // One puff at the tail. scroll: the ground's speed in px/s.
-  emit(scroll, kick) {
+  emit(scroll, kick, cloud = false) {
     const d = this.p[this.next];
     this.next = (this.next + 1) % DUST_MAX;
     d.on = true;
     d.front = false;
     d.big = 0;
+    d.cloud = cloud;   // slide puffs are clouds; the run, takeoff and landing keep the old square sand
     d.x = RUNNER.x + 2 + Math.random() * 10;
     d.y = GROUND - 2 - Math.random() * 3;
     d.vx = -scroll * (0.25 + Math.random() * 0.35) - Math.random() * 40 * kick;
@@ -188,7 +189,7 @@ class Dust {
 
   burst(n, scroll, kick) {
     for (let i = 0; i < n; i++) {
-      this.emit(scroll, kick);
+      this.emit(scroll, kick, true);
       if (i % 2) this.belly(this.last);
     }
   }
@@ -220,8 +221,8 @@ class Dust {
     this.carry += dt * 120;
     while (this.carry >= 1) {
       this.carry--;
-      if (++this.n % 3 === 0) { this.emit(scroll, 0.6); continue; }
-      this.emit(scroll, 0.5);
+      if (++this.n % 3 === 0) { this.emit(scroll, 0.6, true); continue; }
+      this.emit(scroll, 0.5, true);
       this.belly(this.last);
     }
   }
@@ -256,6 +257,13 @@ class Dust {
     const colors = night > 0.5 ? DUST_NIGHT : DUST_COLORS;
     for (const d of this.p) {
       if (!d.on || d.front !== front) continue;
+      if (!d.cloud) {   // the old sand: a fading square, 2 to 4 art px
+        const t = d.age / d.life, size = CELL * (2 + Math.round(t * 2));
+        ctx.globalAlpha = 1 - t;
+        ctx.fillStyle = colors[d.c];
+        ctx.fillRect(grid(d.x - size / 2), grid(d.y - size), size, size);
+        continue;
+      }
       // A puff is a little cloud: a round body with a smaller bump on each side
       // and a flat bottom on the sand, growing as it fades (2 to 4 art px radius, belly clouds 3 to 4, about leg height).
       const t = d.age / d.life, R = d.big ? 3 + Math.floor(t * 1.3) : 2 + Math.floor(t * 2.5), r2 = Math.max(1, R - 1), off = R;
