@@ -92,14 +92,14 @@ function buildLayers() {
     L.clouds = up(c); L.cloudsN = tinted(L.clouds);
   }
 
-  // Mountains (0.1×), a 640×110 tile resting on the ground: flat-topped mesas mixed with
-  // pointed peaks of different heights. Each is [kind, x, width, height] in half-size pixels.
+  // Mountains (0.1×), a 640×110 tile resting on the ground: flat-topped mesas, rounded hills
+  // and pointed peaks of different heights. Each is [kind, x, width, height] in half-size pixels.
   {
     const [c, g] = canvas(W, 55);
     const LIGHT = '#E39A57', TOP = '#EDB073', SHADE = '#CF844A';
     const shapes = [
-      ['mesa', 10, 60, 35], ['peak', 80, 40, 50], ['peak', 120, 26, 32], ['mesa', 152, 70, 40],
-      ['peak', 214, 46, 54], ['mesa', 268, 30, 22], ['peak', 292, 28, 38],
+      ['mesa', 10, 54, 35], ['peak', 76, 40, 50], ['hill', 108, 44, 30], ['mesa', 156, 60, 40],
+      ['peak', 212, 44, 54], ['hill', 250, 38, 34], ['peak', 290, 28, 36],
     ];
     for (const [kind, x, w, h] of shapes) {
       for (let row = 0; row < h; row++) {
@@ -111,13 +111,13 @@ function buildLayers() {
           g.fillStyle = SHADE;
           g.fillRect(x + w + grow - 4, y, 4, 1);
         } else {
-          // a pointed peak: the width grows steadily from a tip, with a small notch every few rows
-          const cx = x + Math.floor(w / 2);
-          const half = Math.floor(row * w / (2 * h)) + (row % 6 === 4 ? 1 : 0);
-          const l = cx - half, r = cx + half + 1;
-          g.fillStyle = row < 3 ? TOP : LIGHT;
+          // 'peak' is pointed (straight slopes); 'hill' is rounded, between a peak and a mesa
+          const cx = x + Math.floor(w / 2), t = (row + 0.5) / h;
+          const half = Math.round((w / 2) * (kind === 'hill' ? Math.pow(t, 0.55) : t));
+          const l = cx - half, r = cx + half;
+          g.fillStyle = row < (kind === 'hill' ? 2 : 3) ? TOP : LIGHT;
           g.fillRect(l, y, r - l, 1);
-          const split = cx + Math.round(Math.sin(row / 4) * 1.5);   // shaded side, a jagged ridge line
+          const split = cx + Math.round(half * 0.2);   // the shaded side, a smooth diagonal
           if (row >= 3) { g.fillStyle = SHADE; g.fillRect(split, y, r - split, 1); }
         }
       }
