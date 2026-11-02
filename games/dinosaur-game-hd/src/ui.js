@@ -444,13 +444,15 @@ function tag(ctx, p, x, y, color, size = 2) {
   drawText(ctx, label, x, y, size, color);
 }
 
-// A pixel trophy, 7x7 cells of `k` px, with a one-cell drop shadow.
+// A pixel trophy, 7x7 cells of `k` px, with a 1 px black outline.
 const TROPHY = ['1111111', '1011101', '1011101', '0111110', '0011100', '0001000', '0011100'];
 function trophy(ctx, x, y, k = 2) {
-  for (const [dx, color] of [[k, PAL.ink], [0, '#F2B632']]) {
+  const cells = (ox, oy, color) => {
     ctx.fillStyle = color;
-    TROPHY.forEach((row, j) => [...row].forEach((c, i) => { if (c === '1') ctx.fillRect(x + dx + i * k, y + dx + j * k, k, k); }));
-  }
+    TROPHY.forEach((row, j) => [...row].forEach((c, i) => { if (c === '1') ctx.fillRect(x + ox + i * k, y + oy + j * k, k, k); }));
+  };
+  for (const ox of [-1, 0, 1]) for (const oy of [-1, 0, 1]) if (ox || oy) cells(ox, oy, '#000');
+  cells(0, 0, '#F2B632');
 }
 
 function drawSetup(ctx, g) {
