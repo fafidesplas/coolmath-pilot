@@ -114,7 +114,7 @@ function buildLayers() {
           // 'peak' is pointed (straight slopes); 'hill' is rounded, between a peak and a mesa
           const cx = x + Math.floor(w / 2), t = (row + 0.5) / h;
           const half = Math.round((w / 2) * (kind === 'hill' ? Math.pow(t, 0.55) : t));
-          const l = cx - half, r = cx + half;
+          const l = cx - half, r = cx + half + 1;
           g.fillStyle = row < (kind === 'hill' ? 2 : 3) ? TOP : LIGHT;
           g.fillRect(l, y, r - l, 1);
           const split = cx + Math.round(half * 0.2);   // the shaded side, a smooth diagonal

@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — Rounded hills, smoother peaks
+- Pao: added a third mountain type, rounded hills (between a mesa and a peak), and smoothed the pointed peaks: straight slopes with no notches and a smooth shaded side. The layer is now 2 hills, 3 peaks and 2 mesas. Next: check it in Chrome at day and night.
+
 ## 2026-11-01 — Pointier mountains
 - Pao: the background mountains all looked like plateaus. The far layer now mixes flat mesas with pointed peaks of four different heights and widths (a tip, steady slopes, a shaded right side with a jagged ridge line). Same tile size, same scroll speed. Next: look at it in Chrome at day and night.
 
