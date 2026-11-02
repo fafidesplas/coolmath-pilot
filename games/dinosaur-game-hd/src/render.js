@@ -164,7 +164,7 @@ const DUST_MAX = 128, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGH
 const BELLY_X0 = 8, BELLY_X1 = 40;   // the slide's belly on the sand, from the runner's x
 class Dust {
   constructor() {
-    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, cloud: false, s: 1, ln: 0, lx: [0, 0, 0, 0], lr: [1, 1, 1, 1], x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
+    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, floor: 0, cloud: false, s: 1, ln: 0, lx: [0, 0, 0, 0], lr: [1, 1, 1, 1], x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
     this.next = 0;
     this.carry = 0;
     this.n = 0;
@@ -179,6 +179,7 @@ class Dust {
     d.big = 0;
     d.cloud = cloud;
     d.s = 1;
+    d.floor = GROUND - 1;
     if (cloud) this.shape(d);   // slide puffs are clouds; the run, takeoff and landing keep the old square sand
     d.x = RUNNER.x + 2 + Math.random() * 10;
     d.y = GROUND - 2 - Math.random() * 3;
@@ -230,11 +231,10 @@ class Dust {
       d.x = RUNNER.x + x + Math.random() * 8 - 2;
       d.life = 0.15 + Math.random() * 0.2;
       d.s = 1 - 0.5 * Math.min(1, Math.max(0, (d.x - RUNNER.x - 13) / 10));   // smaller toward the front foot
-      if (i % 2) {
-        d.front = true;
-        d.y = GROUND - Math.random() * 3;
-        d.vy *= 0.5;
-      }
+      d.floor = GROUND;       // flush with the floor: the puffs' bottom edge is the dino's bottom pixel
+      d.y = GROUND;
+      d.vy *= 0.35;           // and they only lift a little
+      if (i % 2) d.front = true;
     }
   }
 
@@ -258,6 +258,7 @@ class Dust {
     d.s = 0.85 + Math.random() * 0.4;   // but varied less, so the legs stay hidden
     d.x = RUNNER.x + BELLY_X0 + Math.random() * (BELLY_X1 - BELLY_X0);
     d.s *= 1 - 0.55 * (d.x - RUNNER.x - BELLY_X0) / (BELLY_X1 - BELLY_X0);   // smaller toward the head
+    d.floor = GROUND + 3;
     d.y = GROUND + 3 - Math.random() * 2;   // starts on the sand line, at the feet
     d.vy *= 0.4;                           // and rises only a little
     d.vx -= Math.random() * 30;
@@ -272,8 +273,7 @@ class Dust {
       d.x += d.vx * dt;
       d.y += d.vy * dt;
       d.vy += 120 * dt;   // settles back down
-      const floor = d.big ? GROUND + 3 : GROUND - 1;
-      if (d.y > floor) d.y = floor;
+      if (d.y > d.floor) d.y = d.floor;
     }
   }
 

@@ -1,6 +1,7 @@
 # Dinosaur Game: Cool Edition — devlog
 
 ## 2026-11-01 — Cloud-like dust
+- Pao: the run dust is flush with the floor: each puff's bottom edge starts on the dino's bottom pixel row, and it lifts less (checked in Chrome).
 - Pao: the run dust follows the same rule: puffs kicked up near the front foot are smaller (half size) than those from the back foot.
 - Pao: slide clouds near the front of the sprite are smaller (down to 45% of the tail's size at the head).
 - Pao: more dust in the run: 4 puffs per footfall (was 1), and every other one is drawn in front of the runner, over its feet (checked in Chrome).
