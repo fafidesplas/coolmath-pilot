@@ -27,9 +27,7 @@ const g = {
   raceAt: 0, goAt: 0, beeps: 0,   // countdown start, GO, beeps played
   winner: null,         // 'p1' | 'p2' | 'draw' once the first crash happens
   endAt: 0,             // when the race was decided (the victory lap starts)
-  raceEggs: [0, 0],
   tally: { p1: 0, p2: 0 },   // kept until Menu
-  eggBumpAt2: [0, 0],
   lanes: [0, 1].map(() => ({ sliding: false, wasInAir: false, runFrame: -1 })),
   pausedAt: 0,
   run: null,
@@ -119,11 +117,11 @@ function cycleRunner(p, dir) {
   if (p) { data.p2Runner = id; save(data); } else equip(id);
 }
 
-// One seed for both lanes; no golden egg, so a race stays a pure race (GDD 3.7).
+// One seed for both lanes; no eggs and no golden egg, so a race stays a pure race (GDD 3.7).
 function startRace() {
   const seed = (Math.random() * 2 ** 32) >>> 0;
   g.mode = 'versus';
-  g.runs = [0, 1].map(() => new Run(seed, { invincible: g.invincible, noGolden: true }));
+  g.runs = [0, 1].map(() => new Run(seed, { invincible: g.invincible, noEggs: true }));
   g.run = null;
   g.screen = 'racing';
   g.raceAt = performance.now();
@@ -174,33 +172,23 @@ function stepRace() {
 }
 
 function raceEvents(i, sounds = null) {
-  const run = g.runs[i], now = performance.now(), play = s => sounds ? sounds.add(s) : sfx[s]();
+  const run = g.runs[i], play = s => sounds ? sounds.add(s) : sfx[s]();
   for (const e of run.events) {
     if (e === 'jump') { play('jump'); r.takeoff(run.speed * 60, i); }
-    else if (e === 'egg') {
-      g.streak = now - g.lastEggAt < EGGS.streakMs ? Math.min(8, g.streak + 1) : 0;
-      g.lastEggAt = g.eggBumpAt2[i] = now;
-      sfx.egg(g.streak);
-    } else if (e === 'duck') play('duck');
+    else if (e === 'duck') play('duck');
     else if (e === 'milestone') play('milestone');
     else if (e === 'land') { if (!run.ducking) r.land(run.speed * 60, i); }
     else if (e === 'night') play('night');
   }
   run.events.length = 0;
-  for (const e of run.pickups) g.fx.push({ x: e.x + EGGS.w / 2, y: LANE.top2P[i] + e.y + EGGS.h / 2, t: now, n: g.fx.length });
-  run.pickups.length = 0;
 }
 
-// After the victory lap: the results, the eggs banked, the win counted.
+// After the victory lap: the results, and the win counted.
 function endRace() {
   const w = g.winner, runs = g.runs;
   g.screen = 'complete';
   g.crashAt = performance.now();
   g.result = runs[w === 'p2' ? 1 : 0].score;
-  g.raceEggs = runs.map(run => run.eggCount);
-  const eggs = g.raceEggs[0] + g.raceEggs[1];
-  data.eggs += eggs;
-  data.totalEggs += eggs;
   if (w !== 'draw') { data.versusWins++; g.tally[w]++; sfx.win(); }
   save(data);
   pointers.clear();

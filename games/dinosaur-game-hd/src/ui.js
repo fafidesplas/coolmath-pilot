@@ -462,9 +462,6 @@ function drawRaceHud(ctx, g, now, r) {
   for (const p of [0, 1]) {
     const run = g.runs[p], top = p ? LANE.seam + 6 : 4;
     tag(ctx, p, 8, top);
-    const bump = now - (g.eggBumpAt2?.[p] ?? 0) < BUMP_MS ? 2 : 0;
-    ctx.drawImage(SPR.egg[0], 56, top + 6 - bump);
-    drawText(ctx, String(run.eggCount), 74, top + 8, 2, text);
     drawText(ctx, pad(run.score), VIEW_W - 12, top + 8, 2, text, 'right');
   }
   if (g.screen !== 'racing') return;
@@ -494,8 +491,8 @@ function drawRaceHud(ctx, g, now, r) {
   ctx.globalAlpha = 1;
 }
 
-// Race results (GDD 8): the winner (or a draw), the winner's distance, both
-// players' eggs, and the tally kept until Menu.
+// Race results (GDD 8): the winner (or a draw), the winner's distance, and
+// the tally kept until Menu, between the two players' tags.
 function drawRaceResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
   const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2, win = g.winner;
@@ -503,13 +500,9 @@ function drawRaceResults(ctx, g, now) {
   drawText(ctx, win === 'draw' ? 'DRAW!' : `${win.toUpperCase()} WINS!`, cx, y + 12, 4, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
   drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
-  for (const k of [0, 1]) {
-    const lx = cx - 150 + k * 160;
-    tag(ctx, k, lx, y + 92);
-    ctx.drawImage(SPR.egg[0], lx + 50, y + 98);
-    drawText(ctx, `+${Math.round(g.raceEggs[k] * p)}`, lx + 68, y + 100, 2, PAL.cream);
-  }
-  drawText(ctx, `P1 ${g.tally.p1} - ${g.tally.p2} P2`, cx, y + 134, 2, PAL.sand, 'center');
+  tag(ctx, 0, cx - 110, y + 108);
+  tag(ctx, 1, cx + 70, y + 108);
+  drawText(ctx, `${g.tally.p1} - ${g.tally.p2}`, cx, y + 110, 3, PAL.cream, 'center');
   drawText(ctx, 'SPACE OR R FOR A REMATCH', cx, y + 220, 2, PAL.sand, 'center');
 }
 

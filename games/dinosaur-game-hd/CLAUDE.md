@@ -32,7 +32,7 @@ Title (the dino sleeps; any key wakes it) → run starts → jump and duck throu
 ## 2-player mode
 - Two lanes stacked on one screen (P1 top, P2 bottom), both from the same seed, so both see the same obstacles at the same time.
 - Both run at the same speed, the same curve as 1P. The first crash ends the race: the crashed dino stays in its lane as a ghost and the other wins after a short victory lap. Crashing in the same frame is a draw.
-- Single races, no best-of-3: a big Rematch button and a running tally ("P1 2 – 1 P2"). Eggs earned in 2P go to the shared bank.
+- Single races, no best-of-3: a big Rematch button and a running tally ("P1 2 – 1 P2"). No eggs in 2P: a race stays a pure race.
 
 ## Controls
 - **1 player:** Space, Up or W to jump (hold for higher); Down or S to duck / fast-fall. Mouse/touch: press the top two thirds of the screen to jump, hold the bottom third to duck; faint icons show the zones in the first run.

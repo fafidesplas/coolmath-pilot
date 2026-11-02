@@ -1,5 +1,9 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — No eggs in 2P races
+- Pao: eggs don't decide who wins a race, so they only tempted riskier jumps. Races now run with `noEggs` (no eggs, no golden egg). The race HUD shows only the tag and the distance. The race results show the tally between the P1 and P2 tags, and nothing goes to the egg bank. GDD (3.7, 8, 13) and the brief updated.
+- Checked: over 100 seeds, a run without eggs has exactly the same obstacles as one with them (the egg stream is separate). In Chrome, a 70 m race had 0 eggs in both lanes and the bank stayed the same; no console errors. Physics test passes.
+
 ## 2026-11-01 — 2-player race
 - Built the 2P mode from GDD 3.1, 4 and 8. The title has a **2 Players** button that opens race setup: two stacked lanes with P1 (orange tag) and P2 (teal tag). P1 changes runner with A/D and P2 with Left/Right (arrows on touch). Then **Race!** (Space/Enter).
 - Race: a 3-2-1-GO countdown with beeps, then two Runs from one seed (no golden egg). Each lane is the 1P scene clipped to 640×180, with the ground 150 px below the lane top. P1 uses W/S and P2 uses Up/Down. Space does nothing. On touch, P1 has the left half and P2 the right half; the bottom third of each half ducks. Faint P1/P2 zone labels show until 3 s after GO.
