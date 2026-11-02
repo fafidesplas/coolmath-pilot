@@ -164,7 +164,7 @@ const DUST_MAX = 128, DUST_COLORS = ['#FFF6E0', '#FBE3B0', '#C99A55'], DUST_NIGH
 const BELLY_X0 = 8, BELLY_X1 = 40;   // the slide's belly on the sand, from the runner's x
 class Dust {
   constructor() {
-    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
+    this.p = Array.from({ length: DUST_MAX }, () => ({ on: false, front: false, big: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, c: 0 }));
     this.next = 0;
     this.carry = 0;
     this.n = 0;
@@ -176,6 +176,7 @@ class Dust {
     this.next = (this.next + 1) % DUST_MAX;
     d.on = true;
     d.front = false;
+    d.big = 0;
     d.x = RUNNER.x + 2 + Math.random() * 10;
     d.y = GROUND - 2 - Math.random() * 3;
     d.vx = -scroll * (0.25 + Math.random() * 0.35) - Math.random() * 40 * kick;
@@ -229,10 +230,11 @@ class Dust {
   // runner, so the sand sprays over the belly's lower edge.
   belly(d) {
     d.front = true;
+    d.big = 1;   // belly clouds are bigger: they hide the legs
     d.x = RUNNER.x + BELLY_X0 + Math.random() * (BELLY_X1 - BELLY_X0);
     d.y = GROUND - Math.random() * 2;
     d.vx -= Math.random() * 30;
-    d.life = 0.2 + Math.random() * 0.25;
+    d.life = 0.3 + Math.random() * 0.25;
   }
 
   update(dt) {
@@ -253,10 +255,10 @@ class Dust {
     for (const d of this.p) {
       if (!d.on || d.front !== front) continue;
       // A puff is a little cloud: a round body with a smaller bump on each side
-      // and a flat bottom on the sand, growing as it fades (1 to 3 art px radius).
-      const t = d.age / d.life, R = 1 + Math.floor(t * 2.5), r2 = Math.max(1, R - 1), off = R;
+      // and a flat bottom on the sand, growing as it fades (2 to 4 art px radius, belly clouds 3 to 4, about leg height).
+      const t = d.age / d.life, R = d.big ? 3 + Math.floor(t * 1.3) : 2 + Math.floor(t * 2.5), r2 = Math.max(1, R - 1), off = R;
       const bx = grid(d.x), by = grid(d.y);
-      ctx.globalAlpha = Math.min(1, (1 - t) * 1.6);
+      ctx.globalAlpha = Math.min(1, (1 - t) * (d.big ? 2.2 : 1.6));
       for (let j = 0; j < 2 * R; j++) {   // rows from the bottom up
         let lo = 1e9, hi = -1e9;
         for (const [cx, r] of [[0, R], [-off, r2], [off, r2]]) {

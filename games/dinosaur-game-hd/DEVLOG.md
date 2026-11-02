@@ -1,6 +1,7 @@
 # Dinosaur Game: Cool Edition — devlog
 
 ## 2026-11-01 — Cloud-like dust
+- Pao: bigger belly clouds that cover the legs (3 to 4 art px radius, checked in Chrome: legs and lower belly hidden, back and head still visible).
 - Pao: the slide particles now look like little clouds: a round body with a bump on each side, a flat darker bottom on the sand, growing from 1 to 3 art px radius as they fade. Same pool and timing. Next: check it in Chrome.
 
 ## 2026-11-01 — Trophy outline
