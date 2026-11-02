@@ -401,7 +401,7 @@ function drawHatch(ctx, g, now, r) {
   if (t >= HATCH_MS.done && Math.floor(now / 500) % 2 === 0) drawText(ctx, 'CLICK OR PRESS ANY KEY', cx, 280, 2, PAL.cream, 'center');
 }
 
-// The bonus flight (GDD 8): the 30 s bar instead of the score, the eggs top
+// The bonus flight (GDD 8): the 20 s bar instead of the score, the eggs top
 // left, "hold to fly up" on the first flight, and "+N eggs" at the end.
 function drawFlightHud(ctx, g, now) {
   const f = g.flight, cx = VIEW_W / 2;

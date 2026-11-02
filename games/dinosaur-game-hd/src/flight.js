@@ -36,7 +36,7 @@ export class Flight {
     this.pickups = [];          // eggs picked up; the caller empties it
     this.events = [];           // flap, egg, warn, hit, complete; the caller empties it
     this.hit = false;
-    this.done = false;          // 30 s flown, or the outro after a hit is over
+    this.done = false;          // 20 s flown, or the outro after a hit is over
     this.result = null;         // 'hit' | 'complete'
     this.hitFrame = 0;
     this.rider = null;          // after a hit: { x, y, vy, spin }

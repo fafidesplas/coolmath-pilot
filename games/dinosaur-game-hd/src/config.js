@@ -115,7 +115,7 @@ export const GOLD = {
 
 // The bonus flight (GDD 3.8), in screen px (640×360) and frames at 60 Hz.
 export const FLIGHT = {
-  frames: 1800,            // 30 s
+  frames: 1200,            // 20 s
   scroll: 8,               // px/frame, no ramp
   x: 100,                  // the mount's left edge on screen
   gravity: 0.45, flap: 0.9, maxVy: 7,
