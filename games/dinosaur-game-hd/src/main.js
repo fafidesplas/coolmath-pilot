@@ -645,7 +645,6 @@ function frame(now) {
     }
     g.alpha = g.screen === 'playing' ? acc / STEP_MS : 1;
   } else if (g.screen === 'racing') {
-    for (; g.beeps <= Math.min(3, Math.floor((now - g.raceAt) / 500)); g.beeps++) sfx.count(g.beeps === 3);
     if (now >= g.goAt) {
       acc += dt * 1000;
       while (acc >= STEP_MS) {

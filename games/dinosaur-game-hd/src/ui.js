@@ -477,14 +477,6 @@ function drawRaceHud(ctx, g, now, r) {
     drawText(ctx, pad(run.score), VIEW_W - 12, top + 8, 2, text, 'right');
   }
   if (g.screen !== 'racing') return;
-  // 3-2-1-GO over the seam, each number popping in.
-  const t = now - g.raceAt, step = Math.floor(t / 500);
-  if (step <= 3) {
-    const label = ['3', '2', '1', 'GO!'][step], k = (t % 500) / 500;
-    const size = k < 0.15 ? 8 : 6, y = LANE.seam - size * 7 / 2;
-    drawText(ctx, label, VIEW_W / 2 + 4, y + 4, size, PAL.ink, 'center');
-    drawText(ctx, label, VIEW_W / 2, y, size, step === 3 ? PAL.orange : PAL.cream, 'center');
-  }
   // The touch zones: P1 the left half, P2 the right, the bottom third ducks (GDD 4).
   const alpha = hintAlpha(now, g.raceAt, g.goAt + RACE.hintMs);
   if (alpha <= 0) return;

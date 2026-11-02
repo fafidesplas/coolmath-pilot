@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — No 2P countdown
+- Pao: the 3-2-1 countdown (numbers and beeps) is gone. Both lanes run as soon as the race starts. GDD updated. Next: check it in Chrome.
+
 ## 2026-11-01 — Trophy and wins in the 2P HUD
 - Pao: beside P1 and P2 in the race HUD there is now a trophy icon and that player's win count (the tally kept until Menu). Next: check it in Chrome.
 
