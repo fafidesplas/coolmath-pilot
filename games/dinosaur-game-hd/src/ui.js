@@ -91,9 +91,8 @@ export function layout(g, now, r) {
     B.push({ id: 'menu', label: 'MENU', size: 2, x: 240, y: 218, w: 160, h: 30 });
   } else if (g.screen === 'complete' && now - g.crashAt >= RESULTS_DELAY_MS) {
     const y = panelY(g, now);
-    B.push({ id: 'retry', label: 'RETRY', size: 4, big: true, x: 152, y: y + 166, w: 150, h: 44 });
-    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
-    B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+    B.push({ id: 'retry', label: 'RETRY', size: 2, big: true, x: 217, y: y + 172, w: 134, h: 32 });
+    B.push({ id: 'menu', label: 'MENU', size: 2, x: 359, y: y + 172, w: 64, h: 32 });
     // A flight to take (this run's, or banked): the golden egg, beside the panel.
     if ((g.earned || g.data.flights) && now >= eggShownAt(g)) B.push({ id: 'fly', egg: true, ...EGG_HIT, eager: g.earned, count: g.data.flights });
   } else if (g.screen === 'runners' && !g.hatch) {

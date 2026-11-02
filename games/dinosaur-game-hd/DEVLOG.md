@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — Less crowded results panel
+- Pao: the results panel was crowded. The Runners button is gone from it (Runners stays on the title screen). RETRY is now the same size as MENU (small, orange), side by side. Next: check it in Chrome.
+
 ## 2026-11-01 — No pointed peaks
 - Pao: the pointed peaks looked unnatural, so they are gone. The mountain layer is now 5 rounded hills of different heights and widths (28 to 52 px) and 2 mesas.
 
