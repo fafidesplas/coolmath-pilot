@@ -178,6 +178,7 @@ class Dust {
     d.front = false;
     d.big = 0;
     d.cloud = cloud;
+    d.s = 1;
     if (cloud) this.shape(d);   // slide puffs are clouds; the run, takeoff and landing keep the old square sand
     d.x = RUNNER.x + 2 + Math.random() * 10;
     d.y = GROUND - 2 - Math.random() * 3;
@@ -228,6 +229,7 @@ class Dust {
       const d = this.last;
       d.x = RUNNER.x + x + Math.random() * 8 - 2;
       d.life = 0.15 + Math.random() * 0.2;
+      d.s = 1 - 0.5 * Math.min(1, Math.max(0, (d.x - RUNNER.x - 13) / 10));   // smaller toward the front foot
       if (i % 2) {
         d.front = true;
         d.y = GROUND - Math.random() * 3;
@@ -281,7 +283,7 @@ class Dust {
     for (const d of this.p) {
       if (!d.on || d.front !== front) continue;
       if (!d.cloud) {   // the old sand: a fading square, 2 to 4 art px
-        const t = d.age / d.life, size = CELL * (2 + Math.round(t * 2));
+        const t = d.age / d.life, size = CELL * Math.max(1, Math.round((2 + t * 2) * d.s));
         ctx.globalAlpha = 1 - t;
         ctx.fillStyle = colors[d.c];
         ctx.fillRect(grid(d.x - size / 2), grid(d.y - size), size, size);
