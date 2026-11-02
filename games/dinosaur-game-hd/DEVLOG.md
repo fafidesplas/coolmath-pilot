@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — Pointier mountains
+- Pao: the background mountains all looked like plateaus. The far layer now mixes flat mesas with pointed peaks of four different heights and widths (a tip, steady slopes, a shaded right side with a jagged ridge line). Same tile size, same scroll speed. Next: look at it in Chrome at day and night.
+
 ## 2026-11-01 — Race results layout
 - Pao's mockup: the race results panel is smaller (242×190) and centered. Rematch and Home sit side by side, both 32 px tall with size 2 text; Rematch stays orange. The Runners button and the "SPACE OR R FOR A REMATCH" line are gone (Space and R still rematch). Menu is labeled Home on this screen only. GDD 8 updated.
 

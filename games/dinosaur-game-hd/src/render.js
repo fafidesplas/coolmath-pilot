@@ -92,16 +92,34 @@ function buildLayers() {
     L.clouds = up(c); L.cloudsN = tinted(L.clouds);
   }
 
-  // Mesas (0.1×), flat-topped, a 640×110 tile resting on the ground.
+  // Mountains (0.1×), a 640×110 tile resting on the ground: flat-topped mesas mixed with
+  // pointed peaks of different heights. Each is [kind, x, width, height] in half-size pixels.
   {
     const [c, g] = canvas(W, 55);
-    for (const [x, w, h] of [[10, 60, 35], [105, 35, 22], [165, 80, 46], [270, 40, 28]]) {
+    const LIGHT = '#E39A57', TOP = '#EDB073', SHADE = '#CF844A';
+    const shapes = [
+      ['mesa', 10, 60, 35], ['peak', 80, 40, 50], ['peak', 120, 26, 32], ['mesa', 152, 70, 40],
+      ['peak', 214, 46, 54], ['mesa', 268, 30, 22], ['peak', 292, 28, 38],
+    ];
+    for (const [kind, x, w, h] of shapes) {
       for (let row = 0; row < h; row++) {
-        const grow = Math.floor(row / 3);
-        g.fillStyle = row < 2 ? '#EDB073' : '#E39A57';
-        g.fillRect(x - grow, 55 - h + row, w + grow * 2, 1);
-        g.fillStyle = '#CF844A';
-        g.fillRect(x + w + grow - 4, 55 - h + row, 4, 1);
+        const y = 55 - h + row;
+        if (kind === 'mesa') {
+          const grow = Math.floor(row / 3);
+          g.fillStyle = row < 2 ? TOP : LIGHT;
+          g.fillRect(x - grow, y, w + grow * 2, 1);
+          g.fillStyle = SHADE;
+          g.fillRect(x + w + grow - 4, y, 4, 1);
+        } else {
+          // a pointed peak: the width grows steadily from a tip, with a small notch every few rows
+          const cx = x + Math.floor(w / 2);
+          const half = Math.floor(row * w / (2 * h)) + (row % 6 === 4 ? 1 : 0);
+          const l = cx - half, r = cx + half + 1;
+          g.fillStyle = row < 3 ? TOP : LIGHT;
+          g.fillRect(l, y, r - l, 1);
+          const split = cx + Math.round(Math.sin(row / 4) * 1.5);   // shaded side, a jagged ridge line
+          if (row >= 3) { g.fillStyle = SHADE; g.fillRect(split, y, r - split, 1); }
+        }
       }
     }
     L.mesas = up(c); L.mesasN = tinted(L.mesas);
