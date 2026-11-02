@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-02 — Title says Cool Dino Game
+- Pao: the title screen logo reads "COOL DINO GAME" and the "COOL EDITION" line is gone. The browser tab title and docs still say Dinosaur Game: Cool Edition. Next: check it in Chrome.
+
 ## 2026-11-02 — One flight at a time
 - Pao: only one bonus flight can be banked. `GOLD.maxFlights` is 1, no golden egg spawns in a run while a flight is waiting, and a save with more flights is cut to 1. GDD 3.7, 3.8, 8 updated. Next: playtest it (grab the golden egg, Retry, start another run: no golden egg), then the hatch prices.
 

@@ -230,7 +230,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "DINOSAUR GAME" with "COOL EDITION" under it in the same style (Night Ink with an orange drop shadow, smaller), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (Night Ink with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
@@ -372,6 +372,7 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-11-02 — Title screen text is "COOL DINO GAME" with no "COOL EDITION" line (8; Pao's call). The game's working name elsewhere (browser tab, docs) is unchanged.
 - 2026-11-02 — One banked flight at a time (3.7, 3.8, 8; Pao's call): `maxFlights` 3 → 1, and the golden egg doesn't appear while a flight is waiting. An older save with more is cut to 1.
 - 2026-11-01 — Race results: a smaller panel, Rematch and Home side by side at the same height, no Runners button and no "Space or R" hint line (Pao's call, from a mockup, 8).
 - 2026-11-01 — The P1 / P2 labels are plain text with a drop shadow in the player's color, not boxes: a box read as a button (Pao's call, 8).

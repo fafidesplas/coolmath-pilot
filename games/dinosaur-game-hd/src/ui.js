@@ -268,10 +268,8 @@ function arrow(ctx, x, y, dir) {
 
 function drawTitle(ctx, g, now) {
   const cx = VIEW_W / 2;
-  drawText(ctx, 'DINOSAUR GAME', cx + 2, 30, 4, PAL.orange, 'center');
-  drawText(ctx, 'DINOSAUR GAME', cx, 28, 4, PAL.ink, 'center');
-  drawText(ctx, 'COOL EDITION', cx + 2, 72, 2, PAL.orange, 'center');
-  drawText(ctx, 'COOL EDITION', cx, 70, 2, PAL.ink, 'center');
+  drawText(ctx, 'COOL DINO GAME', cx + 2, 30, 4, PAL.orange, 'center');
+  drawText(ctx, 'COOL DINO GAME', cx, 28, 4, PAL.ink, 'center');
   if (Math.floor(now / 600) % 2 === 0) drawText(ctx, 'SPACE, UP OR W TO START', cx, 156, 2, PAL.ink, 'center');
   if (g.data.best) drawText(ctx, `BEST ${g.data.best} M`, cx, 178, 2, PAL.ink, 'center');
 }
