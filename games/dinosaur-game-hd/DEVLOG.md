@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — Trophy and wins in the 2P HUD
+- Pao: beside P1 and P2 in the race HUD there is now a trophy icon and that player's win count (the tally kept until Menu). Next: check it in Chrome.
+
 ## 2026-11-01 — 2P race ends at once
 - Pao: in 2P, the game now ends the moment one player hits an obstacle. Both lanes freeze and the results come up right away. The victory lap is gone (GDD updated). Next: check it in Chrome.
 

@@ -444,6 +444,15 @@ function tag(ctx, p, x, y, color, size = 2) {
   drawText(ctx, label, x, y, size, color);
 }
 
+// A pixel trophy, 7x7 cells of `k` px, with a one-cell drop shadow.
+const TROPHY = ['1111111', '1011101', '1011101', '0111110', '0011100', '0001000', '0011100'];
+function trophy(ctx, x, y, k = 2) {
+  for (const [dx, color] of [[k, PAL.ink], [0, '#F2B632']]) {
+    ctx.fillStyle = color;
+    TROPHY.forEach((row, j) => [...row].forEach((c, i) => { if (c === '1') ctx.fillRect(x + dx + i * k, y + dx + j * k, k, k); }));
+  }
+}
+
 function drawSetup(ctx, g) {
   const d = g.data;
   drawText(ctx, '2 PLAYERS', VIEW_W / 2 + 2, 14, 4, PAL.orange, 'center');
@@ -463,6 +472,8 @@ function drawRaceHud(ctx, g, now, r) {
   for (const p of [0, 1]) {
     const run = g.runs[p], top = p ? LANE.seam + 6 : 4;
     tag(ctx, p, 10, top + 4, text);
+    trophy(ctx, 40, top + 4);
+    drawText(ctx, String(g.tally[p ? 'p2' : 'p1']), 58, top + 4, 2, text);
     drawText(ctx, pad(run.score), VIEW_W - 12, top + 8, 2, text, 'right');
   }
   if (g.screen !== 'racing') return;
