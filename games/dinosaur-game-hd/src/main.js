@@ -156,6 +156,7 @@ function raceRelease(p, action) {
 // Both lanes step together, so both crashing in the same step is a draw.
 // Sounds both lanes make in the same step play once.
 function stepRace() {
+  if (g.winner) return;   // the first crash ends the race at once: both lanes freeze
   const sounds = new Set();
   g.runs.forEach((run, i) => { run.step(); raceEvents(i, sounds); });
   if (!g.winner) {
@@ -164,7 +165,6 @@ function stepRace() {
       g.winner = a && b ? 'draw' : a ? 'p2' : 'p1';
       g.endAt = performance.now();
       g.shakeUntil = g.endAt + 150;
-      if (g.winner !== 'draw') g.runs[g.winner === 'p1' ? 0 : 1].invincible = true;   // the victory lap
       sounds.add('crash');
     }
   }
@@ -654,7 +654,7 @@ function frame(now) {
       }
       g.alpha = acc / STEP_MS;
     }
-    if (g.endAt && now - g.endAt >= (g.winner === 'draw' ? 0 : RACE.lapMs)) endRace();
+    if (g.endAt && true) endRace();
   } else if (g.screen === 'bonus') {
     acc += dt * 1000;
     while (acc >= STEP_MS) {

@@ -20,11 +20,10 @@ export const LANE = {
   seam: 180,        // screen y where the P1 lane ends and the P2 lane starts
 };
 
-// The 2P race (GDD 8): a 3-2-1-GO countdown, then the winner's victory lap
-// after the first crash.
+// The 2P race (GDD 8): a 3-2-1-GO countdown, then the first crash ends the race
+// at once.
 export const RACE = {
   countdownMs: 1500,        // 3 at 0, 2 at 500, 1 at 1000, GO at 1500 ms
-  lapMs: 1500,
   hintMs: 3000,             // the P1 / P2 touch zone labels, after GO
 };
 

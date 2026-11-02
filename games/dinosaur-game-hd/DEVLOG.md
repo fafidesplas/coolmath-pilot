@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — 2P race ends at once
+- Pao: in 2P, the game now ends the moment one player hits an obstacle. Both lanes freeze and the results come up right away. The victory lap is gone (GDD updated). Next: check it in Chrome.
+
 ## 2026-11-01 — Less crowded results panel
 - Pao: the results panel was crowded. The Runners button is gone from it (Runners stays on the title screen). RETRY is now the same size as MENU (small, orange), side by side. Next: check it in Chrome.
 
