@@ -435,12 +435,14 @@ function drawFlightHud(ctx, g, now) {
 }
 
 // ---- the 2P race (GDD 4, 8) ----------------------------------------------------------------
-const P_COLORS = [[PAL.orange, '#C46A12'], ['#2E9C9C', '#1F6F6F']];   // P1 orange, P2 teal; always with the P1 / P2 label
+const P_COLORS = [PAL.orange, '#2E9C9C'];   // P1 orange, P2 teal; always with the P1 / P2 label
 
-function tag(ctx, p, x, y) {
-  const [fill, lip] = P_COLORS[p];
-  box(ctx, x, y, 40, 26, PAL.ink, fill, lip);
-  drawText(ctx, `P${p + 1}`, x + 20, y + 6, 2, PAL.cream, 'center');
+// A player's label: plain text in the title's style, `color` with a drop
+// shadow in the player's color. No box, so it never looks like a button.
+function tag(ctx, p, x, y, color, size = 2) {
+  const label = `P${p + 1}`;
+  drawText(ctx, label, x + size, y + size, size, P_COLORS[p]);
+  drawText(ctx, label, x, y, size, color);
 }
 
 function drawSetup(ctx, g) {
@@ -450,7 +452,7 @@ function drawSetup(ctx, g) {
   const keys = ['A / D TO CHANGE   W JUMP   S SLIDE', 'LEFT / RIGHT TO CHANGE   UP JUMP   DOWN SLIDE'];
   for (const p of [0, 1]) {
     const top = LANE.top2P[p] - 10;
-    tag(ctx, p, 16, top + 50);
+    tag(ctx, p, 16, top + 50, PAL.ink, 4);
     const R = RUNNER_LIST.find(R => R.id === (p ? d.p2Runner : d.equipped));
     drawText(ctx, R.name, SETUP.text, top + 104, 2, PAL.ink);
     drawText(ctx, keys[p], SETUP.text, top + 124, 1, PAL.ink);
@@ -461,7 +463,7 @@ function drawRaceHud(ctx, g, now, r) {
   const text = r.night > 0.5 ? PAL.cream : PAL.ink;
   for (const p of [0, 1]) {
     const run = g.runs[p], top = p ? LANE.seam + 6 : 4;
-    tag(ctx, p, 8, top);
+    tag(ctx, p, 10, top + 4, text);
     drawText(ctx, pad(run.score), VIEW_W - 12, top + 8, 2, text, 'right');
   }
   if (g.screen !== 'racing') return;
@@ -500,8 +502,8 @@ function drawRaceResults(ctx, g, now) {
   drawText(ctx, win === 'draw' ? 'DRAW!' : `${win.toUpperCase()} WINS!`, cx, y + 12, 4, PAL.cream, 'center');
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
   drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
-  tag(ctx, 0, cx - 110, y + 108);
-  tag(ctx, 1, cx + 70, y + 108);
+  tag(ctx, 0, cx - 100, y + 110, PAL.cream, 3);
+  tag(ctx, 1, cx + 66, y + 110, PAL.cream, 3);
   drawText(ctx, `${g.tally.p1} - ${g.tally.p2}`, cx, y + 110, 3, PAL.cream, 'center');
   drawText(ctx, 'SPACE OR R FOR A REMATCH', cx, y + 220, 2, PAL.sand, 'center');
 }

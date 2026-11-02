@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — P1 / P2 labels aren't buttons
+- Pao: the P1 / P2 tags were drawn in the button style (border, fill and lip), so they looked pressable. They are now plain text with a drop shadow in the player's color (orange or teal), like the title: Night Ink in setup, the HUD's text color in a race, cream on the results panel. Checked setup, the race HUD and the results in Chrome.
+
 ## 2026-11-01 — No eggs in 2P races
 - Pao: eggs don't decide who wins a race, so they only tempted riskier jumps. Races now run with `noEggs` (no eggs, no golden egg). The race HUD shows only the tag and the distance. The race results show the tally between the P1 and P2 tags, and nothing goes to the egg bank. GDD (3.7, 8, 13) and the brief updated.
 - Checked: over 100 seeds, a run without eggs has exactly the same obstacles as one with them (the egg stream is separate). In Chrome, a 70 m race had 0 eggs in both lanes and the bank stayed the same; no console errors. Physics test passes.
