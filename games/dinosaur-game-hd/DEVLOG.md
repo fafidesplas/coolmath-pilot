@@ -1,5 +1,14 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-01 — 2-player race
+- Built the 2P mode from GDD 3.1, 4 and 8. The title has a **2 Players** button that opens race setup: two stacked lanes with P1 (orange tag) and P2 (teal tag). P1 changes runner with A/D and P2 with Left/Right (arrows on touch). Then **Race!** (Space/Enter).
+- Race: a 3-2-1-GO countdown with beeps, then two Runs from one seed (no golden egg). Each lane is the 1P scene clipped to 640×180, with the ground 150 px below the lane top. P1 uses W/S and P2 uses Up/Down. Space does nothing. On touch, P1 has the left half and P2 the right half; the bottom third of each half ducks. Faint P1/P2 zone labels show until 3 s after GO.
+- The first crash ends the race. The loser stays as a ghost (50% opacity, X eyes) and its lane freezes. The winner does a 1.5 s victory lap (invincible), a crown drops onto it, then confetti falls in its lane. If both crash in the same step, it is a draw.
+- Race results: P1 WINS / P2 WINS / DRAW, the winner's distance, both players' eggs (banked) and the tally, which resets at Menu. **Rematch** (Space, R, Enter) / Runners / Menu. A win adds 1 to `versusWins`.
+- Per-lane dust and squash in the renderer; new `count` and `win` sounds; events `Start:versus`, `versus:start`, `Complete:versus`, `versus:winner:<p1|p2|draw>`. `window.game.race()`; debug `game.crash(p)` crashes one lane in a race.
+- Checked in Chrome: setup, countdown, draw, P1 win with crown, ghost and confetti, tally, each player's keys and touch half move only their runner, pause freezes the race, 1P unchanged; no console errors. The physics and egg tests pass.
+- Next: Pao to play a real race with two people (keyboard and a tablet), and judge the lane look (the 30 px of sand under P1 and the cut mesas).
+
 ## 2026-11-01 — The golden egg is the Fly button
 - Pao: instead of a FLY button, the golden egg stands on the sand beside the results panel, big (×4), hopping like an eager dog wanting to be clicked: squash on landing, stretch on takeoff, a lean toward the panel in the air, a double hop every third beat. Banked-only flights hop calmer; 2 or more show a number badge. Click it to fly (Space still flies after a golden egg run). The panel is back to its normal width and buttons; the BONUS FLIGHT! tag is gone. The title keeps its FLY N button.
 - Checked in Chrome: the egg pops in as the panel lands, hops, and a click starts the flight; no console errors.

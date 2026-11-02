@@ -88,3 +88,6 @@ export const golden = () => {
 export const flap = () => { noise(0.08, 0.12, 500); tone('sine', 220, 140, 0.08, 0.05); };
 export const warn = () => { tone('square', 1760, 1760, 0.05, 0.035); tone('square', 1760, 1760, 0.05, 0.035, 0.09); };
 export const tumble = () => { tone('triangle', 520, 130, 0.45, 0.07); noise(0.1, 0.15, 900); };
+// The 2P race: a beep for 3, 2 and 1, a higher one for GO, and a victory jingle.
+export const count = go => tone('square', go ? 1046 : 523, go ? 1046 : 523, go ? 0.28 : 0.12, 0.05);
+export const win = () => [523, 659, 784, 659, 784, 1046].forEach((f, i) => tone('square', f, f, i === 5 ? 0.3 : 0.08, 0.045, i * 0.085));

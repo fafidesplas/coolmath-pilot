@@ -1,7 +1,7 @@
 // HUD and screens (GDD 8): title, pause, results and runners. layout() returns this
 // frame's buttons, and main.js hit-tests pointers against the same list, so a
 // sliding panel's buttons are always where they are drawn.
-import { VIEW_W, VIEW_H, RUN, HATCH, RUNNER_LIST, FLIGHT } from './config.js';
+import { VIEW_W, VIEW_H, LANE, RACE, RUN, HATCH, RUNNER_LIST, FLIGHT } from './config.js';
 import { drawText, textWidth } from './font.js';
 import { PAL, SPR, MARGIN } from './sprites.js';
 import { CELL } from './art.js';
@@ -47,13 +47,42 @@ function corner(id, r) {
   return { id, icon: id, x: VIEW_W - 32, y: 8, w: 24, h: 24, hit: { x: VIEW_W - hit, y: 0, w: hit, h: hit } };
 }
 
+// 2P: the pause button sits top center, between the two players' HUDs (GDD 4).
+function pauseCenter(r) {
+  const hit = Math.max(40, r.logicalPx(64));
+  return { id: 'pause', icon: 'pause', x: VIEW_W / 2 - 12, y: 6, w: 24, h: 24, hit: { x: VIEW_W / 2 - hit / 2, y: 0, w: hit, h: hit } };
+}
+
+// Race setup (GDD 8): each lane's runner between two arrows, its name and keys to the right.
+const SETUP = { prev: 160, next: 256, text: 296 };
+
 export function layout(g, now, r) {
   const B = [];
   if (g.screen === 'title') {
     B.push({ id: 'play', label: 'PLAY', size: 4, big: true, x: 250, y: 102, w: 140, h: 44 });
-    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 260, y: 200, w: 120, h: 30 });
-    if (g.data.flights) B.push({ id: 'fly', label: `FLY ${g.data.flights}`, gold: true, size: 2, x: 260, y: 238, w: 120, h: 30 });
+    B.push({ id: 'versus', label: '2 PLAYERS', size: 2, x: 250, y: 200, w: 140, h: 30 });
+    B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 250, y: 238, w: 140, h: 30 });
+    if (g.data.flights) B.push({ id: 'fly', label: `FLY ${g.data.flights}`, gold: true, size: 2, x: 250, y: 276, w: 140, h: 30 });
     B.push({ ...corner('sound', r), on: g.data.settings.sfx });
+  } else if (g.screen === 'setup') {
+    // Arrows beside each lane's runner; their hit square is 48 px (STANDARDS).
+    for (const p of [0, 1]) {
+      const y = LANE.top2P[p] + LANE.ground - 44;
+      for (const [dir, x] of [[-1, SETUP.prev], [1, SETUP.next]]) {
+        B.push({ id: 'pick', p, dir, icon: dir < 0 ? 'prev' : 'next', x, y, w: 24, h: 40, hit: { x: x - 12, y: y - 4, w: 48, h: 48 } });
+      }
+    }
+    B.push({ id: 'race', label: 'RACE!', size: 4, big: true, x: 462, y: LANE.seam - 22, w: 150, h: 44 });
+    B.push({ id: 'back', label: 'BACK', size: 2, x: 540, y: 8, w: 88, h: 30 });
+  } else if (g.screen === 'racing') {
+    B.push(pauseCenter(r));
+  } else if (g.screen === 'complete' && g.mode === 'versus') {
+    if (now - g.crashAt >= RESULTS_DELAY_MS) {
+      const y = panelY(g, now);
+      B.push({ id: 'retry', label: 'REMATCH', size: 3, big: true, x: 152, y: y + 166, w: 150, h: 44 });
+      B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 310, y: y + 172, w: 110, h: 32 });
+      B.push({ id: 'menu', label: 'MENU', size: 2, x: 428, y: y + 172, w: 64, h: 32 });
+    }
   } else if (g.screen === 'playing' || (g.screen === 'bonus' && !g.flightEndAt)) {
     B.push(corner('pause', r));
   } else if (g.screen === 'paused') {
@@ -405,7 +434,94 @@ function drawFlightHud(ctx, g, now) {
   }
 }
 
+// ---- the 2P race (GDD 4, 8) ----------------------------------------------------------------
+const P_COLORS = [[PAL.orange, '#C46A12'], ['#2E9C9C', '#1F6F6F']];   // P1 orange, P2 teal; always with the P1 / P2 label
+
+function tag(ctx, p, x, y) {
+  const [fill, lip] = P_COLORS[p];
+  box(ctx, x, y, 40, 26, PAL.ink, fill, lip);
+  drawText(ctx, `P${p + 1}`, x + 20, y + 6, 2, PAL.cream, 'center');
+}
+
+function drawSetup(ctx, g) {
+  const d = g.data;
+  drawText(ctx, '2 PLAYERS', VIEW_W / 2 + 2, 14, 4, PAL.orange, 'center');
+  drawText(ctx, '2 PLAYERS', VIEW_W / 2, 12, 4, PAL.ink, 'center');
+  const keys = ['A / D TO CHANGE   W JUMP   S SLIDE', 'LEFT / RIGHT TO CHANGE   UP JUMP   DOWN SLIDE'];
+  for (const p of [0, 1]) {
+    const top = LANE.top2P[p] - 10;
+    tag(ctx, p, 16, top + 50);
+    const R = RUNNER_LIST.find(R => R.id === (p ? d.p2Runner : d.equipped));
+    drawText(ctx, R.name, SETUP.text, top + 104, 2, PAL.ink);
+    drawText(ctx, keys[p], SETUP.text, top + 124, 1, PAL.ink);
+  }
+}
+
+function drawRaceHud(ctx, g, now, r) {
+  const text = r.night > 0.5 ? PAL.cream : PAL.ink;
+  for (const p of [0, 1]) {
+    const run = g.runs[p], top = p ? LANE.seam + 6 : 4;
+    tag(ctx, p, 8, top);
+    const bump = now - (g.eggBumpAt2?.[p] ?? 0) < BUMP_MS ? 2 : 0;
+    ctx.drawImage(SPR.egg[0], 56, top + 6 - bump);
+    drawText(ctx, String(run.eggCount), 74, top + 8, 2, text);
+    drawText(ctx, pad(run.score), VIEW_W - 12, top + 8, 2, text, 'right');
+  }
+  if (g.screen !== 'racing') return;
+  // 3-2-1-GO over the seam, each number popping in.
+  const t = now - g.raceAt, step = Math.floor(t / 500);
+  if (step <= 3) {
+    const label = ['3', '2', '1', 'GO!'][step], k = (t % 500) / 500;
+    const size = k < 0.15 ? 8 : 6, y = LANE.seam - size * 7 / 2;
+    drawText(ctx, label, VIEW_W / 2 + 4, y + 4, size, PAL.ink, 'center');
+    drawText(ctx, label, VIEW_W / 2, y, size, step === 3 ? PAL.orange : PAL.cream, 'center');
+  }
+  // The touch zones: P1 the left half, P2 the right, the bottom third ducks (GDD 4).
+  const alpha = hintAlpha(now, g.raceAt, g.goAt + RACE.hintMs);
+  if (alpha <= 0) return;
+  ctx.globalAlpha = alpha * 0.6;
+  ctx.fillStyle = PAL.ink;
+  for (let y = 40; y < VIEW_H; y += 12) ctx.fillRect(VIEW_W / 2 - 1, y, 2, 6);
+  ctx.globalAlpha = alpha;
+  for (const p of [0, 1]) {
+    const cx = p ? VIEW_W * 3 / 4 : VIEW_W / 4;
+    drawText(ctx, `P${p + 1}`, cx, 50, 4, PAL.ink, 'center');
+    arrow(ctx, cx - 30, 92, -1);
+    drawText(ctx, p ? 'UP' : 'W', cx + 10, 100, 2, PAL.ink);
+    arrow(ctx, cx - 30, 340, 1);
+    drawText(ctx, p ? 'DOWN' : 'S', cx + 10, 318, 2, PAL.ink);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Race results (GDD 8): the winner (or a draw), the winner's distance, both
+// players' eggs, and the tally kept until Menu.
+function drawRaceResults(ctx, g, now) {
+  if (now - g.crashAt < RESULTS_DELAY_MS) return;
+  const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2, win = g.winner;
+  box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
+  drawText(ctx, win === 'draw' ? 'DRAW!' : `${win.toUpperCase()} WINS!`, cx, y + 12, 4, PAL.cream, 'center');
+  const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
+  drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
+  for (const k of [0, 1]) {
+    const lx = cx - 150 + k * 160;
+    tag(ctx, k, lx, y + 92);
+    ctx.drawImage(SPR.egg[0], lx + 50, y + 98);
+    drawText(ctx, `+${Math.round(g.raceEggs[k] * p)}`, lx + 68, y + 100, 2, PAL.cream);
+  }
+  drawText(ctx, `P1 ${g.tally.p1} - ${g.tally.p2} P2`, cx, y + 134, 2, PAL.sand, 'center');
+  drawText(ctx, 'SPACE OR R FOR A REMATCH', cx, y + 220, 2, PAL.sand, 'center');
+}
+
 export function drawUI(ctx, g, now, r) {
+  if (g.mode === 'versus' && g.screen !== 'runners') {
+    if (g.screen === 'setup') drawSetup(ctx, g);
+    else drawRaceHud(ctx, g, now, r);
+    if (g.screen === 'paused') drawPause(ctx, r);
+    if (g.screen === 'complete') drawRaceResults(ctx, g, now);
+    for (const b of g.buttons) drawButton(ctx, b, now, g);
+    return;
+  }
   const flying = g.screen === 'bonus' || (g.screen === 'paused' && g.pausedFrom === 'bonus');
   if (flying) drawFlightHud(ctx, g, now);
   else if (g.screen === 'title') drawTitle(ctx, g, now);

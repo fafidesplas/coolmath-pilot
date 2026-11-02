@@ -16,6 +16,16 @@ export const OFFSCREEN = 640;
 export const LANE = {
   ground: 140,      // y where feet and obstacle bottoms rest
   top1P: 110,       // 1P: lane y 140 lands on screen y 250 (GDD 3.1)
+  top2P: [10, 190], // 2P: two 180 px lanes, each ground line 150 px below the lane's top
+  seam: 180,        // screen y where the P1 lane ends and the P2 lane starts
+};
+
+// The 2P race (GDD 8): a 3-2-1-GO countdown, then the winner's victory lap
+// after the first crash.
+export const RACE = {
+  countdownMs: 1500,        // 3 at 0, 2 at 500, 1 at 1000, GO at 1500 ms
+  lapMs: 1500,
+  hintMs: 3000,             // the P1 / P2 touch zone labels, after GO
 };
 
 export const RUN = {

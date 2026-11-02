@@ -243,6 +243,7 @@ class Dust {
   }
 }
 
+const SETUP_RUNNER_X = 200;   // race setup: each lane's runner, between its arrows
 const SQUASH_MS = 50, SQUASH = [[6, 6], [2, 2]];   // per frame: extra width, lost height (px)
 const STRETCH = [[-8, -10], [-4, -5], [-2, -2]];      // takeoff: narrower and taller, one frame longer
 
@@ -252,9 +253,10 @@ export class Renderer {
     this.ctx = cv.getContext('2d');
     this.L = buildLayers();
     this.night = 0;          // 0 day … 1 night, faded over 1 s (GDD 3.6)
-    this.dust = new Dust();
-    this.landAt = -1e9;      // performance.now() of the last landing on the feet
-    this.jumpAt = -1e9;      // performance.now() of the last takeoff
+    // Per lane (1P uses lane 0): its dust, and when its runner last landed
+    // and took off (the squash and stretch).
+    this.fx = [0, 1].map(() => ({ dust: new Dust(), landAt: -1e9, jumpAt: -1e9 }));
+    this.cur = this.fx[0];   // the lane being drawn
     this.bounds = { x0: 0, x1: VIEW_W, y0: 0, y1: VIEW_H };
     this.resize();
     addEventListener('resize', () => this.resize());
@@ -284,6 +286,8 @@ export class Renderer {
 
   snap(v) { return Math.round(v * this.s) / this.s; }
 
+  get dust() { return this.fx[0].dust; }
+
   resetNight() { this.night = 0; }
 
   draw(g, now, dt) {
@@ -306,6 +310,8 @@ export class Renderer {
     b.x0 = -ox / s; b.x1 = (this.cv.width - ox) / s; b.y0 = -oy / s; b.y1 = (this.cv.height - oy) / s;
 
     if (flying) return this.drawFlight(g, now, dt);
+    if (g.mode === 'versus' && g.screen !== 'runners') return this.drawRace(g, now, dt);
+    this.cur = this.fx[0];
     const a = g.alpha, lerp = (p, c) => p + (c - p) * a;
     const scroll = run ? lerp(run.prevScrollPx, run.scrollPx) : menu ? Math.max(0, now - g.screenAt) * RUN.speed * 60 / 1000 : 0;
     this.drawBackground(scroll, now);
@@ -586,8 +592,8 @@ export class Renderer {
     // they are. Drawing only; the hitbox doesn't change.
     const live = run && !run.ducking && !run.crashed;
     const [sw, sh] = !live ? [0, 0]
-      : run.jumping ? STRETCH[Math.floor((now - this.jumpAt) / SQUASH_MS)] || [0, 0]
-      : SQUASH[Math.floor((now - this.landAt) / SQUASH_MS)] || [0, 0];
+      : run.jumping ? STRETCH[Math.floor((now - this.cur.jumpAt) / SQUASH_MS)] || [0, 0]
+      : SQUASH[Math.floor((now - this.cur.landAt) / SQUASH_MS)] || [0, 0];
     ctx.drawImage(img, RUNNER.x - MARGIN - sw / 2, dy + img.oy - MARGIN + sh, img.width + sw, img.height - sh);
 
     if (!run) {   // asleep on the title: Zz
@@ -611,15 +617,107 @@ export class Renderer {
   }
 
   // The runner takes off: dust and the stretch start now.
-  takeoff(scroll) {
-    this.dust.feet(6, scroll);
-    this.jumpAt = performance.now();
+  takeoff(scroll, lane = 0) {
+    const f = this.fx[lane];
+    f.dust.feet(6, scroll);
+    f.jumpAt = performance.now();
   }
 
   // The runner lands on its feet: dust and the squash start now.
-  land(scroll) {
-    this.dust.feet(10, scroll);
-    this.landAt = performance.now();
+  land(scroll, lane = 0) {
+    const f = this.fx[lane];
+    f.dust.feet(10, scroll);
+    f.landAt = performance.now();
+  }
+
+  // ---- the 2P race (GDD 3.1, 8, 9) -------------------------------------------------------------
+  // Two 640×180 lanes, P1 on top. Each lane is the 1P scene moved up or down
+  // so its ground line is 150 px below the lane's top, and clipped to the
+  // lane; the window's extra space shows sky above P1 and sand below P2. In
+  // race setup (no runs yet) each lane's runner runs on a treadmill.
+  drawRace(g, now, dt) {
+    const { ctx } = this, b = this.bounds, runs = g.runs, setup = g.screen === 'setup';
+    const target = !setup && runs?.some(r => r.night) ? 1 : 0;
+    this.night += Math.max(-dt, Math.min(dt, target - this.night));
+    const a = g.alpha, lerp = (p, c) => p + (c - p) * a;
+    for (let i = 0; i < 2; i++) {
+      const run = setup ? null : runs[i], d = LANE.top2P[i] - LANE.top1P;
+      const top = i ? LANE.seam : b.y0, bottom = i ? b.y1 : LANE.seam;
+      this.cur = this.fx[i];
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(b.x0, top, b.x1 - b.x0, bottom - top);
+      ctx.clip();
+      ctx.translate(0, d);
+      b.y0 -= d; b.y1 -= d;
+      const scroll = run ? lerp(run.prevScrollPx, run.scrollPx) : Math.max(0, now - g.screenAt) * RUN.speed * 60 / 1000;
+      this.drawBackground(scroll, now);
+      if (run) {
+        for (const o of run.obstacles) this.drawObstacle(o, this.snap(lerp(o.prevX, o.x)), g.showBoxes);
+        for (const e of run.eggs) if (!e.taken) this.drawEgg(e, this.snap(lerp(e.prevX, e.x)), now);
+      }
+      if (g.screen !== 'paused') this.cur.dust.update(dt);
+      this.cur.dust.draw(ctx, this.night, false);
+      const id = i ? g.data.p2Runner : g.data.equipped;
+      const y = run ? this.snap(lerp(run.prevY, run.y)) : LANE.ground - RUNNER.height;
+      const dx = setup ? SETUP_RUNNER_X - RUNNER.x : 0;
+      const ghost = run?.crashed && g.winner;
+      ctx.translate(dx, 0);
+      if (ghost) ctx.globalAlpha = 0.5;
+      this.drawRunner(SPR.runners[id], run || { timeMs: Math.max(0, now - g.screenAt) }, y, now, g.showBoxes && !!run);
+      ctx.globalAlpha = 1;
+      if (ghost) this.xEyes(run);
+      this.cur.dust.draw(ctx, this.night, true);
+      const won = g.winner === (i ? 'p2' : 'p1');
+      if (won && g.endAt) this.drawCrown(run, y, now - g.endAt);
+      ctx.restore();
+      b.y0 += d; b.y1 += d;
+      if (won && g.screen === 'complete') this.drawConfetti(i, now - g.crashAt);
+    }
+    // The seam between the lanes.
+    ctx.fillStyle = PAL.ink;
+    ctx.fillRect(b.x0, LANE.seam - 2, b.x1 - b.x0, 4);
+    this.drawPickups(g.fx, now);
+    drawUI(ctx, g, now, this);
+  }
+
+  // The ghost's X eyes: an X in Night Ink over the head of the crashed runner.
+  xEyes(run) {
+    const ctx = this.ctx;
+    const x = RUNNER.x + (run.ducking ? 46 : 30), y = LANE.top1P + (run.ducking ? LANE.ground - RUNNER.heightDuck + 2 : run.y + 4);
+    ctx.fillStyle = PAL.ink;
+    for (let k = 0; k < 4; k++) {
+      ctx.fillRect(grid(x) + k * CELL, grid(y) + k * CELL, CELL, CELL);
+      ctx.fillRect(grid(x) + (3 - k) * CELL, grid(y) + k * CELL, CELL, CELL);
+    }
+  }
+
+  // The winner's crown drops from the sky onto its head and bounces once (GDD 9).
+  drawCrown(run, y, t) {
+    const ctx = this.ctx, p = Math.min(1, t / 450);
+    const fall = p < 1 ? -90 * (1 - p) ** 2 : 0;
+    const bounce = t > 450 && t < 650 ? -Math.sin((t - 450) / 200 * Math.PI) * 6 : 0;
+    const top = LANE.top1P + (run.ducking ? LANE.ground - RUNNER.heightDuck : y);
+    const x = grid(RUNNER.x + (run.ducking ? 34 : 20)), cy = grid(top - 14 + fall + bounce);
+    // 11×6 art px: three points, a gold band with red gems, Night Ink outline.
+    const rows = ['.1...1...1.', '1G1.1G1.1G1', '1GG1GGG1GG1', '1GGGGGGGGG1', '1GRGGRGGRG1', '11111111111'];
+    rows.forEach((row, r) => [...row].forEach((c, k) => {
+      if (c === '.') return;
+      ctx.fillStyle = c === '1' ? PAL.ink : c === 'R' ? '#E0402A' : '#F5C542';
+      ctx.fillRect(x + k * CELL, cy + r * CELL, CELL, CELL);
+    }));
+  }
+
+  // Confetti falling through the winner's lane while the results show.
+  drawConfetti(lane, t) {
+    if (t < 0) return;
+    const ctx = this.ctx, top = lane ? LANE.seam : 0, colors = [PAL.orange, PAL.cream, '#F5C542', '#3FA34D', '#E0402A'];
+    for (let i = 0; i < 40; i++) {
+      const sp = 40 + (i * 53) % 60, x = (i * 97 + Math.sin(t / 300 + i) * 10) % VIEW_W;
+      const y = top - 10 + ((t / 1000 * sp + i * 37) % 190);
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fillRect(grid(x), grid(y), CELL * (i % 3 ? 1 : 2), CELL * 2);
+    }
   }
 
   // A "Z" `size` art px wide.

@@ -4,7 +4,7 @@
 import { Run } from './sim.js';
 import { Flight } from './flight.js';
 import { stream, STREAM } from './gen.js';
-import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RUN, EGGS, HATCH, RUNNER_LIST, RUNNER_IDS, ANIM, DEBUG, GOLD } from './config.js';
+import { STEP_MS, MAX_FRAME_DT, VIEW_W, VIEW_H, LANE, RACE, RUN, EGGS, HATCH, RUNNER_LIST, RUNNER_IDS, ANIM, DEBUG, GOLD } from './config.js';
 import { load, save } from './save.js';
 import * as sfx from './audio.js';
 import { GA } from './analytics.js';
@@ -21,8 +21,17 @@ sfx.setEnabled(data.settings.sfx);
 
 // Everything the renderer and UI read.
 const g = {
-  screen: 'title',      // 'title' | 'playing' | 'paused' | 'complete' | 'runners' | 'bonus'
-  mode: 'endless',
+  screen: 'title',      // 'title' | 'playing' | 'paused' | 'complete' | 'runners' | 'bonus' | 'setup' | 'racing'
+  mode: 'endless',      // 'endless' | 'versus'
+  runs: null,           // the 2P race's two runs, P1 then P2 (GDD 8)
+  raceAt: 0, goAt: 0, beeps: 0,   // countdown start, GO, beeps played
+  winner: null,         // 'p1' | 'p2' | 'draw' once the first crash happens
+  endAt: 0,             // when the race was decided (the victory lap starts)
+  raceEggs: [0, 0],
+  tally: { p1: 0, p2: 0 },   // kept until Menu
+  eggBumpAt2: [0, 0],
+  lanes: [0, 1].map(() => ({ sliding: false, wasInAir: false, runFrame: -1 })),
+  pausedAt: 0,
   run: null,
   alpha: 0,             // how far between the last two steps
   data,
@@ -52,6 +61,8 @@ let acc = 0, last = performance.now();
 
 // ---- screens -------------------------------------------------------------------------------
 function startRun(withJump) {
+  g.mode = 'endless';
+  g.runs = null;
   g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible });
   g.screen = 'playing';
   g.alpha = 0; acc = 0;
@@ -69,6 +80,7 @@ function startRun(withJump) {
 }
 
 function retry() {
+  if (g.mode === 'versus') return startRace();
   leaveFlight();
   if (g.screen === 'complete' && g.earned) GA.design('bonus:bank', data.flights);   // skipped: it stays banked
   g.earned = false;
@@ -80,7 +92,139 @@ function menu() {
   leaveFlight();
   g.earned = false;
   g.screen = 'title';
+  g.mode = 'endless';
   g.run = null;
+  g.runs = null;
+  g.tally = { p1: 0, p2: 0 };
+}
+
+// ---- the 2P race (GDD 4, 8) ------------------------------------------------------------------
+// P1 keys and P2 keys, one each: Space does nothing in a race.
+const RACE_KEYS = [{ jump: 'KeyW', duck: 'KeyS' }, { jump: 'ArrowUp', duck: 'ArrowDown' }];
+
+function openSetup() {
+  g.mode = 'versus';
+  g.screen = 'setup';
+  g.screenAt = performance.now();
+  g.runs = null;
+  g.winner = null;
+  g.tally = { p1: 0, p2: 0 };
+  r.resetNight();
+}
+
+// P1 changes the equipped runner; P2 has its own, kept in the save.
+function cycleRunner(p, dir) {
+  const list = RUNNER_LIST.filter(R => data.unlocked.includes(R.id)).map(R => R.id);
+  const cur = p ? data.p2Runner : data.equipped, id = list[(list.indexOf(cur) + dir + list.length) % list.length];
+  if (p) { data.p2Runner = id; save(data); } else equip(id);
+}
+
+// One seed for both lanes; no golden egg, so a race stays a pure race (GDD 3.7).
+function startRace() {
+  const seed = (Math.random() * 2 ** 32) >>> 0;
+  g.mode = 'versus';
+  g.runs = [0, 1].map(() => new Run(seed, { invincible: g.invincible, noGolden: true }));
+  g.run = null;
+  g.screen = 'racing';
+  g.raceAt = performance.now();
+  g.goAt = g.raceAt + RACE.countdownMs;
+  g.beeps = 0;
+  g.winner = null;
+  g.endAt = 0;
+  g.fx.length = 0;
+  g.streak = 0;
+  g.alpha = 0; acc = 0;
+  pointers.clear();
+  r.resetNight();
+  GA.progression('Start', 'versus');
+  GA.design('versus:start');
+}
+
+function racePress(p, action, repeat) {
+  if (g.screen !== 'racing' || performance.now() < g.goAt) return;
+  const run = g.runs[p];
+  if (action === 'duck' && run.jumping && !run.speedDrop) sfx.duck();   // fast-fall
+  run.press(action, repeat);
+  raceEvents(p);
+}
+
+// Released only when that player's key and pointers no longer hold it.
+function raceRelease(p, action) {
+  if (g.screen !== 'racing') return;
+  if (keys.held.has(RACE_KEYS[p][action]) || [...pointers.values()].includes(`${p}:${action}`)) return;
+  g.runs[p].release(action);
+}
+
+// Both lanes step together, so both crashing in the same step is a draw.
+// Sounds both lanes make in the same step play once.
+function stepRace() {
+  const sounds = new Set();
+  g.runs.forEach((run, i) => { run.step(); raceEvents(i, sounds); });
+  if (!g.winner) {
+    const [a, b] = g.runs.map(run => run.crashed);
+    if (a || b) {
+      g.winner = a && b ? 'draw' : a ? 'p2' : 'p1';
+      g.endAt = performance.now();
+      g.shakeUntil = g.endAt + 150;
+      if (g.winner !== 'draw') g.runs[g.winner === 'p1' ? 0 : 1].invincible = true;   // the victory lap
+      sounds.add('crash');
+    }
+  }
+  for (const s of sounds) sfx[s]();
+}
+
+function raceEvents(i, sounds = null) {
+  const run = g.runs[i], now = performance.now(), play = s => sounds ? sounds.add(s) : sfx[s]();
+  for (const e of run.events) {
+    if (e === 'jump') { play('jump'); r.takeoff(run.speed * 60, i); }
+    else if (e === 'egg') {
+      g.streak = now - g.lastEggAt < EGGS.streakMs ? Math.min(8, g.streak + 1) : 0;
+      g.lastEggAt = g.eggBumpAt2[i] = now;
+      sfx.egg(g.streak);
+    } else if (e === 'duck') play('duck');
+    else if (e === 'milestone') play('milestone');
+    else if (e === 'land') { if (!run.ducking) r.land(run.speed * 60, i); }
+    else if (e === 'night') play('night');
+  }
+  run.events.length = 0;
+  for (const e of run.pickups) g.fx.push({ x: e.x + EGGS.w / 2, y: LANE.top2P[i] + e.y + EGGS.h / 2, t: now, n: g.fx.length });
+  run.pickups.length = 0;
+}
+
+// After the victory lap: the results, the eggs banked, the win counted.
+function endRace() {
+  const w = g.winner, runs = g.runs;
+  g.screen = 'complete';
+  g.crashAt = performance.now();
+  g.result = runs[w === 'p2' ? 1 : 0].score;
+  g.raceEggs = runs.map(run => run.eggCount);
+  const eggs = g.raceEggs[0] + g.raceEggs[1];
+  data.eggs += eggs;
+  data.totalEggs += eggs;
+  if (w !== 'draw') { data.versusWins++; g.tally[w]++; sfx.win(); }
+  save(data);
+  pointers.clear();
+  GA.progression('Complete', 'versus', g.result);
+  GA.design(`versus:winner:${w}`);
+}
+
+// Each lane's running dust, slide burst and trail; the scrape plays while either slides.
+function updateRaceFx(dt) {
+  let any = false;
+  g.lanes.forEach((L, i) => {
+    const run = g.runs?.[i], live = g.screen === 'racing' && run && !run.crashed && performance.now() >= g.goAt;
+    const dust = r.fx[i].dust, scroll = run ? run.speed * 60 : 0;
+    const f = live && !run.jumping && !run.ducking ? Math.floor(run.timeMs / ANIM.run) % 4 : -1;
+    if (f >= 0 && f !== L.runFrame) dust.step(FOOTFALL_X[f], scroll);
+    L.runFrame = f;
+    const sliding = !!live && run.ducking;
+    if (sliding && !L.sliding) dust.burst(L.wasInAir ? 24 : 14, scroll, L.wasInAir ? 1.5 : 1);
+    if (sliding) dust.trail(dt, scroll);
+    L.sliding = sliding;
+    L.wasInAir = !!run?.jumping;
+    any ||= sliding;
+  });
+  sfx.slide(any);
 }
 
 // ---- the golden egg and the bonus flight (GDD 3.7, 3.8) --------------------------------------
@@ -164,6 +308,7 @@ function openRunners() {
 
 function back() {
   if (g.hatch) return;
+  if (g.screen === 'setup') return menu();
   g.screen = g.runnersFrom;   // the results keep their run
 }
 
@@ -224,11 +369,12 @@ function runnersKey(code) {
 }
 
 function pause() {
-  if (g.screen !== 'playing' && !(g.screen === 'bonus' && !g.flightEndAt)) return;
+  if (g.screen !== 'playing' && g.screen !== 'racing' && !(g.screen === 'bonus' && !g.flightEndAt)) return;
   g.pausedFrom = g.screen;
   g.screen = 'paused';
+  g.pausedAt = performance.now();
   if (g.flight) g.flight.release();
-  else { g.run.release('jump'); g.run.release('duck'); }
+  else for (const run of g.runs || [g.run]) { run.release('jump'); run.release('duck'); }
   pointers.clear();
   keys.clear();
 }
@@ -236,6 +382,11 @@ function pause() {
 function resume() {
   g.screen = g.pausedFrom;
   last = performance.now();
+  if (g.screen === 'racing') {   // the countdown and the victory lap wait out the pause
+    const d = last - g.pausedAt;
+    g.raceAt += d; g.goAt += d;
+    if (g.endAt) g.endAt += d;
+  }
 }
 
 function toggleSound() {
@@ -350,6 +501,20 @@ keys.onDown = (code, first) => {
     else if (code === 'KeyP' || code === 'Escape') pause();
     return;
   }
+  if (s === 'setup') return setupKey(code);
+  if (s === 'racing') {
+    for (const p of [0, 1]) {
+      if (code === RACE_KEYS[p].jump) return racePress(p, 'jump', true);
+      if (code === RACE_KEYS[p].duck) return racePress(p, 'duck', false);
+    }
+    if (code === 'KeyP' || code === 'Escape') pause();
+    else if (code === 'KeyR') retry();
+    return;
+  }
+  if (s === 'complete' && g.mode === 'versus') {
+    if (code === 'KeyR' || code === 'Enter') retry();
+    return;
+  }
   if (DEBUG && code === 'KeyG') return debugGolden();
   if (JUMP_KEYS.includes(code)) {
     if (!first) return;
@@ -374,7 +539,22 @@ keys.onDown = (code, first) => {
   }
 };
 
+function setupKey(code) {
+  if (code === 'KeyA' || code === 'KeyD') cycleRunner(0, code === 'KeyA' ? -1 : 1);
+  else if (code === 'ArrowLeft' || code === 'ArrowRight') cycleRunner(1, code === 'ArrowLeft' ? -1 : 1);
+  else if (code === 'Space' || code === 'Enter') startRace();
+  else if (code === 'Escape' || code === 'Backspace') menu();
+  else return;
+  sfx.click();
+}
+
 keys.onUp = (code, lastOfGroup) => {
+  if (g.mode === 'versus') {
+    if (g.screen === 'racing') {
+      for (const p of [0, 1]) for (const a of ['jump', 'duck']) if (code === RACE_KEYS[p][a]) raceRelease(p, a);
+    } else if (g.screen === 'complete' && code === 'Space' && performance.now() - g.crashAt >= RESULTS_DELAY_MS) retry();
+    return;
+  }
   if (JUMP_KEYS.includes(code)) {
     // Space, Up and W restart on release, after the original's lock (GDD 8).
     if (g.screen === 'complete') {
@@ -387,7 +567,7 @@ keys.onUp = (code, lastOfGroup) => {
 
 const ACTIONS = {
   play: () => startRun(false), sound: toggleSound, pause, resume, restart: retry, retry, menu,
-  runners: openRunners, back, fly: startFlight, card: b => choose(b.i), hatch: b => choose(b.i), page: b => turnPage(b.dir),
+  runners: openRunners, back, fly: startFlight, versus: openSetup, race: startRace, pick: b => cycleRunner(b.p, b.dir), card: b => choose(b.i), hatch: b => choose(b.i), page: b => turnPage(b.dir),
 };
 
 canvas.addEventListener('pointerdown', e => {
@@ -404,6 +584,11 @@ canvas.addEventListener('pointerdown', e => {
     if (g.flightEndAt) return;
     pointers.set(e.pointerId, 'flap');
     g.flight.press();
+  } else if (g.screen === 'racing') {
+    // P1 the left half, P2 the right; the bottom third of each half ducks (GDD 4).
+    const p = x < VIEW_W / 2 ? 0 : 1, action = y >= VIEW_H * 2 / 3 ? 'duck' : 'jump';
+    pointers.set(e.pointerId, `${p}:${action}`);
+    racePress(p, action, false);
   } else if (g.screen === 'playing') {
     const action = y >= VIEW_H * 2 / 3 ? 'duck' : 'jump';   // bottom third ducks (GDD 4)
     pointers.set(e.pointerId, action);
@@ -415,7 +600,10 @@ const pointerEnd = e => {
   const action = pointers.get(e.pointerId);
   if (!action) return;
   pointers.delete(e.pointerId);
-  if (action === 'flap') {
+  if (action.includes(':')) {
+    const [p, a] = action.split(':');
+    raceRelease(+p, a);
+  } else if (action === 'flap') {
     if (g.flight && !keys.holds('jump') && ![...pointers.values()].includes('flap')) g.flight.release();
   } else release(action);
 };
@@ -468,6 +656,17 @@ function frame(now) {
       acc -= STEP_MS;
     }
     g.alpha = g.screen === 'playing' ? acc / STEP_MS : 1;
+  } else if (g.screen === 'racing') {
+    for (; g.beeps <= Math.min(3, Math.floor((now - g.raceAt) / 500)); g.beeps++) sfx.count(g.beeps === 3);
+    if (now >= g.goAt) {
+      acc += dt * 1000;
+      while (acc >= STEP_MS) {
+        stepRace();
+        acc -= STEP_MS;
+      }
+      g.alpha = acc / STEP_MS;
+    }
+    if (g.endAt && now - g.endAt >= (g.winner === 'draw' ? 0 : RACE.lapMs)) endRace();
   } else if (g.screen === 'bonus') {
     acc += dt * 1000;
     while (acc >= STEP_MS) {
@@ -478,8 +677,8 @@ function frame(now) {
     g.alpha = acc / STEP_MS;
     if (g.flightEndAt && now - g.flightEndAt >= FLIGHT_END_MS) endFlight();
   }
-  updateSlide(dt);
-  updateRunDust();
+  if (g.mode === 'versus') updateRaceFx(dt);
+  else { updateSlide(dt); updateRunDust(); }
   updateSlideHint(now);
   updateHatch(now);
   while (g.fx.length && now - g.fx[0].t > FX_MS) g.fx.shift();
@@ -501,17 +700,19 @@ function debugGolden() {
 
 // ---- testing hook (STANDARDS, GDD 12) -----------------------------------------------------
 window.game = {
-  get screen() { return g.screen; },
+  get screen() { return g.screen === 'racing' ? 'playing' : g.screen; },
   get level() { return g.mode; },
   get mode() { return g.mode; },
-  get score() { return g.run ? g.run.score : 0; },
+  get score() { return g.runs ? Math.max(g.runs[0].score, g.runs[1].score) : g.run ? g.run.score : 0; },
   get eggs() { return g.flight ? g.flight.eggCount : g.run ? g.run.eggCount : 0; },
   get flights() { return data.flights; },
   start() { startRun(false); },
+  race() { startRace(); },
   restart() { retry(); },
 };
 if (DEBUG) {
-  window.game.crash = () => {
+  window.game.crash = (p = 1) => {   // in a race: crash P2 (P1 wins), or P1 with crash(0)
+    if (g.screen === 'racing') { if (performance.now() >= g.goAt) g.runs[p].crashed = true; return; }
     if (g.screen !== 'playing') return;
     g.run.crashed = true;
     g.run.events.push('crash');
@@ -519,6 +720,7 @@ if (DEBUG) {
   };
   window.game.win = window.game.crash;
   window.game.run = () => g.run;
+  window.game.runs = () => g.runs;
   window.game.flight = () => g.flight;
   window.game.fly = () => { data.flights = Math.max(1, data.flights); startFlight(); };
 }
