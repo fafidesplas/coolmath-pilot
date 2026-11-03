@@ -42,6 +42,7 @@ const g = {
   sliding: false, wasInAir: false, runFrame: -1,
   flashUntil: 0, shakeUntil: 0,
   showBoxes: false, invincible: false,
+  debugOn: DEBUG,       // TEMPORARY: the title's DEBUG button turns the debug keys and the 300 m golden eggs on and off
   pick: 0, screenAt: 0, runnersFrom: 'title',   // the Runners screen: focused card, when it opened, where Back goes
   peek: false,          // debug: the Runners screen shows every runner as unlocked
   hatch: null,          // the hatch scene: { id, name, at, step }
@@ -61,7 +62,7 @@ let acc = 0, last = performance.now();
 function startRun(withJump) {
   g.mode = 'endless';
   g.runs = null;
-  g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible, noGolden: !DEBUG && data.flights >= GOLD.maxFlights, goldenEvery: DEBUG ? GOLD.debugEvery : 0 });   // no golden egg while a flight is banked; debug builds: one every 300 m
+  g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible, noGolden: !g.debugOn && data.flights >= GOLD.maxFlights, goldenEvery: g.debugOn ? GOLD.debugEvery : 0 });   // no golden egg while a flight is banked; debug builds: one every 300 m
   g.screen = 'playing';
   g.alpha = 0; acc = 0;
   g.runStart = performance.now(); g.jumpedAt = null;
@@ -349,7 +350,7 @@ function runnersKey(code) {
   else if (code === 'ArrowRight' || code === 'KeyD') g.pick = (g.pick + 1) % n;
   else if ((code === 'ArrowUp' || code === 'KeyW') && g.pick >= row) g.pick -= row;
   else if ((code === 'ArrowDown' || code === 'KeyS') && g.pick + row < n) g.pick += row;
-  else if (DEBUG && code === 'KeyU') g.peek = !g.peek;   // show every runner as if unlocked
+  else if (g.debugOn && code === 'KeyU') g.peek = !g.peek;   // show every runner as if unlocked
   else if (code === 'Space' || code === 'Enter') choose(g.pick);
   else if (code === 'Escape' || code === 'Backspace') back();
   else return;
@@ -375,6 +376,14 @@ function resume() {
     g.raceAt += d; g.goAt += d;
     if (g.endAt) g.endAt += d;
   }
+}
+
+// TEMPORARY (title button, debug builds only): debug features on or off. Off also clears
+// the debug looks (invincible, hitboxes, every runner unlocked).
+function toggleDebug() {
+  g.debugOn = !g.debugOn;
+  if (!g.debugOn) g.invincible = g.showBoxes = g.peek = false;
+  console.log(`debug features: ${g.debugOn ? 'on' : 'off'}`);
 }
 
 function toggleSound() {
@@ -503,7 +512,7 @@ keys.onDown = (code, first) => {
     if (code === 'KeyR' || code === 'Enter') retry();
     return;
   }
-  if (DEBUG && code === 'KeyG') return debugGolden();
+  if (g.debugOn && code === 'KeyG') return debugGolden();
   if (JUMP_KEYS.includes(code)) {
     if (!first) return;
     if (s === 'title') startRun(true);   // the first press is also the first jump
@@ -519,8 +528,8 @@ keys.onDown = (code, first) => {
   } else if (code === 'KeyP' || code === 'Escape') {
     if (s === 'playing') pause();
     else if (s === 'paused') resume();
-  } else if (DEBUG && code === 'KeyH') g.showBoxes = !g.showBoxes;
-  else if (DEBUG && code === 'KeyI') {
+  } else if (g.debugOn && code === 'KeyH') g.showBoxes = !g.showBoxes;
+  else if (g.debugOn && code === 'KeyI') {
     g.invincible = !g.invincible;
     if (g.run) g.run.invincible = g.invincible;
     console.log(`invincible: ${g.invincible}`);
@@ -554,7 +563,7 @@ keys.onUp = (code, lastOfGroup) => {
 };
 
 const ACTIONS = {
-  play: () => startRun(false), sound: toggleSound, pause, resume, restart: retry, retry, menu,
+  play: () => startRun(false), sound: toggleSound, debug: toggleDebug, pause, resume, restart: retry, retry, menu,
   runners: openRunners, back, fly: startFlight, versus: openSetup, race: startRace, pick: b => cycleRunner(b.p, b.dir), card: b => choose(b.i), hatch: b => choose(b.i), page: b => turnPage(b.dir),
 };
 

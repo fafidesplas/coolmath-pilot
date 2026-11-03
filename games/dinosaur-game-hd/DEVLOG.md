@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-03 — Temporary DEBUG button on the title
+- Pao: a temporary **DEBUG ON / OFF** button, bottom left of the title (only while `DEBUG` in `config.js` is true), turns the debug features on and off for the page's life: the G, H, I and U keys and the golden egg every 300 m. Off also clears invincible, hitboxes and unlocked-runner peek, and a banked flight blocks the golden egg again. It starts ON and resets on reload. Checked in Chrome. To remove it: the `debug` button in `ui.js` (`layout`), `toggleDebug` and the `debugOn` field in `main.js`.
+
 ## 2026-11-03 — Debug: golden egg every 300 m
 - Pao: for testers, debug builds (`DEBUG` in `config.js`) put a golden egg on a cactus or low pterodactyl about every 300 m (`GOLD.debugEvery`), with no hotkey. It also ignores the banked-flight block, so it shows even with a flight waiting (a second flight is still not banked). Release builds (`DEBUG` false) keep the normal 1500–1900 m rule. `tools/golden-test.mjs` doesn't use the option and still passes. Next: playtest; the hatch prices are still open.
 

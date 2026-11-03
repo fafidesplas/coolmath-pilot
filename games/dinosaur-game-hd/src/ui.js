@@ -1,7 +1,7 @@
 // HUD and screens (GDD 8): title, pause, results and runners. layout() returns this
 // frame's buttons, and main.js hit-tests pointers against the same list, so a
 // sliding panel's buttons are always where they are drawn.
-import { VIEW_W, VIEW_H, LANE, RACE, RUN, HATCH, RUNNER_LIST, FLIGHT } from './config.js';
+import { VIEW_W, VIEW_H, LANE, RACE, RUN, HATCH, RUNNER_LIST, FLIGHT, DEBUG } from './config.js';
 import { drawText, textWidth } from './font.js';
 import { PAL, SPR, MARGIN } from './sprites.js';
 import { CELL } from './art.js';
@@ -65,6 +65,7 @@ export function layout(g, now, r) {
     B.push({ id: 'runners', label: 'RUNNERS', size: 2, x: 250, y: 238, w: 140, h: 30 });
     if (g.data.flights) B.push({ id: 'fly', label: `FLY ${g.data.flights}`, gold: true, size: 2, x: 250, y: 276, w: 140, h: 30 });
     B.push({ ...corner('sound', r), on: g.data.settings.sfx });
+    if (DEBUG) B.push({ id: 'debug', label: g.debugOn ? 'DEBUG ON' : 'DEBUG OFF', size: 2, x: 8, y: 324, w: 124, h: 28 });   // TEMPORARY
   } else if (g.screen === 'setup') {
     // Arrows beside each lane's runner; their hit square is 48 px (STANDARDS).
     for (const p of [0, 1]) {
