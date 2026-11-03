@@ -1,6 +1,7 @@
 # Dock All The Boats — devlog
 
 ## 2026-11-03 — Cursing boats
+- Parking results screen shows only the title word and the damages bill (counting up). Stars, accuracy, tries, ducks, per-boat accuracy and NEW BEST are no longer shown there; jam levels keep their old screen. Stars and accuracy are still computed and saved.
 - The parking burst is colorful fish (swimming the way they fly) and spinning navy anchors instead of confetti (`confetti()` in `src/main.js`, `drawFish` in `src/render.js`).
 - "PARKED!" is now "DOCKED!" or "LAND HO!", picked at random each time a boat parks; the results screen shows the last one.
 - A boat the player bumps (drifters, traffic, jam boats; not moored ones) shows speech bubbles with "!", "?!", "!!!", "!?" or "!!" (one fixed per bubble, no cycling) for 1.6 s. Bigger boats on screen get more bubbles, spread along the keel (one per about 3 UI units of length, up to 6). Code: `drawSwearing()` in `src/main.js`.

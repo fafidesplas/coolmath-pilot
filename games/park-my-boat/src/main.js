@@ -1388,6 +1388,17 @@ function drawTitle()
     txt('DOCK ALL THE BOATS', 20, 15.4 + bob, 2.8, C_SUNNY, 'center', .25, C_INK);
 }
 
+function drawCompleteStars(t)
+{
+    for (let s = 0; s < 3; s++)
+    {
+        const st = clamp((t - .35 - s*.25)*5, 0, 1);
+        const sz = st < 1 ? st*1.3 : 1;
+        if (st > 0 && st < .25 && s < result.stars && !result['sfx' + s]) { result['sfx' + s] = 1; sfx('click', undefined, 1, 1 + s*.25); }
+        drawStar(vec2(16 + s*4, 14.4), 1.4*Math.max(.01, s < result.stars ? sz : 1), s < result.stars && st > 0);
+    }
+}
+
 function drawComplete()
 {
     drawRect(UI_CENTER, UI_SIZE.scale(3), C_INK.scale(1, .35));
@@ -1396,13 +1407,7 @@ function drawComplete()
     drawPanel(c.add(vec2(0, (1 - ease)*-12)), 24, 17, C_CREAM, .8);
     if (k < 1) return;
     txt(level.jam ? 'ALL CLEAR!' : parkedWord, 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
-    for (let s = 0; s < 3; s++)
-    {
-        const st = clamp((t - .35 - s*.25)*5, 0, 1);
-        const sz = st < 1 ? st*1.3 : 1;
-        if (st > 0 && st < .25 && s < result.stars && !result['sfx' + s]) { result['sfx' + s] = 1; sfx('click', undefined, 1, 1 + s*.25); }
-        drawStar(vec2(16 + s*4, 14.4), 1.4*Math.max(.01, s < result.stars ? sz : 1), s < result.stars && st > 0);
-    }
+    if (level.jam) drawCompleteStars(t);
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
     if (level.jam)
     {
@@ -1411,11 +1416,7 @@ function drawComplete()
         if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
         return;
     }
-    txt(`Accuracy ${shown}%`, 20, 11.6, 1, C_INK);
-    txt(`Tries: ${attempts}    Damages: ${fmtMoney(damages)}    Ducks hit: ${ducksOffended}`, 20, 10.3, .55, C_TEAL);
-    if (accs.length > 1)
-        txt(level.boats.map((e, i) => `${BOATS[e.boat].name} ${Math.round(accs[i]*100)}%`).join('    '), 20, 9.3, .5, C_INK);
-    if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
+    txt(`Damages: ${fmtMoney(Math.round(damages * clamp((t - .5)*1.5, 0, 1)))}`, 20, 12, 1.4, C_TEAL);
 }
 
 function gameRender()
