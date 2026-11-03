@@ -199,7 +199,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 - **Level select:** **(new)** two pages, one per world (title "World 1 · Learn the Ropes"), 10 cards each. A card shows the level number, stars (filled vs outline), and the most money kept. Locked levels show a lock. The next level pulses. The bonus card comes after level 20.
 - **Playing:** HUD bar on top: level number and name, boat name and size, "Boat 2/3", **(new)** the money left with the 3★ line marked ("$9,400 of $10,000 · ★★★ $9,000"), damages, the scale bar, RESTART and II. The rest ring shows around the boat inside the slip (3.4). Between boats a card shows "Boat 2 of 3" and the size line ("300 m · 105x BIGGER").
 - **Pause:** dims the screen. RESUME, RESTART, MENU.
-- **Level complete:** "PARKED!", 3 stars that pop in one by one, **(new)** money kept counting up, the 3★ and 2★ lines, "NEW BEST!", damage per boat, "Clean!" boats, accuracy per boat, misses, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
+- **Level complete:** "DOCKED!" or "LAND HO!" (the same word the last boat showed), 3 stars that pop in one by one, **(new)** money kept counting up, the 3★ and 2★ lines, "NEW BEST!", damage per boat, "Clean!" boats, accuracy per boat, misses, ducks hit. NEXT (BONUS when the bonus is next), RETRY, MENU.
 
 ## 9. Art direction
 - **Family:** Toybox Flat. Everything is drawn in code with Canvas 2D: flat fills, 0.1-unit ink outlines, soft offset drop shadows.

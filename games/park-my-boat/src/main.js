@@ -87,6 +87,7 @@ let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
 let trafficBoats = [];      // the level's traffic boats, in the order of `traffic` in levels.js
 let anchor, judge, result, restT = 0, restArmed = true;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
+let parkedWord = 'DOCKED!';
 let popups = [], drops = [], wakes = [], foams = [];
 let shakeAmt = 0, steerHeld = false, motorTimer = 0, wakeTimer = 0;
 let buttons = [], hoverId;
@@ -772,7 +773,8 @@ function judgeBoat()
         dropAnchor();
         sfx('win');
         confetti(player.pos, player.k);
-        popup('PARKED!', player.pos, C_SUNNY, 1.6, 2);
+        parkedWord = rand() < .5 ? 'DOCKED!' : 'LAND HO!';
+        popup(parkedWord, player.pos, C_SUNNY, 1.6, 2);
     }
     else
     {
@@ -1389,7 +1391,7 @@ function drawComplete()
     const c = vec2(20, 11.5);
     drawPanel(c.add(vec2(0, (1 - ease)*-12)), 24, 17, C_CREAM, .8);
     if (k < 1) return;
-    txt(level.jam ? 'ALL CLEAR!' : 'PARKED!', 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
+    txt(level.jam ? 'ALL CLEAR!' : parkedWord, 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
     for (let s = 0; s < 3; s++)
     {
         const st = clamp((t - .35 - s*.25)*5, 0, 1);
