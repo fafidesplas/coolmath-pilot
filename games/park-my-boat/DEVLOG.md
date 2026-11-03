@@ -1,5 +1,9 @@
 # Dock All The Boats — devlog
 
+## 2026-11-03 — Cursing boats
+- A boat the player bumps (drifters, traffic, jam boats; not moored ones) shows speech bubbles of gibberish like !@#&*~! for 1.6 s. Bigger boats on screen get more bubbles, spread along the keel (one per about 3 UI units of length, up to 6). Code: `drawSwearing()` in `src/main.js`.
+- Next: check it in play.
+
 ## 2026-11-01 — No slip preview; traffic waits for control
 - Pao: traffic boats moved while the camera was showing the slip, and the slip preview broke the rhythm mid-level. The preview is cut: the camera stays on the boat. When a boat parks, the camera moves and zooms from it to the next boat at its normal speed (no 40% glide), and the next boat gets control when the camera is nearly there (at most 3 s, `HANDOFF_MAX`). Boat 1 has control at once. The size card still shows (2.5 s, or 1 s past control). With nothing to skip, Space, Enter and click no longer skip anything.
 - Traffic: a stopped traffic boat sets off only once the player has control in one of its turns (`hasControl()` in `driveTraffic`). One already moving keeps going into the next turn if that turn is one of its turns too.

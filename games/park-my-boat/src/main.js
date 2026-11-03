@@ -423,6 +423,36 @@ function confetti(pos, s=1)
 // mass at toy scale, so a cruise ship wobbles like the toy it is drawn as
 function toyMass(b) { return b.mass / (b.k*b.k*b.k); }
 
+const SWEAR_TIME = 1.6, SWEAR_CHARS = '!@#$%&*~?^';
+function swearText(seed, n)
+{
+    let out = '';
+    for (let i = 0; i < n; i++) out += SWEAR_CHARS[Math.abs(Math.sin(seed*12.9898 + i*78.233)*43758.5453|0) % SWEAR_CHARS.length];
+    return out;
+}
+
+// speech bubbles of gibberish over cursing boats: one per ~3 UI units of on-screen length, spread along the keel
+function drawSwearing()
+{
+    for (const b of bodies)
+    {
+        if (!(b.swearT > 0) || !b.type || !inView(b.pos, b.radius*1.5)) continue;
+        const len = screenLen(b);
+        if (len < .5) continue;
+        const n = clamp(Math.round(len/3), 1, 6), a = clamp(b.swearT*4, 0, 1);
+        const pop = clamp((SWEAR_TIME - b.swearT)*8, 0, 1), shake = Math.floor(time*8);
+        for (let i = 0; i < n; i++)
+        {
+            const x = n == 1 ? 0 : (i/(n - 1) - .5) * b.type.L * b.k * .7;
+            const u = worldToUi(b.toWorld(x, 0));
+            const len2 = 4 + (i + b.swearSeed)%3, w = len2*.42 + .5, c = vec2(u.x, u.y + 1.1 + pop*.2);
+            drawPanel(c, w*pop, .85*pop, C_CREAM.scale(1, a), .3);
+            drawPoly([c.add(vec2(-.15, -.4)), c.add(vec2(.15, -.4)), c.add(vec2(-.05, -.8))].map(q => q.scale(pop).add(c.scale(1 - pop))), C_CREAM.scale(1, a), LINE_W, C_INK.scale(1, a));
+            if (pop >= 1) txt(swearText(b.swearSeed + i*31 + shake*7, len2), c.x, c.y - .05, .5, C_CORAL.scale(1, a));
+        }
+    }
+}
+
 function onHit(A, B, impact, p)
 {
     // impact speeds are judged relative to the size of what got hit
@@ -453,6 +483,9 @@ function onHit(A, B, impact, p)
     splash(p, Math.min(14, rel*3), Math.min(rel, 4)*1.2, B ? Math.max(A.k, B.k) : A.k);
     if (cool.hitCooldown > 0) return;
     cool.hitCooldown = .35;
+
+    // a boat you bump (not a moored one) curses at you
+    if (isPlayer && other?.type && other.kind != 'moored') other.swearT = SWEAR_TIME, other.swearSeed = (rand(1e6)|0);
 
     if (isPlayer)
     {
@@ -842,7 +875,7 @@ function stepWorld()
             collideStatics(bodies[i], rects, posts, onHit);
         }
     }
-    for (const b of bodies) if (b.hurtT > 0) b.hurtT -= timeDelta;
+    for (const b of bodies) { if (b.hurtT > 0) b.hurtT -= timeDelta; if (b.swearT > 0) b.swearT -= timeDelta; }
 
     // motor putts (deeper for bigger boats) and wake
     const t = player.type, thr = Math.abs(player.throttle);
@@ -1406,6 +1439,7 @@ function gameRender()
 
     useUiCamera();
     if (editing) return pmbEditor.renderUi();
+    drawSwearing();
     drawPopups();
     drawPlayerMarker();
     drawSlipArrow();
