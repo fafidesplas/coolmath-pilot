@@ -97,7 +97,8 @@ function egg(cx, y, pattern, group, speedOffset = 0) {
 
 export class EggGen {
   // curve(speed): the runner's height after each frame of a held jump (sim.js).
-  constructor(rand, curve) {
+  // goldenEvery (debug builds only): a golden egg at every multiple of this many metres.
+  constructor(rand, curve, goldenEvery = 0) {
     this.rand = rand;
     this.curve = curve;
     this.slot = 0;
@@ -106,6 +107,8 @@ export class EggGen {
     this.groups = 0;
     // The golden egg's distance (GDD 3.7): the first long enough gap after it gets it.
     this.goldenAt = GOLD.from + this.rand() * (GOLD.to - GOLD.from);
+    this.goldenEvery = goldenEvery;
+    if (goldenEvery) this.goldenAt = goldenEvery;
   }
 
   // Eggs for obstacle `o`, which has just spawned, `m` metres into the run.

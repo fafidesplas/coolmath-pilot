@@ -16,7 +16,7 @@ export class Run {
     this.seed = seed >>> 0;
     this.invincible = !!opts.invincible;
     this.gen = new ObstacleGen(stream(this.seed, STREAM.obstacles));
-    this.eggGen = opts.noEggs ? null : new EggGen(stream(this.seed, STREAM.eggs), jumpCurve);
+    this.eggGen = opts.noEggs ? null : new EggGen(stream(this.seed, STREAM.eggs), jumpCurve, opts.goldenEvery);
     this.goldOn = !opts.noEggs && !opts.noGolden;   // endless only (GDD 3.7)
     this.golden = null;         // the golden egg once placed: { x, y, prevX, taken, m }
     this.goldenTaken = false;
@@ -181,6 +181,12 @@ export class Run {
     eggs.length = n;
     const gold = this.golden;
     if (gold) { gold.prevX = gold.x; gold.x -= scroll(this.speed + (gold.owner.drifting ? gold.speedOffset : 0)); }
+    // Debug builds: once the golden egg has scrolled away, the next one is due at the next multiple of goldenEvery.
+    if (gold && this.eggGen && this.eggGen.goldenEvery && gold.x < -OFFSCREEN) {
+      const every = this.eggGen.goldenEvery;
+      this.eggGen.goldenAt = (Math.floor(gold.m / every) + 1) * every;
+      this.golden = null;
+    }
 
     // The original's spawn rule, checked on the frame `ahead.n` frames from
     // now: after the clear time, once the last obstacle has left the view or

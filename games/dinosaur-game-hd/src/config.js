@@ -108,6 +108,7 @@ export const GOLD = {
   y: -6,                   // sprite top, lane coordinates: only a near-full jump (over ~80 px) reaches it
   pickup: 16,
   maxFlights: 1,           // banked flights (GDD 3.8): one at a time
+  debugEvery: 300,         // m: in DEBUG builds only, a golden egg this often, so testers see it without a hotkey
 };
 
 // The bonus flight (GDD 3.8), in screen px (640×360) and frames at 60 Hz.

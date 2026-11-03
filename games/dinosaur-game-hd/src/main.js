@@ -61,7 +61,7 @@ let acc = 0, last = performance.now();
 function startRun(withJump) {
   g.mode = 'endless';
   g.runs = null;
-  g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible, noGolden: data.flights >= GOLD.maxFlights });   // no golden egg while a flight is banked
+  g.run = new Run((Math.random() * 2 ** 32) >>> 0, { invincible: g.invincible, noGolden: !DEBUG && data.flights >= GOLD.maxFlights, goldenEvery: DEBUG ? GOLD.debugEvery : 0 });   // no golden egg while a flight is banked; debug builds: one every 300 m
   g.screen = 'playing';
   g.alpha = 0; acc = 0;
   g.runStart = performance.now(); g.jumpedAt = null;
@@ -676,13 +676,13 @@ function frame(now) {
 requestAnimationFrame(frame);
 canvas.focus();
 
-// Debug (G): in a run, the golden egg goes in the next long enough gap;
+// Debug (G): in a run, the golden egg goes on the next cactus or low pterodactyl;
 // elsewhere, a flight is banked.
 function debugGolden() {
   if (g.screen === 'playing' && g.run.eggGen && !g.run.golden) g.run.eggGen.goldenAt = 0;
   else if (g.screen === 'title' || g.screen === 'complete') { data.flights = Math.min(GOLD.maxFlights, data.flights + 1); save(data); }
   else return;
-  console.log(g.screen === 'playing' ? 'golden egg: next long gap' : `flights banked: ${data.flights}`);
+  console.log(g.screen === 'playing' ? 'golden egg: next cactus or low pterodactyl' : `flights banked: ${data.flights}`);
 }
 
 // ---- testing hook (STANDARDS, GDD 12) -----------------------------------------------------

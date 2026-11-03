@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-03 — Debug: golden egg every 300 m
+- Pao: for testers, debug builds (`DEBUG` in `config.js`) put a golden egg on a cactus or low pterodactyl about every 300 m (`GOLD.debugEvery`), with no hotkey. It also ignores the banked-flight block, so it shows even with a flight waiting (a second flight is still not banked). Release builds (`DEBUG` false) keep the normal 1500–1900 m rule. `tools/golden-test.mjs` doesn't use the option and still passes. Next: playtest; the hatch prices are still open.
+
 ## 2026-11-02 — Golden egg over obstacles, 1500–1900 m
 - Pao: the golden egg now comes between 1500 and 1900 m. It sits on the apex of the held jump over the first cactus or low pterodactyl (with no eggs of its own) after the pick, so it no longer needs a gap. About 15% land over a pterodactyl. `tools/golden-test.mjs` passes (every placement is grabbable by a held jump without a hit; a tap never reaches it), and the other tests pass. GDD updated. Next: playtest a late run, then the hatch prices.
 
