@@ -412,7 +412,8 @@ function splash(pos, n, speed=4, s=1)
 }
 
 // the parking burst: a massive splash. Shock rings spread out, a thick spray of foam and water flies
-// from the hull, and a few big blobs lob out farther. Negative t on a ring delays it.
+// from the hull, a few big blobs lob out farther, and crabs and colorful fish (headed where they fly)
+// get thrown out with it. Negative t on a ring delays it.
 function confetti(pos, s=1)
 {
     for (let i = 0; i < 3; i++)
@@ -426,6 +427,13 @@ function confetti(pos, s=1)
     {
         const a = rand(PI*2), v = rand(8, 14)*s;
         drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.9, 1.5), size:rand(.6, 1)*s, color:C_CREAM });
+    }
+    const colors = [C_CORAL, C_SUNNY, C_TEAL, C_CREAM, C_WATER2];
+    for (let i = 0; i < 16; i++)
+    {
+        const a = rand(PI*2), v = rand(3, 9)*s, crab = i % 2;
+        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.9, 1.5), size:rand(.35, .6)*s*(crab ? .8 : 1),
+            color: crab ? (i%4 == 1 ? C_CORAL : C_SUNNY.lerp(C_CORAL, .6)) : colors[i%colors.length], shape: crab ? 'crab' : 'fish', ang:a, spin:rand(-6, 6) });
     }
 }
 
@@ -1253,7 +1261,9 @@ function drawDrops()
     {
         const k = 1 - d.t / d.life;
         if (d.t < 0) continue;
-        if (d.shape == 'ring') drawCircle(d.pos, d.size*(1 - k*k), new Color(0, 0, 0, 0), .35*WU*k + .02*WU, d.color.scale(1, k));
+        if (d.shape == 'fish') drawFish(d.pos, d.size*k + .1*WU, d.ang + Math.sin(d.t*14)*.25, d.color);
+        else if (d.shape == 'crab') drawCrab(d.pos, d.size*k + .1*WU, d.t*d.spin*.3, d.t, d.color);
+        else if (d.shape == 'ring') drawCircle(d.pos, d.size*(1 - k*k), new Color(0, 0, 0, 0), .35*WU*k + .02*WU, d.color.scale(1, k));
         else if (d.square) drawRect(d.pos, vec2(d.size*k + .05*WU), d.color, d.t*8);
         else drawCircle(d.pos, d.size*k + .05*WU, d.color);
     }
