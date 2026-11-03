@@ -187,13 +187,23 @@ function drawDashedRect(c, w, h, color, width, dash=.5)
     }
 }
 
-function drawAnchorGlyph(pos, s, color)
+function drawAnchorGlyph(pos, s, color, rot=0)
 {
-    const L = (x1, y1, x2, y2) => drawLine(vec2(pos.x+x1*s, pos.y+y1*s), vec2(pos.x+x2*s, pos.y+y2*s), .13*s, color);
-    drawCircle(vec2(pos.x, pos.y + .5*s), .3*s, C_CLEAR, .12*s, color);
+    const cs = Math.cos(rot), sn = Math.sin(rot), at = (x, y) => vec2(pos.x + (x*cs - y*sn)*s, pos.y + (x*sn + y*cs)*s);
+    const L = (x1, y1, x2, y2) => drawLine(at(x1, y1), at(x2, y2), .13*s, color);
+    drawCircle(at(0, .5), .3*s, C_CLEAR, .12*s, color);
     L(0, .35, 0, -.55);
     L(-.28, .2, .28, .2);
     L(-.48, -.12, -.3, -.42); L(-.3, -.42, 0, -.55); L(0, -.55, .3, -.42); L(.3, -.42, .48, -.12);
+}
+
+// a little fish seen from the side, nose toward angle ang; s is half its length
+function drawFish(pos, s, ang, color)
+{
+    const cs = Math.cos(ang), sn = Math.sin(ang), at = (x, y) => vec2(pos.x + (x*cs - y*sn)*s, pos.y + (x*sn + y*cs)*s);
+    const pts = [at(1, 0), at(.5, .45), at(-.2, .5), at(-.7, .1), at(-1.1, .55), at(-1.1, -.55), at(-.7, -.1), at(-.2, -.5), at(.5, -.45)];
+    drawPoly(pts, color, .1*s, C_INK);
+    drawCircle(at(.55, .12), .16*s, C_INK);
 }
 
 function starPoints(c, r)
