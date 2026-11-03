@@ -411,15 +411,16 @@ function splash(pos, n, speed=4, s=1)
     if (drops.length > 160) drops.splice(0, drops.length - 160);
 }
 
-// the parking burst: colorful fish (headed where they fly) and spinning anchors
+// the parking burst: mostly spinning anchors, then crabs and colorful fish (headed where they fly)
 function confetti(pos, s=1)
 {
     const colors = [C_CORAL, C_SUNNY, C_TEAL, C_CREAM, C_WATER2];
-    for (let i = 0; i < 34; i++)
+    for (let i = 0; i < 40; i++)
     {
-        const a = rand(PI*2), v = rand(3, 9)*s, anchor = i % 3 == 2;
-        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.9, 1.5), size:rand(.35, .6)*s*(anchor ? .8 : 1),
-            color: anchor ? C_NAVY : colors[i%colors.length], shape: anchor ? 'anchor' : 'fish', ang:a, spin:rand(-6, 6) });
+        const a = rand(PI*2), v = rand(3, 9)*s, r = i % 20;
+        const shape = r < 10 ? 'anchor' : r < 15 ? 'crab' : 'fish';
+        drops.push({ pos:pos.copy(), vel:vec2(Math.cos(a)*v, Math.sin(a)*v), t:0, life:rand(.9, 1.5), size:rand(.35, .6)*s*(shape == 'fish' ? 1 : .8),
+            color: shape == 'anchor' ? C_NAVY : shape == 'crab' ? (i%2 ? C_CORAL : C_SUNNY.lerp(C_CORAL, .6)) : colors[i%colors.length], shape, ang:a, spin:rand(-6, 6) });
     }
 }
 
@@ -1247,6 +1248,7 @@ function drawDrops()
     {
         const k = 1 - d.t / d.life;
         if (d.shape == 'fish') drawFish(d.pos, d.size*k + .1*WU, d.ang + Math.sin(d.t*14)*.25, d.color);
+        else if (d.shape == 'crab') drawCrab(d.pos, d.size*k + .1*WU, d.t*d.spin*.3, d.t, d.color);
         else if (d.shape == 'anchor') drawAnchorGlyph(d.pos, d.size*k + .1*WU, d.color, d.ang + d.t*d.spin);
         else if (d.square) drawRect(d.pos, vec2(d.size*k + .05*WU), d.color, d.t*8);
         else drawCircle(d.pos, d.size*k + .05*WU, d.color);

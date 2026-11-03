@@ -206,6 +206,23 @@ function drawFish(pos, s, ang, color)
     drawCircle(at(.55, .12), .16*s, C_INK);
 }
 
+// a little crab seen from above, scuttling: s is its half width, rot tilts it, t drives the claw and leg wiggle
+function drawCrab(pos, s, rot, t, color)
+{
+    const cs = Math.cos(rot), sn = Math.sin(rot), at = (x, y) => vec2(pos.x + (x*cs - y*sn)*s, pos.y + (x*sn + y*cs)*s);
+    const wig = Math.sin(t*22);
+    for (const m of [1, -1])
+    {
+        for (let i = 0; i < 3; i++)                 // legs
+            drawLine(at(m*.5, -.15 - i*.22), at(m*(1.05 + wig*.08*(i%2 ? 1 : -1)), -.4 - i*.3), .13*s, C_INK);
+        const up = .95 + wig*.12*m;                 // arm and claw
+        drawLine(at(m*.5, .25), at(m*.95, up*.7), .15*s, C_INK);
+        drawCircle(at(m*1.05, up), .38*s, color, .1*s, C_INK);
+    }
+    drawCircle(at(0, 0), 1.3*s, color, .1*s, C_INK);
+    for (const m of [1, -1]) { drawLine(at(m*.28, .5), at(m*.28, .8), .08*s, C_INK); drawCircle(at(m*.28, .85), .2*s, C_CREAM, .06*s, C_INK); }
+}
+
 function starPoints(c, r)
 {
     const pts = [];
