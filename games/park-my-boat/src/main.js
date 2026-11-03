@@ -423,15 +423,10 @@ function confetti(pos, s=1)
 // mass at toy scale, so a cruise ship wobbles like the toy it is drawn as
 function toyMass(b) { return b.mass / (b.k*b.k*b.k); }
 
-const SWEAR_TIME = 1.6, SWEAR_CHARS = '!@#$%&*~?^';
-function swearText(seed, n)
-{
-    let out = '';
-    for (let i = 0; i < n; i++) out += SWEAR_CHARS[Math.abs(Math.sin(seed*12.9898 + i*78.233)*43758.5453|0) % SWEAR_CHARS.length];
-    return out;
-}
+const SWEAR_TIME = 1.6, SWEAR_TEXTS = ['!', '?!', '!!!', '!?', '!!'];
+function swearText(seed) { return SWEAR_TEXTS[Math.abs(seed) % SWEAR_TEXTS.length]; }
 
-// speech bubbles of gibberish over cursing boats: one per ~3 UI units of on-screen length, spread along the keel
+// speech bubbles (!, ?!, !!!) over cursing boats: one per ~3 UI units of on-screen length, spread along the keel
 function drawSwearing()
 {
     for (const b of bodies)
@@ -440,15 +435,15 @@ function drawSwearing()
         const len = screenLen(b);
         if (len < .5) continue;
         const n = clamp(Math.round(len/3), 1, 6), a = clamp(b.swearT*4, 0, 1);
-        const pop = clamp((SWEAR_TIME - b.swearT)*8, 0, 1), shake = Math.floor(time*8);
+        const pop = clamp((SWEAR_TIME - b.swearT)*8, 0, 1);
         for (let i = 0; i < n; i++)
         {
             const x = n == 1 ? 0 : (i/(n - 1) - .5) * b.type.L * b.k * .7;
             const u = worldToUi(b.toWorld(x, 0));
-            const len2 = 4 + (i + b.swearSeed)%3, w = len2*.42 + .5, c = vec2(u.x, u.y + 1.1 + pop*.2);
+            const str = swearText(b.swearSeed + i*7), w = str.length*.42 + .6, c = vec2(u.x, u.y + 1.1 + pop*.2);
             drawPanel(c, w*pop, .85*pop, C_CREAM.scale(1, a), .3);
             drawPoly([c.add(vec2(-.15, -.4)), c.add(vec2(.15, -.4)), c.add(vec2(-.05, -.8))].map(q => q.scale(pop).add(c.scale(1 - pop))), C_CREAM.scale(1, a), LINE_W, C_INK.scale(1, a));
-            if (pop >= 1) txt(swearText(b.swearSeed + i*31 + shake*7, len2), c.x, c.y - .05, .5, C_CORAL.scale(1, a));
+            if (pop >= 1) txt(str, c.x, c.y - .05, .5, C_CORAL.scale(1, a));
         }
     }
 }

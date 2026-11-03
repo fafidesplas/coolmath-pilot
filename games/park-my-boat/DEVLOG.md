@@ -1,7 +1,7 @@
 # Dock All The Boats — devlog
 
 ## 2026-11-03 — Cursing boats
-- A boat the player bumps (drifters, traffic, jam boats; not moored ones) shows speech bubbles of gibberish like !@#&*~! for 1.6 s. Bigger boats on screen get more bubbles, spread along the keel (one per about 3 UI units of length, up to 6). Code: `drawSwearing()` in `src/main.js`.
+- A boat the player bumps (drifters, traffic, jam boats; not moored ones) shows speech bubbles with "!", "?!", "!!!", "!?" or "!!" (one fixed per bubble, no cycling) for 1.6 s. Bigger boats on screen get more bubbles, spread along the keel (one per about 3 UI units of length, up to 6). Code: `drawSwearing()` in `src/main.js`.
 - Next: check it in play.
 
 ## 2026-11-01 — No slip preview; traffic waits for control
