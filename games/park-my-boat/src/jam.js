@@ -18,13 +18,40 @@ function jamLoad(L)
     jamBoats = (L.moored || []).map((m, k) =>
     {
         const b = makeBoat(m.boat, vec2(m.x, m.y), m.a, 'jam', MOORED_COLORS[k % MOORED_COLORS.length], boatK(L, m));
-        b.slip = makeSlip(m, b.k);
+        if (m.slip) b.slip = makeSlip(m, b.k);
         b.parked = false; b.restT = 0; b.restArmed = true;
         b.lastPos = b.pos.copy();
         return b;
     });
     jamDone = -1;
     fleet = []; slips = []; slip = undefined;
+    if (L.test) jamSpawn('dinghy');
+}
+
+// the Test Map (level.test): a new boat of this type beside the one you drive (or at the origin), and you take the helm
+function jamSpawn(key)
+{
+    const b = makeBoat(key, vec2(), 0, 'jam', MOORED_COLORS[jamBoats.length % MOORED_COLORS.length], BOATS[key].k);
+    b.restT = 0; b.restArmed = true; b.parked = false; b.lastPos = b.pos.copy();
+    if (player)
+    {
+        b.angle = player.angle;
+        b.pos = player.pos.add(player.forward().scale(player.radius + b.radius*1.15 + 1));
+    }
+    b.updateWorld();
+    jamBoats.push(b);
+    steerHeld = false;
+    jamSelect(b);
+}
+
+// REMOVE BOAT: the one you drive (or the one given); no argument clears every boat
+function jamRemove(b)
+{
+    const gone = b ? [b] : [...jamBoats];
+    if (!gone.length) return;
+    jamBoats = jamBoats.filter(o => !gone.includes(o));
+    bodies = bodies.filter(o => !gone.includes(o));
+    if (gone.includes(player)) { player = undefined; slip = undefined; steerHeld = false; }
 }
 
 // the boat you tapped becomes the one you drive; the one you were driving keeps its momentum and glides
@@ -106,7 +133,7 @@ function jamUpdate(dt)
     // must have no input. After a miss it has to move before the next check.
     for (const b of jamBoats)
     {
-        if (b.parked) continue;
+        if (b.parked || !b.slip) continue;
         const still = b.speed() < REST_SPEED*b.vs && Math.abs(b.angVel) < REST_SPIN/b.slowdown && (b != player || !b.throttle && !b.rudder) && !b.under && !b.wantDive;
         if (!still) { b.restT = 0; b.restArmed = true; continue; }
         if (!b.restArmed || !jamInSlip(b, false)) { b.restT = 0; continue; }
@@ -181,6 +208,7 @@ function drawJamSelection()
 
 function drawJamHud()
 {
+    if (level.test) { txt(`TEST MAP${player ? ' - ' + player.type.name + ' ' + fmtLen(boatSize(player)) : ''}`, 10, 21.75, .55, C_TEAL, 'left'); if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL); return drawAirGauge(); }
     const left = jamBoats.filter(b => !b.parked).length;
     txt(`${left} boat${left == 1 ? '' : 's'} left${player ? ' - ' + player.type.name : ''}`, 10, 21.75, .55, C_TEAL, 'left');
     if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
@@ -190,7 +218,7 @@ function drawJamHud()
 // debug (window.game.win): every boat parked, no bumps
 function jamWin()
 {
-    for (const b of jamBoats) { b.parked = true; b.vel = vec2(); b.invMass = 0; b.invInertia = 0; b.pos = b.slip.pos.copy(); b.angle = b.slip.a; b.updateWorld(); }
+    for (const b of jamBoats) { if (!b.slip) continue; b.parked = true; b.vel = vec2(); b.invMass = 0; b.invInertia = 0; b.pos = b.slip.pos.copy(); b.angle = b.slip.a; b.updateWorld(); }
     player = undefined; slip = undefined;
     showComplete();
 }
@@ -201,7 +229,7 @@ function drawJamSlips()
     const pulse = .5 + .5*Math.sin(time*5);
     for (const b of jamBoats)
     {
-        if (b.parked || b != player) continue;      // only the selected boat's slip shows
+        if (b.parked || b != player || !b.slip) continue;      // only the selected boat's slip shows
         const s = b.slip, on = true, inside = jamInSlip(b);
         const lw = Math.min(.14*WU, s.wid*.08), a = on ? 1 : .6;
         const pts = [vec2(s.pos.x - s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y + s.h/2), vec2(s.pos.x - s.w/2, s.pos.y + s.h/2)];

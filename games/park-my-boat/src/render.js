@@ -18,8 +18,8 @@ function painter(b, ox=0, oy=0)
     const px = b.pos.x + ox, py = b.pos.y + oy, ang = -b.angle;
     const P = (x, y) => vec2(px + x*sx*c - y*sy*s, py + x*sx*s + y*sy*c);
     const lw = outline => outline ? Math.min(LINE_W, .1*k) : 0;
-    // a submerged submarine is drawn washed toward the water and see-through
-    const g = b.dive || 0, tc = c => g > .02 && c ? c.lerp(C_TEAL, .45*g).scale(1, 1 - .5*g) : c, ink = tc(C_INK);
+    // a submerged submarine keeps its solid colors, a little cooler; drawBoat lays a film of water over it
+    const g = b.dive || 0, tc = c => g > .02 && c ? c.lerp(C_TEAL, .3*g) : c, ink = tc(C_INK);
     return {
         P,
         circle(x, y, d, color, outline) { drawCircle(P(x, y), d*sx, tc(color), lw(outline), ink); },
@@ -62,6 +62,13 @@ function drawBoat(b)
     BOAT_DECO[t.key](d, t, b);
     if (!t.blob && !t.sub && (b.kind == 'player' || b.kind == 'moored' || b.kind == 'traffic'))
         drawCaptain(d, t.captainX, b, Math.min(1, 2.5 / (b.k || 1)));
+    // submerged: a semi-transparent film of water over the whole hull, with a faint ripple line round it
+    if (t.sub && b.dive > .02)
+    {
+        const pts = t.hullPts.map(p => d.P(p.x, p.y));
+        drawPoly(pts, C_WATER.lerp(C_TEAL, .25).scale(1, .62*b.dive), 0);
+        drawPoly(pts, C_CLEAR, Math.min(LINE_W*.5, .05*(b.k || 1)), C_WATER2.scale(1, .7*b.dive));
+    }
 }
 
 // Captain seen from above: cap, plus eyes looking toward the bow (wide when bonked).

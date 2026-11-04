@@ -295,8 +295,35 @@ const SCALE_LEVELS =
         buoys: [[300, 380, 5], [900, 380, 5]],
         ducks: [{ x: 440, y: 572, kids: 3 }],
     },
+    {
+        // sandbox, only with ?test: open water with a beach, piers (two a submarine can pass under), an islet, a current,
+        // buoys, ducks and a few boats to bump. The buttons on the left spawn any boat type next to the one you drive.
+        // No slips and no stars. Boats are real size, so the Island and Continent are huge: use RESTART to start over.
+        name: 'Test Map', test: true, jam: true, view: [-130, -100, 130, 130], boats: [],
+        land: [[-3000, 100, 3000, 3000]],
+        docks:
+        [
+            { x0: -60, y0: 96, x1: 60, y1: 100, quay: true },
+            { x0: -40, y0: 70, x1: -34, y1: 100 },
+            { x0: -90, y0: 40, x1: -60, y1: 46 },
+            { x0: 30, y0: 50, x1: 90, y1: 56, under: true },
+            { x0: 100, y0: -20, x1: 106, y1: 40, under: true },
+        ],
+        lands: [{ x: -90, y: -50, k: 6, circles: [[0, 0, 3], [2.5, .5, 2], [-2.4, -.3, 2.2]], grass: true }],
+        currents: [{ x0: -125, y0: -100, x1: -60, y1: -80, dx: 2, dy: 0 }],
+        moored:
+        [
+            { boat: 'sailboat', x: 0, y: -30, a: PI/2 },
+            { boat: 'speedboat', x: 20, y: -30, a: 0 },
+            { boat: 'trawler', x: -40, y: -60, a: PI },
+            { boat: 'yacht', x: 60, y: -70, a: 0 },
+        ],
+        buoys: [[-20, 0, 1], [20, 10, 1.5], [60, 20, 1]],
+        ducks: [{ x: -30, y: 20, kids: 3 }],
+    },
 ];
 
-// bonus levels are hidden for now; ?bonus shows them after the regular ones
+// bonus levels are hidden for now; ?bonus shows them after the regular ones. ?test adds the Test Map (a sandbox)
 const SHOW_BONUS = new URLSearchParams(location.search).has('bonus');
-const LEVELS = [...SCALE_LEVELS.filter(L => !L.bonus), ...(SHOW_BONUS ? SCALE_LEVELS.filter(L => L.bonus) : [])].map(L => ({ ...L, world: 1 }));
+const SHOW_TEST = new URLSearchParams(location.search).has('test');
+const LEVELS = [...SCALE_LEVELS.filter(L => !L.bonus && !L.test), ...(SHOW_BONUS ? SCALE_LEVELS.filter(L => L.bonus) : []), ...(SHOW_TEST ? SCALE_LEVELS.filter(L => L.test) : [])].map(L => ({ ...L, world: 1 }));

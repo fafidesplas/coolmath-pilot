@@ -613,8 +613,8 @@ function drawPeriscope(b)
 {
     if (b.dive < .5 || !inView(b.pos, b.radius*1.5)) return;
     const d = painter({ ...b, dive: 0 });
-    d.line(.3, 0, .5, 0, .14, C_INK);
-    d.circle(.3, 0, .26, C_CREAM, true);
+    d.line(1.45, 0, 1.75, 0, .2, C_INK);
+    d.circle(1.45, 0, .34, C_CREAM, true);
 }
 
 // engine and rudder: the rudder turns the boat more the faster it goes, plus a little prop wash
@@ -1046,13 +1046,21 @@ function layoutButtons()
     }
     else if (gameScreen == 'levels')
     {
-        modeLevels().forEach((i, n) => button('level' + i, LEVELS[i].bonus ? 'BONUS' : String(n + 1), 8 + (n%5)*6, 15.4 - Math.floor(n/5)*4.8, 5.2, 4.3, { card:i }));
+        modeLevels().forEach((i, n) => button('level' + i, LEVELS[i].bonus ? 'BONUS' : LEVELS[i].test ? 'TEST' : String(n + 1), 8 + (n%5)*6, 15.4 - Math.floor(n/5)*4.8, 5.2, 4.3, { card:i }));
         button('back', 'BACK', 20, 1.6, 6, 1.4, { small:true });
     }
     else if (gameScreen == 'playing')
     {
         button('pause', 'II', 37.6, 21.75, 2.2, 1.2, { small:true });
         button('restart', 'RESTART', 33.6, 21.75, 4.8, 1.2, { small:true });
+        // the Test Map's spawn list: one button per boat type, down the left side
+        if (level?.test && !isPaused)
+        {
+            const keys = Object.keys(BOATS);
+            keys.forEach((k, n) => button('spawn:' + k, BOATS[k].name, 3.7, 19.6 - n*1.15, 6.6, 1, { small:true }));
+            button('remove', 'REMOVE BOAT', 3.7, 19.6 - keys.length*1.15 - .3, 6.6, 1, { small:true });
+            button('clear', 'CLEAR ALL', 3.7, 19.6 - (keys.length + 1)*1.15 - .3, 6.6, 1, { small:true });
+        }
         if (player?.type.sub && !isPaused) button('dive', player.wantDive ? 'SURFACE' : 'DIVE', 4.2, 1.6, 5.6, 1.4, { small:true });
         if (isPaused)
         {
@@ -1083,7 +1091,7 @@ function buttonAt(p)
 function nextLevelIndex(m = gameMode)
 {
     const list = modeLevels(m);
-    return list.find(i => !saveData.stars[i] && !LEVELS[i].bonus) ?? list[0];
+    return list.find(i => !saveData.stars[i] && !LEVELS[i].bonus && !LEVELS[i].test) ?? list[0];
 }
 
 // the level after this one in its mode
@@ -1098,6 +1106,9 @@ function pressButton(id)
     else if (id == 'menu') setScreen('levels');
     else if (id.startsWith('level')) loadLevel(+id.slice(5));
     else if (id == 'dive') toggleDive();
+    else if (id.startsWith('spawn:')) jamSpawn(id.slice(6));
+    else if (id == 'remove') jamRemove(player);
+    else if (id == 'clear') jamRemove();
     else if (id == 'pause') isPaused = !isPaused;
     else if (id == 'resume') isPaused = false;
     else if (id == 'restart' || id == 'retry') { track('design', 'ui:restart'); if (window.pmbEditor?.testing) pmbEditor.restartTest(); else loadLevel(levelIndex); }
@@ -1283,13 +1294,15 @@ function drawRestRing()
 function drawBodies()
 {
     drawLands();
+    // the white rim round the boat you drive is drawn under it; a submerged sub is drawn early, so its rim goes first too
+    if (level?.jam && player && deep(player)) drawJamSelection();
     for (const b of bodies) if (deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     for (const r of rects) if (r.dock) drawDockShadow(r);
     for (const b of bodies) if (b.type && !b.under && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     if (level?.jam) drawJamSlips(); else drawSlip();     // over the finger docks, so its dashed sides show
-    if (level?.jam) drawJamSelection();
+    if (level?.jam && !(player && deep(player))) drawJamSelection();
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
@@ -1357,8 +1370,8 @@ function drawLevelCard(b, hover)
 {
     const i = b.card, L = LEVELS[i], stars = saveData.stars[i] || 0, isNext = i == nextLevelIndex();
     const c = vec2(b.x, b.y + (hover ? .15 : 0));
-    drawPanel(c, b.w, b.h, isNext ? C_SUNNY : L.bonus ? C_WATER2 : C_CREAM, .5);
-    txt(b.label, c.x, c.y + 1.15, L.bonus ? .8 : 1.2, C_INK);
+    drawPanel(c, b.w, b.h, isNext ? C_SUNNY : L.bonus || L.test ? C_WATER2 : C_CREAM, .5);
+    txt(b.label, c.x, c.y + 1.15, L.bonus || L.test ? .8 : 1.2, C_INK);
     txt(L.name, c.x, c.y + .1, .48, C_INK);
     txt(L.jam ? `${L.moored.length} boats` : L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
     for (let s = 0; s < 3; s++) drawStar(vec2(c.x - 1.15 + s*1.15, c.y - 1.45), .42, s < stars);

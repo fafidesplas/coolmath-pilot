@@ -47,13 +47,13 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 | Mega Yacht | 80 m | 10 | 30 | 0.5 | 0.35 | Long, slow to turn |
 | Cruise Ship | 300 m | 12 | 34 | 0.5 | 0.32 | Huge, takes ages to stop |
 | Container Ship | 400 m | 14 | 34 | 0.45 | 0.28 | The biggest regular boat |
-| Submarine | 10.8 m | 2 | 12 | 0.5 | 0.8 | Dives under boats and `under` docks; 9 s of air, then it must surface (see below) |
+| Nuclear Submarine | 112 m | 8 | 30 | 0.4 | 0.3 | Dives under boats and `under` docks; 9 s of air, then it must surface (see below) |
 | Island (bonus) | 30 km | 14 | 36 | 0.5 | 0.3 | Blob hull |
 | Continent (bonus) | 3000 km | 16 | 36 | 0.5 | 0.28 | Blob hull |
 
 Mass and power are toy values before scaling. A level can set its own `k` for a boat (for example the 48 m yacht in Marina).
 
-**Submarine (new, 2026-11-03):** Space or the DIVE button toggles diving. Submerged, it passes under every boat, duck and buoy and under docks marked `under` in the level (drawn as a pier with two rails; sand, walls and landmasses still stop it). It is drawn first, washed toward the water color, so boats and docks cover it, with a periscope on top. Submerged it burns air (`SUB_AIR_TIME` 9 s); at the surface it refills (`SUB_REFILL_TIME` 5 s). At zero it surfaces by itself and can't dive again until it has 30% air (`SUB_DIVE_MIN`). A bar by the button shows the air and flashes when low. It can only be judged parked at the surface. Surfacing under a boat or dock bumps like any hit.
+**Nuclear Submarine (new, 2026-11-03; 112 m, the long dark one):** Space or the DIVE button toggles diving. Submerged, it passes under every boat, duck and buoy and under docks marked `under` in the level (drawn as a pier with two rails; sand, walls and landmasses still stop it). It is drawn first, under a semi-transparent film of water, so boats and docks cover it, with a periscope on top. Submerged it burns air (`SUB_AIR_TIME` 9 s); at the surface it refills (`SUB_REFILL_TIME` 5 s). At zero it surfaces by itself and can't dive again until it has 30% air (`SUB_DIVE_MIN`). A bar by the button shows the air and flashes when low. It can only be judged parked at the surface. Surfacing under a boat or dock bumps like any hit.
 
 ### 3.4 Stopping (new: no anchor)
 - There is no anchor and no anchor button. The player stops with reverse, with drag, or by letting go early.
@@ -99,6 +99,9 @@ See section 5 for each element. Things that get bumped stay where they end up: n
 
 ### 3.9 Damage costs
 Every hit costs money from the level's budget (3.6), from the impact energy and the masses involved, so a cruise ship's scrape costs far more than a rowboat's. Hitting a duck costs 1% of the budget. Damage and ducks hit show in the HUD and on the results.
+
+### 3.10 Test Map (debug)
+Adding `?test` to the URL (`index.html?test`) loads the Test Map: a hidden sandbox level, shown as a TEST card after the regular levels. Open water with a beach, piers (two a submarine can pass under), an islet, a current, buoys, ducks and a few boats. Buttons down the left spawn any boat type at real size beside the one you drive; REMOVE BOAT and CLEAR ALL delete boats. No slips, no stars. It is a development tool, not part of the shipped level list.
 
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
@@ -372,6 +375,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-11-03 — Test Map added (3.10), opened with `?test`.
 - 2026-11-03 — Submarine added (3.3, 4): dive under boats and `under` docks, limited air, surfaces to park.
 - 2026-11-01 — Slip preview cut (3.7, 4, 11): the camera no longer shows the slip at the start of a boat's turn, it moves straight from the parked boat to the next one; no skip control and no `ui:skip`. Traffic only sets off once the player has control (3.7).
 - 2026-10-28 — Level "Mixed Nuts" deleted from the build (it stays in the §6 plan as level 10 until decided). The prototype has 4 regular levels.
