@@ -25,7 +25,7 @@ const C_GRASS  = rgb(.60, .80, .45);       // island and continent interiors
 // view (optional): the camera shows this many times more around the boat (see cameraGoal in main.js).
 const BOATS =
 {
-    jetski:    { name:'Jet Ski',      L:2.4, W:1.1,  k:1,   mass:.8,  power:7,   reverse:.3, turn:1.5, wash:2.6, dragF:.9,  dragS:1.2, dragA:2,   hull:'pointy', color:C_TEAL,  captainX:-.15, view:3 },
+    jetski:    { name:'Jet Ski',      L:2.4, W:1.1,  k:1,   mass:.8,  power:7,   reverse:.3, turn:1.5, wash:2.6, dragF:.9,  dragS:1.2, dragA:2,   hull:'pointy', color:C_TEAL, view:3 },
     dinghy:    { name:'Rowboat',      L:2.2, W:1.15, k:1.3, mass:1,   power:6,   reverse:.6, turn:1.1, wash:1.6, dragF:1.2, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL },
     speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM },
     swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM },
@@ -34,7 +34,7 @@ const BOATS =
     sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM },
     trawler:   { name:'Trawler',      L:3.3, W:1.2,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL },
     yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM },
-    cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY,  captainX:3.3 },
+    cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY, },
     container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL },
     // submarine: dives under boats and some docks (`under` docks), but only while it has air (see updateSubs in main.js)
     sub:       { name:'Nuclear Submarine', L:7, W:1.1, k:16, mass:8,   power:30,  reverse:.4, turn:.3,  wash:.4,  dragF:.5,  dragS:3,   dragA:2,   hull:'pointy', color:C_NAVY, sub:true },
