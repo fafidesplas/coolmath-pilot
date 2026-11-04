@@ -296,7 +296,7 @@ const SCALE_LEVELS =
         ducks: [{ x: 440, y: 572, kids: 3 }],
     },
     {
-        // sandbox, only with ?test: open water with a beach, piers (two a submarine can pass under), an islet, a current,
+        // sandbox, only with ?test: open water with a beach, piers, an islet, a current,
         // buoys, ducks and a few boats to bump. The buttons on the left spawn any boat type next to the one you drive.
         // No slips and no stars. Boats are real size, so the Island and Continent are huge: use RESTART to start over.
         name: 'Test Map', test: true, jam: true, view: [-130, -100, 130, 130], boats: [],
@@ -306,8 +306,6 @@ const SCALE_LEVELS =
             { x0: -60, y0: 96, x1: 60, y1: 100, quay: true },
             { x0: -40, y0: 70, x1: -34, y1: 100 },
             { x0: -90, y0: 40, x1: -60, y1: 46 },
-            { x0: 30, y0: 50, x1: 90, y1: 56, under: true },
-            { x0: 100, y0: -20, x1: 106, y1: 40, under: true },
         ],
         lands: [{ x: -90, y: -50, k: 6, circles: [[0, 0, 3], [2.5, .5, 2], [-2.4, -.3, 2.2]], grass: true }],
         currents: [{ x0: -125, y0: -100, x1: -60, y1: -80, dx: 2, dy: 0 }],

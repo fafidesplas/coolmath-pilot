@@ -101,7 +101,7 @@ See section 5 for each element. Things that get bumped stay where they end up: n
 Every hit costs money from the level's budget (3.6), from the impact energy and the masses involved, so a cruise ship's scrape costs far more than a rowboat's. Hitting a duck costs 1% of the budget. Damage and ducks hit show in the HUD and on the results.
 
 ### 3.10 Test Map (debug)
-Adding `?test` to the URL (`index.html?test`) loads the Test Map: a hidden sandbox level, shown as a TEST card after the regular levels. Open water with a beach, piers (two a submarine can pass under), an islet, a current, buoys, ducks and a few boats. Buttons down the left spawn any boat type at real size beside the one you drive; REMOVE BOAT and CLEAR ALL delete boats. No slips, no stars. It is a development tool, not part of the shipped level list.
+Adding `?test` to the URL (`index.html?test`) loads the Test Map: a hidden sandbox level, shown as a TEST card after the regular levels. Open water with a beach, piers, an islet, a current, buoys, ducks and a few boats. Buttons down the left spawn any boat type at real size beside the one you drive; REMOVE BOAT and CLEAR ALL delete boats. No slips, no stars. It is a development tool, not part of the shipped level list.
 
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
