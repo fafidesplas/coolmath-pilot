@@ -66,6 +66,8 @@ function jamUpdate(dt)
         const b = jamPick(uiToWorld(mousePos));
         if (b) { steerHeld = false; if (b != player) jamSelect(b); }
     }
+    // the hurt eyes and curse bubbles of bumped boats time out (stepWorld does this in the other levels)
+    for (const b of bodies) { if (b.hurtT > 0) b.hurtT -= dt; if (b.swearT > 0) b.swearT -= dt; }
     // every boat floats and can be shoved; buoys, logs and ducks too
     const floaters = bodies.filter(b => b.kind == 'buoy' || b.kind == 'log' || b.kind == 'duck');
     const sub = dt / SUBSTEPS;

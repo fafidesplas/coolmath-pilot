@@ -1,3 +1,6 @@
+## 2026-11-03 — Stuck curse bubbles in the crowded harbors
+- Bumping a boat in a crowded harbor made it curse, but the bubble's timer only ran in stepWorld, which these levels don't use, so the bubble stayed frozen at the start of its pop-in (a tiny panel with a big outline: a black spiky star above the boat) until restart. jamUpdate now ticks the hurt and curse timers. Not run in a browser yet.
+
 ## 2026-11-03 — Only the selected boat's slip shows
 - In the crowded harbors only the selected boat's slip is drawn (none while no boat is selected). The slips still exist and still park their boats.
 
