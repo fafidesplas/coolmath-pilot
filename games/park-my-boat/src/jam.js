@@ -1,6 +1,6 @@
 'use strict';
 // Crowded harbors: a level with jam: true starts as a packed corner of a harbor, every boat already in the
-// water and every one of them yours. Tap a boat to select it (a glowing outline shows which), then drive it to its own
+// water and every one of them yours. Tap a boat to select it (a white outline shows which), then drive it to its own
 // slip: a dashed box in free water with a ghost of that boat's hull in it. Switch boats whenever you like; the
 // one you leave keeps its momentum and glides on. Rest a boat in its slip for REST_TIME and it parks and holds
 // still (any boat resting in its own slip parks, driven or not). The other boats float too: you can shove them
@@ -169,16 +169,14 @@ function jamJudge(b)
     if (jamBoats.every(o => o.parked)) jamDone = 1.4;
 }
 
-// the boat being driven gets a soft glow outline: its own hull shape, stroked in a few widening, fainter passes
-// under the boat, so only a rim shows around it
+// the boat being driven gets a white outline: its own hull shape, filled and stroked white under the boat,
+// so only a rim shows around it
 function drawJamSelection()
 {
     const b = player;
     if (!b) return;
-    const pulse = .75 + .25*Math.sin(time*5), hull = b.type.W*b.k;
-    for (let i = 3; i >= 1; i--)
-        for (let j = 0; j < b.circles.length; j++)
-            drawCircle(b.world[j], (b.circles[j].r*2) + i*.09*cam.wu + .05*hull, C_SUNNY.scale(1, .22*pulse/i));
+    const P = painter(b).P;
+    drawPoly(b.type.hullPts.map(p => P(p.x, p.y)), WHITE, .34*cam.wu, WHITE);
 }
 
 function drawJamHud()

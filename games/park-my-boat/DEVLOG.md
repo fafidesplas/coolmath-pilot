@@ -1,3 +1,6 @@
+## 2026-11-03 — White outline for the selected boat
+- The glow looked bad in the crowded harbors. The selected boat now gets a plain white outline around its hull instead.
+
 ## 2026-11-03 — Level list trimmed
 - From the Level Sorting page: cut Marina Jam, Fishing Port and Big Ship Day. The list is now Odd Couple, Way Down, Rush Hour, Marina, Open Water, Raft-Up, plus the hidden bonus Continental Drift.
 - Level indexes after Marina shifted, so saved stars and bests for the old levels 5-10 now sit on the wrong levels (the old save has not been migrated).
