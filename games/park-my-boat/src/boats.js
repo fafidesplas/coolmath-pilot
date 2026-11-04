@@ -13,7 +13,6 @@ const C_CREAM  = rgb(1, .97, .90);         // #FFF7E5
 const C_TEAL   = rgb(.20, .58, .62);       // #33949E
 const C_SAND   = rgb(.98, .88, .66);
 const C_SHADOW = rgb(.17, .18, .26, .18);
-const C_SKIN   = rgb(.95, .76, .60);
 const C_ORANGE = rgb(.97, .60, .10);       // mini sub
 const C_NAVY   = rgb(.22, .29, .45);
 
@@ -27,18 +26,18 @@ const C_GRASS  = rgb(.60, .80, .45);       // island and continent interiors
 const BOATS =
 {
     jetski:    { name:'Jet Ski',      L:2.4, W:1.1,  k:1,   mass:.8,  power:7,   reverse:.3, turn:1.5, wash:2.6, dragF:.9,  dragS:1.2, dragA:2,   hull:'pointy', color:C_TEAL,  captainX:-.15, view:3 },
-    dinghy:    { name:'Rowboat',      L:2.2, W:1.15, k:1.3, mass:1,   power:6,   reverse:.6, turn:1.1, wash:1.6, dragF:1.2, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL, captainX:-.35 },
-    speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM, captainX:-.2 },
-    swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM, captainX:-.45 },
+    dinghy:    { name:'Rowboat',      L:2.2, W:1.15, k:1.3, mass:1,   power:6,   reverse:.6, turn:1.1, wash:1.6, dragF:1.2, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL },
+    speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM },
+    swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM },
     // mini submarine: a one or two person deep-sea explorer (yellow pontoons around a glass sphere); dives like the big one
-    minisub:   { name:'Mini Sub',     L:3.7, W:1.8,  k:1.1, mass:1.2, power:5,   reverse:.8, turn:1.7, wash:1.4, dragF:1.2, dragS:2.5, dragA:1.6, hull:'capsule', color:C_ORANGE, captainX:0, sub:true, scope:.55 },
-    sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM, captainX:-1.8 },
-    trawler:   { name:'Trawler',      L:3.3, W:1.2,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL, captainX:.55 },
-    yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM, captainX:.6 },
+    minisub:   { name:'Mini Sub',     L:3.7, W:1.8,  k:1.1, mass:1.2, power:5,   reverse:.8, turn:1.7, wash:1.4, dragF:1.2, dragS:2.5, dragA:1.6, hull:'capsule', color:C_ORANGE, sub:true, scope:.55 },
+    sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM },
+    trawler:   { name:'Trawler',      L:3.3, W:1.2,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL },
+    yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM },
     cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY,  captainX:3.3 },
-    container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL, captainX:-4.1 },
+    container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL },
     // submarine: dives under boats and some docks (`under` docks), but only while it has air (see updateSubs in main.js)
-    sub:       { name:'Nuclear Submarine', L:7, W:1.1, k:16, mass:8,   power:30,  reverse:.4, turn:.3,  wash:.4,  dragF:.5,  dragS:3,   dragA:2,   hull:'pointy', color:C_NAVY, captainX:0, sub:true },
+    sub:       { name:'Nuclear Submarine', L:7, W:1.1, k:16, mass:8,   power:30,  reverse:.4, turn:.3,  wash:.4,  dragF:.5,  dragS:3,   dragA:2,   hull:'pointy', color:C_NAVY, sub:true },
     // landmasses: blob hulls made of circles [x, y, r], no keel to speak of
     island:    { name:'Island',       L:10,  W:6,    k:3000, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
                  blob:[[0,0,2.6],[2.6,.6,1.9],[-2.7,-.5,2],[4,1.1,1],[-3.9,-.2,1.1],[.9,-1.5,1.4],[-1,1.7,1.3]] },
@@ -205,7 +204,6 @@ const BOAT_DECO =
         d.poly([[1.4,.16],[1.85,0],[1.4,-.16]], C_SUNNY, true);    // beak
         d.circle(1.18, .2, .12, C_INK);
         d.circle(1.18, -.2, .12, C_INK);
-        d.circle(.15, .3, .3, C_SKIN, true);                       // passenger
     },
     sailboat(d, t, b)
     {
@@ -246,10 +244,6 @@ const BOAT_DECO =
         }
         d.circle(.1, 0, 1.4, C_INK, true);                                                    // sphere ring
         d.circle(.1, 0, 1.25, rgb(.7, .9, .97), true);                                        // glass
-        d.circle(.05, .15, .5, C_SKIN, true);                                                 // pilot and friend, seen through the glass
-        d.circle(.05, -.3, .5, C_SKIN, true);
-        d.circle(.08, .15, .34, C_NAVY, true);
-        d.circle(.08, -.3, .34, C_CORAL, true);
         d.ellipse(.5, -.3, .3, .12, C_CREAM);                                                 // glass glint
     },
     sub(d, t, b)

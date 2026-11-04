@@ -60,8 +60,6 @@ function drawBoat(b)
     d.poly(t.deckPts, t.deck || b.color.lerp(C_CREAM, .45));
     if (len < .8) return;
     BOAT_DECO[t.key](d, t, b);
-    if (!t.blob && !t.sub && (b.kind == 'player' || b.kind == 'moored' || b.kind == 'traffic'))
-        drawCaptain(d, t.captainX, b, Math.min(1, 2.5 / (b.k || 1)));
     // submerged: a semi-transparent film of water over the whole hull, with a faint ripple line round it
     if (t.sub && b.dive > .02)
     {
@@ -71,19 +69,6 @@ function drawBoat(b)
         for (const part of t.film || []) drawPoly(part.map(p => d.P(p[0], p[1])), film, 0);
         drawPoly(pts, C_CLEAR, Math.min(LINE_W*.5, .05*(b.k || 1)), C_WATER2.scale(1, .7*b.dive));
     }
-}
-
-// Captain seen from above: cap, plus eyes looking toward the bow (wide when bonked).
-// s shrinks the captain on big ships so they stay person-sized.
-function drawCaptain(d, x, b, s=1)
-{
-    const hurt = b.hurtT > 0;
-    d.circle(x, 0, .62*s, C_SKIN, true);
-    d.circle(x - .08*s, 0, .42*s, b.kind == 'player' ? C_CREAM : C_NAVY, true);
-    d.line(x + .14*s, .2*s, x + .14*s, -.2*s, .1*s, C_INK);       // cap brim
-    const e = (hurt ? .17 : .1)*s;
-    d.circle(x + .26*s, .13*s, e, hurt ? C_CREAM : C_INK, hurt);
-    d.circle(x + .26*s, -.13*s, e, hurt ? C_CREAM : C_INK, hurt);
 }
 
 function drawDuck(b)
