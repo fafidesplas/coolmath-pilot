@@ -1,3 +1,6 @@
+## 2026-11-03 — Mini Sub redrawn
+- Redrawn after a Triton-style reference: long orange capsule hull (new `capsule` hull kind), 4.1 m, glass sphere with two pilots, thruster fans and a sensor panel at the nose, a dark checkered rack at the back. Checked in Chrome on `?test`.
+
 ## 2026-11-03 — Mini Sub
 - New boat type `minisub` (3.8 m, yellow pontoons round a glass sphere with two pilots). Uses the same dive, air and `under` dock rules as the Nuclear Submarine (`sub: true`); `scope` in the type sets where its periscope nub sits. Test Map spawn list is tighter to fit the extra button. Checked in Chrome on `?test`: spawns, draws, dive film and periscope show, no console errors. Not driven by hand yet; handling numbers are a first guess.
 

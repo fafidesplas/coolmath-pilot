@@ -42,7 +42,7 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 | Swan Pedalo | 2.6 m | 1 | 3.5 | 0.7 | 2.2 | Slow, spins on the spot |
 | Rowboat | 2.9 m | 1 | 6 | 0.6 | 1.1 | Neutral, the learning boat |
 | Zippy | 6.8 m | 1.5 | 13 | 0.5 | 0.9 | Fast, drifts in turns |
-| Mini Sub | 3.8 m | 1.2 | 5 | 0.8 | 1.7 | Yellow deep-sea explorer for one or two; nimble, slow; dives like the big sub |
+| Mini Sub | 4.1 m | 1.2 | 5 | 0.8 | 1.7 | Orange deep-sea explorer for one or two; nimble, slow; dives like the big sub |
 | Sailboat | 12 m | 3.5 | 7 | 0.5 | 0.7 | Strong keel, tracks straight |
 | Trawler | 26 m | 5 | 30 | 0.8 | 0.9 | Fishing boat; strong, pushes things (replaced the tugboat) |
 | Mega Yacht | 80 m | 10 | 30 | 0.5 | 0.35 | Long, slow to turn |
@@ -56,7 +56,7 @@ Mass and power are toy values before scaling. A level can set its own `k` for a 
 
 **Nuclear Submarine (new, 2026-11-03; 112 m, the long dark one):** Space or the DIVE button toggles diving. Submerged, it passes under every boat, duck and buoy and under docks marked `under` in the level (drawn as a pier with two rails; sand, walls and landmasses still stop it). It is drawn first, under a semi-transparent film of water, so boats and docks cover it, with a periscope on top. Submerged it burns air (`SUB_AIR_TIME` 9 s); at the surface it refills (`SUB_REFILL_TIME` 5 s). At zero it surfaces by itself and can't dive again until it has 30% air (`SUB_DIVE_MIN`). A bar by the button shows the air and flashes when low. It can only be judged parked at the surface. Surfacing under a boat or dock bumps like any hit.
 
-**Mini Sub (new, 2026-11-03; 3.8 m, the yellow explorer):** a one or two person research sub, a little bigger than the Swan Pedalo: yellow pontoons with grating round a glass sphere, two pilots inside. It dives exactly like the Nuclear Submarine (same air, same rules, `sub: true`), but it turns fast and is slow, so it is the small-scale way to use `under` docks. Its periscope is a small nub over the sphere.
+**Mini Sub (new, 2026-11-03; 4.1 m, the orange explorer):** a one or two person research sub (modeled on a Triton-style submersible), a little bigger than the Swan Pedalo: a long orange capsule hull with a glass sphere and two pilots inside, thruster fans and a sensor panel at the nose, a dark checkered equipment rack at the back. It dives exactly like the Nuclear Submarine (same air, same rules, `sub: true`), but it turns fast and is slow, so it is the small-scale way to use `under` docks. Its periscope is a small nub over the sphere.
 
 ### 3.4 Stopping (new: no anchor)
 - There is no anchor and no anchor button. The player stops with reverse, with drag, or by letting go early.
