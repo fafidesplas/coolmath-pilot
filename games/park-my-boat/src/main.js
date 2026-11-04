@@ -800,11 +800,19 @@ function judgeBoat()
     }
 }
 
+// parking levels: stars from the share of the budget kept (3 at 90%+, 2 at 60%+, else 1), so less damage is more stars.
+// A level can set its own `budget` ($); acc is that share, and it is what 'best' compares
+const PARK_BUDGET = 1000;
+function parkingResult()
+{
+    const budget = level.budget || PARK_BUDGET, kept = Math.max(0, budget - damages) / budget;
+    return { acc: kept, stars: kept >= .9 ? 3 : kept >= .6 ? 2 : 1 };
+}
+
 function showComplete()
 {
-    const i = levelIndex, acc = accs.reduce((a, b) => a + b, 0) / accs.length;
-    const stars = acc >= .85 ? 3 : acc >= .6 ? 2 : 1;
-    result = level.jam ? jamResult() : { acc, stars };
+    const i = levelIndex;
+    result = level.jam ? jamResult() : parkingResult();
     result.isBest = result.stars > (saveData.stars[i] || 0) || result.acc > (saveData.best[i] || 0);
     // the level editor's test runs don't count
     if (!window.pmbEditor?.testing)
@@ -1423,7 +1431,7 @@ function drawComplete()
     drawPanel(c.add(vec2(0, (1 - ease)*-12)), 24, 17, C_CREAM, .8);
     if (k < 1) return;
     txt(level.jam ? 'ALL CLEAR!' : parkedWord, 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
-    if (level.jam) drawCompleteStars(t);
+    drawCompleteStars(t);
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
     if (level.jam)
     {

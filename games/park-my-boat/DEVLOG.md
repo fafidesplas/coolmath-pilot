@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-11-03 — Stars from damage (parking mode)
+- Parking levels now give stars by how little damage you took: share of the budget kept, 3 stars at 90%+, 2 at 60%+, else 1 (as in GDD 3.6 and the jam levels). Accuracy no longer sets stars; it still gates "parked". The result screen shows the stars again under the damages bill.
+- Budget is `PARK_BUDGET` = $1,000 for every parking level for now; a level can override it with `budget` in its data. Not tuned: play each level and set budgets so a light scrape is about 5% and a solid hit 15-25%.
+- Old saved stars (from accuracy) stay until beaten.
+- Not built: the 5% miss fee from GDD 3.6.
+
 ## 2026-11-03 — Editor: box select
 - Level editor: Cmd/Ctrl+drag on empty space draws a selection box; everything wholly inside joins the selection (added to the current one). Items inside show a preview outline while dragging. Slips and path points are skipped (they follow their boat). Move, nudge, rotate, D and Delete already worked on groups.
 - Next: try it in the editor.

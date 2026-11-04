@@ -736,7 +736,7 @@ window.pmbEditor = (() =>
         if (ED.testing)
         {
             if (gameScreen == 'title' || gameScreen == 'levels') { ED.testing = false; testTag.style.display = 'none'; }
-            else if (gameScreen == 'complete' && screenTime > 1.5) backToEdit(`Parked: accuracy ${Math.round(result.acc*100)}%, ${result.stars} star${result.stars == 1 ? '' : 's'}`);
+            else if (gameScreen == 'complete' && screenTime > 1.5) backToEdit(`Parked: ${fmtMoney(damages)} damages, ${result.stars} star${result.stars == 1 ? '' : 's'}`);
             return false;
         }
         if (!ED.active) return false;
