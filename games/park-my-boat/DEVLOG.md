@@ -1,3 +1,7 @@
+## 2026-11-03 — Level list trimmed
+- From the Level Sorting page: cut Marina Jam, Fishing Port and Big Ship Day. The list is now Odd Couple, Way Down, Rush Hour, Marina, Open Water, Raft-Up, plus the hidden bonus Continental Drift.
+- Level indexes after Marina shifted, so saved stars and bests for the old levels 5-10 now sit on the wrong levels (the old save has not been migrated).
+
 ## 2026-11-03 — Crowded harbors use the normal cost system
 - The five crowded-harbor levels now charge damage like every other level: the standard hit costs (`onHit`), the default $1,000 budget, a "Damages" line in the HUD and on the results. The per-meter push charge, the flat $1,000 bump and the $10,000 budgets are gone.
 - The selected boat shows a soft glow outline around its hull instead of the big ring.

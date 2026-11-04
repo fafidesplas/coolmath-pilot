@@ -235,24 +235,6 @@ const SCALE_LEVELS =
         ],
     },
     {
-        // a crowded harbor (src/jam.js): park every boat of a packed corner, each in its own slip around it. Quay along the top, sand to
-        // the west and along the bottom up to the harbor mouth (x 30-44); open sea to the east.
-        name: 'Marina Jam', jam: true, view: [-2, -29, 73, 26], boats: [],
-        land: [[-50, -50, 0, 60], [-50, -50, 30, 0], [-50, 27, 60, 60]],
-        docks: [{ x0: -1, y0: 24, x1: 44, y1: 27, quay: true }],
-        moored:
-        [
-            { boat: 'trawler', x: 14.2, y: 5.3, a: 0, slip: { x: 48.2, y: -10, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 33, y: 7.2, a: PI/2, slip: { x: 53.2, y: 17.88, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'jetski', x: 38, y: 3.2, a: -PI/2, slip: { x: 47.7, y: 23.95, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'pontoon', x: 38, y: 11.5, a: PI/2, slip: { x: 37.6, y: -23.8, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'speedboat', x: 42, y: 18.4, a: -PI/2, slip: { x: 65.1, y: 19.4, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'swan', x: 33, y: 19.5, a: PI/2, slip: { x: 64.87, y: 7.32, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'yacht', k: 2, x: 12, y: 18.5, a: 0, slip: { x: 52, y: 5.4, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'speedboat', x: 8, y: 12.5, a: PI, slip: { x: 50.4, y: -22.9, a: 0, pad: [1, .8], fingers: 'none' } },
-        ],
-    },
-    {
         // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
         // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
         // sailboats, the rowboats, and the swan in the middle.
@@ -271,51 +253,6 @@ const SCALE_LEVELS =
         ],
         buoys: [[14.5, 37.5, 1.5]],
         ducks: [{ x: 44, y: 6.5, kids: 2 }],
-    },
-    {
-        // jam 2: ten boats from a 40 m container ship to jet skis, one parked on the diagonal; buoys and
-        // ducks drift between them. Quay along the top, sand west and along the bottom to the mouth (x 40-64).
-        name: 'Fishing Port', jam: true, view: [-2, -32, 96, 38], boats: [],
-        land: [[-50, -50, 0, 80], [-50, -50, 40, 0], [-50, 39, 90, 90]],
-        docks: [{ x0: -1, y0: 36, x1: 64, y1: 39, quay: true }],
-        moored:
-        [
-            { boat: 'container', k: 4, x: 20.5, y: 4, a: 0, slip: { x: 62, y: -25.4, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'trawler', x: 46, y: 14.5, a: PI/2, slip: { x: 57.2, y: -10, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'jetski', x: 56, y: 3, a: -PI/2, slip: { x: 60.95, y: 2.7, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'pontoon', x: 56, y: 22, a: PI, slip: { x: 59.6, y: 10.2, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 63, y: 22, a: -PI/2, slip: { x: 70.88, y: 28.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'yacht', k: 2, x: 12, y: 15, a: 0, slip: { x: 11, y: 29.4, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'speedboat', x: 30, y: 14, a: -PI/4, slip: { x: 42.4, y: 33.1, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'swan', x: 30, y: 26, a: 0, slip: { x: 24.32, y: 25.87, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'dinghy', x: 6, y: 22, a: PI, slip: { x: 12.08, y: 22.2675, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'jetski', x: 24, y: 32, a: 0, slip: { x: 28.95, y: 31.7, a: PI/2, pad: [1, .8], fingers: 'none' } },
-        ],
-        buoys: [[34, 31, 2], [14, 26, 2]],
-        ducks: [{ x: 20, y: 30, kids: 3 }],
-    },
-    {
-        // jam 3: big ships and small fry. A 50 m cruise ship and a 45 m container ship, a yacht on the
-        // diagonal, buoys and two duck families. Sand west and along the bottom to the mouth (x 60-94).
-        name: 'Big Ship Day', jam: true, view: [-2, -32, 126, 52], boats: [],
-        land: [[-50, -50, 0, 90], [-50, -50, 60, 0], [-50, 53, 120, 120]],
-        docks: [{ x0: -1, y0: 50, x1: 94, y1: 53, quay: true }],
-        moored:
-        [
-            { boat: 'cruise', k: 5, x: 26, y: 5, a: 0, slip: { x: 91.625, y: -5.9625, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'container', k: 4.5, x: 64, y: 26, a: PI/2, slip: { x: 84.75, y: -19.825, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'yacht', k: 3, x: 44, y: 25, a: -PI/4, slip: { x: 106.5, y: 15.1, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'pontoon', x: 80, y: 14, a: PI, slip: { x: 36.6, y: 14.2, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 88, y: 14, a: -PI/2, slip: { x: 114.88, y: -21.8, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'trawler', x: 82, y: 33, a: PI/2, slip: { x: 107.2, y: 35, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'speedboat', x: 14, y: 20, a: 0, slip: { x: 14.4, y: 13.1, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'jetski', x: 72, y: 6, a: -PI/2, slip: { x: 76.95, y: 5.7, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'swan', x: 30, y: 38.5, a: 0, slip: { x: 29.87, y: 43.32, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'dinghy', x: 10, y: 38, a: PI, slip: { x: 10.08, y: 33.2675, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'jetski', x: 52, y: 44, a: 0, slip: { x: 56.95, y: 43.7, a: PI/2, pad: [1, .8], fingers: 'none' } },
-        ],
-        buoys: [[22, 30, 2.5], [55, 12, 2], [74, 22, 2]],
-        ducks: [{ x: 18, y: 12, kids: 3 }, { x: 46, y: 42, kids: 2 }],
     },
     {
         // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats, party barges,
