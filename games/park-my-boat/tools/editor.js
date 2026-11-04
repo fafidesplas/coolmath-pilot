@@ -9,7 +9,7 @@
     them, every part you didn't touch keeps its exact text (comments, ...basin(...), tiedUp(...)), and
     the parts you did touch are written out as numbers.
 
-    Mouse: drag empty space to pan, wheel to zoom, click to select, drag to move, drag an edge of a
+    Mouse: Cmd/Ctrl+drag on empty space draws a selection box (adds to the selection); drag empty space to pan, wheel to zoom, click to select, drag to move, drag an edge of a
     selected sand / dock / current / wall rect to resize, Shift+drag on empty space for new sand. Traffic
     boats: P with one selected, then click to add path points (P, Enter or Esc to finish); drag a
     point to move it. A selected boat, slip or log has a rotate handle on an arm off its bow: drag it
@@ -302,6 +302,23 @@ window.pmbEditor = (() =>
         return Object.keys(e).length ? e : null;
     }
 
+    const cmdDown = () => keyIsDown('MetaLeft') || keyIsDown('MetaRight') || keyIsDown('ControlLeft') || keyIsDown('ControlRight');
+    // Cmd/Ctrl+drag on empty space: everything that lies wholly inside the box (so a big sand rect behind it stays out)
+    function marqueeItems(d)
+    {
+        const r = rectShape(d.from.x, d.from.y, d.to.x, d.to.y), out = [];
+        for (const kind of PICK_ORDER)
+        {
+            if (!GROUPABLE(kind)) continue;
+            for (let i = 0; i < count(kind); i++)
+            {
+                const b = boundsOf(shapeOf({ kind, i }));
+                if (b.x0 >= r.x0 && b.x1 <= r.x1 && b.y0 >= r.y0 && b.y1 <= r.y1) out.push({ kind, i });
+            }
+        }
+        return out;
+    }
+
     function mouse()
     {
         const p = mouseWorld();
@@ -340,6 +357,7 @@ window.pmbEditor = (() =>
                     drag = { mode: 'move', from: vec2(snap(p.x), snap(p.y)), snapped: false, keep: keep ? it : null };
                 }
                 else if (shift) drag = { mode: 'new', from: vec2(snap(p.x), snap(p.y)) };
+                else if (cmdDown()) drag = { mode: 'marquee', from: p.copy(), to: p.copy(), base: group() ? [...group()] : sel ? [normItem(sel)] : [] };
                 else drag = { mode: 'pan', mouse: mousePos.copy(), cam: cam.pos.copy(), moved: false };
             }
             refreshPanel();
@@ -347,6 +365,8 @@ window.pmbEditor = (() =>
         if (drag && mouseIsDown(0)) dragTo(p);
         if (drag && mouseWasReleased(0))
         {
+            if (drag.mode == 'marquee' && drag.moved) setSelection([...drag.base, ...marqueeItems(drag).filter(it => !drag.base.some(b => same(b, it)))]);
+            if (drag.mode == 'marquee' && !drag.moved) { sel = null; multi = []; }   // a plain Cmd/Ctrl+click on empty space deselects
             if (drag.mode == 'new') addRect(drag.from, vec2(snap(p.x), snap(p.y)));
             if (drag.mode == 'pan' && !drag.moved) { sel = null; multi = []; refreshPanel(); }   // a click on empty space deselects
             if (drag.mode == 'move' && drag.keep && !drag.snapped) { sel = drag.keep; multi = []; refreshPanel(); }
@@ -361,6 +381,12 @@ window.pmbEditor = (() =>
             const d = mousePos.subtract(drag.mouse);
             if (d.length() > .1) drag.moved = true;
             cam.pos = drag.cam.subtract(d.scale(cam.wu));
+            return;
+        }
+        if (drag.mode == 'marquee')
+        {
+            drag.to = p;
+            if (p.distance(drag.from) > .1*cam.wu) drag.moved = true;
             return;
         }
         if (drag.mode == 'rotate')
@@ -788,6 +814,11 @@ window.pmbEditor = (() =>
                 const hs = vec2(.25*W), mx = (s.x0 + s.x1)/2, my = (s.y0 + s.y1)/2;
                 for (const p of [vec2(s.x0, my), vec2(s.x1, my), vec2(mx, s.y0), vec2(mx, s.y1)]) drawRect(p, hs, C_ED);
             }
+        }
+        if (drag?.mode == 'marquee' && drag.moved)
+        {
+            for (const it of marqueeItems(drag)) outline(shapeOf(it), .08*W, C_ED.scale(1, .7));
+            outline(rectShape(drag.from.x, drag.from.y, drag.to.x, drag.to.y), .05*W, C_ED);
         }
         if (drag?.mode == 'new' && drag.to) outline(rectShape(drag.from.x, drag.from.y, drag.to.x, drag.to.y), .08*W, C_ED);
     };

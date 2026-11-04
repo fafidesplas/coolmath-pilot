@@ -1,5 +1,9 @@
 # Dock All The Boats — devlog
 
+## 2026-11-03 — Editor: box select
+- Level editor: Cmd/Ctrl+drag on empty space draws a selection box; everything wholly inside joins the selection (added to the current one). Items inside show a preview outline while dragging. Slips and path points are skipped (they follow their boat). Move, nudge, rotate, D and Delete already worked on groups.
+- Next: try it in the editor.
+
 ## 2026-11-03 — Cursing boats
 - Parking results screen shows only the title word and the damages bill (counting up). Stars, accuracy, tries, ducks, per-boat accuracy and NEW BEST are no longer shown there; jam levels keep their old screen. Stars and accuracy are still computed and saved.
 - The parking burst is one massive splash (3 expanding shock rings, 70 droplets, 12 big foam blobs) with 8 crabs (`drawCrab`) and 8 colorful fish (`drawFish`, swimming the way they fly) thrown out of it (`confetti()` in `src/main.js`). No anchors.
