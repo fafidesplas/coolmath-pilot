@@ -1,3 +1,8 @@
+## 2026-11-03 — Boat editor
+- New debug page `tools/boat-editor.html` for the boat models: edit each type's numbers (size, scale, handling, hull, colors) and its deck drawing as draggable shapes, with live collision circles and in-game size previews; make new boat types from a copy. Cmd+S rewrites only the changed boats in `src/boats.js`. See "Boat editor" in CLAUDE.md.
+- Checked in Chrome: loads all 13 boats, drag/resize/mirror/undo work, `boatEditor.selfTest()` passes (every boat written out loads back the same). Saving to disk not run by hand yet (it needs the folder picker).
+- Next: try it on a real redraw; consider moving the deck drawings to data if editing them by hand in code stops being needed.
+
 ## 2026-11-03 — Mini Sub redrawn
 - Redrawn after a Triton-style reference: long orange capsule hull (new `capsule` hull kind), 4.1 m, glass sphere with two pilots, thruster fans and a sensor panel at the nose, a dark checkered rack at the back. Checked in Chrome on `?test`.
 
