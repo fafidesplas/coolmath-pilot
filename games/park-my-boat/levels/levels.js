@@ -140,7 +140,7 @@ const SCALE_LEVELS =
     },
     {
         name: 'Way Down',
-        land: [[-3000, -110, 320, 3900], [900, -80, 3990, 3920], [-3000, 915, 4700, 3900]],
+        land: [[-3000, -110, 320, 3900], [900, -130, 3990, 3920], [-3000, 915, 4700, 3900]],
         docks:
         [
             { x0: 320, y0: 900, x1: 1470, y1: 915, quay: true },
@@ -150,13 +150,13 @@ const SCALE_LEVELS =
             { x0: 518.4, y0: 885.2, x1: 520.6, y1: 891.6 },
             { x0: 534.4, y0: 885.2, x1: 536.6, y1: 891.6 },
             { x0: 545.4, y0: 885.2, x1: 547.6, y1: 891.6 },
-            { x0: 304, y0: 786, x1: 432, y1: 800 },
+            { x0: 304, y0: 786, x1: 602, y1: 800 },
         ],
         boats:
         [
             { boat: 'trawler', start: { x: 350, y: 873, a: 0 }, slip: { x: 455, top: 900, a: PI/2, pad: [1.2, 1] } },
             { boat: 'jetski', start: { x: 480, y: 893, a: 0 }, slip: { x: 571.5, top: 900, a: PI/2, pad: [1.4, 1] } },
-            { boat: 'container', start: { x: 615, y: 698, a: -PI/2 }, slip: { x: 616, y: 136, a: -PI/2, pad: [1.4, 1] } },
+            { boat: 'container', start: { x: 640, y: 698, a: -PI/2 }, slip: { x: 636, y: 166, a: -PI/2, pad: [1.4, 1] } },
         ],
         // the trawler's tight squeeze on the way to its slip: two 40 m yachts in a line west of it, one
         // nose-in to the quay, leave a 13 m gap (y 845-858) for a 9.6 m boat
@@ -165,15 +165,8 @@ const SCALE_LEVELS =
         traffic:
         [
             { boat: 'speedboat', path: [[510, 879.4], [501.4, 882.6], [498.6, 898.2]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'trawler', path: [[560.5, 811.5], [564, 894]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'sailboat', path: [[523.5, 885], [522, 867], [504, 855.5]], end: 'stop', speed: 0.6, during: [2] },
-            { boat: 'speedboat', path: [[534.5, 863], [529, 874], [529.5, 889.5]], end: 'stop', speed: 0.6, during: [2] },
-            { boat: 'dinghy', path: [[539, 847.5], [538, 890]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'dinghy', path: [[542, 846.5], [540.5, 890]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'dinghy', path: [[544.5, 844.5], [543.5, 889.5]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'jetski', path: [[549.5, 852], [551, 897]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'jetski', path: [[551.7, 849.8], [553.2, 896.8]], end: 'back', speed: 0.6, during: [2] },
-            { boat: 'jetski', path: [[554.5, 847.2], [556, 897.2]], end: 'back', speed: 0.6, during: [2] },
+            { boat: 'trawler', path: [[570.5, 820.5], [589, 838], [598, 856], [600, 878], [588, 890], [572, 888], [560, 870], [554, 858], [556, 840]], end: 'loop', speed: 0.6, during: [2] },
+            { boat: 'sailboat', path: [[541, 869.5], [530.5, 855.5], [502.5, 872], [501.5, 881.5], [512.5, 877.5], [519.5, 869.5], [526.5, 863.5], [534.5, 868.5], [540.5, 869.5]], end: 'back', speed: 0.6, during: [2] },
         ],
     },
     {
@@ -181,16 +174,11 @@ const SCALE_LEVELS =
         // time; all of it fits in the jet ski's view. The 3.5 m of sand between canals is where you wait for
         // a gap. The loops turn round in lagoons just off screen to the north and south, which run out to sea.
         name: 'Rush Hour',
-        land: sandAround([-100, -100, 130, 100],
-        [
-            [-6, -4, 1.5, 4], [-6, -2.5, 30.5, 2.5], [26.5, -4, 30.5, 4],     // start pool, channel, slip pool
-            [1.5, -18, 7.5, 18], [11, -18, 17, 18], [20.5, -18, 26.5, 18],    // the three canals
-            [-6, 18, 36, 100], [-6, -100, 36, -18],                           // lagoons at both ends, open to the sea
-        ]),
-        docks: [{ x0: 30.5, y0: -6, x1: 32, y1: 6, quay: true }],
+        land: [[-100, -100, -6, 100], [-7, -18, 1.5, -4], [-7, 4, 1.5, 18], [7.5, -28, 11, 33.5], [17, -36.8, 20.5, -2.5], [17, 2.5, 20.5, 33.5], [26.5, -18, 31.5, -4], [26.5, 4, 31.5, 18], [30.5, -18, 37, 18], [32.5, -100, 130, 100]],
+        docks: [{ x0: 30.5, y0: -6, x1: 32, y1: 6, quay: true }, { x0: -7.5, y0: 32.5, x1: 37.5, y1: 34.5 }, { x0: -8.1, y0: -42.9, x1: 38.6, y1: -34.4 }],
         boats:
         [
-            { boat: 'jetski', start: { x: -1, y: 0, a: 0 }, slip: { right: 30.5, y: 0, a: 0, pad: [1.4, 1] } },
+            { boat: 'jetski', start: { x: -2, y: 0, a: 0 }, slip: { right: 30.5, y: 0, a: 0, pad: [1.4, 1] } },
         ],
         traffic:
         [
@@ -198,6 +186,29 @@ const SCALE_LEVELS =
             ...loopLane(14, 1.9, 24, true, 3, Array(5).fill([['jetski', .2], ['dinghy', .33]]).flat()),
             ...loopLane(23.5, 1.9, 24, false, 4, Array(10).fill(['jetski', .27])),
         ],
+    },
+    {
+        // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
+        // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
+        // sailboats, the rowboats, and the swan in the middle.
+        name: 'Open Water', jam: true, view: [-24, -7, 84, 52], boats: [], land: [], docks: [],
+        walls: [{ x0: -108, y0: -91, x1: -78, y1: 136 }, { x0: 138, y0: -91, x1: 168, y1: 136 }, { x0: -108, y0: -91, x1: 168, y1: -61 }, { x0: -108, y0: 106, x1: 168, y1: 136 }],  // closes the sea round the view; delete one to open that side
+        moored:
+        [
+            { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'yacht', k: 1.6, x: 21.1, y: 11.05, a: PI, slip: { x: 2.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'speedboat', k: 2.6, x: 32.5, y: 11.05, a: PI, slip: { x: 15.8, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'sailboat', k: 1.5, x: 41.24, y: 11.05, a: PI, slip: { x: 26.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'sailboat', x: 21.4, y: 20, a: PI/2, slip: { x: 10.88, y: 31.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
+            { boat: 'sailboat', x: 38.6, y: 20, a: -PI/2, slip: { x: 50.88, y: 10.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
+            { boat: 'sailboat', x: 30, y: 24.02, a: 0, slip: { x: 19.2, y: 43.88, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'sailboat', x: 30, y: 15.98, a: PI, slip: { x: 40.2, y: -2.12, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'dinghy', x: 27.2, y: 20, a: PI/2, slip: { x: 35.08, y: 4.2675, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'dinghy', x: 32.8, y: 20, a: -PI/2, slip: { x: 42.08, y: 4.2675, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'swan', x: 30, y: 20, a: 0, slip: { x: 10.32, y: 14.87, a: PI/2, pad: [1, .8], fingers: 'none' } },
+        ],
+        buoys: [[14.5, 37.5, 1.5]],
+        ducks: [{ x: 44, y: 6.5, kids: 2 }],
     },
     {
         // a crowded yacht marina: big yachts along the quay, two piers packed on both sides, open water
@@ -233,29 +244,6 @@ const SCALE_LEVELS =
             { boat: 'speedboat', path: [[360, 278], [40, 278]], end: 'back', speed: .15 },
             { boat: 'dinghy', path: [[110, 42], [370, 42]], end: 'back', speed: .33 },
         ],
-    },
-    {
-        // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
-        // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
-        // sailboats, the rowboats, and the swan in the middle.
-        name: 'Open Water', jam: true, view: [-24, -7, 84, 52], boats: [], land: [], docks: [],
-        walls: [{ x0: -108, y0: -91, x1: -78, y1: 136 }, { x0: 138, y0: -91, x1: 168, y1: 136 }, { x0: -108, y0: -91, x1: 168, y1: -61 }, { x0: -108, y0: 106, x1: 168, y1: 136 }],  // closes the sea round the view; delete one to open that side
-        moored:
-        [
-            { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'yacht', k: 1.6, x: 21.1, y: 11.05, a: PI, slip: { x: 2.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'speedboat', k: 2.6, x: 32.5, y: 11.05, a: PI, slip: { x: 15.8, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', k: 1.5, x: 41.24, y: 11.05, a: PI, slip: { x: 26.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 21.4, y: 20, a: PI/2, slip: { x: 10.88, y: 31.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 38.6, y: 20, a: -PI/2, slip: { x: 50.88, y: 10.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 30, y: 24.02, a: 0, slip: { x: 19.2, y: 43.88, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'sailboat', x: 30, y: 15.98, a: PI, slip: { x: 40.2, y: -2.12, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'dinghy', x: 27.2, y: 20, a: PI/2, slip: { x: 35.08, y: 4.2675, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'dinghy', x: 32.8, y: 20, a: -PI/2, slip: { x: 42.08, y: 4.2675, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'swan', x: 30, y: 20, a: 0, slip: { x: 10.32, y: 14.87, a: PI/2, pad: [1, .8], fingers: 'none' } },
-        ],
-        buoys: [[14.5, 37.5, 1.5]],
-        ducks: [{ x: 44, y: 6.5, kids: 2 }],
     },
     {
         // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats,
