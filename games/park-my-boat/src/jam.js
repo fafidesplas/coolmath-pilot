@@ -8,7 +8,7 @@
 // is the cheap way. Park every boat; stars come from the money kept (the default parking budget).
 //
 // level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows: the crowd and the slips; an invisible
-//               wall closes the sea round it), moored: the boats, each with a slip
+//               `walls` in the level data close the sea round it), moored: the boats, each with a slip
 //               ({ x, y, a, pad, fingers: 'none' }, as in a chain level's boats).
 
 let jamBoats = [], jamDone = -1;
@@ -23,12 +23,6 @@ function jamLoad(L)
         b.lastPos = b.pos.copy();
         return b;
     });
-    // the sea round the view box is closed by invisible walls (well outside the view), so a boat can't leave the harbor
-    // the walls sit well outside the view (half its size), so the follow camera never shows a boat stopped by thin air
-    const [vx0, vy0, vx1, vy1] = L.view, m = .5*Math.max(vx1 - vx0, vy1 - vy0), t = 100;
-    const [x0, y0, x1, y1] = [vx0 - m, vy0 - m, vx1 + m, vy1 + m];
-    for (const r of [[x0 - t, y0 - t, x0, y1 + t], [x1, y0 - t, x1 + t, y1 + t], [x0 - t, y0 - t, x1 + t, y0], [x0 - t, y1, x1 + t, y1 + t]])
-        rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], wall:true });
     jamDone = -1;
     fleet = []; slips = []; slip = undefined;
 }

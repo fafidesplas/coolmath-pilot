@@ -1,3 +1,6 @@
+## 2026-11-03 — Crowded-harbor walls are level data
+- The walls round a crowded harbor were made by code, so the editor could not show or remove them. They are now ordinary `walls` in Open Water and Raft-Up (four rects half a view-width outside the view), visible in the editor: select one and press Delete to open that side. jamLoad no longer adds walls itself. Not run in a browser yet.
+
 ## 2026-11-03 — Crowded-harbor walls moved out
 - The invisible walls sat right on the edge of the view box, so with the follow camera a boat could stop at nothing at the bottom of Raft-Up. They now sit half a view-width outside the box. Not run in a browser yet.
 

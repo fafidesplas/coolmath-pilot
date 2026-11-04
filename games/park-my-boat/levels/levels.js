@@ -239,6 +239,7 @@ const SCALE_LEVELS =
         // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
         // sailboats, the rowboats, and the swan in the middle.
         name: 'Open Water', jam: true, view: [-24, -7, 84, 52], boats: [], land: [], docks: [],
+        walls: [{ x0: -108, y0: -91, x1: -78, y1: 136 }, { x0: 138, y0: -91, x1: 168, y1: 136 }, { x0: -108, y0: -91, x1: 168, y1: -61 }, { x0: -108, y0: 106, x1: 168, y1: 136 }],  // closes the sea round the view; delete one to open that side
         moored:
         [
             { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
@@ -260,6 +261,7 @@ const SCALE_LEVELS =
         // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats,
         // a 20 m yacht and the trawler, with small boats pinning the outer pair's ends. 6 rounds.
         name: 'Raft-Up', jam: true, view: [-5, 3, 73, 57], boats: [], land: [], docks: [],
+        walls: [{ x0: -74, y0: -66, x1: -44, y1: 126 }, { x0: 112, y0: -66, x1: 142, y1: 126 }, { x0: -74, y0: -66, x1: 142, y1: -36 }, { x0: -74, y0: 96, x1: 142, y1: 126 }],  // closes the sea round the view; delete one to open that side
         moored:
         [
             { boat: 'jetski', x: 32.00, y: 32.00, a: PI/4, slip: { x: 16.7, y: 39.95, a: 0, pad: [1, .8], fingers: 'none' } },
