@@ -155,6 +155,17 @@ window.pmbEditor = (() =>
         cam.pos = vec2((b.x0 + b.x1)/2 + (rightUi() - leftUi())/2*cam.wu, (b.y0 + b.y1)/2);
     }
     const slipBox = n => { const s = slips[n]; return { x0: s.pos.x - s.w/2, y0: s.pos.y - s.h/2, x1: s.pos.x + s.w/2, y1: s.pos.y + s.h/2 }; };
+    // a moored boat's own slip (crowded harbors), the same box makeSlip builds: { pos, w, h, wid }
+    function mslipGeom(m)
+    {
+        const t = BOATS[m.boat], k = boatK(def, m), s = m.slip, pad = s.pad || [1.4, 1];
+        const leeway = t.L*k >= BIG_SHIP_LENGTH ? BIG_SHIP_LEEWAY : 1;
+        const len = (t.L + pad[0])*k*leeway, wid = (t.W + pad[1])*k*leeway;
+        const vertical = Math.abs(Math.sin(s.a)) > .5;
+        const w = vertical ? wid : len, h = vertical ? len : wid;
+        return { pos: vec2(s.x ?? s.right - w/2, s.y ?? s.top - h/2), w, h, wid };
+    }
+    const mslipBox = i => { const g = mslipGeom(def.moored[i]); return { x0: g.pos.x - g.w/2, y0: g.pos.y - g.h/2, x1: g.pos.x + g.w/2, y1: g.pos.y + g.h/2 }; };
     function frameBoat(n)
     {
         if (!slips[n]) return;
@@ -208,6 +219,7 @@ window.pmbEditor = (() =>
         {
             case 'start':   { const e = def.boats[i]; return boatShape(e.boat, boatK(def, e), e.start.x, e.start.y, e.start.a); }
             case 'slip':    { const b = slipBox(i); return rectShape(b.x0, b.y0, b.x1, b.y1); }
+            case 'mslip':   { const b = mslipBox(i); return rectShape(b.x0, b.y0, b.x1, b.y1); }
             case 'moored': case 'drifters': { const m = def[it.kind][i]; return boatShape(m.boat, boatK(def, m), m.x, m.y, m.a); }
             case 'traffic': { const t = def.traffic[i], [a, b] = t.path; return boatShape(t.boat, boatK(def, t), a[0], a[1], Math.atan2(b[1] - a[1], b[0] - a[0])); }
             case 'point':   { const q = def.traffic[i].path[it.j]; return { type: 'circle', c: vec2(q[0], q[1]), r: .3*cam.wu }; }
@@ -248,8 +260,10 @@ window.pmbEditor = (() =>
     }
 
     // small things first, so they can be picked off the big things they sit on
-    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'currents', 'walls', 'docks', 'lands', 'land'];
-    function count(kind) { return kind == 'start' || kind == 'slip' ? def.boats.length : (def[kind] || []).length; }
+    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'mslip', 'currents', 'walls', 'docks', 'lands', 'land'];
+    function count(kind) { return kind == 'start' || kind == 'slip' ? def.boats.length : kind == 'mslip' ? (def.moored || []).length : (def[kind] || []).length; }
+    // a moored boat may have no slip (only crowded harbors do)
+    const exists = (kind, i) => kind != 'mslip' || !!def.moored[i]?.slip
     // which traffic boat's path points are showing: the selected boat's, or its point's
     const pathOf = () => !group() && (sel?.kind == 'traffic' || sel?.kind == 'point') ? sel.i : null;
     function pick(p)
@@ -260,13 +274,13 @@ window.pmbEditor = (() =>
                 if (hit(shapeOf({ kind: 'point', i: t, j }), p)) return { kind: 'point', i: t, j };
         for (const kind of PICK_ORDER)
             for (let i = count(kind); i--;)
-                if (hit(shapeOf({ kind, i }), p)) return { kind, i };
+                if (exists(kind, i) && hit(shapeOf({ kind, i }), p)) return { kind, i };
         return null;
     }
     const same = (a, b) => a && b && a.kind == b.kind && a.i == b.i && a.j == b.j;
     // a path point stands for its traffic boat and a slip for its chain boat; those two are the only things that can't join a group alone
-    const GROUPABLE = k => k != 'point' && k != 'slip';
-    const normItem = x => x?.kind == 'point' ? { kind: 'traffic', i: x.i } : x?.kind == 'slip' ? { kind: 'start', i: x.i } : x;
+    const GROUPABLE = k => k != 'point' && k != 'slip' && k != 'mslip';
+    const normItem = x => x?.kind == 'point' ? { kind: 'traffic', i: x.i } : x?.kind == 'slip' ? { kind: 'start', i: x.i } : x?.kind == 'mslip' ? { kind: 'moored', i: x.i } : x;
     const group = () => multi.length > 1 && multi.includes(sel) && multi.every(it => it.i < count(it.kind)) ? multi : null;
     const targets = () => group() || (sel ? [sel] : []);
     const inGroup = it => !!group()?.some(g => same(g, it));
@@ -392,7 +406,7 @@ window.pmbEditor = (() =>
         if (drag.mode == 'rotate')
         {
             // slips only face the four ways; the rest snap to 15° unless Alt is held
-            const step = sel.kind == 'slip' ? PI/2 : noSnap() ? 0 : PI/12;
+            const step = sel.kind == 'slip' || sel.kind == 'mslip' ? PI/2 : noSnap() ? 0 : PI/12;
             let a = Math.atan2(p.y - drag.c.y, p.x - drag.c.x);
             if (step) a = Math.round(a/step)*step;
             if (Math.abs(wrapAngle(a - angleOf(sel))) < 1e-6) return;
@@ -465,6 +479,13 @@ window.pmbEditor = (() =>
                 if (s.y !== undefined) s.y += dy; else if (shift) s.top += dy;
                 break;
             }
+            case 'mslip':
+            {
+                const s = def.moored[it.i].slip;
+                if (s.x !== undefined) s.x += dx; else if (shift) s.right += dx;
+                if (s.y !== undefined) s.y += dy; else if (shift) s.top += dy;
+                break;
+            }
             case 'buoys': case 'logs': { const a = def[it.kind][it.i]; a[0] += dx; a[1] += dy; break; }
             case 'traffic': for (const q of def.traffic[it.i].path) { q[0] += dx; q[1] += dy; } break;
             case 'point': { const q = def.traffic[it.i].path[it.j]; q[0] += dx; q[1] += dy; break; }
@@ -478,6 +499,7 @@ window.pmbEditor = (() =>
     function angleOf(it)
     {
         if (it.kind == 'start' || it.kind == 'slip') return def.boats[it.i][it.kind].a;
+        if (it.kind == 'mslip') return def.moored[it.i].slip.a;
         if (it.kind == 'moored' || it.kind == 'drifters') return def[it.kind][it.i].a;
         if (it.kind == 'logs') return def.logs[it.i][2] || 0;
     }
@@ -486,6 +508,7 @@ window.pmbEditor = (() =>
         a = wrapAngle(a);
         if (Math.abs(a) < 1e-9) a = 0;
         if (it.kind == 'start' || it.kind == 'slip') def.boats[it.i][it.kind].a = a;
+        else if (it.kind == 'mslip') def.moored[it.i].slip.a = a;
         else if (it.kind == 'moored' || it.kind == 'drifters') def[it.kind][it.i].a = a;
         else if (it.kind == 'logs') def.logs[it.i][2] = a;
     }
@@ -506,6 +529,7 @@ window.pmbEditor = (() =>
         const wrap = a => { a = wrapAngle(a); return Math.abs(a) < 1e-9 ? 0 : a; };
         if (it.kind == 'start') { const s = def.boats[it.i].start; s.a = wrap(s.a + da); }
         else if (it.kind == 'slip') { const s = def.boats[it.i].slip; s.a = wrap(s.a + Math.sign(da)*PI/2); }
+        else if (it.kind == 'mslip') { const s = def.moored[it.i].slip; s.a = wrap(s.a + Math.sign(da)*PI/2); }
         else if (it.kind == 'moored' || it.kind == 'drifters') { const m = def[it.kind][it.i]; m.a = wrap(m.a + da); }
         else if (it.kind == 'logs') { const l = def.logs[it.i]; l[2] = wrap((l[2] || 0) + da); }
         else return false;
@@ -555,7 +579,7 @@ window.pmbEditor = (() =>
 
     function duplicate()
     {
-        const items = targets().filter(it => !['start', 'slip', 'point'].includes(it.kind));
+        const items = targets().filter(it => !['start', 'slip', 'mslip', 'point'].includes(it.kind));
         if (!items.length) return;
         snapshot();
         const d = 4*step(), made = [];
@@ -599,6 +623,7 @@ window.pmbEditor = (() =>
             sel = null; multi = []; pathMode = null;
             return changed();
         }
+        if (sel.kind == 'mslip') { status = 'A slip belongs to its boat: delete the moored boat instead'; return refreshPanel(); }
         if (sel.kind == 'slip') { status = 'A slip belongs to its boat: delete the boat (its start) instead'; return refreshPanel(); }
         if (sel.kind == 'point')
         {
@@ -771,6 +796,14 @@ window.pmbEditor = (() =>
             drawLine(tip, tip.add(f.rotate(2.5).scale(.3*W)), .06*W, C_ED);
             drawLine(tip, tip.add(f.rotate(-2.5).scale(.3*W)), .06*W, C_ED);
         });
+        // moored boats' own slips (crowded harbors): a dashed box each and a faint line from the boat
+        (def.moored || []).forEach((m, i) =>
+        {
+            if (!m.slip) return;
+            const g = mslipGeom(m), on = sel?.kind == 'mslip' && sel.i == i || sel?.kind == 'moored' && sel.i == i;
+            drawDashedRect(g.pos, g.w, g.h, (on ? C_ED : C_CREAM).scale(1, on ? 1 : .9), .06*W, Math.max(.4*W, g.wid*.12));
+            drawLine(vec2(m.x, m.y), g.pos, .03*W, C_INK.scale(1, on ? .5 : .2));
+        });
         // traffic paths: the curve the boat follows; the selected boat's points get handles
         (def.traffic || []).forEach((t, i) =>
         {
@@ -832,6 +865,12 @@ window.pmbEditor = (() =>
             const a = worldToUi(vec2(e.start.x, e.start.y)), s = slips[n] && worldToUi(slips[n].pos);
             txt(String(n + 1), a.x, a.y + .7, .7, C_ED, 'center', .1, C_CREAM);
             if (s) txt(String(n + 1), s.x, s.y, .9, C_CREAM, 'center', .12, C_INK);
+        });
+        (def.moored || []).forEach((m, i) =>
+        {
+            if (!m.slip) return;
+            const s = worldToUi(mslipGeom(m).pos);
+            txt(String(i + 1), s.x, s.y, .7, C_CREAM, 'center', .1, C_INK);
         });
         const t = pathOf();
         if (t !== null) def.traffic[t].path.forEach((q, j) => { const u = worldToUi(vec2(q[0], q[1])); txt(String(j + 1), u.x, u.y - .02, .32, C_INK); });
@@ -1226,6 +1265,26 @@ window.pmbEditor = (() =>
     const boatOptions = () => Object.values(BOATS).map(t => [t.key, `${t.name} (${fmtLen(t.L*t.k)})`]);
     let addBoatType = 'dinghy';
 
+    // switching to unparking sets jam: true and gives the level a camera box if it has none (the crowd and its slips)
+    function setLevelType(v)
+    {
+        if (v != 'unparking') { delete def.jam; status = 'Parking: boats go one after another along the chain'; return; }
+        def.jam = true;
+        if (!def.view)
+        {
+            let b = null;
+            for (const m of def.moored || [])
+            {
+                const u = boxAround(vec2(m.x, m.y), BOATS[m.boat].L*boatK(def, m));
+                b = b ? boxUnion(b, u) : u;
+                if (m.slip) b = boxUnion(b, mslipBox((def.moored).indexOf(m)));
+            }
+            b = b || { x0: 0, y0: 0, x1: 80, y1: 45 };
+            def.view = [b.x0, b.y0, b.x1, b.y1].map(clean);
+        }
+        status = 'Unparking: every moored boat needs its own slip (select it, then Add slip)';
+    }
+
     function refreshPanel()
     {
         if (!def) return;
@@ -1238,6 +1297,8 @@ window.pmbEditor = (() =>
         LEVELS.forEach((d, i) => pickLevel.append(el('option', { value: i, selected: i == li, textContent: `${i + 1}. ${d.name}${dirty.has(d) ? ' •' : ''}` })));
         panel.append(pickLevel);
         panel.append(field('name', input('text', () => def.name, v => { def.name = v.trim() || def.name; })));
+        // the ruleset: parking is a chain of boats one after another; unparking is a crowd where every boat is yours (jam: true)
+        panel.append(field('type', select([['parking', 'Parking (boats in a chain)'], ['unparking', 'Unparking (crowded harbor)']], () => def.jam ? 'unparking' : 'parking', setLevelType)));
 
         panel.append(el('div', { className: 'row' }, [
             button('Play (E)', () => play(false), 'go'), button('Undo', doUndo), button('Redo', doRedo), button('Frame all', frameAll)]));
@@ -1253,7 +1314,7 @@ window.pmbEditor = (() =>
             <b>E</b> play / edit · <b>Shift+E</b> play from the selected boat (or ▶ in the hierarchy) · <b>R</b> restarts from that boat<br>
             <b>drag empty</b> pan · <b>wheel</b> zoom · <b>click</b> select · <b>drag</b> move<br>
             <b>drag an edge</b> resize sand, dock, current · <b>Shift+drag empty</b> new sand<br>
-            Slips under a pier slide along it; <b>Shift</b> moves them off it<br>
+            Slips under a pier slide along it; <b>Shift</b> moves them off it. A crowded-harbor boat has its own slip: click the dashed box or the Slip button<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: ×10) · <b>[ ]</b> rotate 15° (Shift: 90°)<br>
             <b>drag the round handle</b> rotate (15° steps, Alt: free; slips 90°)<br>
             <b>1–9</b> select boat · <b>F</b> frame selection · <b>Shift+F</b> frame all<br>
@@ -1359,7 +1420,7 @@ window.pmbEditor = (() =>
         if (group()) return `${group().length} selected`;
         const n = sel.i + 1;
         return {
-            start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
+            start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, mslip: `Moored boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
             traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic?.[sel.i]?.path.length}`,
             ducks: 'Duck family', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current', walls: 'Invisible wall',
         }[sel.kind];
@@ -1386,9 +1447,16 @@ window.pmbEditor = (() =>
             else slipFields(e.slip, i);
             return;
         }
-        if (sel.kind == 'moored' || sel.kind == 'drifters')
+        if (sel.kind == 'moored' || sel.kind == 'drifters' || sel.kind == 'mslip')
         {
-            const m = def[sel.kind][i];
+            const kind = sel.kind == 'mslip' ? 'moored' : sel.kind, m = def[kind][i];
+            if (kind == 'moored' && (m.slip || def.jam))
+                panel.append(el('div', { className: 'row' }, [
+                    button('Boat', () => { sel = { kind: 'moored', i }; refreshPanel(); }, sel.kind == 'moored' ? 'on' : ''),
+                    ...(m.slip ? [button('Slip', () => { sel = { kind: 'mslip', i }; refreshPanel(); }, sel.kind == 'mslip' ? 'on' : '')]
+                        : [button('Add slip', () => { snapshot(); m.slip = { x: clean(m.x + 20), y: m.y, a: 0, pad: [1, .8], fingers: 'none' }; sel = { kind: 'mslip', i }; changed(); })]),
+                    button('Frame (F)', frameSel)]));
+            if (sel.kind == 'mslip') return slipFields(m.slip, i, () => mslipGeom(m));
             panel.append(field('boat', select(boatOptions(), () => m.boat, v => { m.boat = v; })),
                 field('size k', input('number', () => m.k, v => { if (v === undefined) delete m.k; else m.k = v; }, { placeholder: `real size (${BOATS[m.boat].k})`, step: 'any' })),
                 grid([field('x', numIn(m, 'x', { step: 'any' })), field('y', numIn(m, 'y', { step: 'any' }))]),
@@ -1580,14 +1648,14 @@ window.pmbEditor = (() =>
             el('div', { className: 'keys', textContent: `${t.path.length} points. It starts on point 1 and follows a smooth curve through them. Outside its turns it cuts the engine and coasts to a stop.` }));
     }
 
-    function slipFields(s, n)
+    function slipFields(s, n, geom = () => slips[n])
     {
         const grid = kids => el('div', { className: 'grid2' }, kids);
         const mode = s.top !== undefined ? 'top' : s.right !== undefined ? 'right' : 'center';
         // switching how the slip is placed keeps it where it is
         const setMode = m =>
         {
-            const g = slips[n], x = g.pos.x, y = g.pos.y;
+            const g = geom(), x = g.pos.x, y = g.pos.y;
             delete s.x; delete s.y; delete s.top; delete s.right;
             if (m == 'top') Object.assign(s, { x, top: y + g.h/2 });
             else if (m == 'right') Object.assign(s, { right: x + g.w/2, y });

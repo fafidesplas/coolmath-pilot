@@ -1,3 +1,8 @@
+## 2026-11-03 — Editor: moored slips and level type; level order
+- Level order is now Odd Couple, Way Down, Rush Hour, Open Water, Marina, Raft-Up (bonus hidden after).
+- The editor shows each moored boat's own slip (dashed box, numbered): click it or use the boat's Slip button to move, rotate or set its numbers; Add slip for a boat without one.
+- The level inspector has a type dropdown, Parking or Unparking (sets `jam: true`, and a `view` if missing). Not run in a browser yet.
+
 ## 2026-11-03 — Crowded-harbor walls are level data
 - The walls round a crowded harbor were made by code, so the editor could not show or remove them. They are now ordinary `walls` in Open Water and Raft-Up (four rects half a view-width outside the view), visible in the editor: select one and press Delete to open that side. jamLoad no longer adds walls itself. Not run in a browser yet.
 
