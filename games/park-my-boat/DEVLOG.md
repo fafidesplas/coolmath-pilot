@@ -1,3 +1,6 @@
+## 2026-11-03 — Crowded-harbor walls moved out
+- The invisible walls sat right on the edge of the view box, so with the follow camera a boat could stop at nothing at the bottom of Raft-Up. They now sit half a view-width outside the box. Not run in a browser yet.
+
 ## 2026-11-03 — Stuck curse bubbles in the crowded harbors
 - Bumping a boat in a crowded harbor made it curse, but the bubble's timer only ran in stepWorld, which these levels don't use, so the bubble stayed frozen at the start of its pop-in (a tiny panel with a big outline: a black spiky star above the boat) until restart. jamUpdate now ticks the hurt and curse timers. Not run in a browser yet.
 
