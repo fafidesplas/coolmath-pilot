@@ -1,26 +1,37 @@
 'use strict';
-// Harbor Jam (prototype): a level with jam: true is a packed corner of a harbor instead of a chain of
-// boats to park. Tap a boat to select it (a ring shows which), then drive it out with the usual controls.
-// The other boats float too: you can shove them out of the way, but every meter a boat you aren't driving
-// is moved costs money, and a hard knock costs a bump, so planning the order is the cheap way. Clear every
-// boat out (shoving one out counts); stars come from the money kept. The harbor is walled where the level has sand or docks and
-// open to the sea elsewhere; a boat is out once it is wholly past the level's view box.
+// Crowded harbors: a level with jam: true starts as a packed corner of a harbor, every boat already in the
+// water and every one of them yours. Tap a boat to select it (a ring shows which), then drive it to its own
+// slip: a dashed box in free water with a ghost of that boat's hull in it. Switch boats whenever you like; the
+// one you leave keeps its momentum and glides on. Rest a boat in its slip for REST_TIME and it parks and holds
+// still (any boat resting in its own slip parks, driven or not). The other boats float too: you can shove them
+// out of the way, but every meter a boat you aren't driving is moved costs money, and a hard knock costs a
+// bump, so planning the order is the cheap way. Park every boat; stars come from the money kept.
 //
-// level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows, and the harbor's edge),
-//               budget ($), moored: the boats in the jam. The view box's edge is drawn as a dashed
-//               line over open water: a boat is out once its whole hull is past it.
+// level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows: the crowd and the slips; an invisible
+//               wall closes the sea round it), budget ($), moored: the boats, each with a slip
+//               ({ x, y, a, pad, fingers: 'none' }, as in a chain level's boats).
 
 const JAM_BUMP = .1;            // share of the budget one bump costs
 const JAM_KNOCK = 1;            // impact (in the boat's own speed scale) from which a hit is a bump
 const JAM_PUSH = 100;           // $ per meter a boat you aren't driving gets moved
-let jamBoats = [], jamBumps = 0, jamPushed = 0, jamPushOwed = 0, jamPushT = 0, jamPushAt = vec2();
+let jamBoats = [], jamBumps = 0, jamPushed = 0, jamPushOwed = 0, jamPushT = 0, jamPushAt = vec2(), jamDone = -1;
 
 function jamLoad(L)
 {
     jamBoats = (L.moored || []).map((m, k) =>
-        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'jam', MOORED_COLORS[k % MOORED_COLORS.length], boatK(L, m)));
-    for (const b of jamBoats) b.lastPos = b.pos.copy();
+    {
+        const b = makeBoat(m.boat, vec2(m.x, m.y), m.a, 'jam', MOORED_COLORS[k % MOORED_COLORS.length], boatK(L, m));
+        b.slip = makeSlip(m, b.k);
+        b.parked = false; b.restT = 0; b.restArmed = true;
+        b.lastPos = b.pos.copy();
+        return b;
+    });
+    // the sea round the view box is closed by invisible walls, so a boat can't leave the harbor
+    const [x0, y0, x1, y1] = L.view, t = 100;
+    for (const r of [[x0 - t, y0 - t, x0, y1 + t], [x1, y0 - t, x1 + t, y1 + t], [x0 - t, y0 - t, x1 + t, y0], [x0 - t, y1, x1 + t, y1 + t]])
+        rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], wall:true });
     jamBumps = jamPushed = jamPushOwed = jamPushT = 0;
+    jamDone = -1;
     fleet = []; slips = []; slip = undefined;
 }
 
@@ -35,69 +46,19 @@ function jamSelect(b)
         player.dragF = player.dragFull * COAST_DRAG; player.dragA = player.dragAFull;
     }
     player = b;
+    slip = b.slip;
+    restT = 0; restArmed = true;
     b.kind = 'player';
     b.coasting = false;
     sfx('click', b.pos, 1, 1.2);
     if (!attempts++) track('design', 'tutorial:step01');
 }
 
-// the boat's circles if it stood at pos: do they touch the walls or another boat in the jam?
-function jamBlocked(b, pos)
-{
-    const c = Math.cos(b.angle), s = Math.sin(b.angle), eps = .02;
-    for (const k of b.circles)
-    {
-        const x = pos.x + k.x*c - k.y*s, y = pos.y + k.x*s + k.y*c, r = k.r - eps;
-        for (const w of rects)
-            if (Math.hypot(x - clamp(x, w.x0, w.x1), y - clamp(y, w.y0, w.y1)) < r) return true;
-        for (const p of posts)
-            if (Math.hypot(x - p.x, y - p.y) < r + p.r) return true;
-        for (const o of jamBoats)
-        {
-            if (o == b || o.pos.distance(pos) > o.radius + b.radius) continue;
-            for (let j = 0; j < o.circles.length; j++)
-                if (Math.hypot(x - o.world[j].x, y - o.world[j].y) < r + o.circles[j].r) return true;
-        }
-    }
-    return false;
-}
-
-// out once every hull circle is wholly past the dashed line (the view box), on any side
-function jamOut(b, pos = b.pos)
-{
-    const [x0, y0, x1, y1] = level.view, c = Math.cos(b.angle), s = Math.sin(b.angle);
-    if (pos.x - b.radius > x1 || pos.x + b.radius < x0 || pos.y - b.radius > y1 || pos.y + b.radius < y0) return true;
-    return b.circles.every(k =>
-    {
-        const x = pos.x + k.x*c - k.y*s, y = pos.y + k.x*s + k.y*c;
-        return x - k.r > x1 || x + k.r < x0 || y - k.r > y1 || y + k.r < y0;
-    });
-}
-
-// the way out: a dashed line along the view box's edge, drawn only where it crosses open water
-function drawJamBoundary()
-{
-    const [x0, y0, x1, y1] = level.view, dash = .6*cam.wu, w = .14*cam.wu;
-    const onLand = p => rects.some(r => p.x > r.x0 && p.x < r.x1 && p.y > r.y0 && p.y < r.y1) ||
-        posts.some(q => Math.hypot(p.x - q.x, p.y - q.y) < q.r);
-    for (const [a, b] of [[vec2(x0, y0), vec2(x1, y0)], [vec2(x1, y0), vec2(x1, y1)], [vec2(x1, y1), vec2(x0, y1)], [vec2(x0, y1), vec2(x0, y0)]])
-    {
-        const len = a.distance(b), n = Math.floor(len / (dash*2)), d = b.subtract(a).normalize();
-        for (let i = 0; i < n; i++)
-        {
-            const p = a.add(d.scale(i*dash*2)), q = p.add(d.scale(dash));
-            if (onLand(p.add(d.scale(dash/2)))) continue;
-            drawLine(p, q, w*1.6, C_INK.scale(1, .35));
-            drawLine(p, q, w, C_CREAM);
-        }
-    }
-}
-
 // which jam boat is under a world point
 function jamPick(p)
 {
     for (const b of jamBoats)
-        for (let i = 0; i < b.circles.length; i++)
+        if (!b.parked) for (let i = 0; i < b.circles.length; i++)
             if (p.distance(b.world[i]) < b.circles[i].r + .3*cam.wu) return b;
 }
 
@@ -117,6 +78,7 @@ function jamUpdate(dt)
         if (player) controlPlayer(sub);
         for (const b of jamBoats)
         {
+            if (b.parked) continue;
             b.integrate(sub);
             collideStatics(b, rects, posts, b == player ? jamHit : undefined);
         }
@@ -147,7 +109,7 @@ function jamUpdate(dt)
             b.coasting = false;
             b.dragF = b.dragFull;
         }
-        if (b != player && !b.coasting)
+        if (b != player && !b.coasting && !b.parked)
         {
             const d = b.pos.distance(b.lastPos);
             if (d > 1e-3) { jamPushed += d; jamPushOwed += d*JAM_PUSH; }
@@ -165,8 +127,19 @@ function jamUpdate(dt)
         popup(`PUSH  -${fmtMoney(cost)}`, jamPushAt, C_SUNNY, .6, 1);     // over the boat being shoved
     }
 
-    // shoved out counts too
-    for (const b of [...jamBoats]) if (b != player && jamOut(b)) jamLeave(b);
+    // a boat at rest with part of its hull in its own slip parks once it has stayed REST_TIME; the one you drive
+    // must have no input. After a miss it has to move before the next check.
+    for (const b of jamBoats)
+    {
+        if (b.parked) continue;
+        const still = b.speed() < REST_SPEED*b.vs && Math.abs(b.angVel) < REST_SPIN/b.slowdown && (b != player || !b.throttle && !b.rudder);
+        if (!still) { b.restT = 0; b.restArmed = true; continue; }
+        if (!b.restArmed || !jamInSlip(b, false)) { b.restT = 0; continue; }
+        b.restT += dt;
+        if (b == player) restT = b.restT;
+        if (b.restT >= REST_TIME) jamJudge(b);
+    }
+    if (jamDone > 0 && (jamDone -= dt) <= 0) { damages += Math.round(jamPushOwed); jamPushOwed = 0; return showComplete(); }
     if (!player) return;
 
     // motor putts and wake, as in stepWorld
@@ -183,22 +156,41 @@ function jamUpdate(dt)
         wakeTimer = .07;
         wakes.push({ pos: player.toWorld(-player.type.L/2*player.k, 0), t: 0, size: player.type.W*.7*player.k });
     }
-
-    if (jamOut(player)) jamLeave(player);
 }
 
-function jamLeave(b)
+// every hull circle of b inside its slip (all), or any of them (!all), with a small tolerance
+function jamInSlip(b, all = true)
 {
-    jamBoats.splice(jamBoats.indexOf(b), 1);
-    bodies.splice(bodies.indexOf(b), 1);
-    if (b == player) { player = undefined; steerHeld = false; }
-    sfx('horn', undefined, .5, clamp(3 / Math.pow(boatSize(b), .3), .35, 3));
-    if (!jamBoats.length)
+    const sl = b.slip, c = Math.cos(sl.a), sn = Math.sin(sl.a), tol = .15*b.k;
+    for (let i = 0; i < b.circles.length; i++)
     {
-        damages += Math.round(jamPushOwed);
-        jamPushOwed = 0;
-        showComplete();
+        const p = b.world[i], r = b.circles[i].r, dx = p.x - sl.pos.x, dy = p.y - sl.pos.y;
+        const lx = dx*c + dy*sn, ly = -dx*sn + dy*c;
+        const inside = Math.abs(lx) + r <= sl.len/2 + tol && Math.abs(ly) + r <= sl.wid/2 + tol;
+        if (inside != all) return !all;
     }
+    return all;
+}
+
+// the check after REST_TIME: all the way in parks the boat for good (it holds still, a wall to the rest);
+// part way in is a miss, and the boat must move before it is checked again
+function jamJudge(b)
+{
+    b.restT = 0; b.restArmed = false;
+    if (b == player) restT = 0;
+    if (!jamInSlip(b))
+    {
+        sfx('fail');
+        return;
+    }
+    b.parked = true;
+    b.vel = vec2(); b.angVel = 0; b.invMass = 0; b.invInertia = 0; b.coasting = false;
+    b.kind = 'jam';
+    sfx('win');
+    confetti(b.pos, b.k);
+    popup(rand() < .5 ? 'DOCKED!' : 'LAND HO!', b.pos, C_SUNNY, 1.2, 1.6);
+    if (b == player) { player = undefined; slip = undefined; steerHeld = false; }
+    if (jamBoats.every(o => o.parked)) jamDone = 1.4;
 }
 
 // a hard knock (against a boat or a wall) costs a bump, once per knock; pushes are paid by the meter
@@ -259,46 +251,32 @@ function jamResult()
 function drawJamHud()
 {
     const L = level;
-    txt(`${jamBoats.length} boat${jamBoats.length == 1 ? '' : 's'} left${player ? ' · ' + player.type.name : ''}`, 10, 21.75, .55, C_TEAL, 'left');
+    const left = jamBoats.filter(b => !b.parked).length;
+    txt(`${left} boat${left == 1 ? '' : 's'} left${player ? ' · ' + player.type.name : ''}`, 10, 21.75, .55, C_TEAL, 'left');
     txt(`Money: ${fmtMoney(Math.max(0, L.budget - damages))}`, 26, 21.75, .55, damages ? C_CORAL : C_INK);
 }
 
-// debug (window.game.win): every boat out, no bumps
+// debug (window.game.win): every boat parked, no bumps
 function jamWin()
 {
-    for (const b of jamBoats) bodies.splice(bodies.indexOf(b), 1);
-    jamBoats = []; player = undefined;
+    for (const b of jamBoats) { b.parked = true; b.vel = vec2(); b.invMass = 0; b.invInertia = 0; b.pos = b.slip.pos.copy(); b.angle = b.slip.a; b.updateWorld(); }
+    player = undefined; slip = undefined;
     showComplete();
 }
 
-// can the jam be cleared without a bump, driving each boat straight out (ahead or astern)? Steering can
-// do more, so this is a floor: if it finds a way, there is one. A boat that can leave now can still
-// leave later (leaving only frees water), so taking any free boat out, again and again, finds the way.
-// Returns the rounds: which boats can leave together at each step.
-function jamSolve()
+// every slip: the unparked boats' own, dashed in the boat's color with a ghost of its hull in it; the selected
+// boat's slip is brighter and pulses. A boat resting in its slip fills it.
+function drawJamSlips()
 {
-    const saved = jamBoats.map(b => [b, b.pos.copy()]), rounds = [];
-    const name = b => `${b.type.name}@${Math.round(b.pos.x)},${Math.round(b.pos.y)}`;
-    const leaves = (b, dir) =>
+    const pulse = .5 + .5*Math.sin(time*5);
+    for (const b of jamBoats)
     {
-        const f = b.forward().scale(dir*.1*b.type.W*b.k);
-        for (let p = b.pos.copy(), i = 0; i < 20000; i++)
-        {
-            p = p.add(f);
-            if (jamBlocked(b, p)) return false;
-            if (jamOut(b, p)) return true;
-        }
-        return false;
-    };
-    let left = [...jamBoats];
-    while (left.length)
-    {
-        const free = left.filter(b => leaves(b, 1) || leaves(b, -1));
-        if (!free.length) break;
-        rounds.push(free.map(b => name(b) + (leaves(b, 1) ? ' ahead' : ' astern')));
-        jamBoats = left = left.filter(b => !free.includes(b));
+        if (b.parked) continue;
+        const s = b.slip, on = b == player, inside = jamInSlip(b);
+        const lw = Math.min(.14*WU, s.wid*.08), a = on ? 1 : .6;
+        drawEllipse(s.pos, vec2(b.type.L*b.k, b.type.W*b.k), b.color.scale(1, on ? .5 : .3), -s.a, .08*cam.wu, b.color.scale(1, .8));
+        const pts = [vec2(s.pos.x - s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y + s.h/2), vec2(s.pos.x - s.w/2, s.pos.y + s.h/2)];
+        if (inside) drawPoly(pts, C_CREAM.scale(1, .15 + .1*pulse), lw*1.15, C_CREAM);
+        else drawDashedRect(s.pos, s.w, s.h, C_CREAM.scale(1, a), lw*(on ? 1.4 : 1), Math.max(.45*WU, s.wid*.15));
     }
-    const stuck = left.map(name);
-    jamBoats = saved.map(([b]) => b);
-    return { solvable: !stuck.length, rounds, stuck };
 }

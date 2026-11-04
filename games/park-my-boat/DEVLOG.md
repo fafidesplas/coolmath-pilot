@@ -1,5 +1,11 @@
 # Dock All The Boats — devlog
 
+## 2026-11-03 — Crowded harbors replace unparking
+- The unparking mode is gone (no second button, one level list). Its five jams (Marina Jam, Open Water, Fishing Port, Big Ship Day, Raft-Up) are parking levels now: the same crowded start, every boat yours and switchable by tap, but each boat has its own slip and parks by resting 0.5 s in it (driven or not). A parked boat holds still for good. Shove costs, bumps and the $10,000 budget stay; stars from money kept.
+- Slips (`slip` on each `moored` entry) were laid out by script in columns east of the crowd, each drawn as a dashed box with a ghost hull; `view` grew to frame them (boats are smaller on screen now). Invisible walls close the sea round the view. The way-out line, "out" rule and `jamSolve()` are removed.
+- Checked in the browser: all five load, no slip touches land, a wall, another slip or a boat; a miss does not park, an exact park does, an unselected boat resting in its slip parks, all parked ends the level.
+- Next: play each one. Slip spots are arbitrary (a boat's slip may be across the harbor from where it started); a long trip for a jet ski may want a closer slip. The level editor doesn't show these slips yet.
+
 ## 2026-11-03 — Stars from damage (parking mode)
 - Parking levels now give stars by how little damage you took: share of the budget kept, 3 stars at 90%+, 2 at 60%+, else 1 (as in GDD 3.6 and the jam levels). Accuracy no longer sets stars; it still gates "parked". The result screen shows the stars again under the damages bill.
 - Budget is `PARK_BUDGET` = $1,000 for every parking level for now; a level can override it with `budget` in its data. Not tuned: play each level and set budgets so a light scrape is about 5% and a solid hit 15-25%.

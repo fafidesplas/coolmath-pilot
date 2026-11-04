@@ -75,10 +75,10 @@ function track(...args) { console.log('[GA]', ...args); }   // GameAnalytics sta
 // state
 
 let gameScreen = 'title', screenTime = 0, levelIndex = 0, level, isPaused = false;
-// two modes, chosen on the title: Parking (chains of boats to park) and Unparking (harbor jams to
-// clear, src/jam.js). Each has its own level list; a level's index stays its place in LEVELS (saves).
+// one mode, Parking: chains of boats to park, and crowded harbors where every boat is yours (src/jam.js). The
+// level list is LEVELS in order; a level's index stays its place in LEVELS (saves).
 let gameMode = 'park';
-const modeOf = L => L.jam ? 'unpark' : 'park';
+const modeOf = L => 'park';
 const modeLevels = (m = gameMode) => LEVELS.map((L, i) => i).filter(i => modeOf(LEVELS[i]) == m);
 // a level's number within its mode, from 1
 const levelNumber = (i = levelIndex) => modeLevels(modeOf(LEVELS[i])).indexOf(i) + 1;
@@ -250,7 +250,7 @@ function loadLevel(i)
     for (const w of L.walls || []) rects.push({ x0:w.x0, y0:w.y0, x1:w.x1, y1:w.y1, wall:true });    // invisible: collides, never drawn
     for (const m of L.lands || []) addLand(m);
 
-    // a harbor jam (src/jam.js) has no chain of boats to park, only the boats to clear out
+    // a crowded harbor (src/jam.js) has no chain of boats: every boat is there from the start
     if (L.jam)
     {
         jamLoad(L);
@@ -305,8 +305,8 @@ function hasControl() { return !intro || intro.ctrlAt !== undefined; }
 
 function levelId()
 {
-    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world && !l.bonus == !level.bonus && !l.jam == !level.jam).length + 1;
-    const group = level.jam ? 'unpark' : level.bonus ? 'bonus' : 'world' + String(level.world).padStart(2, '0');
+    const n = LEVELS.slice(0, levelIndex).filter(l => l.world == level.world && !l.bonus == !level.bonus).length + 1;
+    const group = level.bonus ? 'bonus' : 'world' + String(level.world).padStart(2, '0');
     return `${group}:level${String(n).padStart(2, '0')}`;
 }
 
@@ -994,8 +994,7 @@ function layoutButtons()
     buttons = [];
     if (gameScreen == 'title')
     {
-        button('park', 'PARKING', 20, 9, 10, 2.4, { big:true });
-        button('unpark', 'UNPARKING', 20, 6, 10, 2.4, { big:true });
+        button('park', 'PLAY', 20, 8, 10, 2.4, { big:true });
         button('sound', saveData.sound ? 'SOUND: ON' : 'SOUND: OFF', 20, 2.8, 7, 1.5, { small:true });
     }
     else if (gameScreen == 'levels')
@@ -1045,7 +1044,7 @@ function nextInMode() { const list = modeLevels(modeOf(level)); return list[list
 function pressButton(id)
 {
     sfx('click');
-    if (id == 'park' || id == 'unpark') { gameMode = id; setScreen('levels'); }
+    if (id == 'park') { gameMode = id; setScreen('levels'); }
     else if (id == 'sound') { saveData.sound = !saveData.sound; persist(); if (!saveData.sound) track('design', 'settings:sfx:off'); }
     else if (id == 'back') setScreen('title');
     else if (id == 'menu') setScreen('levels');
@@ -1238,8 +1237,8 @@ function drawBodies()
     for (const b of bodies) if (b.type && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
-    drawSlip();     // over the finger docks, so its dashed sides show
-    if (level?.jam) { drawJamBoundary(); drawJamSelection(); }
+    if (level?.jam) drawJamSlips(); else drawSlip();     // over the finger docks, so its dashed sides show
+    if (level?.jam) drawJamSelection();
     for (const b of bodies)
     {
         if (!inView(b.pos, b.radius*1.5)) continue;
@@ -1309,7 +1308,7 @@ function drawLevelCard(b, hover)
     drawPanel(c, b.w, b.h, isNext ? C_SUNNY : L.bonus ? C_WATER2 : C_CREAM, .5);
     txt(b.label, c.x, c.y + 1.15, L.bonus ? .8 : 1.2, C_INK);
     txt(L.name, c.x, c.y + .1, .48, C_INK);
-    txt(L.jam ? 'Harbor jam' : L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
+    txt(L.jam ? `${L.moored.length} boats` : L.boats.length > 1 ? `${L.boats.length} boats` : BOATS[L.boats[0].boat].name, c.x, c.y - .55, .4, L.world == 1 ? C_CORAL : C_TEAL);
     for (let s = 0; s < 3; s++) drawStar(vec2(c.x - 1.15 + s*1.15, c.y - 1.45), .42, s < stars);
 }
 
@@ -1328,7 +1327,7 @@ function drawScaleBar()
 // when the slip is off screen: an arrow at the edge of the play area pointing to it, with the distance
 function drawSlipArrow()
 {
-    if (gameScreen != 'playing' || !slip) return;
+    if (gameScreen != 'playing' || !slip || !player) return;
     // shown until the middle of the slip is on screen
     const half = viewHalfUi(), u = worldToUi(slip.pos);
     const x0 = 20 - half.x, x1 = 20 + half.x, y0 = UI_CENTER.y - half.y, y1 = PLAY_TOP;
@@ -1430,7 +1429,7 @@ function drawComplete()
     const c = vec2(20, 11.5);
     drawPanel(c.add(vec2(0, (1 - ease)*-12)), 24, 17, C_CREAM, .8);
     if (k < 1) return;
-    txt(level.jam ? 'ALL CLEAR!' : parkedWord, 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
+    txt(level.jam ? 'ALL DOCKED!' : parkedWord, 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
     drawCompleteStars(t);
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
     if (level.jam)
@@ -1451,7 +1450,7 @@ function gameRender()
     {
         useUiCamera();
         if (gameScreen == 'title') drawTitle();
-        else txt(gameMode == 'unpark' ? 'UNPARKING' : 'PARKING', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
+        else txt('PARKING', 20, 19.6, 2, C_SUNNY, 'center', .16, C_INK);
         return;
     }
     drawCurrents();
