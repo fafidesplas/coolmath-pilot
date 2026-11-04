@@ -25,7 +25,7 @@ A level is a chain of boats of wildly different sizes parked one after another i
 - **Score extras:** a damage bill in dollars and a count of ducks hit, shown in the HUD and on the result screen. They don't affect stars.
 
 ## Boats (real size)
-Jet Ski (2.4 m, quick and slidey, almost no reverse), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Sailboat (12 m, strong keel), Trawler (26 m fishing boat, strong, pushes things; replaced the tugboat, whose boxy top view looked like an iPad), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, and for now they appear only in the hidden bonus level.
+Jet Ski (2.4 m, quick and slidey, almost no reverse), Swan Pedalo (2.6 m, spins), Rowboat (2.9 m), Zippy (6.8 m speedboat, drifts), Sailboat (12 m, strong keel), Trawler (26 m fishing boat, strong, pushes things; replaced the tugboat, whose boxy top view looked like an iPad), Submarine (10.8 m; Space or DIVE toggles diving: submerged it passes under boats, ducks, buoys and docks marked `under` (editor checkbox on a dock), drawn washed out under them with a periscope; 9 s of air, refills at the surface, forced up at zero and can't redive until 30%; parks only at the surface; `updateSubs` in `src/main.js`), Mega Yacht (80 m), Cruise Ship (300 m), Container Ship (400 m), Island (30 km), Continent (3000 km). Islands and continents are blob hulls made of circles, and for now they appear only in the hidden bonus level.
 
 ## Levels
 - **World 1, Big & Small (4):** Odd Couple (rowboat → cruise ship), Way Down (container ship → trawler → jet ski), Rush Hour (jet ski down a 30 m channel crossed by three 6 m canals of looping traffic, all on one screen: 10 rowboats and swans at 2.2 m/s, 10 jet skis and rowboats at 3 m/s, then 10 jet skis at 4 m/s; the loops turn round in lagoons just off screen; wait on the 3.5 m of sand between canals for a gap).
@@ -42,7 +42,6 @@ No instruction, tutorial or flavor text in the game: no hints, taglines or messa
 Not built yet. Candidates for the GDD and for new levels.
 - **More crowded harbors:** tighter slips between more moored boats, so a parking job means threading a gap without bumping the neighbors.
 - **More boat traffic:** built as `traffic` (see Obstacles); no level uses it yet. Still to try: a boat towing a barge (the tugboat is gone; a redrawn tug or the trawler could do it).
-- **Submarine:** a boat that can dive and pass under boats on the surface, then surface to park. Needs a dive control and a way to show what is under the water.
 - **More drift:** trying it now for every boat (see Boat physics). Next question: keep it global, or make it a trait of certain boats.
 
 ## Concerns and design questions

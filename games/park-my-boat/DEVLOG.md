@@ -1,3 +1,7 @@
+## 2026-11-03 — Submarine
+- New boat type `sub` (Submarine, 10.8 m). Space or the DIVE button dives; submerged it skips boat, duck and buoy collisions and passes under docks flagged `under` (new checkbox in the editor, drawn as a railed pier). Air lasts 9 s, refills in 5 s at the surface, forced up at zero, no redive under 30%. Air bar by the button. It parks only at the surface. Works in parking and unparking levels; no level uses it yet (add it as a chain or moored boat in the editor). Not run in a browser yet.
+- Also: the unparking parking ring no longer sticks (jam.js).
+
 ## 2026-11-03 — Editor: moored slips and level type; level order
 - Level order is now Odd Couple, Way Down, Rush Hour, Open Water, Marina, Raft-Up (bonus hidden after).
 - The editor shows each moored boat's own slip (dashed box, numbered): click it or use the boat's Slip button to move, rotate or set its numbers; Add slip for a boat without one.

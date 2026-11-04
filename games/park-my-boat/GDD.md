@@ -47,10 +47,13 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 | Mega Yacht | 80 m | 10 | 30 | 0.5 | 0.35 | Long, slow to turn |
 | Cruise Ship | 300 m | 12 | 34 | 0.5 | 0.32 | Huge, takes ages to stop |
 | Container Ship | 400 m | 14 | 34 | 0.45 | 0.28 | The biggest regular boat |
+| Submarine | 10.8 m | 2 | 12 | 0.5 | 0.8 | Dives under boats and `under` docks; 9 s of air, then it must surface (see below) |
 | Island (bonus) | 30 km | 14 | 36 | 0.5 | 0.3 | Blob hull |
 | Continent (bonus) | 3000 km | 16 | 36 | 0.5 | 0.28 | Blob hull |
 
 Mass and power are toy values before scaling. A level can set its own `k` for a boat (for example the 48 m yacht in Marina).
+
+**Submarine (new, 2026-11-03):** Space or the DIVE button toggles diving. Submerged, it passes under every boat, duck and buoy and under docks marked `under` in the level (drawn as a pier with two rails; sand, walls and landmasses still stop it). It is drawn first, washed toward the water color, so boats and docks cover it, with a periscope on top. Submerged it burns air (`SUB_AIR_TIME` 9 s); at the surface it refills (`SUB_REFILL_TIME` 5 s). At zero it surfaces by itself and can't dive again until it has 30% air (`SUB_DIVE_MIN`). A bar by the button shows the air and flashes when low. It can only be judged parked at the surface. Surfacing under a boat or dock bumps like any hit.
 
 ### 3.4 Stopping (new: no anchor)
 - There is no anchor and no anchor button. The player stops with reverse, with drag, or by letting go early.
@@ -104,6 +107,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | Reverse | Hold behind the boat | S / Down |
 | Rudder | (by pointer position) | A / D, Left / Right |
 | Restart level | RESTART button | R |
+| Dive / surface (submarine) | DIVE button | Space |
 | Pause | II button | P / Esc |
 
 **(new)** At 800×450 the pause and restart buttons are smaller than 48 px. Make them at least 48 × 48 px at that size.
@@ -304,7 +308,6 @@ No daily events (no daily in v1).
     - Each setting needs its own water, land and accent colors on top of the shared ink, cream and sunny. `STANDARDS.md` asks for one palette of 4–6 colors chosen once, so per-setting palettes need the team's OK first (see 14).
     - Settings could become the worlds (World 1 the harbor, World 2 the islands…), which gives each world its own look as well as its own lesson.
 - **Cut:**
-  - Submarine: needs a dive control and an underwater view. Too much new UI for a pilot.
   - Player zoom: the set framing per boat keeps the size jump readable and the controls simple.
   - The clock and par times: it is not a race (3.6).
   - Stars from accuracy alone: replaced by money kept (3.6).
@@ -324,7 +327,7 @@ Decided with the owner on 2026-10-25:
 | Daily challenge? | Not in v1 | Pao | Decided |
 | Music? | Pao adds it later; the toggle comes with it | Pao | Decided |
 | Drift for every boat? | Keep it global; boat stats make the differences | Pao | Decided |
-| Out of v1? | Later: two-player modes, a boat towing a barge. Cut: submarine, player zoom | Pao | Decided |
+| Out of v1? | Later: two-player modes, a boat towing a barge. Cut: player zoom. Submarine added 2026-11-03 (see 3.3) | Pao | Decided |
 | Palette: 6 main colors plus sand, stone, navy, grass, skin | Keep the extras as support tones for land, quays, ship hulls and captains | Pao | Decided |
 | Main analytics question | Which boat makes players give up | Pao | Decided |
 
@@ -369,6 +372,7 @@ Still open on the economy:
 | Ducks | 1% of the budget per duck hit: they're a joke, not a trap | Pao, Fafi | Open |
 
 ## 15. Changelog
+- 2026-11-03 — Submarine added (3.3, 4): dive under boats and `under` docks, limited air, surfaces to park.
 - 2026-11-01 — Slip preview cut (3.7, 4, 11): the camera no longer shows the slip at the start of a boat's turn, it moves straight from the parked boat to the next one; no skip control and no `ui:skip`. Traffic only sets off once the player has control (3.7).
 - 2026-10-28 — Level "Mixed Nuts" deleted from the build (it stays in the §6 plan as level 10 until decided). The prototype has 4 regular levels.
 - 2026-10-28 — Level 1 tutorial cut (ghost pointer, key icons, "Park in the box."). The game shows no instruction or flavor text: no hints, tagline or miss message. Text is menu buttons, labels and numbers only.
