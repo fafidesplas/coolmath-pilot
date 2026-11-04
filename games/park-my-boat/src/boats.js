@@ -30,7 +30,7 @@ const BOATS =
     speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM, captainX:-.2 },
     swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM, captainX:-.45 },
     // mini submarine: a one or two person deep-sea explorer (yellow pontoons around a glass sphere); dives like the big one
-    minisub:   { name:'Mini Sub',     L:3.2, W:2,    k:1.2, mass:1.2, power:5,   reverse:.8, turn:1.7, wash:1.4, dragF:1.2, dragS:2.5, dragA:1.6, hull:'box',    color:C_SUNNY, captainX:0, sub:true, scope:.35 },
+    minisub:   { name:'Mini Sub',     L:3.2, W:2,    k:1.2, mass:1.2, power:5,   reverse:.8, turn:1.7, wash:1.4, dragF:1.2, dragS:2.5, dragA:1.6, hull:'box',    color:C_SUNNY, captainX:0, sub:true, scope:.7 },
     sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM, captainX:-1.8 },
     trawler:   { name:'Trawler',      L:3.3, W:1.2,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL, captainX:.55 },
     yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM, captainX:.6 },
@@ -233,17 +233,20 @@ const BOAT_DECO =
         {
             d.rect(0, s*.72, 2.7, .34, C_SUNNY.lerp(C_INK, .12), true);                      // pontoon grating
             for (let i = 0; i < 7; i++) d.rect(-1.2 + i*.4, s*.72, .12, .3, C_INK);
-            d.circle(1.42, s*.62, .24, C_CREAM, true);                                        // headlights
-            d.circle(-1.38, s*.66, .4, C_INK, true);                                          // thrusters
+            d.circle(1.42, s*.62, .3, C_CREAM, true);                                         // headlights, front
+            d.circle(-1.38, s*.66, .46, C_INK, true);                                         // thrusters, back
             d.circle(-1.38, s*.66, .2, C_TEAL);
         }
-        d.circle(0, 0, 1.45, C_INK, true);                                                    // sphere ring
-        d.circle(0, 0, 1.3, rgb(.7, .9, .97), true);                                          // glass
-        d.circle(-.1, .15, .5, C_SKIN, true);                                                 // pilot and friend, seen through the glass
-        d.circle(-.1, -.3, .5, C_SKIN, true);
-        d.circle(-.18, .15, .34, C_NAVY, true);
-        d.circle(-.18, -.3, .34, C_CORAL, true);
-        d.ellipse(.45, -.3, .3, .12, C_CREAM);                                                // glass glint
+        d.poly([[1.62, 0], [1.1, .42], [1.1, -.42]], C_CORAL, true);                          // nose cone, pointing forward
+        d.rect(-.95, 0, .85, 1.1, C_INK.lerp(C_CREAM, .25), true);                            // equipment bay, back
+        for (const y of [-.32, 0, .32]) d.circle(-.95, y, .24, C_TEAL, true);                 // air tanks
+        d.circle(.3, 0, 1.4, C_INK, true);                                                    // sphere ring
+        d.circle(.3, 0, 1.25, rgb(.7, .9, .97), true);                                        // glass
+        d.circle(.25, .15, .5, C_SKIN, true);                                                 // pilot and friend, seen through the glass
+        d.circle(.25, -.3, .5, C_SKIN, true);
+        d.circle(.28, .15, .34, C_NAVY, true);
+        d.circle(.28, -.3, .34, C_CORAL, true);
+        d.ellipse(.7, -.3, .3, .12, C_CREAM);                                                 // glass glint
     },
     sub(d, t, b)
     {
