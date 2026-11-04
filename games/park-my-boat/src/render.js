@@ -66,7 +66,9 @@ function drawBoat(b)
     if (t.sub && b.dive > .02)
     {
         const pts = t.hullPts.map(p => d.P(p.x, p.y));
-        drawPoly(pts, C_WATER.lerp(C_TEAL, .25).scale(1, .62*b.dive), 0);
+        const film = C_WATER.lerp(C_TEAL, .25).scale(1, .62*b.dive);
+        drawPoly(pts, film, 0);
+        for (const part of t.film || []) drawPoly(part.map(p => d.P(p[0], p[1])), film, 0);
         drawPoly(pts, C_CLEAR, Math.min(LINE_W*.5, .05*(b.k || 1)), C_WATER2.scale(1, .7*b.dive));
     }
 }

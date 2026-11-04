@@ -153,6 +153,17 @@ for (const key in BOATS)
         t.hull == 'pointy' ? fitCircles(t.hullPts, t.L, t.W) : makeCircles(t.L, t.W);
 }
 
+// the submarine's parts that stick out past the hull (planes, shaft, propeller), as polygons in toy coordinates: the film
+// of water drawn over a submerged sub (see drawBoat) covers these too
+BOATS.sub.film =
+[
+    ...[1, -1].flatMap(s => [
+        [[-2.7, s*.35], [-3.3, s*.95], [-3.55, s*.95], [-3.25, s*.35]],         // stern planes
+        [[1.4, s*.3], [.9, s*.95], [.7, s*.95], [.9, s*.3]]]),                  // sail planes
+    [[-3.5, .1], [-3.9, .1], [-3.9, -.1], [-3.5, -.1]],                          // shaft
+    Array.from({ length: 16 }, (_, i) => [-3.95 + .08*Math.cos(i/16*PI*2), .475*Math.sin(i/16*PI*2)]),   // propeller
+];
+
 // Deck decorations, drawn with a local-space painter (see render.js)
 const BOAT_DECO =
 {
