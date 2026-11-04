@@ -1,5 +1,6 @@
 ## 2026-11-03 — White outline for the selected boat
 - The glow looked bad in the crowded harbors. The selected boat now gets a plain white outline around its hull instead.
+- Selecting a boat in a crowded harbor now zooms the camera to that boat's default framing and follows it, as in the other levels; with no boat selected the camera shows the whole harbor. Not run in a browser yet.
 
 ## 2026-11-03 — Level list trimmed
 - From the Level Sorting page: cut Marina Jam, Fishing Port and Big Ship Day. The list is now Odd Couple, Way Down, Rush Hour, Marina, Open Water, Raft-Up, plus the hidden bonus Continental Drift.

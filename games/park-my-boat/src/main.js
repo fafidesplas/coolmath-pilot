@@ -324,10 +324,9 @@ function boxAround(p, r) { return { x0:p.x - r, y0:p.y - r, x1:p.x + r, y1:p.y +
 // (more for small, quick boats); the slip may be off screen, an arrow at the edge points to it
 function cameraGoal()
 {
-    // a jam's camera holds still on the whole harbor corner
-    if (level?.jam)
+    // a jam's camera shows the whole harbor corner until a boat is selected, then follows it like any other level
+    if (level?.jam && !player)
     {
-        // with a margin, so the dashed way-out line round the view box shows on every side
         const v = level.view, m = .07*Math.max(v[2] - v[0], v[3] - v[1]);
         const [x0, y0, x1, y1] = [v[0] - m, v[1] - m, v[2] + m, v[3] + m], wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
         return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
