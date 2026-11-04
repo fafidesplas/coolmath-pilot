@@ -510,7 +510,7 @@ function onHit(A, B, impact, p)
         sfx('bong', p, 1, rand(.9, 1.1) / Math.sqrt(other.k));
         if (isPlayer) damages += 20 * Math.round(other.baseK*other.baseK);
     }
-    else if (kind == 'moored' || kind == 'drifter' || kind == 'traffic' || kind == 'player')
+    else if (kind == 'moored' || kind == 'drifter' || kind == 'traffic' || kind == 'player' || kind == 'jam')
     {
         sfx('bonk', p, 1, .8);
         if (other && other.hurtT !== undefined) other.hurtT = .8;
@@ -812,7 +812,7 @@ function parkingResult()
 function showComplete()
 {
     const i = levelIndex;
-    result = level.jam ? jamResult() : parkingResult();
+    result = parkingResult();
     result.isBest = result.stars > (saveData.stars[i] || 0) || result.acc > (saveData.best[i] || 0);
     // the level editor's test runs don't count
     if (!window.pmbEditor?.testing)
@@ -1432,13 +1432,7 @@ function drawComplete()
     txt(level.jam ? 'ALL DOCKED!' : parkedWord, 20, 17.6, 2, C_CORAL, 'center', .16, C_INK);
     drawCompleteStars(t);
     const shown = Math.round(result.acc*100 * clamp((t - .5)*1.5, 0, 1));
-    if (level.jam)
-    {
-        txt(`Money kept ${fmtMoney(Math.round(level.budget*shown/100))}`, 20, 11.6, 1, C_INK);
-        txt(`Bumps: ${jamBumps}    Pushed: ${fmtLen(jamPushed)}    Ducks hit: ${ducksOffended}    Boats picked: ${attempts}`, 20, 10.3, .55, C_TEAL);
-        if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
-        return;
-    }
+    if (result.isBest) txt('NEW BEST!', 28.5, 16.2, .7, C_CORAL, 'center', 0);
     txt(`Damages: ${fmtMoney(Math.round(damages * clamp((t - .5)*1.5, 0, 1)))}`, 20, 12, 1.4, C_TEAL);
 }
 

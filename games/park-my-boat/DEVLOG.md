@@ -1,3 +1,8 @@
+## 2026-11-03 — Crowded harbors use the normal cost system
+- The five crowded-harbor levels now charge damage like every other level: the standard hit costs (`onHit`), the default $1,000 budget, a "Damages" line in the HUD and on the results. The per-meter push charge, the flat $1,000 bump and the $10,000 budgets are gone.
+- The selected boat shows a soft glow outline around its hull instead of the big ring.
+- Not tuned: play the five levels and set `budget` where $1,000 feels off. Not run in a browser yet.
+
 # Dock All The Boats — devlog
 
 ## 2026-11-03 — Crowded harbors replace unparking

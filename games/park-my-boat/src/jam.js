@@ -1,20 +1,17 @@
 'use strict';
 // Crowded harbors: a level with jam: true starts as a packed corner of a harbor, every boat already in the
-// water and every one of them yours. Tap a boat to select it (a ring shows which), then drive it to its own
+// water and every one of them yours. Tap a boat to select it (a glowing outline shows which), then drive it to its own
 // slip: a dashed box in free water with a ghost of that boat's hull in it. Switch boats whenever you like; the
 // one you leave keeps its momentum and glides on. Rest a boat in its slip for REST_TIME and it parks and holds
 // still (any boat resting in its own slip parks, driven or not). The other boats float too: you can shove them
-// out of the way, but every meter a boat you aren't driving is moved costs money, and a hard knock costs a
-// bump, so planning the order is the cheap way. Park every boat; stars come from the money kept.
+// out of the way, but hits cost money exactly as in the other levels (onHit in main.js), so planning the order
+// is the cheap way. Park every boat; stars come from the money kept (the default parking budget).
 //
 // level fields: jam: true, view: [x0, y0, x1, y1] (what the camera shows: the crowd and the slips; an invisible
-//               wall closes the sea round it), budget ($), moored: the boats, each with a slip
+//               wall closes the sea round it), moored: the boats, each with a slip
 //               ({ x, y, a, pad, fingers: 'none' }, as in a chain level's boats).
 
-const JAM_BUMP = .1;            // share of the budget one bump costs
-const JAM_KNOCK = 1;            // impact (in the boat's own speed scale) from which a hit is a bump
-const JAM_PUSH = 100;           // $ per meter a boat you aren't driving gets moved
-let jamBoats = [], jamBumps = 0, jamPushed = 0, jamPushOwed = 0, jamPushT = 0, jamPushAt = vec2(), jamDone = -1;
+let jamBoats = [], jamDone = -1;
 
 function jamLoad(L)
 {
@@ -30,7 +27,6 @@ function jamLoad(L)
     const [x0, y0, x1, y1] = L.view, t = 100;
     for (const r of [[x0 - t, y0 - t, x0, y1 + t], [x1, y0 - t, x1 + t, y1 + t], [x0 - t, y0 - t, x1 + t, y0], [x0 - t, y1, x1 + t, y1 + t]])
         rects.push({ x0:r[0], y0:r[1], x1:r[2], y1:r[3], wall:true });
-    jamBumps = jamPushed = jamPushOwed = jamPushT = 0;
     jamDone = -1;
     fleet = []; slips = []; slip = undefined;
 }
@@ -80,52 +76,32 @@ function jamUpdate(dt)
         {
             if (b.parked) continue;
             b.integrate(sub);
-            collideStatics(b, rects, posts, b == player ? jamHit : undefined);
+            collideStatics(b, rects, posts, b == player ? onHit : undefined);
         }
         for (let i = 0; i < jamBoats.length; i++)
             for (let j = i + 1; j < jamBoats.length; j++)
             {
                 const A = jamBoats[i], B = jamBoats[j];
-                collideBodies(A, B, A == player || B == player ? jamHit : undefined);
+                collideBodies(A, B, A == player || B == player ? onHit : undefined);
             }
         for (const f of floaters)
         {
             if (f.kind == 'duck') updateDuck(f, sub);
             f.integrate(sub);
             collideStatics(f, rects, posts);
-            for (const o of jamBoats) collideBodies(o, f, jamFloaterHit);
+            for (const o of jamBoats) collideBodies(o, f, o == player ? onHit : undefined);
         }
         for (let i = 0; i < floaters.length; i++)
             for (let j = i + 1; j < floaters.length; j++) collideBodies(floaters[i], floaters[j]);
     }
 
-    // shoving costs: every meter a boat you aren't driving moves, paid as it happens
-    let most = 0;
+    // a boat let go of glides on for free until it comes to rest
     for (const b of jamBoats)
-    {
-        // a boat let go of glides on for free until it comes to rest
         if (b.coasting && b.speed() < REST_SPEED*b.vs && Math.abs(b.angVel) < REST_SPIN/b.slowdown)
         {
             b.coasting = false;
             b.dragF = b.dragFull;
         }
-        if (b != player && !b.coasting && !b.parked)
-        {
-            const d = b.pos.distance(b.lastPos);
-            if (d > 1e-3) { jamPushed += d; jamPushOwed += d*JAM_PUSH; }
-            if (d > most) { most = d; jamPushAt = b.pos.copy(); }
-        }
-        b.lastPos = b.pos.copy();
-    }
-    jamPushT -= dt;
-    if (jamPushOwed >= 1 && jamPushT <= 0)
-    {
-        const cost = Math.round(jamPushOwed);
-        damages += cost;
-        jamPushOwed -= cost;
-        jamPushT = .5;
-        popup(`PUSH  -${fmtMoney(cost)}`, jamPushAt, C_SUNNY, .6, 1);     // over the boat being shoved
-    }
 
     // a boat at rest with part of its hull in its own slip parks once it has stayed REST_TIME; the one you drive
     // must have no input. After a miss it has to move before the next check.
@@ -139,7 +115,7 @@ function jamUpdate(dt)
         if (b == player) restT = b.restT;
         if (b.restT >= REST_TIME) jamJudge(b);
     }
-    if (jamDone > 0 && (jamDone -= dt) <= 0) { damages += Math.round(jamPushOwed); jamPushOwed = 0; return showComplete(); }
+    if (jamDone > 0 && (jamDone -= dt) <= 0) return showComplete();
     if (!player) return;
 
     // motor putts and wake, as in stepWorld
@@ -193,67 +169,23 @@ function jamJudge(b)
     if (jamBoats.every(o => o.parked)) jamDone = 1.4;
 }
 
-// a hard knock (against a boat or a wall) costs a bump, once per knock; pushes are paid by the meter
-function jamHit(A, B, impact, p)
-{
-    const other = A == player ? B : A;
-    if (impact / player.vs < JAM_KNOCK || player.hitCooldown > 0) return;
-    player.hitCooldown = .6;
-    const cost = Math.round(level.budget*JAM_BUMP);
-    jamBumps++;
-    damages += cost;
-    player.squashVel += 3;
-    if (other) other.squashVel += 3;
-    shakeAmt = Math.max(shakeAmt, .25);
-    sfx('bonk', p, 1, .8);
-    splash(p, 8, 3, player.k);
-    popup(`BUMP  -${fmtMoney(cost)}`, player.pos, C_CORAL, .8, 1.2);
-}
-
-// the boat you drive hitting a buoy, log or duck: buoys ring and float off for free, a duck costs a
-// little (1% of the budget) and spins
-function jamFloaterHit(A, B, impact, p)
-{
-    const f = A.kind == 'jam' || A.kind == 'player' ? B : A, boat = f == A ? B : A;
-    if (boat != player || impact / Math.min(boat.vs, f.vs) < .6 || f.hitCooldown > 0) return;
-    f.hitCooldown = .4;
-    if (f.kind == 'duck')
-    {
-        if (f.stunT > 0) return;
-        f.stunT = 1.5;
-        f.angVel += rand(-14, 14);
-        ducksOffended++;
-        const cost = Math.round(level.budget*.01);
-        damages += cost;
-        sfx('quack', p, 1, rand(.9, 1.3) / Math.sqrt(f.duckSize));
-        popup(`QUACK  -${fmtMoney(cost)}`, f.pos, C_CORAL, .6, 1);
-    }
-    else sfx(f.kind == 'buoy' ? 'bong' : 'bonk', p, .8, rand(.9, 1.1) / Math.sqrt(f.k || 1));
-}
-
-// RTS-style selection ring around the boat being driven, under its hull
+// the boat being driven gets a soft glow outline: its own hull shape, stroked in a few widening, fainter passes
+// under the boat, so only a rim shows around it
 function drawJamSelection()
 {
     const b = player;
     if (!b) return;
-    const pulse = 1 + .04*Math.sin(time*6), size = vec2(b.type.L*b.k*1.25 + 1.2, b.type.W*b.k*1.25 + 1.2).scale(pulse);
-    drawEllipse(b.pos, size, C_SUNNY.scale(1, .18), -b.angle, .26*cam.wu, C_INK.scale(1, .5));
-    drawEllipse(b.pos, size, C_CLEAR, -b.angle, .15*cam.wu, C_SUNNY);
-}
-
-// share of the budget kept, and the stars for it
-function jamResult()
-{
-    const kept = Math.max(0, level.budget - damages) / level.budget;
-    return { acc: kept, stars: kept >= .9 ? 3 : kept >= .6 ? 2 : 1, jam: true };
+    const pulse = .75 + .25*Math.sin(time*5), hull = b.type.W*b.k;
+    for (let i = 3; i >= 1; i--)
+        for (let j = 0; j < b.circles.length; j++)
+            drawCircle(b.world[j], (b.circles[j].r*2) + i*.09*cam.wu + .05*hull, C_SUNNY.scale(1, .22*pulse/i));
 }
 
 function drawJamHud()
 {
-    const L = level;
     const left = jamBoats.filter(b => !b.parked).length;
-    txt(`${left} boat${left == 1 ? '' : 's'} left${player ? ' · ' + player.type.name : ''}`, 10, 21.75, .55, C_TEAL, 'left');
-    txt(`Money: ${fmtMoney(Math.max(0, L.budget - damages))}`, 26, 21.75, .55, damages ? C_CORAL : C_INK);
+    txt(`${left} boat${left == 1 ? '' : 's'} left${player ? ' - ' + player.type.name : ''}`, 10, 21.75, .55, C_TEAL, 'left');
+    if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
 }
 
 // debug (window.game.win): every boat parked, no bumps

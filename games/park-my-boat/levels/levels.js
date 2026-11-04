@@ -237,7 +237,7 @@ const SCALE_LEVELS =
     {
         // a crowded harbor (src/jam.js): park every boat of a packed corner, each in its own slip around it. Quay along the top, sand to
         // the west and along the bottom up to the harbor mouth (x 30-44); open sea to the east.
-        name: 'Marina Jam', jam: true, budget: 10000, view: [-2, -29, 73, 26], boats: [],
+        name: 'Marina Jam', jam: true, view: [-2, -29, 73, 26], boats: [],
         land: [[-50, -50, 0, 60], [-50, -50, 30, 0], [-50, 27, 60, 60]],
         docks: [{ x0: -1, y0: 24, x1: 44, y1: 27, quay: true }],
         moored:
@@ -256,7 +256,7 @@ const SCALE_LEVELS =
         // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
         // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
         // sailboats, the rowboats, and the swan in the middle.
-        name: 'Open Water', jam: true, budget: 10000, view: [-24, -7, 84, 52], boats: [], land: [], docks: [],
+        name: 'Open Water', jam: true, view: [-24, -7, 84, 52], boats: [], land: [], docks: [],
         moored:
         [
             { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
@@ -275,7 +275,7 @@ const SCALE_LEVELS =
     {
         // jam 2: ten boats from a 40 m container ship to jet skis, one parked on the diagonal; buoys and
         // ducks drift between them. Quay along the top, sand west and along the bottom to the mouth (x 40-64).
-        name: 'Fishing Port', jam: true, budget: 10000, view: [-2, -32, 96, 38], boats: [],
+        name: 'Fishing Port', jam: true, view: [-2, -32, 96, 38], boats: [],
         land: [[-50, -50, 0, 80], [-50, -50, 40, 0], [-50, 39, 90, 90]],
         docks: [{ x0: -1, y0: 36, x1: 64, y1: 39, quay: true }],
         moored:
@@ -297,7 +297,7 @@ const SCALE_LEVELS =
     {
         // jam 3: big ships and small fry. A 50 m cruise ship and a 45 m container ship, a yacht on the
         // diagonal, buoys and two duck families. Sand west and along the bottom to the mouth (x 60-94).
-        name: 'Big Ship Day', jam: true, budget: 10000, view: [-2, -32, 126, 52], boats: [],
+        name: 'Big Ship Day', jam: true, view: [-2, -32, 126, 52], boats: [],
         land: [[-50, -50, 0, 90], [-50, -50, 60, 0], [-50, 53, 120, 120]],
         docks: [{ x0: -1, y0: 50, x1: 94, y1: 53, quay: true }],
         moored:
@@ -320,7 +320,7 @@ const SCALE_LEVELS =
     {
         // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats, party barges,
         // a 20 m yacht and the trawler, with small boats pinning the outer pair's ends. 6 rounds.
-        name: 'Raft-Up', jam: true, budget: 10000, view: [-5, 3, 73, 57], boats: [], land: [], docks: [],
+        name: 'Raft-Up', jam: true, view: [-5, 3, 73, 57], boats: [], land: [], docks: [],
         moored:
         [
             { boat: 'jetski', x: 32.00, y: 32.00, a: PI/4, slip: { x: 16.7, y: 39.95, a: 0, pad: [1, .8], fingers: 'none' } },
