@@ -194,8 +194,7 @@ function jamWin()
     showComplete();
 }
 
-// every slip: the unparked boats' own, dashed in the boat's color with a ghost of its hull in it; the selected
-// boat's slip is brighter and pulses. A boat resting in its slip fills it.
+// every slip: the unparked boats' own, dashed; the selected boat's slip is bolder. A boat resting in its slip fills it.
 function drawJamSlips()
 {
     const pulse = .5 + .5*Math.sin(time*5);
@@ -204,7 +203,6 @@ function drawJamSlips()
         if (b.parked) continue;
         const s = b.slip, on = b == player, inside = jamInSlip(b);
         const lw = Math.min(.14*WU, s.wid*.08), a = on ? 1 : .6;
-        drawEllipse(s.pos, vec2(b.type.L*b.k, b.type.W*b.k), b.color.scale(1, on ? .5 : .3), -s.a, .08*cam.wu, b.color.scale(1, .8));
         const pts = [vec2(s.pos.x - s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y + s.h/2), vec2(s.pos.x - s.w/2, s.pos.y + s.h/2)];
         if (inside) drawPoly(pts, C_CREAM.scale(1, .15 + .1*pulse), lw*1.15, C_CREAM);
         else drawDashedRect(s.pos, s.w, s.h, C_CREAM.scale(1, a), lw*(on ? 1.4 : 1), Math.max(.45*WU, s.wid*.15));
