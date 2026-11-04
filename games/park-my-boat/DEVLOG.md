@@ -1,3 +1,6 @@
+## 2026-11-03 — Mini Sub
+- New boat type `minisub` (3.8 m, yellow pontoons round a glass sphere with two pilots). Uses the same dive, air and `under` dock rules as the Nuclear Submarine (`sub: true`); `scope` in the type sets where its periscope nub sits. Test Map spawn list is tighter to fit the extra button. Checked in Chrome on `?test`: spawns, draws, dive film and periscope show, no console errors. Not driven by hand yet; handling numbers are a first guess.
+
 ## 2026-11-03 — Test Map
 - `?test` adds a sandbox level, Test Map: spawn buttons for every boat type (real size, beside the boat you drive), REMOVE BOAT, CLEAR ALL. Has piers a submarine can pass under, an islet, a current, buoys, ducks and a few boats. Smoke-tested in Chrome (spawn, remove, clear, no console errors).
 

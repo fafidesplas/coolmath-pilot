@@ -613,8 +613,9 @@ function drawPeriscope(b)
 {
     if (b.dive < .5 || !inView(b.pos, b.radius*1.5)) return;
     const d = painter({ ...b, dive: 0 });
-    d.line(1.45, 0, 1.75, 0, .2, C_INK);
-    d.circle(1.45, 0, .34, C_CREAM, true);
+    const x = b.type.scope ?? 1.45;
+    d.line(x, 0, x + .3, 0, .2, C_INK);
+    d.circle(x, 0, .34, C_CREAM, true);
 }
 
 // engine and rudder: the rudder turns the boat more the faster it goes, plus a little prop wash
@@ -1057,9 +1058,9 @@ function layoutButtons()
         if (level?.test && !isPaused)
         {
             const keys = Object.keys(BOATS);
-            keys.forEach((k, n) => button('spawn:' + k, BOATS[k].name, 3.7, 19.6 - n*1.15, 6.6, 1, { small:true }));
-            button('remove', 'REMOVE BOAT', 3.7, 19.6 - keys.length*1.15 - .3, 6.6, 1, { small:true });
-            button('clear', 'CLEAR ALL', 3.7, 19.6 - (keys.length + 1)*1.15 - .3, 6.6, 1, { small:true });
+            keys.forEach((k, n) => button('spawn:' + k, BOATS[k].name, 3.7, 19.6 - n*1.05, 6.6, .95, { small:true }));
+            button('remove', 'REMOVE BOAT', 3.7, 19.6 - keys.length*1.05 - .3, 6.6, .95, { small:true });
+            button('clear', 'CLEAR ALL', 3.7, 19.6 - (keys.length + 1)*1.05 - .3, 6.6, .95, { small:true });
         }
         if (player?.type.sub && !isPaused) button('dive', player.wantDive ? 'SURFACE' : 'DIVE', 4.2, 1.6, 5.6, 1.4, { small:true });
         if (isPaused)
