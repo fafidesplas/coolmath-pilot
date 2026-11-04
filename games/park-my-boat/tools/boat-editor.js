@@ -1034,6 +1034,7 @@ window.boatEditor = (() =>
 
     setGLEnable(false);
     setShowSplashScreen(false);
+    setInputPreventDefault(false);      // the engine cancels every mousedown, which keeps the panels' dropdowns from opening
     engineInit(gameInit, () => {}, () => {}, gameRender, () => {});
 
     return { M, save, selfTest, sourceWith, refresh };
