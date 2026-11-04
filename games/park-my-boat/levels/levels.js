@@ -242,7 +242,9 @@ const SCALE_LEVELS =
         moored:
         [
             { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'container', k: 3, x: 30, y: 11.05, a: PI, slip: { x: 10.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'yacht', k: 1.6, x: 21.1, y: 11.05, a: PI, slip: { x: 2.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'speedboat', k: 2.6, x: 32.5, y: 11.05, a: PI, slip: { x: 15.8, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'pontoon', k: 1.6, x: 41.24, y: 11.05, a: PI, slip: { x: 26.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
             { boat: 'sailboat', x: 21.4, y: 20, a: PI/2, slip: { x: 10.88, y: 31.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'sailboat', x: 38.6, y: 20, a: -PI/2, slip: { x: 50.88, y: 10.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'sailboat', x: 30, y: 24.02, a: 0, slip: { x: 19.2, y: 43.88, a: 0, pad: [1, .8], fingers: 'none' } },
