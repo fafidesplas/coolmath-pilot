@@ -198,12 +198,14 @@ function jamJudge(b)
 
 // the boat being driven gets a white outline: its own hull shape, filled and stroked white under the boat,
 // so only a rim shows around it
-function drawJamSelection()
+function drawJamSelection(onTop = false)
 {
     const b = player;
     if (!b) return;
-    const P = painter(b).P;
-    drawPoly(b.type.hullPts.map(p => P(p.x, p.y)), WHITE, .34*cam.wu, WHITE);
+    const P = painter({ ...b, dive: 0 }).P, pts = b.type.hullPts.map(p => P(p.x, p.y));
+    // on top of everything (a submerged sub): just the outline, since a fill would hide what is above the sub
+    if (onTop) drawPoly(pts, C_CLEAR, .2*cam.wu, WHITE);
+    else drawPoly(pts, WHITE, .34*cam.wu, WHITE);
 }
 
 function drawJamHud()

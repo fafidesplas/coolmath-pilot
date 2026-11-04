@@ -1294,8 +1294,6 @@ function drawRestRing()
 function drawBodies()
 {
     drawLands();
-    // the white rim round the boat you drive is drawn under it; a submerged sub is drawn early, so its rim goes first too
-    if (level?.jam && player && deep(player)) drawJamSelection();
     for (const b of bodies) if (deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     for (const r of rects) if (r.dock) drawDockShadow(r);
     for (const b of bodies) if (b.type && !b.under && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
@@ -1313,6 +1311,8 @@ function drawBodies()
     for (const b of bodies) if (b.type && b != player && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     if (player && !deep(player)) drawBoat(player);
     for (const b of bodies) if (deep(b)) drawPeriscope(b);
+    // a submerged sub hides under boats and docks, but its white outline stays on top so you can still find it
+    if (level?.jam && player && deep(player)) drawJamSelection(true);
 }
 
 // sand rects and landmass blobs drawn as one shape: every outline first, then every fill on top,
