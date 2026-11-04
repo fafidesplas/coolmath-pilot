@@ -35,6 +35,8 @@ const SETTLE_SPEED = +new URLSearchParams(location.search).get('settle') || 1, S
 const HANDOFF_MAX = 3, CARD_SHOW = 2.5, CARD_AFTER = 1;
 // a cheat so buoys stay visible next to big ships: each buoy is at least this share of the current
 // boat's length (wide), growing or shrinking smoothly when the next boat starts. Try others with ?buoy=.05
+// submarine: seconds of air while submerged, seconds to refill at the surface, and the air it needs before it may dive again
+const SUB_AIR_TIME = 9, SUB_REFILL_TIME = 5, SUB_DIVE_MIN = .3, SUB_DIVE_SPEED = 2.2;
 const BUOY_SHARE = +new URLSearchParams(location.search).get('buoy') || 1/12;
 const DUCK_SLEEP_WU = 4;              // zoomed out past this (meters per UI unit) ducks are specks: freeze them
 const MOORED_COLORS = [C_TEAL, C_SUNNY, C_NAVY, C_CORAL, C_CREAM];
@@ -131,6 +133,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     b.wash = t.wash / (slowdown*slowdown);
     b.color = color || t.color;
     b.hurtT = 0;
+    if (t.sub) { b.o2 = 1; b.dive = 0; b.under = false; b.wantDive = false; b.winded = false; }
     b.dragFull = b.dragF;          // forward drag under power; controlPlayer lowers it while coasting
     b.dragAFull = b.dragA;         // spin drag; controlPlayer raises it while settling
     bodies.push(b);
@@ -570,6 +573,50 @@ function controlPlayer(dt)
     driveBoat(player, throttle, rudder, dt);
 }
 
+// ---------------------------------------------------------------------------
+// submarine: dive with Space or the DIVE button. While under it passes beneath every boat, duck and buoy and beneath
+// docks marked `under` in the level (sand, walls and landmasses still stop it), but it burns air; at zero it has to
+// surface, and it can't dive again until it has some air back. It can only park at the surface.
+
+function toggleDive()
+{
+    const b = player;
+    if (!b?.type.sub || !hasControl() || b.parked) return;
+    if (b.wantDive) b.wantDive = false;
+    else if (!b.winded) b.wantDive = true;
+}
+
+function updateSubs(dt)
+{
+    for (const b of bodies)
+    {
+        if (!b.type?.sub) continue;
+        if (b != player || b.parked || anchor) b.wantDive = false;
+        if (b.under) b.o2 = Math.max(0, b.o2 - dt/SUB_AIR_TIME);
+        else if (!b.wantDive) b.o2 = Math.min(1, b.o2 + dt/SUB_REFILL_TIME);
+        if (b.o2 <= 0) { b.wantDive = false; b.winded = true; }
+        else if (b.winded && b.o2 >= SUB_DIVE_MIN) b.winded = false;
+        const was = b.under, goal = b.wantDive ? 1 : 0;
+        b.dive += clamp(goal - b.dive, -dt*SUB_DIVE_SPEED, dt*SUB_DIVE_SPEED);
+        b.under = b.dive > .5;
+        if (b.under != was) splash(b.pos, 8, 2, b.k);
+    }
+}
+
+// the docks a submerged boat still bumps into (not the `under` ones)
+let subRectsFor = null, subRectsList;
+function subRects() { if (subRectsFor != rects) { subRectsFor = rects; subRectsList = rects.filter(r => !r.under); } return subRectsList; }
+
+// a submerged submarine is drawn first, so docks and boats cover it; a periscope marks where it is
+const deep = b => b.type?.sub && b.dive > .05;
+function drawPeriscope(b)
+{
+    if (b.dive < .5 || !inView(b.pos, b.radius*1.5)) return;
+    const d = painter({ ...b, dive: 0 });
+    d.line(.3, 0, .5, 0, .14, C_INK);
+    d.circle(.3, 0, .26, C_CREAM, true);
+}
+
 // engine and rudder: the rudder turns the boat more the faster it goes, plus a little prop wash
 function driveBoat(b, throttle, rudder, dt)
 {
@@ -753,7 +800,7 @@ function parkingScore()
 function isResting()
 {
     return player.speed() < REST_SPEED*player.vs && Math.abs(player.angVel) < REST_SPIN/player.slowdown
-        && !player.throttle && !player.rudder;
+        && !player.throttle && !player.rudder && !player.wantDive && !player.under;
 }
 
 // no anchor: the boat is checked once it has rested for REST_TIME with part of its hull in the slip.
@@ -875,6 +922,7 @@ function stepWorld()
     const ducksAsleep = cam.wu > DUCK_SLEEP_WU;
     for (const b of bodies) b.asleep = ducksAsleep && b.kind == 'duck';
     growBuoys(timeDelta);
+    updateSubs(timeDelta);
     for (let s = 0; s < SUBSTEPS; s++)
     {
         controlPlayer(dt);
@@ -891,8 +939,8 @@ function stepWorld()
         {
             if (bodies[i].asleep) continue;
             for (let k = i+1; k < bodies.length; k++)
-                if (!bodies[k].asleep) collideBodies(bodies[i], bodies[k], onHit);
-            collideStatics(bodies[i], rects, posts, onHit);
+                if (!bodies[k].asleep && !bodies[i].under && !bodies[k].under) collideBodies(bodies[i], bodies[k], onHit);
+            collideStatics(bodies[i], bodies[i].under ? subRects() : rects, posts, onHit);
         }
     }
     for (const b of bodies) { if (b.hurtT > 0) b.hurtT -= timeDelta; if (b.swearT > 0) b.swearT -= timeDelta; }
@@ -1005,6 +1053,7 @@ function layoutButtons()
     {
         button('pause', 'II', 37.6, 21.75, 2.2, 1.2, { small:true });
         button('restart', 'RESTART', 33.6, 21.75, 4.8, 1.2, { small:true });
+        if (player?.type.sub && !isPaused) button('dive', player.wantDive ? 'SURFACE' : 'DIVE', 4.2, 1.6, 5.6, 1.4, { small:true });
         if (isPaused)
         {
             button('resume', 'RESUME', 20, 13, 8, 2.2, { big:true });
@@ -1048,6 +1097,7 @@ function pressButton(id)
     else if (id == 'back') setScreen('title');
     else if (id == 'menu') setScreen('levels');
     else if (id.startsWith('level')) loadLevel(+id.slice(5));
+    else if (id == 'dive') toggleDive();
     else if (id == 'pause') isPaused = !isPaused;
     else if (id == 'resume') isPaused = false;
     else if (id == 'restart' || id == 'retry') { track('design', 'ui:restart'); if (window.pmbEditor?.testing) pmbEditor.restartTest(); else loadLevel(levelIndex); }
@@ -1093,6 +1143,7 @@ function gameUpdate()
     {
         if (keyWasPressed('KeyP') || keyWasPressed('Escape')) isPaused = !isPaused;
         if (keyWasPressed('KeyR')) pressButton('restart');
+        if (!isPaused && keyWasPressed('Space')) toggleDive();
         if (!isPaused)
         {
             levelTime += timeDelta;
@@ -1232,8 +1283,9 @@ function drawRestRing()
 function drawBodies()
 {
     drawLands();
+    for (const b of bodies) if (deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     for (const r of rects) if (r.dock) drawDockShadow(r);
-    for (const b of bodies) if (b.type && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
+    for (const b of bodies) if (b.type && !b.under && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     if (level?.jam) drawJamSlips(); else drawSlip();     // over the finger docks, so its dashed sides show
@@ -1245,8 +1297,9 @@ function drawBodies()
         else if (b.kind == 'buoy') drawBuoy(b);
         else if (b.kind == 'log') drawLog(b);
     }
-    for (const b of bodies) if (b.type && b != player && inView(b.pos, b.radius*1.2)) drawBoat(b);
-    if (player) drawBoat(player);
+    for (const b of bodies) if (b.type && b != player && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
+    if (player && !deep(player)) drawBoat(player);
+    for (const b of bodies) if (deep(b)) drawPeriscope(b);
 }
 
 // sand rects and landmass blobs drawn as one shape: every outline first, then every fill on top,
@@ -1343,6 +1396,19 @@ function drawSlipArrow()
     txt(fmtLen(slip.pos.distance(player.pos)), q.x, q.y, .5, C_CREAM, 'center', .1, C_INK);
 }
 
+// the submarine's air: a bar by the DIVE button that flashes when it runs low
+function drawAirGauge()
+{
+    const b = player;
+    if (!b?.type.sub) return;
+    const x = 12.2, y = 1.6, w = 6.4, h = .7, low = b.o2 < .25, flash = low && Math.sin(time*14) > 0;
+    drawPanel(vec2(x, y), w + .5, h + .5, C_CREAM, .3, false);
+    drawRect(vec2(x, y), vec2(w, h), C_INK.scale(1, .15));
+    const fill = w*b.o2;
+    if (fill > .01) drawRect(vec2(x - w/2 + fill/2, y), vec2(fill, h), flash || b.winded ? C_CORAL : C_TEAL);
+    drawRect(vec2(x - w/2 + w*SUB_DIVE_MIN, y), vec2(.08, h + .3), C_INK);     // the air needed to dive again
+}
+
 // a ring around the player when the boat is too small to spot
 function drawPlayerMarker()
 {
@@ -1389,6 +1455,7 @@ function drawHud()
     if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
     txt(boat, 10, 21.75, .55, C_TEAL, 'left');
     if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
+    drawAirGauge();
     drawScaleBar();
 }
 

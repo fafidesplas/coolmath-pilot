@@ -1498,6 +1498,8 @@ window.pmbEditor = (() =>
         const side = (label, k, n) => field(label, sel.kind == 'land' ? input('number', () => r[n], v => { r[n] = v ?? 0; }, { step: 'any' }) : numIn(r, k, { step: 'any' }));
         panel.append(grid([side('left', 'x0', 0), side('right', 'x1', 2), side('bottom', 'y0', 1), side('top', 'y1', 3)]));
         if (sel.kind == 'currents') panel.append(grid([field('flow x', numIn(r, 'dx', { step: 'any' })), field('flow y', numIn(r, 'dy', { step: 'any' }))]));
+        if (sel.kind == 'docks')
+            panel.append(el('label', {}, [el('input', { type: 'checkbox', checked: !!r.under, onchange: e => { snapshot(); if (e.target.checked) r.under = true; else delete r.under; changed(); } }), 'submarines can pass under']));
         if (sel.kind == 'walls') panel.append(el('div', { className: 'keys', textContent: 'Boats and floaters bump into it, but it is never drawn in the game. Only the editor shows it.' }));
         else if (sel.kind != 'currents') panel.append(el('div', { className: 'keys', textContent: 'T: sand → dock → quay → sand' }));
     }
@@ -1598,6 +1600,7 @@ window.pmbEditor = (() =>
                 break;
             case 'docks':
                 panel.append(bCheck('quay (concrete)', o => o.quay, (o, v) => { if (v) o.quay = true; else delete o.quay; }));
+                panel.append(bCheck('submarines can pass under', o => o.under, (o, v) => { if (v) o.under = true; else delete o.under; }));
                 break;
             case 'currents':
                 panel.append(bNum('flow x', o => o.dx, (o, v) => { o.dx = v ?? 0; }, { step: 'any' }), bNum('flow y', o => o.dy, (o, v) => { o.dy = v ?? 0; }, { step: 'any' }));

@@ -34,6 +34,8 @@ const BOATS =
     yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM, captainX:.6 },
     cruise:    { name:'Cruise Ship',  L:10,  W:1.3,  k:30,  mass:12,  power:34,  reverse:.5, turn:.32, wash:.6,  dragF:.5,  dragS:2.6, dragA:1.6, hull:'pointy', color:C_NAVY,  captainX:3.3 },
     container: { name:'Container Ship', L:10, W:1.5, k:40,  mass:14,  power:34,  reverse:.45,turn:.28, wash:.4,  dragF:.45, dragS:3,   dragA:1.8, hull:'pointy', color:C_CORAL, captainX:-4.1 },
+    // submarine: dives under boats and some docks (`under` docks), but only while it has air (see updateSubs in main.js)
+    sub:       { name:'Submarine',    L:3.6, W:1.3, k:3,   mass:2,   power:12,  reverse:.5, turn:.8,  wash:.8,  dragF:.8,  dragS:3.5, dragA:2.5, hull:'pointy', color:C_SUNNY, captainX:0, sub:true },
     // landmasses: blob hulls made of circles [x, y, r], no keel to speak of
     island:    { name:'Island',       L:10,  W:6,    k:3000, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
                  blob:[[0,0,2.6],[2.6,.6,1.9],[-2.7,-.5,2],[4,1.1,1],[-3.9,-.2,1.1],[.9,-1.5,1.4],[-1,1.7,1.3]] },
@@ -211,6 +213,20 @@ const BOAT_DECO =
         d.rect(-.55, .02, .26, .2, C_SUNNY, true);
         d.rect(-1.1, 0, .32, .66, C_WOOD2, true);                   // net drum at the stern
         for (const y of [-.2, 0, .2]) d.line(-1.24, y, -.96, y, .04, C_INK);
+    },
+    sub(d, t, b)
+    {
+        d.line(-1.9, 0, -2.25, 0, .16, C_INK);                       // propeller shaft
+        d.ellipse(-2.3, 0, .12, .8, C_INK);                          // propeller
+        d.rect(.8, 0, .36, .12, C_INK);                              // bow planes
+        d.line(.8, .1, .8, .62, .12, C_INK); d.line(.8, -.1, .8, -.62, .12, C_INK);
+        d.rect(-1.5, 0, .36, .12, C_INK);                            // stern planes
+        d.line(-1.5, .1, -1.5, .55, .12, C_INK); d.line(-1.5, -.1, -1.5, -.55, .12, C_INK);
+        for (let i = 0; i < 3; i++) d.circle(.45 - i*.55, 0, .2, rgb(.4,.7,.8), true);   // portholes down the spine
+        d.ellipse(-.3, 0, 1.15, .62, C_CORAL, true);                  // conning tower
+        d.ellipse(-.3, 0, .6, .3, C_CREAM);                           // hatch
+        d.line(-.1, 0, .25, 0, .1, C_INK);                            // periscope
+        d.circle(.3, 0, .2, C_INK);
     },
     yacht(d, t)
     {

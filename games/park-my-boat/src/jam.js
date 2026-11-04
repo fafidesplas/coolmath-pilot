@@ -67,6 +67,7 @@ function jamUpdate(dt)
     // every boat floats and can be shoved; buoys, logs and ducks too
     const floaters = bodies.filter(b => b.kind == 'buoy' || b.kind == 'log' || b.kind == 'duck');
     const sub = dt / SUBSTEPS;
+    updateSubs(dt);
     for (let s = 0; s < SUBSTEPS; s++)
     {
         if (player) controlPlayer(sub);
@@ -74,20 +75,20 @@ function jamUpdate(dt)
         {
             if (b.parked) continue;
             b.integrate(sub);
-            collideStatics(b, rects, posts, b == player ? onHit : undefined);
+            collideStatics(b, b.under ? subRects() : rects, posts, b == player ? onHit : undefined);
         }
         for (let i = 0; i < jamBoats.length; i++)
             for (let j = i + 1; j < jamBoats.length; j++)
             {
                 const A = jamBoats[i], B = jamBoats[j];
-                collideBodies(A, B, A == player || B == player ? onHit : undefined);
+                if (!A.under && !B.under) collideBodies(A, B, A == player || B == player ? onHit : undefined);
             }
         for (const f of floaters)
         {
             if (f.kind == 'duck') updateDuck(f, sub);
             f.integrate(sub);
             collideStatics(f, rects, posts);
-            for (const o of jamBoats) collideBodies(o, f, o == player ? onHit : undefined);
+            for (const o of jamBoats) if (!o.under) collideBodies(o, f, o == player ? onHit : undefined);
         }
         for (let i = 0; i < floaters.length; i++)
             for (let j = i + 1; j < floaters.length; j++) collideBodies(floaters[i], floaters[j]);
@@ -106,13 +107,14 @@ function jamUpdate(dt)
     for (const b of jamBoats)
     {
         if (b.parked) continue;
-        const still = b.speed() < REST_SPEED*b.vs && Math.abs(b.angVel) < REST_SPIN/b.slowdown && (b != player || !b.throttle && !b.rudder);
+        const still = b.speed() < REST_SPEED*b.vs && Math.abs(b.angVel) < REST_SPIN/b.slowdown && (b != player || !b.throttle && !b.rudder) && !b.under && !b.wantDive;
         if (!still) { b.restT = 0; b.restArmed = true; continue; }
         if (!b.restArmed || !jamInSlip(b, false)) { b.restT = 0; continue; }
         b.restT += dt;
-        if (b == player) restT = b.restT;
         if (b.restT >= REST_TIME) jamJudge(b);
     }
+    // the ring follows the driven boat's timer, so it clears whenever that resets (moved, left the slip, missed)
+    restT = player && !player.parked ? player.restT : 0;
     if (jamDone > 0 && (jamDone -= dt) <= 0) return showComplete();
     if (!player) return;
 
@@ -182,6 +184,7 @@ function drawJamHud()
     const left = jamBoats.filter(b => !b.parked).length;
     txt(`${left} boat${left == 1 ? '' : 's'} left${player ? ' - ' + player.type.name : ''}`, 10, 21.75, .55, C_TEAL, 'left');
     if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
+    drawAirGauge();
 }
 
 // debug (window.game.win): every boat parked, no bumps

@@ -18,14 +18,16 @@ function painter(b, ox=0, oy=0)
     const px = b.pos.x + ox, py = b.pos.y + oy, ang = -b.angle;
     const P = (x, y) => vec2(px + x*sx*c - y*sy*s, py + x*sx*s + y*sy*c);
     const lw = outline => outline ? Math.min(LINE_W, .1*k) : 0;
+    // a submerged submarine is drawn washed toward the water and see-through
+    const g = b.dive || 0, tc = c => g > .02 && c ? c.lerp(C_TEAL, .45*g).scale(1, 1 - .5*g) : c, ink = tc(C_INK);
     return {
         P,
-        circle(x, y, d, color, outline) { drawCircle(P(x, y), d*sx, color, lw(outline), C_INK); },
-        ellipse(x, y, w, h, color, outline) { drawEllipse(P(x, y), vec2(w*sx, h*sy), color, ang, lw(outline), C_INK); },
-        poly(pts, color, outline) { drawPoly(pts.map(p => p.x === undefined ? P(p[0], p[1]) : P(p.x, p.y)), color || C_CLEAR, lw(outline), C_INK); },
+        circle(x, y, d, color, outline) { drawCircle(P(x, y), d*sx, tc(color), lw(outline), ink); },
+        ellipse(x, y, w, h, color, outline) { drawEllipse(P(x, y), vec2(w*sx, h*sy), tc(color), ang, lw(outline), ink); },
+        poly(pts, color, outline) { drawPoly(pts.map(p => p.x === undefined ? P(p[0], p[1]) : P(p.x, p.y)), tc(color || C_CLEAR), lw(outline), ink); },
         rect(cx, cy, w, h, color, outline) { this.poly([[cx-w/2,cy-h/2],[cx+w/2,cy-h/2],[cx+w/2,cy+h/2],[cx-w/2,cy+h/2]], color, outline); },
-        line(x1, y1, x2, y2, w, color) { drawLine(P(x1, y1), P(x2, y2), w*k, color); },
-        text(str, x, y, size, color) { drawText(str, P(x, y), size*k, color, 0, C_INK, 'center', fontDefault, FONT_STYLE); },
+        line(x1, y1, x2, y2, w, color) { drawLine(P(x1, y1), P(x2, y2), w*k, tc(color)); },
+        text(str, x, y, size, color) { drawText(str, P(x, y), size*k, tc(color), 0, ink, 'center', fontDefault, FONT_STYLE); },
     };
 }
 
@@ -39,7 +41,7 @@ function txt(str, x, y, size, color=C_INK, align='center', outline=0, outlineCol
 
 function drawBoatShadow(b)
 {
-    if (screenLen(b) < .3) return;
+    if (screenLen(b) < .3 || b.under) return;
     const o = shadowOff(b.type.W * (b.k || 1));
     painter(b, o.x, o.y).poly(b.type.hullPts, C_SHADOW);
 }
@@ -58,7 +60,7 @@ function drawBoat(b)
     d.poly(t.deckPts, t.deck || b.color.lerp(C_CREAM, .45));
     if (len < .8) return;
     BOAT_DECO[t.key](d, t, b);
-    if (!t.blob && (b.kind == 'player' || b.kind == 'moored' || b.kind == 'traffic'))
+    if (!t.blob && !t.sub && (b.kind == 'player' || b.kind == 'moored' || b.kind == 'traffic'))
         drawCaptain(d, t.captainX, b, Math.min(1, 2.5 / (b.k || 1)));
 }
 
@@ -153,7 +155,7 @@ function outlineRect(r, width, color)
 function drawDock(r)
 {
     const w = r.x1 - r.x0, h = r.y1 - r.y0, plank = r.plank || .7;
-    const c = fillRect(r, r.quay ? C_STONE : C_WOOD);
+    const c = fillRect(r, r.under ? C_WOOD2.lerp(C_CREAM, .3) : r.quay ? C_STONE : C_WOOD);
     if (!c) return;
     // planks run across the long side, only while they are far enough apart to see
     if (!r.quay && plank / WU > .15)
@@ -162,6 +164,13 @@ function drawDock(r)
         else       for (let y = r.y0 + plank*Math.ceil((c.y0 - r.y0)/plank + 1e-6); y < c.y1; y += plank) drawLine(vec2(r.x0, y), vec2(r.x1, y), Math.min(.05*WU, plank*.08), C_WOOD2);
     }
     outlineRect(r, Math.min(LINE_W, Math.min(w, h)*.2), C_INK);
+    // a pier a submarine can pass under: two rails along its long sides, like a bridge
+    if (r.under)
+    {
+        const inset = Math.min(w, h)*.18, lw = Math.min(.06*WU, Math.min(w, h)*.08);
+        if (w > h) { drawLine(vec2(r.x0, r.y0 + inset), vec2(r.x1, r.y0 + inset), lw, C_INK); drawLine(vec2(r.x0, r.y1 - inset), vec2(r.x1, r.y1 - inset), lw, C_INK); }
+        else       { drawLine(vec2(r.x0 + inset, r.y0), vec2(r.x0 + inset, r.y1), lw, C_INK); drawLine(vec2(r.x1 - inset, r.y0), vec2(r.x1 - inset, r.y1), lw, C_INK); }
+    }
 }
 
 function drawDockShadow(r)
