@@ -1,3 +1,6 @@
+## 2026-11-03 — Only the selected boat's slip shows
+- In the crowded harbors only the selected boat's slip is drawn (none while no boat is selected). The slips still exist and still park their boats.
+
 ## 2026-11-03 — No ghost ovals in the slips
 - The crowded-harbor slips no longer show an oval ghost of the boat's hull; they are plain dashed boxes.
 

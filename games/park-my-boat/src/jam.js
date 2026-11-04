@@ -194,14 +194,14 @@ function jamWin()
     showComplete();
 }
 
-// every slip: the unparked boats' own, dashed; the selected boat's slip is bolder. A boat resting in its slip fills it.
+// the selected boat's slip, dashed; it fills when the boat rests in it. The other boats' slips are not shown.
 function drawJamSlips()
 {
     const pulse = .5 + .5*Math.sin(time*5);
     for (const b of jamBoats)
     {
-        if (b.parked) continue;
-        const s = b.slip, on = b == player, inside = jamInSlip(b);
+        if (b.parked || b != player) continue;      // only the selected boat's slip shows
+        const s = b.slip, on = true, inside = jamInSlip(b);
         const lw = Math.min(.14*WU, s.wid*.08), a = on ? 1 : .6;
         const pts = [vec2(s.pos.x - s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y - s.h/2), vec2(s.pos.x + s.w/2, s.pos.y + s.h/2), vec2(s.pos.x - s.w/2, s.pos.y + s.h/2)];
         if (inside) drawPoly(pts, C_CREAM.scale(1, .15 + .1*pulse), lw*1.15, C_CREAM);
