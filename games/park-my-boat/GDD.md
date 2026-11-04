@@ -42,7 +42,6 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 | Swan Pedalo | 2.6 m | 1 | 3.5 | 0.7 | 2.2 | Slow, spins on the spot |
 | Rowboat | 2.9 m | 1 | 6 | 0.6 | 1.1 | Neutral, the learning boat |
 | Zippy | 6.8 m | 1.5 | 13 | 0.5 | 0.9 | Fast, drifts in turns |
-| Party Barge | 9.2 m | 4 | 12 | 0.6 | 0.55 | Wide, slow to turn |
 | Sailboat | 12 m | 3.5 | 7 | 0.5 | 0.7 | Strong keel, tracks straight |
 | Trawler | 26 m | 5 | 30 | 0.8 | 0.9 | Fishing boat; strong, pushes things (replaced the tugboat) |
 | Mega Yacht | 80 m | 10 | 30 | 0.5 | 0.35 | Long, slow to turn |
@@ -149,9 +148,9 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | 6 | Duck Crossing | Swan Pedalo → Sailboat | Duck families cross the fairway; the swan spins, the sailboat tracks straight. |
 | 7 | Tight Squeeze | Sailboat | Parallel park between two moored boats on a pier. |
 | 8 | Clear the Way | Trawler → Mega Yacht | Push drifting logs and an empty barge out of the yacht's slip, then park the yacht. |
-| 9 | River Mouth | Zippy → Party Barge | A current crosses the approach; aim upstream. The wide barge gets pushed more. |
+| 9 | River Mouth | Zippy → Sailboat | A current crosses the approach; aim upstream. The sailboat gets pushed more. |
 | 10 | "Mixed Nuts" | Mega Yacht → Cruise Ship → Swan Pedalo | World finale: big, bigger, tiny. |
-| 11 | "Way Down" | Container Ship → Trawler → Jet Ski | Big-to-small chain, first slow traffic (party barge, sailboat); the trawler squeezes through a 13 m gap between two moored yachts on the way to its slip. |
+| 11 | "Way Down" | Container Ship → Trawler → Jet Ski | Big-to-small chain, first slow traffic (sailboat); the trawler squeezes through a 13 m gap between two moored yachts on the way to its slip. |
 | 12 | Ferry Lane | Rowboat → Mega Yacht | One ferry lane of back-and-forth traffic to cross twice. |
 | 13 | Container Port | Trawler → Container Ship | Tight ship berth between two moored container ships. |
 | 14 | "Rush Hour" | Jet Ski | A gauntlet on one screen: three narrow canals of looping traffic, faster each time; stop on the sand and wait for a gap. |
@@ -159,7 +158,7 @@ Every hit costs money from the level's budget (3.6), from the impact energy and 
 | 16 | Crosscurrent | Sailboat → Cruise Ship | A strong current along the quay. |
 | 17 | Drift Field | Zippy → Trawler → Mega Yacht | A harbor full of loose boats and logs. |
 | 18 | "Marina" | Jet Ski → Sailboat → 48 m Yacht | Packed yacht marina with tenders in the fairways. |
-| 19 | Busy Harbor | Party Barge → Container Ship → Rowboat | Traffic plus current plus moored boats. |
+| 19 | Busy Harbor | Sailboat → Container Ship → Rowboat | Traffic plus current plus moored boats. |
 | 20 | Dock All The Boats | Jet Ski → Rowboat → Sailboat → Mega Yacht → Container Ship | Five boats, 2.4 m to 400 m, one harbor. |
 
 Levels 1–3 and 5–9, 12–13, 15–17 and 19–20 are new.
@@ -210,7 +209,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
 | `#8CD6D1` | Water |
 | `#33949E` | Teal: UI accents, jet ski, slip outline |
 | `#F2635F` | Coral: warnings, damages, rowboat, trawler |
-| `#FFCC47` | Sunny: title, stars, party barge |
+| `#FFCC47` | Sunny: title, stars |
 | `#FFF7E5` | Cream: panels, white hulls |
 | `#E8B873` | Wood: docks, decks |
 
@@ -227,7 +226,7 @@ The `world` of a level comes from its position in the list (levels 1–10 → wo
   - Title: bobbing logo, boat parade.
 - **Concept art prompts:**
   - "Top-down toy harbor in flat vector style, teal water #8CD6D1, wooden docks #E8B873, a tiny coral rowboat parked next to a giant navy cruise ship, thick dark outlines #2B2D42, soft drop shadows, cream and sunny yellow accents, playful, no text."
-  - "Flat vector sticker sheet of toy boats seen from above: jet ski, swan pedal boat, rowboat, speedboat, party barge, sailboat, fishing trawler, mega yacht, cruise ship, container ship; each with a tiny cartoon captain, thick ink outlines, palette teal, coral, sunny yellow, cream, wood."
+  - "Flat vector sticker sheet of toy boats seen from above: jet ski, swan pedal boat, rowboat, speedboat, sailboat, fishing trawler, mega yacht, cruise ship, container ship; each with a tiny cartoon captain, thick ink outlines, palette teal, coral, sunny yellow, cream, wood."
   - "Top-down crowded yacht marina in toy flat style, piers lined with boats, one empty berth outlined with a dashed box, ducks in a line, buoys, teal water."
 
 ## 10. Audio
@@ -300,7 +299,7 @@ No daily events (no daily in v1).
   - **Settings (stretch goal):** levels in different places, not only harbors. A setting is a look plus one or two things of its own, so it reads as new without new rules:
     - **Harbor and docks** (today): concrete quays, wooden docks, cranes; ships and trawlers.
     - **Marina:** packed piers, yachts, tenders (Marina today).
-    - **Tropical islands:** turquoise shallows, white sand, palm trees, a wooden jetty or a beach hut on stilts; coral heads as fixed obstacles; jet skis, swans and party barges.
+    - **Tropical islands:** turquoise shallows, white sand, palm trees, a wooden jetty or a beach hut on stilts; coral heads as fixed obstacles; jet skis and swans.
     - Later candidates: a canal town (narrow canals, bridges, gondolas), a lake with a boathouse, an icy fjord with floating ice.
     - Each setting needs its own water, land and accent colors on top of the shared ink, cream and sunny. `STANDARDS.md` asks for one palette of 4–6 colors chosen once, so per-setting palettes need the team's OK first (see 14).
     - Settings could become the worlds (World 1 the harbor, World 2 the islands…), which gives each world its own look as well as its own lesson.
@@ -337,7 +336,7 @@ Decided in review 1 (2026-10-25):
 | Inside but under 50% accuracy | A message per cause, with the slip showing what's wrong (3.5) | Pao | Decided |
 | Vertical slice | The 4 existing levels in the full v1 shell (13) | Pao | Decided |
 | Players who close the tab | `boat:…:start` events; `stars:…` dropped (11) | Pao | Decided |
-| Teaching order | Jet ski gets level 5; level 9 is Zippy → Party Barge; traffic first at 11 | Pao | Decided |
+| Teaching order | Jet ski gets level 5; level 9 is Zippy → Sailboat; traffic first at 11 | Pao | Decided |
 | Edge arrows | Size-aware warning, at most 2 traffic arrows (3.7) | Pao | Decided |
 | Level 1 tutorial | Cut: the game shows no instruction or flavor text (see changelog) | Pao | Decided |
 | Level length | A decent run takes at most 90 s (120 s for level 20) | Pao | Decided |

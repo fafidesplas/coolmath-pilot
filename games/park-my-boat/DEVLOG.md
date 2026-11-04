@@ -1,3 +1,6 @@
+## 2026-11-03 — Party Barge removed
+- The Party Barge is gone from the game: its boat type and drawing are deleted. Marina's pier rows and fairway traffic use a speedboat or sailboat where it was; Raft-Up's two barges are 9 m speedboats; Open Water's is a 7.5 m sailboat. Checked by script: no overlaps among boats, slips and the chain boats' starts in any level. Not run in a browser yet.
+
 ## 2026-11-03 — Open Water: no container ship
 - The container ship (shrunk to 30 m, so it looked small next to the trawler) is replaced by three mid-sized boats in the bottom row, all smaller than the trawler: a 12.8 m yacht, an 8.8 m speedboat and a 7.4 m party barge, each with its own slip to the south. Not run in a browser yet.
 

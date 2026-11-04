@@ -219,17 +219,17 @@ const SCALE_LEVELS =
         moored:
         [
             ...berths(3, 377, 350, -1, 2, [['yacht', 5.5], ['yacht', 6.5], ['yacht', 5], ['yacht', 6]]),
-            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2], ['sailboat', 2.4]]),
+            ...berths(3, 266, 206, 1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4]]),
             ...berths(3, 266, 200, -1, 2, [['yacht', 4], ['yacht', 3.5], ['yacht', 4.5]], [[150, 20]]),
-            ...berths(104, 377, 76, 1, 1.2, [['speedboat', 2], ['dinghy', 1.3], ['jetski', 1], ['pontoon', 2], ['speedboat', 2], ['sailboat', 2.4], ['dinghy', 1.3], ['jetski', 1]], [[230, 4.2], [290, 7.5]]),
-            ...berths(104, 377, 70, -1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['pontoon', 2]]),
+            ...berths(104, 377, 76, 1, 1.2, [['speedboat', 2], ['dinghy', 1.3], ['jetski', 1], ['speedboat', 2], ['speedboat', 2], ['sailboat', 2.4], ['dinghy', 1.3], ['jetski', 1]], [[230, 4.2], [290, 7.5]]),
+            ...berths(104, 377, 70, -1, 1.5, [['sailboat', 2.4], ['speedboat', 2], ['sailboat', 2.4], ['speedboat', 2]]),
         ],
         traffic:
         [
             { boat: 'dinghy', path: [[110, 148], [280, 148]], end: 'back', speed: .33 },
             { boat: 'speedboat', path: [[280, 136], [110, 136]], end: 'back', speed: .15 },
             { boat: 'jetski', path: [[320, 125], [365, 125], [365, 190], [320, 190]], end: 'loop', speed: .22 },
-            { boat: 'pontoon', path: [[30, 257], [260, 257]], end: 'back', speed: .33 },
+            { boat: 'sailboat', path: [[30, 257], [260, 257]], end: 'back', speed: .33 },
             { boat: 'speedboat', path: [[360, 278], [40, 278]], end: 'back', speed: .15 },
             { boat: 'dinghy', path: [[110, 42], [370, 42]], end: 'back', speed: .33 },
         ],
@@ -244,7 +244,7 @@ const SCALE_LEVELS =
             { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
             { boat: 'yacht', k: 1.6, x: 21.1, y: 11.05, a: PI, slip: { x: 2.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
             { boat: 'speedboat', k: 2.6, x: 32.5, y: 11.05, a: PI, slip: { x: 15.8, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'pontoon', k: 1.6, x: 41.24, y: 11.05, a: PI, slip: { x: 26.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'sailboat', k: 1.5, x: 41.24, y: 11.05, a: PI, slip: { x: 26.5, y: 2.45, a: 0, pad: [1, .8], fingers: 'none' } },
             { boat: 'sailboat', x: 21.4, y: 20, a: PI/2, slip: { x: 10.88, y: 31.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'sailboat', x: 38.6, y: 20, a: -PI/2, slip: { x: 50.88, y: 10.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'sailboat', x: 30, y: 24.02, a: 0, slip: { x: 19.2, y: 43.88, a: 0, pad: [1, .8], fingers: 'none' } },
@@ -257,7 +257,7 @@ const SCALE_LEVELS =
         ducks: [{ x: 44, y: 6.5, kids: 2 }],
     },
     {
-        // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats, party barges,
+        // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats,
         // a 20 m yacht and the trawler, with small boats pinning the outer pair's ends. 6 rounds.
         name: 'Raft-Up', jam: true, view: [-5, 3, 73, 57], boats: [], land: [], docks: [],
         moored:
@@ -267,8 +267,8 @@ const SCALE_LEVELS =
             { boat: 'swan', x: 33.97, y: 33.97, a: -PI/4, slip: { x: 31.87, y: 52.32, a: 0, pad: [1, .8], fingers: 'none' } },
             { boat: 'speedboat', x: 29.65, y: 34.35, a: PI/4, slip: { x: 24.1, y: 51.4, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'speedboat', x: 34.35, y: 29.65, a: -3*PI/4, slip: { x: 40.4, y: 51.1, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'pontoon', x: 27.40, y: 27.40, a: -PI/4, slip: { x: 21.6, y: 8.2, a: 0, pad: [1, .8], fingers: 'none' } },
-            { boat: 'pontoon', x: 36.60, y: 36.60, a: 3*PI/4, slip: { x: 42.6, y: 8.2, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'speedboat', k: 2.7, x: 27.40, y: 27.40, a: -PI/4, slip: { x: 21.6, y: 8.2, a: 0, pad: [1, .8], fingers: 'none' } },
+            { boat: 'speedboat', k: 2.7, x: 36.60, y: 36.60, a: 3*PI/4, slip: { x: 42.6, y: 8.2, a: 0, pad: [1, .8], fingers: 'none' } },
             { boat: 'yacht', k: 2.5, x: 25.94, y: 38.06, a: -3*PI/4, slip: { x: 8.25, y: 35.25, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'trawler', x: 39.16, y: 24.84, a: PI/4, slip: { x: 64, y: 30.2, a: PI/2, pad: [1, .8], fingers: 'none' } },
             { boat: 'jetski', x: 17.99, y: 30.10, a: 3*PI/4, slip: { x: 10.7, y: 20.95, a: 0, pad: [1, .8], fingers: 'none' } },

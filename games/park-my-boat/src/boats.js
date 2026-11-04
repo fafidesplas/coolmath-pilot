@@ -29,7 +29,6 @@ const BOATS =
     dinghy:    { name:'Rowboat',      L:2.2, W:1.15, k:1.3, mass:1,   power:6,   reverse:.6, turn:1.1, wash:1.6, dragF:1.2, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL, captainX:-.35 },
     speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM, captainX:-.2 },
     swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM, captainX:-.45 },
-    pontoon:   { name:'Party Barge',  L:4.6, W:2.4,  k:2,   mass:4,   power:12,  reverse:.6, turn:.55, wash:.9,  dragF:.8,  dragS:2.2, dragA:2.4, hull:'box',    color:C_SUNNY, captainX:-1.6 },
     sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM, captainX:-1.8 },
     trawler:   { name:'Trawler',      L:3.3, W:1.2,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL, captainX:.55 },
     yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM, captainX:.6 },
@@ -190,16 +189,6 @@ const BOAT_DECO =
         d.circle(1.18, .2, .12, C_INK);
         d.circle(1.18, -.2, .12, C_INK);
         d.circle(.15, .3, .3, C_SKIN, true);                       // passenger
-    },
-    pontoon(d, t)
-    {
-        d.rect(.2, 0, 3, 2, C_CORAL, true);                        // striped canopy
-        for (let i = 0; i < 3; i++)
-            d.rect(-1 + i*1.2, 0, .45, 2, C_CREAM);
-        d.rect(.2, 0, 3, 2, undefined, true);
-        d.circle(1.95, .7, .5, C_TEAL, true);                      // balloons
-        d.circle(2.05, .2, .45, C_SUNNY, true);
-        d.circle(1.95, -.6, .5, C_CORAL, true);
     },
     sailboat(d, t, b)
     {
