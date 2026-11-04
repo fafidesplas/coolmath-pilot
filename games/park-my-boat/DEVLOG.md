@@ -2,7 +2,7 @@
 
 ## 2026-11-03 — Crowded harbors replace unparking
 - The unparking mode is gone (no second button, one level list). Its five jams (Marina Jam, Open Water, Fishing Port, Big Ship Day, Raft-Up) are parking levels now: the same crowded start, every boat yours and switchable by tap, but each boat has its own slip and parks by resting 0.5 s in it (driven or not). A parked boat holds still for good. Shove costs, bumps and the $10,000 budget stay; stars from money kept.
-- Slips (`slip` on each `moored` entry) were laid out by script in columns east of the crowd, each drawn as a dashed box with a ghost hull; `view` grew to frame them (boats are smaller on screen now). Invisible walls close the sea round the view. The way-out line, "out" rule and `jamSolve()` are removed.
+- Slips (`slip` on each `moored` entry) sit in free water around the crowd, each as near its own boat as it fits, with lanes left open out of the crowd (laid out by script, each drawn as a dashed box with a ghost hull); `view` grew to frame them (boats are smaller on screen now). The first layout put them in a block east of the crowd; Pao wanted a declogging puzzle, so it was redone. Invisible walls close the sea round the view. The way-out line, "out" rule and `jamSolve()` are removed.
 - Checked in the browser: all five load, no slip touches land, a wall, another slip or a boat; a miss does not park, an exact park does, an unselected boat resting in its slip parks, all parked ends the level.
 - Next: play each one. Slip spots are arbitrary (a boat's slip may be across the harbor from where it started); a long trip for a jet ski may want a closer slip. The level editor doesn't show these slips yet.
 
