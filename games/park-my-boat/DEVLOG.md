@@ -1,3 +1,9 @@
+## 2026-11-06 — Space build: bigger, glowing stars
+- Stars were thin hard dots (drawCircle takes a diameter, so they were half the intended size). Now each is a soft glow sprite (solid core, halo), 70 per layer instead of 46, and 6% are four-point flares (long thin rays, up and across) in place of the eight-ray atomic bursts. The title's four big bursts are flares too.
+- On-screen star size now follows the zoom only half as much (square root), so stars never shrink to specks; spacing still follows the zoom fully, so zooming still reads.
+- Sprites are drawn once to offscreen canvases; the whole sky is one canvas call per frame.
+- Next: the sky is sparse at some zooms (Open Space), where only one star layer is showing.
+
 ## 2026-11-06 — Space build: PREP THE AIRLOCK!
 - The space build's park word "TOUCHDOWN!" (it replaced "LAND HO!") is now "PREP THE AIRLOCK!": ships dock, they don't land. Shows in the park popup and as the result headline.
 

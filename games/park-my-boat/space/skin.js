@@ -1,6 +1,6 @@
 'use strict';
 // Lost in Parking Space: the secret space skin, in a 1960s space-age poster style (flat rounded shapes with a
-// soft shaded edge, teal, mustard, brick and cream on near-black navy, atomic starbursts, film grain, Righteous type).
+// soft shaded edge, teal, mustard, brick and cream on near-black navy, glowing stars with four-point flares, film grain, Righteous type).
 // Loaded after src/main.js by space/index.html only, so the harbor build never sees it.
 // Pure visual reskin: physics, levels, sizes and handling are untouched. A poster painter replaces the Toybox one,
 // so every deck drawing turns flat and shaded with no per-ship rewrite. Every game fix and new level in the
@@ -212,15 +212,60 @@ SOUNDS.bonk  = new Sound([1,.05,260,0,.01,.3,0,1,0,0,0,0,0,0,63,0,0,.5,.08]);
 SOUNDS.quack = new Sound([1,.1,500,.02,.08,.14,0,1,12,-1,0,0,0,0,0,0,0,.8]);
 
 // ---------------------------------------------------------------------------
-// the sky: cream and mustard stars with the odd atomic starburst, in octaves 10x apart (like the harbor's ripples)
-// so the zoom always shows, then film grain over the whole screen
+// the sky: soft glowing cream and mustard stars with the odd four-point flare, in octaves 10x apart (like the
+// harbor's ripples) so the zoom always shows, then film grain over the whole screen
 
 const STARS = [];
 {
     let seed = 7;
     const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 46; i++) STARS.push({ x:rnd()*40, y:rnd()*22, r:.05 + rnd()*rnd()*.13, ph:rnd()*9, gold:rnd() < .2, burst:rnd() < .09 });
+    for (let i = 0; i < 70; i++) STARS.push({ x:rnd()*40, y:rnd()*22, d:.5 + rnd()*rnd()*.9, ph:rnd()*9, gold:rnd() < .2, flare:rnd() < .06 });
 }
+
+// star sprites, drawn once: a glow dot (solid core, soft halo) and a flare (glow dot with long thin rays, up and across)
+function starSprite(col, flare)
+{
+    const n = flare ? 128 : 64, m = n/2, c = document.createElement('canvas'), g = c.getContext('2d');
+    c.width = c.height = n;
+    const rgba = a => `rgba(${col.r*255|0},${col.g*255|0},${col.b*255|0},${a})`;
+    const glow = (r, a) =>
+    {
+        const gr = g.createRadialGradient(m, m, 0, m, m, r);
+        gr.addColorStop(0, rgba(a));
+        gr.addColorStop(1, rgba(0));
+        g.fillStyle = gr;
+        g.fillRect(0, 0, n, n);
+    };
+    if (flare)
+    {
+        for (const [dx, dy] of [[1, 0], [0, 1]])
+        {
+            const gr = g.createLinearGradient(m - dx*m, m - dy*m, m + dx*m, m + dy*m), w = n*.016;
+            gr.addColorStop(0, rgba(0));
+            gr.addColorStop(.5, rgba(1));
+            gr.addColorStop(1, rgba(0));
+            g.fillStyle = gr;
+            g.beginPath();
+            g.moveTo(m - dx*m, m - dy*m); g.lineTo(m + dy*w, m + dx*w); g.lineTo(m + dx*m, m + dy*m); g.lineTo(m - dy*w, m - dx*w);
+            g.fill();
+        }
+        glow(m*.3, .5);
+        glow(m*.1, 1);
+    }
+    else
+    {
+        glow(m, .3);
+        glow(m*.5, .7);
+        glow(m*.25, 1);
+    }
+    g.fillStyle = 'rgba(255,252,236,1)';
+    g.beginPath();
+    g.arc(m, m, flare ? n*.035 : n*.12, 0, PI*2);
+    g.fill();
+    return c;
+}
+const STAR_DOT = starSprite(P_CREAM), STAR_GOLD = starSprite(P_MUSTARD), STAR_FLARE = starSprite(P_CREAM, true);
+const FLARE_SIZE = 2.4;   // a flare's ray span, in star-layer units (a dot is .5-1.4)
 
 // film grain: a small speckle tile, filled over the screen as a pattern (one call, no per-frame gradients)
 let grainPattern;
@@ -248,30 +293,28 @@ function drawGrain(alpha)
 
 drawWater = function()
 {
-    const v = VIEW_RECT;
-    for (let s = .01; s < 1e7; s *= 10)
+    const v = VIEW_RECT, o = vec2(v.x0, v.y0);
+    // one canvas call for the whole sky; inside it, 1 unit = 1 meter measured from the view's corner
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
     {
-        const g = .7*s / WU;
-        if (g < .3 || g > 3) continue;
-        const fade = clamp((g - .3)/.4, 0, 1) * clamp((3 - g)/1.5, 0, 1);
-        const tw = 40*s, th = 22*s;
-        for (let tx = Math.floor(v.x0/tw); tx*tw < v.x1; tx++)
-        for (let ty = Math.floor(v.y0/th); ty*th < v.y1; ty++)
-        for (const p of STARS)
+        for (let s = .01; s < 1e7; s *= 10)
         {
-            const x = tx*tw + p.x*s, y = ty*th + p.y*s;
-            if (x < v.x0 - s || x > v.x1 + s || y < v.y0 - s || y > v.y1 + s) continue;
-            const a = fade*(.65 + .35*Math.sin(time*1.5 + p.ph)), col = (p.gold ? P_MUSTARD : P_CREAM).scale(1, a);
-            if (p.burst)
+            const g = .7*s / WU;
+            if (g < .3 || g > 3) continue;
+            const fade = clamp((g - .3)/.4, 0, 1) * clamp((3 - g)/1.5, 0, 1);
+            // spacing follows the zoom, but size only half as much, so stars never shrink to specks
+            const tw = 40*s, th = 22*s, ds = s*Math.sqrt(.7/g);
+            for (let tx = Math.floor(v.x0/tw); tx*tw < v.x1; tx++)
+            for (let ty = Math.floor(v.y0/th); ty*th < v.y1; ty++)
+            for (const p of STARS)
             {
-                // an atomic starburst: eight rays, long and short
-                const segs = [];
-                for (let i = 0; i < 8; i++) { const an = i/8*PI*2 + p.ph, r = (i % 2 ? .3 : .6)*s; segs.push([vec2(Math.cos(an)*.12*s, Math.sin(an)*.12*s), vec2(Math.cos(an)*r, Math.sin(an)*r)]); }
-                posterSegs(vec2(x, y), segs, P_CREAM.scale(1, a*.8), .05*s);
+                const x = tx*tw + p.x*s, y = ty*th + p.y*s, d = (p.flare ? FLARE_SIZE : p.d)*ds;
+                if (x < v.x0 - d || x > v.x1 + d || y < v.y0 - d || y > v.y1 + d) continue;
+                ctx.globalAlpha = fade*(p.flare ? .6 + .4*Math.sin(time*1.1 + p.ph) : .7 + .3*Math.sin(time*1.5 + p.ph));
+                ctx.drawImage(p.flare ? STAR_FLARE : p.gold ? STAR_GOLD : STAR_DOT, x - o.x - d/2, y - o.y - d/2, d, d);
             }
-            drawCircle(vec2(x, y), p.r*s, col);
         }
-    }
+    });
     drawGrain(1);
 };
 
@@ -1159,11 +1202,7 @@ drawTitle = function()
     posterShape(pc, ringPts(3.1, .55).map(p => p.add(vec2(.4, 1.4))), P_ROCK2, 0);       // a band
     posterSegs(pc, front, P_MUSTARD, .42);
     for (const [x, y, s] of [[6, 18.5, 1], [15.5, 20.8, .6], [36.5, 6.5, .8], [3.5, 5, .5]])
-    {
-        const segs = [];
-        for (let i = 0; i < 8; i++) { const a = i/8*PI*2, r = (i % 2 ? .45 : .9)*s; segs.push([vec2(Math.cos(a)*.18*s, Math.sin(a)*.18*s), vec2(Math.cos(a)*r, Math.sin(a)*r)]); }
-        posterSegs(vec2(x, y), segs, P_CREAM, .08*s);
-    }
+        drawCanvas2D(vec2(x, y), vec2(3.6*s), 0, false, ctx => ctx.drawImage(STAR_FLARE, -.5, -.5, 1, 1));
     const ship = { pos:vec2(((time*1.2) % 90) - 25, 2.6), angle:0, sx:1, sy:1, id:9, k:2.4, type:BOATS.cruise, color:BOATS.cruise.color, kind:'title' };
     drawBoatShadow(ship);
     drawBoat(ship);
