@@ -1,5 +1,5 @@
 'use strict';
-// Lost in Parking Space: the space look, in a 1960s space-age poster style (flat rounded shapes with a soft
+// Starship Parking: the space look, in a 1960s space-age poster style (flat rounded shapes with a soft
 // shaded edge, teal, mustard, brick and cream on near-black navy, glowing stars with four-point flares, film grain,
 // Righteous type). Loaded last by index.html, after the game code in src/ (forked from Park My Boat's harbor game).
 // It repaints that code: a poster painter replaces the Toybox one, so every deck drawing turns flat and shaded with
@@ -1123,13 +1123,22 @@ drawStar = function(c, r, filled)
     else posterShape(c, pts, P_DEEP.scale(1, .16), 0);
 };
 
+// crowded levels: until a ship is picked, a line at the bottom says what to do (plain text with a drop shadow)
+function drawPickHint()
+{
+    if (level.test || player || gameScreen != 'playing' || !jamBoats.some(b => !b.parked)) return;
+    const a = .75 + .25*Math.sin(time*3);
+    harborTxt('Click the ship you want to park first', 20.08, 1.62, .85, P_VOID.scale(1, a));
+    harborTxt('Click the ship you want to park first', 20, 1.7, .85, P_CREAM.scale(1, a));
+}
+
 drawHud = function()
 {
     const L = level, wide = viewHalfUi().x*2;
     drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), P_DEEP);
     drawRect(vec2(20, PLAY_TOP - .05), vec2(wide, .1), P_MUSTARD);
     txt(`${levelNumber()}. ${L.name}`, .8, 21.75, .7, P_MUSTARD, 'left');
-    if (L.jam) return drawJamHud();
+    if (L.jam) { drawPickHint(); return drawJamHud(); }
     let boat = player.type.name;
     boat += ` - ${fmtLen(boatSize(player))}`;
     if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
@@ -1208,9 +1217,9 @@ drawTitle = function()
         drawBoat(b);
     });
     const bob = Math.sin(time*2)*.2;
-    harborTxt('Lost in', 20, 16.9 + bob, 1.6, P_MUSTARD);
-    harborTxt('Parking Space', 20.22, 14.45 + bob, 3, P_BRICK);
-    harborTxt('Parking Space', 20, 14.7 + bob, 3, P_CREAM);
+    harborTxt('Starship', 20, 17.3 + bob, 1.9, P_MUSTARD);
+    harborTxt('Parking', 20.25, 14.4 + bob, 3.6, P_BRICK);
+    harborTxt('Parking', 20, 14.7 + bob, 3.6, P_CREAM);
 };
 
 // ---------------------------------------------------------------------------

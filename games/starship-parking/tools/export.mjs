@@ -1,5 +1,5 @@
 // Exports the game as a clean, standalone folder (and zip) for showing to people outside the team.
-// Usage, from games/lost-in-parking-space:   node tools/export.mjs [outDir]     (default: ~/Desktop/lost-in-parking-space)
+// Usage, from games/starship-parking:   node tools/export.mjs [outDir]     (default: ~/Desktop/starship-parking)
 // What it does: copies the engine, game code, levels, skin and font into one flat folder, strips every comment
 // from the game code, rewrites the few strings that name Park My Boat (the code's origin) or the team (REWRITES below), silences the
 // analytics console log, and fails if any name from FORBIDDEN is left anywhere in the output.
@@ -11,12 +11,12 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = path.resolve(process.argv[2] || path.join(os.homedir(), 'Desktop', 'lost-in-parking-space'));
+const OUT = path.resolve(process.argv[2] || path.join(os.homedir(), 'Desktop', 'starship-parking'));
 const SCRIPTS = ['src/physics.js', 'src/boats.js', 'src/render.js', 'levels/levels.js', 'src/jam.js', 'src/main.js', 'src/skin.js'];
 const REWRITES =
 [
-    ["'cm_lost-in-parking-space_save'", "'lost-in-parking-space_save'"],
-    ["'DOCK ALL THE BOATS'", "'LOST IN PARKING SPACE'"],
+    ["'cm_starship-parking_save'", "'starship-parking_save'"],
+    ["'DOCK ALL THE BOATS'", "'STARSHIP PARKING'"],
     ["function track(...args) { console.log('[GA]', ...args); }", 'function track() {}'],
     [/\bpmbEditor\b/g, 'levelEditor'],
 ];
@@ -113,7 +113,7 @@ for (const f of SCRIPTS)
 
 const scripts = ['littlejs.js', ...SCRIPTS.map(f => path.basename(f))].map(f => `<script src=js/${f}></script>`).join('\n');
 fs.writeFileSync(path.join(OUT, 'index.html'), `<!DOCTYPE html><head>
-<title>Lost in Parking Space</title>
+<title>Starship Parking</title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width, initial-scale=1, user-scalable=no">
 <style>

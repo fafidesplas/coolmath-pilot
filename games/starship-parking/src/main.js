@@ -6,7 +6,7 @@
 const UI_SIZE = vec2(40, 22.5);
 const UI_CENTER = UI_SIZE.scale(.5);
 const PLAY_TOP = 21;                  // HUD bar above this line (UI units)
-const SAVE_KEY = 'cm_lost-in-parking-space_save';
+const SAVE_KEY = 'cm_starship-parking_save';
 const SUBSTEPS = 2;
 // slowdown: how many times slower a boat reacts than its toy version (speeding up, turning, stopping).
 // A boat k times bigger is k^SLOWDOWN_CURVE times slower, but never more than MAX_SLOWDOWN, so big
