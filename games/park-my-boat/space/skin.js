@@ -879,11 +879,11 @@ drawTitle = function()
         const a = time*.4 + i*PI/2;
         drawBoat({ pos:vec2(20 + Math.cos(a)*15, 11 + Math.sin(a)*7.5), angle:a + PI/2, sx:1, sy:1, id:i, type:BOATS[key], color:BOATS[key].color, kind:'title' });
     });
-    const bob = Math.sin(time*2)*.2, buzz = Math.sin(time*23) > .97 ? .6 : 1;   // a neon sign that flickers now and then
+    const bob = Math.sin(time*2)*.2;
     for (const [line, y, size, col] of [['LOST IN', 16.6, 1.7, N_CYAN], ['PARKING SPACE', 14.3, 2.6, N_PINK]])
     {
-        harborTxt(line, 20, y + bob, size, col.scale(1, .2*buzz), 'center', size*.3, col.scale(1, .12*buzz));
-        harborTxt(line, 20, y + bob, size, hot(col).scale(1, buzz), 'center', .1, col);
+        harborTxt(line, 20, y + bob, size, col.scale(1, .2), 'center', size*.3, col.scale(1, .12));
+        harborTxt(line, 20, y + bob, size, hot(col), 'center', .1, col);
     }
 };
 
