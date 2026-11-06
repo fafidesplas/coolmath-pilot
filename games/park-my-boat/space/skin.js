@@ -178,7 +178,7 @@ for (const L of LEVELS) if (LEVEL_NAMES[L.name]) L.name = LEVEL_NAMES[L.name];
 // every on-screen string goes through txt (buttons, HUD, popups, results), so the wording changes in one place
 const TEXT_SWAPS =
 [
-    [/LAND HO!/g, 'TOUCHDOWN!'], [/\bDIVE\b/g, 'CLOAK'], [/\bSURFACE\b/g, 'UNCLOAK'],
+    [/LAND HO!/g, 'PREP THE AIRLOCK!'], [/\bDIVE\b/g, 'CLOAK'], [/\bSURFACE\b/g, 'UNCLOAK'],
     [/\bBOATS\b/g, 'SHIPS'], [/\bBOAT\b/g, 'SHIP'], [/\bboats\b/g, 'ships'], [/\bboat\b/g, 'ship'],
     [/ · /g, ' - '],
 ];

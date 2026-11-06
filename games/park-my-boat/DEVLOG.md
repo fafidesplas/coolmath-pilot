@@ -1,3 +1,6 @@
+## 2026-11-06 — Space build: PREP THE AIRLOCK!
+- The space build's park word "TOUCHDOWN!" (it replaced "LAND HO!") is now "PREP THE AIRLOCK!": ships dock, they don't land. Shows in the park popup and as the result headline.
+
 ## 2026-11-06 — Space build export for a publisher
 - New `tools/export-space.mjs`: writes the space build as an unbranded standalone folder and zip. It strips comments, renames the `cm_` save keys and the harbor title string, makes `track()` a no-op, and fails if any team, harbor-game or author name is left.
 - Checked: the exported copy runs over HTTP (title, level select, a level, no console errors) and opened straight from disk in Chrome (font loads). 220 KB zipped.
