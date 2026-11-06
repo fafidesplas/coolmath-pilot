@@ -1,7 +1,7 @@
-// Exports the space build as a clean, standalone folder (and zip) for showing to people outside the team.
-// Usage, from games/park-my-boat:   node tools/export-space.mjs [outDir]     (default: ~/Desktop/lost-in-parking-space)
+// Exports the game as a clean, standalone folder (and zip) for showing to people outside the team.
+// Usage, from games/lost-in-parking-space:   node tools/export.mjs [outDir]     (default: ~/Desktop/lost-in-parking-space)
 // What it does: copies the engine, game code, levels, skin and font into one flat folder, strips every comment
-// from the game code, rewrites the few strings that name the harbor game or the team (REWRITES below), silences the
+// from the game code, rewrites the few strings that name Park My Boat (the code's origin) or the team (REWRITES below), silences the
 // analytics console log, and fails if any name from FORBIDDEN is left anywhere in the output.
 // The LittleJS engine keeps its MIT header and the font keeps its OFL license file: both licenses require it.
 import fs from 'node:fs';
@@ -12,11 +12,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.resolve(process.argv[2] || path.join(os.homedir(), 'Desktop', 'lost-in-parking-space'));
-const SCRIPTS = ['src/physics.js', 'src/boats.js', 'src/render.js', 'levels/levels.js', 'src/jam.js', 'src/main.js', 'space/skin.js'];
+const SCRIPTS = ['src/physics.js', 'src/boats.js', 'src/render.js', 'levels/levels.js', 'src/jam.js', 'src/main.js', 'src/skin.js'];
 const REWRITES =
 [
-    ["'cm_park-my-boat_space_save'", "'lost-in-parking-space_save'"],
-    ["'cm_park-my-boat_save'", "'lost-in-parking-space_harbor_save'"],
+    ["'cm_lost-in-parking-space_save'", "'lost-in-parking-space_save'"],
     ["'DOCK ALL THE BOATS'", "'LOST IN PARKING SPACE'"],
     ["function track(...args) { console.log('[GA]', ...args); }", 'function track() {}'],
     [/\bpmbEditor\b/g, 'levelEditor'],
@@ -102,7 +101,7 @@ fs.mkdirSync(path.join(OUT, 'js'), { recursive: true });
 fs.mkdirSync(path.join(OUT, 'fonts'), { recursive: true });
 
 fs.copyFileSync(path.join(ROOT, 'dist/littlejs.js'), path.join(OUT, 'js/littlejs.js'));
-for (const f of ['Righteous-Regular.ttf', 'OFL.txt']) fs.copyFileSync(path.join(ROOT, 'space/fonts', f), path.join(OUT, 'fonts', f));
+for (const f of ['Righteous-Regular.ttf', 'OFL.txt']) fs.copyFileSync(path.join(ROOT, 'fonts', f), path.join(OUT, 'fonts', f));
 
 for (const f of SCRIPTS)
 {

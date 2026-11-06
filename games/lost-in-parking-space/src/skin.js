@@ -1,10 +1,9 @@
 'use strict';
-// Lost in Parking Space: the secret space skin, in a 1960s space-age poster style (flat rounded shapes with a
-// soft shaded edge, teal, mustard, brick and cream on near-black navy, glowing stars with four-point flares, film grain, Righteous type).
-// Loaded after src/main.js by space/index.html only, so the harbor build never sees it.
-// Pure visual reskin: physics, levels, sizes and handling are untouched. A poster painter replaces the Toybox one,
-// so every deck drawing turns flat and shaded with no per-ship rewrite. Every game fix and new level in the
-// harbor build shows up here for free. Keep collision shapes alone: anything drawn past a hull is decoration only.
+// Lost in Parking Space: the space look, in a 1960s space-age poster style (flat rounded shapes with a soft
+// shaded edge, teal, mustard, brick and cream on near-black navy, glowing stars with four-point flares, film grain,
+// Righteous type). Loaded last by index.html, after the game code in src/ (forked from Park My Boat's harbor game).
+// It repaints that code: a poster painter replaces the Toybox one, so every deck drawing turns flat and shaded with
+// no per-ship rewrite. Keep collision shapes alone: anything drawn past a hull is decoration only.
 
 // ---------------------------------------------------------------------------
 // palette: a handful of poster inks; every Toybox color is mapped onto them
@@ -200,11 +199,6 @@ txt = function(str, x, y, size, color=C_INK, align='center', outline=0, outlineC
 {
     return harborTxt(spaceText(str), x, y, size, textColor(color), align, outline, outlineColor);
 };
-
-// its own save, so harbor progress and space progress never mix
-const SPACE_SAVE_KEY = 'cm_park-my-boat_space_save';
-saveData = readSaveData(SPACE_SAVE_KEY, SAVE_DEFAULT);
-persist = function() { writeSaveData(SPACE_SAVE_KEY, saveData); };
 
 // sounds: horn -> synth chime, bonk -> metal clang, quack -> tiny "whoa!"
 SOUNDS.horn  = new Sound([.7,0,660,.01,.2,.6,0,1,0,0,330,.1,0,0,0,0,.15,.6]);
@@ -1220,7 +1214,7 @@ drawTitle = function()
 };
 
 // ---------------------------------------------------------------------------
-// type: Righteous, bundled in space/fonts (SIL Open Font License, see fonts/OFL.txt) and declared in index.html.
+// type: Righteous, bundled in fonts/ (SIL Open Font License, see fonts/OFL.txt) and declared in index.html.
 // Every text draw goes through the engine's drawText, so this one swap covers labels, buttons, popups and decks.
 
 const POSTER_FONT = "'Righteous', 'Trebuchet MS', 'Arial Rounded MT Bold', sans-serif";
