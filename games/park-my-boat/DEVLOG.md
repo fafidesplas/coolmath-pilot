@@ -1,3 +1,10 @@
+## 2026-11-06 — Lost in Parking Space (secret space skin build)
+- New separate build `space/index.html`: the same game code and levels, repainted by `space/skin.js` (loaded last). Pure visual reskin: physics, levels, sizes and handling are untouched. Nothing links to it and the harbor build never loads the skin, so players can't find or switch skins.
+- Ships: Rocket Scooter, Escape Pod, Flying Saucer, Zoomer, Stealth Pod, Solar Sailer, Asteroid Miner, Star Yacht, Stealth Cruiser, Space Liner, Cargo Hauler, Asteroid, The Moon. Thruster flames while throttling, retro puffs in reverse. Dive becomes CLOAK (fade + shimmer + beacon), air bar becomes a power bar.
+- World: starfield in zoom octaves, asteroid rock with craters, steel gantry docks, satellites (buoys), tiny tethered astronauts (ducks), space junk (logs), solar-wind currents, exhaust puffs. Level names Open Space, Spaceport, Docking Ring, Moon Drift; LAND HO! reads TOUCHDOWN!. Horn, bonk and quack swapped for chime, clang and "whoa". Own save key `cm_park-my-boat_space_save`.
+- Checked in Chrome: title, every ship on the Test Map, cloak, Spaceport, Moon Drift through to the results screen, no console errors; harbor build unchanged.
+- Next: play a full run by hand; new boat types fall back to their harbor deck until they get a space one in `SHIP_DECO`.
+
 ## 2026-11-03 — Boat editor
 - New debug page `tools/boat-editor.html` for the boat models: edit each type's numbers (size, scale, handling, hull, colors) and its deck drawing as draggable shapes, with live collision circles and in-game size previews; make new boat types from a copy. Cmd+S rewrites only the changed boats in `src/boats.js`. See "Boat editor" in CLAUDE.md.
 - Checked in Chrome: loads all 13 boats, drag/resize/mirror/undo work, `boatEditor.selfTest()` passes (every boat written out loads back the same). Saving to disk not run by hand yet (it needs the folder picker).
