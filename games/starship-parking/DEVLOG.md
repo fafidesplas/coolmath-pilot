@@ -1,3 +1,8 @@
+## 2026-11-06 — Spin Dock: ships dock across the end of the stack
+- The docking ports are back at the two ends of the module stack, and each slip lies across the stack's end, broadside to the port like the bar of a T: the pod at the front end, the yacht at the aft end. The solar wings and the pod's start are back where they were before the side ports.
+- Checked: a ship held in each slip docks with no damage.
+- Next: play it by hand and tune.
+
 ## 2026-11-06 — Touchdown: ships fall straight down
 - Gravity pulled straight down, but falling ships still had the boat's water drag (easy along the keel, stiff sideways), so a tilted ship fell along its own nose. A falling ship's drag is now the same in every direction, so it falls straight down whichever way it points.
 - Next: play Touchdown by hand and retune gravity share if landings got harder.

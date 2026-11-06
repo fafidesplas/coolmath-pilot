@@ -23,16 +23,16 @@ const BEAM_GROW = .5;                     // the docking beam reaches this many 
 
 const STATION =
 {
-    truss: [[-2.2, -62, 2.2, 62]],
-    wings: [41, 54, -41, -54].flatMap(y => [[4, y - 5, 36, y + 5], [-36, y - 5, -4, y + 5]]),
+    truss: [[-2.2, -55, 2.2, 55]],
+    wings: [34, 47, -34, -47].flatMap(y => [[4, y - 5, 36, y + 5], [-36, y - 5, -4, y + 5]]),
     radiators: [16, -16].flatMap(y => [[3, y - 3, 14, y + 3], [-14, y - 3, -3, y + 3]]),
     // the module stack, from the aft port to the front port: [x0, x1, radius]
     stack: [[-32, -28, 1.6], [-28, -12, 2.2], [-12, 4, 2.1], [4, 10, 2.3], [10, 20, 2.2], [20, 26, 2.3]],
     // side modules off the nodes: [x, y0, y1, radius]
     side: [[23, 2.3, 15, 2.1], [23, -2.3, -11, 2.1], [7, 2.3, 9, 1.8], [7, -2.3, -10, 1.9]],
-    // docking ports on the sides of the module stack, so ships dock across it: [x, y, facing]. The lab's port side, and
-    // the aft module's starboard side (its slip runs out between the radiators and the solar wings)
-    ports: [[17, 2.2, PI/2], [-21, -2.2, -PI/2]],
+    // docking ports at the two ends of the module stack: [x, y, facing]. Ships dock across the stack, lying broadside
+    // against the port like the bar of a T
+    ports: [[26, 0, 0], [-32, 0, PI]],
 };
 
 // a rect [x0, y0, x1, y1] as a row of circles along its long side
