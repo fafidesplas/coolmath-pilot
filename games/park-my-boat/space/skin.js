@@ -1,6 +1,6 @@
 'use strict';
 // Lost in Parking Space: the secret space skin, in a 1960s space-age poster style (flat rounded shapes with a
-// soft shaded edge, teal, mustard, brick and cream on deep indigo, atomic starbursts, film grain, Righteous type).
+// soft shaded edge, teal, mustard, brick and cream on near-black navy, atomic starbursts, film grain, Righteous type).
 // Loaded after src/main.js by space/index.html only, so the harbor build never sees it.
 // Pure visual reskin: physics, levels, sizes and handling are untouched. A poster painter replaces the Toybox one,
 // so every deck drawing turns flat and shaded with no per-ship rewrite. Every game fix and new level in the
@@ -9,7 +9,9 @@
 // ---------------------------------------------------------------------------
 // palette: a handful of poster inks; every Toybox color is mapped onto them
 
-const P_INDIGO = rgb(.114, .106, .31);   // #1D1B4F the sky
+const P_SPACE  = rgb(.027, .035, .11);   // #07091C the sky: near-black navy, so space never reads as water
+const P_VOID   = rgb(.008, .008, .035);  // #020209 shadows, darker than the sky
+const P_INDIGO = rgb(.114, .106, .31);   // #1D1B4F
 const P_DEEP   = rgb(.078, .071, .227);  // #14123A darks, bars
 const P_TEAL   = rgb(.165, .616, .561);  // #2A9D8F
 const P_MUSTARD= rgb(.914, .725, .286);  // #E9B949
@@ -26,11 +28,11 @@ const P_ROCK2  = rgb(.651, .353, .275);  // #A65A46 its lit top
 const P_ROCKDK = rgb(.369, .184, .165);  // #5E2F2A its shadow side
 
 function setColor(c, d, a=c.a) { c.r = d.r; c.g = d.g; c.b = d.b; c.a = a; }
-setColor(C_WATER, P_INDIGO);
+setColor(C_WATER, P_SPACE);
 setColor(C_WATER2, P_GLASS);             // sparks, bonus cards
 setColor(C_SAND, P_ROCK);                // asteroid hull, ore
 setColor(C_GRASS, P_ROCK2);
-setColor(C_SHADOW, P_DEEP, .5);          // hard poster shadows
+setColor(C_SHADOW, P_VOID, .6);          // hard poster shadows
 
 const C_SILVER = rgb(.80, .82, .90);
 const C_GLASS  = rgb(.45, .80, .96);

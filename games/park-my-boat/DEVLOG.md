@@ -1,3 +1,7 @@
+## 2026-11-06 — Space build: darker sky
+- The indigo sky (#1D1B4F) still read as water under the ships, so space is now a near-black navy (#07091C, `P_SPACE`), with the page background to match. Shadows moved to a darker ink (`P_VOID`, #020209 at 60%) so they stay darker than the sky. Indigo stays as a ship ink.
+- Checked in Chrome on Odd Couple. Next: see whether the HUD bar (#14123A, now lighter than the sky) and the cream cards still sit right.
+
 ## 2026-11-06 — Space build: 1960s space-age poster look
 - Night Neon was the same family as Orbit Hop (also a space game), Echo Steps and Shadow Shapes, so the space build switched to a look no team game uses, picked from a style board of four: a 1960s space-age poster. Flat rounded shapes with a darker lower-right edge, teal, mustard, brick and cream on deep indigo, atomic starbursts and film grain, hard indigo shadows, brick and teal buttons on cream cards.
 - How: a poster `painter` replaces the Toybox one (every deck drawing turns flat and shaded); `poster()` maps each Toybox color onto the poster inks. Rock is one merged shape per frame (shadow, dark side, lit side) so overlapping pieces show no seams. Grain is one pattern fill.
