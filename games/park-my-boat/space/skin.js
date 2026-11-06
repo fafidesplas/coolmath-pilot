@@ -166,7 +166,7 @@ const SHIP_NAMES =
 };
 const SHIP_COLORS =
 {
-    dinghy:C_ORANGE, swan:C_SILVER, minisub:C_STEALTH, sub:C_SLATE, cruise:C_SILVER, continent:C_MOON,
+    dinghy:C_ORANGE, speedboat:C_CORAL, swan:C_SILVER, minisub:C_STEALTH, sub:C_SLATE, cruise:C_SILVER, continent:C_MOON,
 };
 for (const k in SHIP_NAMES) if (BOATS[k]) BOATS[k].name = SHIP_NAMES[k];
 for (const k in SHIP_COLORS) if (BOATS[k]) BOATS[k].color = SHIP_COLORS[k];
@@ -334,10 +334,10 @@ drawDrops = function() { harborDrawDrops(); drawGrain(.55); };
 // thruster flames, in toy coordinates: [x, y, width] at the stern
 const JETS =
 {
-    jetski:[[-1.2, 0, .28]], dinghy:[[-1.1, 0, .3]], swan:[[-1.15, 0, .3]], speedboat:[[-1.7, .25, .22], [-1.7, -.25, .22]],
-    minisub:[[-1.85, 0, .4]], sailboat:[[-2.5, 0, .3]], trawler:[[-1.65, .2, .22], [-1.65, -.2, .22]],
-    yacht:[[-4, .75, .35], [-4, -.75, .35], [-4, 0, .4]], sub:[[-3.5, 0, .35]],
-    cruise:[[-5, .3, .22], [-5, 0, .22], [-5, -.3, .22]], container:[[-5.05, .38, .34], [-5.05, 0, .34], [-5.05, -.38, .34]],
+    jetski:[[-1.14, 0, .26]], dinghy:[[-1.0, 0, .28]], swan:[[-1.15, 0, .3]], speedboat:[[-1.6, 0, .26]],
+    minisub:[[-1.7, 0, .34], [-1.62, .72, .16], [-1.62, -.72, .16]], sailboat:[[-2.32, 0, .26]], trawler:[[-1.46, .1, .18], [-1.46, -.1, .18]],
+    yacht:[[-3.82, 0, .48], [-4.06, 1.15, .18], [-4.06, -1.15, .18]], sub:[[-3.4, 0, .3]],
+    cruise:[[-4.9, .28, .2], [-4.9, 0, .2], [-4.9, -.28, .2]], container:[[-5.05, .38, .34], [-5.05, 0, .34], [-5.05, -.38, .34]],
 };
 
 function shipThrottle(b)
@@ -381,9 +381,13 @@ drawBoat = function(b)
         return;
     }
     const d = painter(b), hull = poster(b.color);
-    if (len >= .8) drawJets(b, d);
+    if (len >= .8)
+    {
+        drawJets(b, d);
+        SHIP_UNDER[t.key]?.(d, t, b, hull);                   // fins and boosters, under the body
+    }
     d.poly(t.hullPts, hull, true);
-    d.poly(t.deckPts, raw(t.deck ? poster(t.deck) : hull.lerp(hull == P_CREAM ? P_SAND : P_CREAM, .22)));
+    if (t.deckPts) d.poly(t.deckPts, raw(t.deck ? poster(t.deck) : hull.lerp(hull == P_CREAM ? P_SAND : P_CREAM, .22)));
     if (len < .8) return;
     (SHIP_DECO[t.key] || BOAT_DECO[t.key])(d, t, b);
     // cloaked: a dotted cream rim over the faded ship
@@ -423,31 +427,241 @@ if (BOATS.container)
     t.deckPts = t.hullPts;
 }
 
+// ---------------------------------------------------------------------------
+// poster rockets: every other ship is a 1950s poster rocket seen from the side, lying on the sky (bow = nose):
+// an ogive body in the ship's color, swept fins and boosters drawn under it, an engine bell, a nose cone and bands
+// in a trim color, portholes. The body replaces the boat hull outline (drawing only: collision circles stay).
+
+// A rocket body from tail x0 to nose x1, radius r: an ogive nose over the front `nose` share, a rounded taper over
+// the back `tail` share down to tailR*r where the engine bell sits. dy shifts it sideways (boosters).
+function rocketPts(x0, x1, r, nose=.4, tail=.15, tailR=.75, dy=0)
+{
+    const len = x1 - x0, xn = x1 - len*nose, xt = x0 + len*tail, top = [[x0, r*tailR]];
+    for (let i = 1; i <= 4; i++) top.push([x0 + (xt - x0)*i/4, r*(tailR + (1 - tailR)*Math.sin(i/4*PI/2))]);
+    for (let i = 0; i <= 10; i++) top.push([xn + (x1 - xn)*i/10, r*Math.cos(i/10*PI/2)**.75]);
+    const pts = top.map(([x, y]) => vec2(x, dy + y));
+    for (let i = top.length - 2; i >= 0; i--) pts.push(vec2(top[i][0], dy - top[i][1]));
+    return pts;
+}
+// the part of a shape between xa and xb (nose cones, bands)
+function clipX(pts, xa, xb)
+{
+    const clip = (poly, keep, edge) =>
+    {
+        const out = [];
+        for (let i = 0; i < poly.length; i++)
+        {
+            const a = poly[i], b = poly[(i + 1) % poly.length], ina = keep(a), inb = keep(b);
+            if (ina) out.push(a);
+            if (ina != inb) out.push(vec2(edge, a.y + (b.y - a.y)*(edge - a.x)/(b.x - a.x)));
+        }
+        return out;
+    };
+    return clip(clip(pts, p => p.x >= xa, xa), p => p.x <= xb, xb);
+}
+// a port-side shape and its starboard mirror
+const sides = pts => [pts.map(([x, y]) => vec2(x, y)), pts.map(([x, y]) => vec2(x, -y))];
+// an engine bell: flares from r0 at x0 to r1 at x1
+const bell = (x0, x1, r0, r1, dy=0) => [[x0, dy + r0], [x1, dy + r1], [x1, dy - r1], [x0, dy - r0]].map(([x, y]) => vec2(x, y));
+// fins in brick (teal on a brick or orange ship), trim in cream (brick on a cream ship), so moored colors still work
+const finOf = (hull, pref=P_BRICK) => hull == pref || (hull == P_ORANGE && pref == P_BRICK) ? (pref == P_TEAL ? P_BRICK : P_TEAL) : pref;
+const trimOf = hull => hull == P_CREAM || hull == P_SAND ? P_BRICK : P_CREAM;
+const shipHull = (t, b) => poster(b ? b.color : t.color);
+
+// the shapes, built once (toy units, like BOAT_DECO)
+const RK =
+{
+    jetski:     // Rocket Scooter: a little one-seat rocket with a bubble canopy and swoopy fins
+    {
+        body: rocketPts(-.98, 1.2, .3, .42, .15, .75),
+        fins: sides([[-.22, .26], [-.7, .4], [-1.05, .55], [-1.2, .55], [-.95, .2]]),
+        bell: bell(-.95, -1.14, .17, .24),
+    },
+    dinghy:     // Escape Pod: a fat egg rocket with a big porthole and stubby fins
+    {
+        body: rocketPts(-.85, 1.1, .45, .55, .35, .42),
+        fins: sides([[-.2, .4], [-.66, .55], [-1.02, .58], [-.98, .4], [-.8, .2]]),
+        bell: bell(-.83, -1.0, .15, .22),
+    },
+    speedboat:  // Zoomer: a rocket plane, needle nose and delta wings with wingtip pods
+    {
+        body: rocketPts(-1.45, 1.7, .21, .45, .08, .85),
+        fins: sides([[.35, .15], [-1.1, .62], [-1.38, .62], [-1.22, .15]]),
+        canards: sides([[1.0, .12], [.72, .32], [.6, .32], [.64, .12]]),
+        bell: bell(-1.42, -1.6, .15, .19),
+    },
+    minisub:    // Stealth Pod: a rocket between two boosters on swept pylons
+    {
+        body: rocketPts(-1.5, 1.85, .4, .45, .14, .75),
+        fins: sides([[.25, .3], [-.2, .72], [-1.05, .72], [-1.05, .3]]),
+        boosters: [rocketPts(-1.5, .55, .17, .4, .1, .8, .72), rocketPts(-1.5, .55, .17, .4, .1, .8, -.72)],
+        bell: bell(-1.47, -1.7, .26, .33),
+        bells: [bell(-1.48, -1.62, .12, .15, .72), bell(-1.48, -1.62, .12, .15, -.72)],
+    },
+    sailboat:   // Solar Sailer: a slim rocket under a diamond mirror sail
+    {
+        body: rocketPts(-2.15, 2.5, .26, .3, .1, .8),
+        fins: sides([[-1.35, .22], [-1.95, .5], [-2.42, .6], [-2.15, .2]]),
+        bell: bell(-2.12, -2.32, .18, .23),
+    },
+    trawler:    // Asteroid Miner: a stubby work rocket with a drill nose, grabber arms and an ore bay
+    {
+        body: rocketPts(-1.3, 1.2, .42, .26, .3, .5),
+        fins: sides([[-.35, .4], [-.85, .56], [-1.38, .62], [-1.5, .58], [-1.2, .24]]),
+        bells: [bell(-1.28, -1.46, .09, .12, .1), bell(-1.28, -1.46, .09, .12, -.1)],
+    },
+    yacht:      // Star Yacht: a long cream rocket with big swept fins, a booster on each fin tip and a glass dome
+    {
+        body: rocketPts(-3.55, 4, .58, .38, .12, .78),
+        fins: sides([[-.7, .5], [-1.9, .88], [-3.0, 1.15], [-3.7, 1.2], [-3.45, .85], [-3.2, .42]]),
+        boosters: [rocketPts(-3.95, -1.85, .18, .38, .1, .8, 1.15), rocketPts(-3.95, -1.85, .18, .38, .1, .8, -1.15)],
+        bell: bell(-3.52, -3.82, .4, .48),
+        bells: [bell(-3.93, -4.06, .12, .16, 1.15), bell(-3.93, -4.06, .12, .16, -1.15)],
+    },
+    sub:        // Stealth Cruiser: a long dark needle rocket with canards
+    {
+        body: rocketPts(-3.2, 3.5, .4, .35, .1, .8),
+        fins: sides([[-1.75, .36], [-2.9, .82], [-3.45, .86], [-3.15, .3]]),
+        canards: sides([[1.45, .3], [1.0, .6], [.82, .6], [.9, .3]]),
+        bell: bell(-3.17, -3.4, .26, .31),
+    },
+    cruise:     // Space Liner: a long porthole rocket with three engines
+    {
+        body: rocketPts(-4.7, 5, .6, .28, .08, .8),
+        fins: sides([[-2.7, .55], [-3.9, .92], [-4.95, 1.0], [-4.62, .45]]),
+        bells: [.28, 0, -.28].map(y => bell(-4.66, -4.9, .1, .13, y)),
+    },
+};
+// nose: where the trim-colored nose cone starts; bands: [from, to] stripes round the body
+const RK_TRIM =
+{
+    jetski:    { nose: .62,  bands: [[-.62, -.5]] },
+    dinghy:    { nose: .82,  bands: [[-.5, -.38]] },
+    speedboat: { nose: 1.3,  bands: [] },
+    minisub:   { nose: 1.5,  bands: [[-.78, -.64]] },
+    sailboat:  { nose: 1.95, bands: [] },
+    trawler:   { nose: 9,    bands: [[-.95, -.82]] },
+    yacht:     { nose: 3.35, bands: [[-1.55, -1.35]] },
+    sub:       { nose: 2.95, bands: [] },
+    cruise:    { nose: 4.4,  bands: [[-3.78, -3.58], [3.12, 3.28]] },
+};
+for (const key in RK)
+{
+    const r = RK[key], trim = RK_TRIM[key];
+    r.nose = clipX(r.body, trim.nose, 99);
+    r.bands = trim.bands.map(([a, b]) => clipX(r.body, a, b));
+    if (r.boosters) r.boosterNoses = r.boosters.map(p => clipX(p, p[5].x + .25*(p[15].x - p[5].x), 99));
+    if (!BOATS[key]) continue;
+    BOATS[key].hullPts = r.body;                                     // drawing only, like the saucer
+    BOATS[key].deckPts = null;
+}
+// nose cone and bands in the trim color
+function trimBody(d, key, color)
+{
+    const r = RK[key];
+    for (const p of r.bands) d.poly(p, color);
+    if (r.nose.length) d.poly(r.nose, color, true);
+}
+
 // a soft highlight on glass, the way a poster painter would add one
 const glint = (d, x, y, w, h) => d.ellipse(x, y, w, h, P_CREAM.scale(1, .55));
+// a porthole: trim ring, glass, glint
+function porthole(d, x, y, r, ring)
+{
+    d.circle(x, y, r*2, ring, true);
+    d.circle(x, y, r*1.45, P_GLASS);
+    glint(d, x + r*.2, y + r*.22, r*.6, r*.28);
+}
+
+// drawn before the body: fins, wings, boosters, engine bells
+const SHIP_UNDER =
+{
+    jetski(d, t, b, hull)
+    {
+        const r = RK.jetski, fin = finOf(hull);
+        for (const f of r.fins) d.poly(f, fin, true);
+        d.poly(r.bell, P_DEEP);
+    },
+    dinghy(d, t, b, hull)
+    {
+        const r = RK.dinghy, fin = finOf(hull, P_TEAL);
+        for (const f of r.fins) d.poly(f, fin, true);
+        d.poly(r.bell, P_DEEP);
+    },
+    speedboat(d, t, b, hull)
+    {
+        const r = RK.speedboat;
+        for (const f of r.fins) d.poly(f, hull, true);
+        for (const f of r.canards) d.poly(f, hull, true);
+        d.poly(r.bell, P_DEEP);
+    },
+    minisub(d, t, b, hull)
+    {
+        const r = RK.minisub;
+        for (const f of r.fins) d.poly(f, P_DUSK, true);
+        for (const p of r.bells) d.poly(p, P_DEEP);
+        for (const p of r.boosters) d.poly(p, hull, true);
+        for (const p of r.boosterNoses) d.poly(p, P_DUSK);
+        d.poly(r.bell, P_DEEP);
+    },
+    sailboat(d, t, b, hull)
+    {
+        const r = RK.sailboat, fin = finOf(hull);
+        for (const f of r.fins) d.poly(f, fin, true);
+        d.poly(r.bell, P_DEEP);
+    },
+    trawler(d, t, b, hull)
+    {
+        const r = RK.trawler;
+        for (const f of r.fins) d.poly(f, trimOf(hull), true);
+        for (const p of r.bells) d.poly(p, P_DEEP);
+        for (const s of [1, -1])                                       // grabber arms
+        {
+            d.line(.3, s*.36, 1.05, s*.56, .12, P_SLATE);
+            d.circle(1.08, s*.56, .24, P_SAND, true);
+        }
+    },
+    yacht(d, t, b, hull)
+    {
+        const r = RK.yacht, fin = finOf(hull, P_TEAL);
+        for (const f of r.fins) d.poly(f, fin, true);
+        for (const p of r.bells) d.poly(p, P_DEEP);
+        for (const p of r.boosters) d.poly(p, hull, true);
+        for (const p of r.boosterNoses) d.poly(p, trimOf(hull));
+        d.poly(r.bell, P_DEEP);
+    },
+    sub(d, t, b, hull)
+    {
+        const r = RK.sub;
+        for (const f of r.fins) d.poly(f, P_DUSK, true);
+        for (const f of r.canards) d.poly(f, P_DUSK, true);
+        d.poly(r.bell, P_DEEP);
+    },
+    cruise(d, t, b, hull)
+    {
+        const r = RK.cruise, fin = finOf(hull);
+        for (const f of r.fins) d.poly(f, fin, true);
+        for (const p of r.bells) d.poly(p, P_DEEP);
+    },
+};
 
 // Deck drawings, in the same painter as BOAT_DECO (x = bow, y = port, toy units)
 const SHIP_DECO =
 {
-    jetski(d)       // Rocket Scooter
+    jetski(d, t, b)     // Rocket Scooter
     {
-        for (const s of [1, -1]) d.poly([[-.6, s*.36], [-1.12, s*.42], [-1.12, s*.18]], C_CORAL, true);   // tail fins
-        d.poly([[1.1,0],[.75,.3],[.45,.32],[.45,-.32],[.75,-.3]], C_CREAM, true);                          // nose cowl
-        d.circle(.95, 0, .16, C_SUNNY);                                                                    // headlight
-        d.ellipse(-.35, 0, 1.1, .42, C_NAVY, true);                                                        // seat
-        d.line(.35, .45, .35, -.45, .09, C_INK);                                                           // handlebars
-        d.circle(.35, .45, .16, C_INK);
-        d.circle(.35, -.45, .16, C_INK);
-        d.rect(-1.12, 0, .16, .32, C_INK);                                                                 // nozzle
+        const hull = shipHull(t, b);
+        trimBody(d, 'jetski', trimOf(hull));
+        d.line(-.35, 0, -1.12, 0, .1, finOf(hull));                                  // top fin, edge on
+        d.ellipse(.2, 0, .56, .36, P_GLASS, true);                                    // bubble canopy
+        glint(d, .3, .08, .2, .08);
     },
-    dinghy(d)       // Escape Pod
+    dinghy(d, t, b)     // Escape Pod
     {
-        d.line(-.45, .42, -.45, -.42, .14, C_CREAM);                     // hazard band
-        d.line(-.7, .38, -.7, -.38, .07, C_CREAM);
-        d.circle(.2, 0, .74, C_INK, true);                               // hatch ring
-        d.circle(.2, 0, .58, C_GLASS);                                   // porthole
-        glint(d, .32, .12, .22, .1);
-        d.rect(-1.02, 0, .16, .38, C_INK);                               // nozzle
+        const hull = shipHull(t, b);
+        trimBody(d, 'dinghy', trimOf(hull));
+        d.line(-.38, 0, -.8, 0, .13, finOf(hull, P_TEAL));                            // top fin, edge on
+        porthole(d, .22, 0, .32, trimOf(hull));
     },
     swan(d)         // Flying Saucer
     {
@@ -460,97 +674,85 @@ const SHIP_DECO =
         d.circle(-.05, 0, 1, C_GLOW.lerp(C_GLASS, .4), true);             // dome
         glint(d, .15, .2, .36, .16);
     },
-    speedboat(d)    // Zoomer
+    speedboat(d, t, b)  // Zoomer
     {
-        for (const s of [1, -1]) d.poly([[.2, s*.3], [-.85, s*.74], [-1.2, s*.74], [-.95, s*.3]], C_CORAL, true);   // swept wings
-        d.line(1.45, 0, .95, 0, .14, C_CORAL);                           // nose stripe
-        d.poly([[.95,0],[.6,.28],[.12,.25],[.12,-.25],[.6,-.28]], C_GLASS, true);   // canopy
-        glint(d, .55, .1, .25, .08);
-        for (const s of [1, -1]) d.rect(-1.5, s*.25, .32, .22, C_INK);   // engines
-    },
-    minisub(d)      // Stealth Pod
-    {
-        const dark = C_STEALTH.lerp(C_INK, .35);
+        const hull = shipHull(t, b), trim = trimOf(hull);
         for (const s of [1, -1])
         {
-            d.ellipse(-.4, s*.6, 1.7, .4, dark, true);                  // side pods
-            d.line(-1.2, s*.6, .3, s*.6, .07, C_GLOW);                   // light strips
+            d.line(.1, s*.24, -.98, s*.56, .07, trim);                                // wing stripes
+            d.ellipse(-1.12, s*.62, .62, .13, trim, true);                            // wingtip pods
         }
-        d.ellipse(.65, 0, 1.3, .95, C_GLASS, true);                      // canopy
-        glint(d, .85, .2, .38, .14);
-        d.rect(-1.72, 0, .2, .6, C_INK);                                 // nozzle
+        trimBody(d, 'speedboat', trim);
+        d.line(-.7, 0, -1.5, 0, .08, P_DEEP);                                         // top fin, edge on
+        d.ellipse(.62, 0, .64, .26, P_GLASS, true);                                   // canopy
+        glint(d, .72, .06, .24, .07);
     },
-    sailboat(d)     // Solar Sailer: a diamond mirror sail on struts
+    minisub(d, t, b)    // Stealth Pod
     {
-        for (const [x, y] of [[1.9, 0], [.2, .76], [-1.5, 0], [.2, -.76]]) d.line(.2, 0, x, y, .05, C_INK);
-        d.poly([[1.9,0],[.2,.76],[-1.5,0],[.2,-.76]], C_SUNNY, true);   // sail
-        d.poly([[1.3,0],[.2,.5],[-.9,0],[.2,-.5]], C_SUNNY.lerp(C_CREAM, .45));
-        const g = ((time*.35) % 1)*3.4 - 1.5;                            // a glint sweeping down the mirror
-        if (g > -1.2 && g < 1.6) d.line(g + .2, .3, g - .2, -.3, .1, C_CREAM.scale(1, .8));
-        d.line(-1.5, 0, 1.9, 0, .05, C_INK);                             // struts
-        d.line(.2, .76, .2, -.76, .05, C_INK);
-        d.circle(.2, 0, .32, C_SILVER, true);                            // hub
-        d.rect(-2.32, 0, .22, .42, C_INK);                               // nozzle
+        trimBody(d, 'minisub', P_DUSK);
+        for (const s of [1, -1]) d.line(-1.2, s*.72, .2, s*.72, .06, P_GLASS);        // booster light strips
+        d.line(-.95, 0, -1.6, 0, .1, P_DUSK);                                          // top fin, edge on
+        d.ellipse(.72, 0, .95, .52, P_GLASS, true);                                    // canopy
+        glint(d, .88, .12, .32, .12);
     },
-    trawler(d)      // Asteroid Miner
+    sailboat(d, t, b)   // Solar Sailer: a diamond mirror sail on struts
     {
-        for (const s of [1, -1])                                        // grabber arms
+        const hull = shipHull(t, b);
+        trimBody(d, 'sailboat', trimOf(hull));
+        d.line(-1.5, 0, -2.35, 0, .1, finOf(hull));                                   // top fin, edge on
+        for (const [x, y] of [[1.45, 0], [.15, .78], [-1.15, 0], [.15, -.78]]) d.line(.15, 0, x, y, .05, C_INK);
+        d.poly([[1.45,0],[.15,.78],[-1.15,0],[.15,-.78]], C_SUNNY, true);            // sail
+        d.poly([[1.0,0],[.15,.5],[-.7,0],[.15,-.5]], C_SUNNY.lerp(C_CREAM, .45));
+        const g = ((time*.35) % 1)*2.6 - 1.15;                                         // a glint sweeping down the mirror
+        if (g > -.9 && g < 1.2) d.line(g + .2, .3, g - .2, -.3, .1, C_CREAM.scale(1, .8));
+        d.line(-1.15, 0, 1.45, 0, .05, C_INK);                                         // struts
+        d.line(.15, .78, .15, -.78, .05, C_INK);
+        d.circle(.15, 0, .3, C_SILVER, true);                                          // hub
+    },
+    trawler(d, t, b)    // Asteroid Miner
+    {
+        const hull = shipHull(t, b);
+        trimBody(d, 'trawler', trimOf(hull));
+        d.ellipse(-.2, 0, 1.05, .6, P_DEEP);                                           // ore bay
+        for (const [x, y, r] of [[-.5, .08, .28], [-.16, -.1, .32], [.04, .14, .2], [.14, -.1, .16]]) d.circle(x, y, r, P_ROCK2, true);
+        d.ellipse(.62, 0, .34, .48, P_GLASS, true);                                    // cockpit
+        glint(d, .68, .1, .12, .1);
+        d.rect(1.02, 0, .16, .72, P_DEEP, true);                                       // drill collar
+        d.poly([[1.68, 0], [1.08, .3], [1.08, -.3]], P_SAND, true);                    // drill
+        const turn = (time*3) % 1*.2;                                                  // its thread, turning
+        for (let i = 0; i < 3; i++)
         {
-            d.line(.85, s*.32, 1.3, s*.4, .08, C_INK);
-            d.circle(1.32, s*.4, .14, C_SILVER, true);
+            const x = 1.12 + turn + i*.18, w = .24*(1.68 - x)/.6;
+            if (x < 1.6) d.line(x, w, x + .1, -w, .04, P_DEEP);
         }
-        d.rect(1.15, 0, .16, .52, C_INK);                                // drill mount
-        d.poly([[1.75,0],[1.25,.24],[1.25,-.24]], C_SILVER, true);       // drill
-        d.line(1.35, .16, 1.48, -.12, .04, C_INK);
-        d.line(1.5, .1, 1.6, -.06, .04, C_INK);
-        d.rect(.7, 0, .52, .66, C_CREAM, true);                          // cockpit
-        d.rect(.87, 0, .13, .5, C_GLASS);
-        d.rect(-.3, 0, .95, .78, C_WOOD2, true);                         // ore bin
-        for (const [x, y, r] of [[-.55, .15, .32], [-.15, -.18, .36], [-.05, .2, .24], [-.6, -.2, .22]]) d.circle(x, y, r, C_SAND, true);
-        d.rect(-1.2, 0, .32, .66, C_INK.lerp(C_SLATE, .5), true);        // engine block
     },
-    yacht(d)        // Star Yacht
+    yacht(d, t, b)      // Star Yacht
     {
-        for (const s of [1, -1])
-        {
-            d.ellipse(-3.3, s*.75, 1.3, .42, C_TEAL, true);             // nacelles
-            d.line(-2.4, s*.92, -3.5, s*.92, .12, C_CORAL);               // fin stripes
-        }
-        d.rect(-.5, 0, 4.6, 1.75, C_CREAM, true);                        // deck
-        d.ellipse(1.6, 0, 2.4, 1.3, C_GLASS, true);                      // observation dome
-        glint(d, 1.95, .3, .7, .22);
-        d.circle(-1.95, 0, 1.05, C_TEAL, true);                          // star pool
-        d.circle(-1.95, 0, .52, C_GLOW.lerp(C_GLASS, .5));
-        d.rect(-3.85, 0, .22, .5, C_INK);
+        const hull = shipHull(t, b), trim = trimOf(hull);
+        trimBody(d, 'yacht', trim);
+        d.line(-1.7, 0, -3.78, 0, .24, finOf(hull, P_TEAL));                          // top fin, edge on
+        for (const x of [1.0, .15, -.7]) porthole(d, x, 0, .17, P_DEEP);
+        d.ellipse(2.35, 0, 1.6, .78, P_GLASS, true);                                   // observation dome
+        glint(d, 2.65, .15, .55, .18);
     },
-    sub(d)          // Stealth Cruiser
+    sub(d, t, b)        // Stealth Cruiser
     {
-        const dark = C_SLATE.lerp(C_INK, .4);
-        for (const s of [1, -1]) d.poly([[-2.7, s*.35], [-3.3, s*.8], [-3.55, s*.8], [-3.25, s*.35]], dark, true);   // tail fins
-        d.poly([[2.6,0],[1.2,.28],[-2.6,.28],[-3.15,0],[-2.6,-.28],[1.2,-.28]], dark, true);   // armor spine
-        for (const s of [1, -1]) d.line(-2.4, s*.36, 1.8, s*.36, .05, C_GLOW);   // light strips
-        for (let i = 0; i < 5; i++) d.line(-.6 - i*.42, .22, -.6 - i*.42, -.22, .05, C_INK);   // plate seams
-        d.poly([[1.75,0],[1.25,.18],[.75,0],[1.25,-.18]], C_GLASS, true);   // bridge
-        d.rect(-3.4, 0, .18, .42, C_INK);
+        d.poly([[2.6,0],[1.6,.15],[-2.7,.15],[-3.1,0],[-2.7,-.15],[1.6,-.15]], P_DUSK);   // armor spine
+        for (const s of [1, -1]) d.line(-2.4, s*.27, 1.7, s*.27, .05, P_GLASS);       // light strips
+        for (let i = 0; i < 5; i++) d.line(-.6 - i*.42, .14, -.6 - i*.42, -.14, .05, P_DEEP);   // plate seams
+        trimBody(d, 'sub', P_DUSK);
+        d.poly([[2.2,0],[1.7,.17],[1.2,0],[1.7,-.17]], P_GLASS, true);                // bridge
     },
-    cruise(d)       // Space Liner
+    cruise(d, t, b)     // Space Liner
     {
-        d.rect(-.5, 0, 7.6, 1.02, C_CREAM, true);                        // hull plating
-        for (let i = 0; i < 8; i++)                                      // escape pods
-        {
-            d.ellipse(-3.8 + i*.95, .58, .55, .16, C_SUNNY, true);
-            d.ellipse(-3.8 + i*.95, -.58, .55, .16, C_SUNNY, true);
-        }
-        for (let i = 0; i < 14; i++)                                     // cabin windows
-        {
-            d.rect(-3.9 + i*.5, .3, .26, .12, C_GLASS);
-            d.rect(-3.9 + i*.5, -.3, .26, .12, C_GLASS);
-        }
-        d.rect(.3, 0, 3.2, .3, C_GLASS, true);                           // promenade
-        d.ellipse(-2.6, 0, 1, .5, C_CORAL, true);                        // reactor
-        d.circle(-2.6, 0, .26, C_GLOW);
-        d.poly([[3.9,0],[3.4,.38],[3.05,.38],[3.05,-.38],[3.4,-.38]], C_GLASS, true);   // bridge
-        for (const y of [.3, 0, -.3]) d.rect(-4.7, y, .32, .22, C_INK);
+        const hull = shipHull(t, b), trim = trimOf(hull);
+        trimBody(d, 'cruise', trim);
+        d.rect(-.25, 0, 6.3, .16, P_TEAL);                                              // promenade deck
+        for (let i = 0; i < 13; i++)                                                   // cabin portholes
+            for (const y of [.34, -.34]) d.circle(-3.2 + i*.5, y, .2, (i*3 + (y > 0)) % 5 ? P_GLASS : P_MUSTARD);
+        d.line(-3.3, 0, -4.9, 0, .22, finOf(hull));                                    // top fin, edge on
+        d.ellipse(3.72, 0, .95, .5, P_GLASS, true);                                    // bridge dome
+        glint(d, 3.9, .1, .32, .1);
     },
     container(d, t, b)   // Cargo Hauler: a Saturn V-style moon rocket lying on its side (bow = nose)
     {
