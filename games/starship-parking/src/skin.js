@@ -3,7 +3,7 @@
 // shaded edge, teal, mustard, brick and cream on near-black navy, glowing stars with four-point flares, film grain,
 // Righteous type). Loaded last by index.html, after the game code in src/ (forked from Park My Boat's harbor game).
 // It repaints that code: a poster painter replaces the Toybox one, so every deck drawing turns flat and shaded with
-// no per-ship rewrite. Keep collision shapes alone: anything drawn past a hull is decoration only.
+// no per-ship rewrite. Each ship's collision circles are rebuilt from its poster outline (see coverCircles).
 
 // ---------------------------------------------------------------------------
 // palette: a handful of poster inks; every Toybox color is mapped onto them
@@ -446,7 +446,7 @@ drawPeriscope = function(b)
     drawCircle(p, .34*k, P_MUSTARD);
 };
 
-// the saucer is round (drawing only: its collision circles stay those of the pedalo it replaces)
+// the saucer is round (its collision circles follow, see the hitboxes below)
 if (BOATS.swan)
 {
     const t = BOATS.swan;
@@ -454,7 +454,7 @@ if (BOATS.swan)
     t.deckPts = t.hullPts.map(p => vec2(p.x*.74, p.y*.68));
 }
 
-// the cargo hauler is a moon rocket: its outline follows the stages (drawing only, like the saucer)
+// the cargo hauler is a moon rocket: its outline follows the stages
 const ROCKET_BODY = [[-4.6, .62], [1.75, .62], [2.25, .43], [3.5, .43], [3.5, -.43], [2.25, -.43], [1.75, -.62], [-4.6, -.62]];
 if (BOATS.container)
 {
@@ -467,7 +467,7 @@ if (BOATS.container)
 // ---------------------------------------------------------------------------
 // poster rockets: every other ship is a 1950s poster rocket seen from the side, lying on the sky (bow = nose):
 // an ogive body in the ship's color, swept fins and boosters drawn under it, an engine bell, a nose cone and bands
-// in a trim color, portholes. The body replaces the boat hull outline (drawing only: collision circles stay).
+// in a trim color, portholes. The body replaces the boat hull outline; the hitboxes below follow body, fins and boosters.
 
 // A rocket body from tail x0 to nose x1, radius r: an ogive nose over the front `nose` share, a rounded taper over
 // the back `tail` share down to tailR*r where the engine bell sits. dy shifts it sideways (boosters).
@@ -589,9 +589,108 @@ for (const key in RK)
     r.bands = trim.bands.map(([a, b]) => clipX(r.body, a, b));
     if (r.boosters) r.boosterNoses = r.boosters.map(p => clipX(p, p[5].x + .25*(p[15].x - p[5].x), 99));
     if (!BOATS[key]) continue;
-    BOATS[key].hullPts = r.body;                                     // drawing only, like the saucer
+    BOATS[key].hullPts = r.body;                                     // the outline drawn (and shadowed, and outlined when picked)
     BOATS[key].deckPts = null;
 }
+// ---------------------------------------------------------------------------
+// hitboxes: every ship collides where it is drawn. The boat code gives each type a row of circles along the keel of
+// its old boat hull; here they are rebuilt from the ship's poster outline: body, fins, boosters, wings, sail, drill.
+// Thin details (canards, engine bells, flames) stay decoration. Slips grow to fit the new outline (hitL, hitW: see makeSlip).
+
+const SAIL_PTS = [[1.45, 0], [.15, .78], [-1.15, 0], [.15, -.78]];                              // Solar Sailer's mirror
+const DRILL_PTS = [[1.68, 0], [1.08, .3], [1.08, -.3]];                                        // Asteroid Miner's drill
+const CARGO_FINS = sides([[-3.8, .6], [-4.45, 1.05], [-4.95, 1.05], [-4.6, .6]]);               // Cargo Hauler's fins
+const CARGO_BELLS = [.38, 0, -.38].map(y => [[-4.55, y + .11], [-5.05, y + .2], [-5.05, y - .2], [-4.55, y - .11]]);
+const toVecs = pts => pts.map(p => p.x === undefined ? vec2(p[0], p[1]) : p);
+
+// the outline each ship collides with: a list of polygons in toy units (x = bow, y = port)
+function shipHitShapes(key)
+{
+    const t = BOATS[key], r = RK[key];
+    if (key == 'swan') return [t.hullPts];
+    if (key == 'container') return [t.hullPts, ...CARGO_FINS];
+    if (!r) return null;
+    const shapes = [r.body, ...r.fins, ...(r.boosters || [])];
+    if (key == 'sailboat') shapes.push(toVecs(SAIL_PTS));
+    if (key == 'trawler') shapes.push(toVecs(DRILL_PTS), ...[1, -1].map(s => ringPts(.12).map(p => p.add(vec2(1.08, s*.56)))));
+    return shapes;
+}
+
+// distance from (x, y) to the outline of a polygon
+function edgeDist(pts, x, y)
+{
+    let best = Infinity;
+    for (let i = 0; i < pts.length; i++)
+    {
+        const a = pts[i], b = pts[(i + 1) % pts.length], dx = b.x - a.x, dy = b.y - a.y;
+        const u = clamp(((x - a.x)*dx + (y - a.y)*dy) / (dx*dx + dy*dy || 1), 0, 1);
+        best = Math.min(best, Math.hypot(a.x + u*dx - x, a.y + u*dy - y));
+    }
+    return best;
+}
+
+// Circles covering a ship's outline, mirrored across the keel. The body (shapes[0]) gets a row along the keel, each circle
+// as big as fits (a bit over), shrinking toward the tips so the nose and tail collide where they are drawn. Then each other
+// shape (fins, boosters, sail...) is sampled on a grid, and circles that fit inside it are added greedily, each the one
+// covering the most samples nothing covers yet, until all but `left` of its samples are covered (at most `max` per shape).
+function coverCircles(shapes, max = 3, left = .12)
+{
+    const [body, ...parts] = shapes;
+    let x0 = Infinity, x1 = -Infinity, ym = 0;
+    for (const q of body) { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); ym = Math.max(ym, Math.abs(q.y)); }
+    // never smaller than rMin, so a needle nose doesn't take a dozen tiny circles (it sticks out a hair instead)
+    const over = .06*ym, rMin = .4*ym, r = x => Math.max(rMin, (inPoly(body, x, 0) ? edgeDist(body, x, 0) : 0) + over);
+    // the circle whose edge just reaches the tip: x + r(x) grows toward the nose, x - r(x) shrinks toward the tail
+    const reach = (f, lo, hi) => { for (let i = 0; i < 40; i++) { const m = (lo + hi)/2; f(m) ? lo = m : hi = m; } return lo; };
+    const mid = (x0 + x1)/2, nose = reach(x => x + r(x) < x1, mid, x1), tail = reach(x => x - r(x) > x0, mid, x0);
+    const circles = [];
+    for (let x = nose; x > tail; )
+    {
+        circles.push({ x, y: 0, r: r(x) });
+        const step = .8*r(x);
+        x -= Math.min(step, .8*r(x - step));
+    }
+    circles.push({ x: tail, y: 0, r: r(tail) });
+    const covers = (x, y) => circles.some(c => (c.x - x)**2 + (c.y - y)**2 <= c.r*c.r);
+    for (const p of parts)
+    {
+        if (!p.some(q => q.y > 1e-6) && p.some(q => q.y < -1e-6)) continue;       // starboard copies come from the mirror
+        let px0 = Infinity, px1 = -Infinity, py0 = Infinity, py1 = -Infinity;
+        for (const q of p) { px0 = Math.min(px0, q.x); px1 = Math.max(px1, q.x); py0 = Math.min(py0, q.y); py1 = Math.max(py1, q.y); }
+        const h = Math.max(px1 - px0, py1 - py0) / 40, samples = [];
+        for (let x = px0 + h/2; x < px1; x += h)
+            for (let y = py0 + h/2; y < py1; y += h)
+                if (inPoly(p, x, y) && !covers(x, y)) samples.push({ x, y, r: edgeDist(p, x, y) + over*.5 });
+        const total = samples.length;
+        for (let n = 0; n < max && samples.length > left*total; n++)
+        {
+            let best, bestN = 0;
+            for (const c of samples)
+            {
+                let k = 0;
+                for (const s of samples) if ((s.x - c.x)**2 + (s.y - c.y)**2 <= c.r*c.r) k++;
+                if (k > bestN) { bestN = k; best = c; }
+            }
+            if (!best) break;
+            const keel = Math.abs(best.y) < h, y = keel ? 0 : best.y;
+            circles.push({ x: best.x, y, r: best.r });
+            if (!keel) circles.push({ x: best.x, y: -y, r: best.r });
+            for (let k = samples.length - 1; k >= 0; k--)
+                if ((samples[k].x - best.x)**2 + (samples[k].y - y)**2 <= best.r*best.r) samples.splice(k, 1);
+        }
+    }
+    return circles.sort((a, b) => b.x - a.x);
+}
+
+for (const key in BOATS)
+{
+    const shapes = shipHitShapes(key), t = BOATS[key];
+    if (!shapes) continue;
+    t.circles = coverCircles(shapes);
+    t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
+    t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
+}
+
 // nose cone and bands in the trim color
 function trimBody(d, key, color)
 {
@@ -738,7 +837,7 @@ const SHIP_DECO =
         trimBody(d, 'sailboat', trimOf(hull));
         d.line(-1.5, 0, -2.35, 0, .1, finOf(hull));                                   // top fin, edge on
         for (const [x, y] of [[1.45, 0], [.15, .78], [-1.15, 0], [.15, -.78]]) d.line(.15, 0, x, y, .05, C_INK);
-        d.poly([[1.45,0],[.15,.78],[-1.15,0],[.15,-.78]], C_SUNNY, true);            // sail
+        d.poly(SAIL_PTS, C_SUNNY, true);                                                // sail
         d.poly([[1.0,0],[.15,.5],[-.7,0],[.15,-.5]], C_SUNNY.lerp(C_CREAM, .45));
         const g = ((time*.35) % 1)*2.6 - 1.15;                                         // a glint sweeping down the mirror
         if (g > -.9 && g < 1.2) d.line(g + .2, .3, g - .2, -.3, .1, C_CREAM.scale(1, .8));
@@ -755,7 +854,7 @@ const SHIP_DECO =
         d.ellipse(.62, 0, .34, .48, P_GLASS, true);                                    // cockpit
         glint(d, .68, .1, .12, .1);
         d.rect(1.02, 0, .16, .72, P_DEEP, true);                                       // drill collar
-        d.poly([[1.68, 0], [1.08, .3], [1.08, -.3]], P_SAND, true);                    // drill
+        d.poly(DRILL_PTS, P_SAND, true);                                               // drill
         const turn = (time*3) % 1*.2;                                                  // its thread, turning
         for (let i = 0; i < 3; i++)
         {
@@ -794,13 +893,9 @@ const SHIP_DECO =
     container(d, t, b)   // Cargo Hauler: a Saturn V-style moon rocket lying on its side (bow = nose)
     {
         const fin = b ? b.color : t.color;
-        for (const s of [1, -1])
-        {
-            d.poly([[-3.8, s*.6], [-4.45, s*1.05], [-4.95, s*1.05], [-4.6, s*.6]], fin, true);    // fins
-            d.poly([[-4.1, s*.6], [-4.6, s*.72], [-4.6, s*.6]], P_DEEP);                           // engine fairings
-        }
-        for (const y of [.38, 0, -.38])                                                           // engine bells
-            d.poly([[-4.55, y + .11], [-5.05, y + .2], [-5.05, y - .2], [-4.55, y - .11]], P_SLATE, true);
+        for (const f of CARGO_FINS) d.poly(f, fin, true);                                         // fins
+        for (const s of [1, -1]) d.poly([[-4.1, s*.6], [-4.6, s*.72], [-4.6, s*.6]], P_DEEP);     // engine fairings
+        for (const p of CARGO_BELLS) d.poly(p, P_SLATE, true);                                    // engine bells
         d.poly(ROCKET_BODY, P_CREAM, true);                                                       // the stages
         d.rect(-4.05, .31, 1.1, .62, P_DEEP);                                                     // first stage roll pattern
         d.rect(-4.05, -.31, 1.1, .62, P_CREAM);
@@ -920,6 +1015,7 @@ drawPost = function(p)
 // an 80 m breakwater look alike.
 drawDock = function(r)
 {
+    if (r.pad) return drawPad(r);                    // a landing pad (src/space.js)
     const w = r.x1 - r.x0, h = r.y1 - r.y0, short = Math.min(w, h), along = w > h;
     const c = fillRect(r, r.under ? P_DEEP.scale(1, .55) : P_CREAM);
     if (!c) return;
@@ -1084,9 +1180,10 @@ drawJamSelection = function(onTop = false)
 };
 
 // slips: round cream dashes
-drawDashedRect = function(c, w, h, color, width, dash=.5)
+drawDashedRect = function(c, w, h, color, width, dash=.5, angle=0)
 {
-    const pts = [vec2(-w/2, -h/2), vec2(w/2, -h/2), vec2(w/2, h/2), vec2(-w/2, h/2)], segs = [];
+    const cs = Math.cos(angle), sn = Math.sin(angle), segs = [];
+    const pts = [[-w/2, -h/2], [w/2, -h/2], [w/2, h/2], [-w/2, h/2]].map(([x, y]) => vec2(x*cs - y*sn, x*sn + y*cs));
     for (let i = 0; i < 4; i++)
     {
         const a = pts[i], b = pts[(i + 1) % 4], n = clamp(Math.round(a.distance(b)/dash), 1, 120);

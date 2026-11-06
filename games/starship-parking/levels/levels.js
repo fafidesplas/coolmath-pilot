@@ -8,7 +8,12 @@
 //          toy units (times k), fingers = 'both' | 'none' (short docks along the slip's long sides)
 // land:    [x0, y0, x1, y1] sand;  docks: {x0, y0, x1, y1, quay?, plank?}
 // walls:   invisible colliders {x0, y0, x1, y1}: boats and floaters bump into them, nothing is drawn (the editor shows them)
-// lands:   blob landmasses {x, y, k, circles: [[x, y, r]] in units of k (first one on the center), grass?}
+// lands:   blob landmasses {x, y, k, circles: [[x, y, r]] in units of k (first one on the center), grass?, detail?: outline points}
+// pads:    a dock with pad: true is a landing pad; a slip with bottom: y stands on it (gravity levels)
+// station: a spinning space station {x, y (center of its drift), a, spin: rad/s, drift: {r, period, phase}}; a slip with
+//          on: 'station' is given in the station's coordinates and moves with it (src/space.js)
+// gravity: {share: of each ship's full thrust, dir?: angle (default down)}
+// a chain boat may set view: the camera shows that many times more around it than its type does
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
 // traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
 //          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn),
@@ -225,7 +230,7 @@ const SCALE_LEVELS =
         [
             { boat: 'jetski', start: { x: 215, y: 91, a: 0 }, slip: { x: 230, y: 77.9, a: PI/2, pad: [1.4, .8], fingers: 'none' } },
             { boat: 'sailboat', start: { x: 255, y: 93, a: 0 }, slip: { x: 290, y: 83.2, a: PI/2, pad: [.8, .5], fingers: 'none' } },
-            { boat: 'yacht', k: 6, start: { x: 280, y: 110, a: PI }, slip: { x: 150, y: 173.5, a: PI/2, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'yacht', k: 6, start: { x: 280, y: 110, a: PI }, slip: { x: 150, y: 173.5, a: PI/2, pad: [.8, .5], fingers: 'none' } },
         ],
         moored:
         [
@@ -268,6 +273,31 @@ const SCALE_LEVELS =
         ],
         buoys: [[18, 46, 2], [48, 16, 2]],
         ducks: [{ x: 46, y: 46, kids: 3 }],
+    },
+    {
+        // a space station drifting round a slow circle and turning once a minute, solar wings sweeping round it. The pod
+        // docks at the front port, then a 28 m yacht at the aft one. Only the gaps between the wings lead in.
+        name: 'Spin Dock', land: [], docks: [],
+        walls: [{ x0: -280, y0: -280, x1: -250, y1: 280 }, { x0: 250, y0: -280, x1: 280, y1: 280 }, { x0: -280, y0: -280, x1: 280, y1: -250 }, { x0: -280, y0: 250, x1: 280, y1: 280 }],
+        station: { x: 0, y: 0, a: .4, spin: 2*PI/60, drift: { r: 10, period: 140, phase: 0 } },
+        boats:
+        [
+            { boat: 'dinghy', view: 4, start: { x: 0, y: -76, a: PI/2 }, slip: { on: 'station', x: 30.84, y: 0, a: 0, pad: [1.4, 1], fingers: 'none' } },
+            { boat: 'yacht', k: 3.5, start: { x: 170, y: 40, a: PI }, slip: { on: 'station', x: -49.9, y: 0, a: 0, pad: [.8, .6], fingers: 'none' } },
+        ],
+        buoys: [[60, -75, 1.2], [-75, 55, 1.2]],
+    },
+    {
+        // gravity: land on a pad on a planet, standing up. The pod first, then a space liner on the big pad next door.
+        name: 'Touchdown', gravity: { share: .35 }, land: [],
+        docks: [{ x0: -4, y0: -3, x1: 4, y1: .5, pad: true }, { x0: 45, y0: -12, x1: 145, y1: 1, pad: true }],
+        lands: [{ x: 0, y: -1200, k: 1200, circles: [[0, 0, 1]], detail: 512 }],
+        walls: [{ x0: -1600, y0: -1300, x1: -1500, y1: 1600 }, { x0: 1500, y0: -1300, x1: 1600, y1: 1600 }, { x0: -1600, y0: 1500, x1: 1600, y1: 1600 }],
+        boats:
+        [
+            { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
+            { boat: 'cruise', start: { x: -350, y: 560, a: PI/2 }, slip: { x: 95, bottom: 1, a: PI/2, pad: [.6, .6], fingers: 'none' } },
+        ],
     },
     {
         // bonus: each boat 100x the last: the harbor is cut into a small island, the island parks in a

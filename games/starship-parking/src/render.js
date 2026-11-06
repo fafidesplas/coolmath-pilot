@@ -179,9 +179,11 @@ function drawPost(p)
     drawCircle(vec2(p.x, p.y), p.r, C_WOOD, 0);
 }
 
-function drawDashedRect(c, w, h, color, width, dash=.5)
+// angle turns the box round its center
+function drawDashedRect(c, w, h, color, width, dash=.5, angle=0)
 {
-    const pts = [vec2(c.x-w/2,c.y-h/2), vec2(c.x+w/2,c.y-h/2), vec2(c.x+w/2,c.y+h/2), vec2(c.x-w/2,c.y+h/2)];
+    const cs = Math.cos(angle), sn = Math.sin(angle);
+    const pts = [[-w/2,-h/2], [w/2,-h/2], [w/2,h/2], [-w/2,h/2]].map(([x, y]) => vec2(c.x + x*cs - y*sn, c.y + x*sn + y*cs));
     for (let i = 0; i < 4; i++)
     {
         const a = pts[i], b = pts[(i+1)%4], len = a.distance(b), n = clamp(Math.round(len/dash), 1, 120);

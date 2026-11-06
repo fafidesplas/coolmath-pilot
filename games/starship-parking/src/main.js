@@ -169,10 +169,13 @@ function makeSlip(e, k)
 {
     const t = BOATS[e.boat], s = e.slip, pad = s.pad || [1.4, 1];
     const leeway = t.L*k >= BIG_SHIP_LENGTH ? BIG_SHIP_LEEWAY : 1;
-    const len = (t.L + pad[0])*k*leeway, wid = (t.W + pad[1])*k*leeway;
+    // the room is measured from what collides (hitL, hitW: fins and boosters included, see skin.js) when that is bigger
+    const L = Math.max(t.L, t.hitL || 0), W = Math.max(t.W, t.hitW || 0);
+    const len = (L + pad[0])*k*leeway, wid = (W + pad[1])*k*leeway;
     const vertical = Math.abs(Math.sin(s.a)) > .5;
     const w = vertical ? wid : len, h = vertical ? len : wid;
-    const x = s.x ?? s.right - w/2, y = s.y ?? s.top - h/2;
+    // top/right: the pier edge it hangs from; bottom: the landing pad it stands on
+    const x = s.x ?? s.right - w/2, y = s.y ?? (s.bottom !== undefined ? s.bottom + h/2 : s.top - h/2);
     if (s.fingers != 'none')
     {
         const ft = .5*k, pr = .32*k;
@@ -191,7 +194,8 @@ function makeSlip(e, k)
             posts.push({ x:xo, y:y-wid/2-ft/2, r:pr }, { x:xo, y:y+wid/2+ft/2, r:pr });
         }
     }
-    return { pos:vec2(x, y), a:s.a, len, wid, w, h, k, leeway };
+    const made = { pos:vec2(x, y), a:s.a, len, wid, w, h, k, leeway };
+    return s.on ? attachSlip(made, s) : made;        // on a station: x, y, a are in its coordinates (src/space.js)
 }
 
 // static landmass: circles [x, y, r] around (x, y), scaled by k; collides as round posts
@@ -199,7 +203,7 @@ function addLand(m)
 {
     const k = m.k, at = p => vec2(m.x + p.x*k, m.y + p.y*k);
     for (const [x, y, r] of m.circles) posts.push({ x:m.x + x*k, y:m.y + y*k, r:r*k, land:true });
-    const outline = blobOutline(m.circles);
+    const outline = blobOutline(m.circles, m.detail);         // detail: outline points (default 64); a planet needs more
     const pts = outline.map(at), r = Math.max(...outline.map(p => p.length()))*k;
     lands.push({ pos:vec2(m.x, m.y), r, pts, grass: m.grass && outline.map(p => at(p.scale(.8))) });
 }
@@ -241,7 +245,7 @@ function loadLevel(i)
     levelIndex = i;
     const L = level = LEVELS[i];
     gameMode = modeOf(L);
-    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; currents = L.currents || [];
+    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; stations = []; currents = L.currents || [];
     popups.length = drops.length = wakes.length = foams.length = 0;
     anchor = judge = result = intro = player = undefined;
     attempts = damages = ducksOffended = levelTime = 0;
@@ -252,6 +256,7 @@ function loadLevel(i)
     for (const d of L.docks) rects.push({ ...d, dock:true });
     for (const w of L.walls || []) rects.push({ x0:w.x0, y0:w.y0, x1:w.x1, y1:w.y1, wall:true });    // invisible: collides, never drawn
     for (const m of L.lands || []) addLand(m);
+    if (L.station) stationLoad(L.station);
 
     // a crowded harbor (src/jam.js) has no chain of boats: every boat is there from the start
     if (L.jam)
@@ -267,6 +272,7 @@ function loadLevel(i)
     // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
     fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
+    fleet.forEach((b, n) => b.view = L.boats[n].view);      // a level can show more (or less) around a ship than its type does
 
     (L.moored || []).forEach((m, k) =>
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
@@ -334,7 +340,7 @@ function cameraGoal()
         const [x0, y0, x1, y1] = [v[0] - m, v[1] - m, v[2] + m, v[3] + m], wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
         return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
     }
-    const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.type.view || 1);
+    const lens = (boatSize(player) >= BIG_SHIP_LENGTH ? BIG_SHIP_VIEW : 3 + 6/player.slowdown) * (player.view || player.type.view || 1);
     const minW = boatSize(player) * lens, pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
     const box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
@@ -564,10 +570,10 @@ function controlPlayer(dt)
             }
         }
     }
-    if (anchor || !hasControl()) throttle = rudder = 0;
+    if (anchor || player.held || !hasControl()) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;
-    const settling = !throttle && player.speed() < SETTLE_SPEED*player.vs;
+    const settling = !throttle && relSpeed(player) < SETTLE_SPEED*player.vs;
     player.dragF = player.dragFull * (throttle || settling ? 1 : COAST_DRAG);
     player.dragA = player.dragAFull * (settling && !rudder ? SETTLE_SPIN : 1);
     driveBoat(player, throttle, rudder, dt);
@@ -626,7 +632,7 @@ function driveBoat(b, throttle, rudder, dt)
     b.vel.x += f.x * thrust * dt;
     b.vel.y += f.y * thrust * dt;
     const vf = b.vel.x*f.x + b.vel.y*f.y;
-    b.angVel += rudder * (b.turn*vf + b.wash*throttle) * dt;
+    b.angVel += (level?.gravity ? thrusterSpin(b, rudder, throttle) : rudder * (b.turn*vf + b.wash*throttle)) * dt;
 }
 
 // ---------------------------------------------------------------------------
@@ -800,7 +806,8 @@ function parkingScore()
 
 function isResting()
 {
-    return player.speed() < REST_SPEED*player.vs && Math.abs(player.angVel) < REST_SPIN/player.slowdown
+    // measured against the space around the ship: on a station, against its port's motion (src/space.js)
+    return relSpeed(player) < REST_SPEED*player.vs && relSpin(player) < REST_SPIN/player.slowdown
         && !player.throttle && !player.rudder && !player.wantDive && !player.under;
 }
 
@@ -833,7 +840,7 @@ function judgeBoat()
         const acc = parkingScore();
         accs.push(acc);
         judge.result = 'win';
-        dropAnchor();
+        if (holdsInstead()) holdShip(player); else dropAnchor();
         sfx('win');
         confetti(player.pos, player.k);
         parkedWord = rand() < .5 ? 'DOCKED!' : 'LAND HO!';
@@ -929,13 +936,17 @@ function stepWorld()
         controlPlayer(dt);
         anchorForce(dt);
         for (const b of bodies) if (b.kind == 'traffic') driveTraffic(b, dt);
+        stationsDrive(dt);
+        applyGravity(dt);
         for (const b of bodies)
         {
             if (b.asleep) { b.vel.set(0, 0); b.angVel = b.stunT = 0; continue; }
             if (b.kind == 'duck') updateDuck(b, dt);
-            const c = currentAt(b.pos);
-            b.integrate(dt, c ? c.dx : 0, c ? c.dy : 0);
+            const m = mediumAt(b), c = currentAt(b.pos);
+            if (m) { b.vel.x += m.ax*dt; b.vel.y += m.ay*dt; b.integrate(dt, m.x, m.y, m.a); }
+            else b.integrate(dt, c ? c.dx : 0, c ? c.dy : 0);
         }
+        stationsFollow();
         for (let i = 0; i < bodies.length; i++)
         {
             if (bodies[i].asleep) continue;
@@ -1229,6 +1240,7 @@ function drawSlip()
 {
     if (!slip) return;
     const inside = boatInSlip(), pulse = .5 + .5*Math.sin(time*5);
+    if (slip.on) return drawMovingSlip(inside);
     const lw = Math.min(.14*WU, slip.wid*.08);
     if (inside)
     {
@@ -1295,6 +1307,7 @@ function drawRestRing()
 function drawBodies()
 {
     drawLands();
+    drawStations();
     for (const b of bodies) if (deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     for (const r of rects) if (r.dock) drawDockShadow(r);
     for (const b of bodies) if (b.type && !b.under && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
@@ -1312,8 +1325,21 @@ function drawBodies()
     for (const b of bodies) if (b.type && b != player && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     if (player && !deep(player)) drawBoat(player);
     for (const b of bodies) if (deep(b)) drawPeriscope(b);
+    if (SHOW_HITBOX) drawHitboxes();
     // a submerged sub hides under boats and docks, but its white outline stays on top so you can still find it
     if (level?.jam && player && deep(player)) drawJamSelection(true);
+}
+
+// debug: ?hitbox in the URL outlines every collision circle
+const SHOW_HITBOX = new URLSearchParams(location.search).has('hitbox');
+function drawHitboxes()
+{
+    for (const b of bodies)
+    {
+        if (!inView(b.pos, b.radius)) continue;
+        for (let i = 0; i < b.circles.length; i++)
+            drawCircle(b.world[i], b.circles[i].r*2, rgb(1, .2, .3, .18), Math.min(.06*WU, b.circles[i].r*.2), rgb(1, .3, .4, .9));
+    }
 }
 
 // sand rects and landmass blobs drawn as one shape: every outline first, then every fill on top,

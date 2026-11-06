@@ -80,8 +80,8 @@ class Body
     // force over dt applied at a world point
     applyForce(fx, fy, p, dt) { this.applyImpulse(fx*dt, fy*dt, p); }
 
-    // wx, wy: water current velocity at this body
-    integrate(dt, wx=0, wy=0)
+    // wx, wy: water current velocity at this body; wa: the spin of the water around it (a station's docking beam turns)
+    integrate(dt, wx=0, wy=0, wa=0)
     {
         // water drag relative to the water: slides easily along the keel, resists going sideways
         const f = this.forward(), rx = this.vel.x - wx, ry = this.vel.y - wy;
@@ -90,7 +90,7 @@ class Body
         vf *= Math.max(0, 1 - this.dragF*dt);
         vs *= Math.max(0, 1 - this.dragS*dt);
         this.vel.set(wx + f.x*vf - f.y*vs, wy + f.y*vf + f.x*vs);
-        this.angVel *= Math.max(0, 1 - this.dragA*dt);
+        this.angVel = wa + (this.angVel - wa)*Math.max(0, 1 - this.dragA*dt);
 
         this.pos.x += this.vel.x*dt;
         this.pos.y += this.vel.y*dt;
