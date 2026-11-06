@@ -25,7 +25,7 @@ const C_GRASS  = rgb(.60, .80, .45);       // island and continent interiors
 // view (optional): the camera shows this many times more around the boat (see cameraGoal in main.js).
 const BOATS =
 {
-    jetski:    { name:'Jet Ski',      L:2.4, W:1.1,  k:1,   mass:.8,  power:7,   reverse:.3, turn:1.5, wash:2.6, dragF:.9,  dragS:1.2, dragA:2,   hull:'pointy', color:C_TEAL, view:3 },
+    jetski:    { name:'Jet Ski',      L:2.4, W:1.1,  k:1,   mass:.8,  power:7,   reverse:.3, turn:1.1, wash:3.2, dragF:.9,  dragS:1.8, dragA:5,   hull:'pointy', color:C_TEAL, view:3 },
     dinghy:    { name:'Rowboat',      L:2.2, W:1.15, k:1.3, mass:1,   power:6,   reverse:.6, turn:1.1, wash:1.6, dragF:1.2, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL },
     speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM },
     swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM },

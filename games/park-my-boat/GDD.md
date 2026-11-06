@@ -38,7 +38,7 @@ Units: the world is in meters, and the camera is free (no fixed px scale). Each 
 ### 3.3 Boat types
 | Boat | Real length | Mass | Power | Reverse | Turn | Feel |
 |---|---|---|---|---|---|---|
-| Jet Ski | 2.4 m | 0.8 | 7 | 0.3 | 1.5 | Quick, slides, almost no reverse |
+| Jet Ski | 2.4 m | 0.8 | 7 | 0.3 | 1.1 | Quick, slides, almost no reverse; strong spin damping so it doesn't wiggle at speed |
 | Swan Pedalo | 2.6 m | 1 | 3.5 | 0.7 | 2.2 | Slow, spins on the spot |
 | Rowboat | 2.9 m | 1 | 6 | 0.6 | 1.1 | Neutral, the learning boat |
 | Zippy | 6.8 m | 1.5 | 13 | 0.5 | 0.9 | Fast, drifts in turns |

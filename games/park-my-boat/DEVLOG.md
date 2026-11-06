@@ -1,3 +1,7 @@
+## 2026-11-06 — Jet Ski stops wiggling
+- Jet Ski handling: turn 1.5 → 1.1, wash 2.6 → 3.2, side drag 1.2 → 1.8, spin drag 2 → 5, so it no longer wiggles at speed. GDD 3.3 updated.
+- The space build's Rocket Scooter is the same type, so it handles the same with no skin change.
+
 ## 2026-11-06 — Space build: ships become poster rockets
 - Nine ships still used the harbor's boat hull (pointed bow, flat stern), so from above they read as boats. Each now has its own rocket body: an ogive nose, a rounded tail into an engine bell, swept fins and boosters drawn under the body, a nose cone and bands in a trim color, and portholes. They are drawn from 1950s poster rocket references.
 - Rocket Scooter: slim teal rocket with a bubble canopy. Escape Pod: fat egg rocket with a big porthole. Zoomer: red rocket plane with delta wings and wingtip pods. Stealth Pod: a rocket between two boosters. Solar Sailer: needle rocket under the mirror sail. Asteroid Miner: stubby work rocket with a turning drill, grabber arms and an ore bay. Star Yacht: long cream rocket with big teal fins, a booster on each fin tip and a glass dome. Stealth Cruiser: dark needle rocket with canards. Space Liner: long rocket with two rows of portholes and three engines. Saucer and Cargo Hauler unchanged.
