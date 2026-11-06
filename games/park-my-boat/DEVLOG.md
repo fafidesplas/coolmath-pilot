@@ -1,3 +1,7 @@
+## 2026-11-06 — Space build: arcade pixel font
+- All text in the space build is now a 5x7 arcade pixel font drawn in code (`PIXEL_FONT` in `space/skin.js`, no font file, so STANDARDS' no-web-fonts rule holds): all caps, slightly bold pixels (`PIXEL_BOLD`), a faint neon glow. It replaces the engine's `drawText`, so every label, button, popup and deck letter uses it; the harbor build keeps its font.
+- Checked in Chrome: title, level select, HUD, intro card, Test Map buttons (the longest label still fits). No console errors.
+
 ## 2026-11-06 — Space build goes Night Neon
 - `space/skin.js` switched from Toybox Flat to the Night Neon family: near-black sky with a faint grid and stars in zoom octaves, ships and objects as glowing outlines over dark fills, pink rock coastlines with crater rings, cyan gantries (lime `under` arches, violet quays), dark glass panels with glowing rims, neon title sign. No drop shadows.
 - How: a neon `painter` replaces the Toybox one, so every deck drawing (space decks and any harbor fallback) turns into line art with no per-ship rewrite. `neon()` maps each flat color to its neon hue; `neonPath`/`neonSegs` draw an additive halo plus a hot core. Halos switch off for ships under 2.5 UI units on screen.
