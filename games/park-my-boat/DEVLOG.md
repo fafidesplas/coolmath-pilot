@@ -1,3 +1,8 @@
+## 2026-11-06 — Space build export for a publisher
+- New `tools/export-space.mjs`: writes the space build as an unbranded standalone folder and zip. It strips comments, renames the `cm_` save keys and the harbor title string, makes `track()` a no-op, and fails if any team, harbor-game or author name is left.
+- Checked: the exported copy runs over HTTP (title, level select, a level, no console errors) and opened straight from disk in Chrome (font loads). 220 KB zipped.
+- Still in the export: the LittleJS debug build (console notice), `?test` and `?bonus`, `window.game.win()`.
+
 ## 2026-11-06 — Jet Ski stops wiggling
 - Jet Ski handling: turn 1.5 → 1.1, wash 2.6 → 3.2, side drag 1.2 → 1.8, spin drag 2 → 5, so it no longer wiggles at speed. GDD 3.3 updated.
 - The space build's Rocket Scooter is the same type, so it handles the same with no skin change.
