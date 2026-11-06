@@ -30,7 +30,7 @@ const BOATS =
     speedboat: { name:'Zippy',        L:3.4, W:1.3,  k:2,   mass:1.5, power:13,  reverse:.5, turn:.9,  wash:1.2, dragF:1,   dragS:1.4, dragA:3.2, hull:'pointy', color:C_CREAM },
     swan:      { name:'Swan Pedalo',  L:2.4, W:1.6,  k:1.1, mass:1,   power:3.5, reverse:.7, turn:2.2, wash:3,   dragF:1.4, dragS:2,   dragA:1.1, hull:'swan',   color:C_CREAM },
     // mini submarine: a one or two person deep-sea explorer (yellow pontoons around a glass sphere); dives like the big one
-    minisub:   { name:'Mini Sub',     L:3.7, W:1.8,  k:1.1, mass:1.2, power:5,   reverse:.8, turn:1.7, wash:1.4, dragF:1.2, dragS:2.5, dragA:1.6, hull:'capsule', color:C_ORANGE, sub:true, scope:.55 },
+    minisub:   { name:'Mini Sub', L:3.7, W:1.8, k:1.1, mass:1.2, power:5, reverse:.8, turn:1.7, wash:1.4, dragF:1.2, dragS:2.5, dragA:1.6, hull:'capsule', color:C_ORANGE, sub:true, scope:.55 },
     sailboat:  { name:'Sailboat',     L:5,   W:1.6,  k:2.4, mass:3.5, power:7,   reverse:.5, turn:.7,  wash:.5,  dragF:.5,  dragS:6,   dragA:3,   hull:'pointy', color:C_CREAM },
     trawler:   { name:'Trawler',      L:3.3, W:1.2,  k:8,   mass:5,   power:30,  reverse:.8, turn:.9,  wash:2,   dragF:1.5, dragS:3,   dragA:3,   hull:'pointy', color:C_CORAL },
     yacht:     { name:'Mega Yacht',   L:8,   W:2.6,  k:10,  mass:10,  power:30,  reverse:.5, turn:.35, wash:.45, dragF:.6,  dragS:2.5, dragA:1.6, hull:'pointy', color:C_CREAM },
@@ -229,34 +229,61 @@ const BOAT_DECO =
     },
     minisub(d, t, b)
     {
-        const dark = C_INK.lerp(C_CREAM, .2);
-        d.rect(-.95, 0, 1.15, 1.2, C_INK, true);                                              // equipment rack, back
-        for (let i = 0; i < 4; i++) for (let j = 0; j < 5; j++)
-            d.rect(-1.35 + i*.26, -.5 + j*.25, .16, .16, (i + j) % 2 ? dark : C_NAVY);        // checkered grating
-        d.rect(1.55, 0, .3, .9, C_INK, true);                                                 // sensor panel on the nose
-        for (const s of [1, -1])
-        {
-            d.circle(1.55, s*.28, .16, C_CREAM);                                              // lights
-            d.circle(1.05, s*.62, .5, C_INK, true);                                           // thruster rings, front
-            d.circle(1.05, s*.62, .3, dark);
-            d.line(.88, s*.62, 1.22, s*.62, .08, C_INK);                                      // fan blades
-            d.line(1.05, s*.45, 1.05, s*.79, .08, C_INK);
-        }
-        d.circle(.1, 0, 1.4, C_INK, true);                                                    // sphere ring
-        d.circle(.1, 0, 1.25, rgb(.7, .9, .97), true);                                        // glass
-        d.ellipse(.5, -.3, .3, .12, C_CREAM);                                                 // glass glint
+        d.rect(-.95, 0, 1.15, 1.2, C_INK, true);
+        d.rect(-1.35, -.5, .16, .16, C_NAVY);
+        d.rect(-1.35, -.25, .16, .16, rgb(.336, .338, .388));
+        d.rect(-1.35, 0, .16, .16, C_NAVY);
+        d.rect(-1.35, .25, .16, .16, rgb(.336, .338, .388));
+        d.rect(-1.35, .5, .16, .16, C_NAVY);
+        d.rect(-1.09, -.5, .16, .16, rgb(.336, .338, .388));
+        d.rect(-1.09, -.25, .16, .16, C_NAVY);
+        d.rect(-1.09, 0, .16, .16, rgb(.336, .338, .388));
+        d.rect(-1.09, .25, .16, .16, C_NAVY);
+        d.rect(-1.09, .5, .16, .16, rgb(.336, .338, .388));
+        d.rect(-.83, -.5, .16, .16, C_NAVY);
+        d.rect(-.83, -.25, .16, .16, rgb(.336, .338, .388));
+        d.rect(-.83, 0, .16, .16, C_NAVY);
+        d.rect(-.83, .25, .16, .16, rgb(.336, .338, .388));
+        d.rect(-.83, .5, .16, .16, C_NAVY);
+        d.rect(-.57, -.5, .16, .16, rgb(.336, .338, .388));
+        d.rect(-.57, -.25, .16, .16, C_NAVY);
+        d.rect(-.57, 0, .16, .16, rgb(.336, .338, .388));
+        d.rect(-.57, .25, .16, .16, C_NAVY);
+        d.rect(-.57, .5, .16, .16, rgb(.336, .338, .388));
+        d.rect(1.55, 0, .3, .9, C_INK, true);
+        d.circle(1.55, .28, .16, C_CREAM);
+        d.circle(1.05, .62, .5, C_INK, true);
+        d.circle(1.05, .62, .3, rgb(.336, .338, .388));
+        d.line(.88, .62, 1.22, .62, .08, C_INK);
+        d.line(1.05, .45, 1.05, .79, .08, C_INK);
+        d.circle(1.55, -.28, .16, C_CREAM);
+        d.circle(1.05, -.62, .5, C_INK, true);
+        d.circle(1.05, -.62, .3, rgb(.336, .338, .388));
+        d.line(.88, -.62, 1.22, -.62, .08, C_INK);
+        d.line(1.05, -.45, 1.05, -.79, .08, C_INK);
+        d.circle(.1, 0, 1.4, C_INK, true);
+        d.circle(.1, 0, 1.25, rgb(.7, .9, .97), true);
+        d.ellipse(.25, -.3, .4, .3, C_CREAM);
+        d.ellipse(-.1, -.2, .2, .1, C_CREAM);
+        d.poly([[-1.5,.6],[-2.05,.85],[-2.05,.15],[-1.5,.35]], C_SUNNY, true);
+        d.poly([[-1.5,-.35],[-2.05,-.1],[-2.05,-.8],[-1.5,-.6]], C_SUNNY, true);
+        d.ellipse(0, 0, .9, .5, C_CREAM, true);
     },
     sub(d, t, b)
     {
-        d.line(-3.5, 0, -3.9, 0, .2, C_INK);                          // propeller shaft
-        d.ellipse(-3.95, 0, .16, .95, C_INK);                         // propeller
-        for (const s of [1, -1])
-            d.poly([[-2.7, s*.35], [-3.3, s*.95], [-3.55, s*.95], [-3.25, s*.35]], C_TEAL, true);   // stern planes
-        for (let i = 0; i < 6; i++) d.rect(-.9 - i*.45, 0, .32, .5, C_INK.lerp(C_NAVY, .5), true);  // missile hatches
-        for (const s of [1, -1]) d.poly([[1.4, s*.3], [.9, s*.95], [.7, s*.95], [.9, s*.3]], C_TEAL, true);   // sail planes
-        d.ellipse(1.1, 0, 1.7, .6, C_TEAL, true);                      // sail
-        d.ellipse(1.1, 0, .7, .26, C_CREAM);                           // hatch
-        d.circle(1.45, 0, .2, C_INK);                                  // periscope
+        d.line(-3.5, 0, -3.9, 0, .2, C_INK);
+        d.ellipse(-3.95, 0, .16, .95, C_INK);
+        d.rect(-.9, 0, .32, .5, rgb(.195, .235, .355), true);
+        d.rect(-1.35, 0, .32, .5, rgb(.195, .235, .355), true);
+        d.rect(-1.8, 0, .32, .5, rgb(.195, .235, .355), true);
+        d.rect(-2.25, 0, .32, .5, rgb(.195, .235, .355), true);
+        d.rect(-2.7, 0, .32, .5, rgb(.195, .235, .355), true);
+        d.rect(-3.15, 0, .32, .5, rgb(.195, .235, .355), true);
+        d.poly([[1.4,.3],[.9,.95],[.7,.95],[.9,.3]], C_TEAL, true);
+        d.poly([[1.4,-.3],[.9,-.95],[.7,-.95],[.9,-.3]], C_TEAL, true);
+        d.ellipse(1.1, 0, 1.7, .6, C_TEAL, true);
+        d.ellipse(1.1, 0, .7, .26, C_CREAM);
+        d.circle(1.45, 0, .2, C_INK);
     },
     yacht(d, t)
     {

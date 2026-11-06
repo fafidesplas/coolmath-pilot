@@ -1,3 +1,8 @@
+## 2026-11-06 — Mini Sub and submarine deck touch-ups
+- Mini Sub (boat editor): yellow stern fins on both sides, a cream hatch over the middle of the glass sphere, and a bigger two-part glint on the glass.
+- Nuclear Submarine (boat editor): stern planes removed.
+- Both decks are now plain shapes with numbers, as the editor saves them. Handling numbers unchanged.
+
 ## 2026-11-06 — Space build moves to its own folder
 - `space/` (page, skin, fonts) and `tools/export-space.mjs` are gone: the space build is now its own game, `../lost-in-parking-space/`, with its own copy of this game's code as of `40a0e9c`. Brief's space section replaced with a pointer.
 - Changes here no longer reach the space game, and its save key is now its own.
