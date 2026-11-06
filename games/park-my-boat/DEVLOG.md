@@ -1,3 +1,7 @@
+## 2026-11-06 — Space build moves to its own folder
+- `space/` (page, skin, fonts) and `tools/export-space.mjs` are gone: the space build is now its own game, `../lost-in-parking-space/`, with its own copy of this game's code as of `40a0e9c`. Brief's space section replaced with a pointer.
+- Changes here no longer reach the space game, and its save key is now its own.
+
 ## 2026-11-06 — Space build: bigger, glowing stars
 - Stars were thin hard dots (drawCircle takes a diameter, so they were half the intended size). Now each is a soft glow sprite (solid core, halo), 70 per layer instead of 46, and 6% are four-point flares (long thin rays, up and across) in place of the eight-ray atomic bursts. The title's four big bursts are flares too.
 - On-screen star size now follows the zoom only half as much (square root), so stars never shrink to specks; spacing still follows the zoom fully, so zooming still reads.
