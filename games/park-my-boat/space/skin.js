@@ -337,7 +337,7 @@ const JETS =
     jetski:[[-1.2, 0, .28]], dinghy:[[-1.1, 0, .3]], swan:[[-1.15, 0, .3]], speedboat:[[-1.7, .25, .22], [-1.7, -.25, .22]],
     minisub:[[-1.85, 0, .4]], sailboat:[[-2.5, 0, .3]], trawler:[[-1.65, .2, .22], [-1.65, -.2, .22]],
     yacht:[[-4, .75, .35], [-4, -.75, .35], [-4, 0, .4]], sub:[[-3.5, 0, .35]],
-    cruise:[[-5, .3, .22], [-5, 0, .22], [-5, -.3, .22]], container:[[-5, .35, .3], [-5, -.35, .3]],
+    cruise:[[-5, .3, .22], [-5, 0, .22], [-5, -.3, .22]], container:[[-5.05, .38, .34], [-5.05, 0, .34], [-5.05, -.38, .34]],
 };
 
 function shipThrottle(b)
@@ -411,6 +411,16 @@ if (BOATS.swan)
     const t = BOATS.swan;
     t.hullPts = Array.from({ length: 32 }, (_, i) => vec2(Math.cos(i/32*PI*2)*t.L/2, Math.sin(i/32*PI*2)*t.W/2));
     t.deckPts = t.hullPts.map(p => vec2(p.x*.74, p.y*.68));
+}
+
+// the cargo hauler is a moon rocket: its outline follows the stages (drawing only, like the saucer)
+const ROCKET_BODY = [[-4.6, .62], [1.75, .62], [2.25, .43], [3.5, .43], [3.5, -.43], [2.25, -.43], [1.75, -.62], [-4.6, -.62]];
+if (BOATS.container)
+{
+    const t = BOATS.container;
+    t.hullPts = [[-4.6, .62], [1.75, .62], [2.25, .43], [3.5, .43], [4.05, .28], [4.3, .28], [4.62, .07],
+                 [4.62, -.07], [4.3, -.28], [4.05, -.28], [3.5, -.43], [2.25, -.43], [1.75, -.62], [-4.6, -.62]].map(([x, y]) => vec2(x, y));
+    t.deckPts = t.hullPts;
 }
 
 // a soft highlight on glass, the way a poster painter would add one
@@ -542,20 +552,30 @@ const SHIP_DECO =
         d.poly([[3.9,0],[3.4,.38],[3.05,.38],[3.05,-.38],[3.4,-.38]], C_GLASS, true);   // bridge
         for (const y of [.3, 0, -.3]) d.rect(-4.7, y, .32, .22, C_INK);
     },
-    container(d, t, b)   // Cargo Hauler
+    container(d, t, b)   // Cargo Hauler: a Saturn V-style moon rocket lying on its side (bow = nose)
     {
-        const colors = [C_TEAL, C_SUNNY, C_LILAC, C_CORAL, C_CREAM];
-        d.line(-4.3, 0, 2.9, 0, .2, C_INK);                              // spine
-        for (let i = 0; i < 8; i++)
-        for (let j = 0; j < 4; j++)
-            d.rect(-3.4 + i*.82, -.57 + j*.38, .76, .34, colors[(i*3 + j*7 + (b ? b.id : 0)) % 5], true);
-        d.poly([[4.4,0],[3.6,.42],[2.95,.45],[2.95,-.45],[3.6,-.42]], C_CREAM, true);   // cockpit
-        d.poly([[4.1,0],[3.65,.26],[3.35,.26],[3.35,-.26],[3.65,-.26]], C_GLASS);
+        const fin = b ? b.color : t.color;
         for (const s of [1, -1])
         {
-            d.rect(-4.3, s*.35, .6, .44, C_SILVER, true);               // engines
-            d.rect(-4.7, s*.35, .2, .3, C_INK);
+            d.poly([[-3.8, s*.6], [-4.45, s*1.05], [-4.95, s*1.05], [-4.6, s*.6]], fin, true);    // fins
+            d.poly([[-4.1, s*.6], [-4.6, s*.72], [-4.6, s*.6]], P_DEEP);                           // engine fairings
         }
+        for (const y of [.38, 0, -.38])                                                           // engine bells
+            d.poly([[-4.55, y + .11], [-5.05, y + .2], [-5.05, y - .2], [-4.55, y - .11]], P_SLATE, true);
+        d.poly(ROCKET_BODY, P_CREAM, true);                                                       // the stages
+        d.rect(-4.05, .31, 1.1, .62, P_DEEP);                                                     // first stage roll pattern
+        d.rect(-4.05, -.31, 1.1, .62, P_CREAM);
+        d.rect(-1.25, 0, .55, 1.24, P_DEEP);                                                      // first stage top band
+        d.line(-.72, .62, -.72, -.62, .05, P_DEEP);                                               // stage joint
+        d.line(1.35, .62, 1.35, -.62, .05, P_DEEP);
+        d.rect(2.5, .215, .5, .43, P_DEEP);                                                       // third stage roll pattern
+        d.line(3.45, .43, 3.45, -.43, .1, P_SAND);                                                // instrument ring
+        d.poly([[3.5, .43], [4.05, .28], [4.05, -.28], [3.5, -.43]], P_SAND, true);              // lander fairing
+        d.rect(4.17, 0, .25, .56, P_SAND);                                                        // service module
+        d.poly([[4.3, .28], [4.62, .07], [4.62, -.07], [4.3, -.28]], P_CREAM, true);             // capsule
+        d.line(4.62, 0, 4.82, 0, .05, P_DEEP);                                                    // escape tower
+        for (const s of [1, -1]) d.line(4.62, s*.06, 4.8, 0, .03, P_DEEP);
+        d.poly([[5.02, 0], [4.92, .06], [4.8, .06], [4.8, -.06], [4.92, -.06]], P_BRICK);        // escape rocket
     },
     island(d, t)    // Asteroid
     {

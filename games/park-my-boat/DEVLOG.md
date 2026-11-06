@@ -1,3 +1,8 @@
+## 2026-11-06 — Space build: Cargo Hauler becomes a moon rocket
+- The Cargo Hauler still read as a container ship (rows of colored boxes), so it is now a Saturn V-style moon rocket lying on its side: white stages with black roll-pattern bands, fins and three engine bells at the stern, a lander fairing, the capsule and its escape tower at the nose. Fins take the ship's color, so parked rockets still differ.
+- Its drawn outline (`ROCKET_BODY` and the hauler's `hullPts` in `space/skin.js`) follows the stages; collision circles are unchanged. Three flames now (`JETS`).
+- Checked in Chrome on the Test Map, still and with thrusters. Next: see it at the start of Way Down.
+
 ## 2026-11-06 — Space build: darker sky
 - The indigo sky (#1D1B4F) still read as water under the ships, so space is now a near-black navy (#07091C, `P_SPACE`), with the page background to match. Shadows moved to a darker ink (`P_VOID`, #020209 at 60%) so they stay darker than the sky. Indigo stays as a ship ink.
 - Checked in Chrome on Odd Couple. Next: see whether the HUD bar (#14123A, now lighter than the sky) and the cream cards still sit right.
