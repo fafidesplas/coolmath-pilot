@@ -275,15 +275,16 @@ const SCALE_LEVELS =
         ducks: [{ x: 46, y: 46, kids: 3 }],
     },
     {
-        // a space station drifting round a slow circle and turning once a minute, solar wings sweeping round it. The pod
-        // docks at the front port, then a 28 m yacht at the aft one. Only the gaps between the wings lead in.
+        // a space station drifting round a slow circle and turning once a minute, solar wings sweeping round it. Ships dock
+        // across the module stack: the pod on the lab's port side, then a 28 m yacht on the aft module's starboard side.
+        // Only the gaps between the wings lead in.
         name: 'Spin Dock', land: [], docks: [],
         walls: [{ x0: -280, y0: -280, x1: -250, y1: 280 }, { x0: 250, y0: -280, x1: 280, y1: 280 }, { x0: -280, y0: -280, x1: 280, y1: -250 }, { x0: -280, y0: 250, x1: 280, y1: 280 }],
         station: { x: 0, y: 0, a: .4, spin: 2*PI/60, drift: { r: 10, period: 140, phase: 0 } },
         boats:
         [
-            { boat: 'dinghy', view: 4, start: { x: 0, y: -76, a: PI/2 }, slip: { on: 'station', x: 30.84, y: 0, a: 0, pad: [1.4, 1], fingers: 'none' } },
-            { boat: 'yacht', k: 3.5, start: { x: 170, y: 40, a: PI }, slip: { on: 'station', x: -49.9, y: 0, a: 0, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'dinghy', view: 4, start: { x: 0, y: -82, a: PI/2 }, slip: { on: 'station', x: 17, y: 6.24, a: PI/2, pad: [1.4, 1], fingers: 'none' } },
+            { boat: 'yacht', k: 3.5, start: { x: 170, y: 40, a: PI }, slip: { on: 'station', x: -21, y: -19.3, a: PI/2, pad: [.8, .6], fingers: 'none' } },
         ],
         buoys: [[60, -75, 1.2], [-75, 55, 1.2]],
     },

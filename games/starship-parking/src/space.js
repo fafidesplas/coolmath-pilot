@@ -22,14 +22,16 @@ const BEAM_GROW = .5;                     // the docking beam reaches this many 
 
 const STATION =
 {
-    truss: [[-2.2, -55, 2.2, 55]],
-    wings: [34, 47, -34, -47].flatMap(y => [[4, y - 5, 36, y + 5], [-36, y - 5, -4, y + 5]]),
+    truss: [[-2.2, -62, 2.2, 62]],
+    wings: [41, 54, -41, -54].flatMap(y => [[4, y - 5, 36, y + 5], [-36, y - 5, -4, y + 5]]),
     radiators: [16, -16].flatMap(y => [[3, y - 3, 14, y + 3], [-14, y - 3, -3, y + 3]]),
     // the module stack, from the aft port to the front port: [x0, x1, radius]
     stack: [[-32, -28, 1.6], [-28, -12, 2.2], [-12, 4, 2.1], [4, 10, 2.3], [10, 20, 2.2], [20, 26, 2.3]],
     // side modules off the nodes: [x, y0, y1, radius]
     side: [[23, 2.3, 15, 2.1], [23, -2.3, -11, 2.1], [7, 2.3, 9, 1.8], [7, -2.3, -10, 1.9]],
-    ports: [[26, 0, 0], [-32, 0, PI]],       // [x, y, facing]: front (Harmony) and aft (Zvezda)
+    // docking ports on the sides of the module stack, so ships dock across it: [x, y, facing]. The lab's port side, and
+    // the aft module's starboard side (its slip runs out between the radiators and the solar wings)
+    ports: [[17, 2.2, PI/2], [-21, -2.2, -PI/2]],
 };
 
 // a rect [x0, y0, x1, y1] as a row of circles along its long side
@@ -50,7 +52,7 @@ function stationCircles()
     const S = STATION, rects = [...S.truss, ...S.wings, ...S.radiators,
         ...S.stack.map(([a, b, r]) => [a, -r, b, r]),
         ...S.side.map(([x, a, b, r]) => [x - r, Math.min(a, b), x + r, Math.max(a, b)])];
-    return [...rects.flatMap(rectCircles), ...S.ports.map(([x, y, f]) => ({ x: x + Math.cos(f)*.6, y, r: 1.8 }))];
+    return [...rects.flatMap(rectCircles), ...S.ports.map(([x, y, f]) => ({ x: x + Math.cos(f)*.3, y: y + Math.sin(f)*.3, r: 1.3 }))];
 }
 
 let stations = [];
@@ -255,10 +257,10 @@ function drawStation(b)
     // docking ports: a cream ring, a dark seal, a blinking light
     for (const [x, y, f] of S.ports)
     {
-        const fx = Math.cos(f)*.6;
-        d.circle(x + fx, y, 3.6, P_CREAM, true);
-        d.circle(x + fx, y, 2.4, P_DEEP);
-        d.circle(x + fx, y, 1.1, Math.sin(time*4 + x) > 0 ? P_MUSTARD : P_BRICK);
+        const px = x + Math.cos(f)*.3, py = y + Math.sin(f)*.3;
+        d.circle(px, py, 2.6, P_CREAM, true);
+        d.circle(px, py, 1.75, P_DEEP);
+        d.circle(px, py, .8, Math.sin(time*4 + x) > 0 ? P_MUSTARD : P_BRICK);
     }
 }
 
