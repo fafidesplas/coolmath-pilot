@@ -9,7 +9,8 @@
 // - Gravity (level `gravity`): a steady pull, `share` of each ship's own full thrust (so it feels the same in every
 //   ship), toward `dir` (default down). A ship falls once it has control; ones waiting their turn hang in the sky.
 //   Under gravity the side thrusters turn a ship with no speed (A/D or the mouse), and a ship that parks is set down
-//   for good instead of dropping an anchor.
+//   for good instead of dropping an anchor. A falling ship has no keel: its drag is the same in every direction (air,
+//   not water), so it falls straight down whichever way it points.
 // - Landing pads: docks with `pad: true`, drawn as a landing pad.
 
 const STATION_SPIN_DEFAULT = 2*PI/60;     // rad/s: one turn a minute
@@ -186,6 +187,7 @@ function applyGravity(dt)
     {
         if (!b.falls || !b.invMass) continue;
         const g = gravityPull(b);
+        b.dragS = b.dragF;          // no keel: the boat drag would steer the fall along the hull
         b.vel.x += g.x*dt;
         b.vel.y += g.y*dt;
     }

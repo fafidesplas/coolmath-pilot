@@ -1,3 +1,7 @@
+## 2026-11-06 — Touchdown: ships fall straight down
+- Gravity pulled straight down, but falling ships still had the boat's water drag (easy along the keel, stiff sideways), so a tilted ship fell along its own nose. A falling ship's drag is now the same in every direction, so it falls straight down whichever way it points.
+- Next: play Touchdown by hand and retune gravity share if landings got harder.
+
 ## 2026-11-06 — Spin Dock: ships dock across the station
 - The docking ports moved from the ends of the module stack to its sides, so both slips stand at right angles to it: the pod on the lab's side, the yacht on the far side of the aft module. The solar wings moved 7 m farther out along the truss to make room for the yacht's slip, and the pod starts 6 m farther out to stay clear of their sweep.
 - Next: play it by hand and tune.
