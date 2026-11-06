@@ -33,7 +33,6 @@ No tutorial or flavor text in the game. Text is limited to menu buttons, labels 
 
 ## Not carried over
 - The level editor and the boat editor stay in `../park-my-boat/tools/`. They write that game's files, so they don't work on this folder as is.
-- `mechanic.svg` is the harbor game's schematic, copied as a placeholder; it still shows boats.
 
 ## Gaps against STANDARDS.md
 - No GDD yet.
