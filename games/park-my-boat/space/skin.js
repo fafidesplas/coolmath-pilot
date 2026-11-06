@@ -508,8 +508,6 @@ const SHIP_DECO =
         glint(d, 1.95, .3, .7, .22);
         d.circle(-1.95, 0, 1.05, C_TEAL, true);                          // star pool
         d.circle(-1.95, 0, .52, C_GLOW.lerp(C_GLASS, .5));
-        d.circle(-.3, 0, .8, C_NAVY, true);                              // shuttle pad
-        d.text('H', -.3, 0, .62, C_CREAM);
         d.rect(-3.85, 0, .22, .5, C_INK);
     },
     sub(d)          // Stealth Cruiser
