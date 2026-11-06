@@ -1,124 +1,122 @@
 'use strict';
-// Lost in Parking Space: the secret space skin, in the Night Neon art family (dark navy, glowing outlines, a few
-// vivid accents). Loaded after src/main.js by space/index.html only, so the harbor build never sees it.
-// Pure visual reskin: physics, levels, sizes and handling are untouched. It repaints (a neon painter replaces the
-// Toybox one, so every deck drawing turns into glowing line art), renames, and swaps a few sounds. Every game fix
-// and new level in the harbor build shows up here for free.
-// Keep collision shapes alone: anything drawn past a hull is decoration only.
+// Lost in Parking Space: the secret space skin, in a 1960s space-age poster style (flat rounded shapes with a
+// soft shaded edge, teal, mustard, brick and cream on deep indigo, atomic starbursts, film grain, Righteous type).
+// Loaded after src/main.js by space/index.html only, so the harbor build never sees it.
+// Pure visual reskin: physics, levels, sizes and handling are untouched. A poster painter replaces the Toybox one,
+// so every deck drawing turns flat and shaded with no per-ship rewrite. Every game fix and new level in the
+// harbor build shows up here for free. Keep collision shapes alone: anything drawn past a hull is decoration only.
 
 // ---------------------------------------------------------------------------
-// palette
+// palette: a handful of poster inks; every Toybox color is mapped onto them
 
-function setColor(c, r, g, b, a=c.a) { c.r = r; c.g = g; c.b = b; c.a = a; }
-setColor(C_WATER,  .02, .02, .06);       // the sky
-setColor(C_WATER2, .55, .50, 1);         // sparks, bonus cards
-setColor(C_SAND,   .55, .30, .62);       // rock (asteroid hull, ore)
-setColor(C_GRASS,  .45, .30, .62);
+const P_INDIGO = rgb(.114, .106, .31);   // #1D1B4F the sky
+const P_DEEP   = rgb(.078, .071, .227);  // #14123A darks, bars
+const P_TEAL   = rgb(.165, .616, .561);  // #2A9D8F
+const P_MUSTARD= rgb(.914, .725, .286);  // #E9B949
+const P_BRICK  = rgb(.784, .333, .239);  // #C8553D
+const P_CREAM  = rgb(.953, .902, .8);    // #F3E6CC
+const P_GLASS  = rgb(.561, .827, .812);  // #8FD3CF
+const P_ORANGE = rgb(.878, .478, .227);  // #E07A3A
+const P_LILAC  = rgb(.608, .557, .769);  // #9B8EC4
+const P_SLATE  = rgb(.239, .353, .502);  // #3D5A80
+const P_SAND   = rgb(.851, .78, .627);   // #D9C7A0
+const P_DUSK   = rgb(.427, .416, .6);    // #6D6A99
+const P_ROCK   = rgb(.549, .29, .235);   // #8C4A3C asteroid rock
+const P_ROCK2  = rgb(.651, .353, .275);  // #A65A46 its lit top
+const P_ROCKDK = rgb(.369, .184, .165);  // #5E2F2A its shadow side
+
+function setColor(c, d, a=c.a) { c.r = d.r; c.g = d.g; c.b = d.b; c.a = a; }
+setColor(C_WATER, P_INDIGO);
+setColor(C_WATER2, P_GLASS);             // sparks, bonus cards
+setColor(C_SAND, P_ROCK);                // asteroid hull, ore
+setColor(C_GRASS, P_ROCK2);
+setColor(C_SHADOW, P_DEEP, .5);          // hard poster shadows
 
 const C_SILVER = rgb(.80, .82, .90);
 const C_GLASS  = rgb(.45, .80, .96);
 const C_GLOW   = rgb(.45, 1, .92);
 const C_STEALTH= rgb(.42, .40, .60);
 const C_SLATE  = rgb(.38, .39, .55);
-const C_PANEL  = rgb(.24, .42, .78);     // solar panels
+const C_PANEL  = rgb(.24, .42, .78);
 const C_FLAME  = rgb(1, .55, .2);
 const C_MOON   = rgb(.72, .72, .76);
 const C_LILAC  = rgb(.70, .62, .92);
 
-// the neon lights themselves
-const N_WHITE  = rgb(.88, .96, 1);
-const N_DIM    = rgb(.42, .45, .85);     // what was ink: small dark details
-const N_CYAN   = rgb(.25, .96, 1);
-const N_PINK   = rgb(1, .25, .78);
-const N_YELLOW = rgb(1, .9, .25);
-const N_ORANGE = rgb(1, .55, .2);
-const N_VIOLET = rgb(.62, .42, 1);
-const N_LIME   = rgb(.65, 1, .3);
-// dark fills: shapes hide what is behind them, so line art never turns into a tangle
-const C_HULL   = rgb(.03, .035, .09);
-const C_ROCK   = rgb(.07, .04, .11);
-const C_DECK   = rgb(.04, .06, .13);
-const C_UIBG   = rgb(.04, .04, .11, .94);
-
 MOORED_COLORS[2] = C_LILAC;
 setCanvasClearColor(C_WATER);            // gameInit may already have copied the harbor color
 
-// any Toybox color -> its neon light: grays become white (light) or dim violet (dark), the rest full saturation
-const neonCache = new Map();
-function neon(c)
+const PALETTE = [P_INDIGO, P_DEEP, P_TEAL, P_MUSTARD, P_BRICK, P_CREAM, P_GLASS, P_ORANGE, P_LILAC, P_SLATE, P_SAND, P_DUSK, P_ROCK, P_ROCK2, P_ROCKDK];
+const colorKey = c => Math.round(c.r*255)*65536 + Math.round(c.g*255)*256 + Math.round(c.b*255);
+const posterCache = new Map(PALETTE.map(p => [colorKey(p), p]));
+// any color -> its poster ink (palette inks map to themselves); alpha is kept
+function poster(c)
 {
     if (!c) return C_CLEAR;
-    const key = Math.round(c.r*255)*65536 + Math.round(c.g*255)*256 + Math.round(c.b*255);
-    let n = neonCache.get(key);
-    if (!n)
+    if (c.raw) return c;
+    const key = colorKey(c);
+    let p = posterCache.get(key);
+    if (!p)
     {
         const max = Math.max(c.r, c.g, c.b), min = Math.min(c.r, c.g, c.b), ch = max - min;
-        if (ch < .16) n = max > .55 ? N_WHITE : N_DIM;
+        if (ch < .16) p = max > .85 ? P_CREAM : max > .6 ? P_SAND : max > .4 ? P_DUSK : P_DEEP;
         else
         {
             let h = max == c.r ? ((c.g - c.b)/ch + 6) % 6 : max == c.g ? (c.b - c.r)/ch + 2 : (c.r - c.g)/ch + 4;
             h /= 6;
-            if (h < .04 || h > .93) h = .95;                 // reds glow hot pink
-            const f = m => { const k = (m + h*12) % 12; return .6 - .4*Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
-            n = rgb(f(0), f(8), f(4));
+            p = h < .04 || h >= .9 ? P_BRICK : h < .1 ? P_ORANGE : h < .18 ? P_MUSTARD : h < .53 ? (max > .9 ? P_GLASS : P_TEAL)
+              : h < .68 ? (max > .85 ? P_GLASS : P_SLATE) : P_LILAC;
         }
-        neonCache.set(key, n);
+        posterCache.set(key, p);
     }
-    return c.a < 1 ? n.scale(1, c.a) : n;
+    return c.a < 1 ? p.scale(1, c.a) : p;
 }
-// the white-hot core of a neon tube
-function hot(c) { return new Color(c.r + (1 - c.r)*.45, c.g + (1 - c.g)*.45, c.b + (1 - c.b)*.45, c.a); }
-// panel edges: plain panels glow cyan
-function edgeColor(c) { const n = neon(c); return n.r == N_WHITE.r && n.g == N_WHITE.g ? N_CYAN.scale(1, c.a) : n; }
-// text: dark ink reads as white on the night sky
-function textColor(c) { return !c ? c : .3*c.r + .59*c.g + .11*c.b < .35 ? N_WHITE.scale(1, c.a) : neon(c); }
+function raw(c) { c.raw = true; return c; }
+// text keeps the poster inks too: ink -> deep indigo, cream -> cream, coral -> brick...
+const textColor = poster;
 
-// A glowing path: points relative to o (world or UI units), optional fill, then a soft additive halo and a hot core.
-function neonPath(o, pts, closed, color, w, glow, fill)
+// A flat poster shape: points relative to o. Shaded shapes get a darker crescent on the lower right, as if lit
+// from the upper left (d is how far the light side is pushed).
+function posterShape(o, pts, color, d)
 {
     drawCanvas2D(o, vec2(1), 0, false, ctx =>
     {
-        ctx.beginPath();
-        for (let i = 0; i < pts.length; i++) i ? ctx.lineTo(pts[i].x, pts[i].y) : ctx.moveTo(pts[i].x, pts[i].y);
-        if (closed) ctx.closePath();
-        if (fill) { ctx.fillStyle = fill.toString(); ctx.fill(); }
-        if (!w || !color || color.a <= 0) return;
-        neonStroke(ctx, color, w, glow);
+        const trace = (dx, dy) => { ctx.beginPath(); for (let i = 0; i < pts.length; i++) i ? ctx.lineTo(pts[i].x + dx, pts[i].y + dy) : ctx.moveTo(pts[i].x + dx, pts[i].y + dy); ctx.closePath(); };
+        trace(0, 0);
+        ctx.fillStyle = color.toString();
+        ctx.fill();
+        if (!d) return;
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = `rgba(10,8,40,${.32*color.a})`;
+        ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+        trace(-d, d);
+        ctx.fillStyle = color.toString();
+        ctx.fill();
+        ctx.restore();
     });
 }
-// many separate segments [[a, b], ...] in one path (dashes, edges)
-function neonSegs(o, segs, color, w, glow)
+// round-capped strokes, one path for many segments
+function posterSegs(o, segs, color, w, dash)
 {
     drawCanvas2D(o, vec2(1), 0, false, ctx =>
     {
         ctx.beginPath();
         for (const [a, b] of segs) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
-        neonStroke(ctx, color, w, glow);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        if (dash) ctx.setLineDash(dash);
+        ctx.strokeStyle = color.toString();
+        ctx.lineWidth = w;
+        ctx.stroke();
     });
 }
-function neonStroke(ctx, color, w, glow)
-{
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    if (glow)
-    {
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.strokeStyle = color.scale(1, .16).toString();
-        ctx.lineWidth = w*5;
-        ctx.stroke();
-        ctx.lineWidth = w*2.4;
-        ctx.stroke();
-        ctx.globalCompositeOperation = 'source-over';
-    }
-    ctx.strokeStyle = (glow ? hot(color) : color).toString();
-    ctx.lineWidth = w;
-    ctx.stroke();
-}
-const UNIT_RING = Array.from({ length: 22 }, (_, i) => [Math.cos(i/22*PI*2), Math.sin(i/22*PI*2)]);
+const UNIT_RING = Array.from({ length: 24 }, (_, i) => [Math.cos(i/24*PI*2), Math.sin(i/24*PI*2)]);
 function ringPts(r, ry=r) { return UNIT_RING.map(([u, v]) => vec2(u*r, v*ry)); }
 
-// The neon painter: same calls as the Toybox one (render.js), so every deck drawing works unchanged.
-// Outlined shapes become dark shapes with a glowing rim; small filled ones become lights; big filled ones a faint contour.
+// The poster painter: same calls as the Toybox one (render.js), so every deck drawing works unchanged.
+// Outlined shapes become flat shaded shapes, filled ones flat color, lines round-capped strokes.
 painter = function(b, ox=0, oy=0)
 {
     const k = b.k || 1, c = Math.cos(b.angle), s = Math.sin(b.angle), sx = (b.sx || 1)*k, sy = (b.sy || 1)*k;
@@ -126,22 +124,17 @@ painter = function(b, ox=0, oy=0)
     const L = (x, y) => vec2(x*sx*c - y*sy*s, x*sx*s + y*sy*c);
     const P = (x, y) => L(x, y).add(O);
     const fade = 1 - .72*(b.dive || 0);                     // a cloaked ship fades out
-    const span = (b.type ? b.type.L : 2)*k / WU;            // on-screen size, UI units
-    const glow = span > 2.5, core = Math.min(.07*WU, .06*k);
-    const tint = col => { const n = neon(col); return fade < 1 ? n.scale(1, fade) : n; };
+    const tint = col => { const p = poster(col); return fade < 1 ? p.scale(1, fade) : p; };
     const shape = (rel, size, color, outline) =>
     {
         if (!color || color.a <= 0) return;
-        const n = tint(color);
-        if (outline) neonPath(O, rel, true, n, core, glow, C_HULL.scale(1, fade*color.a));
-        else if (size < .4) neonPath(O, rel, true, n, core*.5, glow, n);
-        else neonPath(O, rel, true, n.scale(1, .5), core*.6, false, null);
+        posterShape(O, rel, tint(color), outline ? Math.min(.1*WU, size*k*.1) : 0);
     };
     const ell = (x, y, w, h) => UNIT_RING.map(([u, v]) => L(x + u*w/2, y + v*h/2));
     return {
         P,
         circle(x, y, d, color, outline) { shape(ell(x, y, d, d), d, color, outline); },
-        ellipse(x, y, w, h, color, outline) { shape(ell(x, y, w, h), Math.max(w, h), color, outline); },
+        ellipse(x, y, w, h, color, outline) { shape(ell(x, y, w, h), Math.min(w, h), color, outline); },
         poly(pts, color, outline)
         {
             let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -151,19 +144,14 @@ painter = function(b, ox=0, oy=0)
                 x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
                 return L(x, y);
             });
-            shape(rel, Math.max(x1 - x0, y1 - y0), color, outline);
+            shape(rel, Math.min(x1 - x0, y1 - y0), color, outline);
         },
         rect(cx, cy, w, h, color, outline) { this.poly([[cx-w/2,cy-h/2],[cx+w/2,cy-h/2],[cx+w/2,cy+h/2],[cx-w/2,cy+h/2]], color, outline); },
-        line(x1, y1, x2, y2, w, color) { if (color) neonPath(O, [L(x1, y1), L(x2, y2)], false, tint(color), Math.min(w*k, core*1.3), glow, null); },
-        text(str, x, y, size, color) { drawText(str, P(x, y), size*k, tint(color), 0, C_INK, 'center', fontDefault, FONT_STYLE); },
-        // a solid glowing shape (thruster flames)
-        flame(pts, color) { const n = tint(color); neonPath(O, pts.map(p => L(p[0], p[1])), true, n, core*.5, glow, n.scale(1, .55)); },
+        line(x1, y1, x2, y2, w, color) { if (color) posterSegs(O, [[L(x1, y1), L(x2, y2)]], tint(color), w*k); },
+        text(str, x, y, size, color) { drawText(str, P(x, y), size*k, tint(color), 0, C_INK, 'center'); },
+        flame(pts, color) { posterShape(O, pts.map(p => L(p[0], p[1])), tint(color), 0); },
     };
 };
-
-// no drop shadows at night
-drawBoatShadow = function() {};
-drawDockShadow = function() {};
 
 // ---------------------------------------------------------------------------
 // names, text, saves
@@ -222,27 +210,43 @@ SOUNDS.bonk  = new Sound([1,.05,260,0,.01,.3,0,1,0,0,0,0,0,0,63,0,0,.5,.08]);
 SOUNDS.quack = new Sound([1,.1,500,.02,.08,.14,0,1,12,-1,0,0,0,0,0,0,0,.8]);
 
 // ---------------------------------------------------------------------------
-// the sky: a faint grid and stars, both in octaves 10x apart (like the harbor's ripples), so the zoom always shows
+// the sky: cream and mustard stars with the odd atomic starburst, in octaves 10x apart (like the harbor's ripples)
+// so the zoom always shows, then film grain over the whole screen
 
 const STARS = [];
 {
     let seed = 7;
     const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
-    const tints = [N_WHITE, N_WHITE, N_CYAN, N_PINK, N_VIOLET];
-    for (let i = 0; i < 50; i++) STARS.push({ x:rnd()*40, y:rnd()*22, r:.04 + rnd()*rnd()*.12, ph:rnd()*9, c:tints[i % tints.length], big:rnd() < .08 });
+    for (let i = 0; i < 46; i++) STARS.push({ x:rnd()*40, y:rnd()*22, r:.05 + rnd()*rnd()*.13, ph:rnd()*9, gold:rnd() < .2, burst:rnd() < .09 });
+}
+
+// film grain: a small speckle tile, filled over the screen as a pattern (one call, no per-frame gradients)
+let grainPattern;
+function drawGrain(alpha)
+{
+    if (!grainPattern)
+    {
+        const c = document.createElement('canvas');
+        c.width = c.height = 160;
+        const g = c.getContext('2d');
+        for (let i = 0; i < 1500; i++)
+        {
+            g.fillStyle = i % 2 ? 'rgba(255,240,210,.09)' : 'rgba(0,0,20,.14)';
+            g.fillRect(Math.random()*160, Math.random()*160, 1 + (i % 3 == 0), 1);
+        }
+        grainPattern = mainContext.createPattern(c, 'repeat');
+    }
+    mainContext.save();
+    mainContext.setTransform(1, 0, 0, 1, 0, 0);
+    mainContext.globalAlpha = alpha;
+    mainContext.fillStyle = grainPattern;
+    mainContext.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+    mainContext.restore();
 }
 
 drawWater = function()
 {
-    const v = VIEW_RECT, cx = (v.x0 + v.x1)/2, cy = (v.y0 + v.y1)/2;
-    for (let s = .01; s < 1e7; s *= 10)
-    {
-        const cell = 4*s, g = cell / WU;
-        if (g < 1 || g > 40) continue;
-        const col = N_VIOLET.scale(1, .13 * clamp((g - 1)/2, 0, 1) * clamp((40 - g)/25, 0, 1)), lw = .035*WU;
-        for (let x = Math.floor(v.x0/cell)*cell; x < v.x1; x += cell) drawRect(vec2(x, cy), vec2(lw, v.y1 - v.y0), col);
-        for (let y = Math.floor(v.y0/cell)*cell; y < v.y1; y += cell) drawRect(vec2(cx, y), vec2(v.x1 - v.x0, lw), col);
-    }
+    const v = VIEW_RECT;
     for (let s = .01; s < 1e7; s *= 10)
     {
         const g = .7*s / WU;
@@ -255,30 +259,31 @@ drawWater = function()
         {
             const x = tx*tw + p.x*s, y = ty*th + p.y*s;
             if (x < v.x0 - s || x > v.x1 + s || y < v.y0 - s || y > v.y1 + s) continue;
-            const a = fade*(.5 + .5*Math.sin(time*2 + p.ph)), c = p.c.scale(1, a);
-            if (p.big)
+            const a = fade*(.65 + .35*Math.sin(time*1.5 + p.ph)), col = (p.gold ? P_MUSTARD : P_CREAM).scale(1, a);
+            if (p.burst)
             {
-                const r = .3*s;
-                drawRect(vec2(x, y), vec2(r*2, .04*s), c);
-                drawRect(vec2(x, y), vec2(.04*s, r*2), c);
-                drawCircle(vec2(x, y), p.r*s*5, p.c.scale(1, a*.15));
+                // an atomic starburst: eight rays, long and short
+                const segs = [];
+                for (let i = 0; i < 8; i++) { const an = i/8*PI*2 + p.ph, r = (i % 2 ? .3 : .6)*s; segs.push([vec2(Math.cos(an)*.12*s, Math.sin(an)*.12*s), vec2(Math.cos(an)*r, Math.sin(an)*r)]); }
+                posterSegs(vec2(x, y), segs, P_CREAM.scale(1, a*.8), .05*s);
             }
-            drawCircle(vec2(x, y), p.r*s, c);
+            drawCircle(vec2(x, y), p.r*s, col);
         }
     }
+    drawGrain(1);
 };
 
-// currents: solar-wind streams, glowing streaks drifting with the flow
+// currents: solar-wind streams, soft mustard bands with cream streaks drifting along
 drawCurrents = function()
 {
     for (const c of currents)
     {
         const w = c.x1 - c.x0, h = c.y1 - c.y0, flow = vec2(c.dx, c.dy), spd = flow.length();
-        drawRect(vec2(c.x0 + w/2, c.y0 + h/2), vec2(w, h), N_VIOLET.scale(1, .07));
+        drawRect(vec2(c.x0 + w/2, c.y0 + h/2), vec2(w, h), P_MUSTARD.scale(1, .09));
         if (spd < 1e-6) continue;
         const dir = flow.scale(1/spd), across = Math.abs(dir.x) >= Math.abs(dir.y);
         const len = across ? w : h, span = across ? h : w, sgn = across ? Math.sign(dir.x) : Math.sign(dir.y);
-        const segs = [], o = vec2(c.x0, c.y0);
+        const segs = [];
         for (let v = 1; v < span; v += 1.6)
         for (let k = 0; k < len/4; k++)
         {
@@ -286,30 +291,21 @@ drawCurrents = function()
             const at = q => across ? vec2(q, v) : vec2(v, q);
             segs.push([at(sgn > 0 ? u - tail : len - u + tail), at(sgn > 0 ? u : len - u)]);
         }
-        if (segs.length) neonSegs(o, segs, N_CYAN.scale(1, .6), Math.min(.06*WU, .08), WU < 1);
+        if (segs.length) posterSegs(vec2(c.x0, c.y0), segs, P_CREAM.scale(1, .4), .14);
     }
 };
 
-// wakes: thruster exhaust puffs, yellow-hot fading to pink, added light
+// wakes: round exhaust puffs, warm then smoky
 drawWakes = function()
 {
-    if (!wakes.length) return;
-    const o = wakes[wakes.length - 1].pos;
-    drawCanvas2D(o, vec2(1), 0, false, ctx =>
+    for (const w of wakes)
     {
-        ctx.globalCompositeOperation = 'lighter';
-        for (const w of wakes)
-        {
-            const k = w.t / 1.2, col = k < .3 ? N_YELLOW.lerp(N_ORANGE, k/.3) : N_ORANGE.lerp(N_PINK, Math.min(1, (k - .3)/.5));
-            ctx.fillStyle = col.scale(1, .3*(1 - k)).toString();
-            ctx.beginPath();
-            ctx.arc(w.pos.x - o.x, w.pos.y - o.y, w.size*(.3 + k*.9), 0, PI*2);
-            ctx.fill();
-        }
-    });
+        const k = w.t / 1.2, col = k < .3 ? P_MUSTARD.lerp(P_ORANGE, k/.3) : P_SAND.lerp(P_DUSK, Math.min(1, (k - .3)/.6));
+        drawCircle(w.pos, w.size*(.5 + k*1.4), col.scale(1, .55*(1 - k)));
+    }
 };
 
-// the hull-side trails: faint cyan ion trails
+// the hull-side trails: faint cream contrails
 drawFoam = function()
 {
     for (const trail of foams)
@@ -319,12 +315,16 @@ drawFoam = function()
         for (const p of trail)
         {
             const k = p.t / FOAM_LIFE, hw = p.w*(1 + k*1.5)/2;
-            const e = { l:p.pos.add(p.n.scale(hw)), r:p.pos.subtract(p.n.scale(hw)), a:p.a*.35*(1 - k) };
-            if (prev) drawPoly([prev.l, e.l, e.r, prev.r], N_CYAN.scale(1, (prev.a + e.a)/2));
+            const e = { l:p.pos.add(p.n.scale(hw)), r:p.pos.subtract(p.n.scale(hw)), a:p.a*.3*(1 - k) };
+            if (prev) drawPoly([prev.l, e.l, e.r, prev.r], P_CREAM.scale(1, (prev.a + e.a)/2));
             prev = e;
         }
     }
 };
+
+// a lighter grain over the finished world too, so ships look printed
+const harborDrawDrops = drawDrops;
+drawDrops = function() { harborDrawDrops(); drawGrain(.55); };
 
 // ---------------------------------------------------------------------------
 // ships
@@ -355,40 +355,41 @@ function drawJets(b, d)
         for (const [x, y, s] of jets)
         {
             const flick = 1.5 + .5*Math.sin(time*43 + b.id*3 + y*9), len = s*flick*(.5 + thr);
-            d.flame([[x + .05, y + s/2], [x - len, y], [x + .05, y - s/2]], N_PINK);
-            d.flame([[x + .05, y + s/4], [x - len*.55, y], [x + .05, y - s/4]], N_YELLOW);
+            // a rounded teardrop of flame: brick outside, mustard inside
+            const drop = (w, l) => [[x + .05, y + w/2], [x - l*.45, y + w*.42], [x - l, y], [x - l*.45, y - w*.42], [x + .05, y - w/2]];
+            d.flame(drop(s, len), P_BRICK);
+            d.flame(drop(s*.55, len*.6), P_MUSTARD);
         }
     }
     else
     {
         // reversing: retro thrusters puff from both sides of the nose
-        const t = b.type, x = t.L/2*.5, y = t.W/2*.95, s = t.W*.2*(1 + .25*Math.sin(time*40 + b.id));
-        for (const m of [1, -1]) d.circle(x, m*(y + s*.3), Math.min(s, .38), N_CYAN);
+        const t = b.type, x = t.L/2*.5, y = t.W/2*.95, s = t.W*.22*(1 + .25*Math.sin(time*40 + b.id));
+        for (const m of [1, -1]) d.circle(x, m*(y + s*.3), s, P_CREAM.scale(1, .85));
     }
 }
 
 drawBoat = function(b)
 {
     const t = b.type, len = screenLen(b);
-    // too small to read: a glowing dot in the ship's color
+    // too small to read: a dot in the ship's color
     if (len < .3)
     {
-        const n = neon(b.color), r = Math.max(len*.6, .16)*WU;
-        drawCircle(b.pos, r*2.6, n.scale(1, .2));
-        drawCircle(b.pos, r, hot(n));
+        drawCircle(b.pos, Math.max(len*.6, .16)*WU, poster(b.color));
         return;
     }
-    const d = painter(b);
+    const d = painter(b), hull = poster(b.color);
     if (len >= .8) drawJets(b, d);
-    d.poly(t.hullPts, b.color, true);
-    d.poly(t.deckPts, t.deck || b.color);
+    d.poly(t.hullPts, hull, true);
+    d.poly(t.deckPts, raw(t.deck ? poster(t.deck) : hull.lerp(hull == P_CREAM ? P_SAND : P_CREAM, .22)));
     if (len < .8) return;
     (SHIP_DECO[t.key] || BOAT_DECO[t.key])(d, t, b);
-    // cloaked: a shimmering cyan rim over the faded ship
+    // cloaked: a dotted cream rim over the faded ship
     if (t.sub && b.dive > .02)
     {
-        const rel = t.hullPts.map(p => d.P(p.x, p.y).subtract(b.pos)), shimmer = .45 + .35*Math.sin(time*9 + b.id);
-        neonPath(b.pos, rel, true, N_CYAN.scale(1, shimmer*b.dive), Math.min(.07*WU, .06*(b.k || 1)), true, null);
+        const rel = t.hullPts.map(p => d.P(p.x, p.y).subtract(b.pos));
+        const segs = rel.map((p, i) => [p, rel[(i + 1) % rel.length]]), w = Math.min(.07*WU, .06*(b.k || 1));
+        posterSegs(b.pos, segs, P_CREAM.scale(1, (.5 + .3*Math.sin(time*6 + b.id))*b.dive), w, [w*.1, w*2.2]);
     }
 };
 
@@ -397,9 +398,9 @@ drawPeriscope = function(b)
 {
     if (b.dive < .5 || !inView(b.pos, b.radius*1.5)) return;
     const p = painter({ ...b, dive: 0 }).P(b.type.scope ?? 1.45, 0), k = b.k || 1;
-    const pulse = (time*1.5 + b.id*.3) % 1;
-    neonPath(p, ringPts((.25 + pulse*.8)*k), true, N_CYAN.scale(1, 1 - pulse), Math.min(.06*WU, .06*k), true, null);
-    drawCircle(p, .3*k, hot(N_CYAN));
+    const pulse = (time*1.5 + b.id*.3) % 1, ring = ringPts((.25 + pulse*.8)*k);
+    posterSegs(p, ring.map((q, i) => [q, ring[(i + 1) % ring.length]]), P_MUSTARD.scale(1, 1 - pulse), Math.min(.07*WU, .07*k));
+    drawCircle(p, .34*k, P_MUSTARD);
 };
 
 // the saucer is round (drawing only: its collision circles stay those of the pedalo it replaces)
@@ -410,8 +411,8 @@ if (BOATS.swan)
     t.deckPts = t.hullPts.map(p => vec2(p.x*.74, p.y*.68));
 }
 
-// highlights belong to the flat style; neon tubes are their own highlight
-const glint = () => {};
+// a soft highlight on glass, the way a poster painter would add one
+const glint = (d, x, y, w, h) => d.ellipse(x, y, w, h, P_CREAM.scale(1, .55));
 
 // Deck drawings, in the same painter as BOAT_DECO (x = bow, y = port, toy units)
 const SHIP_DECO =
@@ -588,108 +589,137 @@ const SHIP_DECO =
 // ducks -> tiny astronauts: mom leads, the kids follow on a tether, a hit makes them see stars
 drawDuck = function(b)
 {
-    const d = painter(b), k = b.duckSize;
-    if (b.leader) neonPath(b.pos, [vec2(), b.leader.pos.subtract(b.pos)], false, N_WHITE.scale(1, .45), Math.min(.04*WU, .05*k), false, null);
-    d.rect(-.38*k, 0, .34*k, .62*k, C_SILVER, true);                   // backpack
-    for (const s of [1, -1]) d.circle(.1*k, s*.38*k, .3*k, C_CREAM, true);   // arms
-    d.ellipse(-.05*k, 0, .82*k, .7*k, C_CREAM, true);                    // suit
-    d.circle(.22*k, 0, .6*k, C_CREAM, true);                             // helmet
-    d.ellipse(.36*k, 0, .26*k, .42*k, C_SUNNY, true);                    // gold visor
+    const d = painter(b), k = b.duckSize, o = shadowOff(.6*k);
+    if (b.leader) posterSegs(b.pos, [[vec2(), b.leader.pos.subtract(b.pos)]], P_CREAM.scale(1, .7), Math.min(.05*WU, .06*k), [.01, .14*k]);
+    painter(b, o.x, o.y).ellipse(0, 0, 1.1*k, .9*k, C_SHADOW);
+    d.rect(-.38*k, 0, .34*k, .62*k, P_TEAL, true);                      // backpack
+    for (const s of [1, -1]) d.circle(.1*k, s*.38*k, .3*k, P_CREAM, true);   // arms
+    d.ellipse(-.05*k, 0, .82*k, .7*k, P_CREAM, true);                    // suit
+    d.circle(.22*k, 0, .6*k, P_CREAM, true);                             // helmet
+    d.ellipse(.36*k, 0, .26*k, .42*k, P_MUSTARD, true);                  // gold visor
     if (b.stunT > 0)
     {
         for (let i = 0; i < 3; i++)
         {
             const a = time*7 + i*PI*2/3;
-            neonPath(d.P(.2*k + Math.cos(a)*.5*k, Math.sin(a)*.5*k), starPoints(vec2(), .16*k), true, N_YELLOW, .03*k, false, N_YELLOW.scale(1, .6));
+            posterShape(d.P(.2*k + Math.cos(a)*.5*k, Math.sin(a)*.5*k), sparkle(.18*k), P_MUSTARD, 0);
         }
     }
+    else glint(d, .4*k, .1*k, .08*k, .14*k);
 };
+
+// a four-pointed poster sparkle, points relative to its center
+function sparkle(r) { return Array.from({ length: 8 }, (_, i) => { const a = i/8*PI*2, rr = i % 2 ? r*.28 : r; return vec2(Math.cos(a)*rr, Math.sin(a)*rr); }); }
 
 // buoys -> little satellites with solar panels and a blinking light
 drawBuoy = function(b)
 {
     const r = .9*(1 + Math.sin(time*3 + b.id)*.03)*b.k;
-    const d = painter({ pos:b.pos, angle:(b.angle || 0) + time*.25 + b.id, k:r });
+    const s = { pos:b.pos, angle:(b.angle || 0) + time*.25 + b.id, k:r }, d = painter(s), o = shadowOff(r);
+    painter(s, o.x, o.y).rect(0, 0, .5, 1.9, C_SHADOW);
     for (const m of [1, -1])
     {
-        d.line(0, m*.25, 0, m*.4, .06, C_INK);                          // boom
-        d.rect(0, m*.67, .42, .55, C_PANEL, true);                       // panel
-        d.line(0, m*.4, 0, m*.95, .025, C_PANEL);
+        d.line(0, m*.25, 0, m*.4, .07, P_CREAM);                        // boom
+        d.rect(0, m*.67, .42, .55, P_TEAL, true);                        // panel
+        d.line(0, m*.42, 0, m*.93, .03, P_DEEP);
     }
-    d.rect(0, 0, .5, .5, C_SUNNY, true);                                 // gold foil body
-    d.circle(.12, .08, .26, C_CREAM, true);                              // dish
-    if (Math.sin(time*5 + b.id) > .3) d.circle(-.14, -.12, .12, C_CORAL);   // blinker
+    d.rect(0, 0, .5, .5, P_MUSTARD, true);                               // gold foil body
+    d.circle(.12, .08, .26, P_CREAM, true);                              // dish
+    if (Math.sin(time*5 + b.id) > .3) d.circle(-.14, -.12, .12, P_BRICK);   // blinker
 };
 
 // logs -> space junk: a snapped solar panel on a bent strut
 drawLog = function(b)
 {
-    const d = painter(b);
-    d.rect(-.4, 0, 1.4, .55, C_PANEL, true);
-    for (const x of [-.85, -.4, .05]) d.line(x, .25, x, -.25, .03, C_PANEL);
-    d.line(.3, 0, .75, .12, .1, C_SILVER);                               // bent strut
-    d.poly([[.7, -.05], [1.2, .2], [1.08, .45], [.62, .22]], C_PANEL, true);   // broken piece
-    d.circle(.3, 0, .16, C_SILVER, true);
+    const d = painter(b), o = shadowOff(.55);
+    painter(b, o.x, o.y).poly(hullRoundRect(1.2, .275, .1, .1), C_SHADOW);
+    d.rect(-.4, 0, 1.4, .55, P_TEAL, true);
+    for (const x of [-.85, -.4, .05]) d.line(x, .25, x, -.25, .03, P_DEEP);
+    d.line(.3, 0, .75, .12, .1, P_SAND);                                 // bent strut
+    d.poly([[.7, -.05], [1.2, .2], [1.08, .45], [.62, .22]], P_TEAL, true);   // broken piece
+    d.circle(.3, 0, .16, P_SAND, true);
 };
 
 // pilings -> mooring posts with a blinking light
 drawPost = function(p)
 {
     const c = vec2(p.x, p.y);
-    neonPath(c, ringPts(p.r), true, N_CYAN, Math.min(.05*WU, p.r*.25), p.r/WU > .15, C_DECK);
-    if (Math.sin(time*3 + p.x) > 0) drawCircle(c, p.r*.7, hot(N_CYAN));
+    drawCircle(c.add(shadowOff(p.r*2)), p.r*2, C_SHADOW);
+    drawCircle(c, p.r*2, P_BRICK);
+    drawCircle(c, p.r*.8, Math.sin(time*3 + p.x) > 0 ? P_MUSTARD : P_CREAM);
 };
 
-// the real edges of a (possibly kilometers long) rect, cut to the view, as glowing lines
-function neonRectEdges(r, color, w, glow)
-{
-    const c = clipRect(r, w*6);
-    if (!c) return;
-    const o = vec2(c.x0, c.y0), segs = [], S = (x0, y0, x1, y1) => segs.push([vec2(x0 - o.x, y0 - o.y), vec2(x1 - o.x, y1 - o.y)]);
-    if (r.y0 >= c.y0) S(c.x0, r.y0, c.x1, r.y0);
-    if (r.y1 <= c.y1) S(c.x0, r.y1, c.x1, r.y1);
-    if (r.x0 >= c.x0) S(r.x0, c.y0, r.x0, c.y1);
-    if (r.x1 <= c.x1) S(r.x1, c.y0, r.x1, c.y1);
-    if (segs.length) neonSegs(o, segs, color, w, glow);
-}
-
-// docks -> station gantries outlined in cyan; `under` docks are lime arches a cloaked ship slips beneath; quays violet
+// docks -> mustard gantries with brick hazard stripes; `under` docks are teal arches with cream rails; quays sand plating
 drawDock = function(r)
 {
-    const w = r.x1 - r.x0, h = r.y1 - r.y0, short = Math.min(w, h);
-    const c = fillRect(r, C_DECK);
+    const w = r.x1 - r.x0, h = r.y1 - r.y0, short = Math.min(w, h), along = w > h;
+    const c = fillRect(r, r.under ? P_TEAL : r.quay ? P_SAND : P_MUSTARD);
     if (!c) return;
-    const col = r.under ? N_LIME : r.quay ? N_VIOLET : N_CYAN;
-    const lw = Math.min(.04*WU, short*.05), bay = r.quay ? short*2 : short;
-    if (bay / WU > .3)
+    const bay = short*1.1;
+    if (bay / WU > .25)
     {
-        // a zigzag truss along the long side (panel seams on quays), only while it reads on screen
-        const inset = short*.2, along = w > h;
-        const a0 = along ? r.x0 : r.y0, c0 = along ? c.x0 : c.y0, c1 = along ? c.x1 : c.y1;
-        const lo = (along ? r.y0 : r.x0) + inset, hi = (along ? r.y1 : r.x1) - inset;
-        const pt = (u, v) => along ? vec2(u, v) : vec2(v, u), dim = col.scale(1, .35);
-        let n = 0;
-        for (let u = a0 + bay*Math.floor((c0 - a0)/bay); u < c1 && n < 400; u += bay, n++)
+        const o = vec2(c.x0, c.y0), cw = c.x1 - c.x0, ch = c.y1 - c.y0;
+        drawCanvas2D(o, vec2(1), 0, false, ctx =>
         {
-            if (r.quay) { drawLine(pt(u, lo - inset), pt(u, hi + inset), lw, dim); continue; }
-            drawLine(pt(u, lo), pt(u + bay/2, hi), lw, dim);
-            drawLine(pt(u + bay/2, hi), pt(u + bay, lo), lw, dim);
-        }
-        if (!r.quay) { drawLine(pt(c0, lo), pt(c1, lo), lw, dim); drawLine(pt(c0, hi), pt(c1, hi), lw, dim); }
+            ctx.beginPath();
+            ctx.rect(0, 0, cw, ch);
+            ctx.clip();
+            if (r.quay)
+            {
+                // plating seams across the quay
+                ctx.strokeStyle = 'rgba(20,18,58,.2)';
+                ctx.lineWidth = Math.min(.05*WU, short*.05);
+                ctx.beginPath();
+                const a0 = along ? r.x0 - c.x0 : r.y0 - c.y0, len = along ? cw : ch, step = short*2;
+                for (let u = a0 + step*Math.ceil(-a0/step); u < len; u += step) along ? (ctx.moveTo(u, 0), ctx.lineTo(u, ch)) : (ctx.moveTo(0, u), ctx.lineTo(cw, u));
+                ctx.stroke();
+                return;
+            }
+            ctx.fillStyle = (r.under ? P_CREAM : P_BRICK).toString();
+            if (r.under)
+            {
+                // two cream rails along the arch
+                const inset = short*.2, rw = short*.12;
+                if (along) { ctx.fillRect(0, r.y0 - c.y0 + inset, cw, rw); ctx.fillRect(0, r.y1 - c.y0 - inset - rw, cw, rw); }
+                else       { ctx.fillRect(r.x0 - c.x0 + inset, 0, rw, ch); ctx.fillRect(r.x1 - c.x0 - inset - rw, 0, rw, ch); }
+                return;
+            }
+            // diagonal hazard stripes
+            const a0 = along ? r.x0 - c.x0 : r.y0 - c.y0, len = along ? cw : ch, n0 = Math.floor(-a0/bay) - 1;
+            for (let n = n0, i = 0; a0 + n*bay < len + bay && i < 400; n++, i++)
+            {
+                const u = a0 + n*bay, sw = bay*.45;
+                ctx.beginPath();
+                if (along) { ctx.moveTo(u, 0); ctx.lineTo(u + sw, 0); ctx.lineTo(u + sw + short*.5, ch); ctx.lineTo(u + short*.5, ch); }
+                else       { ctx.moveTo(0, u); ctx.lineTo(0, u + sw); ctx.lineTo(cw, u + sw + short*.5); ctx.lineTo(cw, u + short*.5); }
+                ctx.fill();
+            }
+        });
     }
-    neonRectEdges(r, col, Math.min(.06*WU, short*.1), short/WU > .2);
 };
 
-// rock: glowing pink coastlines (drawn first, then the fills cover their inner half and every seam), faint contour
-// lines, and crater rings in octaves 10x apart
+// rock: one shape made of every sand rect and landmass, with a hard shadow, a dark side and a lit side (so overlapping
+// pieces show no seams), lighter interiors, and craters in octaves 10x apart
 drawLands = function()
 {
-    const shown = lands.filter(m => inView(m.pos, m.r)), w = .07*WU;
-    for (const r of rects) if (r.land) neonRectEdges(r, N_PINK, w*2, true);
-    for (const m of shown) neonPath(m.pos, m.pts.map(p => p.subtract(m.pos)), true, N_PINK, w*2, true, null);
-    for (const r of rects) if (r.land) fillRect(r, C_ROCK);
-    for (const m of shown) drawPoly(m.pts, C_ROCK);
-    for (const m of shown) if (m.grass) drawPoly(m.grass, C_CLEAR, w*.5, N_PINK.scale(1, .3));
+    const shown = lands.filter(m => inView(m.pos, m.r)), o = cam.pos, d = .14*WU, shapes = [];
+    const add = pts =>
+    {
+        let area = 0;
+        for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a.x*b.y - b.x*a.y; }
+        shapes.push(area < 0 ? pts.slice().reverse() : pts);          // same winding everywhere, so they merge
+    };
+    for (const r of rects) if (r.land) { const c = clipRect(r, d*3); if (c) add([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)].map(p => p.subtract(o))); }
+    for (const m of shown) add(m.pts.map(p => p.subtract(o)));
+    if (!shapes.length) return;
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
+    {
+        const trace = (dx, dy) => { ctx.beginPath(); for (const s of shapes) { s.forEach((p, i) => i ? ctx.lineTo(p.x + dx, p.y + dy) : ctx.moveTo(p.x + dx, p.y + dy)); ctx.closePath(); } };
+        trace(d, -d); ctx.fillStyle = C_SHADOW.toString(); ctx.fill();
+        trace(0, 0); ctx.fillStyle = P_ROCKDK.toString(); ctx.fill();
+        ctx.save(); ctx.clip(); trace(-d*.8, d*.8); ctx.fillStyle = P_ROCK.toString(); ctx.fill(); ctx.restore();
+    });
+    for (const m of shown) if (m.grass) drawPoly(m.grass, P_ROCK2);
     drawCraters();
 };
 
@@ -715,7 +745,8 @@ function drawCraters()
     {
         const g = s / WU;
         if (g < 1.2 || g > 14) continue;
-        const col = N_PINK.scale(1, .4 * clamp((g - 1.2)/1.2, 0, 1) * clamp((14 - g)/5, 0, 1));
+        const a = clamp((g - 1.2)/1.2, 0, 1) * clamp((14 - g)/5, 0, 1);
+        const pit = P_ROCKDK.scale(1, .75*a), lit = P_CREAM.scale(1, .16*a);
         for (const sh of shapes)
         {
             const x0 = Math.max(sh.x0, v.x0), y0 = Math.max(sh.y0, v.y0), x1 = Math.min(sh.x1, v.x1), y1 = Math.min(sh.y1, v.y1);
@@ -729,50 +760,48 @@ function drawCraters()
                 if (x - rr < sh.x0 || x + rr > sh.x1 || y - rr < sh.y0 || y + rr > sh.y1) continue;
                 if (sh.pts && !inPoly(sh.pts, x, y)) continue;
                 if (--budget < 0) return;
-                drawCircle(vec2(x, y), rr*2, C_CLEAR, Math.min(.05*WU, rr*.2), col);
+                drawEllipse(vec2(x, y), vec2(rr*2, rr*1.55), pit);
+                drawEllipse(vec2(x - rr*.22, y + rr*.2), vec2(rr*1.1, rr*.7), lit);
             }
         }
     }
 }
 
-// parking burst: neon stars and tiny ringed planets fly out instead of fish and crabs
+// parking burst: poster sparkles and tiny ringed planets fly out instead of fish and crabs
 drawFish = function(pos, s, ang, color)
 {
     const c = Math.cos(ang*.5), n = Math.sin(ang*.5);
-    const pts = starPoints(vec2(), s*1.1).map(p => vec2(p.x*c - p.y*n, p.x*n + p.y*c));
-    neonPath(pos, pts, true, neon(color), s*.18, false, neon(color).scale(1, .3));
+    posterShape(pos, sparkle(s*1.3).map(p => vec2(p.x*c - p.y*n, p.x*n + p.y*c)), poster(color), 0);
 };
 drawCrab = function(pos, s, rot, t, color)
 {
-    const n = neon(color);
-    neonPath(pos, ringPts(.75*s), true, n, s*.16, false, C_HULL);
-    const cs = Math.cos(rot), sn = Math.sin(rot);
-    neonPath(pos, ringPts(1.3*s, .35*s).map(p => vec2(p.x*cs - p.y*sn, p.x*sn + p.y*cs)), true, N_WHITE, s*.12, false, null);
+    posterShape(pos, ringPts(.75*s), poster(color), s*.15);
+    const cs = Math.cos(rot), sn = Math.sin(rot), ring = ringPts(1.35*s, .32*s).map(p => vec2(p.x*cs - p.y*sn, p.x*sn + p.y*cs));
+    posterSegs(pos, ring.map((p, i) => [p, ring[(i + 1) % ring.length]]), P_CREAM, s*.16);
 };
 
-// parked: a space anchor on a glowing tether
+// parked: a space anchor on a cream tether
 drawAnchorRope = function()
 {
     drawRestRing();
     if (!anchor) return;
     const drop = Math.min(1, anchor.t*4), k = player.k, bow = bowPoint();
-    drawCircle(anchor.pos, 1.2*drop*k, N_CYAN.scale(1, .15));
-    drawAnchorGlyph(anchor.pos, .55*k, N_CYAN);
-    neonPath(bow, [vec2(), anchor.pos.subtract(bow)], false, N_CYAN, Math.min(.06*WU, .06*k), true, null);
+    drawCircle(anchor.pos, 1.2*drop*k, P_CREAM.scale(1, .18));
+    drawAnchorGlyph(anchor.pos, .55*k, P_CREAM);
+    posterSegs(bow, [[vec2(), anchor.pos.subtract(bow)]], P_CREAM, Math.min(.07*WU, .07*k));
 };
 
-// the ship you drive in a crowded harbor: a white neon rim round its hull (under the ship, so only the outer glow shows;
-// over a cloaked ship, just a thin line)
+// the ship you drive in a crowded harbor: a cream rim round its hull (under the ship; over a cloaked one, just a line)
 drawJamSelection = function(onTop = false)
 {
     const b = player;
     if (!b) return;
-    const P = painter({ ...b, dive: 0 }).P, rel = b.type.hullPts.map(p => P(p.x, p.y).subtract(b.pos));
-    if (onTop) neonPath(b.pos, rel, true, N_WHITE.scale(1, .5), .06*cam.wu, false, null);
-    else neonPath(b.pos, rel, true, N_WHITE, .2*cam.wu, true, null);
+    const P = painter({ ...b, dive: 0 }).P, pts = b.type.hullPts.map(p => P(p.x, p.y));
+    if (onTop) drawPoly(pts, C_CLEAR, .12*cam.wu, P_CREAM.scale(1, .7));
+    else drawPoly(pts, P_CREAM, .34*cam.wu, P_CREAM);
 };
 
-// slips: glowing dashes
+// slips: round cream dashes
 drawDashedRect = function(c, w, h, color, width, dash=.5)
 {
     const pts = [vec2(-w/2, -h/2), vec2(w/2, -h/2), vec2(w/2, h/2), vec2(-w/2, h/2)], segs = [];
@@ -781,41 +810,54 @@ drawDashedRect = function(c, w, h, color, width, dash=.5)
         const a = pts[i], b = pts[(i + 1) % 4], n = clamp(Math.round(a.distance(b)/dash), 1, 120);
         for (let k = 0; k < n; k += 2) segs.push([a.lerp(b, k/n), a.lerp(b, Math.min(1, (k + 1)/n))]);
     }
-    neonSegs(c, segs, neon(color), width*.5, true);
+    posterSegs(c, segs, poster(color), width*.85);
 };
 
 // ---------------------------------------------------------------------------
-// UI: dark glass panels with glowing rims
+// UI: cream cards with hard indigo shadows, Righteous type
 
+const UI_SHADOW = vec2(.16, -.22);
 drawPanel = function(c, w, h, color, r=.5, shadow=true)
 {
-    neonPath(c, hullRoundRect(w/2, h/2, r, r), true, edgeColor(color), .07, true, C_UIBG.scale(1, color.a));
+    const pts = hullRoundRect(w/2, h/2, r, r);
+    if (shadow) posterShape(c.add(UI_SHADOW), pts, P_DEEP.scale(1, .6*color.a), 0);
+    posterShape(c, pts, poster(color), 0);
+};
+
+// buttons: the main one brick, the rest teal, both with cream type, so they stand out on cream cards and on the sky
+drawButton = function(b)
+{
+    const hover = hoverId == b.id, lift = hover ? .12 : 0;
+    if (b.card !== undefined) return drawLevelCard(b, hover);
+    const c = vec2(b.x, b.y + lift);
+    drawPanel(c, b.w, b.h, b.big ? P_BRICK : P_TEAL, Math.min(.6, b.h*.35));
+    txt(b.label, c.x, c.y - (b.small ? .02 : .05), b.big ? 1.25 : b.small ? .6 : .85, P_CREAM);
 };
 
 drawStar = function(c, r, filled)
 {
     const pts = starPoints(vec2(), r);
-    if (filled) neonPath(c, pts, true, N_YELLOW, .08, true, N_YELLOW.scale(1, .85));
-    else neonPath(c, pts, true, N_DIM, .06, false, C_UIBG);
+    if (filled) { posterShape(c.add(vec2(.1, -.14)), pts, P_DEEP.scale(1, .45), 0); posterShape(c, pts, P_MUSTARD, r*.12); }
+    else posterShape(c, pts, P_DEEP.scale(1, .16), 0);
 };
 
 drawHud = function()
 {
     const L = level, wide = viewHalfUi().x*2;
-    drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), C_UIBG);
-    neonPath(vec2(20 - wide/2, PLAY_TOP), [vec2(), vec2(wide, 0)], false, N_CYAN, .05, true, null);
-    txt(`${levelNumber()}. ${L.name}`, .8, 21.75, .7, C_INK, 'left');
+    drawRect(vec2(20, (PLAY_TOP + UI_SIZE.y)/2), vec2(wide, UI_SIZE.y - PLAY_TOP), P_DEEP);
+    drawRect(vec2(20, PLAY_TOP - .05), vec2(wide, .1), P_MUSTARD);
+    txt(`${levelNumber()}. ${L.name}`, .8, 21.75, .7, P_MUSTARD, 'left');
     if (L.jam) return drawJamHud();
     let boat = player.type.name;
     boat += ` - ${fmtLen(boatSize(player))}`;
     if (fleet.length > 1) boat += `   ${boatIndex + 1}/${fleet.length}`;
-    txt(boat, 10, 21.75, .55, C_TEAL, 'left');
-    if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, C_CORAL);
+    txt(boat, 10, 21.75, .55, P_CREAM, 'left');
+    if (damages) txt(`Damages: ${fmtMoney(damages)}`, 26, 21.75, .55, P_ORANGE);
     drawAirGauge();
     drawScaleBar();
 };
 
-// speech bubbles over bumped ships, as little neon signs
+// speech bubbles over bumped ships: cream cards with a hard shadow
 drawSwearing = function()
 {
     for (const b of bodies)
@@ -830,9 +872,9 @@ drawSwearing = function()
             const x = n == 1 ? 0 : (i/(n - 1) - .5) * b.type.L * b.k * .7;
             const u = worldToUi(b.toWorld(x, 0));
             const str = swearText(b.swearSeed + i*7), w = str.length*.42 + .6, c = vec2(u.x, u.y + 1.1 + pop*.2);
-            neonPath(c, [vec2(-.15, -.4), vec2(.15, -.4), vec2(-.05, -.8)].map(q => q.scale(pop)), true, N_PINK.scale(1, a), .05, false, C_UIBG.scale(1, a));
-            neonPath(c, hullRoundRect(w*pop/2, .85*pop/2, .3, .3), true, N_PINK.scale(1, a), .06, true, C_UIBG.scale(1, a));
-            if (pop >= 1) txt(str, c.x, c.y - .05, .5, C_CORAL.scale(1, a));
+            posterShape(c, [vec2(-.15, -.4), vec2(.15, -.4), vec2(-.05, -.8)].map(q => q.scale(pop)), P_CREAM.scale(1, a), 0);
+            drawPanel(c, w*pop, .85*pop, P_CREAM.scale(1, a), .3);
+            if (pop >= 1) txt(str, c.x, c.y - .05, .5, P_BRICK.scale(1, a));
         }
     }
 };
@@ -842,135 +884,65 @@ drawScaleBar = function()
     const target = 5*cam.wu, p10 = Math.pow(10, Math.floor(Math.log10(target)));
     const m = [5, 2, 1].map(x => x*p10).find(x => x <= target), len = m / cam.wu;
     const x0 = 1, y = 19.7;
-    neonSegs(vec2(x0, y), [[vec2(), vec2(len, 0)], [vec2(0, -.25), vec2(0, .25)], [vec2(len, -.25), vec2(len, .25)]], N_CYAN, .07, true);
-    txt(fmtLen(m), x0 + len/2, y + .55, .5, C_TEAL);
+    posterSegs(vec2(x0, y), [[vec2(), vec2(len, 0)], [vec2(0, -.25), vec2(0, .25)], [vec2(len, -.25), vec2(len, .25)]], P_CREAM, .14);
+    txt(fmtLen(m), x0 + len/2, y + .55, .5, P_CREAM, 'center', .08, P_DEEP);
 };
 
-// the cloak's power: a glowing bar with a lightning bolt
+// the cloak's power: a bar with a lightning bolt
 drawAirGauge = function()
 {
     const b = player;
     if (!b?.type.sub) return;
     const x = 12.6, y = 1.6, w = 6.4, h = .7, low = b.o2 < .25, flash = low && Math.sin(time*14) > 0;
-    drawPanel(vec2(x - .45, y), w + 1.4, h + .5, C_CREAM, .3);
+    drawPanel(vec2(x - .45, y), w + 1.4, h + .5, P_CREAM, .3);
     const bx = x - w/2 - .55, bolt = [[.12, .42], [-.18, -.02], [.02, -.02], [-.1, -.42], [.2, .06], [0, .06]];
-    neonPath(vec2(bx, y), bolt.map(([u, v]) => vec2(u, v)), true, N_YELLOW, .04, true, N_YELLOW.scale(1, .7));
-    drawRect(vec2(x, y), vec2(w, h), N_DIM.scale(1, .2));
-    const fill = w*b.o2, col = flash || b.winded ? N_PINK : N_CYAN;
-    if (fill > .01) neonPath(vec2(x - w/2, y), [vec2(0, -h/2), vec2(fill, -h/2), vec2(fill, h/2), vec2(0, h/2)], true, col, .04, true, col.scale(1, .55));
-    drawRect(vec2(x - w/2 + w*SUB_DIVE_MIN, y), vec2(.08, h + .3), N_WHITE);
+    posterShape(vec2(bx, y), bolt.map(([u, v]) => vec2(u, v)), P_MUSTARD, 0);
+    drawRect(vec2(x, y), vec2(w, h), P_DEEP.scale(1, .15));
+    const fill = w*b.o2;
+    if (fill > .01) drawRect(vec2(x - w/2 + fill/2, y), vec2(fill, h), flash || b.winded ? P_BRICK : P_TEAL);
+    drawRect(vec2(x - w/2 + w*SUB_DIVE_MIN, y), vec2(.08, h + .3), P_DEEP);
 };
 
-// title: a space liner cruises past behind a parade of little ships, a ringed planet glows in the corner
+// title: a big ringed planet rises behind a space liner and a parade of little ships, under a poster headline
 drawTitle = function()
 {
-    const pc = vec2(34.5, 18.2), tilt = .35, ring = ringPts(4.6, .8).map(p => vec2(p.x*Math.cos(tilt) - p.y*Math.sin(tilt), p.x*Math.sin(tilt) + p.y*Math.cos(tilt)));
-    const back = ring.filter((p, i) => UNIT_RING[i][1] > 0), front = ring.filter((p, i) => UNIT_RING[i][1] <= 0);
-    neonPath(pc, back, false, N_VIOLET, .08, true, null);
-    neonPath(pc, ringPts(2.6), true, N_PINK, .09, true, C_HULL);
-    neonPath(pc, ringPts(2.1, .5).map(p => p.add(vec2(0, .9))), false, N_PINK.scale(1, .4), .05, false, null);
-    neonPath(pc, front, false, N_VIOLET, .08, true, null);
+    const pc = vec2(33.5, 19.5), tilt = .3, rot = p => vec2(p.x*Math.cos(tilt) - p.y*Math.sin(tilt), p.x*Math.sin(tilt) + p.y*Math.cos(tilt));
+    const ring = ringPts(7.4, 1.5).map(rot), back = [], front = [];
+    ring.forEach((p, i) => (UNIT_RING[i][1] > 0 ? back : front).push([p, ring[(i + 1) % ring.length]]));
+    posterSegs(pc, back, P_MUSTARD, .42);
+    posterShape(pc, ringPts(4.2), P_BRICK, .5);
+    posterShape(pc, ringPts(3.1, .55).map(p => p.add(vec2(.4, 1.4))), P_ROCK2, 0);       // a band
+    posterSegs(pc, front, P_MUSTARD, .42);
+    for (const [x, y, s] of [[6, 18.5, 1], [15.5, 20.8, .6], [36.5, 6.5, .8], [3.5, 5, .5]])
+    {
+        const segs = [];
+        for (let i = 0; i < 8; i++) { const a = i/8*PI*2, r = (i % 2 ? .45 : .9)*s; segs.push([vec2(Math.cos(a)*.18*s, Math.sin(a)*.18*s), vec2(Math.cos(a)*r, Math.sin(a)*r)]); }
+        posterSegs(vec2(x, y), segs, P_CREAM, .08*s);
+    }
     const ship = { pos:vec2(((time*1.2) % 90) - 25, 2.6), angle:0, sx:1, sy:1, id:9, k:2.4, type:BOATS.cruise, color:BOATS.cruise.color, kind:'title' };
+    drawBoatShadow(ship);
     drawBoat(ship);
     ['dinghy', 'swan', 'trawler', 'speedboat'].forEach((key, i) =>
     {
         const a = time*.4 + i*PI/2;
-        drawBoat({ pos:vec2(20 + Math.cos(a)*15, 11 + Math.sin(a)*7.5), angle:a + PI/2, sx:1, sy:1, id:i, type:BOATS[key], color:BOATS[key].color, kind:'title' });
+        const b = { pos:vec2(20 + Math.cos(a)*15, 11 + Math.sin(a)*7.5), angle:a + PI/2, sx:1, sy:1, id:i, type:BOATS[key], color:BOATS[key].color, kind:'title' };
+        drawBoatShadow(b);
+        drawBoat(b);
     });
     const bob = Math.sin(time*2)*.2;
-    for (const [line, y, size, col] of [['LOST IN', 16.6, 1.7, N_CYAN], ['PARKING SPACE', 14.3, 2.6, N_PINK]])
-    {
-        harborTxt(line, 20, y + bob, size, col.scale(1, .2), 'center', size*.3, col.scale(1, .12));
-        harborTxt(line, 20, y + bob, size, hot(col), 'center', .1, col);
-    }
+    harborTxt('Lost in', 20, 16.9 + bob, 1.6, P_MUSTARD);
+    harborTxt('Parking Space', 20.22, 14.45 + bob, 3, P_BRICK);
+    harborTxt('Parking Space', 20, 14.7 + bob, 3, P_CREAM);
 };
 
 // ---------------------------------------------------------------------------
-// type: a 5x7 arcade pixel font drawn in code (no font files), all caps, with a faint neon glow.
-// It replaces the engine's drawText, so every label, button, popup and deck letter uses it.
+// type: Righteous, bundled in space/fonts (SIL Open Font License, see fonts/OFL.txt) and declared in index.html.
+// Every text draw goes through the engine's drawText, so this one swap covers labels, buttons, popups and decks.
 
-const PIXEL_FONT =
+const POSTER_FONT = "'Righteous', 'Trebuchet MS', 'Arial Rounded MT Bold', sans-serif";
+const harborDrawText = drawText;
+drawText = function(text, pos, size, color, lineWidth, lineColor, textAlign, font, fontStyle, maxWidth, angle, context)
 {
-    A:'01110 10001 10001 11111 10001 10001 10001', B:'11110 10001 10001 11110 10001 10001 11110',
-    C:'01110 10001 10000 10000 10000 10001 01110', D:'11110 10001 10001 10001 10001 10001 11110',
-    E:'11111 10000 10000 11110 10000 10000 11111', F:'11111 10000 10000 11110 10000 10000 10000',
-    G:'01110 10001 10000 10111 10001 10001 01111', H:'10001 10001 10001 11111 10001 10001 10001',
-    I:'01110 00100 00100 00100 00100 00100 01110', J:'00111 00010 00010 00010 00010 10010 01100',
-    K:'10001 10010 10100 11000 10100 10010 10001', L:'10000 10000 10000 10000 10000 10000 11111',
-    M:'10001 11011 10101 10101 10001 10001 10001', N:'10001 10001 11001 10101 10011 10001 10001',
-    O:'01110 10001 10001 10001 10001 10001 01110', P:'11110 10001 10001 11110 10000 10000 10000',
-    Q:'01110 10001 10001 10001 10101 10010 01101', R:'11110 10001 10001 11110 10100 10010 10001',
-    S:'01111 10000 10000 01110 00001 00001 11110', T:'11111 00100 00100 00100 00100 00100 00100',
-    U:'10001 10001 10001 10001 10001 10001 01110', V:'10001 10001 10001 10001 10001 01010 00100',
-    W:'10001 10001 10001 10101 10101 10101 01010', X:'10001 10001 01010 00100 01010 10001 10001',
-    Y:'10001 10001 10001 01010 00100 00100 00100', Z:'11111 00001 00010 00100 01000 10000 11111',
-    0:'01110 10001 10011 10101 11001 10001 01110', 1:'00100 01100 00100 00100 00100 00100 01110',
-    2:'01110 10001 00001 00010 00100 01000 11111', 3:'11111 00010 00100 00010 00001 10001 01110',
-    4:'00010 00110 01010 10010 11111 00010 00010', 5:'11111 10000 11110 00001 00001 10001 01110',
-    6:'00110 01000 10000 11110 10001 10001 01110', 7:'11111 00001 00010 00100 01000 01000 01000',
-    8:'01110 10001 10001 01110 10001 10001 01110', 9:'01110 10001 10001 01111 00001 00010 01100',
-    '!':'00100 00100 00100 00100 00100 00000 00100', '?':'01110 10001 00001 00010 00100 00000 00100',
-    '.':'00000 00000 00000 00000 00000 01100 01100', ',':'00000 00000 00000 00000 01100 00100 01000',
-    ':':'00000 01100 01100 00000 01100 01100 00000', ';':'00000 01100 01100 00000 01100 00100 01000',
-    '-':'00000 00000 00000 11111 00000 00000 00000', '+':'00000 00100 00100 11111 00100 00100 00000',
-    "'":'00100 00100 01000 00000 00000 00000 00000', '"':'01010 01010 00000 00000 00000 00000 00000',
-    '$':'00100 01111 10100 01110 00101 11110 00100', '%':'11000 11001 00010 00100 01000 10011 00011',
-    '/':'00000 00001 00010 00100 01000 10000 00000', '(':'00010 00100 01000 01000 01000 00100 00010',
-    ')':'01000 00100 00010 00010 00010 00100 01000', '#':'01010 01010 11111 01010 11111 01010 01010',
-    '=':'00000 00000 11111 00000 11111 00000 00000', '*':'00000 10101 01110 11111 01110 10101 00000',
-    '<':'00010 00100 01000 10000 01000 00100 00010', '>':'01000 00100 00010 00001 00010 00100 01000',
-    '_':'00000 00000 00000 00000 00000 00000 11111', ' ':'00000 00000 00000 00000 00000 00000 00000',
+    return harborDrawText(text, pos, size, color, lineWidth, lineColor, textAlign, POSTER_FONT, '', maxWidth, angle, context);
 };
-// each glyph as horizontal runs [row, column, length], row 0 at the top
-const PIXEL_RUNS = {};
-for (const ch in PIXEL_FONT)
-{
-    const runs = [];
-    PIXEL_FONT[ch].split(' ').forEach((row, r) =>
-    {
-        for (let c = 0; c < 5; c++)
-        {
-            if (row[c] != '1') continue;
-            let n = 1;
-            while (row[c + n] == '1') n++;
-            runs.push([r, c, n]);
-            c += n - 1;
-        }
-    });
-    PIXEL_RUNS[ch] = runs;
-}
-const PIXEL_ADVANCE = 6, PIXEL_CAP = .74;     // columns per letter; cap height as a share of the font size
-const PIXEL_BOLD = .35;                       // every pixel grows this much right and down: chunkier arcade strokes
-
-// same arguments as the engine's drawText (world or UI units); font and style are ignored
-drawText = function(text, pos, size=1, color=WHITE, lineWidth=0, lineColor=BLACK, textAlign='center', font, fontStyle, maxWidth, angle=0)
-{
-    const lines = String(text).toUpperCase().split('\n'), px = size*PIXEL_CAP/7;
-    drawCanvas2D(pos, vec2(1), angle, false, ctx =>
-    {
-        ctx.beginPath();
-        lines.forEach((line, li) =>
-        {
-            const w = (line.length*PIXEL_ADVANCE - 1 + PIXEL_BOLD)*px;
-            const x0 = textAlign == 'left' ? 0 : textAlign == 'right' ? -w : -w/2;
-            const y0 = (3.5 + PIXEL_BOLD/2)*px - (li - (lines.length - 1)/2)*size;          // centered on pos, like the engine
-            for (let i = 0; i < line.length; i++)
-            {
-                const runs = PIXEL_RUNS[line[i]] || PIXEL_RUNS['?'];
-                for (const [r, c, n] of runs) ctx.rect(x0 + (i*PIXEL_ADVANCE + c)*px, y0 - (r + 1 + PIXEL_BOLD)*px, (n + PIXEL_BOLD)*px, (1 + PIXEL_BOLD)*px);
-            }
-        });
-        ctx.lineJoin = 'miter';
-        if (lineWidth && lineColor.a > 0) { ctx.strokeStyle = lineColor.toString(); ctx.lineWidth = lineWidth; ctx.stroke(); }
-        if (color.a > .05)
-        {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = color.scale(1, .2).toString();
-            ctx.lineWidth = px*1.3;
-            ctx.stroke();
-            ctx.globalCompositeOperation = 'source-over';
-        }
-        ctx.fillStyle = color.toString();
-        ctx.fill();
-    });
-};
+document.fonts?.load("20px 'Righteous'");

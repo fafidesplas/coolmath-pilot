@@ -1,3 +1,9 @@
+## 2026-11-06 — Space build: 1960s space-age poster look
+- Night Neon was the same family as Orbit Hop (also a space game), Echo Steps and Shadow Shapes, so the space build switched to a look no team game uses, picked from a style board of four: a 1960s space-age poster. Flat rounded shapes with a darker lower-right edge, teal, mustard, brick and cream on deep indigo, atomic starbursts and film grain, hard indigo shadows, brick and teal buttons on cream cards.
+- How: a poster `painter` replaces the Toybox one (every deck drawing turns flat and shaded); `poster()` maps each Toybox color onto the poster inks. Rock is one merged shape per frame (shadow, dark side, lit side) so overlapping pieces show no seams. Grain is one pattern fill.
+- Font: Righteous, bundled in `space/fonts/` with its SIL Open Font License (STANDARDS allow an embedded font file). It replaces the code-drawn pixel font, which leaned toward the team's pixel games.
+- Checked in Chrome: title, level select, Test Map ships, cloak, Way Down, Docking Ring (142 fps on a Mac), Moon Drift, results. No console errors. Not measured on a Chromebook yet.
+
 ## 2026-11-06 — Space build: arcade pixel font
 - All text in the space build is now a 5x7 arcade pixel font drawn in code (`PIXEL_FONT` in `space/skin.js`, no font file, so STANDARDS' no-web-fonts rule holds): all caps, slightly bold pixels (`PIXEL_BOLD`), a faint neon glow. It replaces the engine's `drawText`, so every label, button, popup and deck letter uses it; the harbor build keeps its font.
 - Checked in Chrome: title, level select, HUD, intro card, Test Map buttons (the longest label still fits). No console errors.
