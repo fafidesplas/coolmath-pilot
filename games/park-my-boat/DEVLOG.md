@@ -1,3 +1,9 @@
+## 2026-11-06 — Space build: docks become station modules
+- Docks were mustard gantries with hazard stripes and read as road barriers, not space stations. After two references (a 1950s wheel station and a retro robot probe) they are now cream station modules: panel seams, rows of dark windows with a few lit (mustard or glass), sand collars at the module joints, a round docking port (cream ring, dark seal, blinking beacon) on every other joint, and a shaded lower edge so they read as cylinders.
+- Quays are the station's main hull: two rows of windows and closer plating, no ports. `under` docks are open girders (two cream rails, zigzag struts) over a see-through dark fill. Pilings are round docking hatches with a blinking beacon.
+- Everything scales from the dock's short side, so 2 m fingers and the 80 m breakwater look alike; detail drops out when a dock is thin on screen. Collision is unchanged.
+- Checked in Chrome: Test Map (quay, pier, girder, pilings), Way Down, Spaceport. No console errors.
+
 ## 2026-11-06 — Space build: Cargo Hauler becomes a moon rocket
 - The Cargo Hauler still read as a container ship (rows of colored boxes), so it is now a Saturn V-style moon rocket lying on its side: white stages with black roll-pattern bands, fins and three engine bells at the stern, a lander fairing, the capsule and its escape tower at the nose. Fins take the ship's color, so parked rockets still differ.
 - Its drawn outline (`ROCKET_BODY` and the hauler's `hullPts` in `space/skin.js`) follows the stages; collision circles are unchanged. Three flames now (`JETS`).

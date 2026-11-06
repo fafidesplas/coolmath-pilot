@@ -662,62 +662,83 @@ drawLog = function(b)
     d.circle(.3, 0, .16, P_SAND, true);
 };
 
-// pilings -> mooring posts with a blinking light
+// pilings -> round docking hatches: a cream ring, a dark seal and a blinking beacon
 drawPost = function(p)
 {
-    const c = vec2(p.x, p.y);
-    drawCircle(c.add(shadowOff(p.r*2)), p.r*2, C_SHADOW);
-    drawCircle(c, p.r*2, P_BRICK);
-    drawCircle(c, p.r*.8, Math.sin(time*3 + p.x) > 0 ? P_MUSTARD : P_CREAM);
+    const c = vec2(p.x, p.y), r = p.r;
+    drawCircle(c.add(shadowOff(r*2)), r*2, C_SHADOW);
+    drawCircle(c, r*2, P_CREAM);
+    drawCircle(c.add(vec2(r*.12, -r*.12)), r*1.7, P_SAND);
+    drawCircle(c, r*1.45, P_DEEP);
+    drawCircle(c, r*1.1, P_SLATE);
+    drawCircle(c, r*.55, Math.sin(time*3 + p.x) > 0 ? P_MUSTARD : P_BRICK);
 };
 
-// docks -> mustard gantries with brick hazard stripes; `under` docks are teal arches with cream rails; quays sand plating
+// Docks -> space station modules, after the 1950s wheel station and the retro probes: cream hulls with panel seams,
+// rows of dark windows (a few lit), and a round docking port at every module joint, with a shaded lower edge so
+// they read as cylinders. Quays are the station's main hull (two rows of windows, more plating); `under` docks are
+// open girders a cloaked ship slips under. Everything is measured from the dock's short side, so a 2 m finger and
+// an 80 m breakwater look alike.
 drawDock = function(r)
 {
     const w = r.x1 - r.x0, h = r.y1 - r.y0, short = Math.min(w, h), along = w > h;
-    const c = fillRect(r, r.under ? P_TEAL : r.quay ? P_SAND : P_MUSTARD);
+    const c = fillRect(r, r.under ? P_DEEP.scale(1, .55) : P_CREAM);
     if (!c) return;
-    const bay = short*1.1;
-    if (bay / WU > .25)
+    const px = short / WU;                           // the dock's width on screen, in UI units
+    if (px < .12) return;
+    const o = vec2(c.x0, c.y0), cw = c.x1 - c.x0, ch = c.y1 - c.y0;
+    const a0 = along ? r.x0 - c.x0 : r.y0 - c.y0, len = along ? cw : ch, lo = along ? r.y0 - c.y0 : r.x0 - c.x0;
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
     {
-        const o = vec2(c.x0, c.y0), cw = c.x1 - c.x0, ch = c.y1 - c.y0;
-        drawCanvas2D(o, vec2(1), 0, false, ctx =>
+        ctx.beginPath();
+        ctx.rect(0, 0, cw, ch);
+        ctx.clip();
+        // u runs along the dock (canvas units), v across it (0 = the shaded lower or right edge, 1 = the far edge)
+        const X = (u, v) => along ? u : lo + (1 - v)*short, Y = (u, v) => along ? lo + v*short : u;
+        const box = (u, size, v, thick, col) => { ctx.fillStyle = col; along ? ctx.fillRect(u, lo + v*short, size, thick*short) : ctx.fillRect(lo + (1 - v - thick)*short, u, thick*short, size); };
+        const disc = (u, v, d, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(u, v), Y(u, v), d*short/2, 0, PI*2); ctx.fill(); };
+        const each = (step, f) => { const n0 = Math.floor(-a0/step) - 1; for (let n = n0, i = 0; a0 + n*step < len + step && i < 300; n++, i++) f(a0 + n*step, n); };
+        const deep = P_DEEP.toString(), sand = P_SAND.toString(), cream = P_CREAM.toString(), shade = 'rgba(10,8,40,.22)';
+        if (r.under)
         {
+            // an open girder: two cream rails and zigzag struts
+            box(-1, len + 2, .08, .14, cream);
+            box(-1, len + 2, .78, .14, cream);
+            if (px < .3) return;
+            ctx.strokeStyle = sand;
+            ctx.lineWidth = short*.07;
             ctx.beginPath();
-            ctx.rect(0, 0, cw, ch);
-            ctx.clip();
-            if (r.quay)
-            {
-                // plating seams across the quay
-                ctx.strokeStyle = 'rgba(20,18,58,.2)';
-                ctx.lineWidth = Math.min(.05*WU, short*.05);
-                ctx.beginPath();
-                const a0 = along ? r.x0 - c.x0 : r.y0 - c.y0, len = along ? cw : ch, step = short*2;
-                for (let u = a0 + step*Math.ceil(-a0/step); u < len; u += step) along ? (ctx.moveTo(u, 0), ctx.lineTo(u, ch)) : (ctx.moveTo(0, u), ctx.lineTo(cw, u));
-                ctx.stroke();
-                return;
-            }
-            ctx.fillStyle = (r.under ? P_CREAM : P_BRICK).toString();
-            if (r.under)
-            {
-                // two cream rails along the arch
-                const inset = short*.2, rw = short*.12;
-                if (along) { ctx.fillRect(0, r.y0 - c.y0 + inset, cw, rw); ctx.fillRect(0, r.y1 - c.y0 - inset - rw, cw, rw); }
-                else       { ctx.fillRect(r.x0 - c.x0 + inset, 0, rw, ch); ctx.fillRect(r.x1 - c.x0 - inset - rw, 0, rw, ch); }
-                return;
-            }
-            // diagonal hazard stripes
-            const a0 = along ? r.x0 - c.x0 : r.y0 - c.y0, len = along ? cw : ch, n0 = Math.floor(-a0/bay) - 1;
-            for (let n = n0, i = 0; a0 + n*bay < len + bay && i < 400; n++, i++)
-            {
-                const u = a0 + n*bay, sw = bay*.45;
-                ctx.beginPath();
-                if (along) { ctx.moveTo(u, 0); ctx.lineTo(u + sw, 0); ctx.lineTo(u + sw + short*.5, ch); ctx.lineTo(u + short*.5, ch); }
-                else       { ctx.moveTo(0, u); ctx.lineTo(0, u + sw); ctx.lineTo(cw, u + sw + short*.5); ctx.lineTo(cw, u + short*.5); }
-                ctx.fill();
-            }
+            const step = short*.8;
+            each(step, u => { ctx.moveTo(X(u, .15), Y(u, .15)); ctx.lineTo(X(u + step/2, .85), Y(u + step/2, .85)); ctx.lineTo(X(u + step, .15), Y(u + step, .15)); });
+            ctx.stroke();
+            return;
+        }
+        box(-1, len + 2, 0, .18, shade);                                           // shaded lower edge
+        if (px < .3) return;
+        const rows = r.quay ? [.3, .62] : [.42];                                   // window rows (v of each row's lower edge)
+        for (const v of [.2, .82]) box(-1, len + 2, v, .03, shade);              // panel seams along the hull
+        const bay = short*(r.quay ? 1.4 : 2.2);
+        each(bay, (u, n) =>
+        {
+            box(u - short*.09, short*.18, 0, 1, sand);                             // module collar
+            box(u + short*.09, short*.03, 0, 1, shade);
+            if (px < .55) return;
+            for (const v of rows)                                                 // windows, a few lit
+                for (let k = 0; k < 4; k++)
+                {
+                    const wu0 = u + bay*(.2 + k*.17), lit = (k*3 + n*5) % 7 < 2;
+                    box(wu0, bay*.1, v, .16, deep);
+                    if (lit) box(wu0 + bay*.02, bay*.06, v + .03, .1, (k + n) % 2 ? P_MUSTARD.toString() : P_GLASS.toString());
+                }
+            if (r.quay || n % 2) return;
+            // a docking port on every other joint: a cream ring, a dark seal and a beacon
+            disc(u, .5, .62, cream);
+            disc(u + short*.03, .47, .5, sand);
+            disc(u, .5, .4, deep);
+            disc(u, .5, .26, P_SLATE.toString());
+            disc(u, .5, .12, Math.sin(time*3 + n) > 0 ? P_MUSTARD.toString() : P_BRICK.toString());
         });
-    }
+    });
 };
 
 // rock: one shape made of every sand rect and landmass, with a hard shadow, a dark side and a lit side (so overlapping
