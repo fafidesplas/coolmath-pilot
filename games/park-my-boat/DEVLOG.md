@@ -1,3 +1,9 @@
+## 2026-11-06 — Space build goes Night Neon
+- `space/skin.js` switched from Toybox Flat to the Night Neon family: near-black sky with a faint grid and stars in zoom octaves, ships and objects as glowing outlines over dark fills, pink rock coastlines with crater rings, cyan gantries (lime `under` arches, violet quays), dark glass panels with glowing rims, neon title sign. No drop shadows.
+- How: a neon `painter` replaces the Toybox one, so every deck drawing (space decks and any harbor fallback) turns into line art with no per-ship rewrite. `neon()` maps each flat color to its neon hue; `neonPath`/`neonSegs` draw an additive halo plus a hot core. Halos switch off for ships under 2.5 UI units on screen.
+- Checked in Chrome: title, Test Map ships, flames, cloak, Spaceport, Docking Ring (selection rim), Moon Drift, results, level select; no console errors. 144 fps on Docking Ring on a Mac; not measured on a Chromebook yet.
+- Next: Chromebook performance check (the glow is many canvas strokes; drop the halo pass first if it is slow).
+
 ## 2026-11-06 — Lost in Parking Space (secret space skin build)
 - New separate build `space/index.html`: the same game code and levels, repainted by `space/skin.js` (loaded last). Pure visual reskin: physics, levels, sizes and handling are untouched. Nothing links to it and the harbor build never loads the skin, so players can't find or switch skins.
 - Ships: Rocket Scooter, Escape Pod, Flying Saucer, Zoomer, Stealth Pod, Solar Sailer, Asteroid Miner, Star Yacht, Stealth Cruiser, Space Liner, Cargo Hauler, Asteroid, The Moon. Thruster flames while throttling, retro puffs in reverse. Dive becomes CLOAK (fade + shimmer + beacon), air bar becomes a power bar.
