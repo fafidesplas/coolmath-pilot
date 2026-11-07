@@ -1,8 +1,5 @@
-## 2026-11-07 — Zero-g trial on Odd Couple
-- Trial: Odd Couple (level 1) now flies like the Asteroids ship instead of a boat. Almost no drag (4% a second), the same in every direction, so a ship coasts on at nearly full speed; stopping means firing the reverse thrusters and letting go at the right moment, or it drifts backward. Turning works the same at any speed and stops when you let go. Speed is capped at the ship's usual top speed. Every other level is unchanged.
-- Level flag `zeroG: true`; code in `zeroGControl` and `zeroGCap` in `src/space.js`. URL tuning: `?drift=.1` (more drag), `?retro=.5` (weaker reverse), `?retro=0` (no reverse: turn round and burn).
-- Checked headless: released at 7.5, the ship still had 7.1 after 1.5 s (the harbor physics drop it to 3.7). Holding reverse too long carries it from +4.9 to -3.3, and it keeps that speed.
-- Next: play it by hand and decide whether to keep it, tune it, or spread it to other levels.
+## 2026-11-07 — Zero-g trial dropped
+- Tried Asteroids-style physics on Odd Couple: almost no drag, so a ship coasts on and stopping means a well-timed reverse burn. Too hard to stop when played, so it was reverted (commit `b02b428` has it if it is ever wanted again). Every level flies as before.
 
 ## 2026-11-06 — Touchdown largest first; solid solar wings
 - Touchdown now lands the biggest ship first: the Space Liner on the 100 m pad, then a 28 m Star Yacht on a new 20 m pad, then the Escape Pod on the 8 m pad. Checked: each ship set down on its pad parks with no damage, and the level completes.

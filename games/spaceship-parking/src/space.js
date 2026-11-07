@@ -12,17 +12,10 @@
 //   for good instead of dropping an anchor. A falling ship has no keel: its drag is the same in every direction (air,
 //   not water), so it falls straight down whichever way it points.
 // - Landing pads: docks with `pad: true`, drawn as a landing pad.
-// - Zero-g (level `zeroG`, on trial in one level): the player's ship flies like a ship in space, not a boat in water.
-//   Almost no drag, the same in every direction, so it coasts on and on: stopping means thrusting the other way and
-//   letting go at the right moment. Side thrusters turn it at the same rate at any speed and stop the turn when let go.
-//   Speed is capped at the ship's usual top speed. Tune in the URL: ?drift=.1 (drag per second), ?retro=.5 (share of
-//   the reverse thrust; ?retro=0 means no reverse at all: turn round and burn).
 
 const STATION_SPIN_DEFAULT = 2*PI/60;     // rad/s: one turn a minute
 const RCS_TURN = 2.2;                     // gravity levels: side thruster spin, times the ship's turn rate (toy units)
 const BEAM_GROW = .5;                     // the docking beam reaches this many ship lengths past the slip's sides
-const ZEROG_DRAG = +(new URLSearchParams(location.search).get('drift') ?? .04);   // zero-g: drag per second
-const ZEROG_RETRO = +(new URLSearchParams(location.search).get('retro') ?? 1);    // zero-g: share of the reverse thrust
 
 // ---------------------------------------------------------------------------
 // the station: an orbital lab after the 2000s ones, top view, in meters. x runs along the module stack (the front
@@ -214,25 +207,6 @@ function applyGravity(dt)
         b.vel.x += g.x*dt;
         b.vel.y += g.y*dt;
     }
-}
-
-// ---------------------------------------------------------------------------
-// zero-g
-
-// called from controlPlayer every step instead of the harbor's coast and settle drag; returns the throttle to use
-function zeroGControl(b, throttle, rudder)
-{
-    b.dragF = b.dragS = ZEROG_DRAG/b.slowdown;
-    b.dragA = b.dragAFull * (rudder ? 1 : SETTLE_SPIN);     // let go of A/D and the spin stops, like the gravity levels
-    return throttle < 0 ? throttle*ZEROG_RETRO : throttle;
-}
-
-// called after the thrust: no faster than the ship's usual top speed (where its water drag would have held it)
-function zeroGCap(b)
-{
-    const top = b.power * b.invMass / b.dragFull, m = mediumAt(b), mx = m ? m.x : 0, my = m ? m.y : 0;
-    const rx = b.vel.x - mx, ry = b.vel.y - my, sp = Math.hypot(rx, ry);
-    if (sp > top) b.vel.set(mx + rx*top/sp, my + ry*top/sp);
 }
 
 // side thrusters: under gravity the ship turns with no speed (the harbor rudder needs the ship to move, and turns
