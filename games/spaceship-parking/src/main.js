@@ -136,6 +136,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     if (t.sub) { b.o2 = 1; b.dive = 0; b.under = false; b.wantDive = false; b.winded = false; }
     b.dragFull = b.dragF;          // forward drag under power; controlPlayer lowers it while coasting
     b.dragAFull = b.dragA;         // spin drag; controlPlayer raises it while settling
+    b.dragSFull = b.dragS;         // sideways drag; zero-g and gravity levels make it the same as forward drag
     bodies.push(b);
     return b;
 }
@@ -296,6 +297,7 @@ function startBoat(n)
     {
         prev.kind = 'moored';
         prev.dragF = prev.dragFull;
+        prev.dragS = prev.dragSFull;
         prev.dragA = prev.dragAFull;
     }
     player = fleet[n];
@@ -573,10 +575,15 @@ function controlPlayer(dt)
     if (anchor || player.held || !hasControl()) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;
-    const settling = !throttle && relSpeed(player) < SETTLE_SPEED*player.vs;
-    player.dragF = player.dragFull * (throttle || settling ? 1 : COAST_DRAG);
-    player.dragA = player.dragAFull * (settling && !rudder ? SETTLE_SPIN : 1);
+    if (level?.zeroG) throttle = zeroGControl(player, throttle, rudder);
+    else
+    {
+        const settling = !throttle && relSpeed(player) < SETTLE_SPEED*player.vs;
+        player.dragF = player.dragFull * (throttle || settling ? 1 : COAST_DRAG);
+        player.dragA = player.dragAFull * (settling && !rudder ? SETTLE_SPIN : 1);
+    }
     driveBoat(player, throttle, rudder, dt);
+    if (level?.zeroG) zeroGCap(player);
 }
 
 // ---------------------------------------------------------------------------
@@ -632,7 +639,7 @@ function driveBoat(b, throttle, rudder, dt)
     b.vel.x += f.x * thrust * dt;
     b.vel.y += f.y * thrust * dt;
     const vf = b.vel.x*f.x + b.vel.y*f.y;
-    b.angVel += (level?.gravity ? thrusterSpin(b, rudder, throttle) : rudder * (b.turn*vf + b.wash*throttle)) * dt;
+    b.angVel += (level?.gravity || level?.zeroG && b == player ? thrusterSpin(b, rudder, throttle) : rudder * (b.turn*vf + b.wash*throttle)) * dt;
 }
 
 // ---------------------------------------------------------------------------

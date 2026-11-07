@@ -13,6 +13,7 @@
 // station: a spinning space station {x, y (center of its drift), a, spin: rad/s, drift: {r, period, phase}}; a slip with
 //          on: 'station' is given in the station's coordinates and moves with it (src/space.js)
 // gravity: {share: of each ship's full thrust, dir?: angle (default down)}
+// zeroG:   true: the player's ship flies with almost no drag, like in space (see zeroGControl in src/space.js)
 // a chain boat may set view: the camera shows that many times more around it than its type does
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
 // traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
@@ -142,7 +143,7 @@ function loopLane(x, d, Y, flip, pace, boats)
 const SCALE_LEVELS =
 [
     {
-        name: 'Odd Couple',
+        name: 'Odd Couple', zeroG: true,      // trial: space physics, almost no drag (see zeroGControl in src/space.js)
         land: [[-3000, -3020, 0, 3585], [1400, -3020, 4400, 3585], [-3000, 600, 4400, 3585]],
         docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }, { x0: 526.8, y0: 546, x1: 529.6, y1: 584.9 }],
         boats:
