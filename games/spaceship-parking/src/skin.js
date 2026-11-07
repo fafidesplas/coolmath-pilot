@@ -304,9 +304,8 @@ drawWater = function()
             const tw = 40*s, th = 22*s, ds = s*Math.sqrt(.7/g);
             for (const p of STARS)
             {
-            // parallax (trial, level `parallax`): each star's tiling is shifted along with the camera, so it scrolls
-            // at starDepth(p) of the world's speed
-            const sx = level?.parallax ? cam.pos.x*(1 - starDepth(p)) : 0, sy = level?.parallax ? cam.pos.y*(1 - starDepth(p)) : 0;
+            // parallax: each star's tiling is shifted along with the camera, so it scrolls at starDepth(p) of the world's speed
+            const sx = cam.pos.x*(1 - starDepth(p)), sy = cam.pos.y*(1 - starDepth(p));
             for (let tx = Math.floor((v.x0 - sx)/tw); tx*tw + sx < v.x1; tx++)
             for (let ty = Math.floor((v.y0 - sy)/th); ty*th + sy < v.y1; ty++)
             {
@@ -691,6 +690,22 @@ function coverCircles(shapes, max = 3, left = .12)
     return circles.sort((a, b) => b.x - a.x);
 }
 
+// the side trails (emitFoam in main.js) start TRAIL_AT ship lengths behind the middle, at the edge of the ship's outline there
+// (trailW: body, fins, boosters, sail, so they hug the ship as drawn, not the boat hull it replaced)
+const TRAIL_AT = .18;
+function outlineHalfWidth(shapes, x)
+{
+    let w = 0;
+    for (const p of shapes)
+        for (let i = 0; i < p.length; i++)
+        {
+            const a = p[i], b = p[(i + 1) % p.length];
+            if ((a.x - x)*(b.x - x) > 0 || a.x == b.x) continue;
+            w = Math.max(w, Math.abs(a.y + (b.y - a.y)*(x - a.x)/(b.x - a.x)));
+        }
+    return w;
+}
+
 for (const key in BOATS)
 {
     const shapes = shipHitShapes(key), t = BOATS[key];
@@ -698,6 +713,7 @@ for (const key in BOATS)
     t.circles = coverCircles(shapes);
     t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
     t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
+    t.trailW = 2*outlineHalfWidth(shapes, -TRAIL_AT*t.L);
 }
 
 // nose cone and bands in the trim color

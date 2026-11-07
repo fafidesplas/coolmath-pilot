@@ -1,3 +1,9 @@
+## 2026-11-07 — Parallax stars everywhere; trails hug the ships
+- Parallax stars are kept and now on in every level (the `parallax` level flag is gone).
+- The faint side trails started at the edges of the old boat hulls, so slim ships (Solar Sailer most of all: 1.6 wide as a boat, 0.52 as drawn) had a gap between hull and trail. Each ship type now gets `trailW`, the width of its drawn outline (body, fins, boosters, sail) where the trails start (`outlineHalfWidth`, `TRAIL_AT` in `src/skin.js`), and the trails start there and are sized to it.
+- Checked headless: the Solar Sailer's trails come off its hull, no errors.
+- Next: play a few levels and check the trails on the wider ships (Star Yacht fins, Stealth Pod boosters).
+
 ## 2026-11-07 — Parallax stars trial on Odd Couple
 - Trial: in Odd Couple the stars scroll at different speeds as the camera follows the ship. The smallest (farthest) scroll at 15% of the ships' speed, the biggest at 100%, flares at 60% (`starDepth` in `src/skin.js`). Turned on by `parallax: true` on the level; every other level is unchanged. To drop it, revert this commit.
 - Checked headless: during a 48 px pan the tiniest stars moved about 9 px, flares 31 px, the biggest stars 37-48 px. No errors.

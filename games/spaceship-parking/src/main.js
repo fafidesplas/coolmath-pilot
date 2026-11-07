@@ -995,7 +995,7 @@ function emitFoam(b)
     const top = b.power * b.invMass / b.dragFull, sp = Math.hypot(rx, ry);
     const side = (-rx*f.y + ry*f.x) / top;                    // sideways speed, + to port
     const run = clamp((sp/top - .2) / .6, 0, 1), slide = clamp(Math.abs(side) / .3, 0, 1);
-    const L = b.type.L*b.k, W = b.type.W*b.k;
+    const L = b.type.L*b.k, W = (b.type.trailW || b.type.W)*b.k;     // trailW: the drawn ship's width there (skin.js)
     b.trails ||= [];
     for (const s of [1, -1])
     {
@@ -1004,7 +1004,7 @@ function emitFoam(b)
         if (a < .06) { b.trails[s] = undefined; continue; }
         if (!b.trails[s]) foams.push(b.trails[s] = []);
         const n = vec2(-f.y*s, f.x*s), out = sp*(.12 + (leading ? slide*.18 : 0));
-        b.trails[s].push({ pos:b.toWorld(-L*.18, s*W*.5), vel:n.scale(out), n, t:0,
+        b.trails[s].push({ pos:b.toWorld(-L*TRAIL_AT, s*W*.5), vel:n.scale(out), n, t:0,
             w:W*.16*(.5 + a)*rand(.75, 1.25), a });
     }
 }
