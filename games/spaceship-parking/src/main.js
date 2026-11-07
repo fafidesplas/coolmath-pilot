@@ -91,7 +91,7 @@ let anchor, judge, result, restT = 0, restArmed = true;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
 let parkedWord = 'DOCKED!';
 let popups = [], drops = [], wakes = [], foams = [];
-let shakeAmt = 0, steerHeld = false, motorTimer = 0, wakeTimer = 0;
+let shakeAmt = 0, steerHeld = false, motorTimer = 0;
 let buttons = [], hoverId;
 
 // camera: pos in meters, wu = meters per UI unit
@@ -965,13 +965,7 @@ function stepWorld()
         motorTimer = (.13 - .06*thr) * player.slowdown;
         sfx('putt', player.pos, .5 + thr*.5, Math.max(.25, 1.6 / Math.pow(boatSize(player), .25)) + thr*.3);
     }
-    wakeTimer -= timeDelta;
-    if (player.speed() > .7*player.vs && wakeTimer <= 0)
-    {
-        wakeTimer = .07;
-        const stern = player.toWorld(-t.L/2*player.k, 0);
-        wakes.push({ pos:stern, t:0, size:t.W*.7*player.k });
-    }
+    puffExhaust(player, timeDelta);       // stern puffs going forward, retro puffs reversing (skin.js)
     for (const b of bodies)
     {
         if (b.kind != 'traffic' || (b.wakeT -= timeDelta) > 0 || b.speed() < .7*b.vs) continue;

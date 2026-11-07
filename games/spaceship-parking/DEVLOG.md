@@ -1,3 +1,9 @@
+## 2026-11-07 — Retro thrusters at the nose
+- Reversing no longer puffs exhaust out of the main engine. Instead two retro thrusters, one on each side of the nose (where the hull has narrowed to 60% of its widest), fire forward and out at 35 degrees with the main engine's brick-and-mustard flame, and their smoke drifts off ahead of the ship. They replace the cream circles. Coasting backward makes no puffs at all.
+- Each ship type gets `retro` (port position and flame size) from its drawn outline; puffs for the player now come from one helper, `puffExhaust` in `src/skin.js` (main.js and jam.js call it).
+- Checked headless on the Escape Pod: flames at both nose shoulders, smoke ahead, nothing at the stern, no errors.
+- Next: check the retro flames on the long ships (Space Liner, Cargo Hauler) and the Asteroid Miner's drill.
+
 ## 2026-11-07 — Parallax stars everywhere; trails hug the ships
 - Parallax stars are kept and now on in every level (the `parallax` level flag is gone).
 - The faint side trails started at the edges of the old boat hulls, so slim ships (Solar Sailer most of all: 1.6 wide as a boat, 0.52 as drawn) had a gap between hull and trail. Each ship type now gets `trailW`, the width of its drawn outline (body, fins, boosters, sail) where the trails start (`outlineHalfWidth`, `TRAIL_AT` in `src/skin.js`), and the trails start there and are sized to it.

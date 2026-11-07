@@ -153,12 +153,7 @@ function jamUpdate(dt)
         motorTimer = (.13 - .06*thr) * player.slowdown;
         sfx('putt', player.pos, .5 + thr*.5, Math.max(.25, 1.6 / Math.pow(boatSize(player), .25)) + thr*.3);
     }
-    wakeTimer -= dt;
-    if (player.speed() > .7*player.vs && wakeTimer <= 0)
-    {
-        wakeTimer = .07;
-        wakes.push({ pos: player.toWorld(-player.type.L/2*player.k, 0), t: 0, size: player.type.W*.7*player.k });
-    }
+    puffExhaust(player, dt);              // stern puffs going forward, retro puffs reversing (skin.js)
 }
 
 // every hull circle of b inside its slip (all), or any of them (!all), with a small tolerance

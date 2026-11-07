@@ -410,9 +410,40 @@ function drawJets(b, d)
     }
     else
     {
-        // reversing: retro thrusters puff from both sides of the nose
-        const t = b.type, x = t.L/2*.5, y = t.W/2*.95, s = t.W*.22*(1 + .25*Math.sin(time*40 + b.id));
-        for (const m of [1, -1]) d.circle(x, m*(y + s*.3), s, P_CREAM.scale(1, .85));
+        // reversing: the main engine is off; the retro thrusters on both sides of the nose fire forward and out
+        const r = b.type.retro;
+        if (!r) return;
+        const flick = 1.5 + .5*Math.sin(time*43 + b.id*3), len = r.s*flick*(.6 - thr)*1.3;
+        for (const m of [1, -1])
+        {
+            const dx = RETRO_DIR.x, dy = m*RETRO_DIR.y, x = r.x, y = m*r.y;
+            // the same teardrop of flame as the main engine, pointing along (dx, dy)
+            const drop = (w, l) => [[x - dx*.03 - dy*w/2, y - dy*.03 + dx*w/2], [x + dx*l*.45 - dy*w*.42, y + dy*l*.45 + dx*w*.42],
+                [x + dx*l, y + dy*l], [x + dx*l*.45 + dy*w*.42, y + dy*l*.45 - dx*w*.42], [x - dx*.03 + dy*w/2, y - dy*.03 - dx*w/2]];
+            d.flame(drop(r.s, len), P_BRICK);
+            d.flame(drop(r.s*.55, len*.6), P_MUSTARD);
+        }
+    }
+}
+
+// exhaust puffs, called every frame for the player (main.js, jam.js): from the stern while it runs forward, from the
+// retro ports while it reverses (they drift away ahead of the ship as it backs off), none while it backs up coasting
+let puffTimer = 0;
+function puffExhaust(b, dt)
+{
+    if ((puffTimer -= dt) > 0) return;
+    const t = b.type, f = b.forward(), vf = b.vel.x*f.x + b.vel.y*f.y;
+    if (b.throttle < 0 && t.retro)
+    {
+        puffTimer = .07;
+        const r = t.retro, out = r.s*1.6;
+        for (const m of [1, -1])
+            wakes.push({ pos: b.toWorld(r.x + RETRO_DIR.x*out, m*(r.y + RETRO_DIR.y*out)), t: 0, size: r.s*1.4*b.k });
+    }
+    else if (b.throttle >= 0 && vf > .7*b.vs)
+    {
+        puffTimer = .07;
+        wakes.push({ pos: b.toWorld(-t.L/2*b.k, 0), t: 0, size: t.W*.7*b.k });
     }
 }
 
@@ -714,6 +745,20 @@ for (const key in BOATS)
     t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
     t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
     t.trailW = 2*outlineHalfWidth(shapes, -TRAIL_AT*t.L);
+}
+
+// Retro thrusters: a port on each side of the nose, where the hull has narrowed to RETRO_AT of its widest, firing forward
+// and RETRO_ANGLE out from the keel. Each type gets retro: { x, y (port side), s (flame width) } in toy units.
+const RETRO_AT = .6, RETRO_ANGLE = .6, RETRO_DIR = vec2(Math.cos(RETRO_ANGLE), Math.sin(RETRO_ANGLE));
+for (const key in JETS)
+{
+    const t = BOATS[key], hull = t.hullPts;
+    if (!hull) continue;
+    let x1 = -Infinity, wMax = 0;
+    for (const q of hull) { x1 = Math.max(x1, q.x); wMax = Math.max(wMax, Math.abs(q.y)); }
+    let x = x1;
+    while (x > 0 && outlineHalfWidth([hull], x) < RETRO_AT*wMax) x -= .01;
+    t.retro = { x, y: outlineHalfWidth([hull], x), s: .6*JETS[key][0][2] };
 }
 
 // nose cone and bands in the trim color
