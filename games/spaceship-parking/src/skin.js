@@ -285,6 +285,10 @@ function drawGrain(alpha)
     mainContext.restore();
 }
 
+// parallax: how fast a star scrolls, as a share of the world's speed. The smallest stars are the farthest and
+// scroll at 15%, the biggest at 100% (with the ships); flares sit in the middle
+function starDepth(p) { return p.flare ? .6 : .15 + .85*clamp((p.d - .5)/.9, 0, 1); }
+
 drawWater = function()
 {
     const v = VIEW_RECT, o = vec2(v.x0, v.y0);
@@ -298,14 +302,19 @@ drawWater = function()
             const fade = clamp((g - .3)/.4, 0, 1) * clamp((3 - g)/1.5, 0, 1);
             // spacing follows the zoom, but size only half as much, so stars never shrink to specks
             const tw = 40*s, th = 22*s, ds = s*Math.sqrt(.7/g);
-            for (let tx = Math.floor(v.x0/tw); tx*tw < v.x1; tx++)
-            for (let ty = Math.floor(v.y0/th); ty*th < v.y1; ty++)
             for (const p of STARS)
             {
-                const x = tx*tw + p.x*s, y = ty*th + p.y*s, d = (p.flare ? FLARE_SIZE : p.d)*ds;
+            // parallax (trial, level `parallax`): each star's tiling is shifted along with the camera, so it scrolls
+            // at starDepth(p) of the world's speed
+            const sx = level?.parallax ? cam.pos.x*(1 - starDepth(p)) : 0, sy = level?.parallax ? cam.pos.y*(1 - starDepth(p)) : 0;
+            for (let tx = Math.floor((v.x0 - sx)/tw); tx*tw + sx < v.x1; tx++)
+            for (let ty = Math.floor((v.y0 - sy)/th); ty*th + sy < v.y1; ty++)
+            {
+                const x = tx*tw + p.x*s + sx, y = ty*th + p.y*s + sy, d = (p.flare ? FLARE_SIZE : p.d)*ds;
                 if (x < v.x0 - d || x > v.x1 + d || y < v.y0 - d || y > v.y1 + d) continue;
                 ctx.globalAlpha = fade*(p.flare ? .6 + .4*Math.sin(time*1.1 + p.ph) : .7 + .3*Math.sin(time*1.5 + p.ph));
                 ctx.drawImage(p.flare ? STAR_FLARE : p.gold ? STAR_GOLD : STAR_DOT, x - o.x - d/2, y - o.y - d/2, d, d);
+            }
             }
         }
     });
