@@ -1,8 +1,8 @@
-# Starship Parking — game brief
+# Spaceship Parking — game brief
 
 > Park an escape pod, then a space liner right next to it, while the camera zooms out like crazy. Ships from 2.4 m to 400 m share one patch of sky, drawn like a 1960s space-age poster.
 
-![How Starship Parking plays](mechanic.svg)
+![How Spaceship Parking plays](mechanic.svg)
 
 **Rank:** Prototype
 **Genre:** Physics parking puzzle
@@ -21,14 +21,14 @@ Forked from Park My Boat on 2026-11-06 (commit `40a0e9c`). It began as a secret 
 - Now that the code is its own, space-only changes can go straight into `src/` instead of being patched from `skin.js`. When you add a boat type, give it a space deck in `SHIP_DECO`, a name in `SHIP_NAMES`, jets in `JETS` and its collision outline in `shipHitShapes`.
 - **Hitboxes:** every ship collides where it is drawn. `skin.js` rebuilds each type's collision circles from its poster outline (`shipHitShapes`: body, fins, boosters, wings, the sail, the drill and claws; canards, engine bells and flames stay decoration) with `coverCircles`: a row along the keel fitted to the body, then a few circles per fin or booster, mirrored across the keel. `hitL`/`hitW` (the outline's extent) size the slips when they are bigger than the type's `L`/`W`. Load `index.html?hitbox` to see every collision circle in red.
 - `src/space.js`, loaded after `skin.js`, adds the space-only mechanics (main.js calls it at a few hooks): space stations, slips that move with them, the docking beam, gravity, side thrusters and landing pads (see Levels after the fork).
-- Save key: `cm_starship-parking_save`.
+- Save key: `cm_spaceship-parking_save`.
 - Fonts: Righteous, bundled in `fonts/` with its OFL license, declared in `index.html`.
 
 ## Look
-1960s space-age poster: flat rounded shapes with a soft shaded edge in teal, mustard, brick and cream on a near-black navy sky (#07091C), glowing stars with four-point flares in zoom octaves 10x apart, film grain over everything, Righteous type. The title screen reads "Starship" over a big "Parking". Its look must stay unlike the team's other games (Night Neon was dropped for matching Orbit Hop).
+1960s space-age poster: flat rounded shapes with a soft shaded edge in teal, mustard, brick and cream on a near-black navy sky (#07091C), glowing stars with four-point flares in zoom octaves 10x apart, film grain over everything, Righteous type. The title screen reads "Spaceship" over a big "Parking". Its look must stay unlike the team's other games (Night Neon was dropped for matching Orbit Hop).
 
 ## Export for people outside the team
-`node tools/export.mjs [outDir]` (default `~/Desktop/starship-parking`, plus a `.zip`) writes a standalone copy that opens from disk: one flat folder, every comment stripped from the game code, the save key and the harbor title renamed, analytics logging silenced. It fails if anything naming the team, Park My Boat or its author is left (`FORBIDDEN`). The engine keeps its MIT header and the font its OFL file, as their licenses require. If you add a string that names Park My Boat, add it to `REWRITES`. The public copy is on Netlify (site `luminous-cassata-2dd71b`); update it by dragging the exported folder onto that site's Deploys tab, which keeps the URL.
+`node tools/export.mjs [outDir]` (default `~/Desktop/spaceship-parking`, plus a `.zip`) writes a standalone copy that opens from disk: one flat folder, every comment stripped from the game code, the save key and the harbor title renamed, analytics logging silenced. It fails if anything naming the team, Park My Boat or its author is left (`FORBIDDEN`). The engine keeps its MIT header and the font its OFL file, as their licenses require. If you add a string that names Park My Boat, add it to `REWRITES`. The public copy is on Netlify (site `luminous-cassata-2dd71b`); update it by dragging the exported folder onto that site's Deploys tab, which keeps the URL.
 
 ## Levels after the fork
 The crowded levels (Open Space, Docking Ring) are set inside a station's docking bay instead of open space: `bay()` in `levels/levels.js` walls the bay in with the station's main hull (docks drawn as modules, so hitting it costs money), adds spur modules in the bay's empty corners, and draws more of the station reaching out beyond the hull (none below the bay, where the pick hint is written). The hull replaces the invisible walls these levels had, and stands at least 4 m clear of every slip.

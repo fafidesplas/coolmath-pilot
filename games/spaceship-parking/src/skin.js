@@ -1,5 +1,5 @@
 'use strict';
-// Starship Parking: the space look, in a 1960s space-age poster style (flat rounded shapes with a soft
+// Spaceship Parking: the space look, in a 1960s space-age poster style (flat rounded shapes with a soft
 // shaded edge, teal, mustard, brick and cream on near-black navy, glowing stars with four-point flares, film grain,
 // Righteous type). Loaded last by index.html, after the game code in src/ (forked from Park My Boat's harbor game).
 // It repaints that code: a poster painter replaces the Toybox one, so every deck drawing turns flat and shaded with
@@ -1314,7 +1314,7 @@ drawTitle = function()
         drawBoat(b);
     });
     const bob = Math.sin(time*2)*.2;
-    harborTxt('Starship', 20, 17.3 + bob, 1.9, P_MUSTARD);
+    harborTxt('Spaceship', 20, 17.3 + bob, 1.9, P_MUSTARD);
     harborTxt('Parking', 20.25, 14.4 + bob, 3.6, P_BRICK);
     harborTxt('Parking', 20, 14.7 + bob, 3.6, P_CREAM);
 };

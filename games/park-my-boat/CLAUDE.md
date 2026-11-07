@@ -77,7 +77,7 @@ Not built and not in v1 scope. Two-player local modes on one keyboard, for the G
 - **Check:** `await boatEditor.selfTest()` in the console (over HTTP) writes every boat out in full and checks it loads back to the same numbers and shapes.
 
 ## Space spin-off
-The space skin that lived in `space/` is now its own game, **Starship Parking**, in `../starship-parking/` (forked on 2026-11-06 at commit `40a0e9c`, export script included). Changes here no longer reach it; copy a fix over by hand if it should have it.
+The space skin that lived in `space/` is now its own game, **Spaceship Parking**, in `../spaceship-parking/` (forked on 2026-11-06 at commit `40a0e9c`, export script included). Changes here no longer reach it; copy a fix over by hand if it should have it.
 
 ## Controls
 - Mouse: hold anywhere on the water and the boat steers toward the cursor; it backs up if the cursor is behind it. Farther cursor = more throttle. Let go to stop and park.

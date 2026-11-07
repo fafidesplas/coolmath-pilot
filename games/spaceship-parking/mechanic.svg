@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 480 270" width="480" height="270">
-  <!-- Starship Parking: an escape pod curves across space with its thruster lit, stops in a slip between two docking
+  <!-- Spaceship Parking: an escape pod curves across space with its thruster lit, stops in a slip between two docking
        arms of a station, the resting ring fills, then DOCKED! and three stars. Loop 6 s. Poster colors from src/skin.js. -->
   <defs>
     <radialGradient id="glow">

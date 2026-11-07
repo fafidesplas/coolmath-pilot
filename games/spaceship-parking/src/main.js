@@ -6,7 +6,7 @@
 const UI_SIZE = vec2(40, 22.5);
 const UI_CENTER = UI_SIZE.scale(.5);
 const PLAY_TOP = 21;                  // HUD bar above this line (UI units)
-const SAVE_KEY = 'cm_starship-parking_save';
+const SAVE_KEY = 'cm_spaceship-parking_save';
 const SUBSTEPS = 2;
 // slowdown: how many times slower a boat reacts than its toy version (speeding up, turning, stopping).
 // A boat k times bigger is k^SLOWDOWN_CURVE times slower, but never more than MAX_SLOWDOWN, so big
@@ -983,7 +983,7 @@ function stepWorld()
 }
 
 // Foam streaks along both sides of a moving boat, like tire tracks: each side lays a trail of points
-// that drift outward and fade. Sliding sideways piles foam and spray on the side pushing the water.
+// that drift outward and fade. Sliding sideways piles foam on the side pushing the water.
 const FOAM_EVERY = .035, FOAM_LIFE = 2.2;
 function emitFoam(b)
 {
@@ -1005,14 +1005,6 @@ function emitFoam(b)
         const n = vec2(-f.y*s, f.x*s), out = sp*(.12 + (leading ? slide*.18 : 0));
         b.trails[s].push({ pos:b.toWorld(-L*.18, s*W*.5), vel:n.scale(out), n, t:0,
             w:W*.16*(.5 + a)*rand(.75, 1.25), a });
-        // spray flung off the side when sliding hard
-        if (leading && slide > .35 && rand() < slide)
-            for (let i = rand(1, 3)|0; i--;)
-            {
-                const v = n.scale(sp*rand(.3, .8)).add(vec2(rx, ry).scale(rand(.2, .6)));
-                drops.push({ pos:b.toWorld(rand(-L*.4, L*.2), s*W*.55), vel:v, t:0, life:rand(.4, .9),
-                    size:W*rand(.06, .14), color:C_CREAM.scale(1, .8) });
-            }
     }
 }
 
