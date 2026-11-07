@@ -161,7 +161,7 @@ const SHIP_NAMES =
 {
     jetski:'Rocket Scooter', dinghy:'Escape Pod', swan:'Flying Saucer', speedboat:'Zoomer', minisub:'Stealth Pod',
     sailboat:'Solar Sailer', trawler:'Asteroid Miner', yacht:'Star Yacht', sub:'Stealth Cruiser', cruise:'Space Liner',
-    container:'Cargo Hauler', island:'Asteroid', continent:'The Moon',
+    container:'Classic Frigate', island:'Asteroid', continent:'The Moon',
 };
 const SHIP_COLORS =
 {
@@ -493,7 +493,7 @@ if (BOATS.swan)
     t.deckPts = t.hullPts.map(p => vec2(p.x*.74, p.y*.68));
 }
 
-// the cargo hauler is a moon rocket: its outline follows the stages
+// the classic frigate is a moon rocket: its outline follows the stages
 const ROCKET_BODY = [[-4.6, .62], [1.75, .62], [2.25, .43], [3.5, .43], [3.5, -.43], [2.25, -.43], [1.75, -.62], [-4.6, -.62]];
 if (BOATS.container)
 {
@@ -638,8 +638,8 @@ for (const key in RK)
 
 const SAIL_PTS = [[1.45, 0], [.15, .78], [-1.15, 0], [.15, -.78]];                              // Solar Sailer's mirror
 const DRILL_PTS = [[1.68, 0], [1.08, .3], [1.08, -.3]];                                        // Asteroid Miner's drill
-const CARGO_FINS = sides([[-3.8, .6], [-4.45, 1.05], [-4.95, 1.05], [-4.6, .6]]);               // Cargo Hauler's fins
-const CARGO_BELLS = [.38, 0, -.38].map(y => [[-4.55, y + .11], [-5.05, y + .2], [-5.05, y - .2], [-4.55, y - .11]]);
+const FRIGATE_FINS = sides([[-3.8, .6], [-4.45, 1.05], [-4.95, 1.05], [-4.6, .6]]);               // Classic Frigate's fins
+const FRIGATE_BELLS = [.38, 0, -.38].map(y => [[-4.55, y + .11], [-5.05, y + .2], [-5.05, y - .2], [-4.55, y - .11]]);
 const toVecs = pts => pts.map(p => p.x === undefined ? vec2(p[0], p[1]) : p);
 
 // the outline each ship collides with: a list of polygons in toy units (x = bow, y = port)
@@ -647,7 +647,7 @@ function shipHitShapes(key)
 {
     const t = BOATS[key], r = RK[key];
     if (key == 'swan') return [t.hullPts];
-    if (key == 'container') return [t.hullPts, ...CARGO_FINS];
+    if (key == 'container') return [t.hullPts, ...FRIGATE_FINS];
     if (!r) return null;
     const shapes = [r.body, ...r.fins, ...(r.boosters || [])];
     if (key == 'sailboat') shapes.push(toVecs(SAIL_PTS));
@@ -960,12 +960,12 @@ const SHIP_DECO =
         d.ellipse(3.72, 0, .95, .5, P_GLASS, true);                                    // bridge dome
         glint(d, 3.9, .1, .32, .1);
     },
-    container(d, t, b)   // Cargo Hauler: a Saturn V-style moon rocket lying on its side (bow = nose)
+    container(d, t, b)   // Classic Frigate: a Saturn V-style moon rocket lying on its side (bow = nose)
     {
         const fin = b ? b.color : t.color;
-        for (const f of CARGO_FINS) d.poly(f, fin, true);                                         // fins
+        for (const f of FRIGATE_FINS) d.poly(f, fin, true);                                         // fins
         for (const s of [1, -1]) d.poly([[-4.1, s*.6], [-4.6, s*.72], [-4.6, s*.6]], P_DEEP);     // engine fairings
-        for (const p of CARGO_BELLS) d.poly(p, P_SLATE, true);                                    // engine bells
+        for (const p of FRIGATE_BELLS) d.poly(p, P_SLATE, true);                                    // engine bells
         d.poly(ROCKET_BODY, P_CREAM, true);                                                       // the stages
         d.rect(-4.05, .31, 1.1, .62, P_DEEP);                                                     // first stage roll pattern
         d.rect(-4.05, -.31, 1.1, .62, P_CREAM);
