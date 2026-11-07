@@ -26,6 +26,11 @@ class Body
             area += a;
             radius = Math.max(radius, Math.hypot(c.x, c.y) + c.r);
         }
+        // boxes: extra solid rectangles [x0, y0, x1, y1] in body coordinates (a station's solar wings). They collide
+        // but add no mass or inertia, so only use them on bodies that nothing pushes around.
+        this.boxes = opts.boxes || [];
+        for (const [x0, y0, x1, y1] of this.boxes)
+            radius = Math.max(radius, Math.hypot(Math.max(-x0, x1), Math.max(-y0, y1)));
         // floor keeps tiny round things (ducks, buoys) from spinning wildly; boats scale it with their size
         this.inertia = Math.max(.05 * (opts.inertiaScale ?? 1), inertia * mass / area);
         this.invInertia = 1/this.inertia;
@@ -168,8 +173,47 @@ function collideBodies(A, B, onHit)
         const impact = resolveContact(A, B, nx, ny, p, ra+rb-d);
         if (impact > best) { best = impact; bestP = p; }
     }
+    for (const [S, C] of [[A, B], [B, A]])
+    {
+        if (!S.boxes.length) continue;
+        const hit = collideBoxes(S, C);
+        if (hit && hit.impact > best) { best = hit.impact; bestP = hit.p; }
+    }
     A.updateWorld(); B.updateWorld();
     if (best && onHit) onHit(A, B, best, bestP);
+}
+
+// the circles of body C against the boxes of body S, each box tested in S's own coordinates
+function collideBoxes(S, C)
+{
+    let best = 0, bestP;
+    for (let i = 0; i < C.circles.length; i++)
+    for (const [x0, y0, x1, y1] of S.boxes)
+    {
+        const cs = Math.cos(S.angle), sn = Math.sin(S.angle), r = C.circles[i].r, w = C.world[i];
+        const dx = w.x - S.pos.x, dy = w.y - S.pos.y, lx = dx*cs + dy*sn, ly = -dx*sn + dy*cs;
+        if (lx < x0 - r || lx > x1 + r || ly < y0 - r || ly > y1 + r) continue;
+        const qx = clamp(lx, x0, x1), qy = clamp(ly, y0, y1);
+        let nx = lx - qx, ny = ly - qy, d = Math.hypot(nx, ny), pen;
+        if (d > 1e-5)
+        {
+            if (d >= r) continue;
+            nx /= d; ny /= d; pen = r - d;
+        }
+        else
+        {
+            // center inside: push out the shortest way
+            const opts = [[lx-x0,-1,0],[x1-lx,1,0],[ly-y0,0,-1],[y1-ly,0,1]];
+            opts.sort((a,b)=>a[0]-b[0]);
+            nx = opts[0][1]; ny = opts[0][2]; pen = opts[0][0] + r;
+        }
+        // back to world: the normal points from the box out to the circle, the contact is on the box's surface
+        const wx = nx*cs - ny*sn, wy = nx*sn + ny*cs, p = vec2(w.x - wx*r, w.y - wy*r);
+        const impact = resolveContact(S, C, wx, wy, p, pen);
+        C.updateWorld(); S.updateWorld();
+        if (impact > best) { best = impact; bestP = p; }
+    }
+    return best ? { impact: best, p: bestP } : null;
 }
 
 // Body vs static rectangles {x0,y0,x1,y1} and static circles {x,y,r}

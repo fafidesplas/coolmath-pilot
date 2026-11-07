@@ -313,15 +313,17 @@ const SCALE_LEVELS =
         buoys: [[60, -75, 1.2], [-75, 55, 1.2]],
     },
     {
-        // gravity: land on a pad on a planet, standing up. The pod first, then a space liner on the big pad next door.
+        // gravity: land on a pad on a planet, standing up. Largest first: a space liner on the big pad, then a star yacht
+        // on the pad next door, then the pod on the small pad beside it.
         name: 'Touchdown', gravity: { share: .35 }, land: [],
-        docks: [{ x0: -4, y0: -3, x1: 4, y1: .5, pad: true }, { x0: 45, y0: -12, x1: 145, y1: 1, pad: true }],
+        docks: [{ x0: -4, y0: -3, x1: 4, y1: .5, pad: true }, { x0: 14, y0: -3, x1: 34, y1: .8, pad: true }, { x0: 45, y0: -12, x1: 145, y1: 1, pad: true }],
         lands: [{ x: 0, y: -1200, k: 1200, circles: [[0, 0, 1]], detail: 512 }],
         walls: [{ x0: -1600, y0: -1300, x1: -1500, y1: 1600 }, { x0: 1500, y0: -1300, x1: 1600, y1: 1600 }, { x0: -1600, y0: 1500, x1: 1600, y1: 1600 }],
         boats:
         [
-            { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
             { boat: 'cruise', start: { x: -350, y: 560, a: PI/2 }, slip: { x: 95, bottom: 1, a: PI/2, pad: [.6, .6], fingers: 'none' } },
+            { boat: 'yacht', k: 3.5, start: { x: -100, y: 85, a: PI/2 }, slip: { x: 24, bottom: .8, a: PI/2, pad: [.6, .9], fingers: 'none' } },
+            { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
         ],
     },
     {

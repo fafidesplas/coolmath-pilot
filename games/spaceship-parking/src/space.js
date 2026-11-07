@@ -19,7 +19,8 @@ const BEAM_GROW = .5;                     // the docking beam reaches this many 
 
 // ---------------------------------------------------------------------------
 // the station: an orbital lab after the 2000s ones, top view, in meters. x runs along the module stack (the front
-// port at +x), y along the truss. Parts are rects [x0, y0, x1, y1]; each collides as a row of circles.
+// port at +x), y along the truss. Parts are rects [x0, y0, x1, y1]; each collides as a row of circles, except the solar
+// wings (see wingBoxes).
 
 const STATION =
 {
@@ -48,9 +49,24 @@ function rectCircles([x0, y0, x1, y1])
     return out;
 }
 
+// the solar wings collide as solid rectangles, one per pair of wings on each side of the truss, reaching in to the
+// truss: as rows of circles their scalloped edges, the slot between the two wings of a pair and the slot between the
+// wings and the truss caught the Escape Pod. The drawing is unchanged.
+function wingBoxes()
+{
+    const groups = {}, [tx0, , tx1] = STATION.truss[0];
+    for (const [x0, y0, x1, y1] of STATION.wings)
+    {
+        const g = groups[Math.sign(x0 + x1) + ',' + Math.sign(y0 + y1)] ||= [x0, y0, x1, y1];
+        g[0] = Math.min(g[0], x0); g[1] = Math.min(g[1], y0); g[2] = Math.max(g[2], x1); g[3] = Math.max(g[3], y1);
+    }
+    for (const g of Object.values(groups)) if (g[0] > 0) g[0] = tx1; else g[2] = tx0;
+    return Object.values(groups);
+}
+
 function stationCircles()
 {
-    const S = STATION, rects = [...S.truss, ...S.wings, ...S.radiators,
+    const S = STATION, rects = [...S.truss, ...S.radiators,
         ...S.stack.map(([a, b, r]) => [a, -r, b, r]),
         ...S.side.map(([x, a, b, r]) => [x - r, Math.min(a, b), x + r, Math.max(a, b)])];
     return [...rects.flatMap(rectCircles), ...S.ports.map(([x, y, f]) => ({ x: x + Math.cos(f)*.3, y: y + Math.sin(f)*.3, r: 1.3 }))];
@@ -61,7 +77,7 @@ let stations = [];
 // level.station: { x, y: center of its drift circle, a: heading at the start, spin: rad/s, drift: { r: m, period: s, phase } }
 function stationLoad(def)
 {
-    const b = new Body(vec2(def.x, def.y), def.a || 0, stationCircles(), 1, { kind: 'station', dragF: 0, dragS: 0, dragA: 0, restitution: .3 });
+    const b = new Body(vec2(def.x, def.y), def.a || 0, stationCircles(), 1, { kind: 'station', dragF: 0, dragS: 0, dragA: 0, restitution: .3, boxes: wingBoxes() });
     b.invMass = b.invInertia = 0;           // nothing pushes it around
     b.mass = 1e12;
     b.def = def; b.t = 0;

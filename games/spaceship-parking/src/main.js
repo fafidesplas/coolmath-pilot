@@ -987,6 +987,7 @@ function stepWorld()
 const FOAM_EVERY = .035, FOAM_LIFE = 2.2;
 function emitFoam(b)
 {
+    if (!b.invMass) return;           // held in place (landed, docked to a station): no trail, and top speed below would be 0
     if ((b.foamT = (b.foamT || 0) - timeDelta) > 0) return;
     b.foamT = FOAM_EVERY;
     const c = currentAt(b.pos), f = b.forward();
@@ -1322,7 +1323,7 @@ function drawBodies()
     if (level?.jam && player && deep(player)) drawJamSelection(true);
 }
 
-// debug: ?hitbox in the URL outlines every collision circle
+// debug: ?hitbox in the URL outlines every collision circle and box
 const SHOW_HITBOX = new URLSearchParams(location.search).has('hitbox');
 function drawHitboxes()
 {
@@ -1331,6 +1332,8 @@ function drawHitboxes()
         if (!inView(b.pos, b.radius)) continue;
         for (let i = 0; i < b.circles.length; i++)
             drawCircle(b.world[i], b.circles[i].r*2, rgb(1, .2, .3, .18), Math.min(.06*WU, b.circles[i].r*.2), rgb(1, .3, .4, .9));
+        for (const [x0, y0, x1, y1] of b.boxes)
+            drawPoly([b.toWorld(x0, y0), b.toWorld(x1, y0), b.toWorld(x1, y1), b.toWorld(x0, y1)], rgb(1, .2, .3, .18), .06*WU, rgb(1, .3, .4, .9));
     }
 }
 
