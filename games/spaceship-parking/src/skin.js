@@ -396,8 +396,7 @@ function shipThrottle(b)
 function drawJets(b, d)
 {
     const jets = JETS[b.type.key], thr = shipThrottle(b);
-    if (!jets || !thr) return;
-    if (thr > 0)
+    if (jets && thr > 0)
     {
         for (const [x, y, s] of jets)
         {
@@ -408,39 +407,51 @@ function drawJets(b, d)
             d.flame(drop(s*.55, len*.6), P_MUSTARD);
         }
     }
-    else
+    // the retro thrusters on both sides of the nose fire forward and out: both while reversing (the main engine is off),
+    // one while turning (retroFire)
+    const r = b.type.retro;
+    if (!r) return;
+    for (const m of [1, -1])
     {
-        // reversing: the main engine is off; the retro thrusters on both sides of the nose fire forward and out
-        const r = b.type.retro;
-        if (!r) return;
-        const flick = 1.5 + .5*Math.sin(time*43 + b.id*3), len = r.s*flick*(.6 - thr)*1.3;
-        for (const m of [1, -1])
-        {
-            const dx = RETRO_DIR.x, dy = m*RETRO_DIR.y, x = r.x, y = m*r.y;
-            // the same teardrop of flame as the main engine, pointing along (dx, dy)
-            const drop = (w, l) => [[x - dx*.03 - dy*w/2, y - dy*.03 + dx*w/2], [x + dx*l*.45 - dy*w*.42, y + dy*l*.45 + dx*w*.42],
-                [x + dx*l, y + dy*l], [x + dx*l*.45 + dy*w*.42, y + dy*l*.45 - dx*w*.42], [x - dx*.03 + dy*w/2, y - dy*.03 - dx*w/2]];
-            d.flame(drop(r.s, len), P_BRICK);
-            d.flame(drop(r.s*.55, len*.6), P_MUSTARD);
-        }
+        const fire = retroFire(b, m);
+        if (!fire) continue;
+        const flick = 1.5 + .5*Math.sin(time*43 + b.id*3 + m), len = r.s*flick*(.6 + fire)*1.3;
+        const dx = RETRO_DIR.x, dy = m*RETRO_DIR.y, x = r.x, y = m*r.y;
+        // the same teardrop of flame as the main engine, pointing along (dx, dy)
+        const drop = (w, l) => [[x - dx*.03 - dy*w/2, y - dy*.03 + dx*w/2], [x + dx*l*.45 - dy*w*.42, y + dy*l*.45 + dx*w*.42],
+            [x + dx*l, y + dy*l], [x + dx*l*.45 + dy*w*.42, y + dy*l*.45 - dx*w*.42], [x - dx*.03 + dy*w/2, y - dy*.03 - dx*w/2]];
+        d.flame(drop(r.s, len), P_BRICK);
+        d.flame(drop(r.s*.55, len*.6), P_MUSTARD);
     }
 }
 
-// exhaust puffs, called every frame for the player (main.js, jam.js): from the stern while it runs forward, from the
-// retro ports while it reverses (they drift away ahead of the ship as it backs off), none while it backs up coasting
+// how hard the retro thruster on side m (1 port, -1 starboard) fires, 0-1: both fire while reversing; turning fires
+// the one on the outside of the turn, which pushes the nose round (turning left fires the starboard one). Only the
+// ship you drive turns this way (others keep the rudder they had when you left them).
+const RETRO_TURN = .7, RETRO_TURN_MIN = .15;      // a turn's flame, as a share of a full reverse; smallest rudder that fires
+function retroFire(b, m)
+{
+    const thr = shipThrottle(b), rud = b == player ? b.rudder || 0 : 0;
+    const turn = Math.abs(rud) > RETRO_TURN_MIN && Math.sign(rud) == -m ? Math.abs(rud)*RETRO_TURN : 0;
+    return Math.max(thr < 0 ? -thr : 0, turn);
+}
+
+// exhaust puffs, called every frame for the player (main.js, jam.js): from the stern while it runs forward, from each
+// retro port while it fires (they drift away ahead of the ship), none while it backs up coasting
 let puffTimer = 0;
 function puffExhaust(b, dt)
 {
     if ((puffTimer -= dt) > 0) return;
-    const t = b.type, f = b.forward(), vf = b.vel.x*f.x + b.vel.y*f.y;
-    if (b.throttle < 0 && t.retro)
-    {
-        puffTimer = .07;
-        const r = t.retro, out = r.s*1.6;
+    const t = b.type, r = t.retro, f = b.forward(), vf = b.vel.x*f.x + b.vel.y*f.y;
+    if (r)
         for (const m of [1, -1])
-            wakes.push({ pos: b.toWorld(r.x + RETRO_DIR.x*out, m*(r.y + RETRO_DIR.y*out)), t: 0, size: r.s*1.4*b.k });
-    }
-    else if (b.throttle >= 0 && vf > .7*b.vs)
+        {
+            const fire = retroFire(b, m), out = r.s*1.6;
+            if (!fire) continue;
+            puffTimer = .07;
+            wakes.push({ pos: b.toWorld(r.x + RETRO_DIR.x*out, m*(r.y + RETRO_DIR.y*out)), t: 0, size: r.s*(.7 + .7*fire)*b.k });
+        }
+    if (b.throttle >= 0 && vf > .7*b.vs)
     {
         puffTimer = .07;
         wakes.push({ pos: b.toWorld(-t.L/2*b.k, 0), t: 0, size: t.W*.7*b.k });

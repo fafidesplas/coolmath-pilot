@@ -1,3 +1,8 @@
+## 2026-11-07 — Turning fires a retro thruster
+- Turning fires the retro thruster on the outside of the turn, the one that pushes the nose round: left fires the starboard (right) one, right fires the port one, at 70% of a full reverse flame, with its own smoke puffs. Reversing still fires both. Only the ship you drive does this (`retroFire` in `src/skin.js`; `RETRO_TURN`, `RETRO_TURN_MIN` for the flame size and the smallest mouse turn that fires it).
+- Checked headless on the Escape Pod: A lights the right thruster, D the left one. No errors.
+- The thruster is only a look: in the levels without gravity a ship still needs speed to turn, so a ship sitting still shows the flame without turning.
+
 ## 2026-11-07 — Selection rim round the whole ship
 - The cream rim round the ship you drive in the crowded levels now goes round its whole outline (fins, boosters, sail, drill), not only the body, and is half as thick at 80% opacity (`SELECT_W`, `SELECT_ALPHA`, `drawJamSelection` in `src/skin.js`). All the shapes are stroked as one path, so there are no darker spots where they meet. Over a cloaked ship the rim is cut to the outside of the outline, so no lines cross the ship.
 - Checked headless in Open Space: Star Yacht, Solar Sailer and a cloaked Stealth Pod. No errors.
