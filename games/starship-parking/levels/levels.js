@@ -52,6 +52,30 @@ function harborIsland()
 }
 const HARBOR_ISLAND = harborIsland();
 
+// a docking bay inside a station: the inner box [x0, y0, x1, y1] walled by the station's main hull, t thick, plus spur
+// modules [x0, y0, x1, y1] (one end in a wall) so it reads as a network of modules. Outside the hull, modules reach out
+// from the top and side walls at a third and two thirds of their length, a crossbar module at each end: the rest of the
+// station, out of the ships' reach (none below, where the pick hint is written). The hull strips overlap at the corners.
+function bay(x0, y0, x1, y1, t, spurs = [])
+{
+    const out = [], arm = 16, w = t*.75, bar = 14;
+    for (const f of [1/3, 2/3])
+    {
+        const x = x0 + (x1 - x0)*f, y = y0 + (y1 - y0)*f;
+        out.push({ x0: x - w/2, y0: y1 + t, x1: x + w/2, y1: y1 + t + arm }, { x0: x - bar/2, y0: y1 + t + arm, x1: x + bar/2, y1: y1 + t + arm + w });
+        out.push({ x0: x1 + t, y0: y - w/2, x1: x1 + t + arm, y1: y + w/2 }, { x0: x1 + t + arm, y0: y - bar/2, x1: x1 + t + arm + w, y1: y + bar/2 });
+        out.push({ x0: x0 - t - arm, y0: y - w/2, x1: x0 - t, y1: y + w/2 }, { x0: x0 - t - arm - w, y0: y - bar/2, x1: x0 - t - arm, y1: y + bar/2 });
+    }
+    return [
+        ...out,
+        { x0: x0 - t, y0: y0 - t, x1: x1 + t, y1: y0, quay: true },
+        { x0: x0 - t, y0: y1, x1: x1 + t, y1: y1 + t, quay: true },
+        { x0: x0 - t, y0: y0 - .5, x1: x0, y1: y1 + .5, quay: true },
+        { x0: x1, y0: y0 - .5, x1: x1 + t, y1: y1 + .5, quay: true },
+        ...spurs.map(([a, b, c, d]) => ({ x0: a, y0: b, x1: c, y1: d })),
+    ];
+}
+
 // a boat at real size tied up nose-in under a pier edge
 function tiedUp(boat, x, top) { const t = BOATS[boat]; return { boat, x, y: top - t.L*t.k/2 - .35*t.k, a: PI/2 }; }
 
@@ -193,11 +217,11 @@ const SCALE_LEVELS =
         ],
     },
     {
-        // jam in open water: no walls, the way out is all round. A nested box rafted up 0.6-0.7 m apart,
-        // too tight to steer: the trawler and container ship go first, then the side sailboats, the cross
-        // sailboats, the rowboats, and the swan in the middle.
-        name: 'Open Water', jam: true, view: [-24, -7, 84, 52], boats: [], land: [], docks: [],
-        walls: [{ x0: -108, y0: -91, x1: -78, y1: 136 }, { x0: 138, y0: -91, x1: 168, y1: 136 }, { x0: -108, y0: -91, x1: 168, y1: -61 }, { x0: -108, y0: 106, x1: 168, y1: 136 }],  // closes the sea round the view; delete one to open that side
+        // jam in a station's docking bay: the way out is all round, the hull walls the bay in and spur modules fill its
+        // empty corners. A nested box rafted up 0.6-0.7 m apart, too tight to steer: the trawler and container ship go
+        // first, then the side sailboats, the cross sailboats, the rowboats, and the swan in the middle.
+        name: 'Open Water', jam: true, view: [-15, -15, 92, 57], boats: [], land: [],
+        docks: bay(-9, -10, 86, 51, 4.5, [[-9, 28, 2, 31], [34, 44, 37, 51], [57, -10, 60, -1], [67, 8, 86, 11]]),
         moored:
         [
             { boat: 'trawler', x: 30, y: 31.8, a: 0, slip: { x: 63.2, y: 32, a: 0, pad: [1, .8], fingers: 'none' } },
@@ -251,10 +275,10 @@ const SCALE_LEVELS =
         ],
     },
     {
-        // jam in open water, turned 45 degrees: a jet ski in the middle of swans, speedboats,
+        // jam in a station's docking bay, turned 45 degrees: a jet ski in the middle of swans, speedboats,
         // a 20 m yacht and the trawler, with small boats pinning the outer pair's ends. 6 rounds.
-        name: 'Raft-Up', jam: true, view: [-5, 3, 73, 57], boats: [], land: [], docks: [],
-        walls: [{ x0: -74, y0: -66, x1: -44, y1: 126 }, { x0: 112, y0: -66, x1: 142, y1: 126 }, { x0: -74, y0: -66, x1: 142, y1: -36 }, { x0: -74, y0: 96, x1: 142, y1: 126 }],  // closes the sea round the view; delete one to open that side
+        name: 'Raft-Up', jam: true, view: [-8, -6, 84, 66], boats: [], land: [],
+        docks: bay(-1, -1, 78, 61, 4.5, [[-1, 10, 8, 13], [63, -1, 66, 6]]),
         moored:
         [
             { boat: 'jetski', x: 32.00, y: 32.00, a: PI/4, slip: { x: 16.7, y: 39.95, a: 0, pad: [1, .8], fingers: 'none' } },
