@@ -1,3 +1,7 @@
+## 2026-11-07 — Selection rim round the whole ship
+- The cream rim round the ship you drive in the crowded levels now goes round its whole outline (fins, boosters, sail, drill), not only the body, and is half as thick at 80% opacity (`SELECT_W`, `SELECT_ALPHA`, `drawJamSelection` in `src/skin.js`). All the shapes are stroked as one path, so there are no darker spots where they meet. Over a cloaked ship the rim is cut to the outside of the outline, so no lines cross the ship.
+- Checked headless in Open Space: Star Yacht, Solar Sailer and a cloaked Stealth Pod. No errors.
+
 ## 2026-11-07 — Cargo Hauler renamed Classic Frigate
 - The Saturn V-style ship (`container`) is now called Classic Frigate (`SHIP_NAMES` in `src/skin.js`).
 

@@ -745,6 +745,7 @@ for (const key in BOATS)
     t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
     t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
     t.trailW = 2*outlineHalfWidth(shapes, -TRAIL_AT*t.L);
+    t.selShapes = shapes;                       // the selection rim goes round all of them (drawJamSelection)
 }
 
 // Retro thrusters: a port on each side of the nose, where the hull has narrowed to RETRO_AT of its widest, firing forward
@@ -1239,14 +1240,46 @@ drawAnchorRope = function()
     posterSegs(bow, [[vec2(), anchor.pos.subtract(bow)]], P_CREAM, Math.min(.07*WU, .07*k));
 };
 
-// the ship you drive in a crowded harbor: a cream rim round its hull (under the ship; over a cloaked one, just a line)
+// the ship you drive in a crowded harbor: a cream rim round its whole outline, fins, boosters and sail included
+// (selShapes), drawn under the ship so only the outer half of the stroke shows. All the shapes go in one path and one
+// stroke, so the rim is see-through evenly with no darker spots where shapes meet. Over a cloaked ship the rim is
+// drawn offscreen with the ship's outline cut out of it, so it still only shows outside the ship.
+const SELECT_W = .17, SELECT_ALPHA = .8;      // stroke width (UI units; half of it shows) and opacity
+let selCanvas;
 drawJamSelection = function(onTop = false)
 {
     const b = player;
     if (!b) return;
-    const P = painter({ ...b, dive: 0 }).P, pts = b.type.hullPts.map(p => P(p.x, p.y));
-    if (onTop) drawPoly(pts, C_CLEAR, .12*cam.wu, P_CREAM.scale(1, .7));
-    else drawPoly(pts, P_CREAM, .34*cam.wu, P_CREAM);
+    const P = painter({ ...b, dive: 0 }).P, o = b.pos;
+    const shapes = (b.type.selShapes || [b.type.hullPts]).map(s => s.map(p => P(p.x, p.y).subtract(o)));
+    const rim = g =>
+    {
+        g.beginPath();
+        for (const s of shapes) { s.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath(); }
+        g.lineJoin = 'round';
+        g.lineWidth = SELECT_W*cam.wu;
+        g.strokeStyle = P_CREAM.scale(1, SELECT_ALPHA).toString();
+        g.stroke();
+    };
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
+    {
+        if (!onTop) return rim(ctx);
+        selCanvas ||= document.createElement('canvas');
+        if (selCanvas.width != ctx.canvas.width || selCanvas.height != ctx.canvas.height)
+            { selCanvas.width = ctx.canvas.width; selCanvas.height = ctx.canvas.height; }
+        const g = selCanvas.getContext('2d');
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.clearRect(0, 0, selCanvas.width, selCanvas.height);
+        g.setTransform(ctx.getTransform());
+        rim(g);
+        g.globalCompositeOperation = 'destination-out';
+        g.fill();
+        g.globalCompositeOperation = 'source-over';
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(selCanvas, 0, 0);
+        ctx.restore();
+    });
 };
 
 // slips: round cream dashes
