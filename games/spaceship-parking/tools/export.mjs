@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.resolve(process.argv[2] || path.join(os.homedir(), 'Desktop', 'spaceship-parking'));
-const SCRIPTS = ['src/physics.js', 'src/boats.js', 'src/render.js', 'levels/levels.js', 'src/jam.js', 'src/main.js', 'src/skin.js', 'src/space.js'];
+const SCRIPTS = ['src/physics.js', 'src/boats.js', 'src/render.js', 'levels/levels.js', 'src/jam.js', 'src/main.js', 'src/skin.js', 'src/space.js', 'src/guide.js'];
 const REWRITES =
 [
     ["'cm_spaceship-parking_save'", "'spaceship-parking_save'"],

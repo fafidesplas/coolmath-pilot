@@ -23,8 +23,8 @@ const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
 const BIG_SHIP_LENGTH = 50;
 const BIG_SHIP_LEEWAY = 1.15;
 // the camera shows this many ship lengths across the screen, the same for every ship, so each one takes up the same
-// share of the screen. Try others with ?shipview=10
-const SHIP_SCREEN = +new URLSearchParams(location.search).get('shipview') || 8;
+// share of the screen. Try others with ?shipview=12
+const SHIP_SCREEN = +new URLSearchParams(location.search).get('shipview') || 16;
 // no anchor: a boat is parked once it rests (under REST_SPEED toy units/s and REST_SPIN rad/s, no input) for
 // REST_TIME seconds with part of its hull in the slip. Below SETTLE_SPEED with no throttle the coast ends:
 // full forward drag and SETTLE_SPIN times the spin drag, so a nearly stopped ship doesn't creep for ages
@@ -1176,7 +1176,10 @@ function gameUpdate()
         }
     }
     if (gameScreen == 'playing' || gameScreen == 'complete')
+    {
         updateCamera(timeDelta);
+        guideUpdate(timeDelta);         // the route to the slip (src/guide.js, loaded after the first frame)
+    }
     else { cam.pos = UI_CENTER.copy(); cam.wu = 1; }
     updateEffects();
 }
@@ -1305,6 +1308,7 @@ function drawBodies()
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
     if (level?.jam) drawJamSlips(); else drawSlip();     // over the finger docks, so its dashed sides show
+    drawGuide();                                          // the route to the slip (src/guide.js)
     if (level?.jam && !(player && deep(player))) drawJamSelection();
     for (const b of bodies)
     {
@@ -1409,7 +1413,8 @@ function drawScaleBar()
     txt(fmtLen(m), x0 + len/2, y + .55, .5, C_INK);
 }
 
-// when the slip is off screen: an arrow at the edge of the play area pointing to it, with the distance
+// when the slip is off screen: an arrow at the edge of the play area pointing where the route to it (src/guide.js)
+// leaves the screen, with how long the route still is (straight at the slip, and the straight distance, without one)
 function drawSlipArrow()
 {
     if (gameScreen != 'playing' || !slip || !player) return;
@@ -1419,14 +1424,14 @@ function drawSlipArrow()
     if (u.x > x0 && u.x < x1 && u.y > y0 && u.y < y1) return;
     // where the line from the view center to the slip leaves the inset box
     // (more room at the top, below the scale bar)
-    const m = 1.6, c = vec2(20, (y0 + y1)/2), d = u.subtract(c);
+    const m = 1.6, c = vec2(20, (y0 + y1)/2), d = (guideExit(x0, y0, x1, y1) || u).subtract(c);
     const t = Math.min((d.x > 0 ? x1 - m - c.x : c.x - x0 - m) / Math.abs(d.x || 1e-9),
                        (d.y > 0 ? y1 - 3.4 - c.y : c.y - y0 - m) / Math.abs(d.y || 1e-9));
     const a = Math.atan2(d.y, d.x), p = c.add(d.scale(t)).add(vec2(Math.cos(a), Math.sin(a)).scale(Math.sin(time*5)*.15));
     const pt = (f, s) => p.add(vec2(Math.cos(a)*f - Math.sin(a)*s, Math.sin(a)*f + Math.cos(a)*s));
     drawPoly([pt(1.1, 0), pt(-.7, .9), pt(-.35, 0), pt(-.7, -.9)], C_SUNNY, .14, C_INK);
     const q = pt(-1.8, 0).subtract(vec2(0, .2));
-    txt(fmtLen(slip.pos.distance(player.pos)), q.x, q.y, .5, C_CREAM, 'center', .1, C_INK);
+    txt(fmtLen(guideLeft() ?? slip.pos.distance(player.pos)), q.x, q.y, .5, C_CREAM, 'center', .1, C_INK);
 }
 
 // the submarine's air: a bar by the DIVE button that flashes when it runs low

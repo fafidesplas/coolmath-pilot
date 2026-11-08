@@ -1,3 +1,11 @@
+## 2026-11-08 — Route guide (A*) and a wider camera
+- Camera: 16 ship lengths across (was 8), still the same for every ship.
+- Route guide (`src/guide.js`, added to `index.html` and the export): a dashed line from the ship to its slip along a way it can fly, found with A* on a grid over the level (walls, docks, sand, landmasses, stations and waiting or parked ships are obstacles, grown by the ship's half width; traffic is not), straightened into a few legs, found again every 0.4 s. The edge arrow now points where the route leaves the screen and shows the route's length instead of the straight distance.
+- Fixes found while testing: an obstacle wholly left of the grid filled the whole grid (`fill` reads a negative end from the back); a bay's mooring posts closed its mouth on the grid, so a lane out of a fingered slip's mouth is kept open, and a failed search tries again with less clearance before falling back to a straight line.
+- `guideUpdate` runs only while a level is on screen: LittleJS's first frame comes before the later script files load.
+- Checked in Chrome: Rest Stop from 11 spots all through the maze, for both ships: a route every time, none through a wall (387 m from the west hangar for the Zoomer, 251 m straight). Every ship of the six other levels, earlier ships parked: a route every time, none through anything (Spin Dock's Star Yacht goes round the station, 248 m vs 201 m straight). Searches take 0 to 3 ms, 7 ms when it retries. No errors.
+- Not checked: flying a level by following the line by hand.
+
 ## 2026-11-08 — Camera a little wider: 8 ship lengths across
 - 5 lengths across was too close. `SHIP_SCREEN` is now 8, still the same for every ship (12.5% of the screen width each; about what most ships had before the change, the big ones see more than they used to).
 - Checked in Chrome: Escape Pod (Spin Dock), Classic Frigate (Heavy Lift) and Zoomer (Rest Stop) each span 12.5% of the screen width; in Rest Stop the whole 20 m corridor shows with room around it.
