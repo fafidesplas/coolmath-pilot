@@ -1,3 +1,8 @@
+## 2026-11-08 — Pivot trial: W ends the swing
+- In `?ground=pivot`, the throttle keys (W/S, arrows) end the swing and hand the ship back to its engine, so it can always take off. Let go of them while still turning on the ground and it swings again. Only the keys do this: mouse steering always throttles a little, so it would never pivot otherwise.
+- Before, the engine did nothing during the swing (the pivot sets the ship's motion directly), though the flame still showed.
+- Checked in Chrome on the Asteroid Miner: halfway up with A, adding W lifts it off (20 m/s up after 1 s); stood up with A still held, W lifts it off. No damage, no errors.
+
 ## 2026-11-08 — Planet types: each landing level has its own gravity
 - Three planet types (`PLANETS` in `levels/levels.js`), each with a pull (a share of each ship's own full thrust, so a ship hovers at that throttle) and a ground color (`ROCK_INKS` in `src/skin.js`). Moon: 17%, grey. Rocky: 35% (as before), brick red. Heavy: 55%, ochre.
 - Touchdown and Pad Towers are rocky, Moon Hop is a moon, Heavy Lift is heavy. `landing()` takes the planet type after the name.

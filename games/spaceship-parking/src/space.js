@@ -254,7 +254,7 @@ function thrusterSpin(b, rudder, throttle)
 // ?ground=boost  while it touches the ground, the side thrusters are strong enough to lift one end against gravity
 //                (still a spin about the center; the contact with the ground turns it into lifting the far end)
 // ?ground=pivot  while it touches the ground, turning swings it round the end touching the ground, at the rate it
-//                turns in the air
+//                turns in the air; the engine does nothing during the swing, and W/S end it
 // No ?ground: as in the other levels. Either way it only acts on the ship you drive, tilted more than GROUND_TILT from
 // upright, when the turn lifts it (toward upright). To drop the trial: remove `groundTrial` and this block.
 const GROUND_TRIAL = new URLSearchParams(location.search).get('ground');
@@ -285,6 +285,9 @@ function groundTurn(dt)
     if (!GROUND_TRIAL || !level?.groundTrial || !level.gravity || !b || b.held || !hasControl()) return;
     const s = Math.sign(b.rudder), pv = b.pivoting;
     if (!s || (pv && pv.s != s)) { b.pivoting = null; if (!s) return; }
+    // pivot: the throttle keys (W/S, arrows) end the swing and hand the ship back to its engine, so it can always take
+    // off; let go of them (still turning) and it swings again. Only the keys: mouse steering always throttles a little.
+    if (GROUND_TRIAL == 'pivot' && keyDirection().y) { b.pivoting = null; return; }
     // pivot: stood up, it stays up while the key is still held (let go and turn again to tilt it)
     if (b.pivoting?.done) { b.angVel = 0; return; }
     if (!b.pivoting)
