@@ -754,6 +754,9 @@ const ARK =
     bells: [.72, 0, -.72].map(y => bell(-4.95, -5.2, y ? .26 : .3, y ? .38 : .44, y)),
 };
 ARK.collarPts = ringPts(ARK.dome.collar).map(p => p.add(vec2(ARK.dome.x, 0)));
+// the collar drawn finely (720 points, within 0.3 m of round at 30 km): it collides as an exact circle, and the Star
+// Yacht parks in a hangar in its rim, where a 24-point ring would sit tens of meters off
+ARK.collarFine = Array.from({ length: 720 }, (_, i) => vec2(ARK.dome.x + Math.cos(i/720*PI*2)*ARK.dome.collar, Math.sin(i/720*PI*2)*ARK.dome.collar));
 // the outline of shapes that together are star-shaped round the origin: along each ray, the farthest point inside one
 function unionOutline(shapes, n = 96)
 {
@@ -772,6 +775,9 @@ if (BOATS.island)
     const t = BOATS.island;
     t.hullPts = unionOutline([ARK.body, ARK.collarPts]);
     t.deckPts = null;
+    // a hangar in the collar's rim on the starboard side, its mouth facing out (see fitHangar in space.js): 36 m deep,
+    // 16 m wide, walls 12 m thick, for a Star Yacht 28 m long (Nesting Dolls)
+    t.hangar = { x: ARK.dome.x, y: -ARK.dome.collar, a: PI/2, depth: .012, w: .00267, wall: .004 };
 }
 
 // the Battle Station (it replaced The Moon): a planet-sized steel sphere with a command spire at the bow and, at the
@@ -784,6 +790,7 @@ const BATTLE =
     block: [[-1.2, 2.35], [-3.75, 2.05], [-3.75, -2.05], [-1.2, -2.35]].map(([x, y]) => vec2(x, y)),
     boosters: [[.78, .56], [1.9, .44], [-.78, .56], [-1.9, .44]].map(([y, r]) => ({ y, r, pts: rocketPts(-4.45, -2.35, r, .3, .1, .82, y) })),
     hatch: PI/2,                 // the launch hatch on the sphere, its angle from the sphere's middle (the top, port side)
+    bay: PI/2 - .076,            // the Ark's bay in the sphere's rim, its angle from the sphere's middle (75 km bowward of the hatch)
 };
 // the sphere is traced finely (360 points): the camera can zoom in on it a long way before the close-up takes over
 // (drawBattleSurface), and a coarse outline would show its corners there. The hull outline uses a coarser one.
@@ -801,6 +808,10 @@ if (BOATS.continent)
     t.hullPts = unionOutline([spherePts(96), BATTLE.spire, BATTLE.block]);
     t.deckPts = null;
     t.ownColor = true;                          // always steel grey, like the battle station walls in Rest Stop
+    // the Ark's bay, cut into the sphere's rim, its mouth facing straight out (see fitHangar in space.js): 42 km deep,
+    // 22 km wide, walls 10 km thick (more than the Ark's collar circle, 6.9 km)
+    const { x: X, r } = BATTLE.sphere, f = BATTLE.bay;
+    t.hangar = { x: X + Math.cos(f)*r, y: Math.sin(f)*r, a: f + PI, depth: .14, w: .0367, wall: .0333 };
 }
 // the Carrier: a 100 m hauler with a hangar you fly into. Seen from above it is a U: a round bow with the bridge, and two
 // long booms with an engine at each end, the open hangar between them, its mouth at the stern. The hangar floor is
@@ -980,6 +991,15 @@ if (BOATS.continent)
     const t = BOATS.continent, { x: X, r } = BATTLE.sphere;
     const rest = coverCircles([BATTLE.block, BATTLE.spire, ...BATTLE.boosters.map(o => o.pts)]);
     t.circles = [{ x: X, y: 0, r }, ...rest.filter(c => Math.hypot(c.x - X, c.y) + c.r > r)].sort((a, b) => b.x - a.x);
+    t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
+    t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
+}
+// the Ark's collar is one circle, exactly as big as drawn (the Star Yacht parks in a hangar in its rim), then the hull
+// (a keel row) and fins, without the circles the collar already covers
+if (BOATS.island)
+{
+    const t = BOATS.island, { x: X, collar: r } = ARK.dome;
+    t.circles = [{ x: X, y: 0, r }, ...coverCircles([ARK.body, ...ARK.fins]).filter(c => Math.hypot(c.x - X, c.y) + c.r > r)].sort((a, b) => b.x - a.x);
     t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
     t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
 }
@@ -1275,8 +1295,9 @@ const SHIP_DECO =
             }
         d.ellipse(4.25, 0, .55, .36, P_GLASS, true);                                    // bridge
         glint(d, 4.33, .07, .2, .08);
-        // the collar the dome sits in, bolted round
-        d.circle(X, 0, collar*2, P_SAND, true);
+        // the collar the dome sits in, bolted round, with the hangar in its rim
+        d.poly(ARK.collarFine, P_SAND, true);
+        drawHangar(d, t.hangar, b?.k || t.k, P_SAND);
         for (let i = 0; i < 20; i++) { const a = i/20*PI*2; d.circle(X + Math.cos(a)*(R + collar)/2, Math.sin(a)*(R + collar)/2, .07, P_DEEP); }
         // the biosphere: a meadow with a lake, a forest, farm fields and a little white town
         d.circle(X, 0, R*2, I.meadow);
@@ -1349,6 +1370,7 @@ const SHIP_DECO =
             d.rect(X + x, y, .8, .42, I.bay, true);
             d.rect(X + x, y - .05, .62, .2, I.glow);
         }
+        drawHangar(d, t.hangar, k, P_DUSK);
         // turrets, their twin barrels aimed ahead
         for (const [x, y] of BATTLE_TURRETS)
         {
@@ -1364,6 +1386,31 @@ const SHIP_DECO =
         glint(d, X - .5, r*.62, r*.7, r*.12);
     },
 };
+
+// a hangar cut into a hull (type.hangar, see fitHangar in space.js), in the ship's painter d at scale k: a dark floor
+// with chevrons pointing in, rows of lights along both walls chasing inward, a lit back wall and a cream lip at the
+// mouth's corners. Skipped when too small to see.
+function drawHangar(d, H, k, hull)
+{
+    if (H.depth*k / WU < .05) return;
+    const c = Math.cos(H.a), s = Math.sin(H.a), w = H.w, D = H.depth;
+    const at = (u, v) => [H.x + u*c - v*s, H.y + u*s + v*c];
+    const quad = (u0, v0, u1, v1) => [at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1)];
+    const line = (u0, v0, u1, v1, lw, col) => { const [a, b] = at(u0, v0), [e, f] = at(u1, v1); d.line(a, b, e, f, lw, col); };
+    d.poly(quad(-.002*D, -w, D, w), P_DEEP);
+    d.poly(quad(0, -w*.62, D, w*.62), raw(P_DEEP.lerp(P_INDIGO, .6)));
+    for (let u = D*.12; u < D*.9; u += D*.22)
+        for (const sd of [1, -1]) line(u, sd*w*.5, u + D*.1, 0, w*.09, raw(P_MUSTARD.scale(1, .45)));
+    const lead = Math.floor(time*6) % 6;
+    for (let i = 0; i < 6; i++)
+        for (const sd of [1, -1])
+        {
+            const [x, y] = at(D*(.08 + .84*i/5), sd*w*.86);
+            d.circle(x, y, w*.14, i == lead ? P_MUSTARD : raw(P_MUSTARD.scale(1, .3)));
+        }
+    d.poly(quad(D*.94, -w, D, w), P_MUSTARD);
+    for (const sd of [1, -1]) d.poly(quad(-.002*D, sd*w, D*.1, sd*w*1.25), P_CREAM);
+}
 
 // The Battle Station from close by: its sphere more than SURFACE_LEN UI units long on screen, so a small ship is flying
 // by it (the escape pod leaving it in Nesting Dolls). Only the sphere's surface is drawn, traced exactly round over the
@@ -1432,6 +1479,18 @@ function drawBattleSurface(b)
             const p = at(b.angle + n*gap/R, R - rim/2), on = Math.sin(time*2 + n*gap*.37) > -.6;
             ctx.fillStyle = (n % 5 == 2 ? P_BRICK : on ? P_MUSTARD : P_ORANGE.lerp(P_DEEP, .5)).toString();
             ctx.beginPath(); ctx.arc(p.x, p.y, rim*.32, 0, PI*2); ctx.fill();
+        }
+        // the Ark's bay (22 km wide, 42 km deep): a dark slot, lit at the back
+        const H = b.type.hangar, ab = b.angle + BATTLE.bay, Bp = at(ab, R), bw = H.w*k, bd = H.depth*k;
+        if (Bp.x > -bd && Bp.x < vw + bd && Bp.y > -bd && Bp.y < vh + bd)
+        {
+            ctx.save();
+            ctx.translate(Bp.x, Bp.y);
+            ctx.rotate(ab - PI/2);
+            ctx.fillStyle = P_CREAM.toString(); ctx.fillRect(-bw*1.25, -bd*.1, bw*2.5, bd*.1);
+            ctx.fillStyle = P_DEEP.toString(); ctx.fillRect(-bw, -bd, bw*2, bd*1.002);
+            ctx.fillStyle = P_MUSTARD.toString(); ctx.fillRect(-bw, -bd, bw*2, bd*.06);
+            ctx.restore();
         }
         // the launch hatch: a dark bay 12 m wide in a cream frame, lit inside
         const ah = b.angle + BATTLE.hatch, Hp = at(ah, R);

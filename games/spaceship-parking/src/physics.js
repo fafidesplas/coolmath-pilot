@@ -159,10 +159,14 @@ function collideBodies(A, B, onHit)
 {
     const dx = B.pos.x - A.pos.x, dy = B.pos.y - A.pos.y, rr = A.radius + B.radius;
     if (dx*dx + dy*dy > rr*rr) return;
+    // a hangar cut into a hull (carve, see fitHangar in space.js): a circle of one body whose middle is in the other's
+    // carve ignores the other's circles; the hangar's walls (boxes) hold it in there instead
+    const inA = B.carve ? A.world.map(p => inCarve(B, p)) : null, inB = A.carve ? B.world.map(p => inCarve(A, p)) : null;
     let best = 0, bestP;
     for (let i = 0; i < A.circles.length; i++)
     for (let k = 0; k < B.circles.length; k++)
     {
+        if (inA?.[i] || inB?.[k]) continue;
         const a = A.world[i], b = B.world[k];
         const ra = A.circles[i].r, rb = B.circles[k].r;
         const ex = b.x - a.x, ey = b.y - a.y, d2 = ex*ex + ey*ey;
@@ -183,35 +187,67 @@ function collideBodies(A, B, onHit)
     if (best && onHit) onHit(A, B, best, bestP);
 }
 
-// the circles of body C against the boxes of body S, each box tested in S's own coordinates
+// A box is [x0, y0, x1, y1] in its body's coordinates, or [x0, y0, x1, y1, ox, oy, a]: in a frame of its own whose
+// origin is (ox, oy) in the body's coordinates, turned by a (a hangar's walls). Its frame in the world: { pos, angle }.
+function boxFrame(S, box)
+{
+    const [, , , , ox = 0, oy = 0, a = 0] = box;
+    return { pos: ox || oy ? S.toWorld(ox, oy) : S.pos, angle: S.angle + a };
+}
+
+// a world point in a box's own frame
+function boxLocal(f, p)
+{
+    const c = Math.cos(f.angle), s = Math.sin(f.angle), dx = p.x - f.pos.x, dy = p.y - f.pos.y;
+    return [dx*c + dy*s, -dx*s + dy*c];
+}
+
+function inCarve(S, p)
+{
+    for (const cv of S.carve)
+    {
+        const [u, v] = boxLocal(boxFrame(S, cv), p);
+        if (u > cv[0] && u < cv[2] && v > cv[1] && v < cv[3]) return true;
+    }
+    return false;
+}
+
+// the circles of body C against the boxes of body S, each box tested in its own frame
 function collideBoxes(S, C)
 {
     let best = 0, bestP;
-    for (let i = 0; i < C.circles.length; i++)
-    for (const [x0, y0, x1, y1] of S.boxes)
+    for (const box of S.boxes)
     {
-        const cs = Math.cos(S.angle), sn = Math.sin(S.angle), r = C.circles[i].r, w = C.world[i];
-        const dx = w.x - S.pos.x, dy = w.y - S.pos.y, lx = dx*cs + dy*sn, ly = -dx*sn + dy*cs;
-        if (lx < x0 - r || lx > x1 + r || ly < y0 - r || ly > y1 + r) continue;
-        const qx = clamp(lx, x0, x1), qy = clamp(ly, y0, y1);
-        let nx = lx - qx, ny = ly - qy, d = Math.hypot(nx, ny), pen;
-        if (d > 1e-5)
+        const [x0, y0, x1, y1] = box, f = boxFrame(S, box), cs = Math.cos(f.angle), sn = Math.sin(f.angle);
+        // a box with its middle in C's hangar (the walls of the Ark's own hangar, the Ark parked in a bay) ignores C's hull
+        const mx = (x0 + x1)/2, my = (y0 + y1)/2;
+        if (C.carve && inCarve(C, vec2(f.pos.x + mx*cs - my*sn, f.pos.y + mx*sn + my*cs))) continue;
+        for (let i = 0; i < C.circles.length; i++)
         {
-            if (d >= r) continue;
-            nx /= d; ny /= d; pen = r - d;
+            const r = C.circles[i].r, w = C.world[i], [lx, ly] = boxLocal(f, w);
+            if (lx < x0 - r || lx > x1 + r || ly < y0 - r || ly > y1 + r) continue;
+            const qx = clamp(lx, x0, x1), qy = clamp(ly, y0, y1);
+            let nx = lx - qx, ny = ly - qy, d = Math.hypot(nx, ny), pen;
+            if (d > 1e-5)
+            {
+                if (d >= r) continue;
+                nx /= d; ny /= d; pen = r - d;
+            }
+            else
+            {
+                // center inside: push out the shortest way
+                const opts = [[lx-x0,-1,0],[x1-lx,1,0],[ly-y0,0,-1],[y1-ly,0,1]];
+                opts.sort((a,b)=>a[0]-b[0]);
+                nx = opts[0][1]; ny = opts[0][2]; pen = opts[0][0] + r;
+            }
+            // back to world: the normal points from the box out to the circle, the contact is on the box's surface
+            const wx = nx*cs - ny*sn, wy = nx*sn + ny*cs, p = vec2(w.x - wx*r, w.y - wy*r);
+            const impact = resolveContact(S, C, wx, wy, p, pen);
+            C.updateWorld(); S.updateWorld();
+            if (impact > best) { best = impact; bestP = p; }
+            // the box's frame moved with S
+            Object.assign(f, boxFrame(S, box));
         }
-        else
-        {
-            // center inside: push out the shortest way
-            const opts = [[lx-x0,-1,0],[x1-lx,1,0],[ly-y0,0,-1],[y1-ly,0,1]];
-            opts.sort((a,b)=>a[0]-b[0]);
-            nx = opts[0][1]; ny = opts[0][2]; pen = opts[0][0] + r;
-        }
-        // back to world: the normal points from the box out to the circle, the contact is on the box's surface
-        const wx = nx*cs - ny*sn, wy = nx*sn + ny*cs, p = vec2(w.x - wx*r, w.y - wy*r);
-        const impact = resolveContact(S, C, wx, wy, p, pen);
-        C.updateWorld(); S.updateWorld();
-        if (impact > best) { best = impact; bestP = p; }
     }
     return best ? { impact: best, p: bestP } : null;
 }

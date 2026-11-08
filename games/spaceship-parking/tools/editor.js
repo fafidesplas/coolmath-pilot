@@ -1411,7 +1411,7 @@ window.pmbEditor = (() =>
             return;
         }
         // whatever was on it stays where it is now
-        def.boats.forEach((e, n) => { if (e.start.on) startOnStation(n, false); if (e.slip.on) slipOnStation(n, false); });
+        def.boats.forEach((e, n) => { if (e.start.on) startOnStation(n, false); if (e.slip.on == 'station') slipOnStation(n, false); });
         delete def.station;
         if (sel?.kind == 'station') sel = null;
     }

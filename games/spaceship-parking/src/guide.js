@@ -48,12 +48,14 @@ function routeWith(b, s, share)
         if (i0 > i1) return;            // off the grid (fill would read a negative end as counted from the back)
         for (let j = j0; j <= j1; j++) blocked.fill(v, j*nx + i0, j*nx + i1 + 1);
     };
-    const markCircle = (x, y, r) =>
+    // skip: cells left open (a hangar cut into the circle's hull)
+    const markCircle = (x, y, r, skip) =>
     {
         const [i0, i1] = span(x - r, x + r, gx0, nx), [j0, j1] = span(y - r, y + r, gy0, ny);
-        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if ((cx(i) - x)**2 + (cy(j) - y)**2 <= r*r) blocked[j*nx + i] = 1;
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++)
+            if ((cx(i) - x)**2 + (cy(j) - y)**2 <= r*r && !skip?.(vec2(cx(i), cy(j)))) blocked[j*nx + i] = 1;
     };
-    // a box [x0, y0, x1, y1] in a body's own coordinates (a station's solar wings), grown by g
+    // a box [x0, y0, x1, y1] in its frame o (boxFrame in physics.js: a station's solar wings, a hangar's walls), grown by g
     const markBox = (o, [x0, y0, x1, y1], g, v = 1, out = 0) =>
     {
         const c = Math.cos(o.angle), sn = Math.sin(o.angle), R = Math.hypot(Math.max(-x0, x1), Math.max(-y0, y1)) + g;
@@ -68,9 +70,10 @@ function routeWith(b, s, share)
     for (const p of posts) markCircle(p.x, p.y, p.r + clear);
     for (const o of bodies)
     {
-        if (o == b || (o.kind != 'station' && (!o.type || o.kind == 'traffic'))) continue;
-        o.circles.forEach((k, n) => markCircle(o.world[n].x, o.world[n].y, k.r + clear));
-        for (const box of o.boxes) markBox(o, box, clear);
+        if (o == b || o.held?.on == b || (o.kind != 'station' && (!o.type || o.kind == 'traffic'))) continue;
+        const skip = o.carve && (p => inCarve(o, p));       // its hangar stays open; its walls close it round
+        o.circles.forEach((k, n) => markCircle(o.world[n].x, o.world[n].y, k.r + clear, skip));
+        for (const box of o.boxes) markBox(boxFrame(o, box), box, clear);
     }
     // the slip itself is always open (its finger docks and pad lie right along it), and so is a lane out of its mouth
     // when it has finger docks: their posts narrow the way in (the open end is behind the heading, see makeSlip)

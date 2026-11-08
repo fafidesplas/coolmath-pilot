@@ -1,3 +1,14 @@
+## 2026-11-08 — Nesting Dolls: the Ark ends the chain
+- Nesting Dolls has a fourth ship. The Star Yacht no longer parks in the Carrier (gone from this level); it flies up into a hangar in the rim of the Ark's collar, the 30 km Ark waiting level 300 m above the station. Then the Ark, the yacht riding inside it, flies 75 km along the surface and parks in a bay cut into the Battle Station's rim.
+- Hangars cut into a hull (`hangar` on a boat type, `fitHangar` in `src/space.js`): the hull's circles ignore anything whose middle is in the hangar (`carve`, checked in `collideBodies`), and three walls hold it in there. Boxes can now have a frame of their own (`boxFrame` in `src/physics.js`), so the walls can lie at any angle. A box with its middle in another ship's hangar ignores that ship's hull. The route guide leaves hangars open.
+- Slips in a chain ship's hangar (`on: 'boat', n`). A ship parked in another rides it, never bumps it, and is drawn over it when the host is the ship you drive. The fleet is now built before the slips.
+- The Ark's collar collides as one exact circle and is drawn with 720 points (within 0.3 m of round), so the hangar's mouth sits where the hull is drawn. Its hitbox went from 22 circles to 16.
+- Bumping a ship you don't drive is priced by the smaller of the two masses: a light touch on the Ark cost billions (the fixed Carrier had the same problem). This also makes it cheaper for a small ship to bump a much bigger parked one in other levels.
+- The editor no longer moves a slip in a ship off a removed station (only `on: 'station'` slips).
+- Checked in Chrome: all four turns by `game.win()` (Complete, 100); the yacht stopped by the hull beside the hangar mouth and slid into the mouth with no damage; the Ark stopped by the rim beside the bay, slid into the bay along a wall with no damage, and stayed put at rest in its slip (it was pushed out before the box fix); the yacht stays in the Ark's hangar while the Ark moves. Spin Dock: the pod still bounces off the solar wings. Editor self-test: 8 levels, 0 problems. The export passes. No console errors.
+- Not checked: flying the whole level by hand (the Ark's turn and the 75 km trip at real throttle), editor test play from boat 3 or 4.
+- Next: play it; tune the Ark's height above the station, the bay's distance and the hangar widths.
+
 ## 2026-11-08 — Nesting Dolls: the station turns slower
 - The station the Escape Pod docks at turned once a minute, too fast for the pod: it now turns once every three minutes (`spin: 2*PI/180`), so its front port moves at about 1.1 m/s with the drift (2.9 m/s before) and the wings sweep by a third as fast. The Star Yacht also leaves it at a third of the speed it had.
 - Checked in Chrome: after the Battle Station parks, the station turns once every 180 s and the front port moves at 1.1 m/s.

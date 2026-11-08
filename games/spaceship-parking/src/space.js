@@ -14,7 +14,9 @@
 // - Landing pads: docks with `pad: true`, drawn as a landing pad.
 // - Nesting (`in: n` on the level's station, a moored boat or a chain boat's start): that part of the level stays out
 //   of it until chain boat n has parked, then appears where boat n really parked (see nestLoad). With slips inside a
-//   moored ship (`on: 'moored'`, a carrier's hangar) a level can nest ships one inside the other.
+//   moored ship (`on: 'moored'`, a carrier's hangar) or in a chain ship's hangar (`on: 'boat'`) a level can nest ships one
+//   inside the other.
+// - Hangars cut into a hull (a boat type's `hangar`, see fitHangar): a slot a smaller ship flies into and parks in.
 
 const STATION_SPIN_DEFAULT = 2*PI/60;     // rad/s: one turn a minute
 const RCS_TURN = 2.2;                     // gravity levels: side thruster spin, times the ship's turn rate (toy units)
@@ -143,6 +145,14 @@ function attachSlip(slip, s)
 {
     // inside a moored ship (on: 'moored', i: its place in the level's moored list, a carrier's hangar): x, y, a are given
     // in the level like any slip's, and kept in the ship's own coordinates from then on, so the slip moves with it
+    // in the hangar of chain boat n (from 1; on: 'boat', see fitHangar): across its middle, lying along it, nose in
+    if (s.on == 'boat')
+    {
+        const host = slip.on = fleet[s.n - 1], H = host.hangar;
+        slip.local = { x: H.x + Math.cos(H.a)*H.depth/2, y: H.y + Math.sin(H.a)*H.depth/2, a: H.a };
+        placeSlip(slip);
+        return slip;
+    }
     if (s.on == 'moored')
     {
         const host = slip.on = mooredBoats[s.i || 0], d = slip.pos.subtract(host.pos), c = Math.cos(host.angle), n = Math.sin(host.angle);
@@ -159,6 +169,22 @@ function attachSlip(slip, s)
     else slip.local = { x: slip.pos.x, y: slip.pos.y, a: s.a };
     placeSlip(slip);
     return slip;
+}
+
+// a hangar cut into a hull: type.hangar = { x, y: the middle of its mouth on the hull's edge, a: the way in, depth, w: half
+// its width, wall: its walls' thickness }, in toy units. The hull's circles stop colliding with whatever has its middle
+// in the hangar or just outside its mouth (b.carve), and three walls (boxes) hold it in there instead. The walls are at
+// least as thick as the biggest circle of the ship that parks there, so a circle in the mouth can't reach the hull
+// beside it without touching a wall first. A slip with on: 'boat' lies in it.
+function fitHangar(b)
+{
+    const t = b.type.hangar, k = b.k, d = t.depth*k, w = t.w*k, T = t.wall*k, out = 2*w, e = .01*w;
+    b.hangar = { x: t.x*k, y: t.y*k, a: t.a, depth: d, w };
+    const f = [t.x*k, t.y*k, t.a];
+    b.boxes = [...b.boxes,
+        [-e, w, d + T, w + T, ...f], [-e, -w - T, d + T, -w, ...f],          // the side walls, from the mouth
+        [d, -w, d + T, w, ...f]];                                           // the back wall
+    b.carve = [[-out, -w, d, w, ...f]];
 }
 
 function placeSlip(slip)

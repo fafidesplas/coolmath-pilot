@@ -145,6 +145,7 @@ function makeBoat(key, pos, angle, kind, color, k=1)
     if (t.sub) { b.o2 = 1; b.dive = 0; b.under = false; b.wantDive = false; b.winded = false; }
     b.dragFull = b.dragF;          // forward drag under power; controlPlayer lowers it while coasting
     b.dragAFull = b.dragA;         // spin drag; controlPlayer raises it while settling
+    if (t.hangar) fitHangar(b);    // a hangar cut into the hull (src/space.js)
     bodies.push(b);
     return b;
 }
@@ -287,9 +288,10 @@ function loadLevel(i)
         if (m.fixed) { b.invMass = b.invInertia = 0; b.mass = 1e12; }
         return b;
     });
-    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
-    slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
+    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there.
+    // The fleet comes before the slips: a slip can lie in a chain boat's hangar
     fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
+    slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
     fleet.forEach((b, n) => { if (L.boats[n].start.on) rideStation(b, L.boats[n].start); });     // waits on the station (src/space.js)
     fleet.forEach((b, n) => { if (L.boats[n].start.ground) groundStart(b); });      // waits standing on the ground (src/space.js)
     nestLoad(L);                          // parts of the level that wait inside a chain boat until it parks (src/space.js)
@@ -539,7 +541,8 @@ function onHit(A, B, impact, p)
     {
         sfx('bonk', p, 1, .8);
         if (other && other.hurtT !== undefined) other.hurtT = .8;
-        if (isPlayer) damages += Math.round(impact * 60 * Math.sqrt(other.mass)) * 5;
+        // priced by the smaller of the two: a ship far bigger than yours (the Ark round the Star Yacht) costs like a wall
+        if (isPlayer) damages += Math.round(impact * 60 * Math.sqrt(Math.min(other.mass, player.mass))) * 5;
     }
     else if (kind == 'log')
     {
@@ -970,7 +973,11 @@ function stepWorld()
         {
             if (bodies[i].asleep) continue;
             for (let k = i+1; k < bodies.length; k++)
-                if (!bodies[k].asleep && !bodies[i].under && !bodies[k].under) collideBodies(bodies[i], bodies[k], onHit);
+            {
+                const A = bodies[i], B = bodies[k];
+                // a ship parked in another (in its hangar, on a station) rides it and never bumps it
+                if (!B.asleep && !A.under && !B.under && A.held?.on != B && B.held?.on != A) collideBodies(A, B, onHit);
+            }
             collideStatics(bodies[i], bodies[i].under ? subRects() : rects, posts, onHit);
         }
     }
@@ -1334,9 +1341,11 @@ function drawBodies()
         else if (b.kind == 'buoy') drawBuoy(b);
         else if (b.kind == 'log') drawLog(b);
     }
-    for (const b of bodies) if (b.type && b != player && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
+    const riding = b => player && b.held?.on == player;       // parked inside the ship you drive (in its hangar)
+    for (const b of bodies) if (b.type && b != player && !riding(b) && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     if (slipInShip) { drawSlip(); drawGuide(); }
     if (player && !deep(player)) drawBoat(player);
+    for (const b of bodies) if (b.type && riding(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     for (const b of bodies) if (deep(b)) drawPeriscope(b);
     if (SHOW_HITBOX) drawHitboxes();
     // a submerged sub hides under boats and docks, but its white outline stays on top so you can still find it
@@ -1352,8 +1361,12 @@ function drawHitboxes()
         if (!inView(b.pos, b.radius)) continue;
         for (let i = 0; i < b.circles.length; i++)
             drawCircle(b.world[i], b.circles[i].r*2, rgb(1, .2, .3, .18), Math.min(.06*WU, b.circles[i].r*.2), rgb(1, .3, .4, .9));
-        for (const [x0, y0, x1, y1] of b.boxes)
-            drawPoly([b.toWorld(x0, y0), b.toWorld(x1, y0), b.toWorld(x1, y1), b.toWorld(x0, y1)], rgb(1, .2, .3, .18), .06*WU, rgb(1, .3, .4, .9));
+        for (const box of b.boxes)
+        {
+            const [x0, y0, x1, y1] = box, f = boxFrame(b, box), c = Math.cos(f.angle), s = Math.sin(f.angle);
+            const at = (x, y) => vec2(f.pos.x + x*c - y*s, f.pos.y + x*s + y*c);
+            drawPoly([at(x0, y0), at(x1, y0), at(x1, y1), at(x0, y1)], rgb(1, .2, .3, .18), .06*WU, rgb(1, .3, .4, .9));
+        }
     }
 }
 
