@@ -208,6 +208,26 @@ function rideStation(b, s)
     b.updateWorld();
 }
 
+// a ship whose start has ground: true waits standing on the ground instead of hanging in the sky: it is moved up or
+// down until its lowest point touches the highest ground or pad top under it that is not above its start y, and
+// under gravity it falls like the ship you drive, so it stays down there
+function groundStart(b)
+{
+    b.updateWorld();
+    let x0 = Infinity, x1 = -Infinity, low = Infinity, top = -Infinity;
+    b.world.forEach((c, i) =>
+    {
+        const r = b.circles[i].r;
+        x0 = Math.min(x0, c.x - r); x1 = Math.max(x1, c.x + r); low = Math.min(low, c.y - r);
+    });
+    for (const w of rects)
+        if ((w.land || w.pad) && w.x1 > x0 && w.x0 < x1 && w.y1 <= b.pos.y + 1e-6) top = Math.max(top, w.y1);
+    if (top == -Infinity) return;
+    b.pos.y += top - low;
+    b.updateWorld();
+    if (level.gravity) b.falls = true;
+}
+
 // let it go, moving with the station as it was
 function releaseRider(b)
 {

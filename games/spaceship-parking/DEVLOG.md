@@ -1,3 +1,9 @@
+## 2026-11-08 — Moon Hop: every ship starts on the ground
+- A ship's `start` can say `ground: true` (`groundStart` in `src/space.js`): the ship waits standing on the ground instead of hanging in the sky. It is moved so its lowest point touches the highest ground or pad top under it that is not above its start y, and under gravity it falls while it waits, so it stays put.
+- All three Moon Hop ships use it (same x as before, upright): each takes off from the moon and flies to its pad.
+- The editor still can't save Moon Hop (it is built by `landing()`), so this was changed in `levels/levels.js` by hand. That refusal is why the earlier editor changes didn't save.
+- Checked in Chrome: Asteroid Miner, Solar Sailer and Flying Saucer each start with their lowest point at y = 0 and don't move for 6 s. W lifts the Miner off (50 m up after 2 s) and, on its turn, the Saucer. No errors.
+
 ## 2026-11-08 — Retro smoke puffs at the nose on big ships
 - The retro thrusters' smoke puffs (`puffExhaust` in `src/skin.js`) now scale their position by the ship's size `k`, so they come out at the nose ports on every ship. Before, on a big ship they came out near its middle.
 - Checked in Chrome, reversing: the puffs sit at 0.93 to 1.16 of the half length toward the nose on the Escape Pod, 0.85 to 0.87 on the Space Liner and 0.81 to 0.87 on the Classic Frigate. No errors.

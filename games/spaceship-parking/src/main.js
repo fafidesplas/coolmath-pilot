@@ -275,6 +275,7 @@ function loadLevel(i)
     fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
     fleet.forEach((b, n) => b.view = L.boats[n].view);      // a level can show more (or less) around a ship than its type does
     fleet.forEach((b, n) => { if (L.boats[n].start.on) rideStation(b, L.boats[n].start); });     // waits on the station (src/space.js)
+    fleet.forEach((b, n) => { if (L.boats[n].start.ground) groundStart(b); });      // waits standing on the ground (src/space.js)
 
     (L.moored || []).forEach((m, k) =>
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));

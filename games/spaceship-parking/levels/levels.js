@@ -4,6 +4,7 @@
 //
 // boats:   [{ boat, k?, start:{x,y,a}, slip }]   k defaults to the boat's real size (BOATS[boat].k); start: {on: 'station', x, y, a}
 //          waits riding on the station (in its coordinates) until its turn
+//          start: {x, y, a, ground: true} waits standing on the highest ground or pad top under it not above y (src/space.js)
 // slip:    x/y center, or top/right = the pier edge it hangs from; a = heading the boat must face
 //          (PI/2 = bow into a top pier; either end in is fine), pad = extra [length, width] room in
 //          toy units (times k), fingers = 'both' | 'none' (short docks along the slip's long sides)
@@ -197,13 +198,13 @@ const SCALE_LEVELS =
             { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
         ],
     },
-    // a small moon (flat ground): a 26 m asteroid miner, a 12 m solar sailer, then a 2.6 m flying saucer. The saucer starts on the far
-    // side of the sailer's pad.
+    // a small moon (flat ground): a 26 m asteroid miner, a 12 m solar sailer, then a 2.6 m flying saucer. Every ship starts
+    // standing on the ground (ground: true) and takes off for its pad. The saucer starts on the far side of the sailer's pad.
     landing('Moon Hop', 'moon', 600,
     [
-        { boat: 'trawler', start: { x: -200, y: 160, a: PI/2 }, pad: [60, 24] },
-        { boat: 'sailboat', start: { x: 150, y: 70, a: PI/2 }, pad: [0, 9] },
-        { boat: 'swan', view: 2, start: { x: -70, y: 30, a: PI/2 }, pad: [-30, 5] },
+        { boat: 'trawler', start: { x: -200, y: 0, a: PI/2, ground: true }, pad: [60, 24] },
+        { boat: 'sailboat', start: { x: 150, y: 0, a: PI/2, ground: true }, pad: [0, 9] },
+        { boat: 'swan', view: 2, start: { x: -70, y: 0, a: PI/2, ground: true }, pad: [-30, 5] },
     ]),
     {
         // the Spin Dock station seven times bigger (868 m), turning once every five minutes, with two more ports at the
