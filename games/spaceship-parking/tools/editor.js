@@ -102,7 +102,15 @@ window.pmbEditor = (() =>
         loadLevel(li);
         for (let n = 0; n < from; n++)
         {
-            fleet[n].pos = slips[n].pos.copy(); fleet[n].angle = slips[n].a; fleet[n].updateWorld();
+            const b = fleet[n];
+            b.pos = slips[n].pos.copy(); b.angle = slips[n].a; b.updateWorld();
+            // parked on a station it is clamped to it, on a pad it stands on it (holdShip, src/space.js); the current
+            // slip is still this boat's here
+            if (slips[n].on || level.gravity)
+            {
+                if (level.gravity) { b.angle = PI/2; groundStart(b); }
+                holdShip(b);
+            }
             startBoat(n + 1);
         }
         updateCamera(0, true);
@@ -147,6 +155,39 @@ window.pmbEditor = (() =>
     function showPanels(on) { panel.style.display = hier.style.display = on ? 'block' : 'none'; }
     const mouseWorld = () => uiToWorld(mousePos);
 
+    // the station's frame. A chain boat's start or slip with on: 'station' is given in the station's own coordinates
+    // (meters, turned with it), so the editor converts between them and the world, with the station where the level
+    // starts it (the editor freezes the level there). A slip at a port (port: n) is placed by the port alone.
+    const station = () => def.station && stations[0];
+    const onStation = it => !!station() && (it.kind == 'start' || it.kind == 'slip') && def.boats[it.i]?.[it.kind].on == 'station';
+    const atPort = it => onStation(it) && it.kind == 'slip' && def.boats[it.i].slip.port !== undefined;
+    function toLocal(p)
+    {
+        const st = stations[0], d = p.subtract(st.pos), c = Math.cos(st.angle), s = Math.sin(st.angle);
+        return vec2(d.x*c + d.y*s, -d.x*s + d.y*c);
+    }
+    // a world move (dx, dy) in the station's coordinates
+    function localDelta(dx, dy) { const a = stations[0].angle, c = Math.cos(a), s = Math.sin(a); return vec2(dx*c + dy*s, -dx*s + dy*c); }
+    // the station's docking ports in the world: [{ pos, f }] (stationPorts, scaled and turned with the station)
+    function portsWorld()
+    {
+        const st = station();
+        if (!st) return [];
+        const sc = def.station.scale || 1;
+        return stationPorts(def.station).map(([x, y, f]) => ({ pos: st.toWorld(x*sc, y*sc), f: st.angle + f }));
+    }
+    const nearestPort = p => portsWorld().reduce((best, q, n) => q.pos.distance(p) < best.d ? { n, d: q.pos.distance(p) } : best, { n: 0, d: Infinity }).n;
+    // where a chain boat's start shows: the game's own boat, which riding a station or standing on the ground moves
+    function startPose(n)
+    {
+        const b = fleet[n], s = def.boats[n].start;
+        if (b && !ED.testing) return { pos: b.pos, a: b.angle };
+        const st = s.on && station();
+        return st ? { pos: st.toWorld(s.x, s.y), a: st.angle + (s.a || 0) } : { pos: vec2(s.x, s.y), a: s.a };
+    }
+    // a slip's own turn: the world angle of its long side (a station turns its slips with it)
+    const slipAngle = n => slips[n]?.on ? slips[n].a : 0;
+
     function frame(b)
     {
         const availW = (mainCanvasSize.x / uiScale()) - leftUi() - rightUi(), availH = mainCanvasSize.y / uiScale();
@@ -170,12 +211,13 @@ window.pmbEditor = (() =>
     {
         if (!slips[n]) return;
         const e = def.boats[n], r = BOATS[e.boat].L * boatK(def, e);
-        frame(boxUnion(slipBox(n), boxAround(vec2(e.start.x, e.start.y), r)));
+        frame(boxUnion(slipBox(n), boxAround(startPose(n).pos, r)));
     }
     function frameAll()
     {
         let b = def.view && { x0: def.view[0], y0: def.view[1], x1: def.view[2], y1: def.view[3] };
-        (def.boats || []).forEach((e, n) => { const r = BOATS[e.boat].L * boatK(def, e); const u = boxUnion(slipBox(n), boxAround(vec2(e.start.x, e.start.y), r)); b = b ? boxUnion(b, u) : u; });
+        (def.boats || []).forEach((e, n) => { const r = BOATS[e.boat].L * boatK(def, e); const u = boxUnion(slipBox(n), boxAround(startPose(n).pos, r)); b = b ? boxUnion(b, u) : u; });
+        if (station()) { const st = stations[0]; const u = boxAround(st.pos, st.radius); b = b ? boxUnion(b, u) : u; }
         for (const m of def.lands || []) { const u = boxAround(vec2(m.x, m.y), blobRadius(m)); b = b ? boxUnion(b, u) : u; }
         if (b) frame(b);
     }
@@ -217,8 +259,14 @@ window.pmbEditor = (() =>
         const i = it.i;
         switch (it.kind)
         {
-            case 'start':   { const e = def.boats[i]; return boatShape(e.boat, boatK(def, e), e.start.x, e.start.y, e.start.a); }
-            case 'slip':    { const b = slipBox(i); return rectShape(b.x0, b.y0, b.x1, b.y1); }
+            case 'start':   { const e = def.boats[i], p = startPose(i); return boatShape(e.boat, boatK(def, e), p.pos.x, p.pos.y, p.a); }
+            case 'slip':
+            {
+                const s = slips[i];
+                if (s?.on) return orientedRect(s.pos.x, s.pos.y, s.a, s.len, s.wid);
+                const b = slipBox(i); return rectShape(b.x0, b.y0, b.x1, b.y1);
+            }
+            case 'station': { const st = stations[0]; return { type: 'blob', c: st.pos, r: st.radius, circles: st.circles.map((c, n) => ({ c: st.world[n], r: c.r })) }; }
             case 'mslip':   { const b = mslipBox(i); return rectShape(b.x0, b.y0, b.x1, b.y1); }
             case 'moored': case 'drifters': { const m = def[it.kind][i]; return boatShape(m.boat, boatK(def, m), m.x, m.y, m.a); }
             case 'traffic': { const t = def.traffic[i], [a, b] = t.path; return boatShape(t.boat, boatK(def, t), a[0], a[1], Math.atan2(b[1] - a[1], b[0] - a[0])); }
@@ -260,8 +308,12 @@ window.pmbEditor = (() =>
     }
 
     // small things first, so they can be picked off the big things they sit on
-    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'mslip', 'currents', 'walls', 'docks', 'lands', 'land'];
-    function count(kind) { return kind == 'start' || kind == 'slip' ? def.boats.length : kind == 'mslip' ? (def.moored || []).length : (def[kind] || []).length; }
+    const PICK_ORDER = ['start', 'moored', 'drifters', 'traffic', 'buoys', 'logs', 'ducks', 'slip', 'mslip', 'currents', 'walls', 'docks', 'station', 'lands', 'land'];
+    function count(kind)
+    {
+        if (kind == 'station') return station() ? 1 : 0;
+        return kind == 'start' || kind == 'slip' ? def.boats.length : kind == 'mslip' ? (def.moored || []).length : (def[kind] || []).length;
+    }
     // a moored boat may have no slip (only crowded harbors do)
     const exists = (kind, i) => kind != 'mslip' || !!def.moored[i]?.slip
     // which traffic boat's path points are showing: the selected boat's, or its point's
@@ -279,7 +331,7 @@ window.pmbEditor = (() =>
     }
     const same = (a, b) => a && b && a.kind == b.kind && a.i == b.i && a.j == b.j;
     // a path point stands for its traffic boat and a slip for its chain boat; those two are the only things that can't join a group alone
-    const GROUPABLE = k => k != 'point' && k != 'slip' && k != 'mslip';
+    const GROUPABLE = k => k != 'point' && k != 'slip' && k != 'mslip' && k != 'station';
     const normItem = x => x?.kind == 'point' ? { kind: 'traffic', i: x.i } : x?.kind == 'slip' ? { kind: 'start', i: x.i } : x?.kind == 'mslip' ? { kind: 'moored', i: x.i } : x;
     const group = () => multi.length > 1 && multi.includes(sel) && multi.every(it => it.i < count(it.kind)) ? multi : null;
     const targets = () => group() || (sel ? [sel] : []);
@@ -294,6 +346,7 @@ window.pmbEditor = (() =>
     function toggleSel(it)
     {
         it = normItem(it);
+        if (!GROUPABLE(it.kind) || (sel && !GROUPABLE(normItem(sel).kind))) return setSelection([it]);    // the station stays on its own
         const base = group() ? [...group()] : sel ? [normItem(sel)] : [];
         const at = base.findIndex(g => same(g, it));
         if (at >= 0) base.splice(at, 1); else base.push(it);
@@ -407,7 +460,8 @@ window.pmbEditor = (() =>
         {
             // slips only face the four ways; the rest snap to 15° unless Alt is held
             const step = sel.kind == 'slip' || sel.kind == 'mslip' ? PI/2 : noSnap() ? 0 : PI/12;
-            let a = Math.atan2(p.y - drag.c.y, p.x - drag.c.x);
+            // on a station the angle is the station's own, and snaps there
+            let a = Math.atan2(p.y - drag.c.y, p.x - drag.c.x) - (onStation(sel) ? stations[0].angle : 0);
             if (step) a = Math.round(a/step)*step;
             if (Math.abs(wrapAngle(a - angleOf(sel))) < 1e-6) return;
             if (!drag.snapped) { snapshot(); drag.snapped = true; }
@@ -416,6 +470,15 @@ window.pmbEditor = (() =>
         }
         const q = vec2(snap(p.x), snap(p.y));
         if (drag.mode == 'new') { drag.to = q; return; }
+        if (drag.mode == 'move' && !group() && atPort(sel))
+        {
+            // a slip at a port goes to the port nearest the mouse
+            const s = def.boats[sel.i].slip, n = nearestPort(p);
+            if (n == s.port) return;
+            if (!drag.snapped) { snapshot(); drag.snapped = true; }
+            s.port = n;
+            return changed();
+        }
         if (drag.mode == 'move')
         {
             const d = q.subtract(drag.from);
@@ -471,14 +534,26 @@ window.pmbEditor = (() =>
         const shift = keyIsDown('ShiftLeft') || keyIsDown('ShiftRight');
         switch (it.kind)
         {
-            case 'start': { const s = def.boats[it.i].start; s.x += dx; s.y += dy; break; }
-            case 'slip':
+            case 'start': case 'slip':
             {
-                const s = def.boats[it.i].slip;
+                const s = def.boats[it.i][it.kind];
+                if (atPort(it)) break;          // placed by its port: dragging it picks another port
+                if (onStation(it))
+                {
+                    // in the station's coordinates, kept on a fine grid there
+                    const d = localDelta(dx, dy), f = v => clean(Math.round(v / (step()/20)) * (step()/20));
+                    s.x = f(s.x + d.x); s.y = f(s.y + d.y);
+                    break;
+                }
+                if (it.kind == 'start') { s.x += dx; s.y += dy; break; }
+                // a slip under a pier edge or on a pad slides along it; Shift moves it off
                 if (s.x !== undefined) s.x += dx; else if (shift) s.right += dx;
-                if (s.y !== undefined) s.y += dy; else if (shift) s.top += dy;
+                if (s.y !== undefined) s.y += dy;
+                else if (shift && s.bottom !== undefined) s.bottom += dy;
+                else if (shift && s.top !== undefined) s.top += dy;
                 break;
             }
+            case 'station': { const o = def.station; o.x += dx; o.y += dy; break; }
             case 'mslip':
             {
                 const s = def.moored[it.i].slip;
@@ -498,7 +573,9 @@ window.pmbEditor = (() =>
     // the angle of a thing that can turn (undefined for the rest), and setting it
     function angleOf(it)
     {
-        if (it.kind == 'start' || it.kind == 'slip') return def.boats[it.i][it.kind].a;
+        if (atPort(it)) return undefined;           // turned by its port
+        if (it.kind == 'start' || it.kind == 'slip') return def.boats[it.i][it.kind].a || 0;
+        if (it.kind == 'station') return def.station.a || 0;
         if (it.kind == 'mslip') return def.moored[it.i].slip.a;
         if (it.kind == 'moored' || it.kind == 'drifters') return def[it.kind][it.i].a;
         if (it.kind == 'logs') return def.logs[it.i][2] || 0;
@@ -508,6 +585,7 @@ window.pmbEditor = (() =>
         a = wrapAngle(a);
         if (Math.abs(a) < 1e-9) a = 0;
         if (it.kind == 'start' || it.kind == 'slip') def.boats[it.i][it.kind].a = a;
+        else if (it.kind == 'station') def.station.a = a;
         else if (it.kind == 'mslip') def.moored[it.i].slip.a = a;
         else if (it.kind == 'moored' || it.kind == 'drifters') def[it.kind][it.i].a = a;
         else if (it.kind == 'logs') def.logs[it.i][2] = a;
@@ -515,8 +593,9 @@ window.pmbEditor = (() =>
     // rotate handle of the selection, like a transform box's: an arm out of the bow, a knob at its end
     function rotHandle()
     {
-        const a = sel && !group() && angleOf(sel);
-        if (a === undefined || a === null) return null;
+        let a = sel && !group() && angleOf(sel);
+        if (a === undefined || a === null || a === false) return null;
+        if (onStation(sel)) a += stations[0].angle;
         const s = shapeOf(sel), c = s.type == 'rect' ? vec2((s.x0 + s.x1)/2, (s.y0 + s.y1)/2) : s.c;
         const r = s.type == 'rect' ? Math.hypot(s.x1 - s.x0, s.y1 - s.y0)/2 : s.r;
         const f = vec2(Math.cos(a), Math.sin(a));
@@ -527,8 +606,10 @@ window.pmbEditor = (() =>
     function rotate(it, da)
     {
         const wrap = a => { a = wrapAngle(a); return Math.abs(a) < 1e-9 ? 0 : a; };
-        if (it.kind == 'start') { const s = def.boats[it.i].start; s.a = wrap(s.a + da); }
+        if (it.kind == 'start') { const s = def.boats[it.i].start; s.a = wrap((s.a || 0) + da); }
+        else if (atPort(it)) return false;
         else if (it.kind == 'slip') { const s = def.boats[it.i].slip; s.a = wrap(s.a + Math.sign(da)*PI/2); }
+        else if (it.kind == 'station') { const o = def.station; o.a = wrap((o.a || 0) + da); }
         else if (it.kind == 'mslip') { const s = def.moored[it.i].slip; s.a = wrap(s.a + Math.sign(da)*PI/2); }
         else if (it.kind == 'moored' || it.kind == 'drifters') { const m = def[it.kind][it.i]; m.a = wrap(m.a + da); }
         else if (it.kind == 'logs') { const l = def.logs[it.i]; l[2] = wrap((l[2] || 0) + da); }
@@ -625,6 +706,7 @@ window.pmbEditor = (() =>
         }
         if (sel.kind == 'mslip') { status = 'A slip belongs to its boat: delete the moored boat instead'; return refreshPanel(); }
         if (sel.kind == 'slip') { status = 'A slip belongs to its boat: delete the boat (its start) instead'; return refreshPanel(); }
+        if (sel.kind == 'station') { status = 'Untick "space station" in the level settings to remove it'; return refreshPanel(); }
         if (sel.kind == 'point')
         {
             const path = def.traffic[sel.i].path;
@@ -787,12 +869,14 @@ window.pmbEditor = (() =>
         {
             const s = slips[n];
             if (!s) return;
-            drawDashedRect(s.pos, s.w, s.h, C_CREAM.scale(1, .9), .06*W, Math.max(.4*W, s.wid*.12));
-            drawLine(vec2(e.start.x, e.start.y), s.pos, .03*W, C_INK.scale(1, .25));
+            if (s.on) drawDashedRect(s.pos, s.len, s.wid, C_CREAM.scale(1, .9), .06*W, Math.max(.4*W, s.wid*.12), s.a);
+            else drawDashedRect(s.pos, s.w, s.h, C_CREAM.scale(1, .9), .06*W, Math.max(.4*W, s.wid*.12));
+            const p = startPose(n);
+            drawLine(p.pos, s.pos, .03*W, C_INK.scale(1, .25));
             // heading arrow on the start
-            const f = vec2(Math.cos(e.start.a), Math.sin(e.start.a)), L = Math.max(BOATS[e.boat].L*boatK(def, e)*.6, .8*W);
-            const tip = vec2(e.start.x, e.start.y).add(f.scale(L));
-            drawLine(vec2(e.start.x, e.start.y), tip, .06*W, C_ED);
+            const f = vec2(Math.cos(p.a), Math.sin(p.a)), L = Math.max(BOATS[e.boat].L*boatK(def, e)*.6, .8*W);
+            const tip = p.pos.add(f.scale(L));
+            drawLine(p.pos, tip, .06*W, C_ED);
             drawLine(tip, tip.add(f.rotate(2.5).scale(.3*W)), .06*W, C_ED);
             drawLine(tip, tip.add(f.rotate(-2.5).scale(.3*W)), .06*W, C_ED);
         });
@@ -826,6 +910,8 @@ window.pmbEditor = (() =>
             drawLine(vec2(t.path[0][0], t.path[0][1]), vec2(q[0], q[1]), .04*W, C_ED.scale(1, .6));
             drawCircle(vec2(q[0], q[1]), .35*W, C_CLEAR, .05*W, C_ED);
         });
+        // the station's docking ports: a ring each, numbered in renderUi
+        for (const q of portsWorld()) drawCircle(q.pos, .9*W, C_CLEAR, .06*W, C_ED.scale(1, .8));
         for (const c of def.currents || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_CLEAR, .04*W, C_TEAL);
         // invisible colliders: a tinted box, only ever seen here
         for (const c of def.walls || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_ED.scale(1, .18), .05*W, C_ED.scale(1, .7));
@@ -862,10 +948,11 @@ window.pmbEditor = (() =>
         // numbers on each start and slip, the same on both
         def.boats.forEach((e, n) =>
         {
-            const a = worldToUi(vec2(e.start.x, e.start.y)), s = slips[n] && worldToUi(slips[n].pos);
+            const a = worldToUi(startPose(n).pos), s = slips[n] && worldToUi(slips[n].pos);
             txt(String(n + 1), a.x, a.y + .7, .7, C_ED, 'center', .1, C_CREAM);
             if (s) txt(String(n + 1), s.x, s.y, .9, C_CREAM, 'center', .12, C_INK);
         });
+        portsWorld().forEach((q, n) => { const u = worldToUi(q.pos); txt(`port ${n + 1}`, u.x, u.y + .75, .4, C_ED, 'center', .08, C_CREAM); });
         (def.moored || []).forEach((m, i) =>
         {
             if (!m.slip) return;
@@ -899,7 +986,7 @@ window.pmbEditor = (() =>
             const [m, x] = n.toExponential().split('e');
             if (m.replace('-', '').length <= 5) return m + 'e' + (+x);
         }
-        return String(n);
+        return String(n).replace(/^(-?)0\./, '$1.');      // .96, like the file
     }
     function angle(a)
     {
@@ -912,7 +999,15 @@ window.pmbEditor = (() =>
     const str = s => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}'`;
     function lit(v, key)
     {
-        if (typeof v == 'number') return key == 'a' ? angle(v) : num(v);
+        // a spin as one turn every so many seconds, a planet's gravity by its name, ports with their facing as angles
+        if (key == 'spin' && v)
+        {
+            const t = 2*PI/v;
+            if (Math.abs(t*100 - Math.round(t*100)) < 1e-6) return `2*PI/${num(t)}`;
+        }
+        if (key == 'gravity' && v?.planet && PLANETS[v.planet] && deepEqual(v, PLANETS[v.planet])) return `{ ...PLANETS.${v.planet} }`;
+        if (key == 'ports' && Array.isArray(v)) return `[${v.map(([x, y, f]) => `[${num(x)}, ${num(y)}, ${angle(f)}]`).join(', ')}]`;
+        if (typeof v == 'number') return key == 'a' || key == 'phase' ? angle(v) : num(v);
         if (typeof v == 'string') return str(v);
         if (Array.isArray(v)) return `[${v.map(x => lit(x)).join(', ')}]`;
         if (v && typeof v == 'object')
@@ -1085,7 +1180,7 @@ window.pmbEditor = (() =>
     {
         if (Array.isArray(v) && (v.length > 1 || k == 'boats') && v.length && v.every(x => x && typeof x == 'object' && !Array.isArray(x)))
             return `\n        [\n${v.map(x => '            ' + lit(x) + ',').join('\n')}\n        ]`;
-        return lit(v);
+        return lit(v, k);
     }
 
     function newLevelSource(d)
@@ -1168,6 +1263,14 @@ window.pmbEditor = (() =>
         catch (e) { status = e.name == 'AbortError' ? 'Save cancelled' : 'Save failed: ' + e.message; console.error(e); }
         refreshPanel();
     }
+
+    // console, over HTTP: the current level's code as Save would write it into levels.js (nothing is written)
+    ED.preview = async () =>
+    {
+        const text = await (await fetch(new URL('../levels/levels.js', HERE), { cache: 'no-store' })).text();
+        const out = sourceWith(text, def), span = findLevel(out, def.name);
+        return out.slice(out.lastIndexOf('\n', span.open) + 1, span.close + 2);
+    };
 
     // console, over HTTP: unedited levels must rewrite to exactly the file, and every level written
     // out in full must load back to the same data
@@ -1265,7 +1368,107 @@ window.pmbEditor = (() =>
         for (const [value, text] of options) s.append(el('option', { value, textContent: text, selected: String(get()) == String(value) }));
         return s;
     }
+    const check = (label, on, set) => el('label', {}, [el('input', { type: 'checkbox', checked: on, onchange: ev => { snapshot(); set(ev.target.checked); changed(); } }), label]);
     const boatOptions = () => Object.values(BOATS).map(t => [t.key, `${t.name} (${fmtLen(t.L*t.k)})`]);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // space: gravity, the station, and moving starts and slips onto it and off it where they are now
+
+    const r2 = v => Math.round(v*100)/100 || 0;
+    // an angle that is a quarter turn (or close) as exactly one, any other kept to four decimals
+    const tidyAngle = a => { a = wrapAngle(a); const q = Math.round(a/(PI/2))*PI/2; return Math.abs(a - q) < 1e-4 ? q || 0 : Math.round(a*1e4)/1e4; };
+    function startOnStation(n, on)
+    {
+        const s = def.boats[n].start, p = startPose(n);
+        if (on)
+        {
+            const l = toLocal(p.pos);
+            delete s.ground;
+            Object.assign(s, { on: 'station', x: r2(l.x), y: r2(l.y), a: tidyAngle(p.a - stations[0].angle) });
+        }
+        else { delete s.on; Object.assign(s, { x: r2(p.pos.x), y: r2(p.pos.y), a: tidyAngle(p.a) }); }
+    }
+    function slipOnStation(n, on)
+    {
+        const s = def.boats[n].slip, g = slips[n];
+        for (const k of ['x', 'y', 'top', 'right', 'bottom', 'port']) delete s[k];
+        if (on) { const l = toLocal(g.pos); Object.assign(s, { on: 'station', x: r2(l.x), y: r2(l.y), a: tidyAngle(g.a - stations[0].angle) }); }
+        else { delete s.on; Object.assign(s, { x: r2(g.pos.x), y: r2(g.pos.y), a: Math.round(wrapAngle(g.a)/(PI/2))*PI/2 || 0 }); }   // off the station: slips face the four ways
+    }
+    // a slip at a port gets a spot of its own on the station, where it is now
+    function slipOffPort(n)
+    {
+        const s = def.boats[n].slip, g = slips[n], l = toLocal(g.pos);
+        delete s.port;
+        Object.assign(s, { x: r2(l.x), y: r2(l.y), a: tidyAngle(g.a - stations[0].angle) });
+    }
+    function setStation(on)
+    {
+        if (on)
+        {
+            const c = viewCenter(), q = v => clean(Math.round(v / step()) * step());
+            def.station = { x: q(c.x), y: q(c.y), a: 0, spin: 2*PI/60, drift: { r: 10, period: 140, phase: 0 } };
+            return;
+        }
+        // whatever was on it stays where it is now
+        def.boats.forEach((e, n) => { if (e.start.on) startOnStation(n, false); if (e.slip.on) slipOnStation(n, false); });
+        delete def.station;
+        if (sel?.kind == 'station') sel = null;
+    }
+    // a level port j (stationPorts number STATION.ports.length + j) goes: its slips get spots of their own, later ports move down one
+    function removePort(j)
+    {
+        const n = STATION.ports.length + j;
+        def.boats.forEach((e, b) =>
+        {
+            const s = e.slip;
+            if (s.on != 'station' || s.port === undefined) return;
+            if (s.port == n) slipOffPort(b); else if (s.port > n) s.port--;
+        });
+        def.station.ports.splice(j, 1);
+        if (!def.station.ports.length) delete def.station.ports;
+    }
+
+    // the level's gravity and station (the station itself is selected on the canvas or in the hierarchy)
+    function levelSpaceFields()
+    {
+        const g = def.gravity, kind = g ? (PLANETS[g.planet] ? g.planet : 'custom') : '';
+        const options = [['', 'none (free space)'], ...Object.keys(PLANETS).map(k => [k, `${k}: pulls ${Math.round(PLANETS[k].share*100)}% of thrust`])];
+        if (kind == 'custom') options.push(['custom', 'custom']);
+        panel.append(field('gravity', select(options, () => kind, v => { if (!v) delete def.gravity; else if (v != 'custom') def.gravity = { ...PLANETS[v] }; })));
+        if (g) panel.append(field('pull %', input('number', () => Math.round(g.share*1000)/10, v => { g.share = clamp((v ?? 35)/100, .01, .95); }, { step: 1, min: 1, max: 95 })));
+        panel.append(el('div', { className: 'row' }, [check('space station', !!def.station, setStation),
+            ...(def.station ? [button('Select station', () => { sel = { kind: 'station', i: 0 }; multi = []; frameSel(); refreshPanel(); })] : [])]));
+    }
+
+    function stationFields()
+    {
+        const o = def.station, grid = kids => el('div', { className: 'grid2' }, kids), keys = text => el('div', { className: 'keys', textContent: text });
+        panel.append(el('div', { className: 'row' }, [button('Frame (F)', frameSel)]),
+            grid([field('x', numIn(o, 'x', { step: 'any' })), field('y', numIn(o, 'y', { step: 'any' }))]),
+            field('heading°', degIn(() => o.a || 0, v => { o.a = v; })),
+            field('scale', input('number', () => o.scale, v => { if (v === undefined || v == 1) delete o.scale; else o.scale = Math.max(.1, v); }, { placeholder: '1 (the 124 m lab)', step: 'any' })),
+            field('one turn every s', input('number', () => o.spin === undefined ? undefined : o.spin ? Math.round(2*PI/o.spin*100)/100 : 0,
+                v => { if (v === undefined) delete o.spin; else o.spin = v ? 2*PI/v : 0; }, { placeholder: '60', step: 'any' })),
+            keys('0 stops it turning; a negative time turns it the other way.'),
+            check('drifts round a circle', !!o.drift, v => { if (v) o.drift = { r: 10, period: 140, phase: 0 }; else delete o.drift; }));
+        if (o.drift)
+            panel.append(grid([
+                field('drift radius', input('number', () => o.drift.r, v => { o.drift.r = v ?? 10; }, { step: 'any', min: 0 })),
+                field('drift period s', input('number', () => o.drift.period, v => { o.drift.period = Math.max(1, v ?? 140); }, { step: 'any', min: 1 }))]),
+                field('drift phase°', degIn(() => o.drift.phase || 0, v => { o.drift.phase = v; })),
+                keys('x, y is the center of the drift circle.'));
+        panel.append(el('h3', { textContent: 'Docking ports' }),
+            keys(`Ports 1 and 2 are built in, at the front and aft ends of the module stack. More ports are given in the station's own units (before scale) with the way they face out. A slip at a port lies across it.`));
+        (o.ports || []).forEach((q, j) =>
+        {
+            const at = (k, dflt) => input('number', () => q[k], v => { q[k] = v ?? dflt; }, { step: 'any' });
+            panel.append(el('div', { className: 'keys', textContent: `Port ${STATION.ports.length + j + 1}` }),
+                grid([field('x', at(0, 0)), field('y', at(1, 0))]),
+                grid([field('faces°', degIn(() => q[2], v => { q[2] = v; })), button('Remove port', () => { snapshot(); removePort(j); changed(); })]));
+        });
+        panel.append(el('div', { className: 'row' }, [button('Add port', () => { snapshot(); (o.ports ||= []).push([0, 20, PI/2]); changed(); })]));
+    }
     let addBoatType = 'dinghy';
 
     // switching to unparking sets jam: true and gives the level a camera box if it has none (the crowd and its slips)
@@ -1302,6 +1505,7 @@ window.pmbEditor = (() =>
         panel.append(field('name', input('text', () => def.name, v => { def.name = v.trim() || def.name; })));
         // the ruleset: parking is a chain of boats one after another; unparking is a crowd where every boat is yours (jam: true)
         panel.append(field('type', select([['parking', 'Parking (boats in a chain)'], ['unparking', 'Unparking (crowded harbor)']], () => def.jam ? 'unparking' : 'parking', setLevelType)));
+        levelSpaceFields();
 
         panel.append(el('div', { className: 'row' }, [
             button('Play (E)', () => play(false), 'go'), button('Undo', doUndo), button('Redo', doRedo), button('Frame all', frameAll)]));
@@ -1320,6 +1524,7 @@ window.pmbEditor = (() =>
             Slips under a pier slide along it; <b>Shift</b> moves them off it. A crowded-harbor boat has its own slip: click the dashed box or the Slip button<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: ×10) · <b>[ ]</b> rotate 15° (Shift: 90°)<br>
             <b>drag the round handle</b> rotate (15° steps, Alt: free; slips 90°)<br>
+            Station: click it to move or turn it; a slip at a port moves to the port nearest the mouse<br>
             <b>1–9</b> select boat · <b>F</b> frame selection · <b>Shift+F</b> frame all<br>
             <b>Shift / ⌘ / Ctrl+click</b> add to or remove from the selection (hierarchy: ⌘ / Ctrl toggles, Shift a range, <b>all</b> a whole group); move, nudge, rotate, <b>D</b> and <b>Delete</b> act on all, the inspector edits what they share<br>
             <b>D</b> duplicate · <b>Delete</b> remove · <b>T</b> sand → dock → quay<br>
@@ -1398,6 +1603,12 @@ window.pmbEditor = (() =>
                     Object.assign(button('▶', () => startTest(n)), { title: 'Test play from this boat' }),
                     button('↑', () => moveBoat(n, -1)), button('↓', () => moveBoat(n, 1))]));
             });
+        if (station() && header('station', 'Station', 1))
+        {
+            const here = picked('station', 0), b = button(`Space station${def.station.scale && def.station.scale != 1 ? ` ×${num(def.station.scale)}` : ''}`, ev => click('station', 0, ev, frameSel), here ? 'on' : '');
+            if (here) on = b;
+            box.append(b);
+        }
         for (const [kind, title, label] of OBJECTS)
         {
             const list = def[kind] || [];
@@ -1425,7 +1636,7 @@ window.pmbEditor = (() =>
         return {
             start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, mslip: `Moored boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
             traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic?.[sel.i]?.path.length}`,
-            ducks: 'Duck family', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current', walls: 'Invisible wall',
+            ducks: 'Duck family', station: 'Space station', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current', walls: 'Invisible wall',
         }[sel.kind];
     }
 
@@ -1435,6 +1646,7 @@ window.pmbEditor = (() =>
         if (!sel) return panel.append(el('div', { className: 'keys', textContent: 'Click something in the level, or pick it in the hierarchy on the left.' }));
         if (group()) return batchFields(group());
         const i = sel.i;
+        if (sel.kind == 'station') return stationFields();
         if (sel.kind == 'start' || sel.kind == 'slip')
         {
             const e = def.boats[i], t = BOATS[e.boat];
@@ -1445,8 +1657,15 @@ window.pmbEditor = (() =>
             panel.append(field('boat', select(boatOptions(), () => e.boat, v => { e.boat = v; })));
             panel.append(field('size k', input('number', () => e.k, v => { if (v === undefined) delete e.k; else e.k = v; }, { placeholder: `real size (${t.k})`, step: 'any' })));
             if (sel.kind == 'start')
-                panel.append(grid([field('x', numIn(e.start, 'x', { step: 'any' })), field('y', numIn(e.start, 'y', { step: 'any' }))]),
-                    field('heading°', degIn(() => e.start.a, v => { e.start.a = v; })));
+            {
+                const s = e.start;
+                if (def.station) panel.append(check('waits riding on the station', !!s.on, v => startOnStation(i, v)));
+                if (def.gravity && !s.on) panel.append(check('waits standing on the ground', !!s.ground, v => { if (v) s.ground = true; else { s.y = r2(startPose(i).pos.y); delete s.ground; } }));
+                panel.append(grid([field(s.on ? 'x on station' : 'x', numIn(s, 'x', { step: 'any' })), field(s.on ? 'y on station' : 'y', numIn(s, 'y', { step: 'any' }))]),
+                    field(s.on ? 'heading° on station' : 'heading°', degIn(() => s.a || 0, v => { s.a = v; })));
+                if (s.on) panel.append(el('div', { className: 'keys', textContent: 'In the station\'s coordinates: it rides along, clamped to the station, until its turn.' }));
+                if (s.ground && !s.on) panel.append(el('div', { className: 'keys', textContent: 'It stands on the highest ground or pad top under it that is not above y.' }));
+            }
             else slipFields(e.slip, i);
             return;
         }
@@ -1657,21 +1876,39 @@ window.pmbEditor = (() =>
     function slipFields(s, n, geom = () => slips[n])
     {
         const grid = kids => el('div', { className: 'grid2' }, kids);
-        const mode = s.top !== undefined ? 'top' : s.right !== undefined ? 'right' : 'center';
-        // switching how the slip is placed keeps it where it is
-        const setMode = m =>
+        const chain = def.boats[n]?.slip === s;
+        if (chain && def.station) panel.append(check('on the station', s.on == 'station', v => slipOnStation(n, v)));
+        if (chain && s.on == 'station' && station())
         {
-            const g = geom(), x = g.pos.x, y = g.pos.y;
-            delete s.x; delete s.y; delete s.top; delete s.right;
-            if (m == 'top') Object.assign(s, { x, top: y + g.h/2 });
-            else if (m == 'right') Object.assign(s, { right: x + g.w/2, y });
-            else Object.assign(s, { x, y });
-        };
-        panel.append(field('placed', select([['center', 'by its center'], ['top', 'under a pier edge (top)'], ['right', 'left of a pier edge (right)']], () => mode, setMode)));
-        if (mode == 'right') panel.append(grid([field('right', numIn(s, 'right', { step: 'any' })), field('y', numIn(s, 'y', { step: 'any' }))]));
-        else panel.append(grid([field('x', numIn(s, 'x', { step: 'any' })), mode == 'top' ? field('top', numIn(s, 'top', { step: 'any' })) : field('y', numIn(s, 'y', { step: 'any' }))]));
-        const headings = [[0, '0° (along x)'], [angle(PI/2), '90° (bow up)'], [angle(PI), '180°'], [angle(-PI/2), '-90° (bow down)']];
-        panel.append(field('heading', select(headings, () => angle(s.a), v => { s.a = evalCode(v); })));
+            // at a port, or a spot of its own in the station's coordinates
+            const ports = stationPorts(def.station), name = j => `port ${j + 1}${j == 0 ? ' (front end)' : j == 1 ? ' (aft end)' : ''}`;
+            panel.append(field('at', select([['', 'a spot of its own'], ...ports.map((_, j) => [String(j), name(j)])], () => s.port === undefined ? '' : String(s.port),
+                v => { if (v === '') { if (s.port !== undefined) slipOffPort(n); } else { delete s.x; delete s.y; delete s.a; s.port = +v; } })));
+            if (s.port === undefined)
+                panel.append(grid([field('x on station', numIn(s, 'x', { step: 'any' })), field('y on station', numIn(s, 'y', { step: 'any' }))]),
+                    field('heading° on station', degIn(() => s.a || 0, v => { s.a = v; })));
+            else panel.append(el('div', { className: 'keys', textContent: 'It lies across the port, broadside against it. Drag it to another port.' }));
+        }
+        else
+        {
+            const mode = s.top !== undefined ? 'top' : s.right !== undefined ? 'right' : s.bottom !== undefined ? 'bottom' : 'center';
+            // switching how the slip is placed keeps it where it is
+            const setMode = m =>
+            {
+                const g = geom(), x = g.pos.x, y = g.pos.y;
+                delete s.x; delete s.y; delete s.top; delete s.right; delete s.bottom;
+                if (m == 'top') Object.assign(s, { x, top: y + g.h/2 });
+                else if (m == 'right') Object.assign(s, { right: x + g.w/2, y });
+                else if (m == 'bottom') Object.assign(s, { x, bottom: y - g.h/2 });
+                else Object.assign(s, { x, y });
+            };
+            panel.append(field('placed', select([['center', 'by its center'], ['top', 'under a pier edge (top)'], ['right', 'left of a pier edge (right)'], ['bottom', 'standing on a pad (bottom)']], () => mode, setMode)));
+            if (mode == 'right') panel.append(grid([field('right', numIn(s, 'right', { step: 'any' })), field('y', numIn(s, 'y', { step: 'any' }))]));
+            else panel.append(grid([field('x', numIn(s, 'x', { step: 'any' })),
+                mode == 'top' ? field('top', numIn(s, 'top', { step: 'any' })) : mode == 'bottom' ? field('bottom', numIn(s, 'bottom', { step: 'any' })) : field('y', numIn(s, 'y', { step: 'any' }))]));
+            const headings = [[0, '0° (along x)'], [angle(PI/2), '90° (bow up)'], [angle(PI), '180°'], [angle(-PI/2), '-90° (bow down)']];
+            panel.append(field('heading', select(headings, () => angle(s.a), v => { s.a = evalCode(v); })));
+        }
         const pad = s.pad || [1.4, 1];
         panel.append(grid([
             field('room L', input('number', () => pad[0], v => { s.pad = [v ?? 1.4, pad[1]]; }, { step: .1 })),

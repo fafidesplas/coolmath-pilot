@@ -1,3 +1,10 @@
+## 2026-11-08 — Editor: stations, gravity and ground starts
+- The editor now handles the space mechanics. Level settings: gravity (none or a planet, and its pull %) and a space station checkbox. The station is selected by clicking it or in the hierarchy: drag it, turn it with the handle, and set its position, heading, scale, turn time, drift circle and extra docking ports in the inspector. Ports are ringed and numbered on the canvas.
+- A start can ride the station or stand on the ground; a slip can be on the station, at a port or a spot of its own. Toggling keeps the thing where it is. Things on the station are drawn, picked, moved and turned where they really are (before, Grand Station's slips were drawn as straight boxes beside the game's own and its riders far from the station). Dragging a slip at a port moves it to the nearest port. Slips can be placed standing on a pad (`bottom`), and Shift-moving one no longer breaks it.
+- Test play from a later boat now clamps the earlier ones to the station or sets them on their pads.
+- Save writes `2*PI/60` spins, `{ ...PLANETS.moon }` gravity and port facings as angles, like the file. `pmbEditor.preview()` in the console shows what Save would write for the current level.
+- Checked in Chrome: Grand Station heading change moves its slips with it and undoes; rider and slip toggles keep their places; port and spot switching; nudging and turning Spin Dock's slip; test play from boat 2 keeps boat 1 docked (Spin Dock) and on its pad (Moon Hop); gravity and ground fields on Moon Hop; self-test passes for every level.
+
 ## 2026-11-08 — Every level saves from the editor
 - Moon Hop, Pad Towers and Heavy Lift were built by the `landing()` helper, so the editor refused to save them. They are now plain level objects (like Touchdown) and the helper is gone. Pads are ordinary `pad: true` docks, so they can be moved and resized in the editor.
 - Checked in Chrome: the three levels load exactly the same data as before (compared field by field), `pmbEditor.selfTest()` reports 7 levels, 0 problems (it was 3 "not in the file" before), each level loads and plays, no errors.
