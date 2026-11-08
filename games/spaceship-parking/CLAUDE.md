@@ -47,8 +47,13 @@ Only levels made for this game are left: the seven levels forked from Park My Bo
 ## Writing
 No tutorial or flavor text in the game. Text is limited to menu buttons, labels and numbers (level and ship names, sizes, money, results), with one exception: in a crowded level (`jam: true`; none at the moment), until a ship is picked, a line at the bottom reads "Click the ship you want to park first" (`drawPickHint` in `src/skin.js`, plain text with a drop shadow).
 
+## Level editor
+`tools/editor.js` is Park My Boat's level editor, copied on 2026-11-08 (debug only, not in the export): E opens it on the current level, E again play-tests, Cmd+S saves `levels/levels.js` through Chrome's file access (pick this game's folder). It knows nothing about the space mechanics yet:
+- Levels built by a helper (Moon Hop, Pad Towers, Heavy Lift come from `landing()`) open and play-test, but saving them is refused, because they have no object of their own in the file. Change them in `levels/levels.js` by hand.
+- Slips on a station (`on: 'station'`) are drawn in the station's coordinates, away from the station; the station, gravity, ports and riders have no fields in the inspector.
+
 ## Not carried over
-- The level editor and the boat editor stay in `../park-my-boat/tools/`. They write that game's files, so they don't work on this folder as is.
+- The boat editor stays in `../park-my-boat/tools/`.
 
 ## Gaps against STANDARDS.md
 - No GDD yet.

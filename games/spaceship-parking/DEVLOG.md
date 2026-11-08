@@ -1,3 +1,9 @@
+## 2026-11-08 — Level editor copied in from Park My Boat
+- E opens the level editor again: `tools/editor.js` is Park My Boat's, copied, with its saved-folder ids renamed, and `index.html` loads it. It never came over in the fork. `tools/export.mjs` lists its scripts, so the editor stays out of the export.
+- Saving a level built by a helper (Moon Hop, Pad Towers, Heavy Lift from `landing()`) is refused with a message. Before, it would have added a second copy of the level to `levels.js`.
+- Checked in Chrome: E opens the editor on Spin Dock and Moon Hop, E play-tests Moon Hop, and the editor's self-test passes for the three hand-written levels. No errors.
+- Not done: station slips are drawn off the station in the editor, and the space fields (station, gravity, ports, riders) have no inspector fields.
+
 ## 2026-11-08 — Every ship turns when stopped, in every level
 - The turn-when-stopped trial is now the rule: the `spinTurn` flag is gone from Spin Dock, and every ship (traffic too, not only the one you drive) turns with the nose thrusters in the levels without gravity (`spinTurn` in `src/space.js`, `driveBoat` in `src/main.js`). The gravity levels already turned a stopped ship with the side thrusters (`thrusterSpin`).
 - The mouse's reverse steering no longer flips the turn in any level. This also fixes the gravity levels, where the flip turned the ship the wrong way.
