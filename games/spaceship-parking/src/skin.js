@@ -296,6 +296,7 @@ function starDepth(p) { return p.flare ? .6 : .15 + .85*clamp((p.d - .5)/.9, 0, 
 
 drawWater = function()
 {
+    if (level?.interior) return drawDeck();
     const v = VIEW_RECT, o = vec2(v.x0, v.y0);
     // one canvas call for the whole sky; inside it, 1 unit = 1 meter measured from the view's corner
     drawCanvas2D(o, vec2(1), 0, false, ctx =>
@@ -1189,6 +1190,7 @@ drawPost = function(p)
 // an 80 m breakwater look alike.
 drawDock = function(r)
 {
+    if (r.hull) return;                              // battle station walls are drawn together (drawHulls)
     if (r.pad) return drawPad(r);                    // a landing pad (src/space.js)
     const w = r.x1 - r.x0, h = r.y1 - r.y0, short = Math.min(w, h), along = w > h;
     const c = fillRect(r, r.under ? P_DEEP.scale(1, .55) : P_CREAM);
@@ -1250,6 +1252,143 @@ drawDock = function(r)
     });
 };
 
+{ const shadow0 = drawDockShadow; drawDockShadow = r => { if (!r.hull) shadow0(r); }; }
+
+// Battle station walls: docks with hull: true are the inside of a planet-sized station. All of them are drawn as one
+// shape, so the pieces show no seams where they meet: a hard shadow on the deck, grey plating with panel seams and
+// shaded panels in octaves 10x apart (so it reads at any zoom), then along every edge that faces open space a cream
+// rim with a row of amber lights. Overlapping or touching pieces hide each other's edges (hullParts).
+const HULL_INKS = { base: P_DUSK, light: P_DUSK.lerp(P_CREAM, .18), dark: P_DUSK.lerp(P_INDIGO, .45), seam: P_INDIGO.lerp(P_DUSK, .25) };
+let hullCache = null;
+function hullParts()
+{
+    if (hullCache?.rects === rects) return hullCache;
+    const hs = rects.filter(r => r.dock && r.hull), edges = [];
+    // what is left of [lo, hi] once the covered stretches are taken out
+    const left = (lo, hi, cover) =>
+    {
+        let segs = [[lo, hi]];
+        for (const [a, b] of cover) segs = segs.flatMap(([p, q]) => b <= p || a >= q ? [[p, q]] : [...(a > p ? [[p, a]] : []), ...(b < q ? [[b, q]] : [])]);
+        return segs.filter(([p, q]) => q - p > 1e-3);
+    };
+    for (const r of hs)
+    {
+        // each side, with the stretches of it that another piece reaches past (so it is inside the wall)
+        const past = (o, axis, at, out) => out > 0 ? o[axis + '0'] <= at + 1e-6 && o[axis + '1'] > at + 1e-3 : o[axis + '1'] >= at - 1e-6 && o[axis + '0'] < at - 1e-3;
+        const others = hs.filter(o => o != r);
+        for (const [n, at, axis, lo, hi] of [[[0, 1], r.y1, 'y', r.x0, r.x1], [[0, -1], r.y0, 'y', r.x0, r.x1], [[1, 0], r.x1, 'x', r.y0, r.y1], [[-1, 0], r.x0, 'x', r.y0, r.y1]])
+        {
+            const along = axis == 'y' ? 'x' : 'y', out = n[0] + n[1];
+            const cover = others.filter(o => past(o, axis, at, out)).map(o => [o[along + '0'], o[along + '1']]);
+            for (const [a, b] of left(lo, hi, cover)) edges.push({ n, at, a, b });
+        }
+    }
+    return hullCache = { rects, hs, edges };
+}
+
+function drawHulls()
+{
+    const H = hullParts();
+    if (!H.hs.length) return;
+    const d = .14*WU, shown = H.hs.map(r => clipRect(r, d*3)).filter(Boolean);
+    if (!shown.length) return;
+    const v = VIEW_RECT, o = vec2(v.x0, v.y0), vw = v.x1 - v.x0, vh = v.y1 - v.y0;
+    const rim = Math.max(.6, .12*WU), gap = Math.max(6, 1.5*WU);
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
+    {
+        // canvas units are meters from the view's lower left corner, y up
+        const trace = (dx, dy) => { ctx.beginPath(); for (const c of shown) ctx.rect(c.x0 - o.x + dx, c.y0 - o.y + dy, c.x1 - c.x0, c.y1 - c.y0); };
+        trace(d, -d); ctx.fillStyle = C_SHADOW.toString(); ctx.fill();
+        trace(0, 0); ctx.fillStyle = HULL_INKS.base.toString(); ctx.fill();
+        ctx.save();
+        ctx.clip();
+        // plating: panels a few UI units across at each octave, some lighter or darker, with seams between them
+        for (let s = .1; s < 1e7; s *= 10)
+        {
+            const g = s / WU;
+            if (g < .6 || g > 60) continue;
+            const fade = clamp((g - .6)/1.4, 0, 1) * clamp((60 - g)/30, 0, 1);
+            const i0 = Math.floor(v.x0/s), i1 = Math.ceil(v.x1/s), j0 = Math.floor(v.y0/s), j1 = Math.ceil(v.y1/s);
+            ctx.globalAlpha = fade;
+            for (let i = i0; i < i1; i++)
+                for (let j = j0; j < j1; j++)
+                {
+                    const h = craterHash(i, j, s);
+                    if (h > .34) continue;
+                    // a lighter or darker panel, sometimes only half of the cell
+                    ctx.fillStyle = (h < .17 ? HULL_INKS.light : HULL_INKS.dark).toString();
+                    const half = h % .17 < .06, x = i*s - o.x + s*.06, y = j*s - o.y + s*.06;
+                    ctx.fillRect(x, y, half ? s*.42 : s*.88, s*.88);
+                }
+            ctx.strokeStyle = HULL_INKS.seam.toString();
+            ctx.lineWidth = Math.max(.02*s, .04*WU);
+            ctx.beginPath();
+            for (let i = i0; i <= i1; i++) { ctx.moveTo(i*s - o.x, 0); ctx.lineTo(i*s - o.x, vh); }
+            for (let j = j0; j <= j1; j++) { ctx.moveTo(0, j*s - o.y); ctx.lineTo(vw, j*s - o.y); }
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        // the rims along the open edges, inside the wall: cream, a dark line behind it, amber lights along it
+        for (const e of H.edges)
+        {
+            const [nx, ny] = e.n, horiz = ny != 0;
+            if (horiz ? e.b < v.x0 || e.a > v.x1 || e.at < v.y0 - rim || e.at > v.y1 + rim : e.b < v.y0 || e.a > v.y1 || e.at < v.x0 - rim || e.at > v.x1 + rim) continue;
+            const band = (w, off, col) =>
+            {
+                ctx.fillStyle = col;
+                const inner = e.at - (nx + ny)*(off + w), outer = e.at - (nx + ny)*off, lo = Math.min(inner, outer), len = e.b - e.a;
+                if (horiz) ctx.fillRect(e.a - o.x, lo - o.y, len, w); else ctx.fillRect(lo - o.x, e.a - o.y, w, len);
+            };
+            band(rim*.35, rim, HULL_INKS.dark.toString());
+            band(rim, 0, P_CREAM.toString());
+            const n = Math.floor((e.b - e.a)/gap);
+            for (let k = 0; k < n; k++)
+            {
+                const u = e.a + (k + .5)*(e.b - e.a)/n, w = e.at - (nx + ny)*rim*.5;
+                const x = horiz ? u : w, y = horiz ? w : u;
+                if (x < v.x0 - rim || x > v.x1 + rim || y < v.y0 - rim || y > v.y1 + rim) continue;
+                const on = Math.sin(time*2 + u*.37) > -.6;
+                ctx.fillStyle = (k % 5 == 2 ? P_BRICK : on ? P_MUSTARD : P_ORANGE.lerp(P_DEEP, .5)).toString();
+                ctx.beginPath(); ctx.arc(x - o.x, y - o.y, rim*.32, 0, PI*2); ctx.fill();
+            }
+        }
+    });
+}
+
+// the deck floor of a level inside a station (interior: true), instead of the starfield: dark plates in octaves 10x
+// apart, a few shaded, and faint seams
+const P_DECK = P_DEEP.lerp(P_INDIGO, .35);
+function drawDeck()
+{
+    const v = VIEW_RECT, o = vec2(v.x0, v.y0), vw = v.x1 - v.x0, vh = v.y1 - v.y0;
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
+    {
+        ctx.fillStyle = P_DECK.toString();
+        ctx.fillRect(0, 0, vw, vh);
+        for (let s = .1; s < 1e7; s *= 10)
+        {
+            const g = s / WU;
+            if (g < .8 || g > 60) continue;
+            const fade = clamp((g - .8)/1.6, 0, 1) * clamp((60 - g)/30, 0, 1);
+            const i0 = Math.floor(v.x0/s), i1 = Math.ceil(v.x1/s), j0 = Math.floor(v.y0/s), j1 = Math.ceil(v.y1/s);
+            ctx.globalAlpha = fade;
+            ctx.fillStyle = P_INDIGO.lerp(P_DUSK, .12).toString();
+            for (let i = i0; i < i1; i++)
+                for (let j = j0; j < j1; j++)
+                    if (craterHash(i, j, s + 3) < .22) ctx.fillRect(i*s - o.x + s*.05, j*s - o.y + s*.05, s*.9, s*.9);
+            ctx.strokeStyle = P_INDIGO.lerp(P_DUSK, .3).toString();
+            ctx.lineWidth = Math.max(.015*s, .03*WU);
+            ctx.beginPath();
+            for (let i = i0; i <= i1; i++) { ctx.moveTo(i*s - o.x, 0); ctx.lineTo(i*s - o.x, vh); }
+            for (let j = j0; j <= j1; j++) { ctx.moveTo(0, j*s - o.y); ctx.lineTo(vw, j*s - o.y); }
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+    });
+    drawGrain(1);
+}
+
 // rock: one shape made of every sand rect and landmass, with a hard shadow, a dark side and a lit side (so overlapping
 // pieces show no seams), lighter interiors, and craters in octaves 10x apart
 drawLands = function()
@@ -1275,6 +1414,9 @@ drawLands = function()
     for (const m of shown) if (m.grass) drawPoly(m.grass, ink[1]);
     drawCraters();
 };
+
+// battle station walls go over the rock
+{ const lands0 = drawLands; drawLands = function() { lands0(); drawHulls(); }; }
 
 function craterHash(x, y, o) { const s = Math.sin(x*127.1 + y*311.7 + o*74.7)*43758.5453; return s - Math.floor(s); }
 function inPoly(pts, x, y)

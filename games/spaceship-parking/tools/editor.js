@@ -1437,6 +1437,7 @@ window.pmbEditor = (() =>
         if (kind == 'custom') options.push(['custom', 'custom']);
         panel.append(field('gravity', select(options, () => kind, v => { if (!v) delete def.gravity; else if (v != 'custom') def.gravity = { ...PLANETS[v] }; })));
         if (g) panel.append(field('pull %', input('number', () => Math.round(g.share*1000)/10, v => { g.share = clamp((v ?? 35)/100, .01, .95); }, { step: 1, min: 1, max: 95 })));
+        panel.append(check('inside a station (deck floor, no stars)', !!def.interior, v => { if (v) def.interior = true; else delete def.interior; }));
         panel.append(el('div', { className: 'row' }, [check('space station', !!def.station, setStation),
             ...(def.station ? [button('Select station', () => { sel = { kind: 'station', i: 0 }; multi = []; frameSel(); refreshPanel(); })] : [])]));
     }
@@ -1544,7 +1545,7 @@ window.pmbEditor = (() =>
         ['ducks', 'Ducks', f => `Duck + ${f.kids} kid${f.kids == 1 ? '' : 's'}`],
         ['lands', 'Landmasses', m => `Landmass · ${m.circles.length} circles`],
         ['land', 'Sand', r => `Sand · ${size({ x0: r[0], y0: r[1], x1: r[2], y1: r[3] })}`],
-        ['docks', 'Docks', r => `${r.quay ? 'Quay' : 'Dock'} · ${size(r)}`],
+        ['docks', 'Docks', r => `${r.hull ? 'Wall' : r.quay ? 'Quay' : 'Dock'} · ${size(r)}`],
         ['currents', 'Currents', r => `Current · ${size(r)}`],
         ['walls', 'Invisible walls', r => `Wall · ${size(r)}`],
     ];
@@ -1636,7 +1637,7 @@ window.pmbEditor = (() =>
         return {
             start: `Boat ${n}: start`, slip: `Boat ${n}: slip`, mslip: `Moored boat ${n}: slip`, moored: 'Moored boat', drifters: 'Loose boat', buoys: 'Buoy', logs: 'Log',
             traffic: `Traffic boat ${n}`, point: `Traffic boat ${n}: point ${sel.j + 1} of ${def.traffic?.[sel.i]?.path.length}`,
-            ducks: 'Duck family', station: 'Space station', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current', walls: 'Invisible wall',
+            ducks: 'Duck family', station: 'Space station', lands: 'Landmass', land: 'Sand', docks: def.docks[sel.i]?.hull ? 'Station wall' : def.docks[sel.i]?.quay ? 'Quay' : 'Dock', currents: 'Current', walls: 'Invisible wall',
         }[sel.kind];
     }
 
@@ -1720,6 +1721,8 @@ window.pmbEditor = (() =>
         const side = (label, k, n) => field(label, sel.kind == 'land' ? input('number', () => r[n], v => { r[n] = v ?? 0; }, { step: 'any' }) : numIn(r, k, { step: 'any' }));
         panel.append(grid([side('left', 'x0', 0), side('right', 'x1', 2), side('bottom', 'y0', 1), side('top', 'y1', 3)]));
         if (sel.kind == 'currents') panel.append(grid([field('flow x', numIn(r, 'dx', { step: 'any' })), field('flow y', numIn(r, 'dy', { step: 'any' }))]));
+        if (sel.kind == 'docks')
+            panel.append(check('battle station wall', !!r.hull, v => { if (v) r.hull = true; else delete r.hull; }));
         if (sel.kind == 'docks')
             panel.append(el('label', {}, [el('input', { type: 'checkbox', checked: !!r.under, onchange: e => { snapshot(); if (e.target.checked) r.under = true; else delete r.under; changed(); } }), 'submarines can pass under']));
         if (sel.kind == 'walls') panel.append(el('div', { className: 'keys', textContent: 'Boats and floaters bump into it, but it is never drawn in the game. Only the editor shows it.' }));
@@ -1822,6 +1825,7 @@ window.pmbEditor = (() =>
                 break;
             case 'docks':
                 panel.append(bCheck('quay (concrete)', o => o.quay, (o, v) => { if (v) o.quay = true; else delete o.quay; }));
+                panel.append(bCheck('battle station wall', o => o.hull, (o, v) => { if (v) o.hull = true; else delete o.hull; }));
                 panel.append(bCheck('submarines can pass under', o => o.under, (o, v) => { if (v) o.under = true; else delete o.under; }));
                 break;
             case 'currents':

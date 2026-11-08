@@ -9,13 +9,13 @@
 //          (PI/2 = bow into a top pier; either end in is fine), pad = extra [length, width] room in
 //          toy units (times k), fingers = 'both' | 'none' (short docks along the slip's long sides)
 // land:    [x0, y0, x1, y1] sand;  docks: {x0, y0, x1, y1, quay?, plank?}
+// interior: true: inside a station, a deck floor instead of the starfield; docks with hull: true are its walls
 // walls:   invisible colliders {x0, y0, x1, y1}: boats and floaters bump into them, nothing is drawn (the editor shows them)
 // lands:   blob landmasses {x, y, k, circles: [[x, y, r]] in units of k (first one on the center), grass?, detail?: outline points}
 // pads:    a dock with pad: true is a landing pad; a slip with bottom: y stands on it (gravity levels)
 // station: a spinning space station {x, y (center of its drift), a, spin: rad/s, drift: {r, period, phase}}; a slip with
 //          on: 'station' is given in the station's coordinates and moves with it (src/space.js)
 // gravity: {share: of each ship's full thrust, dir?: angle (default down), planet?: a PLANETS type (its ground colors)}
-// a chain boat may set view: the camera shows that many times more around it than its type does
 // moored:  boats tied up on springs; drifters: loose boats; buoys: [x, y, scale]; ducks: {x, y, kids}
 // traffic: boats that drive a path on their own {boat, k?, path: [[x, y], ...], end?: 'back' | 'loop' | 'stop',
 //          speed?: share of top speed (default .6), during?: [boat numbers, from 1] (default: every turn),
@@ -210,8 +210,12 @@ function laneLoop(line, d, pace, boats)
     });
 }
 
-// Rest Stop's tunnel: from the west pocket to the east one, nine straight runs through the asteroid
-const REST_STOP_LINE = [[-330, -60], [-230, -60], [-230, 40], [-150, 40], [-150, 110], [150, 110], [150, 40], [230, 40], [230, -60], [330, -60]];
+// rects [x0, y0, x1, y1] as battle station walls: docks with hull: true, drawn as the inside of a giant station
+// (drawHulls in src/skin.js)
+const hull = list => list.map(([x0, y0, x1, y1]) => ({ x0, y0, x1, y1, hull: true }));
+
+// Rest Stop's corridor: from the west hangar to the east one, nine straight runs
+const REST_STOP_LINE = [[-200, -40], [-140, -40], [-140, 30], [-90, 30], [-90, 80], [90, 80], [90, 30], [140, 30], [140, -40], [200, -40]];
 
 // planet types for the gravity levels: how hard they pull (share of each ship's own full thrust, so it feels the same in
 // every ship: a ship hovers at that throttle) and, by name, the colors of their ground (ROCK_INKS in src/skin.js)
@@ -238,7 +242,7 @@ const SCALE_LEVELS =
         station: { x: 0, y: 0, a: .4, spin: 2*PI/60, drift: { r: 10, period: 140, phase: 0 } },
         boats:
         [
-            { boat: 'dinghy', view: 4, start: { x: 37.8, y: -12, a: PI/2 }, slip: { on: 'station', x: 29.01, y: 0, a: PI/2, pad: [1.4, 1], fingers: 'none' } },
+            { boat: 'dinghy', start: { x: 37.8, y: -12, a: PI/2 }, slip: { on: 'station', x: 29.01, y: 0, a: PI/2, pad: [1.4, 1], fingers: 'none' } },
             { boat: 'yacht', k: 3.5, start: { x: 170, y: 40, a: PI }, slip: { on: 'station', x: -39.37, y: 0, a: PI/2, pad: [.8, .6], fingers: 'none' } },
         ],
         buoys: [[60, -75, 1.2], [-75, 55, 1.2]],
@@ -253,7 +257,7 @@ const SCALE_LEVELS =
         [
             { boat: 'cruise', start: { x: -350, y: 560, a: PI/2 }, slip: { x: 95, bottom: 1, a: PI/2, pad: [.6, .6], fingers: 'none' } },
             { boat: 'yacht', k: 3.5, start: { x: -100, y: 85, a: PI/2 }, slip: { x: 24, bottom: .8, a: PI/2, pad: [.6, .9], fingers: 'none' } },
-            { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
+            { boat: 'dinghy', start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
         ],
     },
     {
@@ -267,7 +271,7 @@ const SCALE_LEVELS =
         [
             { boat: 'trawler', start: { x: -200, y: 0, a: PI/2, ground: true }, slip: { x: 60, bottom: .96, a: PI/2, pad: [.6, .8], fingers: 'none' } },
             { boat: 'sailboat', start: { x: 150, y: 0, a: PI/2, ground: true }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
-            { boat: 'swan', view: 2, start: { x: -70, y: 0, a: PI/2, ground: true }, slip: { x: -30, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'swan', start: { x: -70, y: 0, a: PI/2, ground: true }, slip: { x: -30, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
         ],
     },
     {
@@ -282,8 +286,8 @@ const SCALE_LEVELS =
         [
             { boat: 'cruise', start: { x: -800, y: -300, a: 0 }, slip: { on: 'station', port: 1, pad: [.6, .6], fingers: 'none' } },
             { boat: 'trawler', start: { x: 650, y: 250, a: PI }, slip: { on: 'station', port: 0, pad: [.8, .6], fingers: 'none' } },
-            { boat: 'speedboat', view: 2, start: { on: 'station', x: 100, y: 160, a: 0 }, slip: { on: 'station', port: 2, pad: [.8, .6], fingers: 'none' } },
-            { boat: 'jetski', view: 2, start: { on: 'station', x: 100, y: -150, a: 0 }, slip: { on: 'station', port: 3, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'speedboat', start: { on: 'station', x: 100, y: 160, a: 0 }, slip: { on: 'station', port: 2, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'jetski', start: { on: 'station', x: 100, y: -150, a: 0 }, slip: { on: 'station', port: 3, pad: [.8, .6], fingers: 'none' } },
         ],
     },
     {
@@ -295,7 +299,7 @@ const SCALE_LEVELS =
         boats:
         [
             { boat: 'yacht', start: { x: -300, y: 250, a: PI/2 }, slip: { x: -60, bottom: 1.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
-            { boat: 'speedboat', view: 1.6, start: { x: 120, y: 90, a: PI/2 }, slip: { x: 0, bottom: 30.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'speedboat', start: { x: 120, y: 90, a: PI/2 }, slip: { x: 0, bottom: 30.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
             { boat: 'jetski', start: { x: 90, y: 115, a: PI/2 }, slip: { x: 25, bottom: 55.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
         ],
     },
@@ -308,34 +312,36 @@ const SCALE_LEVELS =
         [
             { boat: 'container', start: { x: -900, y: 700, a: PI/2 }, slip: { x: 300, bottom: 1.5, a: PI/2, pad: [.6, .6], fingers: 'none' } },
             { boat: 'sub', start: { x: -350, y: 150, a: PI/2 }, slip: { x: -50, bottom: 1.5, a: PI/2, pad: [.6, .6], fingers: 'none' } },
-            { boat: 'swan', view: 2, start: { x: 60, y: 30, a: PI/2 }, slip: { x: 10, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'swan', start: { x: 60, y: 30, a: PI/2 }, slip: { x: 10, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
         ],
     },
     {
-        // a winding tunnel through an asteroid with traffic both ways, and a rest stop halfway along it: a lay-by behind
-        // a rock median (in at one end, out at the other) with a small station hull and two bays. A 6.8 m zoomer flies in
-        // from the west pocket, then a 2.9 m escape pod from the east one; both see more than usual (view) so traffic
-        // shows before it is on them. Some corners run on into dead ends, and a long
-        // one leads south from the middle run. Ten small ships (scooters, pods, stealth pods) loop through the tunnel, east on the south side of it
-        // and west on the north side, turning round in the pockets.
-        name: 'Rest Stop',
-        land: carve([-300, -700, 300, 800],
+        // inside a planet-sized battle station: a winding corridor (20 m wide) with traffic both ways, and a rest stop
+        // halfway along it: a lay-by behind a median wall (in at one end, out at the other) with a small station hull and
+        // two bays. A 6.8 m zoomer flies in from the west hangar, then a 2.9 m escape pod from the east one. Some corners
+        // run on into dead ends, and a long one leads south from the middle run. Ten small ships loop through the
+        // corridor, east on its south side and west on its north side, turning round in the hangars.
+        name: 'Rest Stop', interior: true, land: [],
+        docks:
         [
-            ...tunnel(REST_STOP_LINE, 12),
-            ...tunnel([[-230, 40], [-230, 150]], 12), ...tunnel([[-150, 40], [-150, -50]], 12),        // dead ends at the corners
-            ...tunnel([[230, 40], [230, 150]], 12), ...tunnel([[150, 40], [150, -50]], 12),
-            ...tunnel([[0, 110], [0, 10]], 12),                                                         // the long dead end
-            [-70, 110, -45, 134], [45, 110, 70, 134], [-70, 134, 70, 180],                               // the rest stop
-        ]),
-        docks: [{ x0: -70, y0: 172, x1: 70, y1: 180, quay: true }],
-        walls: [{ x0: -460, y0: -240, x1: -420, y1: 340 }, { x0: 420, y0: -240, x1: 460, y1: 340 }, { x0: -460, y0: 300, x1: 460, y1: 340 }, { x0: -460, y0: -240, x1: 460, y1: -200 }],
+            ...hull(carve([-1000, -800, 1000, 900],
+            [
+                ...tunnel(REST_STOP_LINE, 10),
+                ...tunnel([[-140, 30], [-140, 110]], 10), ...tunnel([[-90, 30], [-90, -30]], 10),     // dead ends at the corners
+                ...tunnel([[140, 30], [140, 110]], 10), ...tunnel([[90, 30], [90, -30]], 10),
+                ...tunnel([[0, 80], [0, 0]], 10),                                                       // the long dead end
+                [-55, 80, -38, 100], [38, 80, 55, 100], [-55, 100, 55, 136],                             // the rest stop
+                [-290, -110, -210, 100], [210, -110, 290, 100],                                           // the hangars
+            ])),
+            { x0: -55, y0: 130, x1: 55, y1: 136, quay: true },
+        ],
         boats:
         [
-            { boat: 'speedboat', view: 4, start: { x: -370, y: 150, a: -PI/2 }, slip: { x: -25, top: 172, a: PI/2 } },
-            { boat: 'dinghy', view: 8, start: { x: 370, y: 150, a: -PI/2 }, slip: { x: 25, top: 172, a: PI/2 } },
+            { boat: 'speedboat', start: { x: -260, y: 60, a: -PI/2 }, slip: { x: -18, top: 130, a: PI/2 } },
+            { boat: 'dinghy', start: { x: 260, y: 60, a: -PI/2 }, slip: { x: 18, top: 130, a: PI/2 } },
         ],
         // the throttle share of each ship that cruises near the 6 m/s pace (flying saucers top out near 4 m/s, too slow)
-        traffic: laneLoop(REST_STOP_LINE, 6, 6,
+        traffic: laneLoop(REST_STOP_LINE, 5, 6,
             [['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5]]),
     },
     {
