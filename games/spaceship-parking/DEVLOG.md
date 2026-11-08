@@ -1,5 +1,6 @@
 ## 2026-11-08 — Nesting Dolls: a darker portal
 - The portal was too colorful: it is now dark blues and purples with yellow. A mustard rim and faint glow, rings darkening inward from dusky purple through slate blue and indigo to a near-black middle, the same mustard arms. Teal, lilac and cream are gone from it.
+- Then the rim and its glow turned lilac too, so the yellow is only in the arms.
 - Checked in Chrome: a close-up of the open portal in Nesting Dolls.
 
 ## 2026-11-08 — Nesting Dolls: the Ark flies off into a portal

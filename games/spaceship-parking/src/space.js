@@ -501,7 +501,7 @@ function portalCamera()
     return { pos: vec2((box.x0 + box.x1)/2, (box.y0 + box.y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
 }
 
-// a swirl in dark blues and purples with yellow: a mustard rim, rings darkening inward from dusky purple through slate
+// a swirl in dark blues and purples with yellow: a lilac rim, rings darkening inward from dusky purple through slate
 // blue and indigo to a near-black middle, and mustard arms turning
 function drawPortal()
 {
@@ -509,8 +509,8 @@ function drawPortal()
     if (!p || p.open <= 0) return;
     const ease = 1 - (1 - p.open)**3, R = p.r*ease, c = p.pos;
     if (!inView(c, R)) return;
-    drawCircle(c, R*2.3, P_MUSTARD.scale(1, .1));
-    drawCircle(c, R*2.08, P_MUSTARD);
+    drawCircle(c, R*2.3, P_LILAC.scale(1, .1));
+    drawCircle(c, R*2.08, P_LILAC);
     [P_DUSK.lerp(P_INDIGO, .35), P_SLATE.lerp(P_INDIGO, .3), P_INDIGO, P_DEEP, P_DEEP.lerp(P_VOID, .5)].forEach((col, i) => drawCircle(c, R*2*(.94 - i*.17), col));
     const segs = [];
     for (let arm = 0; arm < 5; arm++)
