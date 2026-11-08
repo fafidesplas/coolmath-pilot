@@ -250,10 +250,9 @@ function thrusterSpin(b, rudder, throttle)
     return rudder * (RCS_TURN*b.type.turn + b.type.wash*Math.abs(throttle)) / (b.slowdown*b.slowdown);
 }
 
-// TRIAL (level `spinTurn`, Spin Dock only): the nose thrusters turn the ship you drive even when it is stopped.
-// Moving, it turns as fast as the harbor rudder would; stopped (or slow), as fast as the gravity side thrusters.
-// Left always turns the nose left, reversing too (the harbor rudder flips like a car's). To revert, drop
-// `spinTurn` from the level.
+// nose thrusters (levels without gravity): they turn a ship even when it is stopped. Moving, it turns as fast as the
+// harbor rudder would; stopped (or slow), as fast as the gravity side thrusters. Left always turns the nose left,
+// reversing too (the harbor rudder flipped like a car's).
 function spinTurn(b, rudder, throttle, vf)
 {
     return rudder * (b.turn*Math.max(Math.abs(vf), RCS_TURN*b.vs) + b.wash*Math.abs(throttle));

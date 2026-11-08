@@ -30,6 +30,9 @@ Forked from Park My Boat on 2026-11-06 (commit `40a0e9c`). It began as a secret 
 ## Export for people outside the team
 `node tools/export.mjs [outDir]` (default `~/Desktop/spaceship-parking`, plus a `.zip`) writes a standalone copy that opens from disk: one flat folder, every comment stripped from the game code, the save key and the harbor title renamed, analytics logging silenced. It fails if anything naming the team, Park My Boat or its author is left (`FORBIDDEN`). The engine keeps its MIT header and the font its OFL file, as their licenses require. If you add a string that names Park My Boat, add it to `REWRITES`. The public copy is on Netlify (site `luminous-cassata-2dd71b`); update it by dragging the exported folder onto that site's Deploys tab, which keeps the URL.
 
+## Turning
+Every ship turns even when it is stopped, in every level. Without gravity the nose thrusters turn it (`spinTurn` in `src/space.js`): moving, as fast as the harbor rudder would; stopped or slow, as fast as the side thrusters under gravity. Left always turns the nose left, reversing too (no car-style flip), and the mouse's reverse steering follows that.
+
 ## Levels
 Only levels made for this game are left: the seven levels forked from Park My Boat (Odd Couple, Way Down, Rush Hour, Open Space, Spaceport, Docking Ring, and the hidden bonus Moon Drift) were removed on 2026-11-08. The Test Map (`?test`) stays as a sandbox. The level helpers those levels used (`basin`, `harborIsland`, `bay`, `berths`, `loopLane`...) are still in `levels/levels.js`, unused; `bay()` builds a station docking bay walled by the main hull (docks drawn as modules), in case a crowded level comes back.
 

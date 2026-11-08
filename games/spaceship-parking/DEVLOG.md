@@ -1,3 +1,9 @@
+## 2026-11-08 — Every ship turns when stopped, in every level
+- The turn-when-stopped trial is now the rule: the `spinTurn` flag is gone from Spin Dock, and every ship (traffic too, not only the one you drive) turns with the nose thrusters in the levels without gravity (`spinTurn` in `src/space.js`, `driveBoat` in `src/main.js`). The gravity levels already turned a stopped ship with the side thrusters (`thrusterSpin`).
+- The mouse's reverse steering no longer flips the turn in any level. This also fixes the gravity levels, where the flip turned the ship the wrong way.
+- Checked headless, all six levels: a stopped ship turns with A or D (Escape Pod about 28 degrees in a second, the big ships 7 to 19), and reversing with A turns it left. Grand Station's Space Liner, which could not turn from a stop before, now does. No errors.
+- Not checked: the mouse's reverse steering by hand.
+
 ## 2026-11-08 — Four new levels: three landings and a big station
 - Moon Hop (landing: Asteroid Miner 26 m, Solar Sailer 12 m, Flying Saucer 2.6 m), Grand Station (docking: Space Liner 300 m, Asteroid Miner 26 m, Zoomer 6.8 m, Rocket Scooter 2.4 m), Pad Towers (landing: Star Yacht 80 m on the ground, Zoomer and Rocket Scooter on 30 m and 55 m towers), Heavy Lift (landing: Classic Frigate 400 m, Stealth Cruiser 112 m, Flying Saucer 2.6 m). Order: Spin Dock, Touchdown, Moon Hop, Grand Station, Pad Towers, Heavy Lift.
 - `landing()` in `levels/levels.js` builds a gravity level from a planet radius and a pad per ship (towers with `lift`).

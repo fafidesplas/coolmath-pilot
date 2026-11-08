@@ -167,7 +167,6 @@ const SCALE_LEVELS =
         // across the end of the module stack, broadside to its port like the bar of a T: the pod at the front end, then
         // a 28 m yacht at the aft end. Only the gaps between the wings lead in.
         name: 'Spin Dock', land: [], docks: [],
-        spinTurn: true,     // TRIAL: the nose thrusters turn a stopped ship (spinTurn in src/space.js)
         walls: [{ x0: -280, y0: -280, x1: -250, y1: 280 }, { x0: 250, y0: -280, x1: 280, y1: 280 }, { x0: -280, y0: -280, x1: 280, y1: -250 }, { x0: -280, y0: 250, x1: 280, y1: 280 }],
         station: { x: 0, y: 0, a: .4, spin: 2*PI/60, drift: { r: 10, period: 140, phase: 0 } },
         boats:

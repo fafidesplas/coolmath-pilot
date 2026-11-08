@@ -568,8 +568,7 @@ function controlPlayer(dt)
             else
             {
                 throttle = -power;
-                rudder = clamp(wrapAngle(want - player.angle - PI)*2.5, -1, 1);
-                if (!level?.spinTurn) rudder = -rudder;     // the harbor rudder flips in reverse; nose thrusters don't
+                rudder = clamp(wrapAngle(want - player.angle - PI)*2.5, -1, 1);     // thrusters don't flip in reverse
             }
         }
     }
@@ -628,7 +627,7 @@ function drawPeriscope(b)
     d.circle(x, 0, .34, C_CREAM, true);
 }
 
-// engine and rudder: the rudder turns the boat more the faster it goes, plus a little prop wash
+// engine and thrusters: the nose thrusters turn a ship even when it is stopped (side thrusters under gravity)
 function driveBoat(b, throttle, rudder, dt)
 {
     const f = b.forward();
@@ -636,7 +635,7 @@ function driveBoat(b, throttle, rudder, dt)
     b.vel.x += f.x * thrust * dt;
     b.vel.y += f.y * thrust * dt;
     const vf = b.vel.x*f.x + b.vel.y*f.y;
-    b.angVel += (level?.gravity ? thrusterSpin(b, rudder, throttle) : level?.spinTurn && b == player ? spinTurn(b, rudder, throttle, vf) : rudder * (b.turn*vf + b.wash*throttle)) * dt;
+    b.angVel += (level?.gravity ? thrusterSpin(b, rudder, throttle) : spinTurn(b, rudder, throttle, vf)) * dt;
 }
 
 // ---------------------------------------------------------------------------
