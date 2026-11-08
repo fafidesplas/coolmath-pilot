@@ -25,6 +25,14 @@ const P_DUSK   = rgb(.427, .416, .6);    // #6D6A99
 const P_ROCK   = rgb(.549, .29, .235);   // #8C4A3C asteroid rock
 const P_ROCK2  = rgb(.651, .353, .275);  // #A65A46 its lit top
 const P_ROCKDK = rgb(.369, .184, .165);  // #5E2F2A its shadow side
+// the ground of each planet type (gravity.planet in the level, PLANETS in levels.js): [rock, lit top, shadow side]
+const ROCK_INKS =
+{
+    rocky: [P_ROCK, P_ROCK2, P_ROCKDK],
+    moon:  [rgb(.49, .478, .455), rgb(.6, .584, .553), rgb(.29, .282, .275)],        // #7D7A74 grey
+    heavy: [rgb(.6, .463, .204), rgb(.702, .553, .259), rgb(.369, .282, .125)],      // #997634 ochre
+};
+const rockInks = () => ROCK_INKS[level?.gravity?.planet] || ROCK_INKS.rocky;
 
 function setColor(c, d, a=c.a) { c.r = d.r; c.g = d.g; c.b = d.b; c.a = a; }
 setColor(C_WATER, P_SPACE);
@@ -1169,14 +1177,15 @@ drawLands = function()
     for (const r of rects) if (r.land) { const c = clipRect(r, d*3); if (c) add([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)].map(p => p.subtract(o))); }
     for (const m of shown) add(m.pts.map(p => p.subtract(o)));
     if (!shapes.length) return;
+    const ink = rockInks();
     drawCanvas2D(o, vec2(1), 0, false, ctx =>
     {
         const trace = (dx, dy) => { ctx.beginPath(); for (const s of shapes) { s.forEach((p, i) => i ? ctx.lineTo(p.x + dx, p.y + dy) : ctx.moveTo(p.x + dx, p.y + dy)); ctx.closePath(); } };
         trace(d, -d); ctx.fillStyle = C_SHADOW.toString(); ctx.fill();
-        trace(0, 0); ctx.fillStyle = P_ROCKDK.toString(); ctx.fill();
-        ctx.save(); ctx.clip(); trace(-d*.8, d*.8); ctx.fillStyle = P_ROCK.toString(); ctx.fill(); ctx.restore();
+        trace(0, 0); ctx.fillStyle = ink[2].toString(); ctx.fill();
+        ctx.save(); ctx.clip(); trace(-d*.8, d*.8); ctx.fillStyle = ink[0].toString(); ctx.fill(); ctx.restore();
     });
-    for (const m of shown) if (m.grass) drawPoly(m.grass, P_ROCK2);
+    for (const m of shown) if (m.grass) drawPoly(m.grass, ink[1]);
     drawCraters();
 };
 
@@ -1203,7 +1212,7 @@ function drawCraters()
         const g = s / WU;
         if (g < 1.2 || g > 14) continue;
         const a = clamp((g - 1.2)/1.2, 0, 1) * clamp((14 - g)/5, 0, 1);
-        const pit = P_ROCKDK.scale(1, .75*a), lit = P_CREAM.scale(1, .16*a);
+        const pit = rockInks()[2].scale(1, .75*a), lit = P_CREAM.scale(1, .16*a);
         for (const sh of shapes)
         {
             const x0 = Math.max(sh.x0, v.x0), y0 = Math.max(sh.y0, v.y0), x1 = Math.min(sh.x1, v.x1), y1 = Math.min(sh.y1, v.y1);

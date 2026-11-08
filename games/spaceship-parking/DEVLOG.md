@@ -1,3 +1,9 @@
+## 2026-11-08 — Planet types: each landing level has its own gravity
+- Three planet types (`PLANETS` in `levels/levels.js`), each with a pull (a share of each ship's own full thrust, so a ship hovers at that throttle) and a ground color (`ROCK_INKS` in `src/skin.js`). Moon: 17%, grey. Rocky: 35% (as before), brick red. Heavy: 55%, ochre.
+- Touchdown and Pad Towers are rocky, Moon Hop is a moon, Heavy Lift is heavy. `landing()` takes the planet type after the name.
+- Checked in Chrome: each level pulls at its share, the grounds show grey, brick and ochre, and the editor's self-test still passes for Touchdown. No errors.
+- Not checked: how hard each level now plays by hand (Heavy Lift's 400 m Frigate falls about twice as fast as before, Moon Hop's ships about half as fast).
+
 ## 2026-11-08 — Trial: getting a ship on its side back up (Moon Hop only)
 - Moon Hop has two ways to stand up a ship lying on the ground, picked in the URL: `?ground=boost` or `?ground=pivot` (`groundTurn` in `src/space.js`, `groundTrial: true` on the level). With no `?ground`, Moon Hop plays as before. Both apply only to the ship you drive, on the ground, tilted more than 20 degrees from upright, turning toward nose up.
 - boost: the side thrusters spin it 3x as hard as it takes to beat gravity round the end touching the ground (`GROUND_BOOST`).
