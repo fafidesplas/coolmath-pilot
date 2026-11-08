@@ -22,9 +22,16 @@ const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
 // boats at least this long (meters) get a slip this much bigger and this much more heading leeway
 const BIG_SHIP_LENGTH = 50;
 const BIG_SHIP_LEEWAY = 1.15;
-// the camera shows this many ship lengths across the screen, the same for every ship, so each one takes up the same
-// share of the screen. Try others with ?shipview=12
+// the camera shows SHIP_SCREEN ship lengths across the screen for ships up to SHIP_SCREEN_FROM m, so they all take up
+// the same share of it; bigger ships get fewer lengths, down to SHIP_SCREEN_BIG at SHIP_SCREEN_TO m and beyond
+// (smoothly, on a log scale), so the biggest don't shrink to specks. Try others with ?shipview=12 (the small ships')
 const SHIP_SCREEN = +new URLSearchParams(location.search).get('shipview') || 16;
+const SHIP_SCREEN_BIG = 6, SHIP_SCREEN_FROM = 50, SHIP_SCREEN_TO = 400;
+function shipScreen(len)
+{
+    const t = clamp(Math.log(len/SHIP_SCREEN_FROM) / Math.log(SHIP_SCREEN_TO/SHIP_SCREEN_FROM), 0, 1);
+    return SHIP_SCREEN + (Math.min(SHIP_SCREEN_BIG, SHIP_SCREEN) - SHIP_SCREEN)*t;
+}
 // no anchor: a boat is parked once it rests (under REST_SPEED toy units/s and REST_SPIN rad/s, no input) for
 // REST_TIME seconds with part of its hull in the slip. Below SETTLE_SPEED with no throttle the coast ends:
 // full forward drag and SETTLE_SPIN times the spin drag, so a nearly stopped ship doesn't creep for ages
@@ -332,7 +339,7 @@ function uiToWorld(p) { return cam.pos.add(p.subtract(UI_CENTER).scale(cam.wu));
 
 function boxAround(p, r) { return { x0:p.x - r, y0:p.y - r, x1:p.x + r, y1:p.y + r }; }
 
-// follow the boat a little ahead of where it is going, SHIP_SCREEN boat lengths across (the same for every ship);
+// follow the boat a little ahead of where it is going, shipScreen() boat lengths across (fewer for the biggest);
 // the slip may be off screen, an arrow at the edge points to it
 function cameraGoal()
 {
@@ -343,7 +350,7 @@ function cameraGoal()
         const [x0, y0, x1, y1] = [v[0] - m, v[1] - m, v[2] + m, v[3] + m], wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
         return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
     }
-    const minW = boatSize(player) * SHIP_SCREEN, pad = player.radius*.8;
+    const minW = boatSize(player) * shipScreen(boatSize(player)), pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
     const box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
     const w = Math.max(box.x1 - box.x0 + pad*2, minW), h = Math.max(box.y1 - box.y0 + pad*2, minW*.45);

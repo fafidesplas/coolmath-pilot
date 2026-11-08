@@ -1,3 +1,7 @@
+## 2026-11-08 — Big ships get a closer camera
+- 16 lengths across made the Space Liner too small. Ships up to 50 m keep 16; bigger ones get fewer, smoothly on a log scale, down to 6 at 400 m (`shipScreen` in `src/main.js`): Star Yacht 13.7, Stealth Cruiser 12.1, Space Liner 7.4, Classic Frigate 6.
+- Checked in Chrome: Space Liner (Touchdown) 7.4 lengths across, Classic Frigate (Heavy Lift) 6.0, Zoomer (Rest Stop) still 16.
+
 ## 2026-11-08 — Guide dashes stand still; edge arrow removed
 - The route guide's dashes no longer move, and the big yellow arrow at the screen edge (with its distance) is gone: `drawSlipArrow` in `src/main.js` and its helpers in `src/guide.js` were removed. The thin line alone leads to the slip.
 - Checked in Chrome in Rest Stop: still dashes along the route, no arrow, no new errors.
