@@ -1,3 +1,8 @@
+## 2026-11-08 — Flat ground in the landing levels
+- Touchdown, Moon Hop, Pad Towers and Heavy Lift land on flat ground (a `land` rect with its top at y = 0) instead of a round planet. On the slope, a winged ship (the Stealth Cruiser) could lie stuck on its side, propped up by a wing. `landing()` in `levels/levels.js` no longer takes a planet radius.
+- Checked in Chrome: the four levels load with one flat ground and no round planet, the pads sit on it (the towers still stand 30 m and 55 m tall), and there are no errors.
+- Found: a ship lying flat on its side still mostly can't turn upright. A or D for 3.5 s leaves it within a few degrees of flat (once it got to 30 degrees). The side thrusters are too weak to lift one end against gravity, so RESTART is the only way out.
+
 ## 2026-11-08 — Level editor copied in from Park My Boat
 - E opens the level editor again: `tools/editor.js` is Park My Boat's, copied, with its saved-folder ids renamed, and `index.html` loads it. It never came over in the fork. `tools/export.mjs` lists its scripts, so the editor stays out of the export.
 - Saving a level built by a helper (Moon Hop, Pad Towers, Heavy Lift from `landing()`) is refused with a message. Before, it would have added a second copy of the level to `levels.js`.
