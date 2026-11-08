@@ -58,9 +58,9 @@ const SOUNDS =
 // ---------------------------------------------------------------------------
 // save
 
-const SAVE_DEFAULT = { v:1, stars:[], best:[], sound:true };
+const SAVE_DEFAULT = { v:2, stars:[], best:[], sound:true };
 let saveData = readSaveData(SAVE_KEY, SAVE_DEFAULT);
-if (saveData.v !== 1 || !Array.isArray(saveData.stars) || !Array.isArray(saveData.best))
+if (saveData.v !== 2 || !Array.isArray(saveData.stars) || !Array.isArray(saveData.best))
     saveData = { ...SAVE_DEFAULT, stars:[], best:[] };
 function persist() { writeSaveData(SAVE_KEY, saveData); }
 

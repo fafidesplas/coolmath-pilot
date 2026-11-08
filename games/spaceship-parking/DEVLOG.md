@@ -1,3 +1,10 @@
+## 2026-11-08 — Forked harbor levels removed
+- Removed the seven levels that came from Park My Boat: Odd Couple, Way Down, Rush Hour, Open Space, Spaceport, Docking Ring and the hidden bonus Moon Drift. The game is now Spin Dock, then Touchdown; `?test` still adds the Test Map. `LEVEL_NAMES` (their space names) is gone from `src/skin.js`; the level helpers stay in `levels/levels.js`, unused for now.
+- Stars are saved by level number, so the save goes to `v: 2` and old stars are cleared rather than shown on the wrong level.
+- The turn-when-stopped trial moved from Odd Couple to Spin Dock (`spinTurn: true`).
+- Checked headless: the level select shows the two levels, both load and play, the stopped pod turns about 30 degrees in a second in Spin Dock, and `?test` still opens the Test Map. No errors.
+- Next: new space levels to fill the game back out.
+
 ## 2026-11-08 — Trial: the nose thrusters turn a stopped ship (Odd Couple only)
 - In Odd Couple (`spinTurn: true` in `levels/levels.js`) the ship you drive turns even when it is stopped, about as fast as the side thrusters turn it in Touchdown, so the flame and the turn now agree. Moving, it turns as fast as before. Left always turns the nose left, reversing too (in the other levels reversing flips the turn like a car), and the mouse's reverse steering follows that (`spinTurn` in `src/space.js`).
 - Checked headless: in Odd Couple a stopped pod turns about 30 degrees in a second with A or D, and reversing with A turns it left; in Way Down a stopped ship still doesn't turn. No errors.

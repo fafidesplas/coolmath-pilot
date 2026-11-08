@@ -171,9 +171,6 @@ for (const k in SHIP_NAMES) if (BOATS[k]) BOATS[k].name = SHIP_NAMES[k];
 for (const k in SHIP_COLORS) if (BOATS[k]) BOATS[k].color = SHIP_COLORS[k];
 if (BOATS.continent) BOATS.continent.deck = rgb(.83, .83, .86);
 
-const LEVEL_NAMES = { 'Open Water':'Open Space', 'Marina':'Spaceport', 'Raft-Up':'Docking Ring', 'Continental Drift':'Moon Drift' };
-for (const L of LEVELS) if (LEVEL_NAMES[L.name]) L.name = LEVEL_NAMES[L.name];
-
 // every on-screen string goes through txt (buttons, HUD, popups, results), so the wording changes in one place
 const TEXT_SWAPS =
 [
