@@ -48,7 +48,6 @@ const C_STEALTH= rgb(.42, .40, .60);
 const C_SLATE  = rgb(.38, .39, .55);
 const C_PANEL  = rgb(.24, .42, .78);
 const C_FLAME  = rgb(1, .55, .2);
-const C_MOON   = rgb(.72, .72, .76);
 const C_LILAC  = rgb(.70, .62, .92);
 
 MOORED_COLORS[2] = C_LILAC;
@@ -169,15 +168,14 @@ const SHIP_NAMES =
 {
     jetski:'Rocket Scooter', dinghy:'Escape Pod', swan:'Flying Saucer', speedboat:'Zoomer', minisub:'Stealth Pod',
     sailboat:'Solar Sailer', trawler:'Asteroid Miner', yacht:'Star Yacht', sub:'Stealth Cruiser', cruise:'Space Liner',
-    container:'Classic Frigate', island:'Ark', continent:'The Moon',
+    container:'Classic Frigate', island:'Ark', continent:'Battle Station',
 };
 const SHIP_COLORS =
 {
-    dinghy:C_ORANGE, speedboat:C_CORAL, swan:C_SILVER, minisub:C_STEALTH, sub:C_SLATE, cruise:C_SILVER, continent:C_MOON,
+    dinghy:C_ORANGE, speedboat:C_CORAL, swan:C_SILVER, minisub:C_STEALTH, sub:C_SLATE, cruise:C_SILVER, continent:P_DUSK,
 };
 for (const k in SHIP_NAMES) if (BOATS[k]) BOATS[k].name = SHIP_NAMES[k];
 for (const k in SHIP_COLORS) if (BOATS[k]) BOATS[k].color = SHIP_COLORS[k];
-if (BOATS.continent) BOATS.continent.deck = rgb(.83, .83, .86);
 
 // every on-screen string goes through txt (buttons, HUD, popups, results), so the wording changes in one place
 const TEXT_SWAPS =
@@ -390,6 +388,7 @@ const JETS =
     yacht:[[-3.82, 0, .48], [-4.06, 1.15, .18], [-4.06, -1.15, .18]], sub:[[-3.4, 0, .3]],
     cruise:[[-4.9, .28, .2], [-4.9, 0, .2], [-4.9, -.28, .2]], container:[[-5.05, .38, .34], [-5.05, 0, .34], [-5.05, -.38, .34]],
     island:[[-5.15, .72, .42], [-5.15, 0, .5], [-5.15, -.72, .42]],
+    continent:[[-5.0, .78, .95], [-5.0, -.78, .95], [-5.0, 1.9, .75], [-5.0, -1.9, .75]],
 };
 
 function shipThrottle(b)
@@ -773,18 +772,59 @@ if (BOATS.island)
     t.deckPts = null;
 }
 
-// the Ark's biosphere, in toy units from the dome's middle (y = port)
+// the Battle Station (it replaced The Moon): a planet-sized steel sphere with a command spire at the bow and, at the
+// stern, an engine block with four big boosters strapped to it, so its rear reads at a glance. Its outline (hullPts)
+// is the sphere, spire and engine block traced as one shape; the boosters are drawn over the block and collide too.
+const BATTLE =
+{
+    sphere: { x: .8, r: 3.3 },
+    spire: [[3.6, .5], [4.75, .24], [4.75, -.24], [3.6, -.5]].map(([x, y]) => vec2(x, y)),
+    block: [[-1.2, 2.35], [-3.75, 2.05], [-3.75, -2.05], [-1.2, -2.35]].map(([x, y]) => vec2(x, y)),
+    boosters: [[.78, .56], [1.9, .44], [-.78, .56], [-1.9, .44]].map(([y, r]) => ({ y, r, pts: rocketPts(-4.45, -2.35, r, .3, .1, .82, y) })),
+};
+BATTLE.spherePts = ringPts(BATTLE.sphere.r).map(p => p.add(vec2(BATTLE.sphere.x, 0)));
+for (const o of BATTLE.boosters)
+{
+    o.nose = clipX(o.pts, -2.95, 99);
+    o.band = clipX(o.pts, -3.95, -3.8);
+    o.bell = bell(-4.4, -5.0, o.r*.6, o.r*.95, o.y);
+}
+if (BOATS.continent)
+{
+    const t = BOATS.continent;
+    t.hullPts = unionOutline([BATTLE.spherePts, BATTLE.spire, BATTLE.block]);
+    t.deckPts = null;
+    t.ownColor = true;                          // always steel grey, like the battle station walls in Rest Stop
+}
+// its inks: the station walls' greys (HULL_INKS), amber lights
+const BATTLE_INK =
+{
+    light: raw(P_DUSK.lerp(P_CREAM, .18)), dark: raw(P_DUSK.lerp(P_INDIGO, .45)), seam: raw(P_INDIGO.lerp(P_DUSK, .25).scale(1, .8)),
+    block: raw(P_DUSK.lerp(P_INDIGO, .3)), bay: P_DEEP, glow: P_MUSTARD, turret: raw(P_DUSK.lerp(P_INDIGO, .6)),
+};
+// in toy units from the sphere's middle (y = port): latitudes and meridians of its plating, hangar bays, turrets, window rows
+const BATTLE_LATS = [-2.3, -1.15, 0, 1.15, 2.3];
+const BATTLE_MERIDIANS = [.42, .78];                       // half widths, as a share of the radius
+const BATTLE_BAYS = [[1.35, 1.72], [-.55, -1.72], [1.95, -.58]];
+const BATTLE_TURRETS = [[.1, 2.75], [1.85, 2.15], [.1, -2.75], [1.85, -2.15]];
+// circle segment of the sphere beyond the latitude y (toward +y when y > 0)
+function sphereCap(y)
+{
+    const { x: X, r } = BATTLE.sphere, a0 = Math.asin(Math.abs(y)/r), s = Math.sign(y);
+    return Array.from({ length: 21 }, (_, i) => { const a = a0 + (PI - 2*a0)*i/20; return vec2(X + Math.cos(a)*r, s*Math.sin(a)*r); });
+}
+
+// the Ark's biosphere, in toy units from the dome's middle (y = port): four tidy quarters on a meadow, a lake,
+// a forest, farm fields and a little white town
 const ARK_INK =
 {
-    seam: raw(P_DEEP.scale(1, .3)), land: P_TEAL, meadow: raw(P_TEAL.lerp(P_GLASS, .45)), forest: raw(P_TEAL.lerp(P_DEEP, .4)),
-    crown: raw(P_TEAL.lerp(P_DEEP, .15)), field: P_MUSTARD, field2: raw(P_MUSTARD.lerp(P_SAND, .55)), water: P_SLATE, shore: P_GLASS,
-    cloud: raw(P_CREAM.scale(1, .6)), glass: raw(P_GLASS.scale(1, .16)), rib: raw(P_CREAM.scale(1, .32)),
+    seam: raw(P_DEEP.scale(1, .3)), meadow: raw(P_TEAL.lerp(P_GLASS, .3)), forest: raw(P_TEAL.lerp(P_DEEP, .35)),
+    field: P_MUSTARD, field2: raw(P_MUSTARD.lerp(P_SAND, .55)), water: P_SLATE, shore: P_GLASS, glass: raw(P_GLASS.scale(1, .14)),
 };
-const ARK_MEADOWS = [[.6, -.3, 1.6, 1.1], [-.9, -.9, 1.1, .8], [.2, 1.3, 1.2, .6]];
-const ARK_FIELDS = [[.55, -1.05, .42, .3], [1.0, -1.05, .42, .3], [.55, -1.38, .42, .3], [1.0, -.72, .42, .3], [1.42, -.72, .3, .3], [1.42, -.4, .3, .3]];
-const ARK_TREES = [[1.05, .55, .42], [1.4, .2, .34], [.85, 1.2, .3], [1.45, .85, .28], [-1.25, -.25, .36], [-1.0, -1.25, .3], [-1.5, .45, .28], [-.3, -1.65, .3], [.1, -1.5, .24]];
-const ARK_TOWN = [[-.05, -.45], [.15, -.42], [-.02, -.66], [.2, -.65], [.4, -.5], [-.22, -.58]];
-const ARK_CLOUDS = [[.9, .25, .7], [-.6, -1.3, .55], [-.3, 1.35, .5]];
+const ARK_LAKE = [-.85, .62, 1.7, 1.15];                                                       // x, y, w, h
+const ARK_TREES = [[-1.45, -.5], [-.95, -.45], [-1.2, -.98], [-.7, -.95], [-.45, -.5]];     // all the same size
+const ARK_FIELDS = [.3, .78, 1.26].flatMap((x, i) => [-.62, -1.02].map((y, j) => [x, y, (i + j) % 2]));
+const ARK_TOWN = [.55, .85, 1.15].flatMap(x => [.7, 1.0].map(y => [x, y]));
 
 const SAIL_PTS = [[1.45, 0], [.15, .78], [-1.15, 0], [.15, -.78]];                              // Solar Sailer's mirror
 const DRILL_PTS = [[1.68, 0], [1.08, .3], [1.08, -.3]];                                        // Asteroid Miner's drill
@@ -799,6 +839,7 @@ function shipHitShapes(key)
     if (key == 'swan') return [t.hullPts];
     if (key == 'container') return [t.hullPts, ...FRIGATE_FINS];
     if (key == 'island') return [ARK.body, ARK.collarPts, ...ARK.fins];
+    if (key == 'continent') return [t.hullPts, ...BATTLE.boosters.map(o => o.pts)];
     if (!r) return null;
     const shapes = [r.body, ...r.fins, ...(r.boosters || [])];
     if (key == 'sailboat') shapes.push(toVecs(SAIL_PTS));
@@ -897,6 +938,16 @@ for (const key in BOATS)
     t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
     t.trailW = 2*outlineHalfWidth(shapes, -TRAIL_AT*t.L);
     t.selShapes = shapes;                       // the selection rim goes round all of them (drawJamSelection)
+}
+// the Battle Station is a ball, not a rocket: one circle for the sphere, then the engine block (a keel row), spire and
+// boosters, without the circles the sphere's already covers
+if (BOATS.continent)
+{
+    const t = BOATS.continent, { x: X, r } = BATTLE.sphere;
+    const rest = coverCircles([BATTLE.block, BATTLE.spire, ...BATTLE.boosters.map(o => o.pts)]);
+    t.circles = [{ x: X, y: 0, r: r*1.02 }, ...rest.filter(c => Math.hypot(c.x - X, c.y) + c.r > r*1.02)].sort((a, b) => b.x - a.x);
+    t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
+    t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
 }
 
 // Retro thrusters: a port on each side of the nose, where the hull has narrowed to RETRO_AT of its widest, firing forward
@@ -1011,6 +1062,12 @@ SHIP_UNDER.island = function(d, t, b, hull)
     for (const f of ARK.fins) d.poly(f, fin, true);
     d.poly(ARK.mount, P_SLATE, true);
     for (const p of ARK.bells) d.poly(p, P_DEEP);
+};
+
+// the Battle Station's engine bells, under its boosters: big and light, so its rear reads even with the engines off
+SHIP_UNDER.continent = function(d)
+{
+    for (const o of BATTLE.boosters) d.poly(o.bell, BATTLE_INK.light, true);
 };
 
 const SHIP_DECO =
@@ -1144,7 +1201,7 @@ const SHIP_DECO =
     },
     island(d, t, b)   // Ark: a generation ship carrying a living world under a clear glass dome
     {
-        const hull = shipHull(t, b), { x: X, r: R, collar } = ARK.dome, I = ARK_INK, k = b?.k || t.k;
+        const hull = shipHull(t, b), { x: X, r: R, collar } = ARK.dome, I = ARK_INK;
         // plating seams across the hull, fore and aft of the collar, and rows of windows down both sides
         for (const x of [-3.95, -3.3, -2.65, 2.75, 3.4, 4.0]) { const w = outlineHalfWidth([ARK.body], x)*.9; d.line(x, w, x, -w, .05, I.seam); }
         for (let i = 0; i < 6; i++)
@@ -1159,53 +1216,71 @@ const SHIP_DECO =
         // the collar the dome sits in, bolted round
         d.circle(X, 0, collar*2, P_SAND, true);
         for (let i = 0; i < 20; i++) { const a = i/20*PI*2; d.circle(X + Math.cos(a)*(R + collar)/2, Math.sin(a)*(R + collar)/2, .07, P_DEEP); }
-        // the biosphere: meadows, a lake fed by a river, forests, farm fields and a little white town
-        d.circle(X, 0, R*2, I.land);
-        for (const [x, y, w, h] of ARK_MEADOWS) d.ellipse(X + x, y, w, h, I.meadow);
-        ARK_FIELDS.forEach(([x, y, w, h], n) => d.rect(X + x, y, w, h, n % 3 ? I.field : I.field2));
-        d.line(X - .2, .35, X + .5, 1.0, .16, I.water);                                  // the river, to the dome's edge
-        d.line(X + .5, 1.0, X + .55, 1.85, .14, I.water);
-        d.ellipse(X - .65, .4, 1.25, .85, I.shore);
-        d.ellipse(X - .65, .4, 1.08, .68, I.water);
-        glint(d, X - .8, .52, .4, .1);
-        for (const [x, y, r] of ARK_TREES) { d.circle(X + x, y, r, I.forest); d.circle(X + x - r*.12, y + r*.12, r*.62, I.crown); }
-        for (const [x, y] of ARK_TOWN) d.rect(X + x, y, .16, .16, P_CREAM);
-        // clouds drifting slowly over it
-        for (const [x, y, w] of ARK_CLOUDS)
-        {
-            const dx = Math.sin(time*.08 + x*3 + (b?.id || 0))*.25;
-            d.ellipse(X + x + dx, y, w, w*.42, I.cloud);
-            d.ellipse(X + x + dx + w*.22, y + w*.12, w*.6, w*.34, I.cloud);
-        }
-        // the glass: a faint tint, ribs out from the top and two rings, and the shine of the light on it
+        // the biosphere: a meadow with a lake, a forest, farm fields and a little white town
+        d.circle(X, 0, R*2, I.meadow);
+        const [lx, ly, lw, lh] = ARK_LAKE;
+        d.ellipse(X + lx, ly, lw + .2, lh + .18, I.shore);
+        d.ellipse(X + lx, ly, lw, lh, I.water);
+        for (const [x, y] of ARK_TREES) d.circle(X + x, y, .58, I.forest);
+        for (const [x, y, n] of ARK_FIELDS) d.rect(X + x, y, .42, .36, n ? I.field2 : I.field);
+        for (const [x, y] of ARK_TOWN) d.rect(X + x, y, .2, .2, P_CREAM);
+        // the glass: a faint tint and one shine along its top
         d.circle(X, 0, R*2, I.glass);
-        const o = d.P(0, 0), segs = [], at = (x, y) => d.P(x, y).subtract(o);
-        for (let i = 0; i < 8; i++) { const a = i/8*PI*2 + .2; segs.push([at(X, 0), at(X + Math.cos(a)*R*.98, Math.sin(a)*R*.98)]); }
-        for (const f of [.45, .78]) for (let i = 0; i < 32; i++)
-        {
-            const a0 = i/32*PI*2, a1 = (i + 1)/32*PI*2;
-            segs.push([at(X + Math.cos(a0)*R*f, Math.sin(a0)*R*f), at(X + Math.cos(a1)*R*f, Math.sin(a1)*R*f)]);
-        }
-        posterSegs(o, segs, I.rib, .028*k);
-        d.circle(X, 0, R*2*.08, raw(P_CREAM.scale(1, .5)));                            // the hub at the top
-        glint(d, X - R*.36, R*.42, R*.95, R*.3);
-        glint(d, X - R*.62, R*.12, R*.3, R*.1);
+        glint(d, X + .1, R*.74, R*.95, R*.16);
     },
-    continent(d, t)   // The Moon
+    continent(d, t, b)   // Battle Station: a planet-sized steel sphere, command spire at the bow, boosters at the stern
     {
-        const mare = C_MOON.lerp(C_INK, .25), pit = C_MOON.lerp(C_INK, .15), ray = C_CREAM.scale(1, .5);
-        for (const [x, y, r] of [[-1.6, .5, 2.6], [-.2, 1.3, 1.9], [1.8, -.6, 2.2], [-2.6, -1.4, 1.4], [3.2, 1.2, 1.2]])
-            d.circle(x, y, r, mare);                                     // dark seas
-        for (let i = 0; i < 10; i++)                                     // the big crater's rays
+        const { x: X, r } = BATTLE.sphere, I = BATTLE_INK, k = b?.k || t.k;
+        // the engine block, its plating seams, and the boosters strapped to it: cream, brick noses and bands
+        d.poly(BATTLE.block, I.block, true);
+        for (const x of [-2.1, -2.9]) d.line(x, 2.05, x, -2.05, .05, I.seam);
+        for (const o of BATTLE.boosters)
         {
-            const a = i/10*PI*2 + .2;
-            d.line(1.3, 1.3, 1.3 + Math.cos(a)*1.5, 1.3 + Math.sin(a)*1.3, .12, ray);
+            d.poly(o.pts, P_CREAM, true);
+            d.poly(o.band, P_BRICK);
+            d.poly(o.nose, P_BRICK, true);
         }
-        for (const [x, y, r] of [[1.3, 1.3, .8], [-3.4, 1.0, .7], [-.6, -2.3, .9], [3.9, -.8, .55], [-1.1, 2.6, .45], [.6, -.2, .5]])
+        // the sphere in front of them: lit above, shaded below
+        d.circle(X, 0, r*2, P_DUSK, true);
+        d.poly(sphereCap(2.3), I.light);
+        d.poly(sphereCap(-2.3), I.dark);
+        // its plating: latitudes are straight seen from the side, meridians are ellipses
+        const o = d.P(0, 0), at = (x, y) => d.P(x, y).subtract(o), segs = [];
+        for (const y of BATTLE_LATS) { const w = Math.sqrt(r*r - y*y)*.995; segs.push([at(X - w, y), at(X + w, y)]); }
+        for (const f of BATTLE_MERIDIANS)
+            for (let i = 0; i < 32; i++)
+            {
+                const a0 = i/32*PI*2, a1 = (i + 1)/32*PI*2;
+                segs.push([at(X + Math.cos(a0)*r*f, Math.sin(a0)*r), at(X + Math.cos(a1)*r*f, Math.sin(a1)*r)]);
+            }
+        posterSegs(o, segs, I.seam, .045*k);
+        // rows of lit windows along the latitudes, a few dark
+        for (const y of [-1.15, 1.15, 0])
         {
-            d.circle(x + r*.06, y - r*.06, r, C_CREAM.scale(1, .55));
-            d.circle(x, y, r*.85, pit, true);
+            const w = Math.sqrt(r*r - y*y) - .35;
+            for (let n = 0, x = -w; x <= w; x += .32, n++)
+                if (!BATTLE_BAYS.some(([bx, by]) => Math.abs(bx - x) < .6 && Math.abs(by - y) < .5) && n % 5 != 2)
+                    d.circle(X + x, y + .16, .12, n % 7 == 3 ? P_GLASS : P_MUSTARD);
         }
+        // hangar bays: a dark mouth, lit inside
+        for (const [x, y] of BATTLE_BAYS)
+        {
+            d.rect(X + x, y, .8, .42, I.bay, true);
+            d.rect(X + x, y - .05, .62, .2, I.glow);
+        }
+        // turrets, their twin barrels aimed ahead
+        for (const [x, y] of BATTLE_TURRETS)
+        {
+            for (const s of [.07, -.07]) d.line(X + x, y + s, X + x + .42, y + s, .07, I.turret);
+            d.circle(X + x, y, .38, I.turret, true);
+        }
+        // the command spire: cream, a glass bridge, a beacon blinking at the tip
+        d.poly(BATTLE.spire, P_CREAM, true);
+        d.ellipse(4.22, 0, .5, .26, P_GLASS, true);
+        glint(d, 4.28, .05, .18, .07);
+        d.circle(4.75, 0, .2, Math.sin(time*4 + (b?.id || 0)) > 0 ? P_MUSTARD : P_BRICK);
+        // the shine of the light on the steel
+        glint(d, X - .5, r*.62, r*.7, r*.12);
     },
 };
 
