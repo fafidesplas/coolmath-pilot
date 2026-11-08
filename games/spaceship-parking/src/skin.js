@@ -376,7 +376,7 @@ drawFoam = function()
 
 // a lighter grain over the finished world too, so ships look printed
 const harborDrawDrops = drawDrops;
-drawDrops = function() { harborDrawDrops(); drawGrain(.55); };
+drawDrops = function() { harborDrawDrops(); drawDust(); drawGrain(.55); };
 
 // ---------------------------------------------------------------------------
 // ships
@@ -446,6 +446,7 @@ function retroFire(b, m)
 let puffTimer = 0;
 function puffExhaust(b, dt)
 {
+    kickDust(b, dt);
     if ((puffTimer -= dt) > 0) return;
     const t = b.type, r = t.retro, f = b.forward(), vf = b.vel.x*f.x + b.vel.y*f.y;
     if (r)
@@ -460,6 +461,92 @@ function puffExhaust(b, dt)
     {
         puffTimer = .07;
         wakes.push({ pos: b.toWorld(-t.L/2*b.k, 0), t: 0, size: t.W*.7*b.k });
+    }
+}
+
+// ---------------------------------------------------------------------------
+// dust: on a planet (gravity levels) a flame that reaches the ground or a pad kicks up dust where it hits. Each firing
+// nozzle of the ship you drive (main engines and retro thrusters) is traced along its flame to the ground. The dust
+// grows with how hard it fires, how close the nozzle is (none from DUST_REACH ship lengths out, the most at the nozzle)
+// and how squarely the flame meets the ground (straight down the most, sideways none). It flies off along the ground
+// away from the hit, more to the side the flame leans to, rises a little and fades. Colored like the planet's rock.
+const DUST_REACH = 1.5;         // ship lengths: a flame raises dust up to this far from its nozzle
+const DUST_RATE = 45;           // puffs a second from a nozzle firing full, straight down, right at the ground
+const DUST_LIFE = 1.6;          // s
+const DUST_DRAG = 1.8;          // per second: how fast a puff slows
+const DUST_MAX = 320;
+let dusts = [], dustFor = null;
+
+// every firing nozzle: { o: world point, d: unit direction of the flame, w: flame width (m), p: how hard it fires 0-1 }
+function nozzles(b)
+{
+    const out = [], t = b.type, k = b.k || 1, f = b.forward(), thr = shipThrottle(b);
+    const turn = (x, y) => vec2(x*f.x - y*f.y, x*f.y + y*f.x);          // ship to world direction
+    if (JETS[t.key] && thr > 0)
+        for (const [x, y, w] of JETS[t.key]) out.push({ o: b.toWorld(x*k, y*k), d: turn(-1, 0), w: w*k, p: thr });
+    if (t.retro)
+        for (const m of [1, -1])
+        {
+            const fire = retroFire(b, m);
+            if (fire) out.push({ o: b.toWorld(t.retro.x*k, m*t.retro.y*k), d: turn(RETRO_DIR.x, m*RETRO_DIR.y), w: t.retro.s*k, p: fire });
+        }
+    return out;
+}
+
+// where a flame from o along d first meets the top of the ground or a pad below it: { at, dist }
+function flameHit(o, d)
+{
+    if (d.y > -.05) return null;
+    let best = null;
+    for (const r of rects)
+    {
+        if (!(r.land || r.pad) || r.y1 > o.y) continue;
+        const dist = (o.y - r.y1) / -d.y, x = o.x + d.x*dist;
+        if (x >= r.x0 && x <= r.x1 && (!best || dist < best.dist)) best = { at: vec2(x, r.y1), dist };
+    }
+    return best;
+}
+
+function kickDust(b, dt)
+{
+    if (dustFor != level) { dusts = []; dustFor = level; }
+    for (const p of dusts)
+    {
+        p.t += dt;
+        const slow = Math.exp(-DUST_DRAG*dt);
+        p.vel.x *= slow; p.vel.y *= slow;
+        p.pos.x += p.vel.x*dt; p.pos.y += p.vel.y*dt;
+    }
+    dusts = dusts.filter(p => p.t < p.life);
+    if (!level?.gravity || !b?.type || b.held) return;
+    const reach = DUST_REACH * b.type.L * (b.k || 1), vs = b.vs || 1;
+    for (const n of nozzles(b))
+    {
+        const hit = flameHit(n.o, n.d);
+        if (!hit || hit.dist > reach) continue;
+        const power = n.p * (1 - hit.dist/reach) * -n.d.y;
+        // a random count with the right average, so a weak flame still puffs now and then
+        let count = DUST_RATE * power * dt;
+        count = Math.floor(count) + (Math.random() < count % 1 ? 1 : 0);
+        for (let i = 0; i < count; i++)
+        {
+            const side = Math.random() < (1 + n.d.x)/2 ? 1 : -1, sp = vs * (2 + 7*power) * rand(.35, 1);
+            dusts.push({ pos: vec2(hit.at.x + side*rand(0, n.w), hit.at.y + rand(0, n.w*.3)), t: 0, life: DUST_LIFE*rand(.7, 1.2),
+                vel: vec2(side*sp, vs*rand(.2, 1.4)*(.4 + power)), size: n.w*rand(.9, 1.7)*(.7 + power), shade: rand(0, 1) });
+        }
+    }
+    if (dusts.length > DUST_MAX) dusts.splice(0, dusts.length - DUST_MAX);
+}
+
+function drawDust()
+{
+    if (!dusts.length) return;
+    const ink = rockInks(), light = ink[1].lerp(P_CREAM, .35), dark = ink[0];
+    for (const p of dusts)
+    {
+        const k = p.t / p.life, size = p.size*(.5 + k*1.8);
+        if (!inView(p.pos, size)) continue;
+        drawCircle(p.pos, size, dark.lerp(light, p.shade).scale(1, .5*(1 - k)*Math.min(1, p.t*8)));
     }
 }
 
