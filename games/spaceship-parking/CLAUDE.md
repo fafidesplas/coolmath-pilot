@@ -33,6 +33,8 @@ Forked from Park My Boat on 2026-11-06 (commit `40a0e9c`). It began as a secret 
 ## Turning
 Every ship turns even when it is stopped, in every level. Without gravity the nose thrusters turn it (`spinTurn` in `src/space.js`): moving, as fast as the harbor rudder would; stopped or slow, as fast as the side thrusters under gravity. Left always turns the nose left, reversing too (no car-style flip), and the mouse's reverse steering follows that.
 
+Under gravity a ship lying on the ground or a pad can stand back up (`groundTurn` in `src/space.js`; the side thrusters alone can't lift one end). Turning the ship you drive toward nose up, tilted more than 20 degrees from upright (`GROUND_TILT`), swings it round the end touching the ground at its in-air turn rate (`groundPivot`: the outermost of its lowest points, so a fin that reaches the ground takes over). It slows over the last 20 degrees and stops upright, staying there while the key is held. The engine does nothing during the swing; the throttle keys (W/S, arrows) end it, so the ship can always take off. Mouse steering pivots too. Big ships take longer, as they turn slower: about 3.5 s from flat for the 26 m Asteroid Miner, about 7 s for the 400 m Classic Frigate.
+
 ## Levels
 Only levels made for this game are left: the seven levels forked from Park My Boat (Odd Couple, Way Down, Rush Hour, Open Space, Spaceport, Docking Ring, and the hidden bonus Moon Drift) were removed on 2026-11-08. The Test Map (`?test`) stays as a sandbox. The level helpers those levels used (`basin`, `harborIsland`, `bay`, `berths`, `loopLane`...) are still in `levels/levels.js`, unused; `bay()` builds a station docking bay walled by the main hull (docks drawn as modules), in case a crowded level comes back.
 

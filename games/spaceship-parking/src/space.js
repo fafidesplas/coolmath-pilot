@@ -250,18 +250,13 @@ function thrusterSpin(b, rudder, throttle)
     return rudder * (RCS_TURN*b.type.turn + b.type.wash*Math.abs(throttle)) / (b.slowdown*b.slowdown);
 }
 
-// TRIAL (level `groundTrial`, Moon Hop only): getting a ship that lies on its side back up. Pick one in the URL:
-// ?ground=boost  while it touches the ground, the side thrusters are strong enough to lift one end against gravity
-//                (still a spin about the center; the contact with the ground turns it into lifting the far end)
-// ?ground=pivot  while it touches the ground, turning swings it round the end touching the ground, at the rate it
-//                turns in the air; the engine does nothing during the swing, and W/S end it
-// No ?ground: as in the other levels. Either way it only acts on the ship you drive, tilted more than GROUND_TILT from
-// upright, when the turn lifts it (toward upright). To drop the trial: remove `groundTrial` and this block.
-const GROUND_TRIAL = new URLSearchParams(location.search).get('ground');
-const GROUND_BOOST = 3;           // boost: times the spin that just balances gravity round the end touching the ground
+// standing up a ship that lies on the ground (gravity levels; the side thrusters alone can't lift one end against
+// gravity). Turning the ship you drive toward nose up while it touches the ground or a pad, tilted more than GROUND_TILT
+// from upright, swings it round the end touching the ground at the rate it turns in the air. It slows over the last
+// GROUND_TILT and stops upright. The engine does nothing during the swing; the throttle keys end it.
 const GROUND_TILT = .35;          // rad (20 degrees) from upright: a turn that starts closer than that works as before
 const GROUND_EPS = .02;           // a circle this close to the top of the ground or a pad (share of the ship's radius) touches it
-const GROUND_LOW = .03;           // pivot: bottom points this close to the ship's lowest one (share of its radius) can be the
+const GROUND_LOW = .03;           // bottom points this close to the ship's lowest one (share of its radius) can be the
                                   // pivot, so a fin that swings down to the ground takes over as the pivot
 
 // the bottom points of the ship's circles within `share` of its radius of the top of the ground or a pad
@@ -282,13 +277,13 @@ function groundContacts(b, share)
 function groundTurn(dt)
 {
     const b = player;
-    if (!GROUND_TRIAL || !level?.groundTrial || !level.gravity || !b || b.held || !hasControl()) return;
+    if (!level?.gravity || !b || b.held || !hasControl()) return;
     const s = Math.sign(b.rudder), pv = b.pivoting;
     if (!s || (pv && pv.s != s)) { b.pivoting = null; if (!s) return; }
-    // pivot: the throttle keys (W/S, arrows) end the swing and hand the ship back to its engine, so it can always take
+    // the throttle keys (W/S, arrows) end the swing and hand the ship back to its engine, so it can always take
     // off; let go of them (still turning) and it swings again. Only the keys: mouse steering always throttles a little.
-    if (GROUND_TRIAL == 'pivot' && keyDirection().y) { b.pivoting = null; return; }
-    // pivot: stood up, it stays up while the key is still held (let go and turn again to tilt it)
+    if (keyDirection().y) { b.pivoting = null; return; }
+    // stood up, it stays up while the key is still held (let go and turn again to tilt it)
     if (b.pivoting?.done) { b.angVel = 0; return; }
     if (!b.pivoting)
     {
@@ -298,17 +293,9 @@ function groundTurn(dt)
         if (toGo < GROUND_TILT || !groundContacts(b, GROUND_EPS).length) return;
         const P = groundPivot(b, s);
         if (!P || (b.pos.x - P.x)*s <= 0) return;
-        if (GROUND_TRIAL == 'boost')
-        {
-            const need = gravityPull(b).length() * Math.abs(b.pos.x - P.x) * b.invInertia / b.invMass;
-            const have = Math.abs(thrusterSpin(b, b.rudder, b.throttle)), want = GROUND_BOOST * need * Math.abs(b.rudder);
-            if (want > have) b.angVel += s * (want - have) * dt;
-            return;
-        }
-        if (GROUND_TRIAL != 'pivot') return;
         b.pivoting = { s, up };
     }
-    // pivot: swing round the contact, slowing over the last GROUND_TILT so it sets down on its end instead of slapping
+    // swing round the contact, slowing over the last GROUND_TILT so it sets down on its end instead of slapping
     // down past upright; once started it carries on up (past the balance point too) while the key is held
     const left = wrapAngle(b.pivoting.up - b.angle) * s;
     if (left < .02) { b.angVel = 0; b.vel.set(0, 0); b.pivoting.done = true; return; }

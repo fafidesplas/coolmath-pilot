@@ -1,3 +1,7 @@
+## 2026-11-08 — Pivot stand-up in every landing level
+- The pivot from the Moon Hop trial is now how every gravity level works (Touchdown, Moon Hop, Pad Towers, Heavy Lift): turn a ship lying on the ground toward nose up and it swings up round the end touching the ground, stops upright, and W ends the swing. `?ground=`, the boost option and `groundTrial` are gone.
+- Checked in Chrome, each level's first ship laid on its side, then A held for 4.5 s: Asteroid Miner (26 m) upright, Star Yacht (80 m) and Space Liner (300 m) at 82 degrees, Classic Frigate (400 m) at 66 degrees (big ships turn slower). No damage in any, W then lifts each off, no errors.
+
 ## 2026-11-08 — Pivot trial: W ends the swing
 - In `?ground=pivot`, the throttle keys (W/S, arrows) end the swing and hand the ship back to its engine, so it can always take off. Let go of them while still turning on the ground and it swings again. Only the keys do this: mouse steering always throttles a little, so it would never pivot otherwise.
 - Before, the engine did nothing during the swing (the pivot sets the ship's motion directly), though the flame still showed.

@@ -199,15 +199,12 @@ const SCALE_LEVELS =
     },
     // a small moon (flat ground): a 26 m asteroid miner, a 12 m solar sailer, then a 2.6 m flying saucer. The saucer starts on the far
     // side of the sailer's pad.
-    {
-        ...landing('Moon Hop', 'moon', 600,
-        [
-            { boat: 'trawler', start: { x: -200, y: 160, a: PI/2 }, pad: [60, 24] },
-            { boat: 'sailboat', start: { x: 150, y: 70, a: PI/2 }, pad: [0, 9] },
-            { boat: 'swan', view: 2, start: { x: -70, y: 30, a: PI/2 }, pad: [-30, 5] },
-        ]),
-        groundTrial: true,      // TRIAL: ?ground=boost or ?ground=pivot gets a ship on its side back up (groundTurn in src/space.js)
-    },
+    landing('Moon Hop', 'moon', 600,
+    [
+        { boat: 'trawler', start: { x: -200, y: 160, a: PI/2 }, pad: [60, 24] },
+        { boat: 'sailboat', start: { x: 150, y: 70, a: PI/2 }, pad: [0, 9] },
+        { boat: 'swan', view: 2, start: { x: -70, y: 30, a: PI/2 }, pad: [-30, 5] },
+    ]),
     {
         // the Spin Dock station seven times bigger (868 m), turning once every five minutes, with two more ports at the
         // ends of its side modules. A 300 m space liner docks at the aft end, a 26 m asteroid miner at the front end, then
