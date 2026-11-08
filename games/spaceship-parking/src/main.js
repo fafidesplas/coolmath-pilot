@@ -175,7 +175,8 @@ function makeSlip(e, k)
     const vertical = Math.abs(Math.sin(s.a)) > .5;
     const w = vertical ? wid : len, h = vertical ? len : wid;
     // top/right: the pier edge it hangs from; bottom: the landing pad it stands on
-    const x = s.x ?? s.right - w/2, y = s.y ?? (s.bottom !== undefined ? s.bottom + h/2 : s.top - h/2);
+    // (a slip at a station's port has none of these: attachSlip places it)
+    const x = s.x ?? (s.right !== undefined ? s.right - w/2 : 0), y = s.y ?? (s.bottom !== undefined ? s.bottom + h/2 : s.top !== undefined ? s.top - h/2 : 0);
     if (s.fingers != 'none')
     {
         const ft = .5*k, pr = .32*k;
@@ -273,6 +274,7 @@ function loadLevel(i)
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
     fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
     fleet.forEach((b, n) => b.view = L.boats[n].view);      // a level can show more (or less) around a ship than its type does
+    fleet.forEach((b, n) => { if (L.boats[n].start.on) rideStation(b, L.boats[n].start); });     // waits on the station (src/space.js)
 
     (L.moored || []).forEach((m, k) =>
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
@@ -571,6 +573,7 @@ function controlPlayer(dt)
             }
         }
     }
+    if (player.held?.rider && hasControl()) releaseRider(player);
     if (anchor || player.held || !hasControl()) throttle = rudder = 0;
     player.throttle = throttle;
     player.rudder = rudder;

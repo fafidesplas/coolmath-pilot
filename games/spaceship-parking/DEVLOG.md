@@ -1,3 +1,11 @@
+## 2026-11-08 — Four new levels: three landings and a big station
+- Moon Hop (landing: Asteroid Miner 26 m, Solar Sailer 12 m, Flying Saucer 2.6 m), Grand Station (docking: Space Liner 300 m, Asteroid Miner 26 m, Zoomer 6.8 m, Rocket Scooter 2.4 m), Pad Towers (landing: Star Yacht 80 m on the ground, Zoomer and Rocket Scooter on 30 m and 55 m towers), Heavy Lift (landing: Classic Frigate 400 m, Stealth Cruiser 112 m, Flying Saucer 2.6 m). Order: Spin Dock, Touchdown, Moon Hop, Grand Station, Pad Towers, Heavy Lift.
+- `landing()` in `levels/levels.js` builds a gravity level from a planet radius and a pad per ship (towers with `lift`).
+- Stations can be scaled (`scale`), get extra docking ports (`ports`), and a slip can sit at a port by number (`port`). Grand Station is Spin Dock's station at 7x. Its small ships wait riding on the station near their ports (`start: { on: 'station' }`), released when their turn gives control: flying in from outside the wings' sweep took the Rocket Scooter over 40 s.
+- No Stealth Cruiser at a station: cloaked, it passes through the station. In Heavy Lift it can cloak under the parked Frigate; harmless.
+- Checked headless: every level loads, and every ship teleported into its slip parks, through to the results screen (Grand Station with no damage; the landing levels charge a little because the test drops ships onto the pads, as it does in Touchdown). A released rider flies off with no hit. No errors.
+- Not checked: flying each level by hand (approach paths, how hard each landing is). The turn-when-stopped trial is still on Spin Dock only.
+
 ## 2026-11-08 — Forked harbor levels removed
 - Removed the seven levels that came from Park My Boat: Odd Couple, Way Down, Rush Hour, Open Space, Spaceport, Docking Ring and the hidden bonus Moon Drift. The game is now Spin Dock, then Touchdown; `?test` still adds the Test Map. `LEVEL_NAMES` (their space names) is gone from `src/skin.js`; the level helpers stay in `levels/levels.js`, unused for now.
 - Stars are saved by level number, so the save goes to `v: 2` and old stars are cleared rather than shown on the wrong level.

@@ -52,7 +52,7 @@ function rectCircles([x0, y0, x1, y1])
 // the solar wings collide as solid rectangles, one per pair of wings on each side of the truss, reaching in to the
 // truss: as rows of circles their scalloped edges, the slot between the two wings of a pair and the slot between the
 // wings and the truss caught the Escape Pod. The drawing is unchanged.
-function wingBoxes()
+function wingBoxes(sc = 1)
 {
     const groups = {}, [tx0, , tx1] = STATION.truss[0];
     for (const [x0, y0, x1, y1] of STATION.wings)
@@ -61,23 +61,30 @@ function wingBoxes()
         g[0] = Math.min(g[0], x0); g[1] = Math.min(g[1], y0); g[2] = Math.max(g[2], x1); g[3] = Math.max(g[3], y1);
     }
     for (const g of Object.values(groups)) if (g[0] > 0) g[0] = tx1; else g[2] = tx0;
-    return Object.values(groups);
+    return Object.values(groups).map(g => g.map(v => v*sc));
 }
 
-function stationCircles()
+// every docking port of a station: the two at the ends of the module stack plus the level's own (def.ports, e.g. at
+// the end of a side module), in station units
+function stationPorts(def) { return [...STATION.ports, ...(def.ports || [])]; }
+
+function stationCircles(def)
 {
-    const S = STATION, rects = [...S.truss, ...S.radiators,
+    const S = STATION, sc = def.scale || 1, rects = [...S.truss, ...S.radiators,
         ...S.stack.map(([a, b, r]) => [a, -r, b, r]),
         ...S.side.map(([x, a, b, r]) => [x - r, Math.min(a, b), x + r, Math.max(a, b)])];
-    return [...rects.flatMap(rectCircles), ...S.ports.map(([x, y, f]) => ({ x: x + Math.cos(f)*.3, y: y + Math.sin(f)*.3, r: 1.3 }))];
+    return [...rects.flatMap(rectCircles), ...stationPorts(def).map(([x, y, f]) => ({ x: x + Math.cos(f)*.3, y: y + Math.sin(f)*.3, r: 1.3 }))]
+        .map(c => ({ x: c.x*sc, y: c.y*sc, r: c.r*sc }));
 }
 
 let stations = [];
 
-// level.station: { x, y: center of its drift circle, a: heading at the start, spin: rad/s, drift: { r: m, period: s, phase } }
+// level.station: { x, y: center of its drift circle, a: heading at the start, spin: rad/s, drift: { r: m, period: s, phase },
+//                 scale?: the station this many times bigger (slips on it are still given in meters), ports?: [[x, y, facing]] more
+//                 docking ports, in the station's own units (before scale) }
 function stationLoad(def)
 {
-    const b = new Body(vec2(def.x, def.y), def.a || 0, stationCircles(), 1, { kind: 'station', dragF: 0, dragS: 0, dragA: 0, restitution: .3, boxes: wingBoxes() });
+    const b = new Body(vec2(def.x, def.y), def.a || 0, stationCircles(def), 1, { kind: 'station', dragF: 0, dragS: 0, dragA: 0, restitution: .3, boxes: wingBoxes(def.scale || 1) });
     b.invMass = b.invInertia = 0;           // nothing pushes it around
     b.mass = 1e12;
     b.def = def; b.t = 0;
@@ -126,11 +133,17 @@ function stationsFollow()
     for (const s of slips) if (s.on) placeSlip(s);
 }
 
-// a slip given in a station's coordinates (slip.on: 'station')
+// a slip given in a station's coordinates (slip.on: 'station'): x, y, a in meters, or port: the number of a docking port
+// (stationPorts), and the slip lies across it, broadside against it like the bar of a T
 function attachSlip(slip, s)
 {
-    slip.on = stations[0];
-    slip.local = { x: slip.pos.x, y: slip.pos.y, a: s.a };
+    const st = slip.on = stations[0];
+    if (s.port !== undefined)
+    {
+        const sc = st.def.scale || 1, [px, py, f] = stationPorts(st.def)[s.port], r = 1.6*sc + slip.wid/2;
+        slip.local = { x: px*sc + Math.cos(f)*r, y: py*sc + Math.sin(f)*r, a: f + PI/2 };
+    }
+    else slip.local = { x: slip.pos.x, y: slip.pos.y, a: s.a };
     placeSlip(slip);
     return slip;
 }
@@ -183,6 +196,27 @@ function holdShip(b)
     sfx('chain', b.pos, .6, 1.6);
 }
 
+// a ship that waits its turn riding on a station (a boat's start: { on: 'station', x, y, a }, in meters in the station's
+// coordinates): clamped to it like a docked ship (a hit on it costs money) until its turn gives it control
+function rideStation(b, s)
+{
+    const st = stations[0];
+    b.held = { on: st, x: s.x, y: s.y, a: s.a || 0, rider: [b.invMass, b.invInertia] };
+    b.invMass = b.invInertia = 0;
+    b.pos = st.toWorld(s.x, s.y); b.angle = st.angle + b.held.a;
+    b.vel = st.pointVel(b.pos); b.angVel = st.angVel;
+    b.updateWorld();
+}
+
+// let it go, moving with the station as it was
+function releaseRider(b)
+{
+    const r = b.held?.rider;
+    if (!r) return;
+    [b.invMass, b.invInertia] = r;
+    b.held = undefined;
+}
+
 // parking here holds the ship in place instead of dropping an anchor
 function holdsInstead() { return !!(slip?.on || level?.gravity); }
 
@@ -228,7 +262,7 @@ function spinTurn(b, rudder, throttle, vf)
 // ---------------------------------------------------------------------------
 // drawing
 
-function stationPainter(b, ox = 0, oy = 0) { return painter({ pos: b.pos, angle: b.angle, k: 1, sx: 1, sy: 1, id: b.id }, ox, oy); }
+function stationPainter(b, ox = 0, oy = 0) { return painter({ pos: b.pos, angle: b.angle, k: b.def.scale || 1, sx: 1, sy: 1, id: b.id }, ox, oy); }
 
 function drawStations()
 {
@@ -237,14 +271,14 @@ function drawStations()
 
 function drawStation(b)
 {
-    const S = STATION, o = shadowOff(4), sh = stationPainter(b, o.x, o.y), d = stationPainter(b);
+    const S = STATION, sc = b.def.scale || 1, o = shadowOff(4*sc), sh = stationPainter(b, o.x, o.y), d = stationPainter(b);
     const rect = (p, [x0, y0, x1, y1], color, outline) => p.rect((x0 + x1)/2, (y0 + y1)/2, x1 - x0, y1 - y0, color, outline);
     const pod = ([a, b2, r]) => [a, -r, b2, r];
     // shadow
     for (const r of [...S.wings, ...S.radiators, ...S.truss]) rect(sh, r, C_SHADOW);
     for (const m of S.stack) rect(sh, pod(m), C_SHADOW);
     // solar wings: mustard cells on a cream mast, a beacon at each tip
-    const fine = 2 / WU > .25;
+    const fine = 2*sc / WU > .25;
     for (const w of S.wings)
     {
         const [x0, y0, x1, y1] = w, cy = (y0 + y1)/2;
@@ -282,7 +316,7 @@ function drawStation(b)
     d.circle(7, -10.5, 3, P_CREAM, true);                     // the cupola: a glass dome
     d.circle(7, -10.5, 2, P_GLASS, true);
     // docking ports: a cream ring, a dark seal, a blinking light
-    for (const [x, y, f] of S.ports)
+    for (const [x, y, f] of stationPorts(b.def))
     {
         const px = x + Math.cos(f)*.3, py = y + Math.sin(f)*.3;
         d.circle(px, py, 2.6, P_CREAM, true);

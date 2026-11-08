@@ -2,7 +2,8 @@
 // Levels. Units are meters (y up). A level is a list of boats parked one after the other in the
 // same harbor; boats waiting their turn sit at their start, parked boats stay where they stopped.
 //
-// boats:   [{ boat, k?, start:{x,y,a}, slip }]   k defaults to the boat's real size (BOATS[boat].k)
+// boats:   [{ boat, k?, start:{x,y,a}, slip }]   k defaults to the boat's real size (BOATS[boat].k); start: {on: 'station', x, y, a}
+//          waits riding on the station (in its coordinates) until its turn
 // slip:    x/y center, or top/right = the pier edge it hangs from; a = heading the boat must face
 //          (PI/2 = bow into a top pier; either end in is fine), pad = extra [length, width] room in
 //          toy units (times k), fingers = 'both' | 'none' (short docks along the slip's long sides)
@@ -139,6 +140,26 @@ function loopLane(x, d, Y, flip, pace, boats)
         ({ boat, path: [...pts.slice(i*m/n), ...pts.slice(0, i*m/n)], end: 'loop', speed, pace }));
 }
 
+// gravity levels: a round planet of radius R with its top at y = 0, ringed by invisible walls `size` m out. Each ship
+// lands upright on its own pad: pad: [x, width, lift?] (lift: the deck stands that many meters above the ground, a
+// tower), room: the slip's extra [length, width] in toy units (see slip above)
+function landing(name, R, size, ships)
+{
+    const ground = x => -R + Math.sqrt(R*R - x*x), docks = [];
+    const boats = ships.map(({ pad: [x, w, lift = 0], room = [.6, .8], ...ship }) =>
+    {
+        const t = clamp(w*.04, .5, 1.5), hi = Math.max(ground(x - w/2), ground(x), ground(x + w/2)), lo = Math.min(ground(x - w/2), ground(x + w/2));
+        const y1 = +(hi + t + lift).toFixed(2);
+        docks.push({ x0: x - w/2, y0: lo - 3*t, x1: x + w/2, y1, pad: true });
+        return { ...ship, slip: { x, bottom: y1, a: PI/2, pad: room, fingers: 'none' } };
+    });
+    return {
+        name, gravity: { share: .35 }, land: [], docks, boats,
+        lands: [{ x: 0, y: -R, k: R, circles: [[0, 0, 1]], detail: 512 }],
+        walls: [{ x0: -size - 100, y0: -R - 100, x1: -size, y1: size + 100 }, { x0: size, y0: -R - 100, x1: size + 100, y1: size + 100 }, { x0: -size - 100, y0: size, x1: size + 100, y1: size + 100 }],
+    };
+}
+
 const SCALE_LEVELS =
 [
     {
@@ -170,6 +191,45 @@ const SCALE_LEVELS =
             { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
         ],
     },
+    // a small moon: a 26 m asteroid miner, a 12 m solar sailer, then a 2.6 m flying saucer. The saucer starts on the far
+    // side of the sailer's pad.
+    landing('Moon Hop', 500, 600,
+    [
+        { boat: 'trawler', start: { x: -200, y: 160, a: PI/2 }, pad: [60, 24] },
+        { boat: 'sailboat', start: { x: 150, y: 70, a: PI/2 }, pad: [0, 9] },
+        { boat: 'swan', view: 2, start: { x: -70, y: 30, a: PI/2 }, pad: [-30, 5] },
+    ]),
+    {
+        // the Spin Dock station seven times bigger (868 m), turning once every five minutes, with two more ports at the
+        // ends of its side modules. A 300 m space liner docks at the aft end, a 26 m asteroid miner at the front end, then
+        // a 6.8 m zoomer and a 2.4 m rocket scooter at the side modules, each in the gap between the stack and the wings.
+        // The zoomer and the scooter wait their turn riding on the station, between the radiators and the wings.
+        name: 'Grand Station', land: [], docks: [],
+        walls: [{ x0: -1100, y0: -1100, x1: -1000, y1: 1100 }, { x0: 1000, y0: -1100, x1: 1100, y1: 1100 }, { x0: -1100, y0: -1100, x1: 1100, y1: -1000 }, { x0: -1100, y0: 1000, x1: 1100, y1: 1100 }],
+        station: { x: 0, y: 0, a: .4, scale: 7, spin: 2*PI/300, drift: { r: 20, period: 300, phase: 0 }, ports: [[23, 15, PI/2], [23, -11, -PI/2]] },
+        boats:
+        [
+            { boat: 'cruise', start: { x: -800, y: -300, a: 0 }, slip: { on: 'station', port: 1, pad: [.6, .6], fingers: 'none' } },
+            { boat: 'trawler', start: { x: 650, y: 250, a: PI }, slip: { on: 'station', port: 0, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'speedboat', view: 2, start: { on: 'station', x: 100, y: 160, a: 0 }, slip: { on: 'station', port: 2, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'jetski', view: 2, start: { on: 'station', x: 100, y: -150, a: 0 }, slip: { on: 'station', port: 3, pad: [.8, .6], fingers: 'none' } },
+        ],
+    },
+    // pads on towers: an 80 m star yacht on the ground, then a 6.8 m zoomer on a 30 m tower and a 2.4 m rocket scooter on
+    // a 55 m one, beside the yacht
+    landing('Pad Towers', 800, 800,
+    [
+        { boat: 'yacht', start: { x: -300, y: 250, a: PI/2 }, pad: [-60, 50] },
+        { boat: 'speedboat', view: 1.6, start: { x: 120, y: 90, a: PI/2 }, pad: [0, 8, 30] },
+        { boat: 'jetski', start: { x: 90, y: 115, a: PI/2 }, pad: [25, 4, 55] },
+    ]),
+    // a big planet: a 400 m classic frigate, a 112 m stealth cruiser, then a 2.6 m flying saucer between them
+    landing('Heavy Lift', 3000, 2500,
+    [
+        { boat: 'container', start: { x: -900, y: 700, a: PI/2 }, pad: [300, 150], room: [.6, .6] },
+        { boat: 'sub', start: { x: -350, y: 150, a: PI/2 }, pad: [-50, 55], room: [.6, .6] },
+        { boat: 'swan', view: 2, start: { x: 60, y: 30, a: PI/2 }, pad: [10, 5] },
+    ]),
     {
         // sandbox, only with ?test: open water with a beach, piers, an islet, a current,
         // buoys, ducks and a few boats to bump. The buttons on the left spawn any boat type next to the one you drive.
