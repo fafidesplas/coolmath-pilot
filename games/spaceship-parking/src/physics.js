@@ -219,7 +219,7 @@ function collideBoxes(S, C)
     for (const box of S.boxes)
     {
         const [x0, y0, x1, y1] = box, f = boxFrame(S, box), cs = Math.cos(f.angle), sn = Math.sin(f.angle);
-        // a box with its middle in C's hangar (the walls of the Ark's own hangar, the Ark parked in a bay) ignores C's hull
+        // a box with its middle in C's hangar (the walls of a ship's own hangar, that ship parked in a bigger one's) ignores C's hull
         const mx = (x0 + x1)/2, my = (y0 + y1)/2;
         if (C.carve && inCarve(C, vec2(f.pos.x + mx*cs - my*sn, f.pos.y + mx*sn + my*cs))) continue;
         for (let i = 0; i < C.circles.length; i++)

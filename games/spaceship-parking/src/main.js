@@ -256,7 +256,7 @@ function loadLevel(i)
     levelIndex = i;
     const L = level = LEVELS[i];
     gameMode = modeOf(L);
-    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; stations = []; mooredBoats = []; nested = []; currents = L.currents || [];
+    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; stations = []; mooredBoats = []; nested = []; portal = null; currents = L.currents || [];
     popups.length = drops.length = wakes.length = foams.length = 0;
     anchor = judge = result = intro = player = undefined;
     attempts = damages = ducksOffended = levelTime = 0;
@@ -288,10 +288,9 @@ function loadLevel(i)
         if (m.fixed) { b.invMass = b.invInertia = 0; b.mass = 1e12; }
         return b;
     });
-    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there.
-    // The fleet comes before the slips: a slip can lie in a chain boat's hangar
-    fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
+    // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
+    fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
     fleet.forEach((b, n) => { if (L.boats[n].start.on) rideStation(b, L.boats[n].start); });     // waits on the station (src/space.js)
     fleet.forEach((b, n) => { if (L.boats[n].start.ground) groundStart(b); });      // waits standing on the ground (src/space.js)
     nestLoad(L);                          // parts of the level that wait inside a chain boat until it parks (src/space.js)
@@ -360,6 +359,7 @@ function cameraGoal()
         const [x0, y0, x1, y1] = [v[0] - m, v[1] - m, v[2] + m, v[3] + m], wu = Math.max((x1 - x0) / UI_SIZE.x, (y1 - y0) / (PLAY_TOP - 3));
         return { pos:vec2((x0 + x1)/2, (y0 + y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
     }
+    if (portal) return portalCamera();       // the ship flying off into the portal (src/space.js)
     const minW = boatSize(player) * shipScreen(boatSize(player)), pad = player.radius*.8;
     const ahead = player.vel.scale(.8), max = minW*.25;
     const box = boxAround(player.pos.add(ahead.length() > max ? ahead.normalize(max) : ahead), player.radius);
@@ -839,8 +839,13 @@ function updateJudge(dt)
     if (judge)
     {
         judge.t += dt;
-        if (judge.result == 'win' && judge.t > 1.4)
-            boatIndex < fleet.length - 1 ? startBoat(boatIndex + 1) : showComplete();
+        // the last one parked: a level with a portal first flies its ship off into it (src/space.js)
+        if (judge.result == 'win' && judge.t > 1.4 && !(portal && !portalDone()))
+        {
+            if (boatIndex < fleet.length - 1) startBoat(boatIndex + 1);
+            else if (level.portal && !portal) portalStart();
+            else showComplete();
+        }
         else if (judge.result == 'fail' && judge.t > 1.8) judge = undefined;
         if (judge) return;
     }
@@ -968,6 +973,7 @@ function stepWorld()
             if (m) { b.vel.x += m.ax*dt; b.vel.y += m.ay*dt; b.integrate(dt, m.x, m.y, m.a); }
             else b.integrate(dt, c ? c.dx : 0, c ? c.dy : 0);
         }
+        portalDrive(dt);        // the ship flying off into the portal (src/space.js)
         stationsFollow();
         for (let i = 0; i < bodies.length; i++)
         {
@@ -1254,7 +1260,7 @@ function drawCurrents()
 
 function drawSlip()
 {
-    if (!slip) return;
+    if (!slip || portal) return;          // the level is done: its last ship flies off into the portal (src/space.js)
     const inside = boatInSlip(), pulse = .5 + .5*Math.sin(time*5);
     if (slip.on) return drawMovingSlip(inside);
     const lw = Math.min(.14*WU, slip.wid*.08);
@@ -1342,9 +1348,12 @@ function drawBodies()
         else if (b.kind == 'log') drawLog(b);
     }
     const riding = b => player && b.held?.on == player;       // parked inside the ship you drive (in its hangar)
-    for (const b of bodies) if (b.type && b != player && !riding(b) && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
+    const flying = portal?.b;                                 // the ship flying into the portal goes over it (src/space.js)
+    for (const b of bodies) if (b.type && b != player && b != flying && !riding(b) && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
+    drawPortal();
+    if (flying && bodies.includes(flying) && inView(flying.pos, flying.radius*1.2)) drawBoat(flying);
     if (slipInShip) { drawSlip(); drawGuide(); }
-    if (player && !deep(player)) drawBoat(player);
+    if (player && !deep(player) && bodies.includes(player)) drawBoat(player);
     for (const b of bodies) if (b.type && riding(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
     for (const b of bodies) if (deep(b)) drawPeriscope(b);
     if (SHOW_HITBOX) drawHitboxes();
@@ -1460,7 +1469,7 @@ function drawAirGauge()
 // a ring around the player when the boat is too small to spot
 function drawPlayerMarker()
 {
-    if (!player) return;
+    if (!player || portal) return;
     const len = boatSize(player) / cam.wu;
     if (len > 1.2) return;
     const u = worldToUi(player.pos), r = 1.1 + Math.sin(time*6)*.12;

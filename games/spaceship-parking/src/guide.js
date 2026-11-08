@@ -13,7 +13,7 @@ let guide = null;               // { player, t, path: [vec2], len, direct }
 // after the camera moves (main.js): find the route again when it is due
 function guideUpdate(dt)
 {
-    if (!player || !slip || level?.jam || gameScreen != 'playing' || !hasControl()) { guide = null; return; }
+    if (!player || !slip || level?.jam || gameScreen != 'playing' || !hasControl() || portal) { guide = null; return; }
     if (guide && guide.player == player && (guide.t += dt) < GUIDE_EVERY) return;
     guide = { player, t: 0, ...findRoute(player, slip) };
 }

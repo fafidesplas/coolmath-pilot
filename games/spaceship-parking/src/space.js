@@ -14,9 +14,10 @@
 // - Landing pads: docks with `pad: true`, drawn as a landing pad.
 // - Nesting (`in: n` on the level's station, a moored boat or a chain boat's start): that part of the level stays out
 //   of it until chain boat n has parked, then appears where boat n really parked (see nestLoad). With slips inside a
-//   moored ship (`on: 'moored'`, a carrier's hangar) or in a chain ship's hangar (`on: 'boat'`) a level can nest ships one
-//   inside the other.
+//   moored ship (`on: 'moored'`, a carrier's hangar, or the hangar cut into one) a level can nest ships one inside the other.
 // - Hangars cut into a hull (a boat type's `hangar`, see fitHangar): a slot a smaller ship flies into and parks in.
+// - A portal (level `portal`): once the last chain ship has parked inside a moored ship, that ship flies off into a portal
+//   opening ahead of it, carrying the ship parked in it, and then the level is complete.
 
 const STATION_SPIN_DEFAULT = 2*PI/60;     // rad/s: one turn a minute
 const RCS_TURN = 2.2;                     // gravity levels: side thruster spin, times the ship's turn rate (toy units)
@@ -145,18 +146,12 @@ function attachSlip(slip, s)
 {
     // inside a moored ship (on: 'moored', i: its place in the level's moored list, a carrier's hangar): x, y, a are given
     // in the level like any slip's, and kept in the ship's own coordinates from then on, so the slip moves with it
-    // in the hangar of chain boat n (from 1; on: 'boat', see fitHangar): across its middle, lying along it, nose in
-    if (s.on == 'boat')
-    {
-        const host = slip.on = fleet[s.n - 1], H = host.hangar;
-        slip.local = { x: H.x + Math.cos(H.a)*H.depth/2, y: H.y + Math.sin(H.a)*H.depth/2, a: H.a };
-        placeSlip(slip);
-        return slip;
-    }
+    // with hangar: true, in the moored ship's hangar (see fitHangar): across its middle, lying along it, nose in
     if (s.on == 'moored')
     {
         const host = slip.on = mooredBoats[s.i || 0], d = slip.pos.subtract(host.pos), c = Math.cos(host.angle), n = Math.sin(host.angle);
-        slip.local = { x: d.x*c + d.y*n, y: -d.x*n + d.y*c, a: s.a - host.angle };
+        const H = s.hangar && host.hangar;
+        slip.local = H ? { x: H.x + Math.cos(H.a)*H.depth/2, y: H.y + Math.sin(H.a)*H.depth/2, a: H.a } : { x: d.x*c + d.y*n, y: -d.x*n + d.y*c, a: s.a - host.angle };
         placeSlip(slip);
         return slip;
     }
@@ -175,7 +170,7 @@ function attachSlip(slip, s)
 // its width, wall: its walls' thickness }, in toy units. The hull's circles stop colliding with whatever has its middle
 // in the hangar or just outside its mouth (b.carve), and three walls (boxes) hold it in there instead. The walls are at
 // least as thick as the biggest circle of the ship that parks there, so a circle in the mouth can't reach the hull
-// beside it without touching a wall first. A slip with on: 'boat' lies in it.
+// beside it without touching a wall first. A slip with on: 'moored' and hangar: true lies in it.
 function fitHangar(b)
 {
     const t = b.type.hangar, k = b.k, d = t.depth*k, w = t.w*k, T = t.wall*k, out = 2*w, e = .01*w;
@@ -449,6 +444,82 @@ function groundPivot(b, s)
 function spinTurn(b, rudder, throttle, vf)
 {
     return rudder * (b.turn*Math.max(Math.abs(vf), RCS_TURN*b.vs) + b.wash*Math.abs(throttle));
+}
+
+// ---------------------------------------------------------------------------
+// the portal: level.portal = { i: the moored ship that flies off, ahead: how far ahead of its bow the portal opens, r: its
+// radius, both in that ship's lengths }. Once the last chain ship has parked (inside that ship), the portal opens, the
+// camera pulls out to the ship, and the ship flies in nose first, speeding up and shrinking into it with whatever is
+// parked in it; the portal closes and the level is complete (updateJudge in main.js waits for it).
+const PORTAL_OPEN = 1.2, PORTAL_GO = 1.8, PORTAL_FLY = 3.6, PORTAL_CLOSE = .8, PORTAL_END = 1;     // s
+let portal = null;
+
+function portalStart()
+{
+    const P = level.portal, b = mooredBoats[P.i || 0], L = boatSize(b), f = b.forward();
+    portal = { b, t: 0, from: b.pos.copy(), dir: f, dist: P.ahead*L, pos: b.pos.add(f.scale(P.ahead*L)), r: P.r*L, open: 0, scale: 1 };
+    sfx('chain', portal.pos, .8, .4);
+}
+
+// true once the portal has closed behind the ship
+function portalDone() { return portal?.done; }
+
+// after the bodies move, before what is clamped to them follows: fly the ship along its way to the portal
+function portalDrive(dt)
+{
+    const p = portal;
+    if (!p || p.gone) { if (p) p.t += dt, p.open = clamp(1 - (p.t - p.goneAt)/PORTAL_CLOSE, 0, 1), p.done = p.t > p.goneAt + PORTAL_CLOSE + PORTAL_END; return; }
+    p.t += dt;
+    p.open = Math.min(1, p.t/PORTAL_OPEN);
+    const b = p.b, u = clamp((p.t - PORTAL_GO)/PORTAL_FLY, 0, 1), s = p.dist*u*u*u;      // speeding up all the way in
+    b.pos = p.from.add(p.dir.scale(s));
+    b.vel = p.dir.scale(3*p.dist*u*u/PORTAL_FLY);
+    b.angVel = 0;
+    b.throttle = u > 0 ? 1 : 0;
+    // it shrinks into the portal over its last length
+    p.scale = clamp((p.dist - s)/boatSize(b), 0, 1);
+    b.sx = b.sy = p.scale;
+    b.updateWorld();
+    // what is parked in it goes with it out of sight (too small to shrink with it: a ship that small is drawn as a dot)
+    if (p.scale < 1) for (const o of [...bodies]) if (o.held?.on == b) bodies.splice(bodies.indexOf(o), 1);
+    if (u >= 1)
+    {
+        p.gone = true; p.goneAt = p.t;
+        bodies.splice(bodies.indexOf(b), 1);
+        sfx('splash', p.pos, 1, .5);
+        confetti(p.pos, boatSize(b)/10);
+    }
+}
+
+// the camera during it: the ship and the portal, at the ship's own zoom
+function portalCamera()
+{
+    const p = portal, b = p.b, L = boatSize(b), minW = L*shipScreen(L);
+    const box = { x0: Math.min(b.pos.x, p.pos.x) - p.r, y0: Math.min(b.pos.y, p.pos.y) - p.r, x1: Math.max(b.pos.x, p.pos.x) + p.r, y1: Math.max(b.pos.y, p.pos.y) + p.r };
+    const w = Math.max(box.x1 - box.x0 + L*.6, minW), h = Math.max(box.y1 - box.y0 + L*.6, minW*.45);
+    const wu = Math.max(w / UI_SIZE.x, h / (PLAY_TOP - 3));
+    return { pos: vec2((box.x0 + box.x1)/2, (box.y0 + box.y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
+}
+
+// a swirl in the poster inks: a cream rim, rings of lilac, teal and glass round a deep middle, and mustard arms turning
+function drawPortal()
+{
+    const p = portal;
+    if (!p || p.open <= 0) return;
+    const ease = 1 - (1 - p.open)**3, R = p.r*ease, c = p.pos;
+    if (!inView(c, R)) return;
+    drawCircle(c, R*2.3, P_GLASS.scale(1, .08));
+    drawCircle(c, R*2.08, P_CREAM);
+    [P_LILAC, P_TEAL, P_SLATE, P_INDIGO, P_DEEP].forEach((col, i) => drawCircle(c, R*2*(.94 - i*.17), col));
+    const segs = [];
+    for (let arm = 0; arm < 5; arm++)
+        for (let i = 0; i < 14; i++)
+        {
+            const a0 = time*1.6 + arm*PI*2/5 + i*.16, a1 = a0 + .16, r0 = R*(.92 - i*.06), r1 = R*(.92 - (i + 1)*.06);
+            segs.push([vec2(Math.cos(a0)*r0, Math.sin(a0)*r0), vec2(Math.cos(a1)*r1, Math.sin(a1)*r1)]);
+        }
+    posterSegs(c, segs, P_MUSTARD.scale(1, .8), R*.05);
+    drawCircle(c, R*.3, P_DEEP);
 }
 
 // ---------------------------------------------------------------------------

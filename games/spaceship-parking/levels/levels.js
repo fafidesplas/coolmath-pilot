@@ -348,20 +348,22 @@ const SCALE_LEVELS =
         // nesting dolls: a 3000 km battle station parks between two moons first (its slip holds it). Then an escape pod
         // comes out of the hatch at the top of its sphere and docks at a small station turning just above it, where a
         // 28 m star yacht waits docked; the yacht flies off and parks in the hangar in the rim of the Ark's collar, the
-        // 30 km Ark waiting 300 m above the station. Last, the Ark flies into its bay in the battle station's rim, 75 km
-        // away. The station, the pod and the Ark wait inside the battle station (in: 1) and appear where it parked;
+        // 30 km Ark waiting 300 m above the station. Then the Ark flies off on its own into a portal opening 3 lengths
+        // ahead of its bow, and the level is done. The station, the pod and the Ark wait inside the battle station (in: 1)
+        // and appear where it parked;
         // their coordinates here are as if it parked right in its slip (sphere center 240 km ahead of the slip's,
         // radius 990 km, the hatch at its top).
         name: 'Nesting Dolls', land: [], docks: [],
         walls: [{ x0: -2.5e7, y0: -2.5e7, x1: -2.4e7, y1: 2.5e7 }, { x0: 2.4e7, y0: -2.5e7, x1: 2.5e7, y1: 2.5e7 }, { x0: -2.5e7, y0: -2.5e7, x1: 2.5e7, y1: -2.4e7 }, { x0: -2.5e7, y0: 2.4e7, x1: 2.5e7, y1: 2.5e7 }],
         lands: [{ x: 0, y: 2.6e6, k: 1e5, circles: [[0, 0, 8]], detail: 160 }, { x: 0, y: -2.6e6, k: 1e5, circles: [[0, 0, 8]], detail: 160 }],
         station: { x: 240010, y: 990080, a: .4, spin: 2*PI/180, drift: { r: 5, period: 140, phase: 0 }, in: 1 },
+        moored: [{ boat: 'island', x: 238960, y: 997200, a: 0, fixed: true, in: 1 }],
+        portal: { i: 0, ahead: 3, r: .42 },
         boats:
         [
             { boat: 'continent', start: { x: -7e6, y: 5e6, a: 0 }, slip: { x: 0, y: 0, a: 0, pad: [.6, .6], fingers: 'none', hold: true } },
             { boat: 'dinghy', start: { x: 240000, y: 990003, a: PI/2, in: 1 }, slip: { on: 'station', port: 0, pad: [1.4, 1], fingers: 'none' } },
-            { boat: 'yacht', k: 3.5, start: { on: 'station', x: -39.37, y: 0, a: PI/2 }, slip: { on: 'boat', n: 4, pad: [.8, .6], fingers: 'none' } },
-            { boat: 'island', start: { x: 238960, y: 997200, a: 0, in: 1 }, slip: { on: 'boat', n: 1, pad: [.8, .6], fingers: 'none' } },
+            { boat: 'yacht', k: 3.5, start: { on: 'station', x: -39.37, y: 0, a: PI/2 }, slip: { on: 'moored', i: 0, hangar: true, pad: [.8, .6], fingers: 'none' } },
         ],
     },
     {
