@@ -566,7 +566,8 @@ function controlPlayer(dt)
             else
             {
                 throttle = -power;
-                rudder = -clamp(wrapAngle(want - player.angle - PI)*2.5, -1, 1);
+                rudder = clamp(wrapAngle(want - player.angle - PI)*2.5, -1, 1);
+                if (!level?.spinTurn) rudder = -rudder;     // the harbor rudder flips in reverse; nose thrusters don't
             }
         }
     }
@@ -632,7 +633,7 @@ function driveBoat(b, throttle, rudder, dt)
     b.vel.x += f.x * thrust * dt;
     b.vel.y += f.y * thrust * dt;
     const vf = b.vel.x*f.x + b.vel.y*f.y;
-    b.angVel += (level?.gravity ? thrusterSpin(b, rudder, throttle) : rudder * (b.turn*vf + b.wash*throttle)) * dt;
+    b.angVel += (level?.gravity ? thrusterSpin(b, rudder, throttle) : level?.spinTurn && b == player ? spinTurn(b, rudder, throttle, vf) : rudder * (b.turn*vf + b.wash*throttle)) * dt;
 }
 
 // ---------------------------------------------------------------------------

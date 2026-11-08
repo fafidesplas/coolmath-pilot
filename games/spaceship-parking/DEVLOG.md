@@ -1,3 +1,9 @@
+## 2026-11-08 — Trial: the nose thrusters turn a stopped ship (Odd Couple only)
+- In Odd Couple (`spinTurn: true` in `levels/levels.js`) the ship you drive turns even when it is stopped, about as fast as the side thrusters turn it in Touchdown, so the flame and the turn now agree. Moving, it turns as fast as before. Left always turns the nose left, reversing too (in the other levels reversing flips the turn like a car), and the mouse's reverse steering follows that (`spinTurn` in `src/space.js`).
+- Checked headless: in Odd Couple a stopped pod turns about 30 degrees in a second with A or D, and reversing with A turns it left; in Way Down a stopped ship still doesn't turn. No errors.
+- To revert: remove `spinTurn` from Odd Couple. To keep it: set it on every level, or drop the flag and use `spinTurn()` everywhere.
+- Not changed: in Touchdown the mouse's reverse steering still uses the harbor sign, which with the side thrusters likely turns the wrong way. Untested.
+
 ## 2026-11-07 — Turning fires a retro thruster
 - Turning fires the retro thruster on the outside of the turn, the one that pushes the nose round: left fires the starboard (right) one, right fires the port one, at 70% of a full reverse flame, with its own smoke puffs. Reversing still fires both. Only the ship you drive does this (`retroFire` in `src/skin.js`; `RETRO_TURN`, `RETRO_TURN_MIN` for the flame size and the smallest mouse turn that fires it).
 - Checked headless on the Escape Pod: A lights the right thruster, D the left one. No errors.

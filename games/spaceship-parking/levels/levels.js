@@ -143,6 +143,7 @@ const SCALE_LEVELS =
 [
     {
         name: 'Odd Couple',
+        spinTurn: true,     // TRIAL: the nose thrusters turn a stopped ship (spinTurn in src/space.js)
         land: [[-3000, -3020, 0, 3585], [1400, -3020, 4400, 3585], [-3000, 600, 4400, 3585]],
         docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }, { x0: 526.8, y0: 546, x1: 529.6, y1: 584.9 }],
         boats:
