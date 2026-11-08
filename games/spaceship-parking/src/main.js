@@ -94,6 +94,7 @@ const modeLevels = (m = gameMode) => LEVELS.map((L, i) => i).filter(i => modeOf(
 const levelNumber = (i = levelIndex) => modeLevels(modeOf(LEVELS[i])).indexOf(i) + 1;
 let player, bodies = [], rects = [], posts = [], lands = [], currents = [], slip;
 let fleet = [], slips = [], boatIndex = 0, accs = [], intro;
+let mooredBoats = [];       // the level's moored boats, in the order of `moored` in levels.js
 let trafficBoats = [];      // the level's traffic boats, in the order of `traffic` in levels.js
 let anchor, judge, result, restT = 0, restArmed = true;
 let attempts = 0, damages = 0, ducksOffended = 0, levelTime = 0, boatTime = 0;
@@ -203,8 +204,8 @@ function makeSlip(e, k)
             posts.push({ x:xo, y:y-wid/2-ft/2, r:pr }, { x:xo, y:y+wid/2+ft/2, r:pr });
         }
     }
-    const made = { pos:vec2(x, y), a:s.a, len, wid, w, h, k, leeway };
-    return s.on ? attachSlip(made, s) : made;        // on a station: x, y, a are in its coordinates (src/space.js)
+    const made = { pos:vec2(x, y), a:s.a, len, wid, w, h, k, leeway, hold: !!s.hold };
+    return s.on ? attachSlip(made, s) : made;        // on a station or inside a moored ship (src/space.js)
 }
 
 // static landmass: circles [x, y, r] around (x, y), scaled by k; collides as round posts
@@ -254,7 +255,7 @@ function loadLevel(i)
     levelIndex = i;
     const L = level = LEVELS[i];
     gameMode = modeOf(L);
-    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; stations = []; currents = L.currents || [];
+    bodies = []; rects = []; posts = []; lands = []; trafficBoats = []; stations = []; mooredBoats = []; nested = []; currents = L.currents || [];
     popups.length = drops.length = wakes.length = foams.length = 0;
     anchor = judge = result = intro = player = undefined;
     attempts = damages = ducksOffended = levelTime = 0;
@@ -278,14 +279,20 @@ function loadLevel(i)
         return;
     }
 
+    // moored boats first: a slip can lie inside one (a carrier's hangar), and the chain boats are drawn over them.
+    // fixed: true, nothing pushes it (like a station)
+    mooredBoats = (L.moored || []).map((m, k) =>
+    {
+        const b = makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m));
+        if (m.fixed) { b.invMass = b.invInertia = 0; b.mass = 1e12; }
+        return b;
+    });
     // every boat of the level waits at its start until its turn; a bump moves it, and its turn starts from there
     slips = L.boats.map(e => makeSlip(e, boatK(L, e)));
     fleet = L.boats.map(e => makeBoat(e.boat, vec2(e.start.x, e.start.y), e.start.a, 'moored', undefined, boatK(L, e)));
     fleet.forEach((b, n) => { if (L.boats[n].start.on) rideStation(b, L.boats[n].start); });     // waits on the station (src/space.js)
     fleet.forEach((b, n) => { if (L.boats[n].start.ground) groundStart(b); });      // waits standing on the ground (src/space.js)
-
-    (L.moored || []).forEach((m, k) =>
-        makeBoat(m.boat, vec2(m.x, m.y), m.a, 'moored', MOORED_COLORS[(k + i) % MOORED_COLORS.length], boatK(L, m)));
+    nestLoad(L);                          // parts of the level that wait inside a chain boat until it parks (src/space.js)
     for (const m of L.drifters || [])
         makeBoat(m.boat, vec2(m.x, m.y), m.a, 'drifter', C_TEAL, boatK(L, m));
     (L.traffic || []).forEach((t, n) => trafficBoats.push(makeTraffic(t, n)));
@@ -304,6 +311,7 @@ function startBoat(n)
     const prev = player;
     if (prev)
     {
+        nestPlace(boatIndex + 1);         // what waited inside the boat just parked appears beside it (src/space.js)
         prev.kind = 'moored';
         prev.dragF = prev.dragFull;
         prev.dragA = prev.dragAFull;
@@ -1314,8 +1322,10 @@ function drawBodies()
     for (const b of bodies) if (b.type && !b.under && inView(b.pos, b.radius*1.2)) drawBoatShadow(b);
     for (const r of rects) if (r.dock) drawDock(r);
     for (const p of posts) if (!p.land && inView(vec2(p.x, p.y), p.r*2)) drawPost(p);
-    if (level?.jam) drawJamSlips(); else drawSlip();     // over the finger docks, so its dashed sides show
-    drawGuide();                                          // the route to the slip (src/guide.js)
+    // a slip inside a ship (a carrier's hangar) and the route to it go over the other ships, under the one you drive
+    const slipInShip = !level?.jam && slip?.on?.type;
+    if (level?.jam) drawJamSlips(); else if (!slipInShip) drawSlip();     // over the finger docks, so its dashed sides show
+    if (!slipInShip) drawGuide();                         // the route to the slip (src/guide.js)
     if (level?.jam && !(player && deep(player))) drawJamSelection();
     for (const b of bodies)
     {
@@ -1325,6 +1335,7 @@ function drawBodies()
         else if (b.kind == 'log') drawLog(b);
     }
     for (const b of bodies) if (b.type && b != player && !deep(b) && inView(b.pos, b.radius*1.2)) drawBoat(b);
+    if (slipInShip) { drawSlip(); drawGuide(); }
     if (player && !deep(player)) drawBoat(player);
     for (const b of bodies) if (deep(b)) drawPeriscope(b);
     if (SHOW_HITBOX) drawHitboxes();

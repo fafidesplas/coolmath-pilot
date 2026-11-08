@@ -345,6 +345,25 @@ const SCALE_LEVELS =
             [['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5]]),
     },
     {
+        // nesting dolls: a 3000 km battle station parks between two moons first (its slip holds it). Then an escape pod
+        // comes out of the hatch at the top of its sphere and docks at a small station turning just above it, where a
+        // 28 m star yacht waits docked; the yacht flies off and parks inside the hangar of a 100 m carrier beside the
+        // station. The station, the carrier and the pod wait inside the battle station (in: 1) and appear where it parked;
+        // their coordinates here are as if it parked right in its slip (sphere center 240 km ahead of the slip's,
+        // radius 990 km, the hatch at its top).
+        name: 'Nesting Dolls', land: [], docks: [],
+        walls: [{ x0: -2.5e7, y0: -2.5e7, x1: -2.4e7, y1: 2.5e7 }, { x0: 2.4e7, y0: -2.5e7, x1: 2.5e7, y1: 2.5e7 }, { x0: -2.5e7, y0: -2.5e7, x1: 2.5e7, y1: -2.4e7 }, { x0: -2.5e7, y0: 2.4e7, x1: 2.5e7, y1: 2.5e7 }],
+        lands: [{ x: 0, y: 2.6e6, k: 1e5, circles: [[0, 0, 8]], detail: 160 }, { x: 0, y: -2.6e6, k: 1e5, circles: [[0, 0, 8]], detail: 160 }],
+        station: { x: 240010, y: 990080, a: .4, spin: 2*PI/60, drift: { r: 5, period: 140, phase: 0 }, in: 1 },
+        moored: [{ boat: 'carrier', x: 240180, y: 990090, a: 0, fixed: true, in: 1 }],
+        boats:
+        [
+            { boat: 'continent', start: { x: -7e6, y: 5e6, a: 0 }, slip: { x: 0, y: 0, a: 0, pad: [.6, .6], fingers: 'none', hold: true } },
+            { boat: 'dinghy', start: { x: 240000, y: 990003, a: PI/2, in: 1 }, slip: { on: 'station', port: 0, pad: [1.4, 1], fingers: 'none' } },
+            { boat: 'yacht', k: 3.5, start: { on: 'station', x: -39.37, y: 0, a: PI/2 }, slip: { on: 'moored', i: 0, x: 240168, y: 990090, a: 0, pad: [.8, .6], fingers: 'none' } },
+        ],
+    },
+    {
         // sandbox, only with ?test: open water with a beach, piers, an islet, a current,
         // buoys, ducks and a few boats to bump. The buttons on the left spawn any boat type next to the one you drive.
         // No slips and no stars. Boats are real size, so the Island and Continent are huge: use RESTART to start over.

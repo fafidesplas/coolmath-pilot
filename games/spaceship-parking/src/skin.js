@@ -168,11 +168,11 @@ const SHIP_NAMES =
 {
     jetski:'Rocket Scooter', dinghy:'Escape Pod', swan:'Flying Saucer', speedboat:'Zoomer', minisub:'Stealth Pod',
     sailboat:'Solar Sailer', trawler:'Asteroid Miner', yacht:'Star Yacht', sub:'Stealth Cruiser', cruise:'Space Liner',
-    container:'Classic Frigate', island:'Ark', continent:'Battle Station',
+    container:'Classic Frigate', carrier:'Carrier', island:'Ark', continent:'Battle Station',
 };
 const SHIP_COLORS =
 {
-    dinghy:C_ORANGE, speedboat:C_CORAL, swan:C_SILVER, minisub:C_STEALTH, sub:C_SLATE, cruise:C_SILVER, continent:P_DUSK,
+    dinghy:C_ORANGE, speedboat:C_CORAL, swan:C_SILVER, minisub:C_STEALTH, sub:C_SLATE, cruise:C_SILVER, continent:P_DUSK, carrier:P_SLATE,
 };
 for (const k in SHIP_NAMES) if (BOATS[k]) BOATS[k].name = SHIP_NAMES[k];
 for (const k in SHIP_COLORS) if (BOATS[k]) BOATS[k].color = SHIP_COLORS[k];
@@ -389,6 +389,7 @@ const JETS =
     cruise:[[-4.9, .28, .2], [-4.9, 0, .2], [-4.9, -.28, .2]], container:[[-5.05, .38, .34], [-5.05, 0, .34], [-5.05, -.38, .34]],
     island:[[-5.15, .72, .42], [-5.15, 0, .5], [-5.15, -.72, .42]],
     continent:[[-5.0, .78, .95], [-5.0, -.78, .95], [-5.0, 1.9, .75], [-5.0, -1.9, .75]],
+    carrier:[[-5.35, 1.625, .5], [-5.35, -1.625, .5]],
 };
 
 function shipThrottle(b)
@@ -554,6 +555,7 @@ function drawDust()
 drawBoat = function(b)
 {
     const t = b.type, len = screenLen(b);
+    if (t.key == 'continent' && len > SURFACE_LEN) return drawBattleSurface(b);
     // too small to read: a dot in the ship's color
     if (len < .3)
     {
@@ -781,8 +783,12 @@ const BATTLE =
     spire: [[3.6, .5], [4.75, .24], [4.75, -.24], [3.6, -.5]].map(([x, y]) => vec2(x, y)),
     block: [[-1.2, 2.35], [-3.75, 2.05], [-3.75, -2.05], [-1.2, -2.35]].map(([x, y]) => vec2(x, y)),
     boosters: [[.78, .56], [1.9, .44], [-.78, .56], [-1.9, .44]].map(([y, r]) => ({ y, r, pts: rocketPts(-4.45, -2.35, r, .3, .1, .82, y) })),
+    hatch: PI/2,                 // the launch hatch on the sphere, its angle from the sphere's middle (the top, port side)
 };
-BATTLE.spherePts = ringPts(BATTLE.sphere.r).map(p => p.add(vec2(BATTLE.sphere.x, 0)));
+// the sphere is traced finely (360 points): the camera can zoom in on it a long way before the close-up takes over
+// (drawBattleSurface), and a coarse outline would show its corners there. The hull outline uses a coarser one.
+const spherePts = n => Array.from({ length: n }, (_, i) => vec2(BATTLE.sphere.x + Math.cos(i/n*PI*2)*BATTLE.sphere.r, Math.sin(i/n*PI*2)*BATTLE.sphere.r));
+BATTLE.spherePts = spherePts(360);
 for (const o of BATTLE.boosters)
 {
     o.nose = clipX(o.pts, -2.95, 99);
@@ -792,10 +798,36 @@ for (const o of BATTLE.boosters)
 if (BOATS.continent)
 {
     const t = BOATS.continent;
-    t.hullPts = unionOutline([BATTLE.spherePts, BATTLE.spire, BATTLE.block]);
+    t.hullPts = unionOutline([spherePts(96), BATTLE.spire, BATTLE.block]);
     t.deckPts = null;
     t.ownColor = true;                          // always steel grey, like the battle station walls in Rest Stop
 }
+// the Carrier: a 100 m hauler with a hangar you fly into. Seen from above it is a U: a round bow with the bridge, and two
+// long booms with an engine at each end, the open hangar between them, its mouth at the stern. The hangar floor is
+// drawn under the hull but doesn't collide, so a smaller ship can park inside it (a slip with on: 'moored').
+const CARRIER =
+{
+    hangar: { x0: -5, x1: .9, w: 1.15 },          // the hangar between the booms: from the stern to its back wall, half width
+    boom: 2.1,                                    // the hull's half width (the booms' outer side)
+    bells: [1.625, -1.625].map(y => bell(-4.95, -5.35, .28, .38, y)),
+};
+{
+    const C = CARRIER, H = C.hangar, B = C.boom, nose = [];
+    for (let i = 0; i <= 10; i++) nose.push([2.6 + 2.4*i/10, B*Math.cos(i/10*PI/2)**.75]);
+    const port = [[-4.75, B], ...nose];
+    const pts = [...port, ...port.slice(0, -1).reverse().map(([x, y]) => [x, -y]),
+        [-5, -B + .2], [-5, -H.w - .2], [-4.75, -H.w], [H.x1, -H.w], [H.x1, H.w], [-4.75, H.w], [-5, H.w + .2], [-5, B - .2]];
+    C.hullPts = pts.map(([x, y]) => vec2(x, y));
+    C.bowPts = [[H.x1, B], ...nose, ...nose.slice(0, -1).reverse().map(([x, y]) => [x, -y]), [H.x1, -B]].map(([x, y]) => vec2(x, y));
+    C.booms = [1, -1].map(sd => [[-5, sd*H.w], [1.6, sd*H.w], [1.6, sd*B], [-5, sd*B]].map(([x, y]) => vec2(x, y)));
+}
+if (BOATS.carrier)
+{
+    const t = BOATS.carrier;
+    t.hullPts = CARRIER.hullPts;
+    t.deckPts = null;
+}
+
 // its inks: the station walls' greys (HULL_INKS), amber lights
 const BATTLE_INK =
 {
@@ -811,7 +843,7 @@ const BATTLE_TURRETS = [[.1, 2.75], [1.85, 2.15], [.1, -2.75], [1.85, -2.15]];
 function sphereCap(y)
 {
     const { x: X, r } = BATTLE.sphere, a0 = Math.asin(Math.abs(y)/r), s = Math.sign(y);
-    return Array.from({ length: 21 }, (_, i) => { const a = a0 + (PI - 2*a0)*i/20; return vec2(X + Math.cos(a)*r, s*Math.sin(a)*r); });
+    return Array.from({ length: 121 }, (_, i) => { const a = a0 + (PI - 2*a0)*i/120; return vec2(X + Math.cos(a)*r, s*Math.sin(a)*r); });
 }
 
 // the Ark's biosphere, in toy units from the dome's middle (y = port): four tidy quarters on a meadow, a lake,
@@ -840,6 +872,7 @@ function shipHitShapes(key)
     if (key == 'container') return [t.hullPts, ...FRIGATE_FINS];
     if (key == 'island') return [ARK.body, ARK.collarPts, ...ARK.fins];
     if (key == 'continent') return [t.hullPts, ...BATTLE.boosters.map(o => o.pts)];
+    if (key == 'carrier') return [CARRIER.bowPts, ...CARRIER.booms];
     if (!r) return null;
     const shapes = [r.body, ...r.fins, ...(r.boosters || [])];
     if (key == 'sailboat') shapes.push(toVecs(SAIL_PTS));
@@ -939,13 +972,25 @@ for (const key in BOATS)
     t.trailW = 2*outlineHalfWidth(shapes, -TRAIL_AT*t.L);
     t.selShapes = shapes;                       // the selection rim goes round all of them (drawJamSelection)
 }
-// the Battle Station is a ball, not a rocket: one circle for the sphere, then the engine block (a keel row), spire and
-// boosters, without the circles the sphere's already covers
+// the Battle Station is a ball, not a rocket: one circle for the sphere, exactly as big as drawn (a small ship can fly
+// right by its surface, see drawBattleSurface), then the engine block (a keel row), spire and boosters, without the
+// circles the sphere already covers
 if (BOATS.continent)
 {
     const t = BOATS.continent, { x: X, r } = BATTLE.sphere;
     const rest = coverCircles([BATTLE.block, BATTLE.spire, ...BATTLE.boosters.map(o => o.pts)]);
-    t.circles = [{ x: X, y: 0, r: r*1.02 }, ...rest.filter(c => Math.hypot(c.x - X, c.y) + c.r > r*1.02)].sort((a, b) => b.x - a.x);
+    t.circles = [{ x: X, y: 0, r }, ...rest.filter(c => Math.hypot(c.x - X, c.y) + c.r > r)].sort((a, b) => b.x - a.x);
+    t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
+    t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
+}
+// the Carrier collides on its walls only, so the hangar stays open: a keel row for the bow (it ends at the hangar's
+// back wall), a row along each boom (reaching into the bow to fill its corners) and three circles along the back wall
+if (BOATS.carrier)
+{
+    const t = BOATS.carrier, H = CARRIER.hangar, B = CARRIER.boom, y = (H.w + B)/2, r = (B - H.w)/2 + .03;
+    const booms = [];
+    for (let x = H.x0 + r; x < 1.7; x += .6) booms.push({ x, y, r }, { x, y: -y, r });
+    t.circles = [...coverCircles([CARRIER.bowPts]), ...booms, ...[0, .7, -.7].map(cy => ({ x: H.x1 + .35, y: cy, r: .35 }))].sort((a, b) => b.x - a.x);
     t.hitL = 2*Math.max(...t.circles.map(c => Math.abs(c.x) + c.r));
     t.hitW = 2*Math.max(...t.circles.map(c => Math.abs(c.y) + c.r));
 }
@@ -1062,6 +1107,23 @@ SHIP_UNDER.island = function(d, t, b, hull)
     for (const f of ARK.fins) d.poly(f, fin, true);
     d.poly(ARK.mount, P_SLATE, true);
     for (const p of ARK.bells) d.poly(p, P_DEEP);
+};
+
+// the Carrier's hangar floor (under the hull, so its walls overlap it) and engine bells. The floor shows the way in:
+// chevrons pointing in from the mouth, a dashed center line, and rows of lights along both walls chasing inward
+SHIP_UNDER.carrier = function(d, t, b)
+{
+    const H = CARRIER.hangar, cx = (H.x0 + H.x1)/2, len = H.x1 - H.x0;
+    for (const p of CARRIER.bells) d.poly(p, P_DEEP);
+    d.rect(cx, 0, len, 2*H.w, P_DEEP);
+    d.rect(cx, 0, len, 2*H.w*.62, raw(P_DEEP.lerp(P_INDIGO, .6)));
+    for (let x = H.x0 + .5; x < H.x1 - .9; x += .7) d.line(x, 0, x + .35, 0, .06, raw(P_CREAM.scale(1, .35)));
+    for (const x of [-4.3, -3.2, -2.1])
+        for (const sd of [1, -1]) d.line(x, sd*.55, x + .4, 0, .09, raw(P_MUSTARD.scale(1, .45)));
+    const lead = Math.floor(time*6) % 8;
+    for (let i = 0; i < 8; i++)
+        for (const sd of [1, -1])
+            d.circle(H.x0 + .35 + i*(len - .7)/7, sd*(H.w - .14), .12, i == lead ? P_MUSTARD : raw(P_MUSTARD.scale(1, .3)));
 };
 
 // the Battle Station's engine bells, under its boosters: big and light, so its rear reads even with the engines off
@@ -1228,6 +1290,25 @@ const SHIP_DECO =
         d.circle(X, 0, R*2, I.glass);
         glint(d, X + .1, R*.74, R*.95, R*.16);
     },
+    carrier(d, t, b)   // Carrier: a U-shaped hauler with a hangar you fly into
+    {
+        const H = CARRIER.hangar, B = CARRIER.boom, y = (H.w + B)/2, trim = P_CREAM;
+        // hazard stripes on the booms' ends, round the hangar mouth
+        for (const sd of [1, -1])
+        {
+            d.rect(-4.72, sd*y, .5, B - H.w - .12, P_MUSTARD);
+            for (const u of [-.2, .12]) d.line(-4.95, sd*(y + u*.9), -4.5, sd*(y + u*.9 + .25), .1, P_DEEP);
+            d.line(-4.2, sd*(B - .22), 1.2, sd*(B - .22), .1, trim);                      // a stripe down each boom
+            for (let i = 0; i < 7; i++) d.circle(-3.7 + i*.7, sd*y, .16, i % 3 == 1 ? P_MUSTARD : P_GLASS);
+        }
+        // the hangar's lit back wall
+        d.rect(H.x1 + .06, 0, .12, 2*H.w - .1, P_MUSTARD);
+        // the bow: a cream band, the bridge, a beacon at the nose
+        d.line(1.75, B - .15, 1.75, -B + .15, .22, trim);
+        d.ellipse(3.6, 0, 1.1, 1.3, P_GLASS, true);
+        glint(d, 3.75, .3, .35, .14);
+        d.circle(4.85, 0, .22, Math.sin(time*4 + (b?.id || 0)) > 0 ? P_MUSTARD : P_BRICK);
+    },
     continent(d, t, b)   // Battle Station: a planet-sized steel sphere, command spire at the bow, boosters at the stern
     {
         const { x: X, r } = BATTLE.sphere, I = BATTLE_INK, k = b?.k || t.k;
@@ -1241,7 +1322,7 @@ const SHIP_DECO =
             d.poly(o.nose, P_BRICK, true);
         }
         // the sphere in front of them: lit above, shaded below
-        d.circle(X, 0, r*2, P_DUSK, true);
+        d.poly(BATTLE.spherePts, P_DUSK, true);
         d.poly(sphereCap(2.3), I.light);
         d.poly(sphereCap(-2.3), I.dark);
         // its plating: latitudes are straight seen from the side, meridians are ellipses
@@ -1283,6 +1364,89 @@ const SHIP_DECO =
         glint(d, X - .5, r*.62, r*.7, r*.12);
     },
 };
+
+// The Battle Station from close by: its sphere more than SURFACE_LEN UI units long on screen, so a small ship is flying
+// by it (the escape pod leaving it in Nesting Dolls). Only the sphere's surface is drawn, traced exactly round over the
+// view, in coordinates measured from the view's corner (a canvas loses precision a million meters out), like the
+// battle station walls in Rest Stop: plating in octaves 10x apart, a cream rim with amber lights along its edge, and the
+// launch hatch. At this zoom the ship's other parts are thousands of kilometers away.
+const SURFACE_LEN = 2000;
+function drawBattleSurface(b)
+{
+    const { x: X, r: r0 } = BATTLE.sphere, k = b.k, R = r0*k, C = b.toWorld(X*k, 0), I = BATTLE_INK;
+    const v = VIEW_RECT, o = vec2(v.x0, v.y0), vw = v.x1 - v.x0, vh = v.y1 - v.y0, diag = Math.hypot(vw, vh);
+    const cx = (v.x0 + v.x1)/2, cy = (v.y0 + v.y1)/2, dist = Math.hypot(cx - C.x, cy - C.y);
+    if (dist - R > diag) return;                                        // the view is all outside the sphere
+    const th = Math.atan2(cy - C.y, cx - C.x), span = Math.min(PI, 1.5*diag/R);
+    const at = (a, rr) => vec2(C.x - o.x + Math.cos(a)*rr, C.y - o.y + Math.sin(a)*rr);
+    const arc = rr => Array.from({ length: 65 }, (_, i) => at(th - span + 2*span*i/64, rr));
+    // its ink where the view is: the lit cap at the top, the shaded one at the bottom (as drawn from afar)
+    const local = wrapAngle(th - b.angle), ly = Math.sin(local)*r0;
+    const base = ly > 2.3 ? I.light : ly < -2.3 ? I.dark : P_DUSK;
+    const uQ = R*local;                                                // arc length to the view, so the plates stay put
+    const rim = Math.max(.6, .12*WU), gap = Math.max(6, 1.5*WU), Q = at(th, R);
+    drawCanvas2D(o, vec2(1), 0, false, ctx =>
+    {
+        // canvas units are meters from the view's lower left corner, y up
+        const edge = arc(R), inner = [edge[64], edge[0]].map(p => p.subtract(vec2(Math.cos(th), Math.sin(th)).scale(2*diag)));
+        ctx.beginPath();
+        [...edge, ...inner].forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+        ctx.closePath();
+        ctx.fillStyle = base.toString();
+        ctx.fill();
+        ctx.save();
+        ctx.clip();
+        // plating, in the surface's own frame at the view: u along it, w out of it
+        ctx.translate(Q.x, Q.y);
+        ctx.rotate(th - PI/2);
+        for (let s = .1; s < 1e7; s *= 10)
+        {
+            const g = s / WU;
+            if (g < .6 || g > 60) continue;
+            ctx.globalAlpha = clamp((g - .6)/1.4, 0, 1) * clamp((60 - g)/30, 0, 1);
+            const i0 = Math.floor((uQ - diag)/s), i1 = Math.ceil((uQ + diag)/s), j1 = Math.ceil(2*diag/s);
+            for (let i = i0; i < i1; i++)
+                for (let j = 0; j < j1; j++)
+                {
+                    const h = craterHash(i, j, s);
+                    if (h > .34) continue;
+                    ctx.fillStyle = (h < .17 ? I.light : I.dark).toString();
+                    const half = h % .17 < .06;
+                    ctx.fillRect(i*s - uQ + s*.06, -(j + 1)*s + s*.06, half ? s*.42 : s*.88, s*.88);
+                }
+            ctx.strokeStyle = I.seam.toString();
+            ctx.lineWidth = Math.max(.02*s, .04*WU);
+            ctx.beginPath();
+            for (let i = i0; i <= i1; i++) { ctx.moveTo(i*s - uQ, 0); ctx.lineTo(i*s - uQ, -2*diag); }
+            for (let j = 0; j <= j1; j++) { ctx.moveTo(-diag, -j*s); ctx.lineTo(diag, -j*s); }
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        // the rim along the edge: cream, a dark line inside it, amber lights along it
+        const stroke = (rr, w, col) => { ctx.beginPath(); arc(rr).forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); };
+        stroke(R - rim*1.175, rim*.35, I.dark.toString());
+        stroke(R - rim/2, rim, P_CREAM.toString());
+        for (let n = Math.floor((uQ - diag)/gap), n1 = Math.ceil((uQ + diag)/gap); n <= n1; n++)
+        {
+            const p = at(b.angle + n*gap/R, R - rim/2), on = Math.sin(time*2 + n*gap*.37) > -.6;
+            ctx.fillStyle = (n % 5 == 2 ? P_BRICK : on ? P_MUSTARD : P_ORANGE.lerp(P_DEEP, .5)).toString();
+            ctx.beginPath(); ctx.arc(p.x, p.y, rim*.32, 0, PI*2); ctx.fill();
+        }
+        // the launch hatch: a dark bay 12 m wide in a cream frame, lit inside
+        const ah = b.angle + BATTLE.hatch, Hp = at(ah, R);
+        if (Hp.x > -40 && Hp.x < vw + 40 && Hp.y > -40 && Hp.y < vh + 40)
+        {
+            ctx.save();
+            ctx.translate(Hp.x, Hp.y);
+            ctx.rotate(ah - PI/2);
+            ctx.fillStyle = P_CREAM.toString(); ctx.fillRect(-7, -6.5, 14, 6.5);
+            ctx.fillStyle = P_DEEP.toString(); ctx.fillRect(-6, -5.6, 12, 5.6);
+            ctx.fillStyle = P_MUSTARD.toString(); ctx.fillRect(-5.4, -5, 10.8, .5);
+            ctx.restore();
+        }
+    });
+}
 
 // ---------------------------------------------------------------------------
 // the world's small things

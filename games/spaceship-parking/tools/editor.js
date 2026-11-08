@@ -106,7 +106,7 @@ window.pmbEditor = (() =>
             b.pos = slips[n].pos.copy(); b.angle = slips[n].a; b.updateWorld();
             // parked on a station it is clamped to it, on a pad it stands on it (holdShip, src/space.js); the current
             // slip is still this boat's here
-            if (slips[n].on || level.gravity)
+            if (slips[n].on || slips[n].hold || level.gravity)
             {
                 if (level.gravity) { b.angle = PI/2; groundStart(b); }
                 holdShip(b);

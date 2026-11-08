@@ -12,6 +12,9 @@
 //   for good instead of dropping an anchor. A falling ship has no keel: its drag is the same in every direction (air,
 //   not water), so it falls straight down whichever way it points.
 // - Landing pads: docks with `pad: true`, drawn as a landing pad.
+// - Nesting (`in: n` on the level's station, a moored boat or a chain boat's start): that part of the level stays out
+//   of it until chain boat n has parked, then appears where boat n really parked (see nestLoad). With slips inside a
+//   moored ship (`on: 'moored'`, a carrier's hangar) a level can nest ships one inside the other.
 
 const STATION_SPIN_DEFAULT = 2*PI/60;     // rad/s: one turn a minute
 const RCS_TURN = 2.2;                     // gravity levels: side thruster spin, times the ship's turn rate (toy units)
@@ -109,6 +112,7 @@ function stationsDrive(dt)
 {
     for (const b of stations)
     {
+        if (b.hidden) continue;
         b.t += dt;
         const p = stationPos(b, b.t);
         b.vel = p.subtract(b.pos).scale(1/dt);
@@ -137,6 +141,15 @@ function stationsFollow()
 // (stationPorts), and the slip lies across it, broadside against it like the bar of a T
 function attachSlip(slip, s)
 {
+    // inside a moored ship (on: 'moored', i: its place in the level's moored list, a carrier's hangar): x, y, a are given
+    // in the level like any slip's, and kept in the ship's own coordinates from then on, so the slip moves with it
+    if (s.on == 'moored')
+    {
+        const host = slip.on = mooredBoats[s.i || 0], d = slip.pos.subtract(host.pos), c = Math.cos(host.angle), n = Math.sin(host.angle);
+        slip.local = { x: d.x*c + d.y*n, y: -d.x*n + d.y*c, a: s.a - host.angle };
+        placeSlip(slip);
+        return slip;
+    }
     const st = slip.on = stations[0];
     if (s.port !== undefined)
     {
@@ -163,7 +176,7 @@ function mediumAt(b)
     if (b != player || !slip?.on || b.held) return null;
     const c = Math.cos(slip.a), s = Math.sin(slip.a), d = b.pos.subtract(slip.pos), grow = BEAM_GROW*boatSize(b);
     if (Math.abs(d.x*c + d.y*s) > slip.len/2 + grow || Math.abs(-d.x*s + d.y*c) > slip.wid/2 + grow) return null;
-    const st = slip.on, v = st.pointVel(b.pos), w = st.angVel, r = b.pos.subtract(st.pos), ac = stationAccel(st);
+    const st = slip.on, v = st.pointVel(b.pos), w = st.angVel, r = b.pos.subtract(st.pos), ac = st.def ? stationAccel(st) : vec2();
     return { x: v.x, y: v.y, a: w, ax: ac.x - w*w*r.x, ay: ac.y - w*w*r.y };
 }
 
@@ -237,8 +250,78 @@ function releaseRider(b)
     b.held = undefined;
 }
 
-// parking here holds the ship in place instead of dropping an anchor
-function holdsInstead() { return !!(slip?.on || level?.gravity); }
+// parking here holds the ship in place instead of dropping an anchor (a slip with hold: true holds too: part of the level
+// is nested in that ship, see nestLoad)
+function holdsInstead() { return !!(slip?.on || slip?.hold || level?.gravity); }
+
+// ---------------------------------------------------------------------------
+// nesting: the level's station, a moored boat or a chain boat's start with in: n (boats numbered from 1) is given in the
+// level's coordinates as if boat n sat exactly in its slip. It stays out of the level (not drawn, nothing bumps it, the
+// route guide ignores it) until boat n has parked; then it appears moved and turned with boat n, by as much as boat n
+// parked off its slip (either end in, so possibly turned half round). A chain boat riding a station that waits in a boat
+// waits with it. Boat n's slip should hold it (hold: true) so it stays put with all that beside it. In the level editor
+// everything shows where the level puts it.
+let nested = [];
+
+function nestLoad(L)
+{
+    nested = [];
+    if (window.pmbEditor?.active) return;
+    const hide = (b, n, place) => { bodies.splice(bodies.indexOf(b), 1); nested.push({ b, n, place }); };
+    const st = stations[0];
+    if (st && L.station?.in) { st.hidden = true; hide(st, L.station.in, T => moveStation(st, T)); }
+    mooredBoats.forEach((b, i) => { const n = L.moored[i].in; if (n) hide(b, n, T => moveBody(b, T)); });
+    fleet.forEach((b, i) =>
+    {
+        const s = L.boats[i].start, n = s.in || (s.on && L.station?.in);
+        if (n) hide(b, n, s.on ? () => followHeld(b) : T => moveBody(b, T));
+    });
+}
+
+// boat n (from 1) has parked: what waits in it appears (the station first, so the ships riding it can follow it)
+function nestPlace(n)
+{
+    const now = nested.filter(e => e.n == n);
+    if (!now.length) return;
+    const host = fleet[n - 1], s = slips[n - 1], da = host.angle - s.a, c = Math.cos(da), sn = Math.sin(da);
+    const T = { da, at: (x, y) => { const dx = x - s.pos.x, dy = y - s.pos.y; return vec2(host.pos.x + dx*c - dy*sn, host.pos.y + dx*sn + dy*c); } };
+    for (const e of now)
+    {
+        e.place(T);
+        e.b.hidden = false;
+        bodies.push(e.b);
+    }
+    nested = nested.filter(e => e.n != n);
+}
+
+function moveBody(b, T)
+{
+    b.pos = T.at(b.pos.x, b.pos.y);
+    b.angle += T.da;
+    b.updateWorld();
+}
+
+function moveStation(st, T)
+{
+    const d = st.def, c = T.at(d.x, d.y);
+    st.def = { ...d, x: c.x, y: c.y, a: (d.a || 0) + T.da, drift: d.drift && { ...d.drift, phase: (d.drift.phase || 0) + T.da } };
+    st.t = 0;
+    st.pos = stationPos(st, 0);
+    st.angle = st.def.a;
+    st.updateWorld();
+}
+
+// a ship clamped to something: put it there now (stationsFollow keeps it there)
+function followHeld(b)
+{
+    const h = b.held;
+    if (!h?.on) return;
+    b.pos = h.on.toWorld(h.x, h.y);
+    b.angle = h.on.angle + h.a;
+    b.vel = h.on.pointVel(b.pos);
+    b.angVel = h.on.angVel;
+    b.updateWorld();
+}
 
 // ---------------------------------------------------------------------------
 // gravity
@@ -349,7 +432,7 @@ function stationPainter(b, ox = 0, oy = 0) { return painter({ pos: b.pos, angle:
 
 function drawStations()
 {
-    for (const b of stations) if (inView(b.pos, b.radius)) drawStation(b);
+    for (const b of stations) if (!b.hidden && inView(b.pos, b.radius)) drawStation(b);
 }
 
 function drawStation(b)
