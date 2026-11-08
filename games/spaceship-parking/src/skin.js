@@ -455,7 +455,7 @@ function puffExhaust(b, dt)
             const fire = retroFire(b, m), out = r.s*1.6;
             if (!fire) continue;
             puffTimer = .07;
-            wakes.push({ pos: b.toWorld(r.x + RETRO_DIR.x*out, m*(r.y + RETRO_DIR.y*out)), t: 0, size: r.s*(.7 + .7*fire)*b.k });
+            wakes.push({ pos: b.toWorld((r.x + RETRO_DIR.x*out)*b.k, m*(r.y + RETRO_DIR.y*out)*b.k), t: 0, size: r.s*(.7 + .7*fire)*b.k });
         }
     if (b.throttle >= 0 && vf > .7*b.vs)
     {

@@ -1,7 +1,10 @@
+## 2026-11-08 — Retro smoke puffs at the nose on big ships
+- The retro thrusters' smoke puffs (`puffExhaust` in `src/skin.js`) now scale their position by the ship's size `k`, so they come out at the nose ports on every ship. Before, on a big ship they came out near its middle.
+- Checked in Chrome, reversing: the puffs sit at 0.93 to 1.16 of the half length toward the nose on the Escape Pod, 0.85 to 0.87 on the Space Liner and 0.81 to 0.87 on the Classic Frigate. No errors.
+
 ## 2026-11-08 — Dust kicked up by the engines
 - On a planet (gravity levels), each firing nozzle of the ship you drive (main engines and retro thrusters) is traced along its flame to the ground or a pad top, and kicks up dust where it hits (`kickDust`, `drawDust` in `src/skin.js`). The amount grows with throttle, with closeness (none from 1.5 ship lengths out, `DUST_REACH`) and with how straight down the flame points. The dust flies along the ground away from the hit, more to the side the flame leans, rises a little and fades in about 1.6 s. It's tinted like the planet's rock and drawn in front of the ships.
 - Checked in Chrome on the Asteroid Miner, engine on full, 1 s: 78 puffs with its tail just off the ground, 71 at 0.3 ship lengths up, 49 at 0.6, 19 at 1.0, none at 1.5. A flame leaning 45 degrees sends 78% of the dust to its side; a sideways flame raises none. Looks right on the moon (grey) and on Heavy Lift (ochre, the Frigate). No errors.
-- Seen, not changed: the retro smoke puffs in `puffExhaust` leave out the ship's scale `k`, so on big ships they come out near the middle of the ship instead of at the nose.
 
 ## 2026-11-08 — Pivot stand-up in every landing level
 - The pivot from the Moon Hop trial is now how every gravity level works (Touchdown, Moon Hop, Pad Towers, Heavy Lift): turn a ship lying on the ground toward nose up and it swings up round the end touching the ground, stops upright, and W ends the swing. `?ground=`, the boost option and `groundTrial` are gone.
