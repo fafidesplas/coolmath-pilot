@@ -941,6 +941,7 @@ function stepWorld()
         for (const b of bodies) if (b.kind == 'traffic') driveTraffic(b, dt);
         stationsDrive(dt);
         applyGravity(dt);
+        groundTurn(dt);         // TRIAL: getting a ship on its side back up (src/space.js)
         for (const b of bodies)
         {
             if (b.asleep) { b.vel.set(0, 0); b.angVel = b.stunT = 0; continue; }

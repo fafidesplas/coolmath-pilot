@@ -1,3 +1,10 @@
+## 2026-11-08 — Trial: getting a ship on its side back up (Moon Hop only)
+- Moon Hop has two ways to stand up a ship lying on the ground, picked in the URL: `?ground=boost` or `?ground=pivot` (`groundTurn` in `src/space.js`, `groundTrial: true` on the level). With no `?ground`, Moon Hop plays as before. Both apply only to the ship you drive, on the ground, tilted more than 20 degrees from upright, turning toward nose up.
+- boost: the side thrusters spin it 3x as hard as it takes to beat gravity round the end touching the ground (`GROUND_BOOST`).
+- pivot: the ship swings round the end touching the ground at its in-air turn rate, slowing over the last 20 degrees. It stops upright and stays there while the key is held. The pivot is the outermost of its lowest points, so a fin that reaches the ground takes over as the pivot.
+- Checked in Chrome on the Asteroid Miner lying on its side, holding A (nose right) or D (nose left). Before (no trial): it stays within a few degrees of flat. Boost: upright in about 1.5 s, but it swings up hard and lands on its fins ($2,375 damage); at 1.6x it stalled near 60 degrees after 5 s with no damage. Pivot: upright in about 3.5 s, stops there, no damage.
+- To drop the trial: remove `groundTrial` from Moon Hop, the `groundTurn` call in `src/main.js` and the TRIAL block in `src/space.js`.
+
 ## 2026-11-08 — Flat ground in the landing levels
 - Touchdown, Moon Hop, Pad Towers and Heavy Lift land on flat ground (a `land` rect with its top at y = 0) instead of a round planet. On the slope, a winged ship (the Stealth Cruiser) could lie stuck on its side, propped up by a wing. `landing()` in `levels/levels.js` no longer takes a planet radius.
 - Checked in Chrome: the four levels load with one flat ground and no round planet, the pads sit on it (the towers still stand 30 m and 55 m tall), and there are no errors.

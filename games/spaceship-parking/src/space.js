@@ -250,6 +250,80 @@ function thrusterSpin(b, rudder, throttle)
     return rudder * (RCS_TURN*b.type.turn + b.type.wash*Math.abs(throttle)) / (b.slowdown*b.slowdown);
 }
 
+// TRIAL (level `groundTrial`, Moon Hop only): getting a ship that lies on its side back up. Pick one in the URL:
+// ?ground=boost  while it touches the ground, the side thrusters are strong enough to lift one end against gravity
+//                (still a spin about the center; the contact with the ground turns it into lifting the far end)
+// ?ground=pivot  while it touches the ground, turning swings it round the end touching the ground, at the rate it
+//                turns in the air
+// No ?ground: as in the other levels. Either way it only acts on the ship you drive, tilted more than GROUND_TILT from
+// upright, when the turn lifts it (toward upright). To drop the trial: remove `groundTrial` and this block.
+const GROUND_TRIAL = new URLSearchParams(location.search).get('ground');
+const GROUND_BOOST = 3;           // boost: times the spin that just balances gravity round the end touching the ground
+const GROUND_TILT = .35;          // rad (20 degrees) from upright: a turn that starts closer than that works as before
+const GROUND_EPS = .02;           // a circle this close to the top of the ground or a pad (share of the ship's radius) touches it
+const GROUND_LOW = .03;           // pivot: bottom points this close to the ship's lowest one (share of its radius) can be the
+                                  // pivot, so a fin that swings down to the ground takes over as the pivot
+
+// the bottom points of the ship's circles within `share` of its radius of the top of the ground or a pad
+function groundContacts(b, share)
+{
+    const pts = [], eps = share*b.radius;
+    for (let i = 0; i < b.circles.length; i++)
+    {
+        const c = b.world[i], r = b.circles[i].r;
+        for (const w of rects)
+            if ((w.land || w.pad) && c.x >= w.x0 && c.x <= w.x1 && c.y - r <= w.y1 + eps && c.y > w.y1 - r)
+                pts.push(vec2(c.x, c.y - r));
+    }
+    return pts;
+}
+
+// after gravity, before the ships move
+function groundTurn(dt)
+{
+    const b = player;
+    if (!GROUND_TRIAL || !level?.groundTrial || !level.gravity || !b || b.held || !hasControl()) return;
+    const s = Math.sign(b.rudder), pv = b.pivoting;
+    if (!s || (pv && pv.s != s)) { b.pivoting = null; if (!s) return; }
+    // pivot: stood up, it stays up while the key is still held (let go and turn again to tilt it)
+    if (b.pivoting?.done) { b.angVel = 0; return; }
+    if (!b.pivoting)
+    {
+        // start only tilted, on the ground, turning toward nose up (ships stand on their fins) and lifting the ship:
+        // left (counter-clockwise) round its leftmost contact, right round its rightmost
+        const up = PI/2, toGo = wrapAngle(up - b.angle) * s;
+        if (toGo < GROUND_TILT || !groundContacts(b, GROUND_EPS).length) return;
+        const P = groundPivot(b, s);
+        if (!P || (b.pos.x - P.x)*s <= 0) return;
+        if (GROUND_TRIAL == 'boost')
+        {
+            const need = gravityPull(b).length() * Math.abs(b.pos.x - P.x) * b.invInertia / b.invMass;
+            const have = Math.abs(thrusterSpin(b, b.rudder, b.throttle)), want = GROUND_BOOST * need * Math.abs(b.rudder);
+            if (want > have) b.angVel += s * (want - have) * dt;
+            return;
+        }
+        if (GROUND_TRIAL != 'pivot') return;
+        b.pivoting = { s, up };
+    }
+    // pivot: swing round the contact, slowing over the last GROUND_TILT so it sets down on its end instead of slapping
+    // down past upright; once started it carries on up (past the balance point too) while the key is held
+    const left = wrapAngle(b.pivoting.up - b.angle) * s;
+    if (left < .02) { b.angVel = 0; b.vel.set(0, 0); b.pivoting.done = true; return; }
+    const P = groundPivot(b, s);
+    if (!P) { b.pivoting = null; return; }
+    const w = thrusterSpin(b, b.rudder, 0) / b.dragA * clamp(left/GROUND_TILT, .25, 1);
+    b.angVel = w;
+    b.vel.set(-w*(b.pos.y - P.y), w*(b.pos.x - P.x));
+}
+
+// the point a turn in direction s swings the ship round: of its lowest bottom points, the leftmost (s > 0) or rightmost
+function groundPivot(b, s)
+{
+    if (!groundContacts(b, GROUND_EPS*5).length) return null;
+    const pts = b.world.map((c, i) => vec2(c.x, c.y - b.circles[i].r)), low = Math.min(...pts.map(p => p.y));
+    return pts.filter(p => p.y < low + GROUND_LOW*b.radius).reduce((a, p) => (p.x - a.x)*s < 0 ? p : a);
+}
+
 // nose thrusters (levels without gravity): they turn a ship even when it is stopped. Moving, it turns as fast as the
 // harbor rudder would; stopped (or slow), as fast as the gravity side thrusters. Left always turns the nose left,
 // reversing too (the harbor rudder flipped like a car's).
