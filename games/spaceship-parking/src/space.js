@@ -452,12 +452,15 @@ function spinTurn(b, rudder, throttle, vf)
 // camera pulls out to the ship, and the ship flies in nose first, speeding up and shrinking into it with whatever is
 // parked in it; the portal closes and the level is complete (updateJudge in main.js waits for it).
 const PORTAL_OPEN = 1.2, PORTAL_GO = 1.8, PORTAL_FLY = 3.6, PORTAL_CLOSE = .8, PORTAL_END = 1;     // s
+// motes pulled into it: this many at once while it is open, a share of them lilac (the rest cream), a trail point every
+// PORTAL_TRAIL_EVERY s (like the ships' trails), PORTAL_TRAIL_N points long
+const PORTAL_MOTES = 48, PORTAL_LILAC = .4, PORTAL_TRAIL_EVERY = .035, PORTAL_TRAIL_N = 14;
 let portal = null;
 
 function portalStart()
 {
     const P = level.portal, b = mooredBoats[P.i || 0], L = boatSize(b), f = b.forward();
-    portal = { b, t: 0, from: b.pos.copy(), dir: f, dist: P.ahead*L, pos: b.pos.add(f.scale(P.ahead*L)), r: P.r*L, open: 0, scale: 1 };
+    portal = { b, t: 0, from: b.pos.copy(), dir: f, dist: P.ahead*L, pos: b.pos.add(f.scale(P.ahead*L)), r: P.r*L, open: 0, scale: 1, motes: [] };
     sfx('chain', portal.pos, .8, .4);
 }
 
@@ -468,6 +471,7 @@ function portalDone() { return portal?.done; }
 function portalDrive(dt)
 {
     const p = portal;
+    if (p) moveMotes(p, dt);
     if (!p || p.gone) { if (p) p.t += dt, p.open = clamp(1 - (p.t - p.goneAt)/PORTAL_CLOSE, 0, 1), p.done = p.t > p.goneAt + PORTAL_CLOSE + PORTAL_END; return; }
     p.t += dt;
     p.open = Math.min(1, p.t/PORTAL_OPEN);
@@ -491,6 +495,30 @@ function portalDrive(dt)
     }
 }
 
+// the motes, in units of the portal's radius, polar round its middle. They start up to 2.4 radii out and spiral in, the
+// turn and the pull both faster closer in, until they reach the hole (radius .15). New ones keep coming while it is open
+// (spread over the whole way in while it opens, so it doesn't start with one ring of them far out); none once it closes.
+function moveMotes(p, dt)
+{
+    const want = p.gone ? 0 : Math.round(PORTAL_MOTES*p.open), opening = p.t < PORTAL_OPEN;
+    while (p.motes.length < want)
+        p.motes.push({ r: opening ? rand(.3, 2.4) : rand(1.25, 2.4), a: rand(PI*2), t: 0, w: rand(.028, .048), lilac: rand() < PORTAL_LILAC, trail: [], next: 0 });
+    for (const m of p.motes)
+    {
+        const k = 1/m.r;
+        m.a += .9*Math.pow(k, 1.3)*dt;
+        m.r -= .33*Math.pow(k, .9)*dt;
+        m.t += dt;
+        if ((m.next -= dt) <= 0)
+        {
+            m.next = PORTAL_TRAIL_EVERY;
+            m.trail.unshift({ r: m.r, a: m.a });
+            if (m.trail.length > PORTAL_TRAIL_N) m.trail.pop();
+        }
+    }
+    p.motes = p.motes.filter(m => m.r > .15);
+}
+
 // the camera during it: the ship and the portal, at the ship's own zoom
 function portalCamera()
 {
@@ -501,25 +529,49 @@ function portalCamera()
     return { pos: vec2((box.x0 + box.x1)/2, (box.y0 + box.y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
 }
 
-// a swirl in dark blues and purples with yellow: a lilac rim, rings darkening inward from dusky purple through slate
-// blue and indigo to a near-black middle, and mustard arms turning
+// a whirlpool in dark blues and purples: a lilac rim, rings darkening inward from dusky purple through slate blue and
+// indigo to a near-black middle, and cream and lilac motes spiraling in, each with a faint trail like the ships' side
+// trails (widening and fading toward its tail) and a brighter head, fading in as they come and out into the hole
 function drawPortal()
 {
     const p = portal;
     if (!p || p.open <= 0) return;
     const ease = 1 - (1 - p.open)**3, R = p.r*ease, c = p.pos;
-    if (!inView(c, R)) return;
+    if (!inView(c, R*2.6)) return;
     drawCircle(c, R*2.3, P_LILAC.scale(1, .1));
     drawCircle(c, R*2.08, P_LILAC);
     [P_DUSK.lerp(P_INDIGO, .35), P_SLATE.lerp(P_INDIGO, .3), P_INDIGO, P_DEEP, P_DEEP.lerp(P_VOID, .5)].forEach((col, i) => drawCircle(c, R*2*(.94 - i*.17), col));
-    const segs = [];
-    for (let arm = 0; arm < 5; arm++)
-        for (let i = 0; i < 14; i++)
+    drawCanvas2D(c, vec2(1), 0, false, ctx =>
+    {
+        // canvas units are meters from the portal's middle, y up
+        const at = q => [Math.cos(q.a)*q.r*R, Math.sin(q.a)*q.r*R];
+        for (const m of p.motes)
         {
-            const a0 = time*1.6 + arm*PI*2/5 + i*.16, a1 = a0 + .16, r0 = R*(.92 - i*.06), r1 = R*(.92 - (i + 1)*.06);
-            segs.push([vec2(Math.cos(a0)*r0, Math.sin(a0)*r0), vec2(Math.cos(a1)*r1, Math.sin(a1)*r1)]);
+            const pts = [m, ...m.trail];
+            if (pts.length < 2) continue;
+            const fade = Math.min(1, m.t/.4) * Math.min(1, (m.r - .15)/.3);
+            ctx.fillStyle = (m.lilac ? P_LILAC : P_CREAM).toString();
+            let prev;
+            pts.forEach((q, i) =>
+            {
+                const k = i/(pts.length - 1), [x, y] = at(q), [ax, ay] = at(pts[Math.max(i - 1, 0)]), [bx, by] = at(pts[Math.min(i + 1, pts.length - 1)]);
+                let nx = by - ay, ny = ax - bx;
+                const nl = Math.hypot(nx, ny) || 1, hw = R*m.w*Math.sqrt(q.r)*(1 - .6*k)/2;
+                nx /= nl; ny /= nl;
+                const e = { l: [x + nx*hw, y + ny*hw], r: [x - nx*hw, y - ny*hw], a: .42*(1 - k)*fade };
+                if (prev)
+                {
+                    ctx.globalAlpha = (prev.a + e.a)/2;
+                    ctx.beginPath(); ctx.moveTo(...prev.l); ctx.lineTo(...e.l); ctx.lineTo(...e.r); ctx.lineTo(...prev.r); ctx.closePath(); ctx.fill();
+                }
+                prev = e;
+            });
+            const [hx, hy] = at(m);
+            ctx.globalAlpha = .7*fade;
+            ctx.beginPath(); ctx.arc(hx, hy, R*m.w*Math.sqrt(m.r)*.45, 0, PI*2); ctx.fill();
         }
-    posterSegs(c, segs, P_MUSTARD.scale(1, .8), R*.05);
+        ctx.globalAlpha = 1;
+    });
     drawCircle(c, R*.3, P_VOID);
 }
 

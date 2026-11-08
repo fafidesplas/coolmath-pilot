@@ -1,3 +1,8 @@
+## 2026-11-08 — Nesting Dolls: motes pulled into the portal
+- The portal's yellow arms are gone; 48 motes spiral into it instead (`moveMotes`, `PORTAL_MOTES` in `src/space.js`), 4 in 10 lilac and the rest cream. They start up to 2.4 portal radii out, turn and fall faster closer in, and fade into the hole. Each one has a faint trail drawn like the ships' side trails (a ribbon that thins and fades toward its tail) and a brighter head. While the portal opens they are spread over the whole way in; none come once it closes, and those left shrink away with it.
+- Tried first in a preview page (amount, color, arms on or off); these are the settings picked there: some motes, cream and lilac, no arms.
+- Checked in Chrome: 48 motes while open, the right mix, spiraling the same way as in the preview; the ending still completes on its own (8.7 s after the yacht parks), frames 7 ms median. Editor self-test: 8 levels, 0 problems. The export passes. No console errors.
+
 ## 2026-11-08 — Nesting Dolls: a darker portal
 - The portal was too colorful: it is now dark blues and purples with yellow. A mustard rim and faint glow, rings darkening inward from dusky purple through slate blue and indigo to a near-black middle, the same mustard arms. Teal, lilac and cream are gone from it.
 - Then the rim and its glow turned lilac too, so the yellow is only in the arms.
