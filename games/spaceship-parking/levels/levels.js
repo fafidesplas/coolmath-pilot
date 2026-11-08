@@ -354,7 +354,7 @@ const SCALE_LEVELS =
         name: 'Nesting Dolls', land: [], docks: [],
         walls: [{ x0: -2.5e7, y0: -2.5e7, x1: -2.4e7, y1: 2.5e7 }, { x0: 2.4e7, y0: -2.5e7, x1: 2.5e7, y1: 2.5e7 }, { x0: -2.5e7, y0: -2.5e7, x1: 2.5e7, y1: -2.4e7 }, { x0: -2.5e7, y0: 2.4e7, x1: 2.5e7, y1: 2.5e7 }],
         lands: [{ x: 0, y: 2.6e6, k: 1e5, circles: [[0, 0, 8]], detail: 160 }, { x: 0, y: -2.6e6, k: 1e5, circles: [[0, 0, 8]], detail: 160 }],
-        station: { x: 240010, y: 990080, a: .4, spin: 2*PI/60, drift: { r: 5, period: 140, phase: 0 }, in: 1 },
+        station: { x: 240010, y: 990080, a: .4, spin: 2*PI/180, drift: { r: 5, period: 140, phase: 0 }, in: 1 },
         moored: [{ boat: 'carrier', x: 240180, y: 990090, a: 0, fixed: true, in: 1 }],
         boats:
         [

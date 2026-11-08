@@ -1,3 +1,7 @@
+## 2026-11-08 — Nesting Dolls: the station turns slower
+- The station the Escape Pod docks at turned once a minute, too fast for the pod: it now turns once every three minutes (`spin: 2*PI/180`), so its front port moves at about 1.1 m/s with the drift (2.9 m/s before) and the wings sweep by a third as fast. The Star Yacht also leaves it at a third of the speed it had.
+- Checked in Chrome: after the Battle Station parks, the station turns once every 180 s and the front port moves at 1.1 m/s.
+
 ## 2026-11-08 — Nesting Dolls: ships parked inside ships
 - New last level, Nesting Dolls: park the 3000 km Battle Station between two moons; the camera dives to an Escape Pod coming out of a hatch on its sphere, which docks at a small spinning station just above its surface; then the Star Yacht docked at that station flies off and parks inside a Carrier's hangar.
 - Nesting (`src/space.js`): a station, moored boat or chain boat start with `in: n` stays out of the level until boat n parks, then appears where boat n really parked (moved and turned with it, so it works off-center and backwards). Slips with `hold: true` hold the ship once parked.
