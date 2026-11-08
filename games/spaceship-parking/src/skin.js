@@ -169,7 +169,7 @@ const SHIP_NAMES =
 {
     jetski:'Rocket Scooter', dinghy:'Escape Pod', swan:'Flying Saucer', speedboat:'Zoomer', minisub:'Stealth Pod',
     sailboat:'Solar Sailer', trawler:'Asteroid Miner', yacht:'Star Yacht', sub:'Stealth Cruiser', cruise:'Space Liner',
-    container:'Classic Frigate', island:'Asteroid', continent:'The Moon',
+    container:'Classic Frigate', island:'Ark', continent:'The Moon',
 };
 const SHIP_COLORS =
 {
@@ -389,6 +389,7 @@ const JETS =
     minisub:[[-1.7, 0, .34], [-1.62, .72, .16], [-1.62, -.72, .16]], sailboat:[[-2.32, 0, .26]], trawler:[[-1.46, .1, .18], [-1.46, -.1, .18]],
     yacht:[[-3.82, 0, .48], [-4.06, 1.15, .18], [-4.06, -1.15, .18]], sub:[[-3.4, 0, .3]],
     cruise:[[-4.9, .28, .2], [-4.9, 0, .2], [-4.9, -.28, .2]], container:[[-5.05, .38, .34], [-5.05, 0, .34], [-5.05, -.38, .34]],
+    island:[[-5.15, .72, .42], [-5.15, 0, .5], [-5.15, -.72, .42]],
 };
 
 function shipThrottle(b)
@@ -560,7 +561,7 @@ drawBoat = function(b)
         drawCircle(b.pos, Math.max(len*.6, .16)*WU, poster(b.color));
         return;
     }
-    const d = painter(b), hull = poster(b.color);
+    const d = painter(b), hull = shipHull(t, b);
     if (len >= .8)
     {
         drawJets(b, d);
@@ -646,7 +647,8 @@ const bell = (x0, x1, r0, r1, dy=0) => [[x0, dy + r0], [x1, dy + r1], [x1, dy - 
 // fins in brick (teal on a brick or orange ship), trim in cream (brick on a cream ship), so moored colors still work
 const finOf = (hull, pref=P_BRICK) => hull == pref || (hull == P_ORANGE && pref == P_BRICK) ? (pref == P_TEAL ? P_BRICK : P_TEAL) : pref;
 const trimOf = hull => hull == P_CREAM || hull == P_SAND ? P_BRICK : P_CREAM;
-const shipHull = (t, b) => poster(b ? b.color : t.color);
+// a type with ownColor keeps its own color wherever it is (the Ark stays cream, so its dome stands out)
+const shipHull = (t, b) => poster(b && !t.ownColor ? b.color : t.color);
 
 // the shapes, built once (toy units, like BOAT_DECO)
 const RK =
@@ -740,6 +742,50 @@ for (const key in RK)
 // its old boat hull; here they are rebuilt from the ship's poster outline: body, fins, boosters, wings, sail, drill.
 // Thin details (canards, engine bells, flames) stay decoration. Slips grow to fit the new outline (hitL, hitW: see makeSlip).
 
+// the Ark: a long hull with a round collar midships carrying the glass dome, swept fins and three engines at the stern.
+// Its outline (hullPts) is the hull and the collar as one shape, traced round from the middle.
+const ARK =
+{
+    body: rocketPts(-4.6, 4.9, 1.3, .3, .1, .82),
+    dome: { x: .35, r: 2.05, collar: 2.3 },
+    fins: sides([[-2.5, 1.2], [-3.7, 2.25], [-4.55, 2.3], [-4.3, 1.05]]),
+    mount: [[-4.95, 1.15], [-4.4, 1.15], [-4.4, -1.15], [-4.95, -1.15]].map(([x, y]) => vec2(x, y)),
+    bells: [.72, 0, -.72].map(y => bell(-4.95, -5.2, y ? .26 : .3, y ? .38 : .44, y)),
+};
+ARK.collarPts = ringPts(ARK.dome.collar).map(p => p.add(vec2(ARK.dome.x, 0)));
+// the outline of shapes that together are star-shaped round the origin: along each ray, the farthest point inside one
+function unionOutline(shapes, n = 96)
+{
+    const inside = (x, y) => shapes.some(s => inPoly(s, x, y));
+    return Array.from({ length: n }, (_, i) =>
+    {
+        const a = i/n*PI*2, c = Math.cos(a), s = Math.sin(a);
+        let lo = 0, hi = 8;
+        for (let r = 8; r > 0; r -= .02) if (inside(r*c, r*s)) { lo = r; hi = r + .02; break; }
+        for (let k = 0; k < 12; k++) { const m = (lo + hi)/2; inside(m*c, m*s) ? lo = m : hi = m; }
+        return vec2(lo*c, lo*s);
+    });
+}
+if (BOATS.island)
+{
+    const t = BOATS.island;
+    t.hullPts = unionOutline([ARK.body, ARK.collarPts]);
+    t.deckPts = null;
+}
+
+// the Ark's biosphere, in toy units from the dome's middle (y = port)
+const ARK_INK =
+{
+    seam: raw(P_DEEP.scale(1, .3)), land: P_TEAL, meadow: raw(P_TEAL.lerp(P_GLASS, .45)), forest: raw(P_TEAL.lerp(P_DEEP, .4)),
+    crown: raw(P_TEAL.lerp(P_DEEP, .15)), field: P_MUSTARD, field2: raw(P_MUSTARD.lerp(P_SAND, .55)), water: P_SLATE, shore: P_GLASS,
+    cloud: raw(P_CREAM.scale(1, .6)), glass: raw(P_GLASS.scale(1, .16)), rib: raw(P_CREAM.scale(1, .32)),
+};
+const ARK_MEADOWS = [[.6, -.3, 1.6, 1.1], [-.9, -.9, 1.1, .8], [.2, 1.3, 1.2, .6]];
+const ARK_FIELDS = [[.55, -1.05, .42, .3], [1.0, -1.05, .42, .3], [.55, -1.38, .42, .3], [1.0, -.72, .42, .3], [1.42, -.72, .3, .3], [1.42, -.4, .3, .3]];
+const ARK_TREES = [[1.05, .55, .42], [1.4, .2, .34], [.85, 1.2, .3], [1.45, .85, .28], [-1.25, -.25, .36], [-1.0, -1.25, .3], [-1.5, .45, .28], [-.3, -1.65, .3], [.1, -1.5, .24]];
+const ARK_TOWN = [[-.05, -.45], [.15, -.42], [-.02, -.66], [.2, -.65], [.4, -.5], [-.22, -.58]];
+const ARK_CLOUDS = [[.9, .25, .7], [-.6, -1.3, .55], [-.3, 1.35, .5]];
+
 const SAIL_PTS = [[1.45, 0], [.15, .78], [-1.15, 0], [.15, -.78]];                              // Solar Sailer's mirror
 const DRILL_PTS = [[1.68, 0], [1.08, .3], [1.08, -.3]];                                        // Asteroid Miner's drill
 const FRIGATE_FINS = sides([[-3.8, .6], [-4.45, 1.05], [-4.95, 1.05], [-4.6, .6]]);               // Classic Frigate's fins
@@ -752,6 +798,7 @@ function shipHitShapes(key)
     const t = BOATS[key], r = RK[key];
     if (key == 'swan') return [t.hullPts];
     if (key == 'container') return [t.hullPts, ...FRIGATE_FINS];
+    if (key == 'island') return [ARK.body, ARK.collarPts, ...ARK.fins];
     if (!r) return null;
     const shapes = [r.body, ...r.fins, ...(r.boosters || [])];
     if (key == 'sailboat') shapes.push(toVecs(SAIL_PTS));
@@ -957,6 +1004,15 @@ const SHIP_UNDER =
 };
 
 // Deck drawings, in the same painter as BOAT_DECO (x = bow, y = port, toy units)
+// the Ark's swept fins, engine mount and three engine bells, under its hull
+SHIP_UNDER.island = function(d, t, b, hull)
+{
+    const fin = finOf(hull);
+    for (const f of ARK.fins) d.poly(f, fin, true);
+    d.poly(ARK.mount, P_SLATE, true);
+    for (const p of ARK.bells) d.poly(p, P_DEEP);
+};
+
 const SHIP_DECO =
 {
     jetski(d, t, b)     // Rocket Scooter
@@ -1086,15 +1142,54 @@ const SHIP_DECO =
         for (const s of [1, -1]) d.line(4.62, s*.06, 4.8, 0, .03, P_DEEP);
         d.poly([[5.02, 0], [4.92, .06], [4.8, .06], [4.8, -.06], [4.92, -.06]], P_BRICK);        // escape rocket
     },
-    island(d, t)    // Asteroid
+    island(d, t, b)   // Ark: a generation ship carrying a living world under a clear glass dome
     {
-        const pit = C_GRASS.lerp(C_INK, .3), rim = C_GRASS.lerp(C_CREAM, .35);
-        for (const [x, y, r] of [[-.4, .3, 2.2], [2.7, .7, 1.3], [-2.8, -.6, 1.5], [1, -1.5, .9], [-1, 1.8, .8], [3.9, 1, .5], [-3.9, -.1, .6]])
+        const hull = shipHull(t, b), { x: X, r: R, collar } = ARK.dome, I = ARK_INK, k = b?.k || t.k;
+        // plating seams across the hull, fore and aft of the collar, and rows of windows down both sides
+        for (const x of [-3.95, -3.3, -2.65, 2.75, 3.4, 4.0]) { const w = outlineHalfWidth([ARK.body], x)*.9; d.line(x, w, x, -w, .05, I.seam); }
+        for (let i = 0; i < 6; i++)
+            for (const sd of [1, -1])
+            {
+                const xa = -4.1 + i*.27, xb = 2.55 + i*.27, lit = n => n % 4 == 1 ? P_MUSTARD : P_GLASS;
+                d.circle(xa, sd*outlineHalfWidth([ARK.body], xa)*.62, .13, lit(i + (sd > 0)));
+                d.circle(xb, sd*outlineHalfWidth([ARK.body], xb)*.62, .12, lit(i + 2*(sd > 0)));
+            }
+        d.ellipse(4.25, 0, .55, .36, P_GLASS, true);                                    // bridge
+        glint(d, 4.33, .07, .2, .08);
+        // the collar the dome sits in, bolted round
+        d.circle(X, 0, collar*2, P_SAND, true);
+        for (let i = 0; i < 20; i++) { const a = i/20*PI*2; d.circle(X + Math.cos(a)*(R + collar)/2, Math.sin(a)*(R + collar)/2, .07, P_DEEP); }
+        // the biosphere: meadows, a lake fed by a river, forests, farm fields and a little white town
+        d.circle(X, 0, R*2, I.land);
+        for (const [x, y, w, h] of ARK_MEADOWS) d.ellipse(X + x, y, w, h, I.meadow);
+        ARK_FIELDS.forEach(([x, y, w, h], n) => d.rect(X + x, y, w, h, n % 3 ? I.field : I.field2));
+        d.line(X - .2, .35, X + .5, 1.0, .16, I.water);                                  // the river, to the dome's edge
+        d.line(X + .5, 1.0, X + .55, 1.85, .14, I.water);
+        d.ellipse(X - .65, .4, 1.25, .85, I.shore);
+        d.ellipse(X - .65, .4, 1.08, .68, I.water);
+        glint(d, X - .8, .52, .4, .1);
+        for (const [x, y, r] of ARK_TREES) { d.circle(X + x, y, r, I.forest); d.circle(X + x - r*.12, y + r*.12, r*.62, I.crown); }
+        for (const [x, y] of ARK_TOWN) d.rect(X + x, y, .16, .16, P_CREAM);
+        // clouds drifting slowly over it
+        for (const [x, y, w] of ARK_CLOUDS)
         {
-            d.circle(x + r*.06, y - r*.06, r, rim);                     // lit rim
-            d.circle(x, y, r*.88, pit, true);                            // crater
+            const dx = Math.sin(time*.08 + x*3 + (b?.id || 0))*.25;
+            d.ellipse(X + x + dx, y, w, w*.42, I.cloud);
+            d.ellipse(X + x + dx + w*.22, y + w*.12, w*.6, w*.34, I.cloud);
         }
-        for (const [x, y] of [[1.6, .1], [-1.9, 1.1], [.3, -2.1], [3.2, -.3]]) d.circle(x, y, .45, C_SAND, true);   // boulders
+        // the glass: a faint tint, ribs out from the top and two rings, and the shine of the light on it
+        d.circle(X, 0, R*2, I.glass);
+        const o = d.P(0, 0), segs = [], at = (x, y) => d.P(x, y).subtract(o);
+        for (let i = 0; i < 8; i++) { const a = i/8*PI*2 + .2; segs.push([at(X, 0), at(X + Math.cos(a)*R*.98, Math.sin(a)*R*.98)]); }
+        for (const f of [.45, .78]) for (let i = 0; i < 32; i++)
+        {
+            const a0 = i/32*PI*2, a1 = (i + 1)/32*PI*2;
+            segs.push([at(X + Math.cos(a0)*R*f, Math.sin(a0)*R*f), at(X + Math.cos(a1)*R*f, Math.sin(a1)*R*f)]);
+        }
+        posterSegs(o, segs, I.rib, .028*k);
+        d.circle(X, 0, R*2*.08, raw(P_CREAM.scale(1, .5)));                            // the hub at the top
+        glint(d, X - R*.36, R*.42, R*.95, R*.3);
+        glint(d, X - R*.62, R*.12, R*.3, R*.1);
     },
     continent(d, t)   // The Moon
     {

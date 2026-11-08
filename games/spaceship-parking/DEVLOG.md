@@ -1,3 +1,8 @@
+## 2026-11-08 — The Asteroid becomes the Ark
+- The `island` type (30 km) is now the Ark, a generation ship: a long cream hull with a round, bolted collar midships carrying a big clear glass dome, swept fins, an engine mount and three engines (with flames, `JETS`). Inside the dome, a biosphere in the poster inks: meadows, a lake fed by a river, forests, farm fields, a small white town and clouds drifting slowly; over it faint glass ribs, a tint and a highlight.
+- Its outline is the hull and the collar traced as one shape (`unionOutline`), and its hitbox is built from hull, dome and fins like the other ships (22 circles). It keeps its cream hull wherever it appears (`ownColor`), since a teal hull from the Test Map's color list blended into the dome.
+- Checked in Chrome on the Test Map: drawn as designed, hitbox (`?hitbox`) follows hull, dome and fins, 6 lengths across on screen, no new errors. No level uses it yet.
+
 ## 2026-11-08 — Big ships get a closer camera
 - 16 lengths across made the Space Liner too small. Ships up to 50 m keep 16; bigger ones get fewer, smoothly on a log scale, down to 6 at 400 m (`shipScreen` in `src/main.js`): Star Yacht 13.7, Stealth Cruiser 12.1, Space Liner 7.4, Classic Frigate 6.
 - Checked in Chrome: Space Liner (Touchdown) 7.4 lengths across, Classic Frigate (Heavy Lift) 6.0, Zoomer (Rest Stop) still 16.

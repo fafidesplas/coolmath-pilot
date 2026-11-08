@@ -38,8 +38,8 @@ const BOATS =
     // submarine: dives under boats and some docks (`under` docks), but only while it has air (see updateSubs in main.js)
     sub:       { name:'Nuclear Submarine', L:7, W:1.1, k:16, mass:8,   power:30,  reverse:.4, turn:.3,  wash:.4,  dragF:.5,  dragS:3,   dragA:2,   hull:'pointy', color:C_NAVY, sub:true },
     // landmasses: blob hulls made of circles [x, y, r], no keel to speak of
-    island:    { name:'Island',       L:10,  W:6,    k:3000, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'blob', color:C_SAND, deck:C_GRASS,
-                 blob:[[0,0,2.6],[2.6,.6,1.9],[-2.7,-.5,2],[4,1.1,1],[-3.9,-.2,1.1],[.9,-1.5,1.4],[-1,1.7,1.3]] },
+    // the Ark: a 30 km generation ship with a biosphere under a glass dome (its outline and drawing are in skin.js)
+    island:    { name:'Ark',          L:10,  W:4.6,  k:3000, mass:14, power:36, reverse:.5, turn:.3,  wash:.6,  dragF:.6,  dragS:1.1, dragA:1.5, hull:'pointy', color:C_CREAM, ownColor:true },
     continent: { name:'Continent',    L:10,  W:7,    k:3e5,  mass:16, power:36, reverse:.5, turn:.28, wash:.5,  dragF:.6,  dragS:1.1, dragA:1.6, hull:'blob', color:C_SAND, deck:C_GRASS,
                  blob:[[0,0,3],[2.8,1,2.2],[-2.6,-.8,2.4],[4.2,-.6,.8],[-4.1,1,.9],[1.5,-2.2,1.3],[-1.2,2.3,1.2],[-2,-2.6,.8]] },
 };
