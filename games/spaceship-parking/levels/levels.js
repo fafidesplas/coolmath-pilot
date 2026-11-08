@@ -141,6 +141,78 @@ function loopLane(x, d, Y, flip, pace, boats)
         ({ boat, path: [...pts.slice(i*m/n), ...pts.slice(0, i*m/n)], end: 'loop', speed, pace }));
 }
 
+// a rock box [x0, y0, x1, y1] with open rects [x0, y0, x1, y1] carved out of it (tunnels, chambers), as sand rects. The
+// cuts split the box on a grid; each column's rock is merged into runs, then neighboring columns with the same runs.
+function carve([X0, Y0, X1, Y1], open)
+{
+    const edges = (lo, hi, k) => [...new Set([lo, hi, ...open.flatMap(r => [r[k], r[k + 2]])])].filter(v => v >= lo && v <= hi).sort((a, b) => a - b);
+    const xs = edges(X0, X1, 0), ys = edges(Y0, Y1, 1), cols = [];
+    for (let i = 0; i < xs.length - 1; i++)
+    {
+        const cx = (xs[i] + xs[i + 1])/2, runs = [];
+        for (let j = 0; j < ys.length - 1; j++)
+        {
+            const cy = (ys[j] + ys[j + 1])/2;
+            if (open.some(r => cx > r[0] && cx < r[2] && cy > r[1] && cy < r[3])) continue;
+            const last = runs[runs.length - 1];
+            if (last && last[1] == ys[j]) last[1] = ys[j + 1]; else runs.push([ys[j], ys[j + 1]]);
+        }
+        const prev = cols[cols.length - 1];
+        if (prev && prev.runs.join() == runs.join()) prev.x1 = xs[i + 1]; else cols.push({ x0: xs[i], x1: xs[i + 1], runs });
+    }
+    return cols.flatMap(c => c.runs.map(([y0, y1]) => [c.x0, y0, c.x1, y1]));
+}
+
+// a tunnel of half width h along a path of straight runs [[x, y], ...], as open rects for carve (each run's ends reach
+// h past its points, so the corners are square)
+const tunnel = (pts, h) => pts.slice(1).map(([x, y], i) => { const [px, py] = pts[i]; return [Math.min(x, px) - h, Math.min(y, py) - h, Math.max(x, px) + h, Math.max(y, py) + h]; });
+
+// two-way traffic through a tunnel: one loop along its center line `line` ([[x, y], ...], from one open end to the other)
+// d m to the right of it, round a wide bend past the far end, back d m to the right going the other way, round a bend
+// past the near end. boats: [[boat, speed], ...] spaced evenly round the loop, at pace m/s (see loopLane)
+function laneLoop(line, d, pace, boats)
+{
+    const unit = (a, b) => { const x = b[0] - a[0], y = b[1] - a[1], l = Math.hypot(x, y); return [x/l, y/l]; };
+    // the line d to its right (mitred corners), points every 8 m or so
+    const side = pts =>
+    {
+        const out = [];
+        pts.forEach((p, i) =>
+        {
+            const a = unit(pts[Math.max(0, i - 1)], pts[Math.max(1, i)]), b = unit(pts[Math.min(i, pts.length - 2)], pts[Math.min(i + 1, pts.length - 1)]);
+            const na = [a[1], -a[0]], nb = [b[1], -b[0]], m = 1 + na[0]*nb[0] + na[1]*nb[1];
+            const q = [p[0] + d*(na[0] + nb[0])/m, p[1] + d*(na[1] + nb[1])/m];
+            const last = out[out.length - 1];
+            if (last) { const n = Math.ceil(Math.hypot(q[0] - last[0], q[1] - last[1]) / 8); for (let k = 1; k < n; k++) out.push([last[0] + (q[0] - last[0])*k/n, last[1] + (q[1] - last[1])*k/n]); }
+            out.push(q);
+        });
+        return out;
+    };
+    // the bend past an end (at `end`, heading `dir`): out 12 m, then round a circle of radius 2.5d, swinging wide to the
+    // right first so it comes back d to the left
+    const bend = (end, dir) =>
+    {
+        const R = 2.5*d, u0 = 12 + Math.sqrt(R*R - d*d), t0 = Math.atan2(d, 12 - u0), out = [];
+        const at = (u, v) => [end[0] + dir[0]*u + dir[1]*v, end[1] + dir[1]*u - dir[0]*v];
+        for (let k = 1; k < 24; k++) { const t = t0 - 2*t0*k/24; out.push(at(u0 + R*Math.cos(t), R*Math.sin(t))); }
+        return out;
+    };
+    const n = line.length, back = [...line].reverse();
+    const pts = [...side(line), ...bend(line[n - 1], unit(line[n - 2], line[n - 1])), ...side(back), ...bend(line[0], unit(line[1], line[0]))]
+        .map(([x, y]) => [+x.toFixed(1), +y.toFixed(1)]);
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const total = cum[cum.length - 1];
+    return boats.map(([boat, speed], i) =>
+    {
+        const k = cum.findIndex(c => c >= total*i/boats.length);
+        return { boat, path: [...pts.slice(k), ...pts.slice(0, k)], end: 'loop', speed, pace };
+    });
+}
+
+// Rest Stop's tunnel: from the west pocket to the east one, nine straight runs through the asteroid
+const REST_STOP_LINE = [[-330, -60], [-230, -60], [-230, 40], [-150, 40], [-150, 110], [150, 110], [150, 40], [230, 40], [230, -60], [330, -60]];
+
 // planet types for the gravity levels: how hard they pull (share of each ship's own full thrust, so it feels the same in
 // every ship: a ship hovers at that throttle) and, by name, the colors of their ground (ROCK_INKS in src/skin.js)
 const PLANETS =
@@ -238,6 +310,33 @@ const SCALE_LEVELS =
             { boat: 'sub', start: { x: -350, y: 150, a: PI/2 }, slip: { x: -50, bottom: 1.5, a: PI/2, pad: [.6, .6], fingers: 'none' } },
             { boat: 'swan', view: 2, start: { x: 60, y: 30, a: PI/2 }, slip: { x: 10, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
         ],
+    },
+    {
+        // a winding tunnel through an asteroid with traffic both ways, and a rest stop halfway along it: a lay-by behind
+        // a rock median (in at one end, out at the other) with a small station hull and two bays. A 6.8 m zoomer flies in
+        // from the west pocket, then a 2.9 m escape pod from the east one; both see more than usual (view) so traffic
+        // shows before it is on them. Some corners run on into dead ends, and a long
+        // one leads south from the middle run. Ten small ships (scooters, pods, stealth pods) loop through the tunnel, east on the south side of it
+        // and west on the north side, turning round in the pockets.
+        name: 'Rest Stop',
+        land: carve([-300, -700, 300, 800],
+        [
+            ...tunnel(REST_STOP_LINE, 12),
+            ...tunnel([[-230, 40], [-230, 150]], 12), ...tunnel([[-150, 40], [-150, -50]], 12),        // dead ends at the corners
+            ...tunnel([[230, 40], [230, 150]], 12), ...tunnel([[150, 40], [150, -50]], 12),
+            ...tunnel([[0, 110], [0, 10]], 12),                                                         // the long dead end
+            [-70, 110, -45, 134], [45, 110, 70, 134], [-70, 134, 70, 180],                               // the rest stop
+        ]),
+        docks: [{ x0: -70, y0: 172, x1: 70, y1: 180, quay: true }],
+        walls: [{ x0: -460, y0: -240, x1: -420, y1: 340 }, { x0: 420, y0: -240, x1: 460, y1: 340 }, { x0: -460, y0: 300, x1: 460, y1: 340 }, { x0: -460, y0: -240, x1: 460, y1: -200 }],
+        boats:
+        [
+            { boat: 'speedboat', view: 4, start: { x: -370, y: 150, a: -PI/2 }, slip: { x: -25, top: 172, a: PI/2 } },
+            { boat: 'dinghy', view: 8, start: { x: 370, y: 150, a: -PI/2 }, slip: { x: 25, top: 172, a: PI/2 } },
+        ],
+        // the throttle share of each ship that cruises near the 6 m/s pace (flying saucers top out near 4 m/s, too slow)
+        traffic: laneLoop(REST_STOP_LINE, 6, 6,
+            [['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5], ['dinghy', .45], ['minisub', .65], ['jetski', .5]]),
     },
     {
         // sandbox, only with ?test: open water with a beach, piers, an islet, a current,
