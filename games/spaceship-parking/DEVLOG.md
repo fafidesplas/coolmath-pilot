@@ -1,3 +1,7 @@
+## 2026-11-08 — Route guide line much thinner
+- The guide line was too distracting: it is now about a third as thick (0.045 UI units, was 0.14), with shorter dashes, 60% opacity (was 85%) and a slower drift.
+- Checked in Chrome in Rest Stop: reads as a faint thread from the ship; the edge arrow is unchanged.
+
 ## 2026-11-08 — Route guide (A*) and a wider camera
 - Camera: 16 ship lengths across (was 8), still the same for every ship.
 - Route guide (`src/guide.js`, added to `index.html` and the export): a dashed line from the ship to its slip along a way it can fly, found with A* on a grid over the level (walls, docks, sand, landmasses, stations and waiting or parked ships are obstacles, grown by the ship's half width; traffic is not), straightened into a few legs, found again every 0.4 s. The edge arrow now points where the route leaves the screen and shows the route's length instead of the straight distance.

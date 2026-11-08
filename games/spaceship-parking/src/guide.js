@@ -179,7 +179,8 @@ function aStar(blocked, nx, ny, start, goal)
     return out.reverse();
 }
 
-// the route, drawn under the ships: mustard dashes flowing toward the slip, from the ship to the slip's middle. Hidden
+// the route, drawn under the ships: thin, faint mustard dashes drifting toward the slip (kept quiet, so it guides
+// without pulling the eye off the ship), from the ship to the slip's middle. Hidden
 // once the ship is in its slip.
 function drawGuide()
 {
@@ -187,7 +188,7 @@ function drawGuide()
     const d = player.pos.subtract(slip.pos), c = Math.cos(slip.a), s = Math.sin(slip.a);
     if (Math.abs(d.x*c + d.y*s) < slip.len/2 && Math.abs(-d.x*s + d.y*c) < slip.wid/2) return;
     const pts = [player.pos, ...guide.path.slice(1)];
-    const W = cam.wu, dash = .55*W, period = .95*W, width = .14*W, flow = (time*2.2*W) % period;
+    const W = cam.wu, dash = .35*W, period = .7*W, width = .045*W, flow = (time*1.2*W) % period;
     // dashes start at flow + n*period along the whole route, so they flow toward the slip
     let s0 = 0;
     for (let k = 1; k < pts.length; k++)
@@ -197,7 +198,7 @@ function drawGuide()
             for (let u = Math.floor((s0 - flow)/period)*period + flow - s0; u < len; u += period)
             {
                 const u0 = Math.max(0, u), u1 = Math.min(len, u + dash);
-                if (u1 > u0) drawLine(a.lerp(b, u0/len), a.lerp(b, u1/len), width, C_SUNNY.scale(1, .85));
+                if (u1 > u0) drawLine(a.lerp(b, u0/len), a.lerp(b, u1/len), width, C_SUNNY.scale(1, .6));
             }
         s0 += len;
     }
