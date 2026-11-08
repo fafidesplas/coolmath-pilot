@@ -3,8 +3,7 @@
 // A* on a grid laid over the stretch of the level around the ship and the slip. Walls, docks, sand, landmasses,
 // stations and ships waiting or parked are obstacles, grown by half the ship's width (plus a little) so the route keeps
 // clear of them; traffic is not (it moves on). A ship that can cloak may pass under `under` docks. The route is found
-// again every GUIDE_EVERY seconds, as stations turn and ships get bumped. The edge arrow (drawSlipArrow in main.js)
-// points where the route leaves the screen, and its number is how long the route still is.
+// again every GUIDE_EVERY seconds, as stations turn and ships get bumped.
 
 const GUIDE_EVERY = .4;         // s between route searches
 const GUIDE_CELLS = 90000;      // most grid cells one search may use
@@ -179,7 +178,7 @@ function aStar(blocked, nx, ny, start, goal)
     return out.reverse();
 }
 
-// the route, drawn under the ships: thin, faint mustard dashes drifting toward the slip (kept quiet, so it guides
+// the route, drawn under the ships: thin, faint mustard dashes, standing still (kept quiet, so it guides
 // without pulling the eye off the ship), from the ship to the slip's middle. Hidden
 // once the ship is in its slip.
 function drawGuide()
@@ -188,45 +187,18 @@ function drawGuide()
     const d = player.pos.subtract(slip.pos), c = Math.cos(slip.a), s = Math.sin(slip.a);
     if (Math.abs(d.x*c + d.y*s) < slip.len/2 && Math.abs(-d.x*s + d.y*c) < slip.wid/2) return;
     const pts = [player.pos, ...guide.path.slice(1)];
-    const W = cam.wu, dash = .35*W, period = .7*W, width = .045*W, flow = (time*1.2*W) % period;
-    // dashes start at flow + n*period along the whole route, so they flow toward the slip
+    const W = cam.wu, dash = .35*W, period = .7*W, width = .045*W;
+    // dashes every period along the whole route, standing still
     let s0 = 0;
     for (let k = 1; k < pts.length; k++)
     {
         const a = pts[k - 1], b = pts[k], len = a.distance(b);
         if (len > 1e-9 && inView(a.lerp(b, .5), len/2 + W))
-            for (let u = Math.floor((s0 - flow)/period)*period + flow - s0; u < len; u += period)
+            for (let u = Math.floor(s0/period)*period - s0; u < len; u += period)
             {
                 const u0 = Math.max(0, u), u1 = Math.min(len, u + dash);
                 if (u1 > u0) drawLine(a.lerp(b, u0/len), a.lerp(b, u1/len), width, C_SUNNY.scale(1, .6));
             }
         s0 += len;
     }
-}
-
-// where the route leaves the play area, in UI units (for the edge arrow), or null when it never does
-function guideExit(x0, y0, x1, y1)
-{
-    if (!guide || guide.player != player) return null;
-    const pts = [player.pos, ...guide.path.slice(1)].map(worldToUi);
-    for (let k = 1; k < pts.length; k++)
-    {
-        const a = pts[k - 1], b = pts[k], n = Math.max(1, Math.ceil(a.distance(b)/.5));
-        for (let m = 1; m <= n; m++)
-        {
-            const p = a.lerp(b, m/n);
-            if (p.x < x0 || p.x > x1 || p.y < y0 || p.y > y1) return p;
-        }
-    }
-    return null;
-}
-
-// how much of the route is left, from where the ship is now
-function guideLeft()
-{
-    if (!guide || guide.player != player) return null;
-    const p = guide.path;
-    let len = p.length > 1 ? player.pos.distance(p[1]) : 0;
-    for (let k = 2; k < p.length; k++) len += p[k].distance(p[k - 1]);
-    return len;
 }

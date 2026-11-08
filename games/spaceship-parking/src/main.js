@@ -1413,27 +1413,6 @@ function drawScaleBar()
     txt(fmtLen(m), x0 + len/2, y + .55, .5, C_INK);
 }
 
-// when the slip is off screen: an arrow at the edge of the play area pointing where the route to it (src/guide.js)
-// leaves the screen, with how long the route still is (straight at the slip, and the straight distance, without one)
-function drawSlipArrow()
-{
-    if (gameScreen != 'playing' || !slip || !player) return;
-    // shown until the middle of the slip is on screen
-    const half = viewHalfUi(), u = worldToUi(slip.pos);
-    const x0 = 20 - half.x, x1 = 20 + half.x, y0 = UI_CENTER.y - half.y, y1 = PLAY_TOP;
-    if (u.x > x0 && u.x < x1 && u.y > y0 && u.y < y1) return;
-    // where the line from the view center to the slip leaves the inset box
-    // (more room at the top, below the scale bar)
-    const m = 1.6, c = vec2(20, (y0 + y1)/2), d = (guideExit(x0, y0, x1, y1) || u).subtract(c);
-    const t = Math.min((d.x > 0 ? x1 - m - c.x : c.x - x0 - m) / Math.abs(d.x || 1e-9),
-                       (d.y > 0 ? y1 - 3.4 - c.y : c.y - y0 - m) / Math.abs(d.y || 1e-9));
-    const a = Math.atan2(d.y, d.x), p = c.add(d.scale(t)).add(vec2(Math.cos(a), Math.sin(a)).scale(Math.sin(time*5)*.15));
-    const pt = (f, s) => p.add(vec2(Math.cos(a)*f - Math.sin(a)*s, Math.sin(a)*f + Math.cos(a)*s));
-    drawPoly([pt(1.1, 0), pt(-.7, .9), pt(-.35, 0), pt(-.7, -.9)], C_SUNNY, .14, C_INK);
-    const q = pt(-1.8, 0).subtract(vec2(0, .2));
-    txt(fmtLen(guideLeft() ?? slip.pos.distance(player.pos)), q.x, q.y, .5, C_CREAM, 'center', .1, C_INK);
-}
-
 // the submarine's air: a bar by the DIVE button that flashes when it runs low
 function drawAirGauge()
 {
@@ -1565,7 +1544,6 @@ function gameRender()
     drawSwearing();
     drawPopups();
     drawPlayerMarker();
-    drawSlipArrow();
     drawHud();
     drawIntro();
     if (gameScreen == 'complete') drawComplete();

@@ -1,3 +1,7 @@
+## 2026-11-08 — Guide dashes stand still; edge arrow removed
+- The route guide's dashes no longer move, and the big yellow arrow at the screen edge (with its distance) is gone: `drawSlipArrow` in `src/main.js` and its helpers in `src/guide.js` were removed. The thin line alone leads to the slip.
+- Checked in Chrome in Rest Stop: still dashes along the route, no arrow, no new errors.
+
 ## 2026-11-08 — Route guide line much thinner
 - The guide line was too distracting: it is now about a third as thick (0.045 UI units, was 0.14), with shorter dashes, 60% opacity (was 85%) and a slower drift.
 - Checked in Chrome in Rest Stop: reads as a faint thread from the ship; the edge arrow is unchanged.
