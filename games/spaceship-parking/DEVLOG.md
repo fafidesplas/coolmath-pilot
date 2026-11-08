@@ -1,3 +1,7 @@
+## 2026-11-08 — Camera a little wider: 8 ship lengths across
+- 5 lengths across was too close. `SHIP_SCREEN` is now 8, still the same for every ship (12.5% of the screen width each; about what most ships had before the change, the big ones see more than they used to).
+- Checked in Chrome: Escape Pod (Spin Dock), Classic Frigate (Heavy Lift) and Zoomer (Rest Stop) each span 12.5% of the screen width; in Rest Stop the whole 20 m corridor shows with room around it.
+
 ## 2026-11-08 — Same screen share for every ship; Rest Stop moves inside a battle station
 - Camera: every ship now spans the same share of the screen, 5 ship lengths across (`SHIP_SCREEN`, `?shipview=` to try others). Before, it was 3.5 lengths for ships of 50 m and more, about 8 for most others, 27 for the Rocket Scooter, and levels widened it further with `view` (up to 68 lengths for Rest Stop's Escape Pod). `view` is gone from the boat types, the levels and the code. Small ships are zoomed in about 1.6x; the big ones are zoomed out a little (from 29% of the screen width to 20%).
 - Battle station look: docks with `hull: true` are drawn as the walls of a giant station (grey plating with panel seams in two sizes at a time, shaded panels, a cream rim with amber lights on every edge facing open space, a hard shadow), all as one shape so the pieces show no seams. A level with `interior: true` has a dark deck floor instead of stars. Both are in the editor (dock "battle station wall", level "inside a station").

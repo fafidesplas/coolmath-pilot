@@ -23,8 +23,8 @@ const SPEED = +new URLSearchParams(location.search).get('speed') || 1.5;
 const BIG_SHIP_LENGTH = 50;
 const BIG_SHIP_LEEWAY = 1.15;
 // the camera shows this many ship lengths across the screen, the same for every ship, so each one takes up the same
-// share of the screen. Try others with ?shipview=6
-const SHIP_SCREEN = +new URLSearchParams(location.search).get('shipview') || 5;
+// share of the screen. Try others with ?shipview=10
+const SHIP_SCREEN = +new URLSearchParams(location.search).get('shipview') || 8;
 // no anchor: a boat is parked once it rests (under REST_SPEED toy units/s and REST_SPIN rad/s, no input) for
 // REST_TIME seconds with part of its hull in the slip. Below SETTLE_SPEED with no throttle the coast ends:
 // full forward drag and SETTLE_SPIN times the spin drag, so a nearly stopped ship doesn't creep for ages
