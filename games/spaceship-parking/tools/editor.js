@@ -82,11 +82,15 @@ window.pmbEditor = (() =>
         refreshPanel();
     }
 
-    // load the level into the game and freeze it there; the editor draws over the real level
+    // load the level into the game and freeze it there; the editor draws over the real level.
+    // loaded: each chain slip's data -> the game's slip built from it (still right while boats are removed)
+    let loaded = new Map();
+    const loadedSlip = s => loaded.get(s);
     function load()
     {
         const keep = { pos: cam.pos.copy(), wu: cam.wu };
-        try { loadLevel(li); }
+        loaded = new Map();
+        try { loadLevel(li); def.boats?.forEach((e, n) => loaded.set(e.slip, slips[n])); }
         catch (e) { status = 'Level error: ' + e.message; console.error(e); }
         intro = undefined;
         cam.pos = keep.pos; cam.wu = keep.wu;
@@ -161,6 +165,11 @@ window.pmbEditor = (() =>
     const station = () => def.station && stations[0];
     const onStation = it => !!station() && (it.kind == 'start' || it.kind == 'slip') && def.boats[it.i]?.[it.kind].on == 'station';
     const atPort = it => onStation(it) && it.kind == 'slip' && def.boats[it.i].slip.port !== undefined;
+    // a slip inside a moored ship (on: 'moored', i): x, y, a in the level's coordinates like any slip's; with hangar: true it
+    // has none of them, placed across the middle of that ship's hangar (attachSlip in src/space.js)
+    const inShip = it => it.kind == 'slip' && def.boats[it.i]?.slip.on == 'moored';
+    const inHangar = it => inShip(it) && !!def.boats[it.i].slip.hangar;
+    const hasHangar = m => !!BOATS[m?.boat]?.hangar;
     function toLocal(p)
     {
         const st = stations[0], d = p.subtract(st.pos), c = Math.cos(st.angle), s = Math.sin(st.angle);
@@ -459,7 +468,7 @@ window.pmbEditor = (() =>
         if (drag.mode == 'rotate')
         {
             // slips only face the four ways; the rest snap to 15° unless Alt is held
-            const step = sel.kind == 'slip' || sel.kind == 'mslip' ? PI/2 : noSnap() ? 0 : PI/12;
+            const step = (sel.kind == 'slip' && !inShip(sel)) || sel.kind == 'mslip' ? PI/2 : noSnap() ? 0 : PI/12;
             // on a station the angle is the station's own, and snaps there
             let a = Math.atan2(p.y - drag.c.y, p.x - drag.c.x) - (onStation(sel) ? stations[0].angle : 0);
             if (step) a = Math.round(a/step)*step;
@@ -537,7 +546,7 @@ window.pmbEditor = (() =>
             case 'start': case 'slip':
             {
                 const s = def.boats[it.i][it.kind];
-                if (atPort(it)) break;          // placed by its port: dragging it picks another port
+                if (atPort(it) || inHangar(it)) break;          // placed by its port (dragging it picks another port) or its hangar
                 if (onStation(it))
                 {
                     // in the station's coordinates, kept on a fine grid there
@@ -546,6 +555,8 @@ window.pmbEditor = (() =>
                     break;
                 }
                 if (it.kind == 'start') { s.x += dx; s.y += dy; break; }
+                if (inShip(it)) { s.x += dx; s.y += dy; break; }
+                carry(it.i, dx, dy, 0);        // what waits inside this boat moves with its slip
                 // a slip under a pier edge or on a pad slides along it; Shift moves it off
                 if (s.x !== undefined) s.x += dx; else if (shift) s.right += dx;
                 if (s.y !== undefined) s.y += dy;
@@ -554,6 +565,7 @@ window.pmbEditor = (() =>
                 break;
             }
             case 'station': { const o = def.station; o.x += dx; o.y += dy; break; }
+            case 'moored': { const o = def.moored[it.i]; o.x += dx; o.y += dy; shipSlips(it.i).forEach(s => { s.x += dx; s.y += dy; }); break; }
             case 'mslip':
             {
                 const s = def.moored[it.i].slip;
@@ -570,10 +582,42 @@ window.pmbEditor = (() =>
         }
     }
 
+    // nesting: the station, moored ships and chain starts with in: n wait inside chain boat n (from 1), given where they
+    // are with boat n exactly in its slip (nestLoad in src/space.js). So when boat n's slip moves or turns, they go with it.
+    // Slips inside a moored ship (on: 'moored', not in its hangar) are in the level's coordinates and go with that ship.
+    const shipSlips = i => def.boats.map(e => e.slip).filter(s => s.on == 'moored' && (s.i || 0) == i && !s.hangar);
+    function turnAbout(list, cx, cy, da)
+    {
+        if (!da) return;
+        const c = Math.cos(da), s = Math.sin(da);
+        for (const o of list)
+        {
+            const x = o.x - cx, y = o.y - cy;
+            o.x = cx + x*c - y*s; o.y = cy + x*s + y*c;
+            o.a = tidyAngle((o.a || 0) + da);
+        }
+    }
+    function carry(n, dx, dy, da)
+    {
+        const inside = o => o?.in == n + 1;
+        const list = [];
+        if (inside(def.station)) list.push(def.station);
+        (def.moored || []).forEach((m, i) => { if (inside(m)) list.push(m, ...shipSlips(i)); });
+        def.boats.forEach(e => { if (inside(e.start) && !e.start.on) list.push(e.start); });
+        if (!list.length) return;
+        for (const o of list) { o.x += dx; o.y += dy; }
+        if (da && slips[n])
+        {
+            const c = slips[n].pos;
+            turnAbout(list, c.x + dx, c.y + dy, da);
+            if (inside(def.station) && def.station.drift) def.station.drift.phase = wrapAngle((def.station.drift.phase || 0) + da);
+        }
+    }
+
     // the angle of a thing that can turn (undefined for the rest), and setting it
     function angleOf(it)
     {
-        if (atPort(it)) return undefined;           // turned by its port
+        if (atPort(it) || inHangar(it)) return undefined;           // turned by its port or its hangar
         if (it.kind == 'start' || it.kind == 'slip') return def.boats[it.i][it.kind].a || 0;
         if (it.kind == 'station') return def.station.a || 0;
         if (it.kind == 'mslip') return def.moored[it.i].slip.a;
@@ -584,10 +628,12 @@ window.pmbEditor = (() =>
     {
         a = wrapAngle(a);
         if (Math.abs(a) < 1e-9) a = 0;
-        if (it.kind == 'start' || it.kind == 'slip') def.boats[it.i][it.kind].a = a;
+        if (it.kind == 'slip' && !onStation(it) && !inShip(it)) { const s = def.boats[it.i].slip, da = wrapAngle(a - s.a); s.a = a; carry(it.i, 0, 0, da); }
+        else if (it.kind == 'start' || it.kind == 'slip') def.boats[it.i][it.kind].a = a;
         else if (it.kind == 'station') def.station.a = a;
         else if (it.kind == 'mslip') def.moored[it.i].slip.a = a;
-        else if (it.kind == 'moored' || it.kind == 'drifters') def[it.kind][it.i].a = a;
+        else if (it.kind == 'moored') { const m = def.moored[it.i], da = wrapAngle(a - m.a); m.a = a; turnAbout(shipSlips(it.i), m.x, m.y, da); }
+        else if (it.kind == 'drifters') def[it.kind][it.i].a = a;
         else if (it.kind == 'logs') def.logs[it.i][2] = a;
     }
     // rotate handle of the selection, like a transform box's: an arm out of the bow, a knob at its end
@@ -607,11 +653,13 @@ window.pmbEditor = (() =>
     {
         const wrap = a => { a = wrapAngle(a); return Math.abs(a) < 1e-9 ? 0 : a; };
         if (it.kind == 'start') { const s = def.boats[it.i].start; s.a = wrap((s.a || 0) + da); }
-        else if (atPort(it)) return false;
-        else if (it.kind == 'slip') { const s = def.boats[it.i].slip; s.a = wrap(s.a + Math.sign(da)*PI/2); }
+        else if (atPort(it) || inHangar(it)) return false;
+        else if (inShip(it)) { const s = def.boats[it.i].slip; s.a = wrap(s.a + da); }
+        else if (it.kind == 'slip') { const s = def.boats[it.i].slip, d = wrap(s.a + Math.sign(da)*PI/2) - s.a; s.a = wrap(s.a + d); carry(it.i, 0, 0, d); }
         else if (it.kind == 'station') { const o = def.station; o.a = wrap((o.a || 0) + da); }
         else if (it.kind == 'mslip') { const s = def.moored[it.i].slip; s.a = wrap(s.a + Math.sign(da)*PI/2); }
-        else if (it.kind == 'moored' || it.kind == 'drifters') { const m = def[it.kind][it.i]; m.a = wrap(m.a + da); }
+        else if (it.kind == 'moored') { const m = def.moored[it.i]; m.a = wrap(m.a + da); turnAbout(shipSlips(it.i), m.x, m.y, da); }
+        else if (it.kind == 'drifters') { const m = def[it.kind][it.i]; m.a = wrap(m.a + da); }
         else if (it.kind == 'logs') { const l = def.logs[it.i]; l[2] = wrap((l[2] || 0) + da); }
         else return false;
         return true;
@@ -679,7 +727,26 @@ window.pmbEditor = (() =>
     // take one thing out of the level (no undo step, no refresh: the callers do that)
     function removeItem(it)
     {
-        if (it.kind == 'start') return def.boats.splice(it.i, 1);
+        if (it.kind == 'start')
+        {
+            // what waited inside it now waits from the start; later boats move down one
+            renumberIn(b => b == it.i + 1 ? undefined : b > it.i + 1 ? b - 1 : b);
+            return def.boats.splice(it.i, 1);
+        }
+        if (it.kind == 'moored')
+        {
+            // a slip inside it stays where it is, in open space; slips in later moored ships and the portal follow their ship
+            def.boats.forEach(e =>
+            {
+                const s = e.slip;
+                if (s.on != 'moored') return;
+                const j = s.i || 0;
+                if (j > it.i) s.i = j - 1;
+                else if (j == it.i) { const g = loadedSlip(s); delete s.on; delete s.i; delete s.hangar; if (g) Object.assign(s, { x: r2(g.pos.x), y: r2(g.pos.y), a: Math.round(wrapAngle(g.a)/(PI/2))*PI/2 || 0 }); }
+            });
+            const P = def.portal;
+            if (P && (P.i || 0) == it.i) delete def.portal; else if (P && (P.i || 0) > it.i) P.i = (P.i || 0) - 1;
+        }
         def[it.kind].splice(it.i, 1);
         // traffic boats refer to each other by number: drop the triggers on the deleted one, renumber the rest
         if (it.kind == 'traffic') for (const t of def.traffic)
@@ -766,11 +833,22 @@ window.pmbEditor = (() =>
         snapshot(); def.traffic[t].path.reverse(); sel = { kind: 'traffic', i: t }; changed();
     }
 
+    // every in: n of the level (station, moored ships, chain starts) through f; undefined drops it
+    function renumberIn(f)
+    {
+        for (const o of [def.station, ...(def.moored || []), ...def.boats.map(e => e.start)])
+        {
+            if (!o?.in) continue;
+            const v = f(o.in);
+            if (v) o.in = v; else delete o.in;
+        }
+    }
     function moveBoat(n, d)
     {
         const m = n + d;
         if (m < 0 || m >= def.boats.length) return;
         snapshot();
+        renumberIn(b => b == n + 1 ? m + 1 : b == m + 1 ? n + 1 : b);
         [def.boats[n], def.boats[m]] = [def.boats[m], def.boats[n]];
         if (sel?.kind == 'start' || sel?.kind == 'slip') sel = { kind: sel.kind, i: m };
         changed();
@@ -779,10 +857,9 @@ window.pmbEditor = (() =>
     function newLevel(copy)
     {
         const d = copy ? cloneDef(def) : {
-            name: 'New Level',
-            land: [[-3000, -3020, 0, 3585], [1400, -3020, 4400, 3585], [-3000, -3020, 4400, -20], [-3000, 600, 4400, 3585]],
-            docks: [{ x0: 0, y0: 585, x1: 1400, y1: 600, quay: true }],
-            boats: [{ boat: 'dinghy', start: { x: 400, y: 300, a: 0 }, slip: { x: 700, top: 585, a: PI/2 } }],
+            // open space: one escape pod and its slip
+            name: 'New Level', land: [], docks: [],
+            boats: [{ boat: 'dinghy', start: { x: 0, y: 0, a: 0 }, slip: { x: 30, y: 0, a: 0, fingers: 'none' } }],
         };
         let name = copy ? def.name + ' copy' : 'New Level', n = 2;
         while (LEVELS.some(L => L.name == name)) name = (copy ? def.name + ' copy ' : 'New Level ') + n++;
@@ -860,6 +937,15 @@ window.pmbEditor = (() =>
         else for (const c of s.circles) drawCircle(c.c, c.r*2, C_CLEAR, w, color);
     }
 
+    // where the level's portal opens: { pos, r, bow } (portalStart in src/space.js)
+    function portalSpot()
+    {
+        const P = def.portal, b = P && mooredBoats[P.i || 0];
+        if (!b) return null;
+        const L = boatSize(b), f = b.forward();
+        return { pos: b.pos.add(f.scale(P.ahead*L)), r: P.r*L, bow: b.pos.add(f.scale(L/2)) };
+    }
+
     ED.renderWorld = () =>
     {
         if (!ED.active) return;
@@ -910,6 +996,9 @@ window.pmbEditor = (() =>
             drawLine(vec2(t.path[0][0], t.path[0][1]), vec2(q[0], q[1]), .04*W, C_ED.scale(1, .6));
             drawCircle(vec2(q[0], q[1]), .35*W, C_CLEAR, .05*W, C_ED);
         });
+        // the portal a moored ship flies off into at the end: its ring, and a line from the ship's bow
+        const pt = portalSpot();
+        if (pt) { drawLine(pt.bow, pt.pos, .04*W, C_ED.scale(1, .5)); drawCircle(pt.pos, pt.r*2, C_ED.scale(1, .12), .08*W, C_ED); }
         // the station's docking ports: a ring each, numbered in renderUi
         for (const q of portsWorld()) drawCircle(q.pos, .9*W, C_CLEAR, .06*W, C_ED.scale(1, .8));
         for (const c of def.currents || []) drawPoly([vec2(c.x0, c.y0), vec2(c.x1, c.y0), vec2(c.x1, c.y1), vec2(c.x0, c.y1)], C_CLEAR, .04*W, C_TEAL);
@@ -953,6 +1042,13 @@ window.pmbEditor = (() =>
             if (s) txt(String(n + 1), s.x, s.y, .9, C_CREAM, 'center', .12, C_INK);
         });
         portsWorld().forEach((q, n) => { const u = worldToUi(q.pos); txt(`port ${n + 1}`, u.x, u.y + .75, .4, C_ED, 'center', .08, C_CREAM); });
+        // what waits inside a chain boat says which, once it is big enough on screen not to pile up with the rest
+        const tag = (p, size, n, dy = 0) => { if (size < cam.wu) return; const u = worldToUi(p); txt(`inside ${n}`, u.x, u.y - .7 + dy, .4, C_ED, 'center', .08, C_CREAM); };
+        if (station() && def.station.in) tag(stations[0].pos, stations[0].radius, def.station.in);
+        (def.moored || []).forEach((m, i) => { const b = mooredBoats[i]; if (m.in && b) tag(b.pos, boatSize(b), m.in); });
+        def.boats.forEach((e, n) => { if (e.start.in) tag(startPose(n).pos, BOATS[e.boat].L*boatK(def, e), e.start.in, -.3); });
+        const pt = portalSpot();
+        if (pt && pt.r > cam.wu) { const u = worldToUi(pt.pos); txt('portal', u.x, u.y, .5, C_ED, 'center', .1, C_CREAM); }
         (def.moored || []).forEach((m, i) =>
         {
             if (!m.slip) return;
@@ -1321,6 +1417,7 @@ window.pmbEditor = (() =>
         .pmbed button.go{background:#FFCC47;color:#1E2433;border-color:#FFCC47;font-weight:700}
         .pmbed button.on{border-color:#4A8CFF;background:#26406E}
         .pmbed .status{margin-top:10px;padding:6px 8px;background:#2B3346;min-height:18px}
+        .pmbed .status.warn{margin-top:4px;background:#4A2B2B;color:#FFD9C7}
         .pmbed .keys{color:#A8B0C0;font-size:12px}
         .pmbed .keys b{color:#EEF1F6;font-weight:600}
         .pmbed .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
@@ -1429,6 +1526,57 @@ window.pmbEditor = (() =>
         if (!def.station.ports.length) delete def.station.ports;
     }
 
+    // where a chain slip lies: 'free' (open space), 'station', or 'moored:i' (inside moored ship i). It keeps its place.
+    function setSlipOn(n, v)
+    {
+        const s = def.boats[n].slip, g = slips[n];
+        if (v == 'station') { if (s.on != 'station') { delete s.i; delete s.hangar; slipOnStation(n, true); } return; }
+        for (const k of ['on', 'i', 'hangar', 'port', 'x', 'y', 'top', 'right', 'bottom']) delete s[k];
+        if (v == 'free') Object.assign(s, { x: r2(g.pos.x), y: r2(g.pos.y), a: Math.round(wrapAngle(g.a)/(PI/2))*PI/2 || 0 });
+        else Object.assign(s, { on: 'moored', i: +v.split(':')[1], x: r2(g.pos.x), y: r2(g.pos.y), a: tidyAngle(g.a) });
+    }
+    function setSlipHangar(n, on)
+    {
+        const s = def.boats[n].slip, g = slips[n];
+        delete s.x; delete s.y; delete s.a;
+        if (on) s.hangar = true;
+        else { delete s.hangar; Object.assign(s, { x: r2(g.pos.x), y: r2(g.pos.y), a: tidyAngle(g.a) }); }
+    }
+    // in: n on the station, a moored ship or a chain start: it waits inside chain boat n until that one parks.
+    // A chain start may only wait in an earlier boat (upTo: how many boats to offer)
+    function waitsField(o, upTo = def.boats.length)
+    {
+        const opts = [['', 'no, it is there from the start'], ...def.boats.slice(0, upTo).map((e, n) => [String(n + 1), `inside ${n + 1}. ${BOATS[e.boat].name} until it parks`])];
+        return field('waits', select(opts, () => o.in ? String(o.in) : '', v => { if (v) o.in = +v; else delete o.in; }));
+    }
+    const nestedCount = n => [def.station, ...(def.moored || []), ...def.boats.map(e => e.start)].filter(o => o?.in == n + 1).length;
+    // nesting mistakes the game would play wrong; shown under the level settings
+    function nestProblems()
+    {
+        const out = [], N = def.boats.length, moored = def.moored || [];
+        const name = n => `${n + 1}. ${BOATS[def.boats[n].boat].name}`;
+        def.boats.forEach((e, n) =>
+        {
+            if (nestedCount(n) && !e.slip.hold) out.push(`Things wait inside ${name(n)}, so its slip should hold it.`);
+            if (e.start.in && e.start.in >= n + 1) out.push(`${name(n)} waits inside a boat that parks after it.`);
+            const s = e.slip, st = def.station;
+            if (s.on == 'moored')
+            {
+                const m = moored[s.i || 0];
+                if (!m) out.push(`${name(n)}'s slip is inside a moored ship that is gone.`);
+                else
+                {
+                    if (m.in && m.in >= n + 1) out.push(`${name(n)}'s slip is inside a ship that only appears once boat ${m.in} parks.`);
+                    if (s.hangar && !hasHangar(m)) out.push(`${name(n)}'s slip is in a hangar, but the ${BOATS[m.boat].name} has none.`);
+                }
+            }
+            if ((s.on == 'station' || e.start.on) && st?.in && st.in >= n + 1) out.push(`${name(n)} uses the station, which only appears once boat ${st.in} parks.`);
+        });
+        for (const o of [def.station, ...moored, ...def.boats.map(e => e.start)]) if (o?.in > N) { out.push(`Something waits inside boat ${o.in}, which is not in the chain.`); break; }
+        if (def.portal && !moored[def.portal.i || 0]) out.push('The portal ship is gone.');
+        return out;
+    }
+
     // the level's gravity and station (the station itself is selected on the canvas or in the hierarchy)
     function levelSpaceFields()
     {
@@ -1448,6 +1596,7 @@ window.pmbEditor = (() =>
         panel.append(el('div', { className: 'row' }, [button('Frame (F)', frameSel)]),
             grid([field('x', numIn(o, 'x', { step: 'any' })), field('y', numIn(o, 'y', { step: 'any' }))]),
             field('heading°', degIn(() => o.a || 0, v => { o.a = v; })),
+            waitsField(o),
             field('scale', input('number', () => o.scale, v => { if (v === undefined || v == 1) delete o.scale; else o.scale = Math.max(.1, v); }, { placeholder: '1 (the 124 m lab)', step: 'any' })),
             field('one turn every s', input('number', () => o.spin === undefined ? undefined : o.spin ? Math.round(2*PI/o.spin*100)/100 : 0,
                 v => { if (v === undefined) delete o.spin; else o.spin = v ? 2*PI/v : 0; }, { placeholder: '60', step: 'any' })),
@@ -1514,6 +1663,7 @@ window.pmbEditor = (() =>
             button(`Save (⌘S)${unsaved.length ? ' •' : ''}`, save, unsaved.length ? 'go' : ''),
             button('New level', () => newLevel(false)), button('Duplicate level', () => newLevel(true))]));
         panel.append(el('div', { className: 'status', textContent: status || (unsaved.length ? 'Unsaved: ' + unsaved.join(', ') : 'No unsaved changes') }));
+        for (const p of nestProblems()) panel.append(el('div', { className: 'status warn', textContent: p }));
 
         panel.append(el('h3', { textContent: sel ? selTitle() : 'Selection' }));
         selectionFields();
@@ -1526,6 +1676,7 @@ window.pmbEditor = (() =>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: ×10) · <b>[ ]</b> rotate 15° (Shift: 90°)<br>
             <b>drag the round handle</b> rotate (15° steps, Alt: free; slips 90°)<br>
             Station: click it to move or turn it; a slip at a port moves to the port nearest the mouse<br>
+            Nesting: the station, a moored ship or a start can <b>wait inside</b> a chain boat (shown where they appear with it in its slip); moving or turning that slip carries them. A slip can <b>lie inside a moored ship</b> (or its hangar); a moored ship can fly off into a <b>portal</b> at the end<br>
             <b>1–9</b> select boat · <b>F</b> frame selection · <b>Shift+F</b> frame all<br>
             <b>Shift / ⌘ / Ctrl+click</b> add to or remove from the selection (hierarchy: ⌘ / Ctrl toggles, Shift a range, <b>all</b> a whole group); move, nudge, rotate, <b>D</b> and <b>Delete</b> act on all, the inspector edits what they share<br>
             <b>D</b> duplicate · <b>Delete</b> remove · <b>T</b> sand → dock → quay<br>
@@ -1536,8 +1687,9 @@ window.pmbEditor = (() =>
     // everything else in the level, by kind, so a thing can be found without hunting for it on the canvas
     const size = r => `${fmtLen(Math.abs(r.x1 - r.x0))} × ${fmtLen(Math.abs(r.y1 - r.y0))}`;
     const boatLabel = m => `${BOATS[m.boat].name} · ${fmtLen(BOATS[m.boat].L*boatK(def, m))}`;
+    const tags = list => { list = list.filter(Boolean); return list.length ? ` (${list.join(', ')})` : ''; };
     const OBJECTS = [
-        ['moored', 'Moored boats', boatLabel],
+        ['moored', 'Moored boats', (m, i) => boatLabel(m) + tags([m.fixed && 'fixed', m.in && `inside ${m.in}`, def.portal && (def.portal.i || 0) == i && 'portal'])],
         ['drifters', 'Loose boats', boatLabel],
         ['traffic', 'Traffic boats', t => `${boatLabel(t)} · ${t.path.length} points`],
         ['buoys', 'Buoys', b => b[2] && b[2] != 1 ? `Buoy ×${num(b[2])}` : 'Buoy'],
@@ -1598,7 +1750,7 @@ window.pmbEditor = (() =>
             def.boats.forEach((e, n) =>
             {
                 const t = BOATS[e.boat], here = picked('start', n);
-                const b = button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}`, ev => click('start', n, ev, () => frameBoat(n)), here ? 'on' : '');
+                const b = button(`${n + 1}. ${t.name} · ${fmtLen(t.L*boatK(def, e))}${tags([e.start.in && `inside ${e.start.in}`, e.slip.on == 'moored' && `parks in moored ${(e.slip.i || 0) + 1}`, e.slip.hold && 'holds'])}`, ev => click('start', n, ev, () => frameBoat(n)), here ? 'on' : '');
                 if (here) on = b;
                 box.append(el('div', { className: 'boat' }, [b,
                     Object.assign(button('▶', () => startTest(n)), { title: 'Test play from this boat' }),
@@ -1606,7 +1758,7 @@ window.pmbEditor = (() =>
             });
         if (station() && header('station', 'Station', 1))
         {
-            const here = picked('station', 0), b = button(`Space station${def.station.scale && def.station.scale != 1 ? ` ×${num(def.station.scale)}` : ''}`, ev => click('station', 0, ev, frameSel), here ? 'on' : '');
+            const here = picked('station', 0), b = button(`Space station${def.station.scale && def.station.scale != 1 ? ` ×${num(def.station.scale)}` : ''}${tags([def.station.in && `inside ${def.station.in}`])}`, ev => click('station', 0, ev, frameSel), here ? 'on' : '');
             if (here) on = b;
             box.append(b);
         }
@@ -1617,7 +1769,7 @@ window.pmbEditor = (() =>
             list.forEach((it, i) =>
             {
                 const here = picked(kind, i);
-                const b = button(`${i + 1}. ${label(it)}`, ev => click(kind, i, ev, frameSel), here ? 'on' : '');
+                const b = button(`${i + 1}. ${label(it, i)}`, ev => click(kind, i, ev, frameSel), here ? 'on' : '');
                 if (here) on = b;
                 box.append(b);
             });
@@ -1662,6 +1814,8 @@ window.pmbEditor = (() =>
                 const s = e.start;
                 if (def.station) panel.append(check('waits riding on the station', !!s.on, v => startOnStation(i, v)));
                 if (def.gravity && !s.on) panel.append(check('waits standing on the ground', !!s.ground, v => { if (v) s.ground = true; else { s.y = r2(startPose(i).pos.y); delete s.ground; } }));
+                if (!s.on && i) panel.append(waitsField(s, i));
+                if (s.on && def.station.in) panel.append(el('div', { className: 'keys', textContent: `It waits with the station, inside boat ${def.station.in}.` }));
                 panel.append(grid([field(s.on ? 'x on station' : 'x', numIn(s, 'x', { step: 'any' })), field(s.on ? 'y on station' : 'y', numIn(s, 'y', { step: 'any' }))]),
                     field(s.on ? 'heading° on station' : 'heading°', degIn(() => s.a || 0, v => { s.a = v; })));
                 if (s.on) panel.append(el('div', { className: 'keys', textContent: 'In the station\'s coordinates: it rides along, clamped to the station, until its turn.' }));
@@ -1684,6 +1838,17 @@ window.pmbEditor = (() =>
                 field('size k', input('number', () => m.k, v => { if (v === undefined) delete m.k; else m.k = v; }, { placeholder: `real size (${BOATS[m.boat].k})`, step: 'any' })),
                 grid([field('x', numIn(m, 'x', { step: 'any' })), field('y', numIn(m, 'y', { step: 'any' }))]),
                 field('heading°', degIn(() => m.a, v => { m.a = v; })));
+            if (kind != 'moored') return;
+            const P = def.portal, mine = !!P && (P.i || 0) == i, keys = text => el('div', { className: 'keys', textContent: text });
+            panel.append(check('fixed (nothing pushes it, like a station)', !!m.fixed, v => { if (v) m.fixed = true; else delete m.fixed; }),
+                waitsField(m),
+                check('flies off into a portal at the end', mine, v => { if (v) def.portal = { i, ahead: P?.ahead ?? 3, r: P?.r ?? .42 }; else delete def.portal; }));
+            if (mine) panel.append(grid([
+                field('portal ahead', input('number', () => P.ahead, v => { P.ahead = Math.max(0, v ?? 3); }, { step: .5, min: 0 })),
+                field('portal radius', input('number', () => P.r, v => { P.r = Math.max(.01, v ?? .42); }, { step: .02, min: .01 }))]),
+                keys('In this ship\'s lengths: how far ahead of its bow the portal opens, and how big it is. Once the last chain ship has parked, this ship flies into it with whatever is parked inside, then the level is complete.'));
+            const inside = def.boats.map((e, n) => e.slip.on == 'moored' && (e.slip.i || 0) == i ? n + 1 : 0).filter(Boolean);
+            panel.append(keys((inside.length ? `Slips inside it: boat ${inside.join(', ')}. They move and turn with it. ` : '') + (hasHangar(m) ? 'It has a hangar a ship can park in (pick this ship as a slip\'s place, then tick "in its hangar").' : 'A slip can lie inside it: pick this ship as the slip\'s place.')));
             return;
         }
         if (sel.kind == 'traffic' || sel.kind == 'point') return trafficFields(def.traffic[i], i);
@@ -1813,6 +1978,7 @@ window.pmbEditor = (() =>
             }
             case 'moored': case 'drifters':
                 panel.append(bNum('heading°', o => deg(o.a), (o, v) => { o.a = (v || 0)*PI/180; }, { step: 15 }));
+                if (kinds[0] == 'moored') panel.append(bCheck('fixed (nothing pushes it)', o => o.fixed, (o, v) => { if (v) o.fixed = true; else delete o.fixed; }));
                 break;
             case 'buoys':
                 panel.append(bNum('scale', o => o[2] ?? 1, (o, v) => { o[2] = v ?? 1; }, { step: 'any' }));
@@ -1880,9 +2046,25 @@ window.pmbEditor = (() =>
     function slipFields(s, n, geom = () => slips[n])
     {
         const grid = kids => el('div', { className: 'grid2' }, kids);
-        const chain = def.boats[n]?.slip === s;
-        if (chain && def.station) panel.append(check('on the station', s.on == 'station', v => slipOnStation(n, v)));
-        if (chain && s.on == 'station' && station())
+        const chain = def.boats[n]?.slip === s, moored = def.moored || [];
+        if (chain && (def.station || moored.length || s.on))
+        {
+            const places = [['free', 'in open space'], ...(def.station ? [['station', 'on the station']] : []),
+                ...moored.map((m, j) => [`moored:${j}`, `inside moored ${j + 1}. ${BOATS[m.boat].name}`])];
+            panel.append(field('lies', select(places, () => s.on == 'moored' ? `moored:${s.i || 0}` : s.on || 'free', v => setSlipOn(n, v))));
+        }
+        if (chain) panel.append(check('holds the ship once parked', !!s.hold, v => { if (v) s.hold = true; else delete s.hold; }));
+        if (chain && nestedCount(n)) panel.append(el('div', { className: 'keys', textContent: `${nestedCount(n)} thing${nestedCount(n) == 1 ? ' waits' : 's wait'} inside this boat and appear${nestedCount(n) == 1 ? 's' : ''} where it parks. Moving or turning this slip carries them along.` }));
+        if (chain && s.on == 'moored')
+        {
+            const m = moored[s.i || 0];
+            if (hasHangar(m)) panel.append(check('in its hangar (across the middle, nose in)', !!s.hangar, v => setSlipHangar(n, v)));
+            if (!s.hangar)
+                panel.append(grid([field('x', numIn(s, 'x', { step: 'any' })), field('y', numIn(s, 'y', { step: 'any' }))]),
+                    field('heading°', degIn(() => s.a || 0, v => { s.a = v; })));
+            panel.append(el('div', { className: 'keys', textContent: s.hangar ? 'It lies in the hangar and moves with the ship.' : 'In the level\'s coordinates; it moves and turns with the ship (moving the ship here carries it too).' }));
+        }
+        else if (chain && s.on == 'station' && station())
         {
             // at a port, or a spot of its own in the station's coordinates
             const ports = stationPorts(def.station), name = j => `port ${j + 1}${j == 0 ? ' (front end)' : j == 1 ? ' (aft end)' : ''}`;
@@ -1917,7 +2099,7 @@ window.pmbEditor = (() =>
         panel.append(grid([
             field('room L', input('number', () => pad[0], v => { s.pad = [v ?? 1.4, pad[1]]; }, { step: .1 })),
             field('room W', input('number', () => pad[1], v => { s.pad = [pad[0], v ?? 1]; }, { step: .1 }))]));
-        panel.append(field('fingers', select([['both', 'short docks both sides'], ['none', 'none']], () => s.fingers || 'both', v => { if (v == 'none') s.fingers = 'none'; else delete s.fingers; })));
+        if (!s.on) panel.append(field('fingers', select([['both', 'short docks both sides'], ['none', 'none']], () => s.fingers || 'both', v => { if (v == 'none') s.fingers = 'none'; else delete s.fingers; })));
         panel.append(el('div', { className: 'keys', textContent: 'Room is extra length and width in toy units, times the boat size. Boats 50 m and longer get 15% on top.' }));
     }
 

@@ -187,7 +187,8 @@ function makeSlip(e, k)
     // top/right: the pier edge it hangs from; bottom: the landing pad it stands on
     // (a slip at a station's port has none of these: attachSlip places it)
     const x = s.x ?? (s.right !== undefined ? s.right - w/2 : 0), y = s.y ?? (s.bottom !== undefined ? s.bottom + h/2 : s.top !== undefined ? s.top - h/2 : 0);
-    if (s.fingers != 'none')
+    // a slip on a station or inside a ship moves with it, so it never has finger docks (they would stay behind)
+    if (s.fingers != 'none' && !s.on)
     {
         const ft = .5*k, pr = .32*k;
         if (vertical)
