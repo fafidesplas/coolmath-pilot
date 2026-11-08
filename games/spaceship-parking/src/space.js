@@ -501,16 +501,17 @@ function portalCamera()
     return { pos: vec2((box.x0 + box.x1)/2, (box.y0 + box.y1)/2 + (UI_CENTER.y - PLAY_TOP/2)*wu), wu };
 }
 
-// a swirl in the poster inks: a cream rim, rings of lilac, teal and glass round a deep middle, and mustard arms turning
+// a swirl in dark blues and purples with yellow: a mustard rim, rings darkening inward from dusky purple through slate
+// blue and indigo to a near-black middle, and mustard arms turning
 function drawPortal()
 {
     const p = portal;
     if (!p || p.open <= 0) return;
     const ease = 1 - (1 - p.open)**3, R = p.r*ease, c = p.pos;
     if (!inView(c, R)) return;
-    drawCircle(c, R*2.3, P_GLASS.scale(1, .08));
-    drawCircle(c, R*2.08, P_CREAM);
-    [P_LILAC, P_TEAL, P_SLATE, P_INDIGO, P_DEEP].forEach((col, i) => drawCircle(c, R*2*(.94 - i*.17), col));
+    drawCircle(c, R*2.3, P_MUSTARD.scale(1, .1));
+    drawCircle(c, R*2.08, P_MUSTARD);
+    [P_DUSK.lerp(P_INDIGO, .35), P_SLATE.lerp(P_INDIGO, .3), P_INDIGO, P_DEEP, P_DEEP.lerp(P_VOID, .5)].forEach((col, i) => drawCircle(c, R*2*(.94 - i*.17), col));
     const segs = [];
     for (let arm = 0; arm < 5; arm++)
         for (let i = 0; i < 14; i++)
@@ -519,7 +520,7 @@ function drawPortal()
             segs.push([vec2(Math.cos(a0)*r0, Math.sin(a0)*r0), vec2(Math.cos(a1)*r1, Math.sin(a1)*r1)]);
         }
     posterSegs(c, segs, P_MUSTARD.scale(1, .8), R*.05);
-    drawCircle(c, R*.3, P_DEEP);
+    drawCircle(c, R*.3, P_VOID);
 }
 
 // ---------------------------------------------------------------------------

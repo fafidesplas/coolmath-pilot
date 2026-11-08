@@ -1,3 +1,7 @@
+## 2026-11-08 — Nesting Dolls: a darker portal
+- The portal was too colorful: it is now dark blues and purples with yellow. A mustard rim and faint glow, rings darkening inward from dusky purple through slate blue and indigo to a near-black middle, the same mustard arms. Teal, lilac and cream are gone from it.
+- Checked in Chrome: a close-up of the open portal in Nesting Dolls.
+
 ## 2026-11-08 — Nesting Dolls: the Ark flies off into a portal
 - The level ends with the Star Yacht again: once it parks in the Ark's hangar, the Ark (now a fixed moored ship, not a chain ship) flies off on its own into a portal opening 3 Ark lengths ahead of its bow, the yacht inside it, and then the level is complete. Nobody pilots the Ark.
 - Portal (`portal: { i, ahead, r }` in a level, `src/space.js`): opens over 1.2 s while the camera pulls out to the Ark, the Ark fires its engines at 1.8 s, speeds up for 3.6 s and shrinks into the portal over its last length; the portal closes and the complete screen shows a second later. It is drawn over the other ships (the Battle Station's rim) and under the Ark. The slip, the route guide and the YOU marker hide during it.
