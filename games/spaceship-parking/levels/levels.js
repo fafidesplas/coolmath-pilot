@@ -150,24 +150,10 @@ const PLANETS =
     heavy: { planet: 'heavy', share: .55 },     // ochre: hovering takes over half the thrust, and a fall builds speed fast
 };
 
-// gravity levels: flat ground with its top at y = 0 (a round planet let a winged ship lie stuck on its side on the
-// slope), walled by invisible walls `size` m out. Each ship lands upright on its own pad: pad: [x, width, lift?] (lift:
-// the deck stands that many meters above the ground, a tower), room: the slip's extra [length, width] in toy units
-// (see slip above). planet: a PLANETS type
-function landing(name, planet, size, ships)
-{
-    const docks = [];
-    const boats = ships.map(({ pad: [x, w, lift = 0], room = [.6, .8], ...ship }) =>
-    {
-        const t = clamp(w*.04, .5, 1.5), y1 = +(t + lift).toFixed(2);
-        docks.push({ x0: x - w/2, y0: -3*t, x1: x + w/2, y1, pad: true });
-        return { ...ship, slip: { x, bottom: y1, a: PI/2, pad: room, fingers: 'none' } };
-    });
-    return {
-        name, gravity: { ...PLANETS[planet] }, land: [[-size - 100, -size, size + 100, 0]], docks, boats,
-        walls: [{ x0: -size - 100, y0: -size, x1: -size, y1: size + 100 }, { x0: size, y0: -size, x1: size + 100, y1: size + 100 }, { x0: -size - 100, y0: size, x1: size + 100, y1: size + 100 }],
-    };
-}
+// gravity levels (Touchdown, Moon Hop, Pad Towers, Heavy Lift): flat ground, a land rect with its top at y = 0 (a round
+// planet let a winged ship lie stuck on its side on the slope), invisible walls round it, and a pad dock per ship
+// (pad: true, its top at the slip's bottom; a tall one reaching up from the ground is a tower). Each is a plain object
+// so the editor can save it.
 
 const SCALE_LEVELS =
 [
@@ -198,14 +184,20 @@ const SCALE_LEVELS =
             { boat: 'dinghy', view: 1.6, start: { x: -22, y: 38, a: PI/2 }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, 1.2], fingers: 'none' } },
         ],
     },
-    // a small moon (flat ground): a 26 m asteroid miner, a 12 m solar sailer, then a 2.6 m flying saucer. Every ship starts
-    // standing on the ground (ground: true) and takes off for its pad. The saucer starts on the far side of the sailer's pad.
-    landing('Moon Hop', 'moon', 600,
-    [
-        { boat: 'trawler', start: { x: -200, y: 0, a: PI/2, ground: true }, pad: [60, 24] },
-        { boat: 'sailboat', start: { x: 150, y: 0, a: PI/2, ground: true }, pad: [0, 9] },
-        { boat: 'swan', view: 2, start: { x: -70, y: 0, a: PI/2, ground: true }, pad: [-30, 5] },
-    ]),
+    {
+        // a small moon (flat ground): a 26 m asteroid miner, a 12 m solar sailer, then a 2.6 m flying saucer. Every ship
+        // starts standing on the ground (ground: true) and takes off for its pad. The saucer starts on the far side of the
+        // sailer's pad.
+        name: 'Moon Hop', gravity: { ...PLANETS.moon }, land: [[-700, -600, 700, 0]],
+        docks: [{ x0: 48, y0: -2.88, x1: 72, y1: .96, pad: true }, { x0: -4.5, y0: -1.5, x1: 4.5, y1: .5, pad: true }, { x0: -32.5, y0: -1.5, x1: -27.5, y1: .5, pad: true }],
+        walls: [{ x0: -700, y0: -600, x1: -600, y1: 700 }, { x0: 600, y0: -600, x1: 700, y1: 700 }, { x0: -700, y0: 600, x1: 700, y1: 700 }],
+        boats:
+        [
+            { boat: 'trawler', start: { x: -200, y: 0, a: PI/2, ground: true }, slip: { x: 60, bottom: .96, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'sailboat', start: { x: 150, y: 0, a: PI/2, ground: true }, slip: { x: 0, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'swan', view: 2, start: { x: -70, y: 0, a: PI/2, ground: true }, slip: { x: -30, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+        ],
+    },
     {
         // the Spin Dock station seven times bigger (868 m), turning once every five minutes, with two more ports at the
         // ends of its side modules. A 300 m space liner docks at the aft end, a 26 m asteroid miner at the front end, then
@@ -222,21 +214,31 @@ const SCALE_LEVELS =
             { boat: 'jetski', view: 2, start: { on: 'station', x: 100, y: -150, a: 0 }, slip: { on: 'station', port: 3, pad: [.8, .6], fingers: 'none' } },
         ],
     },
-    // pads on towers: an 80 m star yacht on the ground, then a 6.8 m zoomer on a 30 m tower and a 2.4 m rocket scooter on
-    // a 55 m one, beside the yacht
-    landing('Pad Towers', 'rocky', 800,
-    [
-        { boat: 'yacht', start: { x: -300, y: 250, a: PI/2 }, pad: [-60, 50] },
-        { boat: 'speedboat', view: 1.6, start: { x: 120, y: 90, a: PI/2 }, pad: [0, 8, 30] },
-        { boat: 'jetski', start: { x: 90, y: 115, a: PI/2 }, pad: [25, 4, 55] },
-    ]),
-    // a big planet (flat ground): a 400 m classic frigate, a 112 m stealth cruiser, then a 2.6 m flying saucer between them
-    landing('Heavy Lift', 'heavy', 2500,
-    [
-        { boat: 'container', start: { x: -900, y: 700, a: PI/2 }, pad: [300, 150], room: [.6, .6] },
-        { boat: 'sub', start: { x: -350, y: 150, a: PI/2 }, pad: [-50, 55], room: [.6, .6] },
-        { boat: 'swan', view: 2, start: { x: 60, y: 30, a: PI/2 }, pad: [10, 5] },
-    ]),
+    {
+        // pads on towers: an 80 m star yacht on the ground, then a 6.8 m zoomer on a 30 m tower and a 2.4 m rocket scooter
+        // on a 55 m one, beside the yacht (a tower is a pad dock reaching up from the ground)
+        name: 'Pad Towers', gravity: { ...PLANETS.rocky }, land: [[-900, -800, 900, 0]],
+        docks: [{ x0: -85, y0: -4.5, x1: -35, y1: 1.5, pad: true }, { x0: -4, y0: -1.5, x1: 4, y1: 30.5, pad: true }, { x0: 23, y0: -1.5, x1: 27, y1: 55.5, pad: true }],
+        walls: [{ x0: -900, y0: -800, x1: -800, y1: 900 }, { x0: 800, y0: -800, x1: 900, y1: 900 }, { x0: -900, y0: 800, x1: 900, y1: 900 }],
+        boats:
+        [
+            { boat: 'yacht', start: { x: -300, y: 250, a: PI/2 }, slip: { x: -60, bottom: 1.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'speedboat', view: 1.6, start: { x: 120, y: 90, a: PI/2 }, slip: { x: 0, bottom: 30.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+            { boat: 'jetski', start: { x: 90, y: 115, a: PI/2 }, slip: { x: 25, bottom: 55.5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+        ],
+    },
+    {
+        // a big planet (flat ground): a 400 m classic frigate, a 112 m stealth cruiser, then a 2.6 m flying saucer between them
+        name: 'Heavy Lift', gravity: { ...PLANETS.heavy }, land: [[-2600, -2500, 2600, 0]],
+        docks: [{ x0: 225, y0: -4.5, x1: 375, y1: 1.5, pad: true }, { x0: -77.5, y0: -4.5, x1: -22.5, y1: 1.5, pad: true }, { x0: 7.5, y0: -1.5, x1: 12.5, y1: .5, pad: true }],
+        walls: [{ x0: -2600, y0: -2500, x1: -2500, y1: 2600 }, { x0: 2500, y0: -2500, x1: 2600, y1: 2600 }, { x0: -2600, y0: 2500, x1: 2600, y1: 2600 }],
+        boats:
+        [
+            { boat: 'container', start: { x: -900, y: 700, a: PI/2 }, slip: { x: 300, bottom: 1.5, a: PI/2, pad: [.6, .6], fingers: 'none' } },
+            { boat: 'sub', start: { x: -350, y: 150, a: PI/2 }, slip: { x: -50, bottom: 1.5, a: PI/2, pad: [.6, .6], fingers: 'none' } },
+            { boat: 'swan', view: 2, start: { x: 60, y: 30, a: PI/2 }, slip: { x: 10, bottom: .5, a: PI/2, pad: [.6, .8], fingers: 'none' } },
+        ],
+    },
     {
         // sandbox, only with ?test: open water with a beach, piers, an islet, a current,
         // buoys, ducks and a few boats to bump. The buttons on the left spawn any boat type next to the one you drive.

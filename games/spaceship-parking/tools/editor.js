@@ -1109,8 +1109,8 @@ window.pmbEditor = (() =>
     {
         const span = fileName.has(d) && findLevel(text, fileName.get(d));
         if (span) return text.slice(0, span.open + 1) + rebuildLevel(text.slice(span.open + 1, span.close), d) + text.slice(span.close);
-        // a level built by a helper (landing('Moon Hop', ...)) has no object of its own in the file: saving it would add a
-        // second copy, so it isn't saved (nothing is written); change it in levels/levels.js by hand
+        // a level built by a helper call has no object of its own in the file: saving it would add a second copy, so it
+        // isn't saved (nothing is written). No level is built that way now; keep every level a plain object
         if (fileName.has(d)) throw new Error(`${fileName.get(d)} is built by a helper in levels.js and can't be saved from here`);
         // a new level goes at the end of SCALE_LEVELS
         const head = text.indexOf('const SCALE_LEVELS =');

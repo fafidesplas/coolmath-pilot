@@ -1,3 +1,8 @@
+## 2026-11-08 — Every level saves from the editor
+- Moon Hop, Pad Towers and Heavy Lift were built by the `landing()` helper, so the editor refused to save them. They are now plain level objects (like Touchdown) and the helper is gone. Pads are ordinary `pad: true` docks, so they can be moved and resized in the editor.
+- Checked in Chrome: the three levels load exactly the same data as before (compared field by field), `pmbEditor.selfTest()` reports 7 levels, 0 problems (it was 3 "not in the file" before), each level loads and plays, no errors.
+- Still missing in the editor: station slips are drawn in the station's coordinates (away from the station), and the station, gravity, ports, riders and `ground` starts have no fields in the inspector. They save fine, but must be changed in `levels/levels.js` by hand.
+
 ## 2026-11-08 — Moon Hop: every ship starts on the ground
 - A ship's `start` can say `ground: true` (`groundStart` in `src/space.js`): the ship waits standing on the ground instead of hanging in the sky. It is moved so its lowest point touches the highest ground or pad top under it that is not above its start y, and under gravity it falls while it waits, so it stays put.
 - All three Moon Hop ships use it (same x as before, upright): each takes off from the moon and flies to its pad.
