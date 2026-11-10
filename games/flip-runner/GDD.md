@@ -1,7 +1,7 @@
 # Flip Runner — Game design document
 
 **Status:** Approved
-**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-10
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-11
 
 > A little bat has to race home before sunrise. It dashes on by itself and one button does everything: hop between the floor and the ceiling (bats love hanging upside down), spread its wings to glide, or steer it and its sibling at once. Read the cave, time the press, thread the gaps.
 
@@ -71,7 +71,7 @@ The runner always moves forward on its own. A **portal** changes its form instan
   - A block that closes on you against rock or another block **crushes** you (`death:crush`).
   - **The bat's speed is constant, so a block's phase at the moment you reach it is fixed.** A block cannot be "waited out". The designer therefore chooses where each block is when you arrive (`at`: start, far end, halfway out, halfway back), so that a lane is always free; a block left to chance can sit in the middle and be impossible. Pistons arrive resting at an end of their path (where the ease is slow), so the free lane is easy to read.
   - A flag stores the block clock, so every retry of a section is identical (3.7).
-- **Speed pads (world 3):** chevrons on a surface. **Fast pad** (»): speed × 1.35. **Slow pad** («): speed × 0.75. The new speed lasts until the next pad. A respawn restores the speed saved at the flag (3.7).
+- **Speed gates, "pads" (world 3):** a band across the whole corridor with chevrons running through it, like a portal. **Fast gate** (», yellow, "FAST"): from its column on, the speed is × 1.35. **Slow gate** («, blue, "SLOW"): × 0.75. A **× 1 gate** ("NORMAL") restores the normal speed. The new speed lasts until the next gate; a respawn restores the speed saved at the flag (3.7). *Change from the first design (pads lying on one surface, so choosing a surface chose a speed):* it made the time you reach any point depend on your route, which made levels hard to verify (the solver's state count exploded) and hard to read. A gate depends only on where you are, so the time to reach any column is the same for everyone; the variety comes from the rhythm changing against the hazards. Hazards in a speed zone are spaced **by time, not by columns** (a fast stretch has wider spacing), so a fast zone is not simply a harder one. Moving blocks and gates do not mix in one level: a block's arrival phase is computed for a constant speed.
 - **Gravity switches (world 4):** a round pad with an arrow. Touching it flips gravity without a tap, in the arrow's direction (both twins in twin form). A switch can be passed through from either side and fires once per pass.
 - **Glider pillars (world 2):** columns from floor and ceiling with a gap to weave through; in the Bell Tower they are stone columns and hanging bells.
 - **Stars:** 3 per level, placed on the risky route (3.8).
@@ -113,7 +113,7 @@ The runner always moves forward on its own. A **portal** changes its form instan
 | Home roost | Ends the level | 1 | Rock ring around a full moon, HOME sign |
 | Platform | Land on top or underside | 4 | Floating block with lips on both faces |
 | Moving block | Slides on a visible rail, crushes | 15 | Block with bolts and a dotted rail |
-| Fast / slow pad | Speed × 1.35 / × 0.75 | 25 | » or « chevrons on the surface |
+| Fast / slow gate | Speed × 1.35 / × 0.75 until the next gate | 25 | A band across the corridor with » (yellow, FAST) or « (blue, SLOW) chevrons |
 | Gravity switch | Flips gravity on touch | 31 | Round pad with a big arrow |
 | Portal | Changes form | 11 | Full-height dashed band with the form's name top and bottom |
 | Glider (form) | Hold to climb, release to dive | 11 | The bat with its wings spread, tilted where it goes, flapping; sky-blue accent and a trail |
@@ -124,7 +124,7 @@ The runner always moves forward on its own. A **portal** changes its form instan
 - **Structure:** 40 levels in 4 worlds of 10.
   - **World 1 — Crystal Cave (1–10):** Flip form only: flipping, gaps, spikes, platforms, room heights.
   - **World 2 — Bell Tower (11–20, built as levels 1–10 of the world):** the **Glider** form, glider pillars and rock hanging from the ceiling, switchbacks between Flip and Glider, then **moving blocks**: pistons (blocks sliding between the ceiling and the floor), lifts (floors that rise while you ride them) and sliding pillars in glider rooms.
-  - **World 3 — Firefly Forest (21–30):** the **Twin** form (21), speed pads (25), then levels mixing Flip and Twin.
+  - **World 3 — Firefly Forest (21–30, built as levels 1–10 of the world):** the **Twin** form (a second bat in a parallel lane, one tap flips both), then speed gates, then levels that mix the two. Twin rooms have two lanes with a rock divider; the lanes can have different heights, so one bat lands before the other and the next flip waits for both.
   - **World 4 — Night Fair (31–40):** gravity switches (31), then levels that chain all three forms through portals.
 - **Form rhythm:** a level spends at least 6 s in a form before the next portal, so each form has room to breathe. From the middle of world 2, most levels use two forms; from world 4, three.
 - **Teaching order:** each element first appears with no other danger nearby and a generous window, then with a twist (on the ceiling, at speed, in a tall room), then combined with older elements.
@@ -157,6 +157,17 @@ The runner always moves forward on its own. A **portal** changes its form instan
     9. **Bell Ringer** — pistons, a glider weave, pistons, moving pillars.
     10. **Tower Exit** (50 s, 3 flags) — the exam: pistons, two lifts, a weave, ping pong, moving pillars.
   - 21. **Two of Us** — after a short flip warm-up, a Twin portal; at first the two lanes have the same spikes, then they start to differ.
+  - **The Firefly Forest (levels 21–30), as built** (24–48 s at 500 px/s; every level passes the solver with all stars, tightest flip window ≥ 180 ms):
+    1. **Two of Us** — the first twin room: identical hazards in both lanes, then one lane at a time.
+    2. **Mirror Mirror** — lanes of different heights (3 and 5 tiles): the short one lands first, but both must land before the next flip.
+    3. **Odd One Out** — one lane has a hazard at a time, alternating lane and surface.
+    4. **Fireflies** — two short lanes (3 tiles each), dense hazards, stars in the lane you are not watching.
+    5. **Fast Lane** — the first speed gates (flip form): normal, fast, normal, slow, fast.
+    6. **Slow Burn** — slow gates before the dense parts, fast gates on the long empty ones.
+    7. **Speed Run** — fast gates and wider hazards.
+    8. **Twin Pads** — a twin room with speed gates across both lanes.
+    9. **Switch** — Flip → Twin → Flip → Twin, with gates in between.
+    10. **Forest Exit** (48 s) — the exam: gates, a twin room with gates, flip, twin again.
   - 31. **Switchboard** — gravity switches that flip you for free, inside a Flip → Glider → Flip run.
 - **Level data format** (one JS module per level in `levels/`):
 
@@ -296,6 +307,7 @@ Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, b
 - **Solver (`tools/`):** a one-button game can be searched. From each state the solver tries "act now" or "wait one step" (act = press in flip and twin form, hold in glider form), with memoization on (column, gravity, y, speed), and reports whether the level is beatable, the tightest flip window on the easiest route, and which stars are reachable. It runs in Node on the same `sim.js`. A level is not done until the solver passes it and the tightest window is at least 120 ms. Windows can have holes (flipping late can also work by entering a room in mid-air), so the solver builds its route by flipping in the middle of the widest good window each time, and reports that width.
 - **Level kit (phase 3):** levels are small programs, not hand-typed grids. `tools/levelkit.mjs` has a `Cave` class (`room`, `floorSpikes`, `ceilSpikes`, `floorGapAt`, `ceilGapAt`, `island`, `rampFloor`, `rampCeil`, `star`, `flagFloor`, `hint`, `portal`, `goal`) that renders the 16-row text grid, and `tools/build-world1.mjs` builds levels 2–10 with it. Any level that needs a change is edited as code and rebuilt, so the solver can re-check it in under a second.
 - **Glider levels have no flip windows to measure** (holding and releasing has no critical instant), so they are checked for **spatial slack** instead: the level must still be beatable with the bat's hitbox 8 px bigger in each direction (`solve.mjs`'s `slack`, stored in the solution file and checked by `simtest`). A level with no slack asks for pixel precision.
+- **Twin levels in the kit:** `twinRoom` (two lanes with a divider; the lanes may differ in height), `laneSpikes(lane, surface, …)`, `twinPortal`, `twinExit` (funnels back to the corridor, then the flip portal) and `pad` (a speed gate). **Stars in a twin room are placed away from the hazards of both lanes** (3 columns), because both bats share gravity: a star on the floor of one lane next to a floor hazard of the other lane needs two opposite gravities at once. `Cave.star` moves every star to the nearest safe cell and fails if there is none. The solver merges states whose x differs by less than 6 px and keeps the lineage of real inputs, so the route it returns replays exactly.
 - **Level tools (`tools/`):** `levels.mjs` (solve every level and print time, stars, flips, tightest window and longest plain stretch), `stars.mjs` (is each star reachable on its own?), `deaths.mjs` (where and how the explored routes die: the way to find the trap in a level that can't be beaten), `show.mjs` (print a slice of a map). `simtest.mjs` runs the mechanics checks and, for every level, the rules above plus a stored solution (`levels/solutions/<id>.json`, with the solver's results) that must reach the goal, bank all three stars and replay identically; `--write` re-solves everything and rewrites them (`--only=id,id` to limit it; solving a long glider level with its slack check takes about a minute). `levelkit.mjs` also has `mover` (with `at` for the phase), `pillar` and `funnel`; solver nodes keep only a summary of their state, because a glider room has hundreds of possible heights per step.
 - **Debug mode (`?debug`):** every level open; `.` and `,` jump to the next or previous checkpoint, `J` and `K` change level, `[` `]` change the forward speed by 20 px/s, `-` `=` change gravity by 500, `9` `0` change the flip kick by 50, all live, with the numbers on screen. This is the "debug level select and live tuning" that `PHASES.md` asks for in skill games.
 - **Visual level editor:** moved to **Later**. The level kit and the solver cover world 1; a visual editor is worth building only if the endless chunks (30 hand-made pieces) turn out to be easier to paint than to program.
@@ -324,6 +336,7 @@ Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, b
 | Should endless chunks be hand-made only, or also cut from levels? | Hand-made with the level editor, 30 chunks for v1 (8 per tier, 6 neutral) | Fafi | Open |
 
 ## 15. Changelog
+- 2026-11-11 — **Phase 3, world 3 (Firefly Forest).** Ten levels built and solver-verified (Twin rooms with lanes of different heights, speed gates). Speed pads became full-corridor **speed gates** (see 3.6): surface-dependent pads made arrival times route-dependent and blew up the solver. Density is now measured in seconds using each zone's real speed. The kit places stars on safe cells (twin rooms: 3 columns from any hazard of either lane). Two world 1 stars moved one column because of that and were re-verified.
 - 2026-11-10 — **Phase 3, world 2 (Bell Tower).** Ten levels built and solver-verified (Glider rooms, switchbacks, moving blocks). Moving blocks implemented in the sim: smoothstep path, riding, wall, crush, flag-stored clock, controlled phase (a block's phase at arrival is fixed because the bat's speed is constant). Glider levels are checked by spatial slack instead of flip windows. The solver's memory use was cut (lighter nodes). New fair-play insight: a block with a free-chosen period can make a level unbeatable.
 - 2026-11-10 — **Phase 3, world 1 (Crystal Cave).** Levels 1–10 built and solver-verified; the forms prototype leaves world 1 and stays as the debug level `proto` (the Glider and Twin worlds will get their own opener levels). New fair-play rules found while building: no hazard within 2 columns of a step, stars never on hazards, no lane with spikes on both surfaces in one column. Density rule now exempts the first and last 2 s and is checked by `simtest`. Levels open one by one (a level opens when the previous is done). Tools: level kit, `levels.mjs`, `stars.mjs`, `deaths.mjs`, `show.mjs`, debug mode; the visual editor moves to Later.
 - 2026-10-28 — **Bat theme** (Fafi: the game looked flat and generic): the runner is a baby bat racing home before sunrise; worlds renamed Crystal Cave, Bell Tower, Firefly Forest and Night Fair (they replace the brief's Lab, Caves, Sky Factory and Space Station), with a sky that warms towards dawn; new night palette; crystal-shard spikes, lantern checkpoints, a moonlit home roost as the goal, the glider is the bat with its wings spread, the twin is its orange sibling. Mechanics and levels unchanged.

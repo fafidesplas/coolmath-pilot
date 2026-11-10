@@ -1,5 +1,13 @@
 # Flip Runner — devlog
 
+## 2026-11-11 — Phase 3: the Firefly Forest (world 3)
+- Ten levels (Two of Us, Mirror Mirror, Odd One Out, Fireflies, Fast Lane, Slow Burn, Speed Run, Twin Pads, Switch, Forest Exit), 24–48 s at 500 px/s, all solver-verified with 3 stars. 256 checks in `simtest`.
+- **Twin:** two lanes with a divider (kit: `twinRoom`, `laneSpikes`, `twinPortal`, `twinExit`); lanes of different heights make one bat land before the other.
+- **Speed gates:** first built as pads lying on one surface (pick a surface, pick a speed). The solver went from 33 to 53,000 states in 1,200 steps and ran out of memory, and the levels were hard to read. They are now bands across the whole corridor: the speed depends only on where you are, so everyone reaches every column at the same time. Hazards in a zone are spaced by time.
+- A star next to a hazard (or, in twin rooms, next to a hazard of the *other* lane) needs a double flip in ~25 ms: the kit now moves every star to a safe cell and fails if there is none.
+- Density is measured in seconds with each zone's speed.
+- Not seen in a browser. Next: Fafi plays worlds 1–3; then world 4 (Night Fair: gravity switches), daily/endless, skins.
+
 ## 2026-11-10 — Phase 3: the Bell Tower (world 2)
 - Ten levels (Take Off, Weave, Scraper, Stalactites, Switchback, Pistons, Lifts, Moving Pillars, Bell Ringer, Tower Exit), 26–50 s at 470 px/s, all solver-verified with 3 stars. 181 checks in `simtest`.
 - **Moving blocks** in the sim: smoothstep path (no trig), carry when you ride them, side = wall, closing on you = `crush`, block clock stored in the flag snapshot so retries are identical.

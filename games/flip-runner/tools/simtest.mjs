@@ -133,6 +133,31 @@ function world(data) {
   }
 }
 
+// --- Speed gates (pads) ----------------------------------------------------------------
+{
+  const data = corridor(200, g => {});
+  const base = data.speed;
+  data.objects = [{ type: 'pad', x: 20, len: 3, mult: 1.35 }, { type: 'pad', x: 70, len: 3, mult: 0.75 }, { type: 'pad', x: 120, len: 3, mult: 1 }, { type: 'flag', x: 90, y: 10 }];
+  const w = world(data);
+  const runTo = (wd, col) => { for (let i = 0; i < 30000 && wd.s.x < col * 40 && !wd.s.dead; i++) wd.run(1); };
+  runTo(w, 30);
+  ok(Math.abs(w.s.speed - base * 1.35) < 1e-9, `a fast gate sets the speed to ${w.s.speed.toFixed(0)} (× 1.35)`);
+  runTo(w, 80);
+  ok(Math.abs(w.s.speed - base * 0.75) < 1e-9, `the next gate slows it to ${w.s.speed.toFixed(0)} (× 0.75)`);
+  runTo(w, 130);
+  ok(Math.abs(w.s.speed - base) < 1e-9, 'a × 1 gate restores the normal speed');
+  // the time to reach a column is the same whatever you do (so a solver and a player agree)
+  const t1 = world(data), t2 = world(data);
+  for (let i = 0; i < 700; i++) { t1.run(1); t2.run(1, () => i === 100 || i === 300); }
+  ok(t1.s.x === t2.s.x, 'the position over time does not depend on your flips (gates depend only on where you are)');
+  // dying after a flag restores the speed saved there
+  const d3 = corridor(220, g => { g[10][160] = '^'; });
+  d3.objects = [{ type: 'pad', x: 10, len: 3, mult: 1.35 }, { type: 'flag', x: 60, y: 10 }];
+  const w3 = world(d3); const resp = [];
+  for (let i = 0; i < 4000; i++) { const b = w3.s.dead; w3.run(1); if (b === 1) resp.push(w3.s.speed); }
+  ok(resp.length >= 2 && resp.every(v => Math.abs(v - base * 1.35) < 1e-9), `respawn keeps the speed of the flag (${resp.length} retries)`);
+}
+
 // --- Moving blocks -----------------------------------------------------------------------
 {
   const m = { x0: 400, y0: 200, w: 80, h: 40, dx: 0, dy: 160, per: 360 }, r = {};

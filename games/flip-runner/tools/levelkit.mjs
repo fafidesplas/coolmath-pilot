@@ -58,6 +58,37 @@ export class Cave {
     const e1 = this.rampCeil(c0, topFrom, topTo), e2 = this.rampFloor(c0, botFrom, botTo);
     return Math.max(e1, e2);
   }
+  // Two lanes for the Twin form. a and b are [first open row, last open row]; the rock
+  // between them is a divider. Lane a is the upper one.
+  twinRoom(c0, c1, a = [1, 5], b = [9, 13]) {
+    this.lane = { a, b };
+    this.room(c0, c1, a[0], b[1] + 1);
+    this.block(c0, c1, a[1] + 1, b[0] - 1);
+    return this;
+  }
+  // Spikes on the 'floor' or 'ceil' of lane 'a' or 'b'.
+  laneSpikes(which, surface, c0, c1) {
+    const l = this.lane[which], row = surface === 'floor' ? l[1] : l[0];
+    for (let c = c0; c <= c1; c++) this.put(c, row, surface === 'floor' ? '^' : 'v');
+    return this;
+  }
+  // The twin portal (inside the room); the twin takes the lane the bat is not in.
+  twinPortal(c) {
+    const m = l => Math.floor((l[0] + l[1]) / 2);
+    return this.portal(c, 'twin', [m(this.lane.a), m(this.lane.b)]);
+  }
+  // Close the lanes after the room ends: funnels back to the standard corridor, then the flip portal.
+  twinExit(c1) {
+    const e = this.funnel(c1 + 1, this.lane.a[0], 5, this.lane.b[1] + 1, 11);
+    this.portal(e + 1, 'flip');
+    return e + 4;
+  }
+  // A speed gate across the corridor at column x: from there the speed is mult times the level's
+  // speed until the next gate (1.35 = fast, 0.75 = slow, 1 = back to normal).
+  pad(x, mult, len = 3) {
+    this.objects.push({ type: 'pad', x, len, mult });
+    return this;
+  }
   floorSpikes(c0, c1) { for (let c = c0; c <= c1; c++) this.fs.add(c); return this; }
   ceilSpikes(c0, c1) { for (let c = c0; c <= c1; c++) this.cs.add(c); return this; }
   floorGapAt(c0, c1) { for (let c = c0; c <= c1; c++) this.floorGap.add(c); return this; }
@@ -92,7 +123,30 @@ export class Cave {
     return this;
   }
 
-  star(c, r) { this.objects.push({ type: 'star', x: c, y: r }); return this; }
+  // A star at (c, r), moved to the nearest column where the cell is empty and no spike is within
+  // 2 columns in the rows around it: a star on or beside a hazard needs a double flip in a few ms.
+  star(c, r) {
+    const ch = (col, row) => this.cells.get(`${col},${row}`)
+      || (this.fs.has(col) && row === this.bottom[col] - 1 ? '^' : this.cs.has(col) && row === this.top[col] ? 'v' : '.');
+    const clear = (col, base) => {
+      if (col < 0 || col >= this.cols) return false;
+      if (ch(col, r) !== '.' || r < this.top[col] || r >= this.bottom[col]) return false;
+      if (this.cells.get(`${col},${r}`) === '#') return false;
+      // in a twin room both runners share gravity, so a hazard in the other lane counts too
+      const twin = !!this.lane && this.top[col] <= this.lane.a[1] && this.bottom[col] > this.lane.b[1];
+      const reach = twin ? base + 1 : base;
+      for (let dc = -reach; dc <= reach; dc++) for (let dr = twin ? -r : -1; dr <= (twin ? ROWS : 1); dr++) { const k = ch(col + dc, r + dr); if (k === '^' || k === 'v') return false; }
+      return true;
+    };
+    let at = c, found = false;
+    for (const base of [2, 1]) {     // prefer 2 columns of clearance (3 in twin rooms), settle for 1 (2)
+      for (let d = 0; d < 12 && !found; d++) { if (clear(c + d, base)) { at = c + d; found = true; } else if (clear(c - d, base)) { at = c - d; found = true; } }
+      if (found) break;
+    }
+    if (!found) throw new Error(`no safe place for the star near column ${c}, row ${r}`);
+    this.objects.push({ type: 'star', x: at, y: r });
+    return this;
+  }
   flag(c, r) { this.objects.push({ type: 'flag', x: c, y: r }); return this; }
   flagFloor(c) { return this.flag(c, this.bottom[c] - 1); }
   flagCeiling(c) { return this.flag(c, this.top[c]); }

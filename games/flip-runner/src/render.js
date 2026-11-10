@@ -452,6 +452,34 @@ export function drawMovers(ctx, lv, mt, colors, t) {
   });
 }
 
+// Speed gates: a band across the corridor with chevrons running through it. » speeds you up
+// (warm yellow), « slows you down (sky blue): shape as well as color. Like a portal, the new
+// speed starts at the gate and lasts until the next one.
+export function drawPads(ctx, lv, t) {
+  for (const p of lv.pads) {
+    const fast = p.mult > 1, slow = p.mult < 1, w = p.x1 - p.x0, dir = slow ? -1 : 1;
+    const color = fast ? '#FFD45C' : slow ? '#5FC8FF' : '#B8F0C8';
+    ctx.save();
+    ctx.globalAlpha = 0.16 + Math.sin(t * 5) * 0.03;
+    ctx.fillStyle = color; ctx.fillRect(p.x0, 0, w, ROWS * T);
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const off = ((t * 120 * dir) % 40 + 40) % 40;
+    for (let y = -40 + off; y < ROWS * T; y += 40) {
+      for (let x = p.x0 + 14; x < p.x1 - 10; x += 22) {
+        ctx.beginPath(); ctx.moveTo(x - dir * 6, y + 8); ctx.lineTo(x + dir * 6, y + 20); ctx.lineTo(x - dir * 6, y + 32); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    for (const y of [T * 2.2, ROWS * T - T * 2.2]) {
+      rrect(ctx, p.x0 + w / 2 - 36, y - 15, 72, 30, 10);
+      ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+      text(ctx, fast ? 'FAST' : slow ? 'SLOW' : 'NORMAL', p.x0 + w / 2, y + 1, 13, C.ink, 'center', 900);
+    }
+    ctx.restore();
+  }
+}
+
 export function drawLevelStar(ctx, x, y, t, ghost) {
   const bob = Math.sin(t * 3 + x) * 3;
   if (ghost) {

@@ -59,7 +59,7 @@ export default {
     },
     {
       "type": "star",
-      "x": 237,
+      "x": 238,
       "y": 7
     },
     {

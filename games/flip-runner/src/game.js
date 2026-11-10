@@ -8,7 +8,7 @@ import { FX, drawStarShape } from './fx.js';
 import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
-import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawGlider, drawPortal, FORM_STYLE, drawFlag, drawGoal, drawLevelStar, drawMovers, rrect, text } from './render.js';
+import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawGlider, drawPortal, FORM_STYLE, drawFlag, drawGoal, drawLevelStar, drawMovers, drawPads, rrect, text } from './render.js';
 import { isSolid, tileAt, TILE } from './level.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel, isOpen } from '../levels/index.js';
 
@@ -426,6 +426,10 @@ export class Game {
           if (s.b2) this.scarf2.reset(s.b2.x + RUNNER.w / 2 - 8, s.b2.y + RUNNER.h / 2);
           break;
         }
+        case 'pad':
+          snd.play('pad', { fast: e.mult > 1 });
+          fx.burst(e.x, e.y, 10, e.mult > 1 ? C.star : '#5FC8FF', e.mult > 1 ? 300 : 120, 'spark', 0.3, 3, 0);
+          break;
         case 'goal': this.onComplete(); break;
       }
     }
@@ -722,6 +726,7 @@ export class Game {
     ctx.translate(-cam, 0);
     lv.flags.forEach((f, i) => { if (f.x > cam - 60 && f.x < cam + VIEW_W + 60) { const p = this.flagSurface(i); drawFlag(ctx, f.x, p.y, p.g, i <= s.flag, t); } });
     if (lv.goal > cam - 120 && lv.goal < cam + VIEW_W + 120) drawGoal(ctx, lv.goal, t);
+    if (lv.pads.length) drawPads(ctx, lv, t);
     if (lv.movers.length) drawMovers(ctx, lv, s.mt + (this.paused || s.done ? 0 : Math.min(1, this.acc / STEP)), this.colors, t);
     lv.portals.forEach((p, i) => { if (i > s.portal && p.x > cam - 60 && p.x < cam + VIEW_W + 60) drawPortal(ctx, p.x, p.form, t); });
     const saved = this.save.stars[this.level.id] || [0, 0, 0];

@@ -20,12 +20,22 @@ import w2l07 from './w2l07.js';
 import w2l08 from './w2l08.js';
 import w2l09 from './w2l09.js';
 import w2l10 from './w2l10.js';
+import w3l01 from './w3l01.js';
+import w3l02 from './w3l02.js';
+import w3l03 from './w3l03.js';
+import w3l04 from './w3l04.js';
+import w3l05 from './w3l05.js';
+import w3l06 from './w3l06.js';
+import w3l07 from './w3l07.js';
+import w3l08 from './w3l08.js';
+import w3l09 from './w3l09.js';
+import w3l10 from './w3l10.js';
 import proto from './proto.js';
 
 export const WORLDS = [
   { name: 'Crystal Cave', levels: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06, w1l07, w1l08, w1l09, w1l10] },
   { name: 'Bell Tower', levels: [w2l01, w2l02, w2l03, w2l04, w2l05, w2l06, w2l07, w2l08, w2l09, w2l10] },
-  { name: 'Firefly Forest', levels: [] },
+  { name: 'Firefly Forest', levels: [w3l01, w3l02, w3l03, w3l04, w3l05, w3l06, w3l07, w3l08, w3l09, w3l10] },
   { name: 'Night Fair', levels: [] },
 ];
 

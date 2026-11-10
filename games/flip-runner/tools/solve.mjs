@@ -7,12 +7,15 @@ import { parseLevel } from '../src/level.js';
 import { initialState, cloneState, advance, bankedCount } from '../src/sim.js';
 import { RUNNER, HZ } from '../src/config.js';
 
+// Positions closer than 6 px are merged: speed pads make x depend on when you hit them, and
+// without this the number of states explodes. Merging only prunes alternatives; the route that is
+// returned is still a real sequence of inputs, so it replays exactly.
 const keyOf = s => {
   let mask = 0;
   for (let i = 0; i < s.stars.length; i++) if (s.stars[i]) mask |= 1 << i;
   const coyote = Math.min(s.step - s.lastGround, RUNNER.coyoteSteps + 1);
   const b = s.b2 ? `${Math.round(s.b2.y * 2)}|${Math.round(s.b2.vy)}|${Math.min(s.step - s.b2.lastGround, RUNNER.coyoteSteps + 1)}` : '';
-  return `${s.form}|${s.g}|${s.on}|${Math.round(s.y * 2)}|${Math.round(s.vy)}|${coyote}|${mask}|${b}`;
+  return `${s.form}|${s.g}|${s.on}|${Math.round(s.x / 6)}|${Math.round(s.speed)}|${Math.round(s.y * 2)}|${Math.round(s.vy)}|${coyote}|${mask}|${b}`;
 };
 
 export function solve(data, { maxSteps = 120 * 180 } = {}) {
@@ -46,6 +49,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
       node.s = { step: ns.step, x: ns.x, form: ns.form, done: false };
     }
     layer = [...next.values()];
+    if (process.env.SOLVE_DEBUG && step % 400 === 0) console.error('step', step, 'states', layer.length);
     all.push(layer);
   }
   if (!goals.length) return { ok: false, layers: all.length, furthestCol: Math.floor(furthest / 40) };

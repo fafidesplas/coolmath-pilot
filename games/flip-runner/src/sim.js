@@ -308,6 +308,16 @@ export function advance(lv, s, bits, emit = null) {
   if (hz) { die(s, s, hz, emit); return; }
   if (b2) { const h2 = hazard(lv, b2); if (h2) { die(s, b2, h2, emit); return; } }
 
+  // Speed gates (pads): from the gate's column on, the speed is the level's speed times its
+  // multiplier, until the next gate. It depends only on where you are, so the time you reach
+  // any point of the level is the same for every route.
+  if (lv.pads.length && s.form !== 'glider') {
+    let mult = 1;
+    for (const p of lv.pads) { if (s.x + R.w / 2 >= p.x0) mult = p.mult; else break; }
+    const sp = lv.speed * mult;
+    if (s.speed !== sp) { s.speed = sp; if (emit) emit('pad', { mult, x: s.x + R.w / 2, y: s.y + R.h / 2 }); }
+  }
+
   grabStars(lv, s, s, emit);
   if (b2) grabStars(lv, s, b2, emit);
 

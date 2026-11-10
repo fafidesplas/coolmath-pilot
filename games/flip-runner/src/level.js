@@ -17,17 +17,20 @@ export function parseLevel(data) {
     }
   });
 
-  const lv = { id: data.id, cols, tiles, speed: data.speed, stars: [], flags: [], hints: [], portals: [], movers: [], goal: cols * T };
+  const lv = { id: data.id, cols, tiles, speed: data.speed, stars: [], flags: [], hints: [], portals: [], movers: [], pads: [], goal: cols * T };
   for (const o of data.objects || []) {
     if (o.type === 'star') lv.stars.push({ x: (o.x + 0.5) * T, y: (o.y + 0.5) * T });
     else if (o.type === 'flag') lv.flags.push({ x: o.x * T, ty: o.y });
     else if (o.type === 'goal') lv.goal = o.x * T;
     else if (o.type === 'hint') lv.hints.push({ x: o.x * T, label: o.label || 'TAP!' });
     else if (o.type === 'mover') lv.movers.push({ x0: o.x * T, y0: o.y * T, w: o.w * T, h: o.h * T, dx: (o.dx || 0) * T, dy: (o.dy || 0) * T, per: Math.round((o.period || 3) * HZ), ph: Math.round((o.phase || 0) * HZ) });
+    // a speed gate across the whole corridor: from its column on, the speed is the level's speed times mult
+    else if (o.type === 'pad') lv.pads.push({ x0: o.x * T, x1: (o.x + (o.len || 3)) * T, mult: o.mult });
     else if (o.type === 'portal') lv.portals.push({ x: o.x * T, form: o.form, lanes: o.lanes || null });
   }
   lv.flags.sort((a, b) => a.x - b.x);
   lv.portals.sort((a, b) => a.x - b.x);
+  lv.pads.sort((a, b) => a.x0 - b.x0);
   lv.start = data.start;
   // Current and previous rectangles of every moving block (rewritten each step by the sim).
   lv.mv = lv.movers.map(m => ({ x: m.x0, y: m.y0, w: m.w, h: m.h }));
