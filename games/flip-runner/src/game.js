@@ -10,7 +10,7 @@ import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
 import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawGlider, drawPortal, FORM_STYLE, drawFlag, drawGoal, drawLevelStar, rrect, text } from './render.js';
 import { isSolid, tileAt, TILE } from './level.js';
-import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
+import { WORLDS, LEVELS_PER_WORLD, findLevel, isOpen } from '../levels/index.js';
 
 const fmt = s => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
 const easeOutBack = k => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;
@@ -42,6 +42,7 @@ export class Game {
     this.pressed = null;
     this.mouse = { x: VIEW_W / 2, y: VIEW_H / 2 };
     this.fixedHz = Number(this.params.get('hz')) || 0;
+    this.debug = this.params.has('debug');     // ?debug: every level open, flag jumps, live tuning
     this.lastRecording = null;
     this.titleFlip = 1; this.titleG = 1;
 
@@ -226,6 +227,7 @@ export class Game {
 
   onKey(code) {
     this.sound.unlock();
+    if (this.debug && this.screen === 'playing' && !this.paused && this.debugKey(code)) return;
     if (this.screen === 'playing' && (code === 'KeyP' || code === 'Escape')) {
       if (this.sim && !this.sim.s.done) { this.pause(!this.paused); this.sound.play('click'); }
       return;
@@ -582,6 +584,45 @@ export class Game {
     ctx.restore();
   }
 
+  // ---- Debug (?debug): level select with everything open, flag jumps, live tuning ------
+
+  debugKey(code) {
+    const s = this.sim.s, lv = this.sim.lv;
+    const list = WORLDS.flatMap(w => w.levels);
+    const here = list.indexOf(this.level);
+    const jump = i => {
+      this.sim.gotoFlag(i);
+      this.prevX = s.x; this.prevY = s.y; this.flipK = s.g;
+      this.cam = this.cameraTarget();
+      this.scarf.reset(s.x + RUNNER.w / 2 - 8, s.y + RUNNER.h / 2);
+    };
+    switch (code) {
+      case 'Period': jump(Math.min(lv.flags.length - 1, s.flag + 1)); return true;
+      case 'Comma': jump(Math.max(-1, s.flag - 1)); return true;
+      case 'Minus': RUNNER.gravity = Math.max(2000, RUNNER.gravity - 500); return true;
+      case 'Equal': RUNNER.gravity += 500; return true;
+      case 'BracketLeft': s.speed = Math.max(200, s.speed - 20); s.snap.speed = s.speed; return true;
+      case 'BracketRight': s.speed += 20; s.snap.speed = s.speed; return true;
+      case 'Digit9': RUNNER.kick = Math.max(0, RUNNER.kick - 50); return true;
+      case 'Digit0': RUNNER.kick += 50; return true;
+      case 'KeyK': if (here >= 0 && list[here + 1]) this.startLevel(list[here + 1]); return true;
+      case 'KeyJ': if (here > 0) this.startLevel(list[here - 1]); return true;
+      default: return false;
+    }
+  }
+
+  drawDebug() {
+    const ctx = this.ctx, s = this.sim.s;
+    const lines = [
+      `DEBUG  ${this.level.id}  col ${Math.floor(s.x / 40)} / ${this.sim.lv.cols}  flag ${s.flag + 1}/${this.sim.lv.flags.length}`,
+      `speed ${Math.round(s.speed)} [ ]   gravity ${RUNNER.gravity} - =   kick ${RUNNER.kick} 9 0`,
+      `flags , .    level J K    R restart`,
+    ];
+    rrect(ctx, 10, VIEW_H - 92, 520, 82, 10);
+    ctx.fillStyle = 'rgba(27,20,48,0.8)'; ctx.fill();
+    lines.forEach((l, i) => text(ctx, l, 22, VIEW_H - 74 + i * 24, 16, i ? '#fff' : C.star, 'left', 700));
+  }
+
   toggleMusic() {
     this.settings.music = !this.settings.music;
     this.sound.setMusic(this.settings.music);
@@ -626,6 +667,14 @@ export class Game {
       }
       const stars = this.save.stars[level.id] || [0, 0, 0];
       const done = this.save.done[level.id];
+      if (!this.debug && !isOpen(level, this.save.done)) {
+        rrect(ctx, x, y + 6, 130, 130, 22); ctx.fillStyle = C.ink; ctx.fill();
+        rrect(ctx, x, y, 130, 130, 22); ctx.fillStyle = '#4A3F66'; ctx.fill();
+        ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+        text(ctx, String(i + 1), x + 65, y + 50, 40, '#8E84AD');
+        this.drawLock(x + 65, y + 96, 1);
+        continue;
+      }
       const isNext = level === next && !done;
       const bounce = isNext ? Math.abs(Math.sin(t * 4)) * -6 : 0;
       this.addButton({
@@ -642,7 +691,8 @@ export class Game {
         },
       });
     }
-    text(ctx, world.levels[0].name, VIEW_W / 2, VIEW_H - 45, 24, C.panel, 'center', 700);
+    const hv = this.hover && this.hover.key && this.hover.key.startsWith('level:') ? findLevel(this.hover.key.slice(6)) : null;
+    text(ctx, hv ? hv.name : world.name, VIEW_W / 2, VIEW_H - 45, 24, C.panel, 'center', 700);
   }
 
   drawWorld() {
@@ -749,6 +799,7 @@ export class Game {
         c.fillStyle = C.ink; c.beginPath(); c.moveTo(b.x + 38, b.y + 13); c.lineTo(b.x + 40, b.y + 27); c.lineTo(b.x + 27, b.y + 21); c.fill();
       } };
     if (this.screen === 'playing' && !this.paused && !s.done) { this.addButton(pause); this.addButton(restart); }
+    if (this.debug) this.drawDebug();
   }
 
   drawPanel(w, h, k = 1) {

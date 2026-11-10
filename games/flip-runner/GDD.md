@@ -1,7 +1,7 @@
 # Flip Runner — Game design document
 
 **Status:** Approved
-**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-28
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-10
 
 > A little bat has to race home before sunrise. It dashes on by itself and one button does everything: hop between the floor and the ceiling (bats love hanging upside down), spread its wings to glide, or steer it and its sibling at once. Read the cave, time the press, thread the gaps.
 
@@ -123,21 +123,21 @@ The runner always moves forward on its own. A **portal** changes its form instan
   - **World 4 — Night Fair (31–40):** gravity switches (31), then levels that chain all three forms through portals.
 - **Form rhythm:** a level spends at least 6 s in a form before the next portal, so each form has room to breathe. From the middle of world 2, most levels use two forms; from world 4, three.
 - **Teaching order:** each element first appears with no other danger nearby and a generous window, then with a twist (on the ceiling, at speed, in a tall room), then combined with older elements.
-- **Density:** something to react to every 0.6–1 s; no empty stretch longer than about 1.5 s after the first 2 s of a level.
+- **Density:** something to react to every 0.6–1 s; no empty stretch longer than about 1.5 s after the first 2 s of a level and before the last 2 s (the run-in to the goal). `simtest` measures this on the level map (columns with spikes, gaps, platforms or steps count as busy) and fails a level above 1.6 s.
 - **Difficulty curve:** a level gets harder with shorter windows between flips, taller rooms (longer flips to plan ahead), flips that must happen in the middle of a sequence, higher speed, and stars placed off the safe route. Each world starts easier than the end of the last. The first level of each world has no star off the safe route.
-- **Fair-play rules:** every obstacle and every portal is visible for at least 1.2 s before it must be acted on; a portal is never followed by an obstacle that needs the new form in under 0.8 s; no blind drops (the landing surface is always on screen); no flip needs a window shorter than 120 ms (checked by the solver).
+- **Fair-play rules:** every obstacle and every portal is visible for at least 1.2 s before it must be acted on; a portal is never followed by an obstacle that needs the new form in under 0.8 s; no blind drops (the landing surface is always on screen); no flip needs a window shorter than 120 ms (checked by the solver); **no hazard within 2 columns of a 1-tile step** (a step-up lifts the bat into the band under the next ceiling, so a spike right at the step is a trap that looks like a plain obstacle); **a star never sits on a hazard tile**, and never needs a double flip in under 200 ms (found while building the Crystal Cave, where three stars did); no tile where both surfaces of a 2-tile lane carry spikes in the same column.
 - **Stars:** placed where grabbing one needs a riskier flip or an extra flip (a deeper dive in glider form, a lane detour in twin form), never a frame-perfect one. Stars sit on surfaces or on a natural glider path, not in mid-air spots that need a double flip.
-- **First 10 levels (Crystal Cave):**
-  1. **First Flip** (20 s) — 3 s of flat floor with a pulsing "tap" icon, then one floor gap with a ceiling over it, then floor spikes only. No one who taps when told can die.
-  2. **Ping Pong** — spikes alternate between floor and ceiling in an even rhythm.
-  3. **Mind the Gap** — open sections where flipping at the wrong moment means flying out of the screen.
-  4. **Islands** — platforms in the middle of the room; land on top, then on the underside.
-  5. **Tall Room** — corridor heights change; taller rooms need earlier taps.
-  6. **Squeeze** — the corridor narrows to 2 tiles: quick, short flips.
-  7. **Star Bait** — the safe route and the star route split visibly.
-  8. **Zigzag** — double flips: land and flip again at once.
-  9. **Long Drop** — tall shafts with spikes at the far end: time when you leave so you land past them.
-  10. **Cave Exit** (50 s) — everything from the world, three flags.
+- **First 10 levels (Crystal Cave).** All ten are built and verified by the solver (3 stars reachable, tightest flip window 150–300 ms except level 10 at 200 ms). Each is 28–53 s at 440 px/s (11 columns per second), with 2–4 flags. Hazards are crystal shards; "lane" means the space above or below a platform.
+  1. **First Flip** (28 s) — hint cues for the first taps, then floor and ceiling spikes, floor gaps, a tall room, ping pong, an open ceiling (do not flip there), a squeeze with a 1-tile step, and islands. No one who taps when told can die. Built by `tools/build-slice.mjs`.
+  2. **Ping Pong** (29 s) — spikes alternate floor/ceiling in an even beat: every 1 s, then every 0.73 s, then an 8-column beat; pairs on the same side break the rhythm in the middle; a star on the ceiling between floor groups.
+  3. **Mind the Gap** (29 s) — floor gaps (be on the ceiling), ceiling gaps (be on the floor), a zigzag of alternating gaps, wide gaps of 7–8 columns where mid-air flipping can't help, and gaps mixed with spikes.
+  4. **Islands** (29 s) — platforms floating in the corridor. Run on top, or hang under them: four islands, from two thin lanes to a "zipper" with hazards on every surface of both lanes, 6 columns apart. Stars on the island tops and undersides.
+  5. **Tall Room** (29 s) — the corridor grows from 6 to 9 to 13 tiles and back; taller rooms mean longer flights, so you tap earlier. Leaving the 9-tile room is a 3-tile wall for the ceiling (be on the floor); the 13-tile shaft is left by 1-tile steps.
+  6. **Squeeze** (29 s) — a 2-tile tunnel (the ceiling wall is 3 tiles: enter on the floor), a 3-tile tunnel, and a wavy 2-tile tunnel that shifts one tile at a time (hazards keep 4 columns from each step).
+  7. **Star Bait** (29 s) — two splits where the star route is visibly different: an island whose upper lane has the stars and a busy rhythm while the lower lane is calm, and a 1-tile tunnel with a star inside whose exit is a trap (spikes right after it).
+  8. **Zigzag** (29 s) — hazards alternate every 7 columns in a 4-tile and a 5-tile corridor: land and flip again at once; stars sit on a free surface between hazards.
+  9. **Long Drop** (29 s) — 13-tile and 11-tile shafts with hazards on the far side 10–12 columns apart: time when you leave so you land past them.
+  10. **Cave Exit** (53 s, 3 flags) — the exam: ping pong, gaps, an island, a tall room, a squeeze, a zigzag and a long drop in one run.
 - **First level of each later world:**
   - 11. **Take Off** — a Glider-only cave with wide gaps between pillars and a "HOLD!" cue at the portal.
   - 21. **Two of Us** — after a short flip warm-up, a Twin portal; at first the two lanes have the same spikes, then they start to differ.
@@ -278,7 +278,10 @@ Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, b
 - **Modules (`src/`):** `main.js` (boot), `game.js` (loop, screens, HUD), `sim.js` (deterministic runner world: movement, flips, deaths, stars, flags; no DOM), `level.js` (parser), `chunks.js` (endless and daily chain from a seed), `render.js` (strip cache, the bat and its scarf, objects, sky and parallax), `fx.js`, `input.js` (keys and pointer to a press queue plus a held state), `audio.js`, `record.js`, `save.js`, `analytics.js`.
 - **Input bits:** each 120 Hz step gets two bits: "pressed this step" and "held". Recordings store them, so glider runs replay exactly.
 - **Solver (`tools/`):** a one-button game can be searched. From each state the solver tries "act now" or "wait one step" (act = press in flip and twin form, hold in glider form), with memoization on (column, gravity, y, speed), and reports whether the level is beatable, the tightest flip window on the easiest route, and which stars are reachable. It runs in Node on the same `sim.js`. A level is not done until the solver passes it and the tightest window is at least 120 ms. Windows can have holes (flipping late can also work by entering a room in mid-air), so the solver builds its route by flipping in the middle of the widest good window each time, and reports that width.
-- **Level editor (phase 3, debug only):** paint tiles, place objects and flags, scrub a playtest from any column, run the solver with one click, and export the level module. 40 levels of ~320 columns plus 30 chunks can't be maintained as hand-typed text.
+- **Level kit (phase 3):** levels are small programs, not hand-typed grids. `tools/levelkit.mjs` has a `Cave` class (`room`, `floorSpikes`, `ceilSpikes`, `floorGapAt`, `ceilGapAt`, `island`, `rampFloor`, `rampCeil`, `star`, `flagFloor`, `hint`, `portal`, `goal`) that renders the 16-row text grid, and `tools/build-world1.mjs` builds levels 2–10 with it. Any level that needs a change is edited as code and rebuilt, so the solver can re-check it in under a second.
+- **Level tools (`tools/`):** `levels.mjs` (solve every level and print time, stars, flips, tightest window and longest plain stretch), `stars.mjs` (is each star reachable on its own?), `deaths.mjs` (where and how the explored routes die: the way to find the trap in a level that can't be beaten), `show.mjs` (print a slice of a map). `simtest.mjs` runs the mechanics checks and, for every level, the rules above plus a stored solution (`levels/solutions/<id>.json`, with the solver's results) that must reach the goal, bank all three stars and replay identically; `--write` re-solves everything and rewrites them.
+- **Debug mode (`?debug`):** every level open; `.` and `,` jump to the next or previous checkpoint, `J` and `K` change level, `[` `]` change the forward speed by 20 px/s, `-` `=` change gravity by 500, `9` `0` change the flip kick by 50, all live, with the numbers on screen. This is the "debug level select and live tuning" that `PHASES.md` asks for in skill games.
+- **Visual level editor:** moved to **Later**. The level kit and the solver cover world 1; a visual editor is worth building only if the endless chunks (30 hand-made pieces) turn out to be easier to paint than to program.
 - **Save keys:** `cm_flip-runner_save` → `{ v: 1, stars: { "w1l01": [1,0,1] }, best: { "w1l01": { time, deaths } }, endless: { best }, daily: { last, streak, best }, skin, tut }` and `cm_flip-runner_settings` → `{ v: 1, music: true, sfx: true }`. Reads in `try/catch`.
 - **Testing hook:** `window.game` with `screen`, `level`, `score`, `start()`, `restart()`, `win()` (debug only).
 - **Riskiest piece:** input latency and the feel of the flip on a Chromebook trackpad. Prove it first in phase 2 with the bare runner on a test corridor, measuring time from input event to the first frame that shows the flip.
@@ -286,7 +289,7 @@ Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, b
 
 ## 13. Scope
 - **v1:** the runner, the three forms (Flip, Glider, Twin) and all mechanics in section 3; 40 levels in 4 worlds; endless mode; daily run with streak and result line; 24 skins; full shell, saving, audio, analytics.
-- **Later:** more forms (a Bounce form where the button jumps); ghost of your best run (cheap thanks to deterministic replays); player level editor with shareable codes.
+- **Later:** a visual level editor (see 12); more forms (a Bounce form where the button jumps); ghost of your best run (cheap thanks to deterministic replays); player level editor with shareable codes.
 - **Cut:**
   - **Mid-air flips:** they remove the timing that the whole game is about.
   - **Lives and game over** in levels: against the quick-death pillar.
@@ -304,6 +307,7 @@ Music: yes, one short synthesized loop per world (4 bars of kick, snare, hats, b
 | Should endless chunks be hand-made only, or also cut from levels? | Hand-made with the level editor, 30 chunks for v1 (8 per tier, 6 neutral) | Fafi | Open |
 
 ## 15. Changelog
+- 2026-11-10 — **Phase 3, world 1 (Crystal Cave).** Levels 1–10 built and solver-verified; the forms prototype leaves world 1 and stays as the debug level `proto` (the Glider and Twin worlds will get their own opener levels). New fair-play rules found while building: no hazard within 2 columns of a step, stars never on hazards, no lane with spikes on both surfaces in one column. Density rule now exempts the first and last 2 s and is checked by `simtest`. Levels open one by one (a level opens when the previous is done). Tools: level kit, `levels.mjs`, `stars.mjs`, `deaths.mjs`, `show.mjs`, debug mode; the visual editor moves to Later.
 - 2026-10-28 — **Bat theme** (Fafi: the game looked flat and generic): the runner is a baby bat racing home before sunrise; worlds renamed Crystal Cave, Bell Tower, Firefly Forest and Night Fair (they replace the brief's Lab, Caves, Sky Factory and Space Station), with a sky that warms towards dawn; new night palette; crystal-shard spikes, lantern checkpoints, a moonlit home roost as the goal, the glider is the bat with its wings spread, the twin is its orange sibling. Mechanics and levels unchanged.
 - 2026-10-26 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-22 — Redesign around **forms** after the forms prototype playtested better than flip-only: portals switch between Flip, Glider (hold to climb) and Twin (two runners, one tap); worlds now introduce Glider (world 2) and Twin (world 3), world 4 mixes all; moving blocks move to level 15, speed pads to 25; no-flip zones cut; input sends press and held bits; analytics add the form on quits; two form accent colors. Status stays In review: the team needs to read the new design.

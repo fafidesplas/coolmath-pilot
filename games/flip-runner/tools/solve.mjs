@@ -20,6 +20,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
   let layer = [{ s: initialState(lv), parent: null, press: false, kids: null }];
   const all = [layer];
   const goals = [];
+  let furthest = 0;        // how far any route got, to debug levels that can't be beaten
 
   for (let step = 0; step < maxSteps && layer.length; step++) {
     const next = new Map();
@@ -33,6 +34,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
         const s = cloneState(ns);
         advance(lv, s, press ? (glider ? 2 : 1) : 0);
         if (s.dead > 0) continue;
+        if (s.x > furthest) furthest = s.x;
         if (s.done) { const g = { s, parent: node, press, kids: [] }; goals.push(g); node.kids[press ? 1 : 0] = g; continue; }
         const k = keyOf(s);
         let child = next.get(k);
@@ -43,7 +45,7 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
     layer = [...next.values()];
     all.push(layer);
   }
-  if (!goals.length) return { ok: false, layers: all.length };
+  if (!goals.length) return { ok: false, layers: all.length, furthestCol: Math.floor(furthest / 40) };
 
   // Most stars any route can bank, then mark the nodes that can still reach
   // a goal with that many stars (backwards over the layers).
@@ -108,6 +110,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const r = solve(data);
   console.log(r.ok
     ? `${id}: beatable, ${r.stars}/3 stars, ${r.time.toFixed(2)} s, ${r.presses.length} flips, tightest window ${r.tightestMs} ms  (${Date.now() - t0} ms)`
-    : `${id}: NOT beatable`);
+    : `${id}: NOT beatable (best route reaches column ${r.furthestCol})`);
   if (r.ok && process.argv.includes('-v')) for (const w of r.windows) console.log(`  flip at column ${w.col}: window ${w.ms} ms`);
 }

@@ -1,14 +1,14 @@
-// Headless checks for the runner, plus the solver on every level.
-//   node tools/simtest.mjs          run the checks and replay the solution files
-//   node tools/simtest.mjs --write  also (re)write levels/solutions/*.json from the solver
+// Headless checks for the runner, plus the rules every level must pass.
+//   node tools/simtest.mjs          mechanics checks, then replay every stored solution (fast)
+//   node tools/simtest.mjs --write  also re-solve every level and rewrite levels/solutions/*.json
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { parseLevel } from '../src/level.js';
 import { initialState, advance, bankedCount } from '../src/sim.js';
 import { HZ, RUNNER } from '../src/config.js';
 import { encodeRecording, decodeRecording } from '../src/record.js';
 import { solve, framesOf } from './solve.mjs';
-import w1l01 from '../levels/w1l01.js';
-import proto from '../levels/proto.js';
+import { loadAll, longestClear } from './levels.mjs';
+import { WORLDS, DEBUG_LEVELS } from '../levels/index.js';
 
 const WRITE = process.argv.includes('--write');
 let failed = 0;
@@ -121,7 +121,7 @@ function world(data) {
 }
 
 { // Twin: the second runner always takes the other lane, whichever one you enter
-  const data = proto;
+  const data = DEBUG_LEVELS.proto;
   const lv = parseLevel(data);
   for (const [label, g] of [['ceiling', -1], ['floor', 1]]) {
     const s = initialState(lv);
@@ -132,19 +132,23 @@ function world(data) {
   }
 }
 
-// --- Levels: solver + recorded solutions -----------------------------------------
+// --- Levels: rules, solver results and recorded solutions ----------------------------
+// Rules (GDD 6): three stars, flags, a sensible length, no plain stretch over ~1.5 s,
+// the solver's tightest flip window at least 120 ms, and a recorded solution that
+// reaches the goal, banks every star and replays identically.
 
-for (const data of [w1l01, proto]) {
-  const r = solve(data);
-  ok(r.ok, `${data.id} is beatable (${r.ok ? `${r.stars}/3 stars, ${r.time.toFixed(1)} s, ${r.presses.length} flips` : 'no route'})`);
-  if (!r.ok) continue;
-  ok(r.tightestMs >= 120, `${data.id} tightest window ${r.tightestMs} ms (min 120)`);
+const levels = await loadAll();
+const registered = new Set([...WORLDS.flatMap(w => w.levels), ...Object.values(DEBUG_LEVELS)].map(l => l.id));
+ok(levels.every(l => registered.has(l.id)) && levels.length === registered.size, `every level file is registered in levels/index.js (${levels.length})`);
+
+for (const data of levels) {
   const file = new URL(`../levels/solutions/${data.id}.json`, import.meta.url);
   if (WRITE) {
-    writeFileSync(file, JSON.stringify(encodeRecording(data.id, 'solo', framesOf(r))) + '\n');
-    console.log(`wrote ${data.id}.json`);
+    const r = solve(data);
+    if (!r.ok) { ok(false, `${data.id} is beatable (best route reaches column ${r.furthestCol})`); continue; }
+    writeFileSync(file, JSON.stringify({ ...encodeRecording(data.id, 'solo', framesOf(r)), stars: r.stars, tightestMs: r.tightestMs, time: Math.round(r.time * 10) / 10 }) + '\n');
   }
-  if (!existsSync(file)) { ok(false, `${data.id}.json missing`); continue; }
+  if (!existsSync(file)) { ok(false, `${data.id}: no solution file (run with --write)`); continue; }
   const rec = JSON.parse(readFileSync(file, 'utf8'));
   const replay = () => {
     const lv = parseLevel(data), s = initialState(lv);
@@ -152,8 +156,16 @@ for (const data of [w1l01, proto]) {
     return s;
   };
   const a = replay(), b = replay();
-  ok(a.done && a.deaths === 0, `${data.id} recording reaches the goal without dying (${bankedCount(a)} stars)`);
+  const stars = data.objects.filter(o => o.type === 'star').length;
+  const flags = data.objects.filter(o => o.type === 'flag').length;
+  const clear = longestClear(data);
+  ok(a.done && a.deaths === 0, `${data.id} solution reaches the goal without dying`);
+  ok(bankedCount(a) === stars && stars === 3, `${data.id} solution banks all ${stars} stars (3 per level)`);
   ok(a.step === b.step && a.x === b.x, `${data.id} replay is deterministic`);
+  ok(rec.tightestMs >= 120, `${data.id} tightest flip window ${rec.tightestMs} ms (min 120)`);
+  ok(flags >= 2 && flags <= 4, `${data.id} has ${flags} checkpoints`);
+  ok(rec.time >= 15 && rec.time <= 60, `${data.id} takes ${rec.time} s (15–60)`);
+  if (!DEBUG_LEVELS[data.id]) ok(clear <= 1.6, `${data.id} longest plain stretch ${clear.toFixed(1)} s (max 1.6)`);   // the forms prototype is a debug level
 }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');

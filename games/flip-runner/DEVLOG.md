@@ -1,5 +1,12 @@
 # Flip Runner — devlog
 
+## 2026-11-10 — Phase 3: the Crystal Cave (world 1)
+- Phase 3a tools, per `PHASES.md` for skill games: a level kit (`tools/levelkit.mjs`, levels as programs), `levels.mjs` / `stars.mjs` / `deaths.mjs` / `show.mjs` around the solver, and `?debug` in the game (every level open, jump between checkpoints, live gravity/speed/kick).
+- Phase 3b: levels 2–10 built (Ping Pong, Mind the Gap, Islands, Tall Room, Squeeze, Star Bait, Zigzag, Long Drop, Cave Exit). All ten pass `simtest`: 3 stars reachable, tightest flip window ≥150 ms, no plain stretch over 1.6 s, stored solution replays identically. 96 checks.
+- Found while building: a hazard right next to a 1-tile step is a trap (the step lifts the bat under the next ceiling spike), stars on hazard tiles need a 25 ms double flip, and an exit with no ramps is a wall of 3–4 tiles. All now rules in the GDD.
+- Levels open one by one now; the forms prototype is the debug level `proto`.
+- Not seen in a browser. Next: Fafi plays world 1 (the gate for 3b), then world 2 (Glider) and 3 (Twin), the daily/endless, skins.
+
 ## 2026-10-28 — Bat theme
 - Fafi: the game looked flat and generic. New theme: a lilac baby bat racing home before sunrise. It explains the mechanics: bats live upside down (Flip), fly (Glider: the bat spreads its wings) and travel with family (Twin: its orange sibling).
 - Worlds renamed Crystal Cave, Bell Tower, Firefly Forest, Night Fair, each with a night sky gradient that warms towards dawn, two silhouette layers (stalactites, bells, trees, a ferris wheel), the moon and drifting motes of light instead of speed lines.

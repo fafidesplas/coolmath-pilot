@@ -274,6 +274,21 @@ export function advance(lv, s, bits, emit = null) {
 
 export const bankedCount = s => s.stars.reduce((n, v) => n + (v === 2 ? 1 : 0), 0);
 
+// Debug (?debug): put the runner at checkpoint i as if it had just passed it
+// (i = -1: the start). Used by the debug keys, never by normal play.
+export function gotoFlag(lv, s, i) {
+  if (i < 0) { Object.assign(s, initialState(lv), { step: s.step }); return; }
+  const f = lv.flags[i];
+  const col = Math.floor(f.x / T);
+  const g = isSolid(lv, col, f.ty + 1) ? 1 : -1;
+  const p = standingAt(col, f.ty, g);
+  s.x = p.x; s.y = p.y; s.g = g; s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99;
+  s.dead = 0; s.flag = i; s.form = 'flip'; s.b2 = null; s.portal = -1;
+  for (let k = 0; k < lv.portals.length; k++) if (lv.portals[k].x <= f.x) { s.portal = k; setForm(lv, s, lv.portals[k], null); }
+  s.snap = snapshot(s, p.x, p.y, g);
+  if (s.b2) s.snap.b2 = spawnTwin(lv, { x: p.x, g, step: s.step }, s.lane);
+}
+
 // Convenience wrapper used by the game: owns the level and an event list.
 export class Sim {
   constructor(data) {
@@ -288,6 +303,7 @@ export class Sim {
   step(bits) {
     advance(this.lv, this.s, bits, this.emit);
   }
+  gotoFlag(i) { gotoFlag(this.lv, this.s, i); }
   forceWin() {
     if (this.s.done) return;
     this.s.done = true;
