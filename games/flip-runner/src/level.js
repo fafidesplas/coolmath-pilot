@@ -23,7 +23,7 @@ export function parseLevel(data) {
     else if (o.type === 'flag') lv.flags.push({ x: o.x * T, ty: o.y });
     else if (o.type === 'goal') lv.goal = o.x * T;
     else if (o.type === 'hint') lv.hints.push({ x: o.x * T, label: o.label || 'TAP!' });
-    else if (o.type === 'mover') lv.movers.push({ x0: o.x * T, y0: o.y * T, w: o.w * T, h: o.h * T, dx: (o.dx || 0) * T, dy: (o.dy || 0) * T, per: Math.round((o.period || 3) * HZ) });
+    else if (o.type === 'mover') lv.movers.push({ x0: o.x * T, y0: o.y * T, w: o.w * T, h: o.h * T, dx: (o.dx || 0) * T, dy: (o.dy || 0) * T, per: Math.round((o.period || 3) * HZ), ph: Math.round((o.phase || 0) * HZ) });
     else if (o.type === 'portal') lv.portals.push({ x: o.x * T, form: o.form, lanes: o.lanes || null });
   }
   lv.flags.sort((a, b) => a.x - b.x);

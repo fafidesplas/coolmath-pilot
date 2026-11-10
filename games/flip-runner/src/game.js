@@ -41,6 +41,7 @@ export class Game {
     this.hover = null;
     this.pressed = null;
     this.mouse = { x: VIEW_W / 2, y: VIEW_H / 2 };
+    this.worldTab = 0;                          // which world the level select shows
     this.fixedHz = Number(this.params.get('hz')) || 0;
     this.debug = this.params.has('debug');     // ?debug: every level open, flag jumps, live tuning
     this.lastRecording = null;
@@ -147,6 +148,7 @@ export class Game {
 
   startLevel(level, replayFrames = null) {
     this.level = level;
+    this.worldTab = Math.max(0, this.levelPos(level.id).world - 1);
     this.sim = new Sim(level);
     this.replay = replayFrames;
     this.recorder = this.params.has('record') && !replayFrames ? new Recorder() : null;
@@ -559,7 +561,7 @@ export class Game {
 
     this.addButton({ x: VIEW_W / 2 - 160, y: 262, w: 320, h: 92, label: 'PLAY', size: 44, color: C.star, isDefault: true,
       action: () => this.startLevel(this.nextLevel()) });
-    this.addButton({ x: VIEW_W / 2 - 330, y: 378, w: 200, h: 62, label: 'LEVELS', size: 24, action: () => { this.screen = 'levels'; this.focus = -1; } });
+    this.addButton({ x: VIEW_W / 2 - 330, y: 378, w: 200, h: 62, label: 'LEVELS', size: 24, action: () => { this.openLevels(); } });
     const lockedNote = (c, b) => { text(c, b.label, b.x + b.w / 2 + 12, b.y + b.h / 2, 22, '#8E8A84'); this.drawLock(b.x + 28, b.y + b.h / 2 + 2, 0.7); };
     this.addButton({ x: VIEW_W / 2 - 100, y: 378, w: 200, h: 62, label: 'DAILY', disabled: true, draw: lockedNote, action: () => {} });
     this.addButton({ x: VIEW_W / 2 + 130, y: 378, w: 200, h: 62, label: 'ENDLESS', disabled: true, draw: lockedNote, action: () => {} });
@@ -568,6 +570,12 @@ export class Game {
     this.addButton({ key: 'music', x: VIEW_W - 250, y: 96, w: 220, h: 56, size: 22,
       label: this.settings.music ? 'MUSIC: ON' : 'MUSIC: OFF', action: () => this.toggleMusic() });
     text(ctx, 'Daily and Endless open after the Crystal Cave', VIEW_W / 2 + 115, 456, 16, col.accent, 'center', 700);
+  }
+
+  openLevels() {
+    this.worldTab = Math.max(0, this.levelPos(this.nextLevel().id).world - 1);
+    this.screen = 'levels';
+    this.focus = -1;
   }
 
   // Menus sit in the Crystal Cave too: sky, moon and silhouettes, drifting slowly.
@@ -643,16 +651,22 @@ export class Game {
     this.addButton({ x: 30, y: 26, w: 150, h: 60, label: '‹ BACK', size: 24, action: () => { this.screen = 'title'; this.focus = -1; } });
 
     WORLDS.forEach((w, i) => {
-      const x = 130 + i * 260, open = w.levels.length > 0;
-      rrect(ctx, x, 120, 240, 56, 14);
-      ctx.fillStyle = i === 0 ? C.star : '#D5D2CC'; ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
-      text(ctx, `${i + 1}  ${w.name.toUpperCase()}`, x + 120, 149, 21, C.ink);
-      if (!open) this.drawLock(x + 216, 148, 0.65);
+      const x = 130 + i * 260;
+      const first = w.levels[0];
+      const open = !!first && (this.debug || isOpen(first, this.save.done));
+      this.addButton({
+        key: `world:${i}`, x, y: 120, w: 240, h: 56, r: 14, disabled: !open,
+        color: i === this.worldTab ? C.star : '#fff',
+        action: () => { this.worldTab = i; this.focus = -1; },
+        draw: (c, b) => {
+          text(c, `${i + 1}  ${w.name.toUpperCase()}`, b.x + 120, b.y + 29, 21, open ? C.ink : '#8E8A84');
+          if (!open) this.drawLock(b.x + 216, b.y + 28, 0.65);
+        },
+      });
     });
 
     const next = this.nextLevel();
-    const world = WORLDS[0];
+    const world = WORLDS[this.worldTab];
     for (let i = 0; i < LEVELS_PER_WORLD; i++) {
       const col = i % 5, row = Math.floor(i / 5);
       const x = 255 + col * 160, y = 230 + row * 200;
@@ -867,7 +881,7 @@ export class Game {
     if (e < 0.35) return;
     const by = y + 380;
     const pos = this.levelPos(this.level.id);
-    const nextLevel = WORLDS[pos.world - 1].levels[pos.level];
+    const nextLevel = WORLDS[pos.world - 1].levels[pos.level] || (WORLDS[pos.world] && WORLDS[pos.world].levels[0]) || null;
     this.addButton({ x: x + 50, y: by, w: 170, h: 64, label: 'MENU', size: 24, action: () => this.toMenu('levels') });
     this.addButton({ x: x + 235, y: by, w: 170, h: 64, label: 'RETRY', size: 24, action: () => this.startLevel(this.level) });
     this.addButton({ x: x + 420, y: by, w: 170, h: 64, label: 'NEXT ›', size: 24, color: C.star,

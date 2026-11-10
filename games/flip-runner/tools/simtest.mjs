@@ -11,6 +11,7 @@ import { loadAll, longestClear } from './levels.mjs';
 import { WORLDS, DEBUG_LEVELS } from '../levels/index.js';
 
 const WRITE = process.argv.includes('--write');
+const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);   // --write --only=w2l09,w2l10
 let failed = 0;
 const ok = (cond, msg) => { console.log(`${cond ? 'PASS' : 'FAIL'}  ${msg}`); if (!cond) failed++; };
 
@@ -178,7 +179,7 @@ ok(levels.every(l => registered.has(l.id)) && levels.length === registered.size,
 
 for (const data of levels) {
   const file = new URL(`../levels/solutions/${data.id}.json`, import.meta.url);
-  if (WRITE) {
+  if (WRITE && (!ONLY.length || ONLY.includes(data.id))) {
     const r = solve(data);
     if (!r.ok) { ok(false, `${data.id} is beatable (best route reaches column ${r.furthestCol})`); continue; }
     const glides = data.objects.some(o => o.type === 'portal' && o.form === 'glider');

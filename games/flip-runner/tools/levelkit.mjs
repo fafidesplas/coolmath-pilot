@@ -22,6 +22,7 @@ export class Cave {
     this.ceilGap = new Set();
     this.cells = new Map();                    // 'c,r' -> char override
     this.objects = [];
+    this.speed = 440;                          // the level's speed: movers need it (see mover())
   }
 
   // Set the corridor for columns c0..c1 (inclusive): open rows top..bottom-1.
@@ -74,6 +75,23 @@ export class Cave {
     return this;
   }
 
+  // A block that slides from (x, y) to (x + dx, y + dy) and back, one round trip per `period` seconds.
+  // The bat runs at a constant speed, so when it reaches a block is fixed: the block's phase
+  // decides what it finds. `at` says where on its path the block is at that moment:
+  // 'start' (resting at its first position), 'far' (at the far end), 'out' (halfway, going
+  // out), 'back' (halfway, coming back). `ref` is the part of the block the bat reaches:
+  // 'left' (its left edge) or 'center'.
+  mover(x, y, w, h, dx, dy, period, at = 'start', ref = 'center') {
+    const stepsPerCol = 40 / (this.speed / 120);
+    const arriveCol = ref === 'left' ? x : x + w / 2;
+    const arrive = Math.round((arriveCol * 40 - 140) / (this.speed / 120));   // bat starts at x = 128 (+12 to its center)
+    const per = Math.round(period * 120);
+    const u = { start: 0, far: 0.5, out: 0.25, back: 0.75 }[at];
+    const ph = (((Math.round(u * per) - arrive) % per) + per) % per;
+    this.objects.push({ type: 'mover', x, y, w, h, dx, dy, period, phase: Math.round(ph / 120 * 1e6) / 1e6 });
+    return this;
+  }
+
   star(c, r) { this.objects.push({ type: 'star', x: c, y: r }); return this; }
   flag(c, r) { this.objects.push({ type: 'flag', x: c, y: r }); return this; }
   flagFloor(c) { return this.flag(c, this.bottom[c] - 1); }
@@ -81,6 +99,13 @@ export class Cave {
   hint(c, label) { this.objects.push(label ? { type: 'hint', x: c, label } : { type: 'hint', x: c }); return this; }
   portal(c, form, lanes) { this.objects.push(lanes ? { type: 'portal', x: c, form, lanes } : { type: 'portal', x: c, form }); return this; }
   goal(c) { this.objects.push({ type: 'goal', x: c }); return this; }
+
+  // Cut the map to just past the goal (never longer than it was built).
+  fit() {
+    const g = this.objects.find(o => o.type === 'goal');
+    if (g) this.cols = Math.min(this.cols, g.x + 14);
+    return this;
+  }
 
   rows() {
     const out = [];
@@ -103,6 +128,7 @@ export class Cave {
 }
 
 export function writeLevel(id, name, cave, { speed = 440, start = { x: 3, y: 10, gravity: 1 }, dir = new URL('../levels/', import.meta.url) } = {}) {
+  cave.fit();
   const rows = cave.rows();
   const level = { id, name, speed, start, tiles: rows, objects: cave.objects };
   const body = JSON.stringify(level, null, 2)

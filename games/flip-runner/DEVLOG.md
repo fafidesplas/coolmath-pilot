@@ -1,5 +1,14 @@
 # Flip Runner — devlog
 
+## 2026-11-10 — Phase 3: the Bell Tower (world 2)
+- Ten levels (Take Off, Weave, Scraper, Stalactites, Switchback, Pistons, Lifts, Moving Pillars, Bell Ringer, Tower Exit), 26–50 s at 470 px/s, all solver-verified with 3 stars. 181 checks in `simtest`.
+- **Moving blocks** in the sim: smoothstep path (no trig), carry when you ride them, side = wall, closing on you = `crush`, block clock stored in the flag snapshot so retries are identical.
+- Lesson: the bat's speed is constant, so a block's phase when you arrive is fixed; a block with a free period can sit in the middle and make the level impossible (level 6 died at column 186 for every route). The kit's `mover(..., at)` now picks the phase so the block is at an end of its path when you arrive.
+- Glider levels have no flip windows to measure, so `simtest` checks spatial slack instead: still beatable with a bat 8 px bigger (all pass at 16).
+- Solver memory: nodes now keep only a summary; the first glider level ran out of memory with full states.
+- The level select has clickable world tabs (the Bell Tower opens when the Crystal Cave's last level is done; `?debug` opens everything), and Next carries over to the next world.
+- Not seen in a browser. Next: Fafi plays worlds 1 and 2; then world 3 (Twin), the daily/endless, skins.
+
 ## 2026-11-10 — Phase 3: the Crystal Cave (world 1)
 - Phase 3a tools, per `PHASES.md` for skill games: a level kit (`tools/levelkit.mjs`, levels as programs), `levels.mjs` / `stars.mjs` / `deaths.mjs` / `show.mjs` around the solver, and `?debug` in the game (every level open, jump between checkpoints, live gravity/speed/kick).
 - Phase 3b: levels 2–10 built (Ping Pong, Mind the Gap, Islands, Tall Room, Squeeze, Star Bait, Zigzag, Long Drop, Cave Exit). All ten pass `simtest`: 3 stars reachable, tightest flip window ≥150 ms, no plain stretch over 1.6 s, stored solution replays identically. 96 checks.

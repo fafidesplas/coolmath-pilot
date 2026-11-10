@@ -38,7 +38,7 @@ export function cloneState(s) {
 // A block ping-pongs between its start and start + (dx, dy) with an eased motion and a
 // fixed period. Arithmetic only (no trig), so it is deterministic everywhere.
 export function moverRect(m, mt, out) {
-  const u = (mt % m.per) / m.per;
+  const u = ((mt + (m.ph || 0)) % m.per) / m.per;
   const tri = u < 0.5 ? 2 * u : 2 - 2 * u;
   const e = tri * tri * (3 - 2 * tri);
   out.x = m.x0 + m.dx * e; out.y = m.y0 + m.dy * e; out.w = m.w; out.h = m.h;

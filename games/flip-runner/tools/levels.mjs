@@ -13,7 +13,7 @@ export async function loadAll() {
 // longer than about 1.5 s after the first 2 s and before the last 2 s (the run-in to
 // the goal). A column is "busy" if it has spikes,
 // a gap in the floor or ceiling, a platform or a step in the walls.
-export function longestClear(lv) {
+export function longestClear(lv, where = null) {
   const rows = lv.tiles, cols = rows[0].length, R = rows.length;
   const solids = c => { let n = 0; for (let r = 0; r < R; r++) if (rows[r][c] === '#') n++; return n; };
   const busy = c => {
@@ -22,9 +22,13 @@ export function longestClear(lv) {
     for (let r = 1; r < R - 1; r++) if (rows[r][c] === '#' && rows[r - 1][c] === '.' && rows[r + 1][c] === '.') return true;
     return (c > 0 && solids(c) !== solids(c - 1)) || (c < cols - 1 && solids(c) !== solids(c + 1));
   };
+  // moving blocks keep their whole swept area busy
+  const movers = lv.objects.filter(o => o.type === 'mover');
+  const inMover = c => movers.some(m => c >= m.x - 1 && c < m.x + m.w + Math.abs(m.dx || 0) + 1);
   const goalCol = (lv.objects.find(o => o.type === 'goal') || { x: cols }).x;
-  let best = 0, run = 0;
-  for (let c = 22; c < Math.min(cols, goalCol) - 22; c++) { if (busy(c)) run = 0; else best = Math.max(best, ++run); }
+  let best = 0, run = 0, bestAt = 0;
+  for (let c = 22; c < Math.min(cols, goalCol) - 22; c++) { if (busy(c) || inMover(c)) run = 0; else if (++run > best) { best = run; bestAt = c - run + 1; } }
+  if (where) where.col = bestAt;
   return best * 40 / lv.speed;
 }
 
