@@ -3,10 +3,10 @@
 //   node tools/simtest.mjs --write  also re-solve every level and rewrite levels/solutions/*.json
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { parseLevel } from '../src/level.js';
-import { initialState, advance, bankedCount } from '../src/sim.js';
+import { initialState, advance, bankedCount, moverRect } from '../src/sim.js';
 import { HZ, RUNNER } from '../src/config.js';
 import { encodeRecording, decodeRecording } from '../src/record.js';
-import { solve, framesOf } from './solve.mjs';
+import { solve, framesOf, slack } from './solve.mjs';
 import { loadAll, longestClear } from './levels.mjs';
 import { WORLDS, DEBUG_LEVELS } from '../levels/index.js';
 
@@ -132,6 +132,41 @@ function world(data) {
   }
 }
 
+// --- Moving blocks -----------------------------------------------------------------------
+{
+  const m = { x0: 400, y0: 200, w: 80, h: 40, dx: 0, dy: 160, per: 360 }, r = {};
+  moverRect(m, 0, r); const p0 = r.y;
+  moverRect(m, 180, r); const p1 = r.y;
+  moverRect(m, 360, r); const p2 = r.y;
+  moverRect(m, 90, r); const pq = r.y;
+  ok(p0 === 200 && p1 === 360 && p2 === 200, `a block goes out and back over its period (${p0} → ${p1} → ${p2})`);
+  ok(pq > 200 && pq < 360 && Math.abs(pq - 280) < 1e-9, 'eased: halfway out at a quarter period (smoothstep)');
+}
+{ // standing on a block carries you; its side is a wall; coming down on you crushes
+  const base = corridor(120, g => { for (let c = 10; c < 120; c++) g[10][c] = '.'; });
+  const withMover = mv => ({ ...base, objects: [mv] });
+  // a wide block moving up 3 tiles in 3 s, under the runner at the start
+  const lift = { type: 'mover', x: 0, y: 10, w: 20, h: 1, dx: 0, dy: -3, period: 6 };
+  const w = world(withMover(lift));
+  w.s.on = 0; w.s.y = 10 * 40 - 28; w.s.x = 40; w.s.grounded = true;
+  const y0 = w.s.y;
+  w.run(60);
+  ok(w.s.deaths === 0 && w.s.grounded && w.s.on === 0 && w.s.y < y0 - 5 && Math.abs(w.s.y + 28 - w.lv.mv[0].y) < 0.05, `standing on a rising block carries you (${(y0 - w.s.y).toFixed(0)} px up, feet on its top)`);
+  const wall = { type: 'mover', x: 14, y: 8, w: 3, h: 3, dx: 0, dy: 0, period: 6 };
+  const w2 = world(withMover(wall)); w2.run(300);
+  ok(w2.ev.some(e => e.t === 'death' && e.kind === 'wall'), 'running into the side of a block is a wall death');
+  const press = { type: 'mover', x: 8, y: 5, w: 40, h: 2, dx: 0, dy: 4, period: 4 };
+  const w3 = world(withMover(press)); w3.run(400);
+  ok(w3.ev.some(e => e.t === 'death' && e.kind === 'crush'), 'a block pressing you against the floor is a crush death');
+}
+{ // a retry replays the same: the flag stores the block clock
+  const data = corridor(160, g => { g[10][90] = '^'; });
+  data.objects = [{ type: 'flag', x: 30, y: 10 }, { type: 'mover', x: 60, y: 5, w: 2, h: 3, dx: 0, dy: 3, period: 3 }];
+  const w = world(data); const mts = [];
+  for (let i = 0; i < 2400; i++) { const before = w.s.dead; w.run(1); if (before === 1) mts.push(w.s.mt); }
+  ok(mts.length >= 3 && mts.every(m => m === mts[0]), `respawn restores the block clock (${mts.length} retries, mt ${mts[0]})`);
+}
+
 // --- Levels: rules, solver results and recorded solutions ----------------------------
 // Rules (GDD 6): three stars, flags, a sensible length, no plain stretch over ~1.5 s,
 // the solver's tightest flip window at least 120 ms, and a recorded solution that
@@ -146,7 +181,9 @@ for (const data of levels) {
   if (WRITE) {
     const r = solve(data);
     if (!r.ok) { ok(false, `${data.id} is beatable (best route reaches column ${r.furthestCol})`); continue; }
-    writeFileSync(file, JSON.stringify({ ...encodeRecording(data.id, 'solo', framesOf(r)), stars: r.stars, tightestMs: r.tightestMs, time: Math.round(r.time * 10) / 10 }) + '\n');
+    const glides = data.objects.some(o => o.type === 'portal' && o.form === 'glider');
+    const extra = glides ? { slackPx: slack(data) } : {};
+    writeFileSync(file, JSON.stringify({ ...encodeRecording(data.id, 'solo', framesOf(r)), stars: r.stars, tightestMs: r.tightestMs, time: Math.round(r.time * 10) / 10, ...extra }) + '\n');
   }
   if (!existsSync(file)) { ok(false, `${data.id}: no solution file (run with --write)`); continue; }
   const rec = JSON.parse(readFileSync(file, 'utf8'));
@@ -163,6 +200,7 @@ for (const data of levels) {
   ok(bankedCount(a) === stars && stars === 3, `${data.id} solution banks all ${stars} stars (3 per level)`);
   ok(a.step === b.step && a.x === b.x, `${data.id} replay is deterministic`);
   ok(rec.tightestMs >= 120, `${data.id} tightest flip window ${rec.tightestMs} ms (min 120)`);
+  if (rec.slackPx !== undefined) ok(rec.slackPx >= 8, `${data.id} (glider) still beatable with a bat ${rec.slackPx} px bigger (min 8): no pixel precision`);
   ok(flags >= 2 && flags <= 4, `${data.id} has ${flags} checkpoints`);
   ok(rec.time >= 15 && rec.time <= 60, `${data.id} takes ${rec.time} s (15–60)`);
   if (!DEBUG_LEVELS[data.id]) ok(clear <= 1.6, `${data.id} longest plain stretch ${clear.toFixed(1)} s (max 1.6)`);   // the forms prototype is a debug level

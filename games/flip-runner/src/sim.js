@@ -15,9 +15,9 @@ export function initialState(lv) {
   const st = lv.start;
   const p = standingAt(st.x, st.y, st.gravity);
   return {
-    step: 0, x: p.x, y: p.y, vy: 0, g: p.g, speed: lv.speed,
+    step: 0, mt: 0, on: -1, x: p.x, y: p.y, vy: 0, g: p.g, speed: lv.speed,
     grounded: true, lastGround: 0, buffer: -99,
-    dead: 0, done: false, deaths: 0, deathTypes: { spikes: 0, gap: 0, wall: 0 }, lastDeath: null,
+    dead: 0, done: false, deaths: 0, deathTypes: { spikes: 0, gap: 0, wall: 0, crush: 0 }, lastDeath: null,
     stars: lv.stars.map(() => 0),       // 0 free, 1 held (not banked yet), 2 banked
     flag: -1, flips: 0,
     form: 'flip', portal: -1, b2: null,     // b2: the second runner in twin form
@@ -27,11 +27,54 @@ export function initialState(lv) {
 
 const copyB2 = b => (b ? { ...b } : null);
 function snapshot(s, x, y, g) {
-  return { x, y, g, speed: s.speed, form: s.form, portal: s.portal, b2: copyB2(s.b2) };
+  return { x, y, g, speed: s.speed, form: s.form, portal: s.portal, b2: copyB2(s.b2), mt: s.mt };
 }
 
 export function cloneState(s) {
   return { ...s, deathTypes: { ...s.deathTypes }, stars: s.stars.slice(), b2: copyB2(s.b2), snap: s.snap && { ...s.snap, b2: copyB2(s.snap.b2) } };
+}
+
+// ---- Moving blocks (GDD 3.6) --------------------------------------------------------
+// A block ping-pongs between its start and start + (dx, dy) with an eased motion and a
+// fixed period. Arithmetic only (no trig), so it is deterministic everywhere.
+export function moverRect(m, mt, out) {
+  const u = (mt % m.per) / m.per;
+  const tri = u < 0.5 ? 2 * u : 2 - 2 * u;
+  const e = tri * tri * (3 - 2 * tri);
+  out.x = m.x0 + m.dx * e; out.y = m.y0 + m.dy * e; out.w = m.w; out.h = m.h;
+  return out;
+}
+
+const overlapsRect = (x, y, m) => x < m.x + m.w - EPS && x + R.w > m.x + EPS && y < m.y + m.h - EPS && y + R.h > m.y + EPS;
+
+// Advance the block clock, carry the runner standing on a block, and push the runner out
+// of any block that moved into it. Returns 'crush' if there is nowhere to go.
+function stepMovers(lv, s) {
+  s.mt++;
+  for (let i = 0; i < lv.movers.length; i++) { moverRect(lv.movers[i], s.mt - 1, lv.mvPrev[i]); moverRect(lv.movers[i], s.mt, lv.mv[i]); }
+  if (s.on >= 0) { s.x += lv.mv[s.on].x - lv.mvPrev[s.on].x; s.y += lv.mv[s.on].y - lv.mvPrev[s.on].y; }
+  for (let i = 0; i < lv.mv.length; i++) {
+    const m = lv.mv[i];
+    if (!overlapsRect(s.x, s.y, m)) continue;
+    const pl = s.x + R.w - m.x, pr = m.x + m.w - s.x, pu = s.y + R.h - m.y, pd = m.y + m.h - s.y;
+    const best = Math.min(pl, pr, pu, pd);
+    let nx = s.x, ny = s.y;
+    if (best === pu) ny = m.y - R.h; else if (best === pd) ny = m.y + m.h; else if (best === pl) nx = m.x - R.w; else nx = m.x + m.w;
+    if (!boxFree(lv, nx, ny) || lv.mv.some(o => overlapsRect(nx, ny, o))) return 'crush';
+    s.x = nx; s.y = ny;
+  }
+  return null;
+}
+
+// Nearest left face of a block the runner would hit moving dx (Infinity if none).
+function moverWallX(lv, s, dx) {
+  let best = Infinity;
+  const edge = s.x + R.w;
+  for (const m of lv.mv) {
+    if (m.y >= s.y + R.h - EPS || m.y + m.h <= s.y + EPS) continue;
+    if (m.x >= edge - EPS && m.x < edge + dx && m.x < best) best = m.x;
+  }
+  return best;
 }
 
 function boxFree(lv, x, y) {
@@ -58,6 +101,8 @@ function wallAhead(lv, s, dx) {
 function moveX(lv, s, dx, emit) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const c = wallAhead(lv, s, dx);
+    const mw = lv.mv.length ? moverWallX(lv, s, dx) : Infinity;
+    if (mw < Infinity && (c < 0 || mw < c * T)) { s.x = mw - R.w; return 'wall'; }   // a block's side is a wall
     if (c < 0) { s.x += dx; return null; }
 
     // Solid rows of that column that overlap the runner.
@@ -87,23 +132,39 @@ function moveX(lv, s, dx, emit) {
   return 'wall';
 }
 
-// Returns true if it hit the surface gravity points at.
+// Returns true if it hit the surface gravity points at (a tile or a moving block; b.on
+// is the block it landed on, or -1).
 function moveY(lv, s, dy) {
   if (dy === 0) return false;
+  s.on = -1;
   const c0 = Math.floor((s.x + EPS) / T), c1 = Math.floor((s.x + R.w - EPS) / T);
+  let hit = null, on = -1;
   if (dy > 0) {
     const edge = s.y + R.h, limit = edge + dy;
-    for (let r = Math.floor((edge - EPS) / T); r <= Math.floor(limit / T); r++) {
+    outer: for (let r = Math.floor((edge - EPS) / T); r <= Math.floor(limit / T); r++) {
       if (r * T < edge - EPS || r * T >= limit) continue;
-      for (let c = c0; c <= c1; c++) if (isSolid(lv, c, r)) { s.y = r * T - R.h; return true; }
+      for (let c = c0; c <= c1; c++) if (isSolid(lv, c, r)) { hit = r * T; break outer; }
     }
+    for (let i = 0; i < lv.mv.length; i++) {
+      const m = lv.mv[i];
+      if (m.x >= s.x + R.w - EPS || m.x + m.w <= s.x + EPS) continue;
+      if (m.y >= edge - EPS && m.y <= limit && (hit === null || m.y < hit)) { hit = m.y; on = i; }
+    }
+    if (hit !== null) { s.y = hit - R.h; s.on = on; return true; }
     s.y += dy;
   } else {
     const edge = s.y, limit = edge + dy;
-    for (let r = Math.floor((edge + EPS) / T) - 1; r >= Math.floor(limit / T); r--) {
+    outer2: for (let r = Math.floor((edge + EPS) / T) - 1; r >= Math.floor(limit / T); r--) {
       if (r * T + T > edge + EPS || r * T + T <= limit) continue;
-      for (let c = c0; c <= c1; c++) if (isSolid(lv, c, r)) { s.y = r * T + T; return true; }
+      for (let c = c0; c <= c1; c++) if (isSolid(lv, c, r)) { hit = r * T + T; break outer2; }
     }
+    for (let i = 0; i < lv.mv.length; i++) {
+      const m = lv.mv[i];
+      if (m.x >= s.x + R.w - EPS || m.x + m.w <= s.x + EPS) continue;
+      const bot = m.y + m.h;
+      if (bot <= edge + EPS && bot >= limit && (hit === null || bot > hit)) { hit = bot; on = i; }
+    }
+    if (hit !== null) { s.y = hit; s.on = on; return true; }
     s.y += dy;
   }
   return false;
@@ -202,11 +263,14 @@ export function advance(lv, s, bits, emit = null) {
     if (--s.dead === 0) {
       const p = s.snap;
       s.x = p.x; s.y = p.y; s.g = p.g; s.speed = p.speed; s.form = p.form; s.portal = p.portal; s.b2 = copyB2(p.b2);
-      s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99;
+      s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99; s.mt = p.mt; s.on = -1;
       if (s.b2) { s.b2.lastGround = s.step; s.b2.vy = 0; }
       if (emit) emit('respawn', {});
     }
     return;
+  }
+  if (lv.movers.length) {
+    if (stepMovers(lv, s)) { die(s, s, 'crush', emit); return; }
   }
   const press = (bits & 1) !== 0, held = (bits & 2) !== 0;
   const b2 = s.b2;
@@ -237,6 +301,7 @@ export function advance(lv, s, bits, emit = null) {
   if (b2) { const w2 = moveX(lv, b2, dx, emit); if (w2) { die(s, b2, w2, emit); return; } }
 
   settle(lv, s, s.step, emit, 0);
+  if (!s.grounded) s.on = -1;
   if (b2) settle(lv, b2, s.step, emit, 1);
 
   const hz = hazard(lv, s);
@@ -283,7 +348,8 @@ export function gotoFlag(lv, s, i) {
   const g = isSolid(lv, col, f.ty + 1) ? 1 : -1;
   const p = standingAt(col, f.ty, g);
   s.x = p.x; s.y = p.y; s.g = g; s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99;
-  s.dead = 0; s.flag = i; s.form = 'flip'; s.b2 = null; s.portal = -1;
+  s.dead = 0; s.flag = i; s.form = 'flip'; s.b2 = null; s.portal = -1; s.on = -1;
+  s.mt = Math.round(f.x / s.speed * HZ);      // an arbitrary but sensible phase for the blocks
   for (let k = 0; k < lv.portals.length; k++) if (lv.portals[k].x <= f.x) { s.portal = k; setForm(lv, s, lv.portals[k], null); }
   s.snap = snapshot(s, p.x, p.y, g);
   if (s.b2) s.snap.b2 = spawnTwin(lv, { x: p.x, g, step: s.step }, s.lane);

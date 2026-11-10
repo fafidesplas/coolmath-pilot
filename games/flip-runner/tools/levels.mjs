@@ -1,7 +1,7 @@
 // Solve one or more levels and print a table: node tools/levels.mjs [id …]
 // Without ids it checks every level file in levels/ (worlds and the forms prototype).
 import { readdirSync } from 'node:fs';
-import { solve } from './solve.mjs';
+import { solve, slack } from './solve.mjs';
 
 export async function loadAll() {
   const dir = new URL('../levels/', import.meta.url);
@@ -29,7 +29,7 @@ export function longestClear(lv) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const wanted = process.argv.slice(2);
+  const wanted = process.argv.slice(2).filter(a => !a.startsWith('--'));
   const all = await loadAll();
   const list = wanted.length ? all.filter(l => wanted.includes(l.id)) : all;
   console.log('level   cols  time   stars flips  tightest  longest-clear');
@@ -38,6 +38,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const r = solve(lv);
     const cols = lv.tiles[0].length;
     if (!r.ok) { console.log(`${lv.id.padEnd(7)} ${String(cols).padStart(4)}  NOT beatable: best route reaches column ${r.furthestCol}`); continue; }
-    console.log(`${lv.id.padEnd(7)} ${String(cols).padStart(4)}  ${(r.time).toFixed(1).padStart(4)}s  ${r.stars}/3   ${String(r.presses.length).padStart(3)}   ${String(r.tightestMs).padStart(4)} ms   ${longestClear(lv).toFixed(1)} s   (${((Date.now() - t0) / 1000).toFixed(1)} s to solve)`);
+    const glides = lv.objects.some(o => o.type === 'portal' && o.form === 'glider');
+    const sl = glides && process.argv.includes('--slack') ? `  slack ${slack(lv)} px` : '';
+    console.log(`${lv.id.padEnd(7)} ${String(cols).padStart(4)}  ${(r.time).toFixed(1).padStart(4)}s  ${r.stars}/3   ${String(r.presses.length).padStart(3)}   ${String(r.tightestMs).padStart(4)} ms   ${longestClear(lv).toFixed(1)} s   (${((Date.now() - t0) / 1000).toFixed(1)} s to solve)${sl}`);
   }
 }

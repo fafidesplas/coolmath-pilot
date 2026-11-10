@@ -41,6 +41,22 @@ export class Cave {
     for (let r = from; r !== to + dir; r += dir, c += 3) this.room(c, c + 2, r, this.bottom[c]);
     return c;
   }
+  // A column of rock from the floor and the ceiling of the local room, leaving a gap of
+  // open rows gapTop..gapBottom (inclusive). Glider rooms are full of these.
+  pillar(c, gapTop, gapBottom, width = 2) {
+    for (let k = 0; k < width; k++) {
+      const col = c + k;
+      for (let r = this.top[col]; r < gapTop; r++) this.put(col, r, '#');
+      for (let r = gapBottom + 1; r < this.bottom[col]; r++) this.put(col, r, '#');
+    }
+    return this;
+  }
+  // Open the corridor from the standard 5..11 to top..bottom (or back) in 1-tile steps.
+  // Returns the first column after the funnel.
+  funnel(c0, topFrom, topTo, botFrom, botTo) {
+    const e1 = this.rampCeil(c0, topFrom, topTo), e2 = this.rampFloor(c0, botFrom, botTo);
+    return Math.max(e1, e2);
+  }
   floorSpikes(c0, c1) { for (let c = c0; c <= c1; c++) this.fs.add(c); return this; }
   ceilSpikes(c0, c1) { for (let c = c0; c <= c1; c++) this.cs.add(c); return this; }
   floorGapAt(c0, c1) { for (let c = c0; c <= c1; c++) this.floorGap.add(c); return this; }

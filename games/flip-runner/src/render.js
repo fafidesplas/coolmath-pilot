@@ -3,6 +3,7 @@
 import { T, ROWS, VIEW_W, COLORS as C, SPIKE_H, RUNNER } from './config.js';
 import { TILE, tileAt, isSolid } from './level.js';
 import { drawStarShape } from './fx.js';
+import { moverRect } from './sim.js';
 
 export const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const STRIP = 32;
@@ -424,6 +425,31 @@ export function drawGoal(ctx, x, t) {
   rrect(ctx, cx - 54, cy - r - 46, 108, 40, 12);
   ctx.fillStyle = C.star; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
   text(ctx, 'HOME', cx, cy - r - 25, 24, C.ink, 'center', 900);
+}
+
+// Moving blocks: a dotted rail showing the whole path, and a rock slab with bright edges
+// and bolts, so you can read where it will be before it gets there (GDD 3.6).
+export function drawMovers(ctx, lv, mt, colors, t) {
+  const r = {};
+  lv.movers.forEach(m => {
+    // rail: the area the block sweeps, outlined with a dashed line
+    const x0 = m.x0, y0 = m.y0, x1 = m.x0 + m.dx, y1 = m.y0 + m.dy;
+    ctx.save();
+    ctx.setLineDash([8, 8]); ctx.lineDashOffset = -t * 20;
+    ctx.strokeStyle = colors.accent; ctx.globalAlpha = 0.55; ctx.lineWidth = 3;
+    ctx.strokeRect(Math.min(x0, x1) + 1.5, Math.min(y0, y1) + 1.5, Math.abs(x1 - x0) + m.w - 3, Math.abs(y1 - y0) + m.h - 3);
+    ctx.restore();
+    // the block
+    moverRect(m, mt, r);
+    rrect(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, 10);
+    ctx.fillStyle = shade(colors.floor, 1.35); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.fillStyle = colors.accent; ctx.globalAlpha = 0.9;
+    ctx.fillRect(r.x + 8, r.y + 5, r.w - 16, 4); ctx.fillRect(r.x + 8, r.y + r.h - 9, r.w - 16, 4);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = C.ink;
+    for (const [bx, by] of [[10, 12], [r.w - 10, 12], [10, r.h - 12], [r.w - 10, r.h - 12]]) { ctx.beginPath(); ctx.arc(r.x + bx, r.y + by, 2.5, 0, 7); ctx.fill(); }
+  });
 }
 
 export function drawLevelStar(ctx, x, y, t, ghost) {

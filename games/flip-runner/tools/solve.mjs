@@ -12,7 +12,7 @@ const keyOf = s => {
   for (let i = 0; i < s.stars.length; i++) if (s.stars[i]) mask |= 1 << i;
   const coyote = Math.min(s.step - s.lastGround, RUNNER.coyoteSteps + 1);
   const b = s.b2 ? `${Math.round(s.b2.y * 2)}|${Math.round(s.b2.vy)}|${Math.min(s.step - s.b2.lastGround, RUNNER.coyoteSteps + 1)}` : '';
-  return `${s.form}|${s.g}|${Math.round(s.y * 2)}|${Math.round(s.vy)}|${coyote}|${mask}|${b}`;
+  return `${s.form}|${s.g}|${s.on}|${Math.round(s.y * 2)}|${Math.round(s.vy)}|${coyote}|${mask}|${b}`;
 };
 
 export function solve(data, { maxSteps = 120 * 180 } = {}) {
@@ -41,6 +41,9 @@ export function solve(data, { maxSteps = 120 * 180 } = {}) {
         if (!child) { child = { s, parent: node, press, kids: null }; next.set(k, child); }
         node.kids[press ? 1 : 0] = child;
       }
+      // Keep only what route reconstruction needs: a full state per node is too much
+      // memory when a glider room has hundreds of heights times every star combination.
+      node.s = { step: ns.step, x: ns.x, form: ns.form, done: false };
     }
     layer = [...next.values()];
     all.push(layer);
@@ -101,6 +104,23 @@ export function framesOf(result) {
   for (const p of result.presses) f[p] = 1;
   for (const p of result.holds) f[p] = 2;
   return f;
+}
+
+// Spatial slack for glider levels: the largest growth of the bat's hitbox (in px, both
+// ways) that still leaves the level beatable. A glider level with no slack asks for
+// pixel precision. Tests 4, 8, 12 and 16 px and returns the last that still passes.
+export function slack(data, steps = [4, 8, 12, 16]) {
+  const w = RUNNER.w, h = RUNNER.h;
+  let best = 0;
+  try {
+    for (const g of steps) {
+      RUNNER.w = w + g; RUNNER.h = h + g;
+      const r = solve(data);
+      if (!r.ok) break;
+      best = g;
+    }
+  } finally { RUNNER.w = w; RUNNER.h = h; }
+  return best;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
