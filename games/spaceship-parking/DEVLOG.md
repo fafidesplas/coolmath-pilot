@@ -1,3 +1,10 @@
+## 2026-11-10 — Release export without debug
+
+- `tools/export.mjs` now cuts every debug piece from the exported build (`RELEASE`): the Test Map level and its spawn/remove/clear buttons, `?test`, `?bonus`, `?hitbox` (and `drawHitboxes`), the URL tuning knobs (`?speed`, `?coast`, `?slowdown`, `?shipview`, `?settle`, `?buoy`, now fixed at their defaults), `window.game.win()` and `load()`, and the level editor hooks. Each cut must match exactly, and a `DEBUG` check fails the export if anything is left.
+- Exported to `~/Desktop/spaceship-parking` (+ `.zip`, 236 KB).
+- Checked in headless Chrome: title screen, 8 levels (Spin Dock to Nesting Dolls), each loads and plays; `?test&hitbox&bonus` adds nothing; `game.win` and the editor are undefined. No errors.
+- Next: upload the folder to the Netlify site if the public copy should update.
+
 ## 2026-11-08 — Editor: levels like Nesting Dolls
 - The level editor can now make everything Nesting Dolls uses. Station, moored ships and chain starts get "waits inside boat n" (`in`). Chain slips get "lies": open space, the station, or inside a moored ship, with "in its hangar" for the Ark. They also get "holds the ship once parked" (`hold`). Moored ships get "fixed" and "flies off into a portal at the end", with the portal's distance and size; the portal ring shows on the canvas.
 - Moving or turning a slip that has things waiting inside its boat carries them along. Moving or turning a moored ship carries the slips inside it. Removing a moored ship frees its slips where they are and drops its portal. Removing or reordering chain boats renumbers every `in`.

@@ -22,6 +22,87 @@ const REWRITES =
 ];
 const FORBIDDEN = /coolmath|cool math|\bcm_|park.?my.?boat|dock all the boats|pmb|paodrive|salcedo|\bpao\b|gameanalytics|\[GA\]/i;
 
+// Release cuts: everything debug goes (the Test Map and its spawn buttons, ?test ?bonus ?hitbox and the URL tuning
+// knobs, window.game.win/load, the level editor hooks). Applied to the comment-stripped code, per file:
+// line: drop the whole line holding this text; block: drop from the line holding this text through its matching }
+// (and a trailing comma); object: drop the { } literal around this text; replace: [from, to, count].
+// Every cut must match exactly (count, default 1), so a change in the game code fails the export instead of shipping debug.
+const URL_KNOB = /\+new URLSearchParams\(location\.search\)\.get\('\w+'\) \|\| /g;
+const RELEASE =
+{
+    'levels/levels.js':
+    [
+        { object: "name: 'Test Map'" },
+        { line: "const SHOW_BONUS = new URLSearchParams(location.search).has('bonus');" },
+        { line: "const SHOW_TEST = new URLSearchParams(location.search).has('test');" },
+        { replace: ["const LEVELS = [...SCALE_LEVELS.filter(L => !L.bonus && !L.test), ...(SHOW_BONUS ? SCALE_LEVELS.filter(L => L.bonus) : []), ...(SHOW_TEST ? SCALE_LEVELS.filter(L => L.test) : [])]",
+            'const LEVELS = SCALE_LEVELS.filter(L => !L.bonus)'] },
+    ],
+    'src/jam.js':
+    [
+        { line: "if (L.test) jamSpawn('dinghy');" },
+        { block: 'function jamSpawn(key)' },
+        { block: 'function jamRemove(b)' },
+        { block: 'function jamWin()' },
+        { line: 'if (level.test) {' },
+    ],
+    'src/main.js':
+    [
+        { replace: [URL_KNOB, '', 6] },
+        { line: 'if (window.pmbEditor?.active) return;' },
+        { replace: ['if (!window.pmbEditor?.active) ', '', 2] },
+        { line: 'if (!window.pmbEditor?.testing)' },
+        { replace: ["LEVELS[i].test ? 'TEST' : ", ''] },
+        { block: 'if (level?.test && !isPaused)' },
+        { replace: [' && !LEVELS[i].test', ''] },
+        { line: "else if (id.startsWith('spawn:'))" },
+        { line: "else if (id == 'remove')" },
+        { line: "else if (id == 'clear')" },
+        { replace: ['if (window.pmbEditor?.testing) pmbEditor.restartTest(); else ', ''] },
+        { line: 'if (window.pmbEditor?.update()) return;' },
+        { line: 'if (SHOW_HITBOX) drawHitboxes();' },
+        { line: 'const SHOW_HITBOX =' },
+        { block: 'function drawHitboxes()' },
+        { replace: ['L.bonus || L.test', 'L.bonus', 2] },
+        { line: 'const editing = window.pmbEditor?.active;' },
+        { line: 'if (editing) pmbEditor.renderWorld();' },
+        { line: 'if (editing) return pmbEditor.renderUi();' },
+        { line: 'load(i) { loadLevel(i); },' },
+        { block: '    win()' },
+    ],
+    'src/skin.js': [{ replace: ['level.test || ', ''] }],
+    'src/space.js': [{ line: 'if (window.pmbEditor?.active) return;' }],
+    'src/guide.js': [{ replace: [' || window.pmbEditor?.active', ''] }],
+};
+// none of this may be left after the cuts
+const DEBUG = /location\.search|pmbEditor|levelEditor|\b(level\??|L|LEVELS\[i\])\.test\b|test map|hitbox|jamSpawn|jamRemove|jamWin|\bwin\(/i;
+
+function countOf(code, find) { return typeof find == 'string' ? code.split(find).length - 1 : (code.match(find) || []).length; }
+function lineAround(code, at) { const s = code.lastIndexOf('\n', at) + 1, e = code.indexOf('\n', at); return [s, e < 0 ? code.length : e + 1]; }
+function closeBrace(code, open)
+{
+    for (let i = open, depth = 0; i < code.length; i++)
+    {
+        if (code[i] == '{') depth++;
+        else if (code[i] == '}' && --depth == 0) return i;
+    }
+    throw new Error('unbalanced braces');
+}
+function applyCut(code, cut, file)
+{
+    const [kind, arg] = Object.entries(cut)[0];
+    const find = kind == 'replace' ? arg[0] : arg, want = kind == 'replace' ? arg[2] ?? 1 : 1, n = countOf(code, find);
+    if (n != want) throw new Error(`release cut ${kind} "${find}" matched ${n} times in ${file} (expected ${want})`);
+    if (kind == 'replace') return typeof find == 'string' ? code.split(find).join(arg[1]) : code.replace(find, arg[1]);
+    const at = code.indexOf(find);
+    if (kind == 'line') { const [s, e] = lineAround(code, at); return code.slice(0, s) + code.slice(e); }
+    const open = kind == 'object' ? code.lastIndexOf('{', at) : code.indexOf('{', at);
+    let end = closeBrace(code, open) + 1;
+    if (code[end] == ',') end++;
+    const s = kind == 'object' ? lineAround(code, open)[0] : lineAround(code, at)[0];
+    return code.slice(0, s) + code.slice(lineAround(code, end - 1)[1]);
+}
+
 // Removes // and /* */ comments; strings, template literals (with nested ${}) and regex literals are kept as is.
 function stripComments(src)
 {
@@ -106,6 +187,9 @@ for (const f of ['Righteous-Regular.ttf', 'OFL.txt']) fs.copyFileSync(path.join(
 for (const f of SCRIPTS)
 {
     let code = stripComments(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+    for (const cut of RELEASE[f] || []) code = applyCut(code, cut, f);
+    const debug = code.match(DEBUG);
+    if (debug) throw new Error(`debug code "${debug[0]}" left in ${f}`);
     for (const [from, to] of REWRITES) code = typeof from == 'string' ? code.split(from).join(to) : code.replace(from, to);
     new Function(code);                          // throws if stripping broke the syntax
     fs.writeFileSync(path.join(OUT, 'js', path.basename(f)), code);
