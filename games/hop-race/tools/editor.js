@@ -420,8 +420,8 @@ window.hrEditor = (() =>
         start();   // the bot leaves the game on the title screen
         bot = r;
         status = !r.finishable ? 'Bot: can\'t reach the flag' :
-            `Bot: ${r.bestTime} s, ${r.hops} hops, tightest ${Math.min(...r.routeSpots.slice(0, -1).map(s => s.holds), 163)}/163 ` +
-            `(not counting the leap at the flag), ${r.deadEnds.length} dead end${r.deadEnds.length == 1 ? '' : 's'}`;
+            `Bot: ${r.bestTime} s, ${r.moves} moves, tightest timing ${r.routeSpots.length > 1 ? Math.min(...r.routeSpots.slice(0, -1).map(s => s.window)) : '-'} frames ` +
+            `(not counting the move to the flag), ${r.deadEnds.length} dead end${r.deadEnds.length == 1 ? '' : 's'}`;
         refreshPanel();
     }
 

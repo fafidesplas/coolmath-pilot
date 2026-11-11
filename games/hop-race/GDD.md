@@ -1,9 +1,9 @@
 # Hop Race — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-10-23
+**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-11-10
 
-> One button, four meanings: hold and release to hop, blast, swing or climb your way to the flag, alone against your ghost or against a friend on the same keyboard.
+> One button, four meanings: run and jump, blast, swing or climb your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
 **Still finding the fun.** The four core worlds are the v1 plan: Hop, Rocket, Grapple and Climb (Phase was rejected, §13). New button meanings keep getting tried as **Lab worlds**: a short feel test (§13.1) that is then kept, grown into a full world, or cut. Climb (§3.7) was the first, and grew into World 4.
 
@@ -17,7 +17,7 @@
 - **Hook:** beating your own ghost by a few tenths, shaving a best time down, and "one more round" against a friend.
 
 ## 2. Core loop
-- **Moment (seconds):** hold to charge or aim → release (or press) to act → land, cling, swing or settle → read the next obstacle.
+- **Moment (seconds):** press, hold or release to act (jump, blast, reel, swing) → land, cling, swing or settle → read the next obstacle.
 - **Level (minutes):** pick a level → race your ghost to the flag → see your time and the gap to your best → Retry for a better time or Next.
 - **Meta (days):** finish levels across 4 worlds × 10 levels to unlock hats and lower your best times; bring a friend for Versus on any level.
 
@@ -36,14 +36,17 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **Stuck nudge (solo):** after 8 s without getting closer to the flag (your best distance to it has not improved), in any mode, a small "R to restart" fades in near the restart button. It disappears as soon as you get closer again.
 
 ### 3.2 Hop (merges the prototype's Classic and Wall Jump)
-- **Hold** (only while grounded or clinging): power charges from 0 to full in 1.1 s; the aim angle sweeps between 18° and 80° at 2.6 rad/s (a full up-down cycle ≈ 2.4 s). Nothing is drawn for the aim or the power: the googly pupil looks along the launch direction, and the player's shape shows the power (flatter with more power, squeezed from the sides as the aim drops flat past full charge), so where you land stays a surprise.
-- **Release:** jump at 9 u/s (no charge) up to 20 u/s (full charge; the prototype used 25 in its 42 u level) along the aim angle, in the facing direction.
-- **You only move by jumping.** Landing stops you dead (no sliding), except on ice. On the ground you face right, except against a grip wall on your right, where you face away from it. Hop stays precise on purpose: you land where you aimed.
-- **Plain walls bounce:** hitting one mid-air reverses your horizontal speed at 35 %.
-- **Ice floor** (from level 5): landing on ice with more than 2 u/s of horizontal speed keeps 80 % of it, and you slide with a friction of 0.8/s. You can charge and jump while sliding; the jump replaces your slide speed. Sliding off an edge drops you. A steep, soft landing barely slides. Built (`HR_HOP.iceKeep`, `iceMin`, `iceFriction`): walls stop a slide dead, and sliding onto a floor that isn't ice stops you dead.
-- **Grip walls** (from level 7): hitting one mid-air makes you cling. You stop, even if you hit it moving up fast (no riding up the wall), turn to face away, and slide down at up to 3 u/s, or at 0.5 u/s while you charge: holding grips the wall and slows the slide (`HR_HOP.clingChargeSlide`; 0 holds you still, 3 is no slower). Charge and jump off as normal. If the wall ends below you, you let go and fall. Landing at the foot of a grip wall turns you away from it, so a jump from there crosses the shaft.
-- **Ceilings** stop upward motion; you keep your sideways speed.
-- **Auto-run (testing, 2026-10-25, `HR_HOP.autoRun`; false brings back the hold-to-charge hop above):** every level starts with the 3-2-1-GO countdown, solo too (as Versus already did; the timer starts at GO). After GO you stand still until you **press to start running** (owner, 2026-10-28: so two players don't set off in perfect sync); that first press only starts the run, it doesn't jump. After a fall you respawn standing still and press to run again. You run at 6 u/s, on the ground and in the air. A **press jumps at once** (from the ground, or up to 0.08 s after running off an edge) at 12 u/s straight up, and **holding keeps you rising**: while you hold, gravity is lighter (12 instead of 42 u/s²) for up to 0.4 s; letting go ends it for that jump. A tap is about 1.8 u high and 3.4 u long; a hold of 0.4 s or more is 4.4 u high and 6.1 u long, with 0.55 s to the top. (A first version launched at 20 u/s and cut the speed to 6 u/s on release; the owner found it popped up too fast.) On the ground the square leans forward into the run (its top 0.15 u ahead) and straightens up in the air. A hold that lasts the full 0.4 s throws a forward somersault (one full turn in 0.4 s, eased; a landing mid-flip rolls the rest 4× faster). The launch stretch and dust stay, and the landing squeeze is stronger: 0.2 flatter plus more for a harder landing, up to 0.4 (was 0.12, up to 0.35). A wall turns you around and drops you back to 6 u/s, except a **grip wall hit in the air**: you cling to it (no riding up it), face away and slide down at up to 3 u/s, and a press jumps you off it, away from the wall, with the same hold-for-higher jump. If the wall ends below you, you let go and fall. On the ground a grip wall turns you around like any wall. **Ice speeds you up:** running on it builds speed from 6 to 15 u/s at 9 u/s² (full speed after 1 s), with white sparkles, white droplets flicked up and back from your foot (more the faster you go, plus a small splash when you land on ice), and a deeper lean: up to 0.26 u, growing on ice to 0.42 u at full ice speed while the square squashes 0.2 flatter and wider, low to the ground. In the air you keep the speed you took off with, and the faster you go, the weaker the takeoff (up to 35 % weaker at 15 u/s), so a jump off ice is a long, low dash: at full ice speed a tap is 0.8 u high and 5.8 u long and a full hold 2.2 u high and 12 u long (vs 4.4 u high and 6.2 u long at 6 u/s). Off the ice you slow back to 6 u/s at 10 u/s² (about 0.9 s from full speed). Level 1's prompt is "Press A to run, press again to jump!" and the hint is "Press: jump · Hold: higher". Levels 1–5 and 7–10 can be finished this way (7–10 with one or two wall grabs). 6 as committed can't: its 5.5 u gap is under a ceiling only 2.5 u above the floor, too low for a jump that carries that far. (Tried and dropped the same day: charging while running with the power setting the angle; the owner found it too tight.)
+Hop is an auto-runner (owner, 2026-11-10: set in stone after testing since 2026-10-25). It replaced the prototype's hold-to-charge hop (hold to charge power while the aim sweeps between 18° and 80°, release to jump), which is in git history before 2026-11-10.
+- **Start:** every level starts with the 3-2-1-GO countdown, solo too (as in Versus); the timer starts at GO. After GO you stand still until you **press to start running** (owner, 2026-10-28: so two players don't set off in perfect sync). That first press only starts the run, it doesn't jump. After a fall you respawn standing still and press to run again.
+- **Run:** 6 u/s, on the ground and in the air. On the ground the square leans forward into the run (its top 0.15 u ahead, up to 0.26 u when faster) and straightens up in the air.
+- **Press** jumps at once (from the ground, or up to 0.08 s after running off an edge) at 12 u/s straight up, keeping your run speed. **Holding keeps you rising:** while you hold, gravity is lighter (12 instead of 42 u/s²) for up to 0.4 s; letting go ends it for that jump. A tap is about 1.8 u high and 3.4 u long; a hold of 0.4 s or more is 4.4 u high and 6.1 u long, with 0.55 s to the top. A hold that lasts the full 0.4 s throws a forward somersault (one turn in 0.4 s, eased; landing mid-flip rolls the rest 4× faster).
+- **Landing:** launch stretch and ink dust as before; the landing squeeze is 0.2 flatter plus more for a harder landing, up to 0.4.
+- **Walls** turn you around and drop you back to 6 u/s, in the air or on the ground.
+- **Ice floor** (from level 5) speeds you up: running on it builds speed from 6 to 15 u/s at 9 u/s² (full speed after 1 s). In the air you keep the speed you took off with, and the faster you go, the weaker the takeoff (up to 35 % weaker at 15 u/s), so a jump off ice is a long, low dash: at full ice speed a tap is 0.8 u high and 5.8 u long and a full hold 2.2 u high and 12 u long. Off the ice you slow back to 6 u/s at 10 u/s² (about 0.9 s from full speed). On ice: white sparkles, white droplets flicked up and back from your foot (more the faster you go, plus a small splash on landing), and the lean grows to 0.42 u at full ice speed while the square squashes 0.2 flatter and wider, low to the ground.
+- **Grip walls** (from level 7): one hit **in the air** holds you. You stop (no riding up it), face away and slide down at up to 3 u/s, and a press jumps you off it, away from the wall, with the same hold-for-higher jump. If the wall ends below you, you let go and fall. On the ground a grip wall turns you around like any wall.
+- **Ceilings** stop upward motion; you keep running.
+- Level 1's prompt is "Press A to run, press again to jump!"; the hint is "Press: jump · Hold: higher".
+- **Tried and dropped (2026-10-25):** charging while running with the power setting the angle (too tight), and a 20 u/s launch cut short on release (popped up too fast).
 
 ### 3.3 Rocket
 - A launcher spins around you all the time at 3 rad/s, always clockwise. Firing doesn't change its direction.
@@ -120,10 +123,10 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Hat | Cosmetic, unlocked by levels finished | Title screen | Small ink shapes on top of the square (§7) |
 | Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
 | Flag | The goal; touch its trigger box | Hop 1 | Dark pole with a waving checkered flag (6 × 4 ink and white cells, F1-style) |
-| Plain wall | Solid; bounces you back in Hop | Hop 4 | Solid dark block, straight sides |
-| Icy floor | You slide after landing (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
-| Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 6 | Block hanging from the top |
-| Grip wall | You cling to it and slide down (Hop) | Hop 7 | Dark block with a sawtooth face |
+| Plain wall | Solid; turns you around in Hop | Hop 4 | Solid dark block, straight sides |
+| Icy floor | Speeds up your run, so jumps become long low dashes (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
+| Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 7 | Block hanging from the top |
+| Grip wall | Hit in the air, you cling to it and slide down; press to wall-jump (Hop) | Hop 7 | Dark block with a sawtooth face |
 | Launcher | Spins around you; aims rockets and the hook | Rocket 1, Grapple 1 | Short barrel in the player's color circling the player |
 | Rocket and blast | Pushes every player in range; explodes on the other player | Rocket 1 | Small capsule, ring and splash particles in the owner's color |
 | Rocket button | A blast near it opens its gate | Rocket 3 | White target on a dark mount; becomes a white check mark when pressed |
@@ -141,28 +144,28 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 
 ## 6. Level design
 - **Structure:** 4 worlds of 10 levels, one per mode, 40 levels in v1. Every level is a single 16:9 screen (24–30 u wide), holds 3–5 obstacles, and takes 8–20 s solo for a first clean run.
-  - **World 1 — Hop:** charge and aim, gaps, walls, ice, ducking, then grip walls.
+  - **World 1 — Hop:** run and jump, gaps, walls, ice dashes, then grip walls.
   - **World 2 — Rocket:** blast yourself around, buttons and gates, ice, pits, then sticky floors.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
   - **World 4 — Climb:** whip the arm into surfaces to pop up, let go to stick, pits at the foot of walls, then teeth on wall faces.
   - ~~**Phase:**~~ rejected (§13). Was: melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
   - **Lab worlds** (§13.1) come after the core four, with 3 levels each, and are not part of the 40.
-- **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Hold A then release to Jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Climb "Hold to swing. Let go to stop." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
+- **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Press A to run, press again to jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Climb "Hold to swing. Let go to stop." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
 - **No dead ends:** in Hop you can only jump right except off grip walls, so every spot a player can stand on must lead to the flag or to a pit. In Phase, no slab or ceiling pocket may trap liquid or gas with no way out. The phase 3 level tool checks both (simulated jumps from every standable spot in Hop, pocket detection in Phase); the stuck nudge (3.1) is the safety net.
-- **Difficulty curve:** harder means narrower landings, wider gaps, less forgiving aim windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
+- **Difficulty curve:** harder means narrower landings, wider gaps, tighter timing windows, and more obstacles between start and flag (so a fall back to the start costs more). Levels 1–3 of each world are easy, 4–7 introduce and twist the world's new elements, 8–10 combine. Each world's level 1 is easier than the previous world's level 10, because the button means something new.
 - **Times, not stars (solo only):** a level is scored only by its time. There are no stars, par or expert times: the target is your own best time, which the ghost replays. Falling only costs time.
 - **World 1 — Hop (all 10 built in `levels/hop.js`):**
-  1. **First Hop:** flat ground, one 3 u gap, flag on the far side. Prompt: "Hold A then release to Jump!"
+  1. **First Hop:** flat ground, one 3 u gap, flag on the far side. Prompt: "Press A to run, press again to jump!"
   2. **Stepping Stones:** three gaps getting wider (3, 4, 5 u) between low platforms.
-  3. **Up We Go:** a staircase of three rising platforms, the last one floating over a pit; needs steeper aims.
-  4. **The Wall:** one long floor (no pits) with a 2 u wall to learn the bounce on, then a 4 u wall: jump too flat and it bounces you back. Clearing it takes a near-full, steep hop; landing on top of either wall is fine.
-  5. **Thin Ice:** hop from a high ledge over a pit onto a long ice floor; the slide carries you to a 1 u bump that stops it, then more ice slides you to the flag. Steep landings slide less.
-  6. **Low Ceiling:** a 5.5 u gap with a block hanging from the top 2.5 u over it, so a high arc bonks and drops into the pit; the gap needs a long hold that sweeps back down to a flat, strong jump. Then a 3 u gap up a 2 u step to the flag.
-  7. **Grip:** a shaft 3 u across between a hanging grip wall (hop in under it, 1.7 u of room) and the 5 u grip face of the flag's ledge; zigzag up.
-  8. **Which Wall?:** a cliff whose foot is plain and whose top half is grip, with a floating grip pillar 3 u in front of it. Jump at the cliff too low and the plain foot bounces you back; high enough and the grip half holds you, then zigzag between it and the pillar to the top.
-  9. **Slide and Climb:** a hop onto an ice ledge that slides you toward a 3.5 u pit; jump while sliding (the slide's speed carries a low hop across), under a hanging grip wall, then climb a grip shaft to the flag.
-  10. **The Gauntlet:** a gap, an ice landing that slides you under a low ceiling toward a 3 u gap, then a grip shaft (hop in under a hanging grip wall) to the flag.
-  - **Bot check** (`tools/hop-bot.js`: every hold length from every spot you can stand or cling): every level finishes and none has a dead end. Fastest bot runs, without the 0.5 s pause per hop a person needs: 1 3.6 s, 2 4.9, 3 6.6, 4 5.0, 5 3.7, 6 5.7, 7 6.0, 8 7.0, 9 6.1, 10 6.8. The tightest hops on the bot's route: 1-3 13 of 163 hold lengths, 1-4 (over the 4 u wall) 17, 1-9 10. Climbing is the only way up: with the grip walls turned plain, the bot can't finish 1-7 to 1-10.
+  3. **Up We Go:** a staircase of three rising platforms, the last one floating over a pit; needs held jumps.
+  4. **The Wall:** one long floor (no pits) with a 2 u wall, then a 4 u wall; a short jump into either turns you around. Clearing the 4 u wall takes a full hold at the right moment.
+  5. **Thin Ice:** jump from a high ledge over a pit onto a long ice floor that speeds you up, over a 1 u bump and on across more ice to the flag.
+  6. **Low Ceiling** (no ceiling since the auto-run rework; the name is to change): two ice runs, each ending at a wide gap (7.75 u, then 8.25 u) that only an ice dash crosses.
+  7. **Grip:** a shaft 3 u across between a hanging grip wall (jump in under it, 1.7 u of room) and the 5 u grip face of the flag's ledge; wall-jump up.
+  8. **Which Wall?:** the flag's ledge is walled in under a long ceiling. A grip pillar in the middle lets you wall-jump back left, up an ice ledge and two small ledges to the top-left corner, then over the ceiling and down to the flag.
+  9. **Slide and Climb:** a drop onto an ice run that ends at a 3.5 u pit; jump the pit at speed, under a hanging grip wall, then climb a grip shaft to the flag.
+  10. **The Gauntlet:** a gap, an ice run under a low ceiling toward a 3 u gap, then a grip shaft (jump in under a hanging grip wall) to the flag.
+  - **Bot check** (`tools/hop-bot.js`, auto-run: from every spot you can stand or cling, every press frame over the next 2.5 s with 9 hold lengths): every level finishes and none has a dead end (2026-11-10). Fastest bot runs: 1 2.95 s, 2 3.95, 3 3.45, 4 3.37, 5 2.63, 6 2.12, 7 3.87, 8 8.77, 9 3.53, 10 3.70. The tightest jump on each route, in press frames that reach the same spot: 1 31, 2 21, 3 21, 4 1, 5 28, 6 10, 7 3, 8 9, 9 3, 10 4. These count frames into one 1 u landing cell, so they understate the real window when a neighboring cell leads on too; play 1-4, 1-7, 1-9 and 1-10 to judge them.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket (built; 4–10 are drafts, hidden until 1–3 are played and the mode is tuned):** 1 **Blast Off**: flat floor with one block in the middle, 2 u wide and 4 u tall; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
   - **Grapple (1–3 built; 4–10 still an outline):** 1 **Swing By**: one pillar over a 3 u pit's far edge; prompt "Hold to reel in. Let go to fly." (placed under the pillar) · 2 **Two Pillars**: a 14 u pit, swing from one pillar to the next · 3 **Let Go**: one pillar, an 8 u pit; the later you let go, the farther you fly · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5). Pillars hang from the top of the level box and stay out of the HUD (x −2.5…2.5 at the top center, and the top right). Where floor runs past the flag with no pillar in reach (1 and 3), a thin ceiling under the HUD runs from x 2.5 to the right wall, so a player who overshoots can hook it and swing back (otherwise only the wall and floor are in reach, and you were stuck).
@@ -184,7 +187,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       gates: [],                           // Rocket only: {solid: {l, r, top, bottom}, button: {x, y}}
       grates: [],                          // Phase only: {l, r, top, bottom}
       flag: {x: 10, y: -4},                // pole foot; {x, y, hang: true, dir: -1} for a hanging flag
-      prompt: 'Hold A then release to Jump!', // level 1 of each world only
+      prompt: 'Press A to run, press again to jump!', // level 1 of each world only
       // promptAt: {x, y},                 // optional: where the prompt sits (default: above the start)
     },
   ];
@@ -240,13 +243,13 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
   - **UI:** dark text on the world color, square pips, icon buttons without panels. Menus use the same two tones; world cards take their world's color.
   - **Font:** a heavy grotesque (the mockups use Archivo ExtraBold). Embed a subset as a woff2 file (it is open-licensed), since the game may not load Google Fonts; fall back to `system-ui` at weight 800.
   - Everything is drawn with engine rectangles and polygons; no image files.
-- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; each eye blinks every 2.5–5 s (sometimes twice), on its own timer so P1 and P2 never blink in sync; after 5 s standing still, the pupil darts left and right furtively, then rests in the middle and repeats, until the player moves or charges; while you charge in Hop, the pupil looks along the aim and follows its sweep; squash down toward the floor while charging, deeper the more power is charged (up to 45 % flatter at full charge), leaning back like a \ when facing right as power and aim height build (up to 0.25 u at full power and the highest aim); the lean lets go on launch, where the stretch takes over; past full charge, as the aim sweeps back down toward a long flat hop, the squash eases into a squeeze from the sides (at the flattest aim 0.44 u wide and 0.64 u tall, still shorter than the 0.8 u square) and the top leans forward into the hop, feet planted, like a / when facing right (up to 0.25 u), with the eye squinting (up to 35 % narrower) and sitting 0.08 u lower; a lunge launches in that pose (no stretch), keeps it for the first 35 % of the jump and eases back to square by the time it would land back at launch height (at least 0.3 s); on landing, a short squeeze (held flat for a moment, deeper on harder landings, then a small spring back past square), stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a stretch pop on finish (no slow-mo: it dropped the frame rate); one soft, lighter pulse of the background on finish (never repeated or strobing); count-up time and gap pop; eased slide-in for every panel; button press bounce.
+- **Juice list:** with no decoration, motion carries the charm, so every item here is required, not optional. Googly pupils wobble on every jump, landing and bump; each eye blinks every 2.5–5 s (sometimes twice), on its own timer so P1 and P2 never blink in sync; after 5 s standing still, the pupil darts left and right furtively, then rests in the middle and repeats, until the player moves or presses; in Hop, the runner leans into the run (further and squashed low on fast ice) and somersaults on a full hold (§3.2); on landing, a short squeeze (held flat for a moment, deeper on harder landings, then a small spring back past square), stretch on launch; ink dust puffs on landing; white sparkle while sliding on ice; flatten on sticky floors; short trail while airborne; blast ring and splash in the owner's color and a short screen shake for rockets; small shake when a hook sticks; splash on melt, puff on evaporate, snap on freeze; white confetti and a stretch pop on finish (no slow-mo: it dropped the frame rate); one soft, lighter pulse of the background on finish (never repeated or strobing); count-up time and gap pop; eased slide-in for every panel; button press bounce.
 - **Concept art prompts:** *"Minimal two-tone platformer, flat warm yellow background, all platforms solid near-black shapes with no texture, one blue square character with a white letter A and one red square character with a white letter L, no outlines, each with one big googly eye, dotted square aim trail, black-and-white checkered racing flag on a black pole, bold flat vector, 16:9."* Per world: swap the background to coral with "blue and red rockets and blast rings, hatched icy floor" (Rocket), teal with "black rope to pillars hanging from the ceiling" (Grapple), yellow with "square melting into a stream of drops on tilted black bars, a black grate with gaps, hollow rings of gas rising" (Phase).
 
 ## 10. Audio
 | Sound | When | Character |
 |---|---|---|
-| Charge tick | While holding, rising pitch with power; in Hop, past full charge it keeps rising as the aim drops into the flat lunge (up to 2.6× the base pitch) and falls back as the aim swings up | Soft blip |
+| Charge tick | While holding, rising pitch with power, in the modes that charge (not Hop since auto-run) | Soft blip |
 | Jump | Hop release | Upward slide |
 | Land | Landing or clinging | Low thump |
 | Ice slide | Sliding on ice | Light scrape loop, fades with speed |
@@ -312,7 +315,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
   - **Checkpoints:** levels are small enough that falling back to the start is fair.
   - **Dynamic camera zoom and scrolling levels:** every level fits the screen, so the camera stays fixed and players are drawn bigger.
   - **Portrait play:** the level box is 16:9; a portrait phone would shrink it to a third. Portrait shows the rotate screen.
-  - **Momentum in Hop landings:** Hop stays precise (land where you aim); momentum lives in Rocket, Grapple, Phase and on ice.
+  - **Hold-to-charge Hop:** replaced by auto-run (§3.2, 2026-11-10).
   - **Reduce-motion setting:** not in v1; the finish pulse is kept to one soft flash instead.
   - **Flow grain-count debug text:** removed (`RC_SAND.debug` off).
 - **Rejected modes:** built and played, then dropped. A rejected mode is hidden in the game (`hidden: true` in `HR_WORLDS`: no card, no levels, not reachable from Play or `window.game.start`), but its code, levels and GDD section stay for reference.
@@ -354,6 +357,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-10 — Hop: auto-run is the rule, no longer a test. The hold-to-charge hop and its switch are removed, the bot checks the auto-run, and saved Hop best times and ghosts (from the charge hop) are cleared once.
 - 2026-10-23 — Title: the world cards are on the title under the Play buttons (a card starts that world's next level, solo), replacing the Levels button, after a playtester never found the worlds after Hop. The idle hopping square is gone; Settings moved to the top right.
 - 2026-10-23 — Hop: charging toward a high hop leans back (\), the mirror of the flat lunge's /. (A bigger eye with it was tried and dropped: too much.)
 - 2026-10-23 — Hop: a lunge flies in its / pose and eases back to square over the jump.

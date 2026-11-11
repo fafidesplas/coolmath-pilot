@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-10 — Hop: auto-run set in stone
+- Owner: keep auto-run for good. Removed `HR_HOP.autoRun` and the hold-to-charge hop with it (charge and aim, the lunge and back-lean poses, ice slides, the charge-only tuning). `HR_MODES.hop.step` is the run. Level 1's prompt and the world hint now live in the data (`levels/hop.js`, `HR_WORLDS`), not as overrides in the mode.
+- The editor's Check (`tools/hop-bot.js`) now plays auto-run: from each landing or wall grab it tries every press frame over the next 2.5 s with 9 hold lengths and follows the jump. Landings are merged per platform, facing, speed and a 1 u grid; without the grid it missed the routes in 8 and 9. All 10 finish with no dead ends, 3.1 s for the whole world: 2.95, 3.95, 3.45, 3.37, 2.63, 2.12, 3.87, 8.77, 3.53, 3.70 s. The status line shows the tightest timing window in frames.
+- Saved Hop best times and ghosts are from the charge hop, so they are cleared once on load (`hopRun` flag in the save). Other worlds' times are untouched.
+- GDD §3.2 rewritten as the auto-run rules; §5 elements, §6 level one-liners and bot numbers, the juice list and the summary line updated.
+- Checked in Chrome: the save reset, the level 1 prompt, a click starts the run, the editor's Check on 1-8 draws its 7-move route, no console errors.
+- Next: 1-6 is still named "Low Ceiling" but has no ceiling now; rename it. `mechanic.svg` and the brief still show the charge hop. The tightest windows (1-4 at 1 frame, 1-7 and 1-9 at 3) are worth playing; they may be grid artifacts.
+
 ## 2026-10-28 — Hop: ice pose and droplets
 - Owner: on ice, lean further and squash lower to sell the speed, and add droplets from the contact point for slipperiness. On ice the lean now grows with ice speed past `maxLean` to `iceLean` 0.42 u, and the square squashes up to `iceCrouch` 0.2 flatter (and wider). Both ease out in the air and off the ice, and now also after the finish.
 - Droplets: white beads flicked up and back from the trailing foot, more and faster the closer you are to full ice speed, plus a 6-drop splash when landing on ice. They arc under their own gravity (the engine's particle gravity is global and zero here), so they're a small pooled system in `render.js` (`hrDroplet`, `hrSplash`, `hrDropsStep`, `hrDrawDrops`, max 64), gone when they fall back to the ice. The sparkles stay.

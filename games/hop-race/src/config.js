@@ -22,7 +22,7 @@ const HR_FONT_STYLE = '800';
 // GDD §11 world ids; `ready` worlds have levels in levels/<id>.js
 // hidden worlds (GDD §13 Rejected) keep their code but have no levels anywhere
 const HR_WORLDS = [
-    {id: 'hop',     name: 'Hop',     ga: 'world01', bg: HR_YELLOW, hint: 'Hold: charge · Release: hop'},
+    {id: 'hop',     name: 'Hop',     ga: 'world01', bg: HR_YELLOW, hint: 'Press: jump · Hold: higher'},
     {id: 'rocket',  name: 'Rocket',  ga: 'world02', bg: HR_CORAL,  hint: 'Press: blast'},
     {id: 'grapple', name: 'Grapple', ga: 'world03', bg: HR_TEAL,   hint: 'Hold: reel in · Release: fly'},
     {id: 'phase',   name: 'Phase',   ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state', hidden: true},

@@ -17,6 +17,14 @@ function hrSaveLoad()
     const d = hrSaveDefaults(), s = readSaveData(HR_SAVE_KEY, d);
     const ok = s.v == 1 && s.levels && typeof s.levels == 'object' && s.settings && typeof s.settings == 'object';
     hrSave = ok ? {...d, ...s, settings: {...d.settings, ...s.settings}, hats: {...d.hats, ...s.hats}} : d;
+    // Hop's rules changed to auto-run (2026-11-10): best times and ghosts from the charge hop don't compare, so
+    // they are cleared once (only test saves had any)
+    if (!hrSave.hopRun)
+    {
+        for (const id in hrSave.levels) if (id.startsWith('hop-')) { delete hrSave.levels[id]; hrGhostClear(id); }
+        hrSave.hopRun = 1;
+        hrSaveWrite();
+    }
 }
 
 function hrSaveWrite() { writeSaveData(HR_SAVE_KEY, hrSave); }
@@ -56,6 +64,8 @@ function hrGhostRead(id)
     }
     catch { return null; }
 }
+
+function hrGhostClear(id) { try { localStorage.removeItem(HR_GHOST_KEY + id); } catch {} }
 
 function hrGhostWrite(id, samples)
 {
