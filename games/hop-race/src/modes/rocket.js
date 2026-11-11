@@ -1,6 +1,6 @@
 /*
     HOP RACE - World 2, Rocket (GDD §3.3). A launcher spins around you; press to fire.
-    The blast pushes every player in range; a rocket explodes on the other player. Ported from the prototype's Rocket Jump
+    Your blasts push only you, and rockets fly through the other player (owner, 2026-11-11). Ported from the prototype's Rocket Jump
     (prototype/game.js rcRocketStep, rcMotion, rcExplode, rcRocketsUpdate).
 */
 
@@ -52,11 +52,9 @@ HR_MODES.rocket = {
                 if (abs(r.x) > hrLevel.w / 2 + 2 || abs(r.y) > hrLevel.h / 2 + 4) return false;   // flew off
                 const btn = hrLevel.gates.find(g => !g.pressed &&
                     isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(g.button.x, g.button.y), vec2(1.1)));
+                // rockets fly through both players: only solids and buttons set them off
                 const hit = hrLevel.solids.some(s => r.x > s.l && r.x < s.r && r.y > s.bottom && r.y < s.top);
-                // your own rocket flies through you; the other player's explodes on you
-                const hitPlayer = hrPlayers.some(p => p != r.owner && !p.finished &&
-                    isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(p.x, p.y), vec2(HR_PSIZE)));
-                if (btn || hit || hitPlayer) { this.explode(r); return false; }
+                if (btn || hit) { this.explode(r); return false; }
             }
             return true;
         });
@@ -69,8 +67,8 @@ HR_MODES.rocket = {
         for (const g of hrLevel.gates)
             if (!g.pressed && c.distance(vec2(g.button.x, g.button.y)) < R.switchRadius) hrPressGate(g);
 
-        // GDD §3.3: the blast pushes every player in range, the one who fired it and the other one
-        for (const p of hrPlayers)
+        // GDD §3.3: the blast pushes only the player who fired it; the other player isn't affected
+        for (const p of [owner])
         {
             const off = vec2(p.x, p.y).subtract(c), d = off.length();
             if (d >= R.radius || p.finished) continue;

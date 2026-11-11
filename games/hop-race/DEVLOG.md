@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-11 — Rocket: your blasts are yours
+- Owner: one player's explosions shouldn't affect the other. Rockets no longer explode on the other player (they fly through both players and go off only on solids and buttons), and a blast pushes only the player who fired it. Gates still open for both, whoever presses the button.
+- GDD §3.1 (no contact now has no exception), §3.3, §14 and the changelog updated.
+
+
 ## 2026-11-11 — Start prompts replace the body letters
 - Owner: the A and L on the squares read as character names, not keys. Removed them from the bodies (`hrDrawPlayer`).
 - Every level now opens with a line over each player: "P1: Press A to run" / "P2: Press L to run" in Versus, "Press A to run" solo. The verb is per world (`verb` in `HR_WORLDS`: run, blast, hook, swing). It shows through the countdown and fades on that player's own first press (`p.intro`). Lines stack (P1 on top) when both start on the same spot, and stay inside the level box. Solo tutorial levels (with their own prompt) skip it.
