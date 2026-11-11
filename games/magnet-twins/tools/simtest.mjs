@@ -5,7 +5,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { Sim } from '../src/sim.js';
 import { B, T } from '../src/config.js';
 import { encodeRecording, decodeRecording } from '../src/record.js';
-import w1l01 from '../levels/w1l01.js';
+import w1l10 from '../levels/w1l10.js';
 
 const WRITE = process.argv.includes('--write');
 let failed = 0;
@@ -123,120 +123,54 @@ const cy = r => r.y + r.h / 2;
 }
 
 { // Spikes reset both robots; crates stay
-  const s = new Sim(w1l01);
+  const s = new Sim(w1l10);
   run(s, 30);
   run(s, 200, () => B.L);
   ok(s.events.some(e => e.type === 'hazard'), 'walking into spikes triggers a reset');
 }
 
-// --- Scripted solutions ------------------------------------------------------
+// --- Levels: recorded solutions, par, bolts and the naive bot ------------------------------
+// Every level has a solution script (tools/solutions.mjs) run in co-op and in solo. The
+// recordings (levels/solutions/<id>.<mode>.json) must reach the exit, collect all 3 bolts,
+// replay identically, and match the par stored in the level (recorded time × 1.25). A bot
+// that only walks right must NOT finish the level.
+import { runScript, naiveReaches } from './bot.mjs';
+import { SCRIPTS } from './solutions.mjs';
+import { WORLDS, DEBUG_LEVELS } from '../levels/index.js';
 
-function solve(level, mode) {
-  const sim = new Sim(level, mode);
-  const frames = [];
-  const hold = [0, 0];
-  const R = sim.robots, crate = sim.crates[0];
-  const center = r => r.x + r.w / 2;
-
-  const frame = (i, bits) => {
-    if (mode === 'solo') return bits;
-    const a = hold[0] | (i === 0 ? bits : 0), b = hold[1] | (i === 1 ? bits : 0);
-    return a | (b << 8);
-  };
-  const tick = bits => { frames.push(bits); sim.step(bits); if (frames.length > 120 * 120) throw new Error('bot timed out'); };
-  const focus = i => { if (mode === 'solo' && sim.active !== i) { tick(B.S); tick(0); } };
-  const wait = (n, i = 0) => { for (let k = 0; k < n; k++) tick(frame(i, 0)); };
-  const settle = i => { for (let k = 0; k < 90 && (Math.abs(R[i].vx) > 1 || !R[i].grounded); k++) tick(frame(i, 0)); };
-  const walkTo = (i, x) => {
-    focus(i);
-    const r = R[i];
-    for (let k = 0; k < 2400; k++) {
-      const d = x - center(r), stop = (r.vx * r.vx) / (2 * 3000) + 1;
-      if (Math.abs(d) <= stop) break;
-      tick(frame(i, d > 0 ? B.R : B.L));
-    }
-    settle(i);
-  };
-  const power = (i, on, aim = 0) => {
-    focus(i);
-    if (mode === 'coop') {
-      if (on) { hold[i] |= B.P; tick(frame(i, aim)); tick(frame(i, aim)); }
-      else { hold[i] &= ~B.P; tick(frame(i, 0)); }
-    } else if (R[i].power !== on) { tick(B.P | aim); tick(aim); tick(0); }
-  };
-  // Jump towards x and keep going until standing with feet at or above surfaceY.
-  const hopTo = (i, x, surfaceY) => {
-    focus(i);
-    const r = R[i];
-    for (let tries = 0; tries < 6; tries++) {
-      tick(frame(i, 0));
-      for (let k = 0; k < 120; k++) {
-        const d = x - center(r);
-        const dir = Math.abs(d) < 3 ? 0 : d > 0 ? B.R : B.L;
-        tick(frame(i, B.U | dir));
-        if (k > 4 && r.grounded) break;
-      }
-      settle(i);
-      if (r.y + r.h <= surfaceY + 0.5 && Math.abs(x - center(r)) < 25) return;
-    }
-    throw new Error(`${r.pol} could not reach ${x},${surfaceY}`);
-  };
-
-  // 1. Minus steps aside, Plus pulls the crate across the spikes.
-  walkTo(1, 505);
-  walkTo(0, 258);
-  power(0, true);
-  wait(80);
-  // 2. Plus walks backwards, dragging the crate, then lets go.
-  walkTo(0, 430);
-  power(0, false);
-  wait(20);
-  // 3. Both climb: crate, then the plateau (surface y = 360).
-  hopTo(0, crate.x + 20, crate.y);
-  hopTo(0, 560, 360);
-  walkTo(1, crate.x + crate.w + 22);
-  hopTo(1, crate.x + 20, crate.y);
-  hopTo(1, 540, 360);
-  // 4. Plus holds the left plate; Minus goes through and holds the right one.
-  walkTo(0, 620);
-  power(0, true, B.U);
-  wait(50);
-  walkTo(1, 1100);
-  power(1, true, B.U);
-  wait(50);
-  // 5. Plus lets go, hops over Minus to the exit; Minus follows.
-  power(0, false);
-  walkTo(0, 1040);
-  hopTo(0, 1218, 360);
-  power(1, false);
-  walkTo(1, 1178);
-  wait(60, 1);
-  if (!sim.done) throw new Error('bot did not finish');
-  return { frames, time: sim.time };
-}
+const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
+const all = WORLDS.flatMap(w => w.levels);
+ok(all.length === new Set(all.map(l => l.id)).size, `${all.length} levels in the world list, all with different ids`);
 
 function replay(level, rec) {
   const sim = new Sim(level, rec.mode);
-  const frames = decodeRecording(rec);
-  for (const bits of frames) sim.step(bits);
+  for (const bits of decodeRecording(rec)) sim.step(bits);
   return sim;
 }
 
-for (const mode of ['coop', 'solo']) {
-  const file = new URL(`../levels/solutions/${w1l01.id}.${mode}.json`, import.meta.url);
-  if (WRITE) {
+for (const level of all) {
+  const script = SCRIPTS[level.id];
+  if (!script) { ok(false, `${level.id}: no solution script`); continue; }
+  const files = m => new URL(`../levels/solutions/${level.id}.${m}.json`, import.meta.url);
+  if (WRITE && (!ONLY.length || ONLY.includes(level.id))) {
     try {
-      const { frames, time } = solve(w1l01, mode);
-      const rec = encodeRecording(w1l01.id, mode, frames);
-      writeFileSync(file, JSON.stringify(rec) + '\n');
-      console.log(`wrote ${w1l01.id}.${mode}.json  (${time.toFixed(2)} s, par ${Math.ceil(time * 1.25)} s)`);
-    } catch (e) { ok(false, `${mode} bot: ${e.message}`); continue; }
+      const out = runScript(level, script);
+      for (const m of ['coop', 'solo']) {
+        const rec = { ...encodeRecording(level.id, m, out[m].frames), time: Math.round(out[m].time * 100) / 100, bolts: out[m].bolts };
+        writeFileSync(files(m), JSON.stringify(rec) + '\n');
+      }
+      console.log(`wrote ${level.id}: co-op ${out.coop.time.toFixed(1)} s, solo ${out.solo.time.toFixed(1)} s`);
+    } catch (e) { ok(false, `${level.id}: ${e.message}`); continue; }
   }
-  if (!existsSync(file)) { ok(false, `${w1l01.id}.${mode}.json missing`); continue; }
-  const rec = JSON.parse(readFileSync(file, 'utf8'));
-  const a = replay(w1l01, rec), b = replay(w1l01, rec);
-  ok(a.done, `${w1l01.id} ${mode} solution reaches the exit (${a.time.toFixed(2)} s)`);
-  ok(a.robots[0].x === b.robots[0].x && a.steps === b.steps, `${mode} replay is deterministic`);
+  for (const m of ['coop', 'solo']) {
+    if (!existsSync(files(m))) { ok(false, `${level.id} ${m}: no recording (run with --write)`); continue; }
+    const rec = JSON.parse(readFileSync(files(m), 'utf8'));
+    const a = replay(level, rec), b = replay(level, rec);
+    ok(a.done && a.boltCount === 3, `${level.id} ${m} solution reaches the exit with all 3 bolts (${a.time.toFixed(1)} s)`);
+    ok(a.steps === b.steps && a.robots[0].x === b.robots[0].x && a.robots[1].x === b.robots[1].x, `${level.id} ${m} replay is deterministic`);
+    ok(level.par[m] === Math.ceil(rec.time * 1.25), `${level.id} ${m} par ${level.par[m]} s = recorded ${rec.time} s × 1.25`);
+  }
+  ok(!naiveReaches(level, 'coop') && !naiveReaches(level, 'solo'), `${level.id}: a bot that only walks right does not finish it`);
 }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
