@@ -245,8 +245,22 @@ function hrUiContinue()
 // drawing helpers (screen space)
 
 const hrRect = (x, y, w, h, c) => drawRect(vec2(x, y), vec2(w, h), c, 0, false, true);
-const hrText = (t, x, y, size, c = HR_INK, align = 'center') =>
-    drawTextScreen(t, vec2(x, y), size, c, 0, BLACK, align, HR_FONT, HR_FONT_STYLE);
+// every text gets a halo in the opposite tone (dark text: the background color; light text: ink),
+// so it stays readable where it crosses ink level pieces; on a plain background the halo is invisible
+// (pass `bg` when the text sits on a panel of another color, like the world cards)
+function hrHalo(c, bg = hrScreenBg())
+{
+    const dark = c.r + c.g + c.b < 1.5;
+    return (dark ? bg : HR_INK).scale(1, c.a);
+}
+const HR_HALO = .14;   // halo stroke width as a share of the text size (the stroke is centered, so ~7% shows outside)
+function hrDrawText(draw, t, pos, size, c, align, bg)
+{
+    drawContext.lineJoin = 'round';   // no miter spikes on the heavy font
+    draw(t, pos, size, c, size * HR_HALO, hrHalo(c, bg), align, HR_FONT, HR_FONT_STYLE);
+}
+const hrText = (t, x, y, size, c = HR_INK, align = 'center', bg) => hrDrawText(drawTextScreen, t, vec2(x, y), size, c, align, bg);
+const hrWorldText = (t, pos, size, c = HR_INK) => hrDrawText(drawText, t, pos, size, c, 'center');
 const hrEaseOut = k => 1 - Math.pow(1 - clamp(k), 3);
 const hrEaseBack = k => { k = clamp(k) - 1; return 1 + 2.7 * k * k * k + 1.7 * k * k; };
 const hrFmt = ms => (ms / 1000).toFixed(1);
@@ -331,16 +345,16 @@ function hrDrawCard(b, w, h, focused)
     const u = hrUnit(), world = HR_WORLDS[b.card], live = b.enabled !== false;
     hrRect(b.x, b.y, w, h, live ? HR_INK : HR_INK.scale(1, .25));
     hrRect(b.x, b.y, w - 14 * u, h - 14 * u, live ? world.bg : world.bg.scale(1, .5));
-    hrText(world.name, b.x, b.y + h * .26, 40 * u, HR_INK);
-    if (world.lab) hrText('LAB', b.x, b.y - h * .39, 20 * u, HR_INK);   // a feel test, not a finished world
+    hrText(world.name, b.x, b.y + h * .26, 40 * u, HR_INK, 'center', world.bg);
+    if (world.lab) hrText('LAB', b.x, b.y - h * .39, 20 * u, HR_INK, 'center', world.bg);   // a feel test, not a finished world
     if (live)
     {
         const done = hrLevelsOf(b.card, false).filter(l => hrSaveLevel(l.id).bestMs).length;
         if (!hrMenuVersus)
-            hrText(`${done}/${world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK);
+            hrText(`${done}/${world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK, 'center', world.bg);
         hrDrawSchematic(b.card, b.x, b.y - h * .12, w * .7);
     }
-    else hrText('Soon', b.x, b.y - h * .1, 28 * u, HR_INK.scale(1, .5));
+    else hrText('Soon', b.x, b.y - h * .1, 28 * u, HR_INK.scale(1, .5), 'center', world.bg.scale(1, .5));
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
@@ -618,7 +632,7 @@ function hrDrawPrompt()
     const def = hrLevelDef(), s = hrLevel.start;
     // high enough to stay clear of a full-power aim arc, unless the level places it
     const at = def.promptAt ? vec2(def.promptAt.x, def.promptAt.y) : vec2(0, s.y + 6);
-    drawText(def.prompt, at, .9, HR_INK.scale(1, hrRun.prompt), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
+    hrWorldText(def.prompt, at, .9, HR_INK.scale(1, hrRun.prompt));
 }
 
 function hrDrawComplete(W, H, u, y0)

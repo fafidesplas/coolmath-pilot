@@ -165,7 +165,7 @@ function hrDrawStartPrompts()
         if (p.intro <= 0) continue;
         const text = `${hrVersus ? p.name + ': ' : ''}Press ${p.letter} to ${verb}`, half = text.length * size * .29;
         const x = clamp(p.x, -hw + half + .3, hw - half - .3), y = p.y + 1.3 + (stacked && !p.index ? .8 : 0);   // stacked: P1 on top
-        drawText(text, vec2(x, y), size, HR_INK.scale(1, p.intro), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
+        hrWorldText(text, vec2(x, y), size, HR_INK.scale(1, p.intro));
     }
 }
 

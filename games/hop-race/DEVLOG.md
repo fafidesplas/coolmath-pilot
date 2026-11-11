@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-11 — Text readable over ink
+- Owner: make all UI text readable on black. Every text was plain ink with no outline, so wherever it crossed an ink level piece (the start prompts over the floor, the hint at the bottom, the HUD over a wall or ceiling) it vanished.
+- All text now goes through `hrDrawText` (`src/ui.js`): a round-joined halo 14 % of the text size, in the opposite tone (screen background around dark text, ink around light text), alpha matched to the text so fades still work. World-space prompts use `hrWorldText`; world cards pass their own color so the halo doesn't ring their panels.
+- On plain backgrounds nothing changes visually. Checked in Chrome: Hop 1-1 with test lines forced over the floor and side wall, the world select, the pause overlay; no console errors. 20 % filled in the letter holes at small sizes, so 14 % it is.
+- GDD §9 UI line and changelog updated.
+
 ## 2026-11-11 — Rocket: your blasts are yours
 - Owner: one player's explosions shouldn't affect the other. Rockets no longer explode on the other player (they fly through both players and go off only on solids and buttons), and a blast pushes only the player who fired it. Gates still open for both, whoever presses the button.
 - GDD §3.1 (no contact now has no exception), §3.3, §14 and the changelog updated.
