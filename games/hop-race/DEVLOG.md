@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-11 — First upload build
+- Built `hopRace.zip` (79 KB, release engine 1.18.30, one `index.html`) for a Coolmath upload.
+- Fixed: the release page still had `<script src=editor.js>` (the build keeps tags it doesn't bundle), a 404 and a network request. `index.html` now adds the editor from a small inline script only when the dev `src/main.js` tag is there, so the release never asks for it. Checked in Chrome: the release makes no requests, has no editor, solo and Versus start; the dev page still opens the editor with `?edit`.
+- Still in the build: GameAnalytics stubs that log to the console, `window.game` with `win()`, no Coolmath SDK (STANDARDS: [confirm]).
+
 ## 2026-11-11 — Hop card shows the run
 - The Hop card's mini schematic (title and mode select) showed the old charge hop (squash, dotted aim arc). It now shows auto-run: the square runs across the floor leaning into the run, hops over a block, lands with a squeeze and runs on, fading in and out at the edges (`hrDrawSchematic` in `ui.js`, 2.2 s loop). Checked in Chrome on the title.
 

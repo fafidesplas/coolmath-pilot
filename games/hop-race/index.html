@@ -28,4 +28,8 @@
 <script src=levels/climb.js></script>
 <script src=levels/phase.js></script>
 <script src=src/main.js></script>
-<script src=tools/editor.js></script>
+<script>
+// the level editor (debug only) loads only in this dev page: a release build inlines everything, so it has no src/main.js tag
+if (document.querySelector('script[src="src/main.js"]'))
+    document.body.appendChild(Object.assign(document.createElement('script'), {src: 'tools/editor.js'}));
+</script>
