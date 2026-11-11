@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-11 — Start prompts replace the body letters
+- Owner: the A and L on the squares read as character names, not keys. Removed them from the bodies (`hrDrawPlayer`).
+- Every level now opens with a line over each player: "P1: Press A to run" / "P2: Press L to run" in Versus, "Press A to run" solo. The verb is per world (`verb` in `HR_WORLDS`: run, blast, hook, swing). It shows through the countdown and fades on that player's own first press (`p.intro`). Lines stack (P1 on top) when both start on the same spot, and stay inside the level box. Solo tutorial levels (with their own prompt) skip it.
+- Round and match screens say "P1 wins the round" / "P1 wins the match" with a plain color square, and the pip rows are labeled P1 and P2. The HUD still shows A and L by the pips (they are the keys).
+- Checked in Chrome: Rocket 2-2 Versus (stacked lines), Hop Versus 2 (each line over its player; P1's fades on A while P2's stays), solo 1-2, solo 1-1 (tutorial only), the round screen; no console errors.
+- Note: on a touch screen the lines still say "Press A", like the level 1 prompts.
+
+
 ## 2026-11-11 — Versus: striped overlap
 - Owner: on shared levels the two players can sit on the same spot and P2 disappears. Prototyped seven drawings on a comparison page (X-ray outline, see-through, stripes, drawn apart, floating letters, outline plus letters, and the old eye nudge); owner picked the striped overlap.
 - `hrDrawOverlap` (`render.js`): where P1's and P2's bodies overlap, diagonal stripes in P2's color, clipped to the overlap; then P1's letter and both eyes are drawn again on top. Same spot: a fully striped square. Lean and spin are ignored for the overlap box. `hrDrawPlayer(p, part)` can now draw just the letter or the eye; the old eye nudge is gone.

@@ -35,6 +35,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
         prompt: index == 0 && def.prompt ? 1 : 0, promptFade: false, hintT: index == 0 ? 0 : 3,
         promptSeen: hrRun && !newLevel ? hrRun.promptSeen : false};
     if (hrRun.promptSeen) hrRun.prompt = 0;
+    if (!versus && hrRun.prompt) hrPlayers[0].intro = 0;   // a solo tutorial level has its own prompt
     hrFinishT = -1;
     if (versus)
     {
@@ -236,6 +237,12 @@ function hrPlayUpdate(racing)
     }
 
     if (hrRun.prompt && hrRun.promptFade) hrRun.prompt = max(0, hrRun.prompt - timeDelta * 2);
+    // each start prompt fades on its player's first press
+    for (const p of hrPlayers)
+    {
+        if (hrButtons[p.index]?.pressed) p.introFade = true;
+        if (p.introFade) p.intro = max(0, p.intro - timeDelta * 3);
+    }
     hrRun.hintT += timeDelta;
 
     if (hrVersus)
@@ -285,16 +292,16 @@ function gameRender()
         hrDrawGhost(hrGhostPos(hrRun.started || hrFinishT >= 0 ? hrRun.frames : 0));
     hrPlayers.forEach(p => hrMode().draw(p));
     // P2 is drawn behind P1; where they overlap (they pass through each other) the overlap is striped in P2's color,
-    // then P1's letter and both eyes go back on top
+    // then both eyes go back on top
     for (let i = hrPlayers.length; i--;)
         hrMode().drawPlayer ? hrMode().drawPlayer(hrPlayers[i]) : hrDrawPlayer(hrPlayers[i]);
     if (hrPlayers.length > 1 && !hrMode().drawPlayer && hrDrawOverlap(hrPlayers[0], hrPlayers[1]))
     {
-        hrDrawPlayer(hrPlayers[0], 'letter');
         hrDrawPlayer(hrPlayers[1], 'eye');
         hrDrawPlayer(hrPlayers[0], 'eye');
     }
     hrDrawDrops();
+    hrDrawStartPrompts();
     hrDrawPrompt();
     window.hrEditor?.render();
 }

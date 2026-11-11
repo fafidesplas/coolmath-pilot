@@ -642,9 +642,8 @@ function hrDrawRound(W, H, u, y0)
     if (hrMatch.tie) hrText('Tie! Again', W / 2, H * .38 + y0, 60 * u);
     else
     {
-        hrRect(W / 2 - 150 * u, H * .38 + y0, 90 * u, 90 * u, p.color);
-        hrText(p.letter, W / 2 - 150 * u, H * .38 + y0, 56 * u, p.letterColor);
-        hrText('wins the round', W / 2 - 80 * u, H * .38 + y0, 52 * u, HR_INK, 'left');
+        hrRect(W / 2 - 220 * u, H * .38 + y0, 90 * u, 90 * u, p.color);
+        hrText(`${p.name} wins the round`, W / 2 - 150 * u, H * .38 + y0, 52 * u, HR_INK, 'left');
     }
     hrPlayers.forEach((q, i) =>
     {
@@ -656,7 +655,7 @@ function hrDrawRound(W, H, u, y0)
             if (k < hrMatch.wins[i]) hrRect(x, y, s, s, HR_INK);
             else hrOutline(x, y, 28 * u, 28 * u, 4 * u, HR_INK);
         }
-        hrText(q.letter, W / 2 + (i ? 200 : -200) * u, H * .56 + y0, 36 * u);
+        hrText(q.name, W / 2 + (i ? 210 : -210) * u, H * .56 + y0, 36 * u);
     });
 }
 
@@ -664,8 +663,7 @@ function hrDrawMatch(W, H, u, y0)
 {
     const p = hrPlayers[hrMatch.winner], s = 150 * u * hrEaseBack(hrScreenT / .4);
     hrRect(W / 2, H * .32 + y0, s, s, p.color);
-    hrText(p.letter, W / 2, H * .32 + y0, s * .6, p.letterColor);
-    hrText(`${p.letter} wins the match`, W / 2, H * .56 + y0, 60 * u);
+    hrText(`${p.name} wins the match`, W / 2, H * .56 + y0, 60 * u);
     hrText(`${hrMatch.wins[0]} – ${hrMatch.wins[1]}`, W / 2, H * .64 + y0, 30 * u, HR_INK.scale(1, .7));
 }
 

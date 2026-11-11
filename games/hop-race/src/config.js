@@ -19,14 +19,14 @@ const HR_TEAL   = hrHex('#7FD1C7');
 const HR_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const HR_FONT_STYLE = '800';
 
-// GDD §11 world ids; `ready` worlds have levels in levels/<id>.js
+// GDD §11 world ids; `ready` worlds have levels in levels/<id>.js; verb goes in the start prompt ("P1: Press A to run")
 // hidden worlds (GDD §13 Rejected) keep their code but have no levels anywhere
 const HR_WORLDS = [
-    {id: 'hop',     name: 'Hop',     ga: 'world01', bg: HR_YELLOW, hint: 'Press: jump · Hold: higher'},
-    {id: 'rocket',  name: 'Rocket',  ga: 'world02', bg: HR_CORAL,  hint: 'Press: blast'},
-    {id: 'grapple', name: 'Grapple', ga: 'world03', bg: HR_TEAL,   hint: 'Hold: reel in · Release: fly'},
-    {id: 'phase',   name: 'Phase',   ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state', hidden: true},
-    {id: 'climb',   name: 'Climb',   ga: 'world05', bg: HR_CORAL,  hint: 'Hold: swing · Release: stop'},   // grew from a Lab world
+    {id: 'hop',     name: 'Hop',     verb: 'run',   ga: 'world01', bg: HR_YELLOW, hint: 'Press: jump · Hold: higher'},
+    {id: 'rocket',  name: 'Rocket',  verb: 'blast', ga: 'world02', bg: HR_CORAL,  hint: 'Press: blast'},
+    {id: 'grapple', name: 'Grapple', verb: 'hook',  ga: 'world03', bg: HR_TEAL,   hint: 'Hold: reel in · Release: fly'},
+    {id: 'phase',   name: 'Phase',   verb: 'melt',  ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state', hidden: true},
+    {id: 'climb',   name: 'Climb',   verb: 'swing', ga: 'world05', bg: HR_CORAL,  hint: 'Hold: swing · Release: stop'},   // grew from a Lab world
     // Lab worlds (GDD §13.1) go here with lab: true: feel tests of new button meanings, 3 levels each
 ];
 const HR_LEVELS_PER_WORLD = 10;

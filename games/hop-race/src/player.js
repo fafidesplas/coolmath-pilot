@@ -32,8 +32,9 @@ function hrGlance(t)
 
 function hrMakePlayer(index)
 {
-    const p = {index, letter: index ? 'L' : 'A',
-        color: index ? HR_RED : HR_BLUE, letterColor: HR_WHITE,
+    // letter is the player's key; name is how screens call the player. intro is the start prompt's strength (GDD §3.1)
+    const p = {index, letter: index ? 'L' : 'A', name: index ? 'P2' : 'P1', intro: 1, introFade: false,
+        color: index ? HR_RED : HR_BLUE,
         x: 0, y: 0, vx: 0, vy: 0, down: false, squash: 0, crouch: 0, pinch: 0, lean: 0, squint: 0, eyeDrop: 0, land: 0, landT: -1, idleT: 0, trail: [],
         eye: {x: 0, y: 0, vx: 0, vy: 0},   // pupil offset from the eye center, on a spring
         falls: 0, finished: false, blinkIn: rand(1, 4), blinkT: -1};

@@ -129,13 +129,14 @@ function hrPlayerBody(p)
     return {pos: vec2(p.x, p.y - (1 - sy) * HR_PSIZE / 2), size: vec2(HR_PSIZE * sx, HR_PSIZE * sy), sy};
 }
 
-// part: 'all', or just 'letter' or 'eye' (redrawn over the striped overlap in Versus)
+// part: 'all', or just 'eye' (redrawn over the striped overlap in Versus). No letter on the body: it read as the
+// character's name, not as its key; the start prompt names the key instead
 function hrDrawPlayer(p, part = 'all')
 {
-    const {pos, size, sy} = hrPlayerBody(p);
+    const {pos, size} = hrPlayerBody(p);
     // lean: the top slides toward the facing side (+, a / when facing right) or away from it (-, a \) while the bottom stays planted
     const lean = p.lean * (p.dir || 1), hx = size.x / 2, hy = size.y / 2;
-    // spin (a somersault, clockwise positive) turns the body, letter and eye together around the center
+    // spin (a somersault, clockwise positive) turns the body and eye together around the center
     const spin = p.spin || 0, turn = v => spin ? v.rotate(spin) : v;
     const shear = y => vec2(lean * (y + hy) / size.y, y);   // offset of a point y above the center, following the lean
     if (part == 'all')
@@ -149,11 +150,23 @@ function hrDrawPlayer(p, part = 'all')
         if (lean) drawPoly([vec2(-hx, -hy), vec2(hx, -hy), vec2(hx + lean, hy), vec2(-hx + lean, hy)], p.color, 0, p.color, pos, spin);
         else drawRect(pos, size, p.color, spin);
     }
-    if (part != 'eye')
-        drawText(p.letter, pos.add(turn(shear(-.1 * sy).add(vec2(-.1 * p.dir, 0)))), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE, undefined, spin);
-    // the eye follows a forward lean only: leaning back would slide it over the letter
-    if (part != 'letter')
-        hrDrawEye(pos.add(turn((p.lean > 0 ? shear(hy - .06 - p.eyeDrop) : vec2(0, hy - .06 - p.eyeDrop)).add(vec2(.2 * (p.dir || 1), 0)))), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+    // the eye follows a forward lean only
+    hrDrawEye(pos.add(turn((p.lean > 0 ? shear(hy - .06 - p.eyeDrop) : vec2(0, hy - .06 - p.eyeDrop)).add(vec2(.2 * (p.dir || 1), 0)))), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+}
+
+// start prompt over each player: "P1: Press A to run" (solo: "Press A to run"), until that player's first press (GDD §3.1)
+function hrDrawStartPrompts()
+{
+    if (window.hrEditor?.active || hrScreen != 'playing') return;
+    const verb = HR_WORLDS[hrWorld].verb, size = .55, hw = hrLevel.w / 2;
+    const [a, b] = hrPlayers, stacked = b && Math.abs(a.x - b.x) < 3 && Math.abs(a.y - b.y) < 1;
+    for (const p of hrPlayers)
+    {
+        if (p.intro <= 0) continue;
+        const text = `${hrVersus ? p.name + ': ' : ''}Press ${p.letter} to ${verb}`, half = text.length * size * .29;
+        const x = clamp(p.x, -hw + half + .3, hw - half - .3), y = p.y + 1.3 + (stacked && !p.index ? .8 : 0);   // stacked: P1 on top
+        drawText(text, vec2(x, y), size, HR_INK.scale(1, p.intro), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
+    }
 }
 
 // Versus: where the two bodies overlap, diagonal stripes in the back player's color, so you can tell two players
