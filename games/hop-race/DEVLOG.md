@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-11 — Versus: striped overlap
+- Owner: on shared levels the two players can sit on the same spot and P2 disappears. Prototyped seven drawings on a comparison page (X-ray outline, see-through, stripes, drawn apart, floating letters, outline plus letters, and the old eye nudge); owner picked the striped overlap.
+- `hrDrawOverlap` (`render.js`): where P1's and P2's bodies overlap, diagonal stripes in P2's color, clipped to the overlap; then P1's letter and both eyes are drawn again on top. Same spot: a fully striped square. Lean and spin are ignored for the overlap box. `hrDrawPlayer(p, part)` can now draw just the letter or the eye; the old eye nudge is gone.
+- Checked in Chrome on Rocket 2-1 Versus: partly overlapping and on the same spot, no console errors.
+
+
 ## 2026-11-11 — First upload build
 - Built `hopRace.zip` (79 KB, release engine 1.18.30, one `index.html`) for a Coolmath upload.
 - Fixed: the release page still had `<script src=editor.js>` (the build keeps tags it doesn't bundle), a 404 and a network request. `index.html` now adds the editor from a small inline script only when the dev `src/main.js` tag is there, so the release never asks for it. Checked in Chrome: the release makes no requests, has no editor, solo and Versus start; the dev page still opens the editor with `?edit`.

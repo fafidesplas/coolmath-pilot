@@ -122,26 +122,58 @@ function hrDrawFlag()
     }
 }
 
-function hrDrawPlayer(p, eyeNudge = 0)
+// the player's drawn body: squash, landing squeeze and crouch, its feet kept on the ground
+function hrPlayerBody(p)
 {
-    // short trail while airborne
-    for (let i = 0; i < p.trail.length; i++)
-    {
-        const k = (i + 1) / (p.trail.length + 1);
-        drawRect(p.trail[i], vec2(HR_PSIZE * k * .7), p.color.scale(1, k * .3));
-    }
-    const land = hrLandSquash(p), sx = 1 + p.squash + land + p.crouch * .6 - p.pinch, sy = 1 - hrSquashY(p), size = vec2(HR_PSIZE * sx, HR_PSIZE * sy);
-    const pos = vec2(p.x, p.y - (1 - sy) * HR_PSIZE / 2);
+    const land = hrLandSquash(p), sx = 1 + p.squash + land + p.crouch * .6 - p.pinch, sy = 1 - hrSquashY(p);
+    return {pos: vec2(p.x, p.y - (1 - sy) * HR_PSIZE / 2), size: vec2(HR_PSIZE * sx, HR_PSIZE * sy), sy};
+}
+
+// part: 'all', or just 'letter' or 'eye' (redrawn over the striped overlap in Versus)
+function hrDrawPlayer(p, part = 'all')
+{
+    const {pos, size, sy} = hrPlayerBody(p);
     // lean: the top slides toward the facing side (+, a / when facing right) or away from it (-, a \) while the bottom stays planted
     const lean = p.lean * (p.dir || 1), hx = size.x / 2, hy = size.y / 2;
     // spin (a somersault, clockwise positive) turns the body, letter and eye together around the center
     const spin = p.spin || 0, turn = v => spin ? v.rotate(spin) : v;
-    if (lean) drawPoly([vec2(-hx, -hy), vec2(hx, -hy), vec2(hx + lean, hy), vec2(-hx + lean, hy)], p.color, 0, p.color, pos, spin);
-    else drawRect(pos, size, p.color, spin);
     const shear = y => vec2(lean * (y + hy) / size.y, y);   // offset of a point y above the center, following the lean
-    drawText(p.letter, pos.add(turn(shear(-.1 * sy).add(vec2(-.1 * p.dir, 0)))), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE, undefined, spin);
+    if (part == 'all')
+    {
+        // short trail while airborne
+        for (let i = 0; i < p.trail.length; i++)
+        {
+            const k = (i + 1) / (p.trail.length + 1);
+            drawRect(p.trail[i], vec2(HR_PSIZE * k * .7), p.color.scale(1, k * .3));
+        }
+        if (lean) drawPoly([vec2(-hx, -hy), vec2(hx, -hy), vec2(hx + lean, hy), vec2(-hx + lean, hy)], p.color, 0, p.color, pos, spin);
+        else drawRect(pos, size, p.color, spin);
+    }
+    if (part != 'eye')
+        drawText(p.letter, pos.add(turn(shear(-.1 * sy).add(vec2(-.1 * p.dir, 0)))), .42 * sy, p.letterColor, 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE, undefined, spin);
     // the eye follows a forward lean only: leaning back would slide it over the letter
-    hrDrawEye(pos.add(turn((p.lean > 0 ? shear(hy - .06 - p.eyeDrop) : vec2(0, hy - .06 - p.eyeDrop)).add(vec2((.2 + eyeNudge) * (p.dir || 1), 0)))), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+    if (part != 'letter')
+        hrDrawEye(pos.add(turn((p.lean > 0 ? shear(hy - .06 - p.eyeDrop) : vec2(0, hy - .06 - p.eyeDrop)).add(vec2(.2 * (p.dir || 1), 0)))), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+}
+
+// Versus: where the two bodies overlap, diagonal stripes in the back player's color, so you can tell two players
+// are there even on the same spot. Drawing only (players pass through each other); lean and spin are ignored
+function hrDrawOverlap(front, back)
+{
+    const a = hrPlayerBody(front), b = hrPlayerBody(back);
+    const l = max(a.pos.x - a.size.x / 2, b.pos.x - b.size.x / 2), r = min(a.pos.x + a.size.x / 2, b.pos.x + b.size.x / 2);
+    const bot = max(a.pos.y - a.size.y / 2, b.pos.y - b.size.y / 2), top = min(a.pos.y + a.size.y / 2, b.pos.y + b.size.y / 2);
+    if (r - l < .02 || top - bot < .02) return false;
+    const c0 = worldToScreen(vec2(l, top)), c1 = worldToScreen(vec2(r, bot));
+    mainContext.save();
+    mainContext.beginPath();
+    mainContext.rect(c0.x, c0.y, c1.x - c0.x, c1.y - c0.y);
+    mainContext.clip();
+    const h = top - bot;
+    for (let k = -h; k < r - l; k += .22)
+        drawLine(vec2(l + k, bot), vec2(l + k + h, top), .1, back.color);
+    mainContext.restore();
+    return true;
 }
 
 // how open the eye is during a blink: 1 open, 0 shut; t is seconds into the blink, -1 when not blinking

@@ -284,12 +284,15 @@ function gameRender()
     if (!hrVersus && hrRun && hrSave.settings.ghost)
         hrDrawGhost(hrGhostPos(hrRun.started || hrFinishT >= 0 ? hrRun.frames : 0));
     hrPlayers.forEach(p => hrMode().draw(p));
-    // when both stand on the same point (Versus on a level that isn't mirrored): P2 is drawn behind, with its eye nudged so both show
+    // P2 is drawn behind P1; where they overlap (they pass through each other) the overlap is striped in P2's color,
+    // then P1's letter and both eyes go back on top
     for (let i = hrPlayers.length; i--;)
+        hrMode().drawPlayer ? hrMode().drawPlayer(hrPlayers[i]) : hrDrawPlayer(hrPlayers[i]);
+    if (hrPlayers.length > 1 && !hrMode().drawPlayer && hrDrawOverlap(hrPlayers[0], hrPlayers[1]))
     {
-        const p = hrPlayers[i], other = hrPlayers[1 - i];
-        const nudge = i == 1 && other && Math.hypot(p.x - other.x, p.y - other.y) < .4 ? -.45 : 0;
-        hrMode().drawPlayer ? hrMode().drawPlayer(p, nudge) : hrDrawPlayer(p, nudge);
+        hrDrawPlayer(hrPlayers[0], 'letter');
+        hrDrawPlayer(hrPlayers[1], 'eye');
+        hrDrawPlayer(hrPlayers[0], 'eye');
     }
     hrDrawDrops();
     hrDrawPrompt();
