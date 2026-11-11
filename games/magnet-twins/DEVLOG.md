@@ -1,5 +1,11 @@
 # Magnet Twins — devlog
 
+## 2026-11-11 — Phase 3: world 1 levels 1–9
+- Levels 1–9 and the slice level (10) are built from `tools/build-world1.mjs`; each has a solution script (`tools/solutions.mjs`) that a macro bot (`tools/bot.mjs`) plays in co-op and solo. `node tools/simtest.mjs` replays the recordings, checks 3 bolts, determinism, par (recorded time × 1.25) and that a bot that only walks right does not finish.
+- New levels: Boost (step added), Tower, Wet Feet (water stones), Carry (crate across a spike pit).
+- Workflow for a level: edit the builder, `node tools/try.mjs <id> coop|solo`, then `simtest --write --only=<id>`, rebuild, `simtest`.
+- Next: turn level 10 into the real Workshop Exam (launch, checkpoint, par over 60 s), then worlds 2 and 3 (hanging platforms, spring plates, chain platforms need new sim code).
+
 ## 2026-10-27 — Slice gate passed
 - Pao played the vertical slice and gave the OK; stage moves to `content`.
 - Next: phase 3a, the content tools, then the levels world by world.

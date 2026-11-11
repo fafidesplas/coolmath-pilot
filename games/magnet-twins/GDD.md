@@ -149,10 +149,10 @@
   3. **Push** — a crate sits on a high shelf across a gap, out of walking reach. Minus pushes it off from a distance so it drops into a pit and becomes a bridge.
   4. **Hold the Door** — a magnetic door. One robot holds the lock plate while the other walks through, then holds the far-side plate for the first.
   5. **Your Lock, My Lock** — two parallel corridors to the exit, one closed by a + door and one by a − door. Plus opens the + door so Minus can go through; Minus then opens the − door from its side so Plus can follow.
-  6. **Boost** — a ledge 4 tiles high. Minus launches Plus up onto it. Then Plus faces the drop with its power on, and Minus jumps into Plus's cone and gets pulled up onto the ledge.
-  7. **Tower** — two crates and a tall wall: stack crates, stand on them, stand on each other.
-  8. **Wet Feet** — first water and spikes. A crate pushed into the water sinks and comes back; the way across is to cover the spikes with crates and walk over them.
-  9. **Carry** — Plus carries a crate along a corridor to Minus, and Minus launches it up onto a high shelf, where it becomes the step both robots need to reach the exit.
+  6. **Boost** — a ledge 4 tiles high with a one-tile step in front. Minus launches Plus up onto it. Then Plus faces the drop with its power on, and Minus jumps into Plus's cone and gets pulled up onto the ledge.
+  7. **Tower** — a 4-tile wall with a crate at its foot: Minus climbs the crate, Plus climbs Minus and jumps onto the ledge, then Plus pulls Minus up from the ledge (Minus jumps from the crate into the cone).
+  8. **Wet Feet** — first water: a pool too wide to jump, crossed on three-tile-wide stepping stones that climb one tile each. Water kills even at the edge of the body, so run-ups start inside the bank. (Crates sink in water, so they are no bridge; the crate-over-spikes idea moved to level 9.)
+  9. **Carry** — the crate starts on the far side of a spike pit. Plus jumps over and pulls it across, carries it (power on, walking away), rides it while Minus pushes it to the foot of the wall, then it is the step up as in level 7. (A robot cannot jump with its power on: the jump key aims up.)
   10. **Workshop Exam** — door, launch and crates together; the first level with a par over 60 s, so it gets one checkpoint halfway.
 - **Level data format** (one JS module per level in `levels/`, exporting this object):
 

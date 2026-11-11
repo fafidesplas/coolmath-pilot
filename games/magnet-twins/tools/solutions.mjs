@@ -156,6 +156,63 @@ SCRIPTS.w1l07 = b => {
   b.wait(60);
 };
 
+// 8. Wet Feet
+SCRIPTS.w1l08 = b => {
+  // Never stand with the body over water: it kills even at the very edge, so run up from 22 px inside the edge.
+  const hop = (i, from, to, y) => { b.walkTo(i, from); b.hopTo(i, to, y, 6); };
+  hop(1, 258, col(10) + 30, 440);                        // Minus leads (he spawns ahead), Plus follows
+  hop(0, 258, col(10) - 30, 440);
+  hop(1, 458, col(15) + 30, 400);
+  hop(0, 458, col(15) - 30, 400);
+  hop(1, 658, col(20) + 30, 360);
+  hop(0, 658, col(20) - 30, 360);
+  hop(1, 858, col(26), 320);
+  hop(0, 858, col(25), 320);
+  b.walkTo(1, col(29));
+  b.walkTo(0, col(28));
+  b.wait(60);
+};
+
+// 9. Carry
+SCRIPTS.w1l09 = b => {
+  const crate = b.sim.crates[0];
+  b.walkTo(0, 280);
+  b.hopTo(0, 340, 440);                                  // Plus over the crate (a bolt sits above it)...
+  b.walkTo(0, 345);
+  b.hopTo(0, 475, 480, 4);                               // ...and over the spike pit
+  b.walkTo(0, 470);
+  b.face(0, -1);
+  b.power(0, true);                                      // pulls the crate across the spikes
+  b.wait(40);
+  while (crate.x < 580) b.tick(b.frame(0, B.R));         // then carries it: walking away with the power on
+  b.power(0, false);
+  b.hopTo(0, crate.x + 20, 440, 6);                      // Plus rides the crate while Minus pushes it
+  b.walkTo(1, 330);                                      // Minus crosses the pit
+  b.hopTo(1, 475, 480, 4);
+  b.focus(1);
+  for (let k = 0; k < 900 && crate.x < 759.5; k++) b.tick(b.frame(1, B.R));   // and pushes the crate against the wall
+  b.settle(1);
+  b.focus(0);
+  for (let k = 0; k < 90; k++) b.tick(b.frame(0, B.L));  // Plus steps off to the left, behind Minus
+  b.settle(0);
+  // from here it is level 7 again, 240 px further right
+  const W = 240;
+  b.hopTo(1, crate.x + 20, crate.y);
+  b.walkTo(0, 460 + W);
+  b.hopTo(0, b.center(1), b.R[1].y);                     // Plus on Minus's head (a bolt in the air)
+  b.walkTo(0, b.center(1));
+  b.climbTo(0, col(15) + W, 320);                        // straight up, then over the edge onto the ledge
+  b.walkTo(0, 608 + W);
+  b.face(0, -1);
+  b.power(0, true);
+  b.hopTo(1, crate.x + 20, 320, 4, 40);                  // Minus jumps from the crate into the cone and is pulled up
+  b.power(0, false);
+  b.hopTo(0, col(18) + W, 320);
+  b.walkTo(0, col(29));
+  b.walkTo(1, col(28));
+  b.wait(60);
+};
+
 // 10. Workshop Exam (the slice level): pull the crate across the spikes, use it as a step,
 // hold the door for each other, launch for the high bolt.
 SCRIPTS.w1l10 = b => {

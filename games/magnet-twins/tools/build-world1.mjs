@@ -67,6 +67,25 @@ levels.w1l07 = () => {
     objects: [{ type: 'crate', x: 13, y: 11 }] }, g];
 };
 
+// 8. Wet Feet: a pool too wide to jump, with stepping stones that climb. Water resets both robots.
+levels.w1l08 = () => {
+  const g = new Grid();
+  g.fill(7, 23, 11, 11, '~');                       // the pool
+  g.fill(9, 11, 11, 11).fill(14, 16, 10, 11).fill(19, 21, 9, 11);   // stones, each a tile higher
+  g.fill(24, 30, 8, 11);                            // the far bank with the exit
+  return [{ id: 'w1l08', name: 'Wet Feet', spawn: { plus: [2, 11], minus: [4, 11] }, exit: [28, 6], bolts: [[15, 9], [20, 8], [26, 7]], objects: [] }, g];
+};
+
+// 9. Carry: the crate starts on the far side of a spike pit. Plus jumps over and pulls it across, Plus rides it
+// while Minus pushes it to the foot of the wall, then it is the step up like in level 7.
+levels.w1l09 = () => {
+  const g = new Grid();
+  g.put(9, 11, '^').put(10, 11, '^');
+  g.fill(20, 30, 8, 11);                            // the wall and the ledge with the exit
+  return [{ id: 'w1l09', name: 'Carry', spawn: { plus: [4, 11], minus: [2, 11] }, exit: [28, 6], bolts: [[8, 10], [19, 8], [24, 7]],
+    objects: [{ type: 'crate', x: 8, y: 11 }] }, g];
+};
+
 // 10. Workshop Exam: the slice level. Pull the crate across the spikes, step up on it, hold
 // the door for each other. (To be extended into the real exam with a launch and a checkpoint.)
 levels.w1l10 = () => {
