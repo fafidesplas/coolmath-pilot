@@ -83,6 +83,9 @@ export class Cave {
     this.portal(e + 1, 'flip');
     return e + 4;
   }
+  // A gravity switch at the centre of tile (x, row): touching it sets gravity to g (1 down, -1 up).
+  bumper(x, row, g) { this.objects.push({ type: 'switch', x, y: row, g }); return this; }
+
   // A speed gate across the corridor at column x: from there the speed is mult times the level's
   // speed until the next gate (1.35 = fast, 0.75 = slow, 1 = back to normal).
   pad(x, mult, len = 3) {

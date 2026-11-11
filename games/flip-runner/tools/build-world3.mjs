@@ -1,6 +1,7 @@
 // World 3, Firefly Forest: the Twin form (a second bat in a parallel lane) and speed pads.
 //   node tools/build-world3.mjs [id …]      then: node tools/levels.mjs w3l01 …
 import { Cave, writeLevel } from './levelkit.mjs';
+import { zoneRun, lanes, tail, twinZones } from './segments.mjs';
 
 const only = process.argv.slice(2);
 const levels = {};
@@ -40,10 +41,6 @@ levels.w3l01 = () => {
   c.goal(e + 50);
   return c;
 };
-
-// Lane hazards: [lane, surface, offset from the section start, width].
-function lanes(c, c0, hz) { for (const [w, surf, off, wd = 3] of hz) c.laneSpikes(w, surf, c0 + off, c0 + off + wd - 1); }
-function tail(c, e) { c.floorSpikes(e + 8, e + 10).ceilSpikes(e + 18, e + 19).floorSpikes(e + 28, e + 29); c.goal(e + 50); }
 
 // 2. Mirror Mirror: lanes of different heights. The short lane lands first, but both must land before the next flip.
 levels.w3l02 = () => {
@@ -89,20 +86,6 @@ levels.w3l04 = () => {
   return c;
 };
 
-// Speed zones. Hazards are placed by time, not by columns: the spacing grows with the speed,
-// so a fast stretch is not simply a harder one. zones: [{ from, mult, pitch, width }].
-function zoneRun(c, zones, end) {
-  let k = 0;
-  zones.forEach((z, zi) => {
-    c.pad(z.from, z.mult, 4);
-    const zEnd = (zones[zi + 1] ? zones[zi + 1].from : end) - 3, w = z.width || 2;
-    for (let h = z.from + 5; h + w <= zEnd; h += z.pitch, k++) {
-      const col = Math.round(h);
-      if (k % 2 === 0) c.ceilSpikes(col, col + w - 1); else c.floorSpikes(col, col + w - 1);
-    }
-  });
-}
-
 // 5. Fast Lane: speed gates. Fast (») makes everything come quicker, slow («) gives you time.
 levels.w3l05 = () => {
   const c = cave(520);
@@ -135,17 +118,6 @@ levels.w3l07 = () => {
   c.goal(460);
   return c;
 };
-
-// Twin lane hazards by time: alternating lanes and surfaces, with speed gates. zones: [{ from, mult, pitch }].
-function twinZones(c, zones, end, first = 0) {
-  const pat = [['a', 'floor'], ['b', 'ceil'], ['a', 'ceil'], ['b', 'floor']];
-  let k = first;
-  zones.forEach((z, zi) => {
-    if (z.mult !== undefined && (zi > 0 || z.mult !== 1)) c.pad(z.from, z.mult, 4);
-    const zEnd = (zones[zi + 1] ? zones[zi + 1].from : end) - 3;
-    for (let h = z.from + 5; h + 2 <= zEnd; h += z.pitch, k++) { const [w, surf] = pat[k % 4]; c.laneSpikes(w, surf, Math.round(h), Math.round(h) + 1); }
-  });
-}
 
 // 8. Twin Pads: a twin room with speed gates across both lanes.
 levels.w3l08 = () => {

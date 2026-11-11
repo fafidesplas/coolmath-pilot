@@ -91,6 +91,7 @@ export class Sound {
       case 'goal': [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone('square', f, f, 0.14, 0.09, i * 0.11)); break;
       case 'stamp': this.tone('triangle', 180, 90, 0.15, 0.3); this.burst(0.08, 0.25, 250); break;
       case 'pad': opt.fast ? (this.tone('sawtooth', 250, 900, 0.18, 0.1), this.burst(0.14, 0.12, 2500, 1)) : (this.tone('sawtooth', 600, 200, 0.22, 0.1), this.burst(0.18, 0.08, 500, 1)); break;
+      case 'boing': this.tone('sine', 280, 880, 0.14, 0.2); this.tone('triangle', 560, 1320, 0.1, 0.07, 0.03); break;
       case 'tap': this.tone('sine', 1200, 1200, 0.06, 0.08); break;
       case 'close': this.tone('square', 1320, 1760, 0.07, 0.07); this.tone('sine', 2640, 2640, 0.12, 0.08, 0.05); break;
     }

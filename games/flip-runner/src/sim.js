@@ -15,7 +15,7 @@ export function initialState(lv) {
   const st = lv.start;
   const p = standingAt(st.x, st.y, st.gravity);
   return {
-    step: 0, mt: 0, on: -1, x: p.x, y: p.y, vy: 0, g: p.g, speed: lv.speed,
+    step: 0, mt: 0, on: -1, sw: 0, x: p.x, y: p.y, vy: 0, g: p.g, speed: lv.speed,
     grounded: true, lastGround: 0, buffer: -99,
     dead: 0, done: false, deaths: 0, deathTypes: { spikes: 0, gap: 0, wall: 0, crush: 0 }, lastDeath: null,
     stars: lv.stars.map(() => 0),       // 0 free, 1 held (not banked yet), 2 banked
@@ -27,7 +27,7 @@ export function initialState(lv) {
 
 const copyB2 = b => (b ? { ...b } : null);
 function snapshot(s, x, y, g) {
-  return { x, y, g, speed: s.speed, form: s.form, portal: s.portal, b2: copyB2(s.b2), mt: s.mt };
+  return { x, y, g, speed: s.speed, form: s.form, portal: s.portal, b2: copyB2(s.b2), mt: s.mt, sw: s.sw };
 }
 
 export function cloneState(s) {
@@ -263,7 +263,7 @@ export function advance(lv, s, bits, emit = null) {
     if (--s.dead === 0) {
       const p = s.snap;
       s.x = p.x; s.y = p.y; s.g = p.g; s.speed = p.speed; s.form = p.form; s.portal = p.portal; s.b2 = copyB2(p.b2);
-      s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99; s.mt = p.mt; s.on = -1;
+      s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99; s.mt = p.mt; s.on = -1; s.sw = p.sw;
       if (s.b2) { s.b2.lastGround = s.step; s.b2.vy = 0; }
       if (emit) emit('respawn', {});
     }
@@ -318,6 +318,19 @@ export function advance(lv, s, bits, emit = null) {
     if (s.speed !== sp) { s.speed = sp; if (emit) emit('pad', { mult, x: s.x + R.w / 2, y: s.y + R.h / 2 }); }
   }
 
+  // Gravity switches: evaluated once, when the bat's centre crosses the switch. Only if it is at
+  // the switch's height then; it sets gravity (both bats in twin form). Gliders ignore them.
+  if (lv.switches.length) {
+    const cx = s.x + R.w / 2, cy = s.y + R.h / 2;
+    while (s.sw < lv.switches.length && cx >= lv.switches[s.sw].x) {
+      const w = lv.switches[s.sw++];
+      if (s.form === 'glider' || Math.abs(cy - w.y) >= 30 || s.g === w.g) continue;
+      s.g = w.g; s.vy = w.g * R.kick; s.grounded = false; s.lastGround = -99;
+      if (s.b2) { s.b2.g = w.g; s.b2.vy = w.g * R.kick; s.b2.grounded = false; s.b2.lastGround = -99; }
+      if (emit) emit('switch', { g: w.g, x: w.x, y: w.y });
+    }
+  }
+
   grabStars(lv, s, s, emit);
   if (b2) grabStars(lv, s, b2, emit);
 
@@ -360,6 +373,7 @@ export function gotoFlag(lv, s, i) {
   s.x = p.x; s.y = p.y; s.g = g; s.vy = 0; s.grounded = true; s.lastGround = s.step; s.buffer = -99;
   s.dead = 0; s.flag = i; s.form = 'flip'; s.b2 = null; s.portal = -1; s.on = -1;
   s.mt = Math.round(f.x / s.speed * HZ);      // an arbitrary but sensible phase for the blocks
+  s.sw = lv.switches.filter(w => w.x < f.x).length;
   for (let k = 0; k < lv.portals.length; k++) if (lv.portals[k].x <= f.x) { s.portal = k; setForm(lv, s, lv.portals[k], null); }
   s.snap = snapshot(s, p.x, p.y, g);
   if (s.b2) s.snap.b2 = spawnTwin(lv, { x: p.x, g, step: s.step }, s.lane);

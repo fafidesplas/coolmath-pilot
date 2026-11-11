@@ -8,7 +8,7 @@ import { FX, drawStarShape } from './fx.js';
 import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
-import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawGlider, drawPortal, FORM_STYLE, drawFlag, drawGoal, drawLevelStar, drawMovers, drawPads, rrect, text } from './render.js';
+import { Strips, renderBackdrop, drawBackdrop, Scarf, drawRunner, drawGlider, drawPortal, FORM_STYLE, drawFlag, drawGoal, drawLevelStar, drawMovers, drawPads, drawSwitches, rrect, text } from './render.js';
 import { isSolid, tileAt, TILE } from './level.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel, isOpen } from '../levels/index.js';
 
@@ -430,6 +430,12 @@ export class Game {
           snd.play('pad', { fast: e.mult > 1 });
           fx.burst(e.x, e.y, 10, e.mult > 1 ? C.star : '#5FC8FF', e.mult > 1 ? 300 : 120, 'spark', 0.3, 3, 0);
           break;
+        case 'switch':
+          snd.play('boing');
+          fx.kick('runner', 0.7, 1.4);
+          fx.burst(e.x, e.y, 14, '#FF9B4A', 280, 'spark', 0.35, 3, 0);
+          fx.spawn({ x: e.x, y: e.y, type: 'ring', color: '#FF9B4A', life: 0.3, size: 14, g: 0 });
+          break;
         case 'goal': this.onComplete(); break;
       }
     }
@@ -727,6 +733,7 @@ export class Game {
     lv.flags.forEach((f, i) => { if (f.x > cam - 60 && f.x < cam + VIEW_W + 60) { const p = this.flagSurface(i); drawFlag(ctx, f.x, p.y, p.g, i <= s.flag, t); } });
     if (lv.goal > cam - 120 && lv.goal < cam + VIEW_W + 120) drawGoal(ctx, lv.goal, t);
     if (lv.pads.length) drawPads(ctx, lv, t);
+    if (lv.switches.length) drawSwitches(ctx, lv, t, s.sw);
     if (lv.movers.length) drawMovers(ctx, lv, s.mt + (this.paused || s.done ? 0 : Math.min(1, this.acc / STEP)), this.colors, t);
     lv.portals.forEach((p, i) => { if (i > s.portal && p.x > cam - 60 && p.x < cam + VIEW_W + 60) drawPortal(ctx, p.x, p.form, t); });
     const saved = this.save.stars[this.level.id] || [0, 0, 0];

@@ -158,6 +158,33 @@ function world(data) {
   ok(resp.length >= 2 && resp.every(v => Math.abs(v - base * 1.35) < 1e-9), `respawn keeps the speed of the flag (${resp.length} retries)`);
 }
 
+// --- Gravity switches --------------------------------------------------------------------
+{
+  const mk = (objs, rows) => { const d = corridor(120, rows); d.objects = objs; return world(d); };
+  // a floor switch (arrow up) under a bat running on the floor flips it up
+  const w = mk([{ type: 'switch', x: 20, y: 10, g: -1 }], () => {});
+  w.run(400);
+  ok(w.s.g === -1 && w.ev.some(e => e.t === 'switch'), 'a switch at your height forces gravity (floor switch → up)');
+  // the same switch in mid-corridor is missed by a bat on the floor
+  const w2 = mk([{ type: 'switch', x: 20, y: 7, g: -1 }], () => {});
+  w2.run(400);
+  ok(w2.s.g === 1 && !w2.ev.some(e => e.t === 'switch'), 'a switch at another height is missed');
+  // flying through a bumper in mid-air reverses the flight (the bat flips up at the floor, a bumper
+  // pointing down turns it back)
+  const w3 = mk([{ type: 'switch', x: 16, y: 7, g: 1 }], () => {});
+  while (w3.s.x < 597) w3.run(1);              // press ~0.16 s before the bat reaches the switch
+  w3.run(1, () => true); w3.run(30);
+  const hit = w3.ev.some(e => e.t === 'switch');
+  w3.run(200);
+  ok(hit && w3.s.g === 1 && w3.s.grounded, 'a bumper in mid-flight turns the bat around (it ends on the floor)');
+  // it fires once, and a respawn restores the switch counter
+  const d4 = corridor(260, g => { g[5][200] = 'v'; });
+  d4.objects = [{ type: 'switch', x: 20, y: 10, g: -1 }, { type: 'flag', x: 60, y: 5 }];
+  const w4 = world(d4); const fires = [];
+  for (let i = 0; i < 8000; i++) { const b = w4.s.dead; w4.run(1); if (b === 1) fires.push(w4.s.sw); }
+  ok(fires.length >= 2 && fires.every(v => v === 1), `a respawn restores the switch counter (${fires.length} retries, sw ${fires[0]})`);
+}
+
 // --- Moving blocks -----------------------------------------------------------------------
 {
   const m = { x0: 400, y0: 200, w: 80, h: 40, dx: 0, dy: 160, per: 360 }, r = {};

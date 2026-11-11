@@ -24,13 +24,15 @@ export function longestClear(lv, where = null) {
   };
   // moving blocks keep their whole swept area busy
   const movers = lv.objects.filter(o => o.type === 'mover');
+  const switches = lv.objects.filter(o => o.type === 'switch');
+  const inSwitch = c => switches.some(w => Math.abs(c - w.x) <= 1);
   const inMover = c => movers.some(m => c >= m.x - 1 && c < m.x + m.w + Math.abs(m.dx || 0) + 1);
   const goalCol = (lv.objects.find(o => o.type === 'goal') || { x: cols }).x;
   // seconds one column lasts, with the speed gates (pads) of the level
   const gates = lv.objects.filter(o => o.type === 'pad').sort((a, b) => a.x - b.x);
   const secs = c => { let m = 1; for (const g of gates) { if (c >= g.x) m = g.mult; else break; } return 40 / (lv.speed * m); };
   let best = 0, run = 0, bestAt = 0, runT = 0;
-  for (let c = 22; c < Math.min(cols, goalCol) - 22; c++) { if (busy(c) || inMover(c)) { run = 0; runT = 0; } else { run++; runT += secs(c); if (runT > best) { best = runT; bestAt = c - run + 1; } } }
+  for (let c = 22; c < Math.min(cols, goalCol) - 22; c++) { if (busy(c) || inMover(c) || inSwitch(c)) { run = 0; runT = 0; } else { run++; runT += secs(c); if (runT > best) { best = runT; bestAt = c - run + 1; } } }
   if (where) where.col = bestAt;
   return best;
 }

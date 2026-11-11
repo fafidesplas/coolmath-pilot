@@ -1,22 +1,12 @@
 // World 2, Bell Tower: the Glider form (hold to climb, release to dive) and moving blocks.
 //   node tools/build-world2.mjs [id …]      then: node tools/levels.mjs w2l01 …
 import { Cave, writeLevel } from './levelkit.mjs';
+import { gliderRoom, pistonSeg, glideSeg, glideMovingSeg } from './segments.mjs';
 
 const only = process.argv.slice(2);
 const levels = {};
 const SPEED = 470;
 const cave = n => { const c = new Cave(n); c.speed = SPEED; return c; };
-
-// Enter a glider room at `portalCol`: a funnel opens the corridor to rows 1..14, the room
-// spans [r0, r1], and a second funnel closes it again before the flip portal.
-function gliderRoom(c, portalCol, r0, r1) {
-  c.portal(portalCol, 'glider');
-  c.funnel(portalCol + 2, 5, 1, 11, 15);       // widens over 12 columns
-  c.room(r0, r1, 1, 15);
-  const e = c.funnel(r1 + 1, 1, 5, 15, 11);    // narrows over 12 columns
-  c.portal(e + 2, 'flip');
-  return e;
-}
 
 // 1. Take Off: the first glider room. Wide gaps, far apart.
 levels.w2l01 = () => {
@@ -195,32 +185,6 @@ levels.w2l08 = () => {
   c.goal(318);
   return c;
 };
-
-// Segments for the longer levels. Each returns the first free column after it.
-const PISTONS = [[3, 3, 3.0], [3, 3, 2.6], [4, 2, 3.2], [4, 2, 2.8], [5, 1, 3.4], [5, 1, 3.0]];
-function pistonSeg(c, s0, ats) {
-  ats.forEach((at, i) => {
-    const col = s0 + i * 22, [h, d, per] = PISTONS[(i + s0) % PISTONS.length];
-    c.mover(col, 5, 2, h, 0, d, per, at);
-    // after a piston, a spike on the surface you were using forces you across
-    if (at === 'start') c.floorSpikes(col + 10, col + 11); else c.ceilSpikes(col + 10, col + 11);
-  });
-  return s0 + ats.length * 22;
-}
-// A glider room with static pillars: [offset from the room start, first open row, open rows]
-function glideSeg(c, portalCol, len, pillars) {
-  const r0 = portalCol + 16;
-  const e = gliderRoom(c, portalCol, r0, r0 + len);
-  pillars.forEach(([off, gt, gh]) => c.pillar(r0 + off, gt, gt + gh - 1));
-  return { end: e + 4, r0 };
-}
-// A glider room with sliding pillars: [offset, period]
-function glideMovingSeg(c, portalCol, len, pillars) {
-  const r0 = portalCol + 16;
-  const e = gliderRoom(c, portalCol, r0, r0 + len);
-  pillars.forEach(([off, per], i) => c.mover(r0 + off, 1, 2, 7, 0, 7, per, i % 2 ? 'far' : 'start'));
-  return { end: e + 4, r0 };
-}
 
 // 9. Bell Ringer: everything so far, one after the other.
 levels.w2l09 = () => {

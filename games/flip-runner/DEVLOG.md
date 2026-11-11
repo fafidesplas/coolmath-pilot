@@ -1,5 +1,12 @@
 # Flip Runner — devlog
 
+## 2026-11-11 — Phase 3: the Night Fair (world 4)
+- Ten levels (Switchboard, Bumpers, Pinball, Carousel, Funhouse, Ferris Wheel, Rails, Three Rings, Big Top, Fair Exit), 22–57 s at 530 px/s, all solver-verified with 3 stars. 336 checks in `simtest`.
+- **Gravity switches:** a disc with an arrow; when the bat's centre crosses it at its height, gravity is set to the arrow (both bats in twin form), once. On a surface it is a soft hazard for that surface; floating in a tall room it is a bumper, the mid-air flip the player cannot make. Evaluated once at the crossing, so the solver stays cheap and it never fires twice. Tests: forced flip, missed at another height, mid-flight bumper, respawn restores the counter.
+- The segment helpers (glider room, pistons, speed zones, twin zones) moved to `tools/segments.mjs`; rebuilding worlds 1–3 gave byte-identical levels.
+- Same lessons again: a star next to a hazard (now at 530 px/s a flight covers more columns, so the old distances were too short), a star placed in the rock of a glider pillar, and more than 4 flags. Density now counts switches.
+- All four worlds exist: 40 levels. Not seen in a browser. Next: Fafi plays; then the endless mode and the daily, skins, polish.
+
 ## 2026-11-11 — Phase 3: the Firefly Forest (world 3)
 - Ten levels (Two of Us, Mirror Mirror, Odd One Out, Fireflies, Fast Lane, Slow Burn, Speed Run, Twin Pads, Switch, Forest Exit), 24–48 s at 500 px/s, all solver-verified with 3 stars. 256 checks in `simtest`.
 - **Twin:** two lanes with a divider (kit: `twinRoom`, `laneSpikes`, `twinPortal`, `twinExit`); lanes of different heights make one bat land before the other.

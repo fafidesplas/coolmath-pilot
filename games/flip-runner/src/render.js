@@ -480,6 +480,24 @@ export function drawPads(ctx, lv, t) {
   }
 }
 
+// Gravity switches: a round pad with a big arrow showing the gravity it sets.
+export function drawSwitches(ctx, lv, t, passed) {
+  lv.switches.forEach((w, i) => {
+    const pulse = 1 + Math.sin(t * 6 + i) * 0.06, used = i < passed;
+    ctx.save(); ctx.translate(w.x, w.y);
+    ctx.globalAlpha = used ? 0.35 : 0.22; ctx.fillStyle = '#FF9B4A';
+    ctx.beginPath(); ctx.arc(0, 0, 30 * pulse, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(0, 0, 21, 0, 7);
+    ctx.fillStyle = used ? '#C9A27A' : '#FF9B4A'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.fillStyle = C.panel; ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+    const d = -w.g;                                           // arrow points the way gravity will pull
+    ctx.beginPath(); ctx.moveTo(0, -d * 11); ctx.lineTo(10, d * 3); ctx.lineTo(4, d * 3); ctx.lineTo(4, d * 11); ctx.lineTo(-4, d * 11); ctx.lineTo(-4, d * 3); ctx.lineTo(-10, d * 3); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+}
+
 export function drawLevelStar(ctx, x, y, t, ghost) {
   const bob = Math.sin(t * 3 + x) * 3;
   if (ghost) {
