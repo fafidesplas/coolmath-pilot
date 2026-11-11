@@ -42,14 +42,14 @@ HR_LEVELS.hop = [
         flag: {x: 10.5, y: 2},
     },
     {
-        // NEEDS IMPROVEMENT (owner, 2026-10-23): see GDD §14
         id: 'hop-04', name: 'The Wall',
         size: 26,
         start: {x: -10.5, y: -4},
         solids: [
             {l: -14, r: 14, top: -4},
-            {l: -5.5, r: -4.5, top: -2},     // a low wall to learn the bounce on
-            {l: 2, r: 3.2, top: 0},          // the 4 u wall: too flat and it bounces you back
+            {l: -0.75, r: 8.75, top: 3.5},     // the big block: 7.5 u tall, flag past it
+            {l: -15.25, r: -10, top: -0.25, bottom: -1.25},
+            {l: -7, r: -4.25, top: 3.5, bottom: 2.5},
         ],
         flag: {x: 10, y: -4},
     },
