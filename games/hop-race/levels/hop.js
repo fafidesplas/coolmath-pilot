@@ -174,5 +174,17 @@ HR_VERSUS.hop = [
             {l: -5.5, r: -2.5, top: 3.5, bottom: 2.5},     // run off its end onto the tower
         ],
         flag: {x: 0, y: 2},
+    },    {
+        id: 'hop-vs-04', name: 'Chimney Drop',
+        mirror: true,
+        size: 32,
+        start: {x: -14, y: -7},
+        solids: [
+            {l: -17, r: 0, top: -7},
+            {l: -5, r: -4.5, top: 5, grip: true},     // the tower's outer face: wall-jump up between it and the pillar
+            {l: -4.5, r: -1.5, top: 5},        // the tower: plain inside, so the drop down the shaft doesn't cling
+            {l: -9, r: -8, top: 4, bottom: -3, grip: true},     // the floating pillar: run under it into the chimney
+        ],
+        flag: {x: 0, y: -7},
     },
 ];

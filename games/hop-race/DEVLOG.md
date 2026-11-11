@@ -6,7 +6,8 @@
 - Tie: both finishing on the same frame gives no point, "Tie! Again" and a replay of the level (`versus:round:tie`).
 - Editor: Versus levels are in the level list ("Hop Versus 1"), the right half is tinted "mirror (P2)", the flag stays at x = 0, play-tests run both players, and Duplicate on a Versus level makes another one. The 3-2-1 no longer shows over the level while editing.
 - Three levels, bot-checked, no dead ends: Face Off 1.83 s, Climb the Middle 4.48 s (fastest route has a 2-frame jump), Out and Back 5.75 s. Checked in Chrome: both starts mirrored, a same-frame finish ties, one frame earlier wins, Versus level select shows 3 tiles, no console errors.
-- Next: play the three with two people. Are half-courses long enough? Is the Climb the Middle start bump fun or annoying?
+- Owner liked the three. Added 4 **Chimney Drop** (owner's idea, drawn in ASCII first): size 32, wall-jump up a chimney between a floating grip pillar and the tower's grip outer face (a thin grip strip, so the shaft inside is plain), then drop down the center shaft to the flag. Bot: 4.05 s, 4 wall jumps, tightest window 12 frames, no dead ends. Checked in Chrome, no console errors.
+- Next: play the four with two people. Is the Climb the Middle start bump fun or annoying?
 
 ## 2026-11-10 — Hop: auto-run set in stone
 - Owner: keep auto-run for good. Removed `HR_HOP.autoRun` and the hold-to-charge hop with it (charge and aim, the lunge and back-lean poses, ice slides, the charge-only tuning). `HR_MODES.hop.step` is the run. Level 1's prompt and the world hint now live in the data (`levels/hop.js`, `HR_WORLDS`), not as overrides in the mode.
