@@ -62,7 +62,7 @@ function hrUiButtons()
         const shown = HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden);
         const n = shown.length, cw = min(200 * u, W / (n + 1.2)), gap = cw * 1.12;
         shown.forEach((i, k) => add({id: 'world' + i, card: i, x: W / 2 + (k - (n - 1) / 2) * gap, y: H * .72, w: cw, h: 250 * u,
-            enabled: hrLevelsOf(i).length > 0,
+            enabled: hrLevelsOf(i, false).length > 0,
             act: () => hrStartLevel(i, hrCardLevel(i), false)}));
         add({id: 'settings', x: W - 110 * u, y: 50 * u, w: 180 * u, h: 56 * u, label: 'Settings', act: () => hrOpenSettings('title')});
     }
@@ -76,7 +76,7 @@ function hrUiButtons()
         const shown = HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden);
         const n = shown.length, cw = min(250 * u, W / (n + 1.2)), gap = cw * 1.12;
         shown.forEach((i, k) => add({id: 'world' + i, card: i, x: W / 2 + (k - (n - 1) / 2) * gap, y: H * .56, w: cw, h: 330 * u,
-            enabled: hrLevelsOf(i).length > 0, focus: i == hrMenuWorld,
+            enabled: hrLevelsOf(i, hrMenuVersus).length > 0, focus: i == hrMenuWorld,
             act: () => { hrMenuWorld = i; hrGo('levels'); }}));
     }
     else if (hrScreen == 'levels')
@@ -87,7 +87,7 @@ function hrUiButtons()
         {
             const col = i % 5, row = floor(i / 5);
             add({id: 'level' + i, tile: i, x: W / 2 + (col - 2) * tw * 1.12, y: H * .42 + row * th * 1.18, w: tw, h: th,
-                enabled: isUnlocked(hrMenuWorld, i), focus: i == hrNextLevel(hrMenuWorld),
+                enabled: isUnlocked(hrMenuWorld, i, hrMenuVersus), focus: i == (hrMenuVersus ? 0 : hrNextLevel(hrMenuWorld)),
                 act: () => hrStartLevel(hrMenuWorld, i, hrMenuVersus)});
         }
     }
@@ -138,18 +138,21 @@ function hrPlay(versus)
 {
     // Play 1P / 2P go back to the last level played (solo or versus); a new player starts at
     // the first level not finished yet, in world and level order
+    // (a world with its own Versus levels: Play 2P goes to the last of those, Play 1P to the last solo one)
     const last = hrFindLevel(hrSave.last);
-    if (last && isUnlocked(last.world, last.index)) return hrStartLevel(last.world, last.index, versus);
+    if (last && last.versus == (versus && hrHasVersusLevels(last.world)) && isUnlocked(last.world, last.index, versus))
+        return hrStartLevel(last.world, last.index, versus);
+    if (last && versus && hrHasVersusLevels(last.world)) return hrStartLevel(last.world, 0, true);
     for (let w = 0; w < HR_WORLDS.length; w++)
-        for (let i = 0; i < hrLevelsOf(w).length; i++)
-            if (isUnlocked(w, i) && !hrSaveLevel(hrLevelsOf(w)[i].id).bestMs) return hrStartLevel(w, i, versus);
+        for (let i = 0; i < hrLevelsOf(w, versus).length; i++)
+            if (isUnlocked(w, i, versus) && !hrSaveLevel(hrLevelsOf(w, versus)[i].id).bestMs) return hrStartLevel(w, i, versus);
     hrStartLevel(0, 0, versus);
 }
 
 function hrNextLevel(world)
 {
-    for (let i = 0; i < hrLevelsOf(world).length; i++)
-        if (isUnlocked(world, i) && !hrSaveLevel(hrLevelsOf(world)[i].id).bestMs) return i;
+    for (let i = 0; i < hrLevelsOf(world, false).length; i++)
+        if (isUnlocked(world, i, false) && !hrSaveLevel(hrLevelsOf(world, false)[i].id).bestMs) return i;
     return -1;
 }
 
@@ -158,7 +161,7 @@ function hrCardLevel(world)
 {
     const next = hrNextLevel(world), last = hrFindLevel(hrSave.last);
     if (next >= 0) return next;
-    return last && last.world == world ? last.index : 0;
+    return last && last.world == world && !last.versus ? last.index : 0;
 }
 
 function hrToLevels() { hrMenuWorld = hrWorld; hrMenuVersus = hrVersus; hrGo('levels'); }
@@ -332,7 +335,7 @@ function hrDrawCard(b, w, h, focused)
     if (world.lab) hrText('LAB', b.x, b.y - h * .39, 20 * u, HR_INK);   // a feel test, not a finished world
     if (live)
     {
-        const done = hrLevelsOf(b.card).filter(l => hrSaveLevel(l.id).bestMs).length;
+        const done = hrLevelsOf(b.card, false).filter(l => hrSaveLevel(l.id).bestMs).length;
         if (!hrMenuVersus)
             hrText(`${done}/${world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK);
         hrDrawSchematic(b.card, b.x, b.y - h * .12, w * .7);
@@ -493,8 +496,8 @@ function hrSchemClimb(x, y, w, u, s, gy)
 function hrDrawTile(b, w, h, focused)
 {
     const u = hrUnit(), live = b.enabled !== false;
-    const def = hrLevelsOf(hrMenuWorld)[b.tile], rec = def ? hrSaveLevel(def.id) : null;
-    const next = b.tile == hrNextLevel(hrMenuWorld);
+    const def = hrLevelsOf(hrMenuWorld, hrMenuVersus)[b.tile], rec = def ? hrSaveLevel(def.id) : null;
+    const next = !hrMenuVersus && b.tile == hrNextLevel(hrMenuWorld);
     if (!live)
     {
         hrOutline(b.x, b.y, w, h, 3 * u, HR_INK.scale(1, .25));
@@ -595,6 +598,7 @@ function hrDrawHud(W, H, u)
 // 3-2-1 before the start, then GO fading out over the first 40 frames of the race
 function hrDrawCountdown(W, H, u, framesSinceGo)
 {
+    if (window.hrEditor?.active) return;   // not over the level while it is being edited
     const c = hrCountdown;
     if (c > 0) hrText(String(Math.ceil(c / .8)), W / 2, H * .45, 160 * u * (1 + (c % .8) * .4));
     else if (framesSinceGo < 40) hrText('GO', W / 2, H * .45, 160 * u, HR_INK.scale(1, 1 - framesSinceGo / 40));
@@ -628,9 +632,13 @@ function hrDrawComplete(W, H, u, y0)
 function hrDrawRound(W, H, u, y0)
 {
     const p = hrPlayers[hrMatch.winner];
-    hrRect(W / 2 - 150 * u, H * .38 + y0, 90 * u, 90 * u, p.color);
-    hrText(p.letter, W / 2 - 150 * u, H * .38 + y0, 56 * u, p.letterColor);
-    hrText('wins the round', W / 2 - 80 * u, H * .38 + y0, 52 * u, HR_INK, 'left');
+    if (hrMatch.tie) hrText('Tie! Again', W / 2, H * .38 + y0, 60 * u);
+    else
+    {
+        hrRect(W / 2 - 150 * u, H * .38 + y0, 90 * u, 90 * u, p.color);
+        hrText(p.letter, W / 2 - 150 * u, H * .38 + y0, 56 * u, p.letterColor);
+        hrText('wins the round', W / 2 - 80 * u, H * .38 + y0, 52 * u, HR_INK, 'left');
+    }
     hrPlayers.forEach((q, i) =>
     {
         for (let k = 0; k < 3; k++)

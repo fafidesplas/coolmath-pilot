@@ -31,8 +31,10 @@ const HR_WORLDS = [
 ];
 const HR_LEVELS_PER_WORLD = 10;
 
-// level data files add their worlds here (HR_LEVELS.hop = [...])
+// level data files add their worlds here (HR_LEVELS.hop = [...]); a world's Versus levels, if it has its own
+// (mirrored: P2 starts on the mirror side, the flag in the middle, GDD §3.1), go in HR_VERSUS.<world>
 const HR_LEVELS = {};
+const HR_VERSUS = {};
 
 const HR_PSIZE  = .8;    // player square size (u)
 const HR_MARGIN = .5;    // camera margin around the level box (u)
@@ -40,20 +42,22 @@ const HR_MARGIN = .5;    // camera margin around the level box (u)
 // GDD §7: every unlock check goes through isUnlocked(); switch the rule to gate later
 const HR_UNLOCK_RULE = 'all';   // 'all' | 'linear'
 
-// levels marked draft: true, and every level of a hidden world, are hidden everywhere (level select, Play, window.game.start)
-function hrLevelsOf(worldIndex)
+// levels marked draft: true, and every level of a hidden world, are hidden everywhere (level select, Play, window.game.start).
+// Versus plays the world's own Versus levels when it has them, its solo levels otherwise
+function hrLevelsOf(worldIndex, versus = hrVersus)
 {
     const world = HR_WORLDS[worldIndex];
-    return world.hidden ? [] : (HR_LEVELS[world.id] || []).filter(l => !l.draft);
+    return world.hidden ? [] : ((versus && HR_VERSUS[world.id]) || HR_LEVELS[world.id] || []).filter(l => !l.draft);
 }
+const hrHasVersusLevels = worldIndex => !!HR_VERSUS[HR_WORLDS[worldIndex].id];
 
 // the world's number as players see it (1-based, hidden worlds skipped)
 function hrWorldNumber(worldIndex) { return HR_WORLDS.slice(0, worldIndex + 1).filter(w => !w.hidden).length; }
 
-function isUnlocked(worldIndex, levelIndex)
+function isUnlocked(worldIndex, levelIndex, versus = hrVersus)
 {
-    if (!hrLevelsOf(worldIndex)[levelIndex]) return false;   // not built yet
-    if (HR_UNLOCK_RULE == 'all') return true;
+    if (!hrLevelsOf(worldIndex, versus)[levelIndex]) return false;   // not built yet
+    if (HR_UNLOCK_RULE == 'all' || versus) return true;
     if (levelIndex == 0) return true;
     return hrSaveLevel(hrLevelsOf(worldIndex)[levelIndex - 1].id).bestMs > 0;   // 'linear': finish the one before
 }

@@ -15,7 +15,11 @@ function hrLoadLevel(def)
         return {l: d.l, r: d.r, top: d.top, bottom, grip: !!d.grip, ice: !!d.ice, sticky: !!d.sticky,
             pos: vec2((d.l + d.r) / 2, (d.top + bottom) / 2), size: vec2(d.r - d.l, d.top - bottom)};
     };
-    const solids = def.solids.map(make);
+    // a mirrored (Versus) level lists its left half; each solid gets a mirror copy, and one touching or
+    // crossing the middle becomes one symmetric solid
+    const src = !def.mirror ? def.solids : def.solids.flatMap(s => s.l <= 0 && s.r >= 0
+        ? [{...s, l: min(s.l, -s.r), r: max(s.r, -s.l)}] : [s, {...s, l: -s.r, r: -s.l}]);
+    const solids = src.map(make);
     // GDD §3.1: the level box's left and right edges act as plain walls
     solids.push(make({l: -w / 2 - 5, r: -w / 2, top: h / 2 + 30, bottom: killY - 30}));
     solids.push(make({l: w / 2, r: w / 2 + 5, top: h / 2 + 30, bottom: killY - 30}));
@@ -30,12 +34,13 @@ function hrLoadLevel(def)
         return {solid, closedBottom: solid.bottom, button: g.button, open: 0, pressed: false};
     });
 
-    const f = def.flag;
-    hrLevel = {def, w, h, killY, solids, gates,
+    // a mirrored level's flag stands in the middle, its trigger box centered on the pole so both sides reach it alike
+    const f = def.mirror ? {...def.flag, x: 0} : def.flag, boxX = def.mirror ? 0 : f.x + (f.dir || 1) * .65;
+    hrLevel = {def, w, h, killY, solids, gates, mirror: !!def.mirror,
         start: vec2(def.start.x, def.start.y),
         flag: {x: f.x, y: f.y, hang: !!f.hang, dir: f.dir || 1},
         // GDD §3.1: trigger box from the pole to the pennant tip, 3 u tall
-        flagBox: {pos: vec2(f.x + (f.dir || 1) * .65, f.hang ? f.y - 1.5 : f.y + 1.5), size: vec2(1.44, 3)},
+        flagBox: {pos: vec2(boxX, f.hang ? f.y - 1.5 : f.y + 1.5), size: vec2(1.44, 3)},
     };
 }
 
@@ -77,7 +82,9 @@ function hrFindLevel(id)
 {
     for (let w = 0; w < HR_WORLDS.length; w++)
     {
-        const i = hrLevelsOf(w).findIndex(l => l.id == id);
-        if (i >= 0) return {world: w, index: i};
+        const i = hrLevelsOf(w, false).findIndex(l => l.id == id);
+        if (i >= 0) return {world: w, index: i, versus: false};
+        const v = hrLevelsOf(w, true).findIndex(l => l.id == id);
+        if (v >= 0 && hrHasVersusLevels(w)) return {world: w, index: v, versus: true};
     }
 }

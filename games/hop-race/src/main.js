@@ -46,6 +46,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
         if (!hrMatch.played.includes(index)) hrMatch.played.push(index);
         hrMatch.frames = 0;
         hrMatch.winner = -1;
+        hrMatch.tie = false;
     }
     else
     {
@@ -62,7 +63,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
 // versus: the next round's level, random within the world; no repeats until every unlocked level was played
 function hrNextVersusLevel()
 {
-    if (hrEditDef) return hrLevelIndex;   // the editor's level stays put
+    if (hrEditDef || hrMatch.tie) return hrLevelIndex;   // the editor's level stays put, and a tie is played again
     const all = hrLevelsOf(hrWorld).map((l, i) => i).filter(i => isUnlocked(hrWorld, i));
     let left = all.filter(i => !hrMatch.played.includes(i));
     if (!left.length)
@@ -109,7 +110,7 @@ function hrEmit(type, p)
         hrRun.promptSeen = true;
     }
     if (type == 'land' && tut) hrTutorial('step03');
-    if (type == 'finish') hrVersus ? hrRoundWon(p) : hrSoloFinish(p);
+    if (type == 'finish') hrVersus ? hrMatch.finishers?.push(p) : hrSoloFinish(p);
 }
 
 function hrTutorial(step, value)
@@ -145,16 +146,28 @@ function hrSoloFinish(p)
     hrFinishFx(p);
 }
 
+// the first player to finish wins the round
 function hrRoundWon(p)
 {
     const m = hrMatch;
-    if (m.winner >= 0) return;   // the first player to finish wins the round
+    if (window.hrEditor?.testing) return hrEditor.finished(p, Math.round(m.frames * 1000 / frameRate));
     m.winner = p.index;
     m.wins[p.index]++;
     m.rounds++;
     hrGaDesign('versus:round:p' + (p.index + 1), Math.round(m.frames * 1000 / frameRate));
     if (m.wins[p.index] >= 3) hrGaDesign('versus:match:p' + (p.index + 1), m.rounds);
     hrFinishFx(p);
+}
+
+// both finished on the same frame: no point, and the round is played again on the same level
+function hrRoundTie()
+{
+    const m = hrMatch;
+    if (window.hrEditor?.testing) return hrEditor.finished(hrPlayers[0], Math.round(m.frames * 1000 / frameRate));
+    m.tie = true;
+    hrGaDesign('versus:round:tie', Math.round(m.frames * 1000 / frameRate));
+    hrFinishFx(hrPlayers[0]);
+    hrConfetti(vec2(hrPlayers[1].x, hrPlayers[1].y), hrPlayers[1].color);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -207,7 +220,7 @@ function hrPlayUpdate(racing)
         if (hrFinishT > .5)
         {
             if (!hrVersus) hrGo('complete');
-            else hrGo(hrMatch.wins[hrMatch.winner] >= 3 ? 'match' : 'round');
+            else hrGo(!hrMatch.tie && hrMatch.wins[hrMatch.winner] >= 3 ? 'match' : 'round');
         }
         return;
     }
@@ -228,7 +241,10 @@ function hrPlayUpdate(racing)
     if (hrVersus)
     {
         hrMatch.frames++;
+        const done = hrMatch.finishers = [];   // who touches the flag this frame
         hrPlayers.forEach(p => hrPlayerStep(p, hrButtons[p.index]));
+        if (done.length == 1) hrRoundWon(done[0]);
+        else if (done.length > 1) hrRoundTie();
         return;
     }
 
@@ -268,7 +284,7 @@ function gameRender()
     if (!hrVersus && hrRun && hrSave.settings.ghost)
         hrDrawGhost(hrGhostPos(hrRun.started || hrFinishT >= 0 ? hrRun.frames : 0));
     hrPlayers.forEach(p => hrMode().draw(p));
-    // in Versus both spawn on the same point: P2 is drawn behind, with its eye nudged so both show
+    // when both stand on the same point (Versus on a level that isn't mirrored): P2 is drawn behind, with its eye nudged so both show
     for (let i = hrPlayers.length; i--;)
     {
         const p = hrPlayers[i], other = hrPlayers[1 - i];
@@ -294,8 +310,9 @@ window.game = {
     start(levelId = 'hop-01', versus = false)
     {
         const f = hrFindLevel(levelId);
-        if (f) hrStartLevel(f.world, f.index, versus);
-        return !!f;
+        if (!f || (versus && !f.versus && hrHasVersusLevels(f.world))) return false;   // that world races on its own Versus levels
+        hrStartLevel(f.world, f.index, f.versus || versus);
+        return true;
     },
     restart() { if (hrInWorld()) hrRestart(); },
     win()

@@ -45,7 +45,9 @@ function hrMode() { return HR_MODES[HR_WORLDS[hrWorld].id]; }
 
 function hrResetPlayer(p)
 {
-    p.x = hrLevel.start.x;
+    // on a mirrored (Versus) level P2 starts on the mirror side, facing the other way
+    const mirrored = hrLevel.mirror && p.index == 1;
+    p.x = mirrored ? -hrLevel.start.x : hrLevel.start.x;
     p.y = hrLevel.start.y + HR_PSIZE / 2;
     p.vx = p.vy = 0;
     p.down = false;
@@ -56,6 +58,7 @@ function hrResetPlayer(p)
     p.trail = [];
     p.eye.x = p.eye.y = p.eye.vx = p.eye.vy = 0;
     hrMode().reset(p);
+    if (mirrored) p.dir = -(p.dir || 1);
 }
 
 // back to the start with zero speed (also used by modes with their own ways to lose, like Phase)

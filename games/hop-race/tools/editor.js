@@ -24,9 +24,11 @@ window.hrEditor = (() =>
     const dirty = new Set();        // level defs changed since the last save
     const fileId = new WeakMap();   // def -> its id in the file (missing: a new level, appended on save)
     const groups = new WeakMap();   // def -> solid index -> line in the file's solids block, as of the last load/save
-    let bot = null, status = '', dirHandle = null, finishMs = -1;
+    let bot = null, status = '', dirHandle = null, finishMs = -1, finishBy = '';
 
-    const levelsOf = w => HR_LEVELS[HR_WORLDS[w].id];
+    // a world's levels in the editor: its solo levels, then its mirrored Versus levels (HR_VERSUS, same file)
+    const levelsOf = w => [...(HR_LEVELS[HR_WORLDS[w].id] || []), ...(HR_VERSUS[HR_WORLDS[w].id] || [])];
+    const listOf = d => (d.mirror ? HR_VERSUS : HR_LEVELS)[HR_WORLDS[world].id];
     const worlds = () => HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden && HR_LEVELS[HR_WORLDS[i].id]);
     const hide = (o, k, v) => (Object.defineProperty(o, k, {value: v, writable: true, configurable: true}), o);
     const box = () => ({hw: hrLevel.w / 2, hh: hrLevel.h / 2});
@@ -73,7 +75,7 @@ window.hrEditor = (() =>
     function start()
     {
         hrEditDef = def;
-        hrStartLevel(world, levelsOf(world).indexOf(def), false);
+        hrStartLevel(world, listOf(def).indexOf(def), !!def.mirror);   // a Versus level plays with both players
     }
     function reload() { hrLoadLevel(def); hrPlayers.forEach(hrResetPlayer); }
 
@@ -125,7 +127,7 @@ window.hrEditor = (() =>
         if (ED.testing)
         {
             if (!HR_WORLD_SCREENS.includes(hrScreen)) { ED.testing = false; hrEditDef = null; panel.style.display = 'none'; }
-            else if (hrFinishT >= .4) { backToEdit(); status = `Finished in ${hrFmt(finishMs)} s`; refreshPanel(); }
+            else if (hrFinishT >= .4) { backToEdit(); status = `${def.mirror ? finishBy + ' finished' : 'Finished'} in ${hrFmt(finishMs)} s`; refreshPanel(); }
             return false;
         }
         if (!ED.active) return false;
@@ -137,7 +139,7 @@ window.hrEditor = (() =>
     ED.finished = (p, ms) =>
     {
         hrRun.started = false;
-        finishMs = ms;
+        finishMs = ms; finishBy = p.letter;
         hrFinishFx(p);
     };
 
@@ -264,7 +266,7 @@ window.hrEditor = (() =>
         else if (sel.type == 'gate') { moveSolid(def.gates[sel.i].solid); shift(def.gates[sel.i].button); }
         else if (sel.type == 'button') shift(def.gates[sel.i].button);
         else if (sel.type == 'start') shift(def.start);
-        else if (sel.type == 'flag') shift(def.flag);
+        else if (sel.type == 'flag') { shift(def.flag); if (def.mirror) def.flag.x = 0; }   // a mirrored level's flag stays in the middle
         else if (sel.type == 'prompt') { const p = promptPos(); def.promptAt = {x: p.x, y: p.y}; shift(def.promptAt); }
     }
 
@@ -392,11 +394,12 @@ window.hrEditor = (() =>
     function doUndo() { if (!undo.length) return; redo.push(cloneDef(def)); restore(undo.pop()); sel = null; changed(); }
     function doRedo() { if (!redo.length) return; undo.push(cloneDef(def)); restore(redo.pop()); sel = null; changed(); }
 
+    // a new level is a solo one; a duplicate stays in its list (a Versus level's copy is a Versus level)
     function newLevel(copy)
     {
-        const w = HR_WORLDS[world].id, list = levelsOf(world);
+        const w = HR_WORLDS[world].id, vs = copy && def.mirror, list = vs ? HR_VERSUS[w] : HR_LEVELS[w];
         let n = list.length + 1, id;
-        while (list.some(l => l.id == (id = `${w}-${String(n).padStart(2, '0')}`))) n++;
+        while (levelsOf(world).some(l => l.id == (id = `${w}${vs ? '-vs' : ''}-${String(n).padStart(2, '0')}`))) n++;
         const d = copy ? cloneDef(def) : {size: 26, start: {x: -10, y: -4}, solids: [{l: -14, r: 14, top: -4}], flag: {x: 10, y: -4}};
         Object.assign(d, {id, name: copy ? def.name + ' copy' : 'New Level'});
         d.solids.forEach(s => hide(s, '_o', undefined));
@@ -404,7 +407,7 @@ window.hrEditor = (() =>
         list.push(d);
         groups.set(d, []);
         dirty.add(d);
-        open(world, list.length - 1);
+        open(world, levelsOf(world).indexOf(d));
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -495,6 +498,7 @@ window.hrEditor = (() =>
         const put = (k, code) => out.push(withComment('        ' + code, c.fields[k]));
         if (d.draft) put('draft', 'draft: true,');
         out.push(withComment(`        id: ${str(d.id)}, name: ${str(d.name)},`, c.fields.id));
+        if (d.mirror) put('mirror', 'mirror: true,');
         put('size', `size: ${num(d.size)},`);
         put('start', `start: ${lit(d.start)},`);
         put('solids', 'solids: [');
@@ -518,7 +522,7 @@ window.hrEditor = (() =>
                 out.push(withComment(`            {solid: ${solidLit(gt.solid)}, button: ${lit(gt.button)}},`, gt._o !== undefined ? c.gates[gt._o] || '' : ''));
             out.push('        ],');
         }
-        const known = ['draft', 'id', 'name', 'size', 'start', 'solids', 'gates', 'flag', 'prompt', 'promptAt'];
+        const known = ['draft', 'id', 'name', 'mirror', 'size', 'start', 'solids', 'gates', 'flag', 'prompt', 'promptAt'];
         for (const k of Object.keys(d)) if (!known.includes(k) && d[k] !== undefined) put(k, `${k}: ${lit(d[k])},`);
         put('flag', `flag: ${lit(d.flag)},`);
         if (d.prompt) put('prompt', `prompt: ${str(d.prompt)},`);
@@ -602,8 +606,8 @@ window.hrEditor = (() =>
                     if (span) text = text.slice(0, span.start) + levelSource(d, span.body) + text.slice(span.end);
                     else
                     {
-                        // a new level goes at the end of HR_LEVELS.<world>
-                        const head = text.indexOf(`HR_LEVELS.${id} = [`);
+                        // a new level goes at the end of HR_LEVELS.<world> (HR_VERSUS.<world> for a Versus level)
+                        const head = text.indexOf(`${d.mirror ? 'HR_VERSUS' : 'HR_LEVELS'}.${id} = [`);
                         const close = matchClose(text, text.indexOf('[', head), '[', ']');
                         const at = text.lastIndexOf('\n', close) + 1;
                         text = text.slice(0, at) + levelSource(d) + text.slice(at);
@@ -648,6 +652,13 @@ window.hrEditor = (() =>
         for (let x = Math.ceil(-hw); x <= hw; x++) drawLine(vec2(x, -hh), vec2(x, hh), x ? .02 : .05, faint);
         for (let y = Math.ceil(-hh); y <= hh; y++) drawLine(vec2(-hw, y), vec2(hw, y), y ? .02 : .05, faint);
         outline({l: -hw, r: hw, bottom: -hh, top: hh}, .06, ink.scale(1, .5));
+        // a mirrored (Versus) level: you edit the left half; the right half is its mirror (P2's side)
+        if (def.mirror)
+        {
+            drawRect(vec2(hw / 2, 0), vec2(hw, hh * 2), HR_WHITE.scale(1, .12));
+            for (let y = -hh; y < hh; y += .6) drawLine(vec2(0, y), vec2(0, y + .3), .06, ink.scale(1, .5));
+            drawText('mirror (P2)', vec2(hw / 2, -hh + .6), .5, ink.scale(1, .4), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
+        }
         // the HUD's spots: keep the top 1.5 u clear near the center and the right edge (GDD §6)
         const hud = HR_RED.scale(1, .14);
         drawRect(vec2(0, hh - .75), vec2(5, 1.5), hud);
@@ -773,7 +784,7 @@ window.hrEditor = (() =>
         const pickLevel = el('select', {onchange: e => { const [w, i] = e.target.value.split(':').map(Number); open(w, i); }});
         for (const w of worlds())
             levelsOf(w).forEach((d, i) => pickLevel.append(el('option', {value: `${w}:${i}`, selected: d == def,
-                textContent: `${HR_WORLDS[w].name} ${i + 1}: ${d.name}${d.draft ? ' (draft)' : ''}${dirty.has(d) ? ' •' : ''}`})));
+                textContent: `${HR_WORLDS[w].name} ${d.mirror ? 'Versus ' + (i + 1 - (HR_LEVELS[HR_WORLDS[w].id] || []).length) : i + 1}: ${d.name}${d.draft ? ' (draft)' : ''}${dirty.has(d) ? ' •' : ''}`})));
         panel.append(pickLevel);
 
         panel.append(el('h3', {textContent: 'Level'}),
@@ -835,7 +846,7 @@ window.hrEditor = (() =>
         for (const w of worlds())
         {
             const id = HR_WORLDS[w].id;
-            const text = await (await fetch(new URL(`../levels/${id}.js`, HERE), {cache: 'no-store'})).text();
+            const text = await (await fetch(new URL(`../levels/${id}.js`, HERE), {cache: 'no-store'})).text();   // Versus levels are in the same file
             for (const d of levelsOf(w))
             {
                 const span = findLevel(text, d.id);

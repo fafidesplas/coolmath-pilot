@@ -132,3 +132,47 @@ HR_LEVELS.hop = [
         flag: {x: 12, y: 1.5},
     },
 ];
+
+// Versus (GDD §6, a 3-level test since 2026-11-10): mirrored levels. Each lists its left half; the game adds the
+// mirror copy, P2 starts on the mirror side facing left, and the flag stands in the middle
+HR_VERSUS.hop = [
+    {
+        id: 'hop-vs-01', name: 'Face Off',
+        mirror: true,
+        size: 28,
+        start: {x: -12, y: -4},
+        solids: [
+            {l: -15, r: -8.5, top: -4},
+            {l: -6, r: 0, top: -4},
+            {l: -3.5, r: -2.5, top: -2.5},     // a low block before the flag: tap and you bounce back
+        ],
+        flag: {x: 0, y: -4},
+    },
+    {
+        id: 'hop-vs-02', name: 'Climb the Middle',
+        mirror: true,
+        size: 28,
+        start: {x: -3.5, y: -5},           // next to the tower: bump it, run out to the wall and climb back
+        solids: [
+            {l: -15, r: 0, top: -5},
+            {l: -1, r: 0, top: 0},             // the middle tower, 5 u: too tall to jump
+            {l: -8, r: -6, top: -3},
+            {l: -5, r: -3, top: -1, bottom: -2},
+        ],
+        flag: {x: 0, y: 0},
+    },
+    {
+        id: 'hop-vs-03', name: 'Out and Back',
+        mirror: true,
+        size: 28,
+        start: {x: -12, y: -5},
+        solids: [
+            {l: -15, r: 0, top: -5},
+            {l: -1.5, r: 0, top: 2},           // the middle tower: run into it to turn back
+            {l: -7, r: -3.5, top: -2.5, bottom: -3.5},
+            {l: -15, r: -9, top: 0, bottom: -1},     // the high ledge: turn at the wall up here
+            {l: -5.5, r: -2.5, top: 3.5, bottom: 2.5},     // run off its end onto the tower
+        ],
+        flag: {x: 0, y: 2},
+    },
+];

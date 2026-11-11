@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-10 — Versus: mirrored levels test
+- Owner: on shared levels the two players can sit on the same spot; a 1.5 u offset start would favor one side. Trying mirrored Versus levels on Hop: P1 starts left, P2 on the mirror spot facing left, the flag in the middle.
+- `HR_VERSUS.<world>` (same file as the solo levels) holds a world's Versus levels; `mirror: true` levels list their left half and `hrLoadLevel` adds the mirror copy (a solid touching x = 0 becomes one symmetric solid). `hrLevelsOf(world, versus)` picks the list; menus, Play 2P, `hrFindLevel` and `window.game.start` know about it. Worlds without their own Versus levels race on their solo levels as before.
+- Tie: both finishing on the same frame gives no point, "Tie! Again" and a replay of the level (`versus:round:tie`).
+- Editor: Versus levels are in the level list ("Hop Versus 1"), the right half is tinted "mirror (P2)", the flag stays at x = 0, play-tests run both players, and Duplicate on a Versus level makes another one. The 3-2-1 no longer shows over the level while editing.
+- Three levels, bot-checked, no dead ends: Face Off 1.83 s, Climb the Middle 4.48 s (fastest route has a 2-frame jump), Out and Back 5.75 s. Checked in Chrome: both starts mirrored, a same-frame finish ties, one frame earlier wins, Versus level select shows 3 tiles, no console errors.
+- Next: play the three with two people. Are half-courses long enough? Is the Climb the Middle start bump fun or annoying?
+
 ## 2026-11-10 — Hop: auto-run set in stone
 - Owner: keep auto-run for good. Removed `HR_HOP.autoRun` and the hold-to-charge hop with it (charge and aim, the lunge and back-lean poses, ice slides, the charge-only tuning). `HR_MODES.hop.step` is the run. Level 1's prompt and the world hint now live in the data (`levels/hop.js`, `HR_WORLDS`), not as overrides in the mode.
 - The editor's Check (`tools/hop-bot.js`) now plays auto-run: from each landing or wall grab it tries every press frame over the next 2.5 s with 9 hold lengths and follows the jump. Landings are merged per platform, facing, speed and a 1 u grid; without the grid it missed the routes in 8 and 9. All 10 finish with no dead ends, 3.1 s for the whole world: 2.95, 3.95, 3.45, 3.37, 2.63, 2.12, 3.87, 8.77, 3.53, 3.70 s. The status line shows the tightest timing window in frames.
