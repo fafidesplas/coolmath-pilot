@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-11-11 — Hop card shows the run
+- The Hop card's mini schematic (title and mode select) showed the old charge hop (squash, dotted aim arc). It now shows auto-run: the square runs across the floor leaning into the run, hops over a block, lands with a squeeze and runs on, fading in and out at the edges (`hrDrawSchematic` in `ui.js`, 2.2 s loop). Checked in Chrome on the title.
+
 ## 2026-11-10 — Versus: mirrored levels test
 - Owner: on shared levels the two players can sit on the same spot; a 1.5 u offset start would favor one side. Trying mirrored Versus levels on Hop: P1 starts left, P2 on the mirror spot facing left, the flag in the middle.
 - `HR_VERSUS.<world>` (same file as the solo levels) holds a world's Versus levels; `mirror: true` levels list their left half and `hrLoadLevel` adds the mirror copy (a solid touching x = 0 becomes one symmetric solid). `hrLevelsOf(world, versus)` picks the list; menus, Play 2P, `hrFindLevel` and `window.game.start` know about it. Worlds without their own Versus levels race on their solo levels as before.

@@ -360,22 +360,29 @@ function hrDrawSchematic(world, x, y, w)
     if (id == 'phase') return hrSchemPhase(x, y, w, u, s, gy);
     if (id == 'climb') return hrSchemClimb(x, y, w, u, s, gy);
 
-    // Hop: squash while charging, the dotted aim arc, then the hop
-    const k = (timeReal % 2) / 2, x0 = x - w * .35, arc = t => gy - s / 2 - Math.sin(t * PI) * w * .32;
+    // Hop: the square runs along the floor leaning into the run, hops over a block, lands with a squeeze and runs on
+    const k = (timeReal % 2.2) / 2.2, x0 = x - w * .45, x1 = x + w * .45, px = lerp(x0, x1, k);
+    const j0 = x - w * .24, j1 = x + w * .24;   // takeoff and landing
     hrRect(x, gy + 4 * u, w, 8 * u, HR_INK);
-    const charge = clamp(k / .35);
-    for (let i = 0; i < 7; i++)
-        hrRect(x0 + i / 6 * w * .7, arc(i / 6), 6 * u, 6 * u, HR_INK.scale(1, k < .35 ? .6 * charge : .6));
-    if (k < .35)
+    hrRect(x, gy - s * .45, s * .8, s * .9, HR_INK);   // the block to hop
+    const a = clamp(min(k, 1 - k) / .06);   // fades in at the left, out at the right
+    let py = gy - s / 2, sw = s, sh = s, lean = s * .2;
+    if (px > j0 && px < j1)
     {
-        const sw = s * (1 + charge * .35), sh = s * (1 - charge * .35);
-        hrRect(x0, gy - sh / 2, sw, sh, HR_BLUE);
+        const t = (px - j0) / (j1 - j0);
+        py -= Math.sin(t * PI) * w * .3;
+        sw = s * (1 - .12 * (1 - t)); sh = s * (1 + .12 * (1 - t));   // stretched at takeoff, square at the top
+        lean = 0;
     }
-    else
+    else if (px >= j1)
     {
-        const t = clamp((k - .35) / .5);
-        hrRect(x0 + t * w * .7, arc(t), s, s, HR_BLUE);
+        const q = clamp((px - j1) / (w * .1));   // landing squeeze, easing back as it runs on
+        sw = s * (1 + .3 * (1 - q)); sh = s * (1 - .3 * (1 - q));
+        lean = s * .2 * q;
+        py = gy - sh / 2;
     }
+    const l = px - sw / 2, r = px + sw / 2, top = py - sh / 2, bot = py + sh / 2;
+    hrSPoly([[l + lean, top], [r + lean, top], [r, bot], [l, bot]], HR_BLUE.scale(1, a));
 }
 
 // Rocket: the launcher spins around the square; a press blasts at its feet and throws it up and over
