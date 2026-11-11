@@ -1,6 +1,6 @@
 /*
     HOP RACE - engine setup, the play state machine and the window.game testing hook.
-    Screens: title | modes | levels | settings | playing | paused | complete | round | match
+    Screens: title | levels | settings | playing | paused | complete | round | match
 */
 
 'use strict';

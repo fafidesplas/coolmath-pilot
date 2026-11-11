@@ -66,19 +66,6 @@ function hrUiButtons()
             act: () => hrStartLevel(i, hrCardLevel(i), false)}));
         add({id: 'settings', x: W - 110 * u, y: 50 * u, w: 180 * u, h: 56 * u, label: 'Settings', act: () => hrOpenSettings('title')});
     }
-    else if (hrScreen == 'modes')
-    {
-        back();
-        add({id: 'solo', x: W / 2 - 100 * u, y: H * .12, w: 190 * u, h: 64 * u, label: 'Solo', on: !hrMenuVersus,
-            act: () => hrMenuVersus = false});
-        add({id: 'versus', x: W / 2 + 100 * u, y: H * .12, w: 190 * u, h: 64 * u, label: 'Versus', on: hrMenuVersus,
-            act: () => hrMenuVersus = true});
-        const shown = HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden);
-        const n = shown.length, cw = min(250 * u, W / (n + 1.2)), gap = cw * 1.12;
-        shown.forEach((i, k) => add({id: 'world' + i, card: i, x: W / 2 + (k - (n - 1) / 2) * gap, y: H * .56, w: cw, h: 330 * u,
-            enabled: hrLevelsOf(i, hrMenuVersus).length > 0, focus: i == hrMenuWorld,
-            act: () => { hrMenuWorld = i; hrGo('levels'); }}));
-    }
     else if (hrScreen == 'levels')
     {
         back();
@@ -170,7 +157,6 @@ function hrOpenSettings(from) { hrSettingsFrom = from; hrGo('settings'); }
 function hrBack()
 {
     if (hrScreen == 'settings') hrGo(hrSettingsFrom);
-    else if (hrScreen == 'levels') hrGo('modes');
     else hrGo('title');
 }
 
@@ -212,7 +198,7 @@ function hrUiUpdate()
         if (keyWasPressed('KeyP') || keyWasPressed('Escape')) return hrGo('playing');
         if (keyWasPressed('KeyR')) return hrRestart();
     }
-    else if (keyWasPressed('Escape') && ['modes', 'levels', 'settings'].includes(hrScreen)) return hrBack();
+    else if (keyWasPressed('Escape') && ['levels', 'settings'].includes(hrScreen)) return hrBack();
 
     // keyboard focus: arrows move between enabled buttons, Enter or Space presses
     const enabled = list.map((b, i) => i).filter(i => list[i].enabled !== false && list[i].id != 'back');
@@ -350,8 +336,7 @@ function hrDrawCard(b, w, h, focused)
     if (live)
     {
         const done = hrLevelsOf(b.card, false).filter(l => hrSaveLevel(l.id).bestMs).length;
-        if (!hrMenuVersus)
-            hrText(`${done}/${world.lab ? hrLevelsOf(b.card).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK, 'center', world.bg);
+        hrText(`${done}/${world.lab ? hrLevelsOf(b.card, false).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK, 'center', world.bg);
         hrDrawSchematic(b.card, b.x, b.y - h * .12, w * .7);
     }
     else hrText('Soon', b.x, b.y - h * .1, 28 * u, HR_INK.scale(1, .5), 'center', world.bg.scale(1, .5));
@@ -549,11 +534,6 @@ function hrUiRender()
     const slide = (1 - hrEaseBack(hrScreenT / .35)) * H * .25;
     const y0 = slide;
     if (hrScreen == 'title') hrDrawTitle(W, H, u);
-    else if (hrScreen == 'modes')
-    {
-        hrText('Pick a world', W / 2, H * .24 + y0, 34 * u);
-        if (hrMenuVersus) hrText('Versus needs a keyboard (A and L) or a touch screen', W / 2, H * .93, 22 * u);
-    }
     else if (hrScreen == 'levels')
         hrText(HR_WORLDS[hrMenuWorld].name + (hrMenuVersus ? ' · Versus' : ''), W / 2, H * .17 + y0, 54 * u);
     else if (hrScreen == 'settings') hrText('Settings', W / 2, H * .18 + y0, 54 * u);

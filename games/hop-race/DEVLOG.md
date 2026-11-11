@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-11 — World select screen removed
+- Owner: the "Pick a world" screen (Solo / Versus toggle and world cards) isn't needed; it repeated the title's cards and was only reached by Back from a level select. Back (and Escape) from a level select now goes to the title.
+- Lost with it: picking a Versus world on purpose (Play 2P still goes to the last Versus level), and the "Versus needs a keyboard (A and L) or a touch screen" note. The title cards now always show "done" counts, even after a Versus match.
+- GDD §8 flow, Title and testing-hook lines, §13 v1 shell list, changelog, and the state machine in CLAUDE.md updated.
+- Checked in Chrome: Rocket Versus ▶ Levels ▶ Back and Escape both land on the title; no console errors.
+
 ## 2026-11-11 — Text readable over ink
 - Owner: make all UI text readable on black. Every text was plain ink with no outline, so wherever it crossed an ink level piece (the start prompts over the floor, the hint at the bottom, the HUD over a wall or ceiling) it vanished.
 - All text now goes through `hrDrawText` (`src/ui.js`): a round-joined halo 14 % of the text size, in the opposite tone (screen background around dark text, ink around light text), alpha matched to the text so fades still work. World-space prompts use `hrWorldText`; world cards pass their own color so the halo doesn't ring their panels.
