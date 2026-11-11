@@ -8,6 +8,7 @@
 - Checked in Chrome: the save reset, the level 1 prompt, a click starts the run, the editor's Check on 1-8 draws its 7-move route, no console errors.
 - 1-6 renamed "Ice Ice Jumpy" (owner; was "Low Ceiling", which no longer fit).
 - `mechanic.svg` redrawn for auto-run: press to start, tap over a pit, full hold with a somersault over a wall.
+- Editor: Save now says what it saved and when ("Saved hop-04 at 20:45"); a second Save says "Already saved" instead of "Nothing to save", which read like a failure.
 - Next: the brief still shows the charge hop. The tightest windows (1-4 at 1 frame, 1-7 and 1-9 at 3) are worth playing; they may be grid artifacts.
 
 ## 2026-10-28 — Hop: ice pose and droplets

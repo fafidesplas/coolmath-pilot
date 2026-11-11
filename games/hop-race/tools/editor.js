@@ -585,7 +585,8 @@ window.hrEditor = (() =>
 
     async function save()
     {
-        if (!dirty.size) { status = 'Nothing to save'; return refreshPanel(); }
+        if (!dirty.size) { status = 'Already saved: no changes since the last save'; return refreshPanel(); }
+        const ids = [...dirty].map(d => d.id).join(', ');
         try
         {
             const dir = await levelsDir();
@@ -613,7 +614,7 @@ window.hrEditor = (() =>
                 await out.close();
                 for (const d of defs) { fileId.set(d, d.id); markLoaded(d); dirty.delete(d); delete d._new; }
             }
-            status = 'Saved';
+            status = `Saved ${ids} at ${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
         }
         catch (e) { status = e.name == 'AbortError' ? 'Save cancelled' : 'Save failed: ' + e.message; }
         refreshPanel();
