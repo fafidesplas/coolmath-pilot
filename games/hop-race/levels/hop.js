@@ -66,7 +66,7 @@ HR_LEVELS.hop = [
         flag: {x: 11, y: -4.5},
     },
     {
-        id: 'hop-06', name: 'Low Ceiling',
+        id: 'hop-06', name: 'Ice Ice Jumpy',
         size: 28,
         start: {x: -12.5, y: -4},
         solids: [

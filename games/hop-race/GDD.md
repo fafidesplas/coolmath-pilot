@@ -160,7 +160,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   3. **Up We Go:** a staircase of three rising platforms, the last one floating over a pit; needs held jumps.
   4. **The Wall:** one long floor (no pits) with a 2 u wall, then a 4 u wall; a short jump into either turns you around. Clearing the 4 u wall takes a full hold at the right moment.
   5. **Thin Ice:** jump from a high ledge over a pit onto a long ice floor that speeds you up, over a 1 u bump and on across more ice to the flag.
-  6. **Low Ceiling** (no ceiling since the auto-run rework; the name is to change): two ice runs, each ending at a wide gap (7.75 u, then 8.25 u) that only an ice dash crosses.
+  6. **Ice Ice Jumpy:** two ice runs, each ending at a wide gap (7.75 u, then 8.25 u) that only an ice dash crosses.
   7. **Grip:** a shaft 3 u across between a hanging grip wall (jump in under it, 1.7 u of room) and the 5 u grip face of the flag's ledge; wall-jump up.
   8. **Which Wall?:** the flag's ledge is walled in under a long ceiling. A grip pillar in the middle lets you wall-jump back left, up an ice ledge and two small ledges to the top-left corner, then over the ceiling and down to the flag.
   9. **Slide and Climb:** a drop onto an ice run that ends at a 3.5 u pit; jump the pit at speed, under a hanging grip wall, then climb a grip shaft to the flag.
@@ -357,6 +357,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-10 — Hop 6 renamed "Ice Ice Jumpy" (was "Low Ceiling"; it has had no ceiling since the auto-run rework).
 - 2026-11-10 — Hop: auto-run is the rule, no longer a test. The hold-to-charge hop and its switch are removed, the bot checks the auto-run, and saved Hop best times and ghosts (from the charge hop) are cleared once.
 - 2026-10-23 — Title: the world cards are on the title under the Play buttons (a card starts that world's next level, solo), replacing the Levels button, after a playtester never found the worlds after Hop. The idle hopping square is gone; Settings moved to the top right.
 - 2026-10-23 — Hop: charging toward a high hop leans back (\), the mirror of the flat lunge's /. (A bigger eye with it was tried and dropped: too much.)
