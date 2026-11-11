@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
-  <!-- Hop Race: two squares race to the flag. Each holds one key to charge (power bar fills, aim arc shows), releases to hop: start ground to floating block to finish. P1 lands first and wins. Loop 5 s. -->
+  <!-- Hop Race: two squares race to the flag. Each presses its key to start running, then runs on its own; a tap jumps low (over the pit), a hold jumps higher and a full hold somersaults (over the wall). P1 starts first and wins. Loop 5 s. -->
   <rect width="480" height="270" fill="#1d1a4d"/>
 
   <!-- stars -->
@@ -14,16 +14,16 @@
     <rect x="236" y="100" width="2" height="2"/>
   </g>
 
-  <!-- start ground, floating block, finish ground (pits between) -->
+  <!-- start ground, pit, ground with a wall block, finish -->
   <g fill="#2e2452">
-    <rect x="0" y="200" width="130" height="70"/>
-    <rect x="190" y="160" width="80" height="24"/>
-    <rect x="340" y="200" width="140" height="70"/>
+    <rect x="0" y="200" width="150" height="70"/>
+    <rect x="190" y="200" width="290" height="70"/>
+    <rect x="290" y="150" width="30" height="50"/>
   </g>
   <g fill="#2ce0e0">
-    <rect x="0" y="200" width="130" height="4"/>
-    <rect x="190" y="160" width="80" height="4"/>
-    <rect x="340" y="200" width="140" height="4"/>
+    <rect x="0" y="200" width="150" height="4"/>
+    <rect x="190" y="200" width="290" height="4"/>
+    <rect x="290" y="150" width="30" height="4"/>
   </g>
 
   <!-- finish flag and checker line -->
@@ -36,69 +36,90 @@
     <rect x="452" y="194" width="6" height="6" fill="#000"/>
   </g>
 
-  <!-- aim previews: dotted arcs while each player charges -->
-  <g fill="none" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 9">
-    <path d="M60,192 Q145,60 230,152" stroke="#8fd6fa">
-      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.12;0.13;0.30;0.31;1" values="0;0;0.8;0.8;0;0"/>
-    </path>
-    <path d="M230,152 Q310,70 390,192" stroke="#8fd6fa">
-      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.56;0.57;0.70;0.71;1" values="0;0;0.8;0.8;0;0"/>
-    </path>
-    <path d="M36,192 Q130,40 215,152" stroke="#ffbf80">
-      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.22;0.23;0.40;0.41;1" values="0;0;0.8;0.8;0;0"/>
-    </path>
-    <path d="M215,152 Q300,60 372,192" stroke="#ffbf80">
-      <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.66;0.67;0.80;0.81;1" values="0;0;0.8;0.8;0;0"/>
-    </path>
+  <!-- hints over the obstacles -->
+  <g font-family="sans-serif" font-weight="bold" font-size="12" text-anchor="middle">
+    <text x="171" y="141" fill="#000" opacity="0.6">tap</text>
+    <text x="170" y="140" fill="#c8c8c8">tap</text>
+    <text x="306" y="99" fill="#000" opacity="0.6">hold</text>
+    <text x="305" y="98" fill="#c8c8c8">hold</text>
   </g>
 
-  <!-- P1 (blue, holds A) -->
+  <!-- P1 (blue, A): presses to start at 0.3 s, runs on its own -->
   <g>
-    <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear"
-      path="M60,192 Q145,60 230,152 Q310,70 390,192"
-      keyTimes="0;0.30;0.48;0.70;0.86;1" keyPoints="0;0;0.52;0.52;1;1"/>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.06;0.74;1" values="42 0;42 0;430 0;430 0"/>
     <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
       keyTimes="0;0.02;0.97;1" values="0;1;1;0"/>
-    <rect x="-8" y="-8" width="16" height="16" fill="#3cb9f5"/>
-    <rect x="-4" y="-4" width="8" height="8" fill="#b0e2fb"/>
-    <rect x="2" y="-3" width="3" height="3" fill="#000"/>
-    <!-- power bar -->
-    <rect x="-12" y="-20" width="24" height="4" fill="#000" opacity="0.5"/>
-    <rect x="-12" y="-20" height="4" fill="#3cb9f5" width="0">
-      <animate attributeName="width" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.12;0.30;0.301;0.56;0.70;0.701;1" values="0;0;24;0;0;20;0;0"/>
-    </rect>
+    <g>
+      <!-- jumps: tap over the pit, full hold over the wall -->
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        calcMode="spline" keyTimes="0;0.240;0.288;0.335;0.433;0.519;0.605;1"
+        values="0 192;0 192;0 163;0 192;0 192;0 122;0 192;0 192"
+        keySplines="0 0 1 1;0 0 0.58 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0.42 0 1 1;0 0 1 1"/>
+      <!-- key shown while pressed -->
+      <text x="0" y="-16" font-family="sans-serif" font-weight="bold" font-size="12" fill="#3cb9f5" text-anchor="middle" opacity="0">A
+        <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.06;0.061;0.08;0.081;0.240;0.241;0.258;0.259;0.433;0.434;0.513;0.514;1"
+          values="0;0;1;1;0;0;1;1;0;0;1;1;0;0"/>
+      </text>
+      <!-- lean forward while running on the ground -->
+      <g>
+        <animateTransform attributeName="transform" type="skewX" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.06;0.07;0.240;0.250;0.335;0.345;0.433;0.443;0.605;0.615;0.74;0.75;1"
+          values="0;0;-12;-12;0;0;-12;-12;0;0;-12;-12;0;0"/>
+        <!-- somersault on the full hold -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate" dur="5s" repeatCount="indefinite"
+            calcMode="spline" keyTimes="0;0.513;0.593;1" values="0;0;360;360"
+            keySplines="0 0 1 1;0.4 0 0.2 1;0 0 1 1"/>
+          <rect x="-8" y="-8" width="16" height="16" fill="#3cb9f5"/>
+          <rect x="-4" y="-4" width="8" height="8" fill="#b0e2fb"/>
+          <rect x="2" y="-3" width="3" height="3" fill="#000"/>
+        </g>
+      </g>
+    </g>
   </g>
 
-  <!-- P2 (orange, holds L), a beat behind -->
+  <!-- P2 (orange, L): presses to start later, a beat behind; stops when P1 finishes -->
   <g>
-    <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear"
-      path="M36,192 Q130,40 215,152 Q300,60 372,192"
-      keyTimes="0;0.40;0.58;0.80;0.96;1" keyPoints="0;0;0.53;0.53;1;1"/>
+    <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+      keyTimes="0;0.12;0.74;1" values="18 0;18 0;372 0;372 0"/>
     <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
       keyTimes="0;0.02;0.97;1" values="0;1;1;0"/>
-    <rect x="-8" y="-8" width="16" height="16" fill="#ff9a33"/>
-    <rect x="-4" y="-4" width="8" height="8" fill="#ffd7ad"/>
-    <rect x="2" y="-3" width="3" height="3" fill="#000"/>
-    <rect x="-12" y="-20" width="24" height="4" fill="#000" opacity="0.5"/>
-    <rect x="-12" y="-20" height="4" fill="#ff9a33" width="0">
-      <animate attributeName="width" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.22;0.40;0.401;0.66;0.80;0.801;1" values="0;0;24;0;0;20;0;0"/>
-    </rect>
+    <g>
+      <animateTransform attributeName="transform" type="translate" dur="5s" repeatCount="indefinite"
+        calcMode="spline" keyTimes="0;0.342;0.390;0.437;0.535;0.621;0.707;1"
+        values="0 192;0 192;0 163;0 192;0 192;0 122;0 192;0 192"
+        keySplines="0 0 1 1;0 0 0.58 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0.42 0 1 1;0 0 1 1"/>
+      <text x="0" y="-16" font-family="sans-serif" font-weight="bold" font-size="12" fill="#ff9a33" text-anchor="middle" opacity="0">L
+        <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.12;0.121;0.14;0.141;0.342;0.343;0.360;0.361;0.535;0.536;0.615;0.616;1"
+          values="0;0;1;1;0;0;1;1;0;0;1;1;0;0"/>
+      </text>
+      <g>
+        <animateTransform attributeName="transform" type="skewX" dur="5s" repeatCount="indefinite"
+          keyTimes="0;0.12;0.13;0.342;0.352;0.437;0.447;0.535;0.545;0.707;0.717;0.74;0.75;1"
+          values="0;0;-12;-12;0;0;-12;-12;0;0;-12;-12;0;0"/>
+        <g>
+          <animateTransform attributeName="transform" type="rotate" dur="5s" repeatCount="indefinite"
+            calcMode="spline" keyTimes="0;0.615;0.695;1" values="0;0;360;360"
+            keySplines="0 0 1 1;0.4 0 0.2 1;0 0 1 1"/>
+          <rect x="-8" y="-8" width="16" height="16" fill="#ff9a33"/>
+          <rect x="-4" y="-4" width="8" height="8" fill="#ffd7ad"/>
+          <rect x="2" y="-3" width="3" height="3" fill="#000"/>
+        </g>
+      </g>
+    </g>
   </g>
 
   <!-- HUD -->
   <g font-family="sans-serif" font-weight="bold">
-    <text x="14" y="26" font-size="16" fill="#3cb9f5">P1: hold A</text>
-    <text x="466" y="26" font-size="16" fill="#ff9a33" text-anchor="end">P2: hold L</text>
-    <text x="240" y="236" font-size="12" fill="#c8c8c8" text-anchor="middle">hold: charge + aim · release: hop</text>
-    <text x="240" y="96" font-size="28" fill="#3cb9f5" text-anchor="middle" opacity="0">P1 WINS!
+    <text x="14" y="26" font-size="16" fill="#3cb9f5">P1: A</text>
+    <text x="466" y="26" font-size="16" fill="#ff9a33" text-anchor="end">P2: L</text>
+    <text x="240" y="236" font-size="12" fill="#c8c8c8" text-anchor="middle">press to run, tap to jump, hold to jump higher</text>
+    <text x="240" y="76" font-size="28" fill="#3cb9f5" text-anchor="middle" opacity="0">P1 WINS!
       <animate attributeName="opacity" dur="5s" repeatCount="indefinite"
-        keyTimes="0;0.86;0.87;0.96;0.97;1" values="0;0;1;1;0;0"/>
+        keyTimes="0;0.74;0.75;0.96;0.97;1" values="0;0;1;1;0;0"/>
     </text>
   </g>
 </svg>

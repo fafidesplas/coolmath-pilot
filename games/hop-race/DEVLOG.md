@@ -7,7 +7,8 @@
 - GDD §3.2 rewritten as the auto-run rules; §5 elements, §6 level one-liners and bot numbers, the juice list and the summary line updated.
 - Checked in Chrome: the save reset, the level 1 prompt, a click starts the run, the editor's Check on 1-8 draws its 7-move route, no console errors.
 - 1-6 renamed "Ice Ice Jumpy" (owner; was "Low Ceiling", which no longer fit).
-- Next: `mechanic.svg` and the brief still show the charge hop. The tightest windows (1-4 at 1 frame, 1-7 and 1-9 at 3) are worth playing; they may be grid artifacts.
+- `mechanic.svg` redrawn for auto-run: press to start, tap over a pit, full hold with a somersault over a wall.
+- Next: the brief still shows the charge hop. The tightest windows (1-4 at 1 frame, 1-7 and 1-9 at 3) are worth playing; they may be grid artifacts.
 
 ## 2026-10-28 — Hop: ice pose and droplets
 - Owner: on ice, lean further and squash lower to sell the speed, and add droplets from the contact point for slipperiness. On ice the lean now grows with ice speed past `maxLean` to `iceLean` 0.42 u, and the square squashes up to `iceCrouch` 0.2 flatter (and wider). Both ease out in the air and off the ice, and now also after the finish.
