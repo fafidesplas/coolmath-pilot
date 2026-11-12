@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-12 — Pause menu: Title Screen
+- Owner: a fifth pause button, "Title Screen", under Settings. It ends a solo attempt the same way Levels does (GameAnalytics `Fail`), then goes to the title.
+- To fit five buttons, they are packed a little closer (11 % of the screen height apart, was 12 %), and "Paused" and the hint moved up.
+- GDD §8 (flow and Pause line) and changelog updated.
+- Checked in Chrome: Hop 1-2, pause, Up wraps the focus to Title Screen, Enter lands on the title; no console errors.
+
 ## 2026-11-12 — Eye inside the square
 - Owner: the eye moves inside the square and grows with the player size. `hrDrawPlayer` now sizes the eye at 0.625 × `HR_PSIZE` (0.5 u at 0.8 u) and places it 0.05 u (scaled) in from the top and front edges. It used to stick out past the top corner at a fixed 0.5 u. Pupil swing, the blink, the eye drop, the lean and the spin all scale with it.
 - Phase's eye (hidden world) is unchanged.

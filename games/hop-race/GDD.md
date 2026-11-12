@@ -208,6 +208,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 Title ──Play 1P / Play 2P──▶ Playing / Race (last level played) ──▶ Level complete ──Next/Retry/Menu
   ├─World card──▶ Playing (that world's next level, solo)
   ├─Pause ▶ Levels──▶ Level select (the world being played, solo or versus) ──▶ Playing ⇄ Pause; Back ──▶ Title
+  ├─Pause ▶ Title Screen──▶ Title
   ├─Hats
   └─Settings
 Versus: Play 2P ──▶ Race (last Versus level) ──▶ Round result ──▶ … ──▶ Match result (Rematch / Levels / Menu)
@@ -219,7 +220,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 - **Hats:** a grid of the 8 hats, locked ones shown as outlines with the number of levels needed; tap one to put it on P1 or P2.
 - **Playing HUD (solo):** world-level label (e.g. "1-5") and timer top center, ghost's best time under it, pause and restart buttons top right, drawn as ink discs with the icon cut out in the world's background color and a thin background-colored rim, so they read over the background and over ink level pieces alike. From level 2 on, the mode's button hint (e.g. "Hold: charge · Release: hop") shows for the first 3 s and always in the pause menu. The HUD sits in the margin above the level where the screen allows, and never covers the flag.
 - **Playing HUD (Versus):** P1's key letter and three square pips top left, P2's top right, as plain dark text with no panels; the world-level label, pause and restart sit top center. A 3-2-1-GO countdown before each round; input is ignored until GO.
-- **Pause:** Resume, Restart, Levels, Settings. The game pauses itself when the tab is hidden.
+- **Pause:** Resume, Restart, Levels, Settings, Title Screen. The game pauses itself when the tab is hidden.
 - **Level complete:** time counts up, then the gap to your old best pops in ("-0.3" or "+1.2") with the best under it, "New best!" if it is one (a first finish shows only the time), a new hat if one unlocked, Next / Retry / Menu. Next is the default action (Space/Enter).
 - **Round result (Versus):** winner banner with letter and color, pip fills, auto-continues after 1.5 s or on any fresh key press after the input lock. The next round is a random level of the same world, with no repeats until every unlocked level of the world has been played (the picked level starts the match; restart keeps the round's level; Rematch starts on a random level). **Match result:** big winner, Rematch / Levels / Menu.
 - **Results input lock:** on the level complete, round result and match result screens, input is ignored for the first 0.6 s, and a button held down from gameplay must be released and pressed again before it counts. A player mashing across the finish line never skips their result.
@@ -362,6 +363,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-12 — Pause menu: new Title Screen button (last, under Settings) goes straight to the title.
 - 2026-11-12 — The googly eye moved inside the square (top front corner; it used to stick out past the top corner) and scales with the player size.
 - 2026-11-12 — Debug panel (`tools/debug.js`, debug only): type `debug` to tune the player size live, to settle how big the player should look (feedback: the game feels too zoomed out).
 - 2026-11-11 — The world select screen (Solo / Versus toggle and world cards) is gone: it repeated the title's cards. Back from a level select goes to the title. Picking a Versus world on purpose is not possible for now.

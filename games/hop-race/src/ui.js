@@ -99,8 +99,9 @@ function hrUiButtons()
     {
         const labels = [['Resume', () => hrGo('playing')], ['Restart', hrRestart],
             ['Levels', () => { hrLeaveAttempt(); hrMenuWorld = hrWorld; hrMenuVersus = hrVersus; hrGo('levels'); }],
-            ['Settings', () => hrOpenSettings('paused')]];
-        labels.forEach(([label, act], i) => add({id: label, x: W / 2, y: H * (.42 + i * .12), w: 300 * u, h: 66 * u, label, act,
+            ['Settings', () => hrOpenSettings('paused')],
+            ['Title Screen', () => { hrLeaveAttempt(); hrGo('title'); }]];
+        labels.forEach(([label, act], i) => add({id: label, x: W / 2, y: H * (.38 + i * .11), w: 300 * u, h: 66 * u, label, act,
             focus: i == 0, side: true}));
     }
     else if (hrScreen == 'complete')
@@ -539,8 +540,8 @@ function hrUiRender()
     else if (hrScreen == 'settings') hrText('Settings', W / 2, H * .18 + y0, 54 * u);
     else if (hrScreen == 'paused')
     {
-        hrText('Paused', W / 2, H * .2 + y0, 64 * u);
-        hrText(HR_WORLDS[hrWorld].hint, W / 2, H * .3 + y0, 26 * u);
+        hrText('Paused', W / 2, H * .16 + y0, 64 * u);
+        hrText(HR_WORLDS[hrWorld].hint, W / 2, H * .26 + y0, 26 * u);
     }
     else if (hrScreen == 'complete') hrDrawComplete(W, H, u, y0);
     else if (hrScreen == 'round') hrDrawRound(W, H, u, y0);
