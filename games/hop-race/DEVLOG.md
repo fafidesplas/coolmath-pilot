@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-12 — Eye inside the square
+- Owner: the eye moves inside the square and grows with the player size. `hrDrawPlayer` now sizes the eye at 0.625 × `HR_PSIZE` (0.5 u at 0.8 u) and places it 0.05 u (scaled) in from the top and front edges. It used to stick out past the top corner at a fixed 0.5 u. Pupil swing, the blink, the eye drop, the lean and the spin all scale with it.
+- Phase's eye (hidden world) is unchanged.
+- Checked in Chrome at 0.8 u and 1.6 u, standing and running (lean); no console errors.
+
 ## 2026-11-12 — Debug panel: live player size
 - Feedback (Jon): the game still feels too zoomed out. The player is 0.8 u, about 4.8 % of the screen height on a size 28 level (34 px at 1280×720).
 - New `tools/debug.js` (dev page only, like the editor): type `debug` to open it. A slider (0.4 to 2 u, plus −/+ and Reset) changes `HR_PSIZE` live; players keep their feet where they are. The readout shows the player's height on screen (% of screen, px at 1280×720). Not saved.

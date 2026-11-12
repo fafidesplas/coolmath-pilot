@@ -150,8 +150,9 @@ function hrDrawPlayer(p, part = 'all')
         if (lean) drawPoly([vec2(-hx, -hy), vec2(hx, -hy), vec2(hx + lean, hy), vec2(-hx + lean, hy)], p.color, 0, p.color, pos, spin);
         else drawRect(pos, size, p.color, spin);
     }
-    // the eye follows a forward lean only
-    hrDrawEye(pos.add(turn((p.lean > 0 ? shear(hy - .06 - p.eyeDrop) : vec2(0, hy - .06 - p.eyeDrop)).add(vec2(.2 * (p.dir || 1), 0)))), p.eye, .5, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+    // the eye sits inside the top front corner and scales with the player (0.5 u at the 0.8 u default); it follows a forward lean only
+    const k = HR_PSIZE / .8, d = .5 * k, m = .05 * k, ey = hy - m - d / 2 - p.eyeDrop * k;
+    hrDrawEye(pos.add(turn((p.lean > 0 ? shear(ey) : vec2(0, ey)).add(vec2((HR_PSIZE / 2 - m - d / 2) * (p.dir || 1), 0)))), p.eye, d, hrBlinkOpen(p.blinkT) * (1 - p.squint));
 }
 
 // start prompt over each player: "P1: Press A to run" (solo: "Press A to run"), until that player's first press (GDD §3.1)
@@ -193,7 +194,7 @@ function hrDrawOverlap(front, back)
 const HR_BLINK_T = .16;
 function hrBlinkOpen(t) { return t < 0 ? 1 : clamp(Math.abs(1 - 2 * t / HR_BLINK_T)); }
 
-// one big googly eye, sticking out past the top corner, with a loose pupil and no outline
+// one big googly eye, inside the top front corner, with a loose pupil and no outline
 function hrDrawEye(center, eye, d = .5, open = 1)
 {
     drawEllipse(center, vec2(d, d * max(open, .12)), HR_WHITE);
