@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-12 — Debug panel: live player size
+- Feedback (Jon): the game still feels too zoomed out. The player is 0.8 u, about 4.8 % of the screen height on a size 28 level (34 px at 1280×720).
+- New `tools/debug.js` (dev page only, like the editor): type `debug` to open it. A slider (0.4 to 2 u, plus −/+ and Reset) changes `HR_PSIZE` live; players keep their feet where they are. The readout shows the player's height on screen (% of screen, px at 1280×720). Not saved.
+- `HR_PSIZE` is now `let` in `config.js`. Phase's drop size is still fixed at load (Phase is hidden).
+- Checked in Chrome: typing opens and closes it, the E in "debug" leaves the editor closed, E alone still opens it, panel clicks don't make the player jump, Hop 1-2 plays at 1.4 u; no console errors.
+- Next: pick a size with Jon, then decide whether to scale the player alone or the whole world (levels and physics are tuned around 0.8 u).
+
 ## 2026-11-11 — World select screen removed
 - Owner: the "Pick a world" screen (Solo / Versus toggle and world cards) isn't needed; it repeated the title's cards and was only reached by Back from a level select. Back (and Escape) from a level select now goes to the title.
 - Lost with it: picking a Versus world on purpose (Play 2P still goes to the last Versus level), and the "Versus needs a keyboard (A and L) or a touch screen" note. The title cards now always show "done" counts, even after a Versus match.

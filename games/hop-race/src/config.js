@@ -36,7 +36,7 @@ const HR_LEVELS_PER_WORLD = 10;
 const HR_LEVELS = {};
 const HR_VERSUS = {};
 
-const HR_PSIZE  = .8;    // player square size (u)
+let   HR_PSIZE  = .8;    // player square size (u); let, so the debug panel (tools/debug.js) can tune it live
 const HR_MARGIN = .5;    // camera margin around the level box (u)
 
 // GDD §7: every unlock check goes through isUnlocked(); switch the rule to gate later
