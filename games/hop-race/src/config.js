@@ -23,11 +23,11 @@ const HR_FONT_STYLE = '800';
 // hidden worlds (GDD §13 Rejected) keep their code but have no levels anywhere
 const HR_WORLDS = [
     {id: 'hop',     name: 'Hop',     verb: 'run',   ga: 'world01', bg: HR_YELLOW, hint: 'Press: jump · Hold: higher'},
-    {id: 'rocket',  name: 'Rocket',  verb: 'blast', ga: 'world02', bg: HR_CORAL,  hint: 'Press: blast'},
+    {id: 'rocket',  name: 'Rocket',  verb: 'blast', ga: 'world02', bg: HR_CORAL,  hint: 'Hold: aim · Release: blast'},
     {id: 'grapple', name: 'Grapple', verb: 'hook',  ga: 'world03', bg: HR_TEAL,   hint: 'Hold: reel in · Release: fly'},
     {id: 'phase',   name: 'Phase',   verb: 'melt',  ga: 'world04', bg: HR_YELLOW, hint: 'Press: next state', hidden: true},
     {id: 'climb',   name: 'Climb',   verb: 'swing', ga: 'world05', bg: HR_CORAL,  hint: 'Hold: swing · Release: stop'},   // grew from a Lab world
-    {id: 'leap',    name: 'Leap',    verb: 'leap',  ga: 'world06', bg: HR_YELLOW, hint: 'Hold: charge · Release: leap'},  // Hop's old charge hop (2026-11-13)
+    {id: 'leap',    name: 'Leap',    verb: 'leap',  ga: 'world06', bg: HR_YELLOW, hint: 'Hold: charge · Release: leap', hidden: true},  // Hop's old charge hop (2026-11-13); hidden for now (owner, 2026-11-13)
     // Lab worlds (GDD §13.1) go here with lab: true: feel tests of new button meanings, 3 levels each
 ];
 const HR_LEVELS_PER_WORLD = 10;

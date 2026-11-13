@@ -1,5 +1,5 @@
 /*
-    HOP RACE - World 2, Rocket (GDD §3.3). A launcher spins around you; press to fire.
+    HOP RACE - World 2, Rocket (GDD §3.3). Hold to turn the launcher counter-clockwise; release to fire (owner, 2026-11-13).
     Your blasts push only you, and rockets fly through the other player (owner, 2026-11-11). Ported from the prototype's Rocket Jump
     (prototype/game.js rcRocketStep, rcMotion, rcExplode, rcRocketsUpdate).
 */
@@ -8,7 +8,7 @@
 
 const HR_ROCKET = {
     gravity:   42,
-    spin:      3,       // launcher rotation (rad/s), always clockwise
+    spin:      3,       // launcher rotation while the button is held (rad/s), counter-clockwise; it stays still otherwise
     speed:     38,      // rocket speed (u/s)
     cooldown:  .1,
     recoil:    4,       // kick opposite the firing direction (u/s)
@@ -93,9 +93,9 @@ HR_MODES.rocket = {
     step(p, input)
     {
         const R = HR_ROCKET, dt = timeDelta, solids = hrLevel.solids;
-        p.aimA -= R.spin * dt;   // y is up, so a falling angle turns clockwise
+        if (input.down) p.aimA += R.spin * dt;   // y is up, so a rising angle turns counter-clockwise
         p.cool = max(0, p.cool - dt);
-        if (input.pressed && p.cool <= 0)
+        if (input.released && p.cool <= 0)
         {
             const d = vec2(Math.cos(p.aimA), Math.sin(p.aimA));
             hrRockets.push({x: p.x + d.x * .6, y: p.y + d.y * .6, vx: d.x * R.speed, vy: d.y * R.speed, owner: p});
@@ -162,7 +162,7 @@ HR_MODES.rocket = {
         p.crouch = p.floor && p.floor.sticky ? .25 : 0;   // flattened on sticky floors
     },
 
-    // launcher: a short barrel in the player's color (so it shows against ink floors) circling the player, faded while cooling down, with a faint dotted
+    // launcher: a short barrel in the player's color (so it shows against ink floors) beside the player, faded while cooling down, with a faint dotted
     // sight line (as in Grapple) to where the rocket would explode: the first solid or unpressed button
     draw(p)
     {

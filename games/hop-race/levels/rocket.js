@@ -18,7 +18,7 @@ HR_LEVELS.rocket = [
             {l: -1, r: 1, top: -1},
         ],
         flag: {x: 10.25, y: -4},
-        prompt: 'Press to blast.',
+        prompt: 'Hold to aim. Let go to blast.',
     },
     {
         id: 'rocket-02', name: 'Step Up',

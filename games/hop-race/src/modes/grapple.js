@@ -8,7 +8,7 @@
 
 const HR_GRAPPLE = {
     gravity:   42,
-    spin:      3,       // launcher rotation (rad/s), clockwise as in Rocket; it freezes while the hook is out
+    spin:      3,       // launcher rotation (rad/s), clockwise; it freezes while the hook is out
     reverseSpin: false, // true: each shot reverses the spin (tried 2026-10-22; off by owner decision)
     speed:     55,      // hook flight speed (u/s), no range limit
     cooldown:  .12,
