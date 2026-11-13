@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: jump arcs from the owner's sketch
+- Owner sketch on 5-3: a tap is a fast, flat dash; longer holds go higher and steeper; a full hold goes almost straight up, the highest but not the farthest.
+- `HR_LEAP.launch` replaces `vMin`/`vMax`/`angleLo`/`angleHi`: five keys of launch velocity {vx, vy} from a tap to full charge, read with a straight lerp. On flat ground: tap 4.3 u long and 0.4 u high, half charge 12 u and 5.3 u (the farthest), full 5 u and 10.7 u (83°). Gravity and charge time (1.1 s) are unchanged.
+- Headless solver (the real `leap.js` and `level.js` in node with stubs, every hold length 1 to 70 frames, from every spot you can stand or cling): all 10 levels finish, most in fewer jumps than before (7 Grip in 2, 1 First Leap in 2). The jumps are much stronger than the levels were built for, so they may skip what they teach (Grip may not need the grip wall).
+- Next: play it by hand; then tune the keys or rework levels for the new reach.
+
 ## 2026-11-13 — Leap: no dash pose
 - Owner: remove the dash pose completely. Charging now only squashes toward the floor and leans back with power, starting from square. No squint, no lowered eye, no lunge pose in flight (`lungeCrouch`, `squint`, `eyeDrop`, `lungeKeep`, `dashZone`, `p.flat`, `p.lunge` and `easeLunge` are gone, plus the two lunge guards in `player.js`).
 - The launch stretch still fades out toward a tap (`stretchZone` .4), so a tap doesn't narrow the body. Jump physics are unchanged.

@@ -1,6 +1,6 @@
 /*
-    HOP RACE - World 5, Leap (GDD §3.8). Hold to charge, release to jump: a tap is a short, low dash forward, and the
-    longer you hold the higher and farther you go, up to a full leap (no aim sweep since 2026-11-13). Grew from the
+    HOP RACE - World 5, Leap (GDD §3.8). Hold to charge, release to jump: a tap is a fast, flat dash forward, and the
+    longer you hold the higher you go; the farthest leap is mid-charge, a full hold goes almost straight up. Grew from the
     hold-to-charge hop that was Hop's rule until 2026-11-10 (Hop is an auto-runner now).
     Ported from the prototype's Classic + Wall Jump (prototype/game.js rcStep). No auto-run and no countdown in solo.
 */
@@ -9,13 +9,12 @@
 
 const HR_LEAP = {
     gravity:   42,
-    // power sets both speed and angle, from a tap (vMin at angleLo: a short, low dash) to full charge (vMax at
-    // angleHi: the highest, farthest leap); holding past full charge keeps it there
-    vMin:      10,      // jump speed with no charge (u/s)
-    vMax:      21,      // jump speed at full charge (u/s)
+    // launch velocity {vx, vy} (u/s) by charge, evenly spaced from a tap to full charge, read with a straight lerp.
+    // Owner's sketch (2026-11-13): a tap is a fast, flat dash; more charge trades forward speed for height, so
+    // the farthest leap is mid-charge and a full hold goes almost straight up, the highest. Holding past full stays there.
+    // With gravity 42, to launch height: tap ~3.6 u far, 0.4 u up; mid ~12 u far, 5 u up; full ~5 u far, 10.7 u up
+    launch:    [{vx: 15, vy: 5.5}, {vx: 13, vy: 15}, {vx: 12, vy: 21}, {vx: 7.5, vy: 27}, {vx: 3.5, vy: 30}],
     chargeT:   1.1,     // seconds to full power
-    angleLo:   15 * PI / 180,
-    angleHi:   60 * PI / 180,
     stretchZone: .4,    // the launch stretch grows from none on a tap to full by this much charge (a stretch narrows the body)
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
     clingSlide: 3,      // top slide speed down a grip wall (u/s)
@@ -41,9 +40,9 @@ HR_MODES.leap = {
 
     aim(p)
     {
-        const H = HR_LEAP;
-        const angle = lerp(H.angleLo, H.angleHi, p.charge), speed = lerp(H.vMin, H.vMax, p.charge);
-        return {angle, speed, vx: Math.cos(angle) * speed * p.dir, vy: Math.sin(angle) * speed};
+        const L = HR_LEAP.launch, t = clamp(p.charge) * (L.length - 1), i = min(L.length - 2, floor(t));
+        const k = t - i, vx = lerp(L[i].vx, L[i + 1].vx, k), vy = lerp(L[i].vy, L[i + 1].vy, k);
+        return {angle: Math.atan2(vy, vx), vx: vx * p.dir, vy};
     },
 
     step(p, input)
