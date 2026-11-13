@@ -35,6 +35,12 @@ export const SCRIPTS = {
     d.hold(R, d => d.p.x >= 650); stop(d); loopNow(d);
     d.hold(R, done);
   },
+  // Echo 1 holds plate A; echo 2 walks through gate A to plate B; then run to the exit.
+  w1l04(d) {
+    d.hold(R, d => d.p.x >= 348); stop(d); loopNow(d);
+    d.hold(R, d => d.p.x >= 668); stop(d); loopNow(d);
+    d.hold(R, done);
+  },
 };
 
 export function buildSolution(data) {
