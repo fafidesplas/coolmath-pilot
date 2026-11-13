@@ -4,9 +4,10 @@ import w1l02 from './w1l02.js';
 import w1l03 from './w1l03.js';
 import w1l04 from './w1l04.js';
 import w1l05 from './w1l05.js';
+import w1l06 from './w1l06.js';
 
 export const WORLDS = [
-  { name: 'Lab', rooms: [w1l01, w1l02, w1l03, w1l04, w1l05] },
+  { name: 'Lab', rooms: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06] },
   { name: 'Archive', rooms: [] },
   { name: 'Core', rooms: [] },
 ];

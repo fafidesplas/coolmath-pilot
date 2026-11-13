@@ -55,6 +55,12 @@ export const SCRIPTS = {
     d.hold(R | J, d => d.p.grounded && d.p.y + PLAYER.h <= 440.01);
     d.hold(R, done);
   },
+  // One echo on each plate of the AND gate (Loop early twice), then run through it.
+  w1l06(d) {
+    d.hold(L, d => d.p.x <= 176); stop(d); loopNow(d);
+    d.hold(R, d => d.p.x >= 570); stop(d); loopNow(d);
+    d.hold(R, done);
+  },
 };
 
 export function buildSolution(data) {
