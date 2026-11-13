@@ -172,6 +172,7 @@ HR_MODES.leap = {
         if (abs(p.vx) > 2 && rand() < .3) hrSparkle(p.x, foot);
     },
 
-    // no aim arrow or power bar: the player's own squash and squeeze show the charge and the aim
-    draw() {},
+    // no aim arrow or power bar: the player's own squash and squeeze show the charge and the aim.
+    // The debug panel (tools/debug.js, debug only) can draw the jump arcs here for tuning
+    draw(p) { window.hrDebug?.drawLeapArcs(p, this); },
 };

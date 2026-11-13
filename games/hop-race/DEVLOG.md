@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Debug panel: Leap jump tuning and arcs
+- Owner: draw the jump arc for easier tuning, and expose the Leap values in the debug panel.
+- `tools/debug.js` has a "Leap jump" section: sliders and number boxes for gravity, charge time and each launch key (forward and up speed, tap to full). "Show jump arcs" draws a faint arc for each key from a player who can jump, and a bright one for the charge you hold, which stays until the next charge. "Copy launch" copies the values as lines to paste over `HR_LEAP`; "Reset" goes back to the values in the code. Nothing is saved.
+- Hooked in through `HR_MODES.leap.draw` (`window.hrDebug?.drawLeapArcs`), so release builds, which leave out the panel, draw nothing.
+- Checked in Chrome on 5-3: the arcs draw, a released jump stays exactly on the bright arc, the sliders change the jump, Copy and Reset work; no console errors.
+- Next: tune the keys by hand, then paste them into `src/modes/leap.js`.
+
 ## 2026-11-13 — Leap: jump arcs from the owner's sketch
 - Owner sketch on 5-3: a tap is a fast, flat dash; longer holds go higher and steeper; a full hold goes almost straight up, the highest but not the farthest.
 - `HR_LEAP.launch` replaces `vMin`/`vMax`/`angleLo`/`angleHi`: five keys of launch velocity {vx, vy} from a tap to full charge, read with a straight lerp. On flat ground: tap 4.3 u long and 0.4 u high, half charge 12 u and 5.3 u (the farthest), full 5 u and 10.7 u (83°). Gravity and charge time (1.1 s) are unchanged.
