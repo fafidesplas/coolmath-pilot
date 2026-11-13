@@ -1,11 +1,11 @@
 # Hop Race — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-11-10
+**Owner:** Pao · **Reviewed by:** Pao (team review waived) · **Last updated:** 2026-11-13
 
 > One button, four meanings: run and jump, blast, swing or climb your way to the flag, alone against your ghost or against a friend on the same keyboard.
 
-**Still finding the fun.** The four core worlds are the v1 plan: Hop, Rocket, Grapple and Climb (Phase was rejected, §13). New button meanings keep getting tried as **Lab worlds**: a short feel test (§13.1) that is then kept, grown into a full world, or cut. Climb (§3.7) was the first, and grew into World 4.
+**Still finding the fun.** The four core worlds are the v1 plan: Hop, Rocket, Grapple and Climb (Phase was rejected, §13). A fifth world, Leap (§3.8, 2026-11-13), brings back Hop's old hold-to-charge hop next to the auto-run Hop. New button meanings keep getting tried as **Lab worlds**: a short feel test (§13.1) that is then kept, grown into a full world, or cut. Climb (§3.7) was the first, and grew into World 4.
 
 ## 1. Summary
 - **Pillars**
@@ -103,6 +103,15 @@ You are a block of matter made of 7 × 7 = 49 drops. **Each press switches you t
 - **Draw:** the arm is a thick ink line to a round ink head. While stuck, the head becomes a **suction cup**: an ink half disc with its flat side flush on the surface (snapped to the face it is over, so it never sits at a slant on a corner) and a thin white lip along that side, landing with a quick squash (wider and flatter for 0.15 s).
 - **Numbers to tune** live in `HR_CLIMB` (`src/modes/climb.js`).
 
+### 3.8 Leap (World 5; Hop's old hold-to-charge hop, revived 2026-11-13)
+Owner, 2026-11-13: the hold-to-charge hop that Hop used until 2026-11-10 comes back as its own world, next to the auto-run Hop (Hop is unchanged). The code is the pre-auto-run Hop, restored as `HR_MODES.leap` in `src/modes/leap.js` with its own tuning block `HR_LEAP`.
+- **No auto-run:** you move only by jumping. No countdown in solo; the timer starts at your first press. Versus keeps the 3-2-1-GO like every world.
+- **Hold** to charge: power fills from 9 to 20 u/s in 1.1 s while the aim sweeps between 18° and 80° (2.6 rad/s). **Release** to jump. No aim arrow or power bar: the square squashes toward the floor with power, leans back toward a high hop, and past full charge, as the aim drops flat, squeezes from the sides and leans forward into a lunge pose that it keeps for the first 35 % of the jump. Charge ticks rise in pitch with power.
+- **Landing:** you stop where you land, except on ice, which keeps 80 % of a landing over 2 u/s and slides you along (friction 0.8/s); walls stop a slide, and sliding off the ice stops you dead. You can charge while sliding.
+- **Plain walls** bounce you back at 35 % of your horizontal speed. **Grip walls** hit in the air hold you: you face away and slide down at up to 3 u/s (0.5 u/s while you charge); release to jump off.
+- Level 1's prompt is "Hold A, then let go to leap!"; the hint is "Hold: charge · Release: leap"; the start prompt verb is "leap".
+- **Levels:** Hop's ten levels as they were on 2026-11-10, before levels 6, 8 and 10 were reworked for auto-run (§6), with ids `leap-01` to `leap-10`. Leap has no Versus levels of its own, so Versus plays the solo ten. The bot (`tools/hop-bot.js`) plays auto-run only, so the editor's Check button stays Hop-only.
+
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
 |---|---|---|
@@ -149,6 +158,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   - **World 2 — Rocket:** blast yourself around, buttons and gates, ice, pits, then sticky floors.
   - **World 3 — Grapple:** swing between hanging pillars, release timing, then no-grip surfaces.
   - **World 4 — Climb:** whip the arm into surfaces to pop up, let go to stick, pits at the foot of walls, then teeth on wall faces.
+  - **World 5 — Leap:** Hop's old hold-to-charge hop (§3.8): gaps, walls, ice slides, then grip walls.
   - ~~**Phase:**~~ rejected (§13). Was: melt and pour down slopes without losing drops, evaporate to rise, freeze to land, then grates and hanging flags.
   - **Lab worlds** (§13.1) come after the core four, with 3 levels each, and are not part of the 40.
 - **Teaching order:** each world's level 1 is a safe tutorial for the button's new meaning, with one short in-world prompt that fades after the first successful action. The prompts: Hop "Press A to run, press again to jump!", Rocket "Press to blast.", Grapple "Hold to reel in. Let go to fly.", Climb "Hold to swing. Let go to stop." Level 1 shows only the prompt; from level 2 on, the button hint shows instead (§8). New elements enter alone in a safe level, then get a twist (tighter, higher or timed), then combine with older elements.
@@ -168,6 +178,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
   10. **The Gauntlet:** a gap, an ice run under a low ceiling toward a 3 u gap, then a grip shaft (jump in under a hanging grip wall) to the flag.
   - **Bot check** (`tools/hop-bot.js`, auto-run: from every spot you can stand or cling, every press frame over the next 2.5 s with 9 hold lengths): every level finishes and none has a dead end (2026-11-10). Fastest bot runs: 1 2.95 s, 2 3.95, 3 3.45, 4 3.37, 5 2.63, 6 2.12, 7 3.87, 8 8.77, 9 3.53, 10 3.70. The tightest jump on each route, in press frames that reach the same spot: 1 31, 2 21, 3 21, 4 1, 5 28, 6 10, 7 3, 8 9, 9 3, 10 4. These count frames into one 1 u landing cell, so they understate the real window when a neighboring cell leads on too; play 1-4, 1-7, 1-9 and 1-10 to judge them.
 - **Hop Versus (mirrored, a test since 2026-11-10; `HR_VERSUS.hop` in `levels/hop.js`):** each level lists only its left half with `mirror: true`; the game adds the mirror copy, and a solid that touches or crosses x = 0 becomes one symmetric solid. The flag is always at x = 0, its trigger box centered on the pole. In the editor the right half is tinted and labeled "mirror (P2)", and a play-test runs both players. Versus on Hop plays only these levels; solo keeps its 10. Bot check (P1's side): 1 **Face Off**: a 2.5 u pit and a 1.5 u block before the flag on one floor (1.83 s, 2 jumps); 2 **Climb the Middle**: start next to a 5 u middle tower, bump it, run out to the wall and climb two steps back to its top (4.48 s; the fastest route has a 2-frame jump, slower ones are easy); 3 **Out and Back**: run in, bump the 7 u middle tower, climb ledges out to the wall, turn on the high ledge and run back over the top (5.75 s, 5 jumps); 4 **Chimney Drop** (size 32, owner's idea): wall-jump up a 3 u chimney between a floating grip pillar and the grip outer face of the middle tower, step onto the tower top and drop 12 u down the center shaft to the flag on the floor; the tower is plain inside, so nobody clings on the way down (4.05 s, 4 wall jumps). No dead ends on any. The question for the test: do half-width courses race well, or are they too short (a straight half is about 2 s)?
+- **Leap (all 10 built in `levels/leap.js`):** Hop's ten levels from before auto-run (git `d4bcb1d`), unchanged except level 1's name (**First Leap**) and prompt. 6 is the old **Low Ceiling** (Hop's 6 is now Ice Ice Jumpy), and 8 and 10 are their charge-hop versions. They were played with the charge hop when made; not re-checked by a bot.
 - **Other worlds (outline; full level lists in phase 3):**
   - **Rocket (built; 4–10 are drafts, hidden until 1–3 are played and the mode is tuned):** 1 **Blast Off**: flat floor with one block in the middle, 2 u wide and 4 u tall; prompt "Press to blast." · 2 **Step Up**: two 2.5 u ledges, blast down to climb · 3 **Knock Knock**: first button and gate, then a short pit · 4 **Glide**: first ice floor with a bump, ending at a pit before a raised landing · 5 **Around the Corner**: the button hides behind the gate under a low ceiling; hit the wall next to it so the blast reaches it · 6 **Mind the Gap**: three narrow islands over pits · 7 **Sticky Situation**: a long sticky floor before a 2.5 u step, then a sticky trough · 8 **Gatehouse**: ice start, button and gate, two landings over pits (the prototype's level, cut down) · 9 **Goo Hop**: two sticky islands over pits, then rising pillars · 10 **The Works**: ice, a hidden button, a sticky floor under a low ceiling, two pits.
   - **Grapple (1–3 built; 4–10 still an outline):** 1 **Swing By**: one pillar over a 3 u pit's far edge; prompt "Hold to reel in. Let go to fly." (placed under the pillar) · 2 **Two Pillars**: a 14 u pit, swing from one pillar to the next · 3 **Let Go**: one pillar, an 8 u pit; the later you let go, the farther you fly · 4–5 rising pillars and floating platforms · 6 first no-grip surfaces · 7–10 combinations (prototype level, cut down, ≈ 5). Pillars hang from the top of the level box and stay out of the HUD (x −2.5…2.5 at the top center, and the top right). Where floor runs past the flag with no pillar in reach (1 and 3), a thin ceiling under the HUD runs from x 2.5 to the right wall, so a player who overshoots can hook it and swing back (otherwise only the wall and floor are in reach, and you were stuck).
@@ -270,7 +281,7 @@ Any screen, portrait window ──▶ "Rotate your device" (game paused)
 All synthesized with ZzFX through `SoundGenerator`. Sound on by default, toggle persists. **Music:** none in v1; the music toggle exists (off) for later.
 
 ## 11. GameAnalytics
-Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `world04` (rejected; the id stays reserved and unused), Climb `world05` (its id from its Lab days, kept); new Lab worlds take the next ids. The HUD numbers worlds as shown, so Climb, World 4, reads "4-1" even though its id is `world05`. Levels `level01`–`level10`.
+Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `world04` (rejected; the id stays reserved and unused), Climb `world05` (its id from its Lab days, kept), Leap `world06`; new Lab worlds take the next ids. The HUD numbers worlds as shown, so Climb, World 4, reads "4-1" even though its id is `world05`. Levels `level01`–`level10`.
 
 | Event id | When it fires | Value |
 |---|---|---|
@@ -281,7 +292,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
 | `tutorial:step02` | First jump in Hop 1 | — |
 | `tutorial:step03` | First landing in Hop 1 | — |
 | `tutorial:done` | Hop 1 finished | Time in ms |
-| `mode:<hop\|rocket\|grapple\|phase\|climb>:<solo\|versus>` | A level or match starts | — |
+| `mode:<hop\|rocket\|grapple\|phase\|climb\|leap>:<solo\|versus>` | A level or match starts | — |
 | `versus:round:<p1\|p2>` | A Versus round is won | Round time in ms |
 | `versus:round:tie` | Both finish on the same frame (mirrored levels) | Round time in ms |
 | `versus:match:<p1\|p2>` | A Versus match is won | Rounds played |
@@ -320,7 +331,7 @@ Worlds map to ids: Hop `world01`, Rocket `world02`, Grapple `world03`, Phase `wo
   - **Checkpoints:** levels are small enough that falling back to the start is fair.
   - **Dynamic camera zoom and scrolling levels:** every level fits the screen, so the camera stays fixed and players are drawn bigger.
   - **Portrait play:** the level box is 16:9; a portrait phone would shrink it to a third. Portrait shows the rotate screen.
-  - **Hold-to-charge Hop:** replaced by auto-run (§3.2, 2026-11-10).
+  - **Hold-to-charge Hop:** replaced by auto-run (§3.2, 2026-11-10); brought back as its own world, Leap (§3.8, 2026-11-13).
   - **Reduce-motion setting:** not in v1; the finish pulse is kept to one soft flash instead.
   - **Flow grain-count debug text:** removed (`RC_SAND.debug` off).
 - **Rejected modes:** built and played, then dropped. A rejected mode is hidden in the game (`hidden: true` in `HR_WORLDS`: no card, no levels, not reachable from Play or `window.game.start`), but its code, levels and GDD section stay for reference.
@@ -363,6 +374,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-13 — Leap (World 5, §3.8): Hop's old hold-to-charge hop and its ten pre-auto-run levels come back as a fifth world, next to the auto-run Hop. GA id `world06`.
 - 2026-11-12 — Pause menu: new Title Screen button (last, under Settings) goes straight to the title.
 - 2026-11-12 — The googly eye moved inside the square (top front corner; it used to stick out past the top corner) and scales with the player size.
 - 2026-11-12 — Debug panel (`tools/debug.js`, debug only): type `debug` to tune the player size live, to settle how big the player should look (feedback: the game feels too zoomed out).

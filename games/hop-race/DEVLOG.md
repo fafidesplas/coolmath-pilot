@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: the old charge hop as World 5
+- Owner: bring back the hop with no auto-run as a fifth world, "Leap", next to Hop (Hop is unchanged).
+- `src/modes/leap.js` is the hold-to-charge hop from before 2026-11-10 (`d93d052^`), as `HR_MODES.leap` with its own `HR_LEAP` tuning: hold to charge and sweep the aim, release to jump, ice slides, wall bounce, grip walls, the lunge pose. No countdown in solo.
+- `levels/leap.js` is Hop's ten levels from before auto-run (`d4bcb1d`), ids `leap-01`..`leap-10`; level 1 is now "First Leap" with the prompt "Hold A, then let go to leap!".
+- Wired in: `HR_WORLDS` (yellow, verb "leap", GA `world06`), `index.html`, `build.json`, the title card (the old charge-hop animation, restored as `hrSchemLeap`), and `player.js` gets back its two lunge guards (no effect on other worlds).
+- Checked in Chrome: five cards fit on the title; 5-1 frame test charges, crouches, jumps and lands; 5-2 lands on the next stone with holds of 91 to 119 frames; 5-7 shows "Press A to leap"; Versus counts down and both players fall and respawn alike; no console errors.
+- Next: play all ten by hand (the levels haven't been played since 2026-11-10, and the player size and eye have changed since).
+
 ## 2026-11-12 — Pause menu: Title Screen
 - Owner: a fifth pause button, "Title Screen", under Settings. It ends a solo attempt the same way Levels does (GameAnalytics `Fail`), then goes to the title.
 - To fit five buttons, they are packed a little closer (11 % of the screen height apart, was 12 %), and "Paused" and the hint moved up.
