@@ -1,5 +1,5 @@
 /*
-    HOP RACE - World 2, Rocket (GDD §3.3). Hold to turn the launcher counter-clockwise; release to fire (owner, 2026-11-13).
+    HOP RACE - World 2, Rocket (GDD §3.3). Hold to turn the launcher clockwise; release to fire (owner, 2026-11-13).
     Your blasts push only you, and rockets fly through the other player (owner, 2026-11-11). Ported from the prototype's Rocket Jump
     (prototype/game.js rcRocketStep, rcMotion, rcExplode, rcRocketsUpdate).
 */
@@ -8,7 +8,7 @@
 
 const HR_ROCKET = {
     gravity:   42,
-    spin:      3,       // launcher rotation while the button is held (rad/s), counter-clockwise; it stays still otherwise
+    spin:      3,       // launcher rotation while the button is held (rad/s), clockwise; it stays still otherwise
     speed:     38,      // rocket speed (u/s)
     cooldown:  .1,
     recoil:    4,       // kick opposite the firing direction (u/s)
@@ -93,7 +93,7 @@ HR_MODES.rocket = {
     step(p, input)
     {
         const R = HR_ROCKET, dt = timeDelta, solids = hrLevel.solids;
-        if (input.down) p.aimA += R.spin * dt;   // y is up, so a rising angle turns counter-clockwise
+        if (input.down) p.aimA -= R.spin * dt;   // y is up, so a falling angle turns clockwise
         p.cool = max(0, p.cool - dt);
         if (input.released && p.cool <= 0)
         {

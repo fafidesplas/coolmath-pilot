@@ -50,7 +50,7 @@ Hop is an auto-runner (owner, 2026-11-10: set in stone after testing since 2026-
 - **Tried and dropped (2026-10-25):** charging while running with the power setting the angle (too tight), and a 20 u/s launch cut short on release (popped up too fast).
 
 ### 3.3 Rocket
-- **Hold** to turn the launcher counter-clockwise around you at 3 rad/s; when you let go it stays where it points (owner, 2026-11-13). Each level starts with it pointing down and back. Until 2026-11-13 it spun clockwise all the time and a press fired.
+- **Hold** to turn the launcher clockwise around you at 3 rad/s; when you let go it stays where it points (owner, 2026-11-13). Each level starts with it pointing down and back. Until 2026-11-13 it spun clockwise all the time and a press fired.
 - A faint dotted sight line, as in Grapple, shows the rocket's path up to where it would explode (the first solid or unpressed button). It hides during the 0.1 s cooldown. It doesn't stop at the other player.
 - **Release** to fire (cooldown 0.1 s); a quick tap fires where the launcher already points. The rocket flies at 38 u/s and explodes on any solid or button; it flies through both players. Firing gives you a small recoil of 4 u/s backwards. You can fire in the air too.
 - **Blast:** radius 4 u, pushes **only the player who fired it** (owner, 2026-11-11; it pushed every player in range before) away from its center at up to 24 u/s (falling off with distance; the prototype's 30 less 20 %). Top speed 22 u/s (was 27). Ground friction 7/s. You keep your momentum through the air and slide to a stop on the ground. Walls bounce you back at 30 %.
@@ -377,7 +377,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
-- 2026-11-13 — Rocket: hold to turn the launcher counter-clockwise, release to fire (was: it spun clockwise all the time and a press fired). The hint is "Hold: aim · Release: blast" and 2-1's prompt "Hold to aim. Let go to blast." Leap is hidden for now.
+- 2026-11-13 — Rocket: hold to turn the launcher clockwise, release to fire (was: it spun clockwise all the time and a press fired). The hint is "Hold: aim · Release: blast" and 2-1's prompt "Hold to aim. Let go to blast." Leap is hidden for now.
 - 2026-11-13 — Leap 2 and 3 reworked by the owner in the editor: 2 starts on a high ledge and drops across two stones, 3 is one long high ledge to the flag over the start. Both can be finished; their built-in ghosts were made again.
 - 2026-11-13 — Leap: a full charge launches at 34.5 u/s up (was 30), 14.2 u high (was 10.7). Routes and built-in ghosts don't change.
 - 2026-11-13 — Leap: the half-charge key is 8.5 u/s forward (was 12), so half charge goes 8.5 u (was 12) and the farthest leap is near three quarters (9.5 u). Leap's built-in ghosts were made again.

@@ -406,7 +406,7 @@ function hrSchemLeap(x, y, w, u, s, gy)
     }
 }
 
-// Rocket: holding turns the launcher counter-clockwise down to the square's feet; the release blasts and throws it up and over
+// Rocket: holding turns the launcher clockwise down to the square's feet; the release blasts and throws it up and over
 function hrSchemRocket(x, y, w, u, s, gy)
 {
     const k = (timeReal % 2.2) / 2.2, fire = .4, x0 = x - w * .25, x1 = x + w * .3;
@@ -424,7 +424,7 @@ function hrSchemRocket(x, y, w, u, s, gy)
         hrSCircle(x0 - s * .55, gy, s * (.6 + 2.4 * e), CLEAR_WHITE, (1 - t) * 6 * u + u, HR_BLUE.scale(1, 1 - t));
     }
     hrRect(px, py, s, s, HR_BLUE);
-    const a = 3 * PI / 4 + max(0, fire - k) / fire * PI;   // screen y is down: a falling angle turns counter-clockwise, to down and back at the release
+    const a = 3 * PI / 4 - max(0, fire - k) / fire * PI;   // screen y is down: a rising angle turns clockwise, to down and back at the release
     drawRect(vec2(px + Math.cos(a) * s * .78, py + Math.sin(a) * s * .78), vec2(s * .62, s * .25), HR_BLUE, a, false, true);
 }
 

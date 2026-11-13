@@ -2,8 +2,8 @@
 
 ## 2026-11-13 — Rocket: hold to aim, release to fire; Leap hidden
 - Owner: hide Leap for now (`hidden: true` in `HR_WORLDS`; code, levels and ghosts stay).
-- Rocket: the launcher no longer spins on its own. Holding turns it counter-clockwise at 3 rad/s; releasing fires (0.1 s cooldown, same rocket, recoil and blast). A tap fires where it already points; it still starts pointing down and back.
-- Hint "Hold: aim · Release: blast"; 2-1's prompt "Hold to aim. Let go to blast."; the title card's schematic turns the launcher counter-clockwise, then fires.
+- Rocket: the launcher no longer spins on its own. Holding turns it clockwise at 3 rad/s (first tried counter-clockwise; owner switched it); releasing fires (0.1 s cooldown, same rocket, recoil and blast). A tap fires where it already points; it still starts pointing down and back.
+- Hint "Hold: aim · Release: blast"; 2-1's prompt "Hold to aim. Let go to blast."; the title card's schematic turns the launcher clockwise, then fires.
 - Not checked in a browser yet (syntax check only). Next: play Rocket 1-3 with the new aim and tune the turn speed.
 
 ## 2026-11-13 — Leap 2 and 3 reworked; Coolmath build
