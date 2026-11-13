@@ -11,6 +11,8 @@
       charge you are holding; the bright one stays up through the jump until the next charge, so you can see the real jump follow it.
       The arcs show from the first time you open the panel until you untick them, also with the panel closed.
       "Copy launch" puts the tuned lines on the clipboard, ready to paste over HR_LEAP in src/modes/leap.js.
+    - Rocket: every value in HR_ROCKET (gravity, aim turn speed, rocket speed, cooldown, recoil, blast and ground values).
+      "Copy values" puts the whole HR_ROCKET block on the clipboard, comments included, ready to paste over it in src/modes/rocket.js.
 */
 
 'use strict';
@@ -46,7 +48,7 @@ window.hrDebug = (() =>
 
     const LEAP_DEFAULT = {gravity: HR_LEAP.gravity, chargeT: HR_LEAP.chargeT, launch: HR_LEAP.launch.map(k => ({...k}))};
     DBG.arcs = true;   // only drawn once the panel has been opened (DBG.used)
-    const leapRows = [];   // each slider row's sync function
+    const rows = [];   // each tuning row's sync function (Leap and Rocket)
 
     // the path of a jump launched from p with velocity (vx, vy), in the same steps as HR_MODES.leap.step,
     // until it hits a solid or falls past the kill line (3 s at most)
@@ -88,6 +90,26 @@ window.hrDebug = (() =>
     };
 
     ///////////////////////////////////////////////////////////////////////////
+    // Rocket values: [key, label, min, max, step, source comment]. Declared before the panel is built, which reads them
+
+    const ROCKET_ROWS = [
+        ['gravity',      'Gravity',       5, 100, 1,   ''],
+        ['spin',         'Aim turn',      .5, 12, .1,  'launcher rotation while the button is held (rad/s), clockwise; it stays still otherwise'],
+        ['speed',        'Rocket speed',  5, 100, 1,   'rocket speed (u/s)'],
+        ['cooldown',     'Cooldown (s)',  0, 1, .05,   ''],
+        ['recoil',       'Recoil',        0, 20, .5,   'kick opposite the firing direction (u/s)'],
+        ['radius',       'Blast radius',  1, 10, .1,   'blast radius (u)'],
+        ['switchRadius', 'Button radius', 0, 6, .1,    'a blast this close to a button presses it'],
+        ['power',        'Blast power',   5, 60, .5,   "blast speed at the center (u/s); the prototype's 30 less 20 % for 24-30 u levels"],
+        ['maxSpeed',     'Top speed',     5, 60, .5,   "top speed after a blast; the prototype's 27 less 20 %"],
+        ['friction',     'Friction',      0, 20, .1,   'ground friction (1/s)'],
+        ['iceFriction',  'Ice friction',  0, 5, .05,   ''],
+        ['stickyPush',   'Sticky push',   0, 1, .05,   'blasts push at 50 % while standing on a sticky floor'],
+        ['wallBounce',   'Wall bounce',   0, 1, .05,   ''],
+    ];
+    const ROCKET_DEFAULT = {...HR_ROCKET};
+
+    ///////////////////////////////////////////////////////////////////////////
     // the panel (DOM, top left)
 
     const panel = document.createElement('div');
@@ -122,6 +144,7 @@ window.hrDebug = (() =>
             button('−', () => setSize(HR_PSIZE - STEP)), button('+', () => setSize(HR_PSIZE + STEP)),
             button(`Reset (${DEFAULT})`, () => setSize(DEFAULT))]),
         readout,
+        rocketSection(),
         leapSection(),
         el('div', {textContent: 'Type "debug" to close. Not saved.', style: 'color:#6E6976;font-size:11px;margin-top:6px'}));
 
@@ -135,7 +158,7 @@ window.hrDebug = (() =>
         r.onchange = () => r.blur();
         n.onchange = () => { put(parseFloat(n.value)); n.blur(); };
         const sync = () => { const v = +get().toFixed(2); r.value = v; if (document.activeElement != n) n.value = v; };
-        leapRows.push(sync);
+        rows.push(sync);
         return el('div', {style: 'display:flex;gap:6px;align-items:center;margin:2px 0'},
             [el('span', {textContent: label, style: 'color:#A9A4B0;width:78px;font-size:12px'}), r, n]);
     }
@@ -160,7 +183,7 @@ window.hrDebug = (() =>
                 {
                     HR_LEAP.gravity = LEAP_DEFAULT.gravity; HR_LEAP.chargeT = LEAP_DEFAULT.chargeT;
                     LEAP_DEFAULT.launch.forEach((k, i) => Object.assign(HR_LEAP.launch[i], k));
-                    leapRows.forEach(f => f());
+                    rows.forEach(f => f());
                 })]),
         ]);
     }
@@ -172,6 +195,30 @@ window.hrDebug = (() =>
         const text = `    gravity:   ${n(H.gravity)},\n` +
             `    launch:    [${H.launch.map(k => `{vx: ${n(k.vx)}, vy: ${n(k.vy)}}`).join(', ')}],\n` +
             `    chargeT:   ${n(H.chargeT)},     // seconds to full power\n`;
+        navigator.clipboard?.writeText(text).catch(() => {});
+        console.log(text);
+    }
+
+    function rocketSection()
+    {
+        return el('div', {style: 'border-top:1px solid #4A4552;margin-top:10px;padding-top:8px'}, [
+            el('b', {textContent: 'Rocket'}),
+            ...ROCKET_ROWS.map(([k, label, min, max, step]) => tuneRow(label, min, max, step, () => HR_ROCKET[k], v => HR_ROCKET[k] = v)),
+            el('div', {style: 'display:flex;gap:6px;margin-top:6px'}, [
+                button('Copy values', copyRocket),
+                button('Reset', () => { Object.assign(HR_ROCKET, ROCKET_DEFAULT); rows.forEach(f => f()); })]),
+        ]);
+    }
+
+    // the whole HR_ROCKET block, comments included, for src/modes/rocket.js
+    function copyRocket()
+    {
+        const lines = ROCKET_ROWS.map(([k, , , , , c]) =>
+        {
+            const head = `    ${k}: ${+HR_ROCKET[k].toFixed(3)},`;
+            return c ? head.padEnd(24) + '// ' + c : head;
+        });
+        const text = `const HR_ROCKET = {\n${lines.join('\n')}\n};\n`;
         navigator.clipboard?.writeText(text).catch(() => {});
         console.log(text);
     }
@@ -189,7 +236,7 @@ window.hrDebug = (() =>
     function toggle(open = !DBG.open)
     {
         DBG.open = open;
-        if (open) { DBG.used = true; leapRows.forEach(f => f()); }
+        if (open) { DBG.used = true; rows.forEach(f => f()); }
         panel.style.display = open ? 'block' : 'none';
         refresh();
     }
