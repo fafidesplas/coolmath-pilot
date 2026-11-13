@@ -1,5 +1,12 @@
 # Echo Steps — devlog
 
+## 2026-11-13 — Lab rooms 4–6 (Relay, Tower, Both)
+- Added rooms 4 **Relay** (loop 8 s, 2 slots, par 2 echoes / 7 s), 5 **Tower** (loop 6 s, par 2 / 8 s) and 6 **Both** (loop 8 s, par 2 / 6 s) as in GDD 6, registered in `levels/index.js`, so they show in the room select, follow room 3 via NEXT and open with `?room=w1l04` / `w1l05` / `w1l06`. Spawns the GDD leaves open: Relay col 6. Tower's upper floor sits 4 tiles up (top of row 11), exit col 25.
+- New cue for Relay: `{ kind: "keys", keys: "delete", on: "full" }` pops the ⌫ keycap over the player once both slots are full (next to the existing HUD ⌫ / R keycaps). The ↓ fast-forward keycap stays hidden while it shows, so the two don't overlap.
+- Reference solutions are scripted in `tools/make-solutions.mjs` and written to `levels/solutions/`. `node tools/simtest.mjs`: all 107 checks pass, including all 10 room rules for each new room (exit, echo par, time par, determinism, solution file, loop replay, 0.25 s tolerance, short waits, lone-runner bot fails, plate rule).
+- Not seen in a real browser yet.
+- Next: play 4–6 cold (does Relay's "echo 2 walks through echo 1's gate" read? is Tower's double climb fiddly?), then rooms 7–10 (inverted gate and release timing in Let Go, Two Jobs, High Plate, Spawn Step).
+
 ## 2026-10-27 — Vertical slice, first playable
 - Built: deterministic 120 Hz room sim with no DOM (`src/sim.js`, `physics.js`, `tape.js`): run, variable jump, coyote, buffer, 6 px corner and lip nudges; loop clock that waits for the first move; Loop (E/Enter), Delete (Backspace), Restart (R); echoes replay their tape position by position, rest at their last spot (and drop if it ended mid-air), are one-way 32 px steps while standing, carry riders, never launch them; slots and "slots full"; plates and gates (AND and inverted supported in data); breaks when a gate closes in an echo's path. Forecast pre-run (`forecast.js`) drives the echo paths (next second bright, ▼ plate and ‖ rest marks), the gate countdown arcs and the timeline lanes.
 - Rooms 1–3 (Echo, Step, Loop Now) as data in `levels/`, with cues (silhouettes, ← → / SPACE keycaps, E keycap on plates in room 3) and reference solutions in `levels/solutions/` (made by `tools/make-solutions.mjs`). Pars: 1 echo / 4 s, 1 / 5 s, 2 / 5 s.
