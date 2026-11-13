@@ -6,11 +6,6 @@
     - Player size: HR_PSIZE (u). The players keep their feet where they are, so a player on the ground stays on it.
       The readout shows how tall the player is on screen right now. Nothing is saved: a reload goes back to the default in src/config.js.
       (Phase's drop size is fixed at load, so it ignores this; Phase is a hidden world.)
-    - Leap jump: HR_LEAP's gravity, charge time and the five launch keys (forward and up speed, u/s, from a tap to full
-      charge). "Show jump arcs" draws, from a player who can jump, a faint arc for each key and a bright one for the
-      charge you are holding; the bright one stays up through the jump until the next charge, so you can see the real jump follow it.
-      The arcs show from the first time you open the panel until you untick them, also with the panel closed.
-      "Copy launch" puts the tuned lines on the clipboard, ready to paste over HR_LEAP in src/modes/leap.js.
     - Rocket: every value in HR_ROCKET (gravity, aim turn speed, rocket speed, cooldown, recoil, blast and ground values).
       "Copy values" puts the whole HR_ROCKET block on the clipboard, comments included, ready to paste over it in src/modes/rocket.js.
 */
@@ -43,51 +38,7 @@ window.hrDebug = (() =>
         return `${(frac * 100).toFixed(1)}% of screen height, ${Math.round(frac * 720)} px at 1280×720, 1/${(1 / frac).toFixed(0)} of the screen`;
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Leap jump tuning and arcs
-
-    const LEAP_DEFAULT = {gravity: HR_LEAP.gravity, chargeT: HR_LEAP.chargeT, launch: HR_LEAP.launch.map(k => ({...k}))};
-    DBG.arcs = true;   // only drawn once the panel has been opened (DBG.used)
-    const rows = [];   // each tuning row's sync function (Leap and Rocket)
-
-    // the path of a jump launched from p with velocity (vx, vy), in the same steps as HR_MODES.leap.step,
-    // until it hits a solid or falls past the kill line (3 s at most)
-    function leapPath(p, vx, vy)
-    {
-        const dt = 1 / 60, g = HR_LEAP.gravity, pts = [];
-        let x = p.x + p.dir * .02, y = p.y;
-        pts.push(vec2(x, y));
-        for (let i = 0; i < 180; i++)
-        {
-            vy -= g * dt;
-            x += vx * dt;
-            y += vy * dt;
-            pts.push(vec2(x, y));
-            if (y < hrLevel.killY || hrLevel.solids.some(s => hrOverlapSolid(x, y, s, .1))) break;
-        }
-        return pts;
-    }
-
-    DBG.drawLeapArcs = (p, mode) =>
-    {
-        if (!DBG.used || !DBG.arcs || p.finished) return;
-        const canJump = p.grounded || p.cling;
-        if (canJump)
-        {
-            // faint: every key, from a tap to full charge
-            const keep = p.charge;
-            HR_LEAP.launch.forEach((k, i, all) =>
-            {
-                p.charge = i / (all.length - 1);
-                const a = mode.aim(p);
-                drawLineList(leapPath(p, a.vx, a.vy), .05, new Color(0, 0, 0, .25));
-            });
-            p.charge = keep;
-            // bright: the jump you are charging; it stays up through the jump and after it, until the next charge
-            if (p.down) { const a = mode.aim(p); p.dbgArc = leapPath(p, a.vx, a.vy); }
-        }
-        if (p.dbgArc) drawLineList(p.dbgArc, .09, new Color(1, 1, 1, .9));
-    };
+    const rows = [];   // each tuning row's sync function
 
     ///////////////////////////////////////////////////////////////////////////
     // Rocket values: [key, label, min, max, step, source comment]. Declared before the panel is built, which reads them
@@ -145,7 +96,6 @@ window.hrDebug = (() =>
             button(`Reset (${DEFAULT})`, () => setSize(DEFAULT))]),
         readout,
         rocketSection(),
-        leapSection(),
         el('div', {textContent: 'Type "debug" to close. Not saved.', style: 'color:#6E6976;font-size:11px;margin-top:6px'}));
 
     // one tuning row: label, slider, number box; get/set read and write the live value
@@ -161,42 +111,6 @@ window.hrDebug = (() =>
         rows.push(sync);
         return el('div', {style: 'display:flex;gap:6px;align-items:center;margin:2px 0'},
             [el('span', {textContent: label, style: 'color:#A9A4B0;width:78px;font-size:12px'}), r, n]);
-    }
-
-    function leapSection()
-    {
-        const arcs = el('input', {type: 'checkbox', checked: DBG.arcs, onchange: e => { DBG.arcs = e.target.checked; e.target.blur(); }});
-        const names = ['Tap', '¼', '½', '¾', 'Full'];
-        const keys = HR_LEAP.launch.flatMap((k, i) => [
-            tuneRow(`${names[i]} forward`, 0, 30, .5, () => HR_LEAP.launch[i].vx, v => HR_LEAP.launch[i].vx = v),
-            tuneRow(`${names[i]} up`, 0, 40, .5, () => HR_LEAP.launch[i].vy, v => HR_LEAP.launch[i].vy = v)]);
-        return el('div', {style: 'border-top:1px solid #4A4552;margin-top:10px;padding-top:8px'}, [
-            el('b', {textContent: 'Leap jump'}),
-            el('label', {style: 'display:block;margin:4px 0;color:#A9A4B0'}, [arcs, ' Show jump arcs']),
-            tuneRow('Gravity', 5, 100, 1, () => HR_LEAP.gravity, v => HR_LEAP.gravity = v),
-            tuneRow('Charge (s)', .2, 3, .05, () => HR_LEAP.chargeT, v => HR_LEAP.chargeT = v),
-            el('div', {textContent: 'Launch keys, u/s:', style: 'color:#6E6976;font-size:11px;margin-top:4px'}),
-            ...keys,
-            el('div', {style: 'display:flex;gap:6px;margin-top:6px'}, [
-                button('Copy launch', copyLeap),
-                button('Reset', () =>
-                {
-                    HR_LEAP.gravity = LEAP_DEFAULT.gravity; HR_LEAP.chargeT = LEAP_DEFAULT.chargeT;
-                    LEAP_DEFAULT.launch.forEach((k, i) => Object.assign(HR_LEAP.launch[i], k));
-                    rows.forEach(f => f());
-                })]),
-        ]);
-    }
-
-    // the tuned values as source lines for HR_LEAP in src/modes/leap.js
-    function copyLeap()
-    {
-        const H = HR_LEAP, n = v => +v.toFixed(2);
-        const text = `    gravity:   ${n(H.gravity)},\n` +
-            `    launch:    [${H.launch.map(k => `{vx: ${n(k.vx)}, vy: ${n(k.vy)}}`).join(', ')}],\n` +
-            `    chargeT:   ${n(H.chargeT)},     // seconds to full power\n`;
-        navigator.clipboard?.writeText(text).catch(() => {});
-        console.log(text);
     }
 
     function rocketSection()
@@ -236,7 +150,7 @@ window.hrDebug = (() =>
     function toggle(open = !DBG.open)
     {
         DBG.open = open;
-        if (open) { DBG.used = true; rows.forEach(f => f()); }
+        if (open) rows.forEach(f => f());
         panel.style.display = open ? 'block' : 'none';
         refresh();
     }

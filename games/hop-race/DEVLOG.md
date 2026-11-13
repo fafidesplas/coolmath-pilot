@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Debug panel: Leap section removed
+- Owner: Leap is set aside, so the debug panel's Leap section (sliders, launch-key copy, jump arcs) is gone; the panel has player size and Rocket. The old section is in git history before this commit.
+- `HR_MODES.leap.draw` calls the arcs hook with `?.`, so Leap still runs if it is shown again.
+
 ## 2026-11-13 — Debug panel: Rocket tuning
 - `tools/debug.js` has a "Rocket" section: a slider and number box for every `HR_ROCKET` value (gravity, aim turn speed, rocket speed, cooldown, recoil, blast radius, button radius, blast power, top speed, friction, ice friction, sticky push, wall bounce). Changes apply live.
 - "Copy values" copies the whole `HR_ROCKET` block with its comments, to paste over it in `src/modes/rocket.js`; "Reset" goes back to the values in the code. Nothing is saved. Release builds still leave the panel out.
