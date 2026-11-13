@@ -41,6 +41,20 @@ export const SCRIPTS = {
     d.hold(R, d => d.p.x >= 668); stop(d); loopNow(d);
     d.hold(R, done);
   },
+  // Echo 1 rests at the foot of the 4-tile wall; echo 2 jumps on it and rests;
+  // then climb echo 1, echo 2 and the ledge.
+  w1l05(d) {
+    const foot = d => d.p.x >= 775.9;
+    const onEcho = k => d => d.p.grounded && d.p.ground === 2 + k;
+    d.hold(R, foot); stop(d); loopNow(d);
+    d.hold(R, foot);
+    d.hold(R | J, onEcho(0)); stop(d); loopNow(d);
+    d.hold(R, foot);
+    d.hold(R | J, onEcho(0)); d.step(R);
+    d.hold(R | J, onEcho(1)); d.step(R);
+    d.hold(R | J, d => d.p.grounded && d.p.y + PLAYER.h <= 440.01);
+    d.hold(R, done);
+  },
 };
 
 export function buildSolution(data) {
