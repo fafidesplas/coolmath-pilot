@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: three levels
+- Owner: keep only Leap's first three levels. `levels/leap.js` now has First Leap, Stepping Stones and Up We Go; 4 to 10 are removed (still in git history at `e15abfe`). This also drops 6 Low Ceiling, which the new jump couldn't finish.
+- The level select and the Next button already handle a world with fewer than 10 levels (Grapple has 3). Old saves for `leap-04`..`leap-10` are just ignored.
+- Next: play the three by hand with the new jump; new Leap levels can be built for it in the editor.
+
 ## 2026-11-13 — Leap: owner's launch keys
 - Owner's values from the debug panel: tap {1.5, 0}, quarter {8, 15}; half, three quarters and full unchanged; gravity 42, charge 1.1 s. A tap is now a small shuffle (0.1 u) instead of a flat dash.
 - Headless solver: 9 of 10 levels finish. 6 Low Ceiling doesn't: its block hangs 2.5 u over the gap, so it needs a jump under about 1.1 u high and about 5.5 u long, and no charge gives that now (a quarter charge is 5.9 u long but 2.7 u high).
