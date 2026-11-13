@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap 2 and 3 reworked; Coolmath build
+- Owner's editor changes: 5-2 Stepping Stones starts on a high ledge (top 5) and drops across two stones to the flag; 5-3 Up We Go is one long ledge (top 3.75) from above the start to the flag.
+- Solver: all 3 Leap levels can be finished. Leap's built-in ghosts made again (bot / ghost, s): 2 4.28/6.27, 3 4.35/6.33; 1 and Hop's are unchanged.
+
 ## 2026-11-13 — Leap: higher full charge
 - Owner's values: the full-charge launch key is {vx: 3.5, vy: 34.5} (was 30 up). A full hold now goes 14.2 u high (was 10.7) and 5.8 u far; three quarters is unchanged.
 - Solver: all 3 levels can be finished, by the same routes. `tools/ghost-gen.js` run again: the Leap ghosts are unchanged (their routes don't use more than three quarters).
