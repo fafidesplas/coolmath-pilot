@@ -39,6 +39,7 @@ function hrDrawLevel()
         if (s.grip) hrDrawSawtooth(s);
         if (s.ice) hrDrawIce(s);
         if (s.sticky) hrDrawSticky(s);
+        if (s.breakable) hrDrawCracks(s);
     }
     hrDrawFlag();
 }
@@ -58,6 +59,45 @@ function hrDrawSticky(s)
     const n = max(2, Math.round((s.r - s.l) / .5)), step = (s.r - s.l) / n;
     for (let i = 0; i < n; i++)
         drawCircle(vec2(s.l + step * (i + .5), s.top), step * 1.1, HR_INK);
+}
+
+// breakable solid (Rocket): jagged cracks in the background color, a fixed pattern per solid; a crack runs
+// down from the top every ~1.6 u, with a short branch
+function hrDrawCracks(s)
+{
+    const bg = hrWorldBg(), hh = hrLevel.h / 2, bottom = max(s.bottom, -hh - 1), h = min(s.top - bottom, 2.4);
+    const n = max(1, Math.round((s.r - s.l) / 1.6)), w = (s.r - s.l) / n;
+    let seed = Math.abs(Math.round(s.l * 97 + s.top * 31)) + 1;
+    const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+    for (let i = 0; i < n; i++)
+    {
+        let p = vec2(s.l + w * (i + .3 + rnd() * .4), s.top), branched = false;
+        for (let y = s.top; y > s.top - h * (.6 + rnd() * .4); )
+        {
+            y -= .3 + rnd() * .25;
+            const q = vec2(clamp(p.x + (rnd() - .5) * .7, s.l + .1, s.r - .1), y);
+            drawLine(p, q, .09, bg);
+            if (!branched && rnd() < .35)
+            {
+                branched = true;
+                const side = rnd() < .5 ? -1 : 1;
+                drawLine(q, vec2(clamp(q.x + side * (.3 + rnd() * .3), s.l + .1, s.r - .1), q.y - .25 - rnd() * .2), .07, bg);
+            }
+            p = q;
+        }
+    }
+}
+
+// a breakable solid shatters: ink chunks fly out of its whole area
+function hrBreakFx(s)
+{
+    const hh = hrLevel.h / 2, bottom = max(s.bottom, -hh - 1), top = min(s.top, hh + 1);
+    const pos = vec2((s.l + s.r) / 2, (top + bottom) / 2), size = vec2(s.r - s.l, top - bottom);
+    const n = min(80, size.x * size.y * 8), e = HR_INK.scale(1, 0);
+    new ParticleEmitter(pos, 0, size, .05, n / .05, PI, undefined, HR_INK, HR_INK, e, e,
+        .6, .35, .15, .12, .1, .92, .95, 0, PI, .1, .4);
+    hrSfx.boom.play(pos, .6, .6);
+    addScreenShake(.15, .2);
 }
 
 // gate: dark bars with the background between, a dotted line to its button; button: a white target

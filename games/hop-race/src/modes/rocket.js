@@ -1,6 +1,7 @@
 /*
     HOP RACE - World 2, Rocket (GDD §3.3). Hold to turn the launcher clockwise; release to fire (owner, 2026-11-13).
-    Your blasts push only you, and rockets fly through the other player (owner, 2026-11-11). Ported from the prototype's Rocket Jump
+    Your blasts push only you, and rockets fly through the other player (owner, 2026-11-11). A rocket that hits a breakable
+    solid destroys it; the blast still pushes you, so a breakable floor under you boosts you too (owner, 2026-11-13). Ported from the prototype's Rocket Jump
     (prototype/game.js rcRocketStep, rcMotion, rcExplode, rcRocketsUpdate).
 */
 
@@ -35,6 +36,9 @@ HR_MODES.rocket = {
         p.cool = 0;
         p.cling = 0;
         hrRockets = hrRockets.filter(r => r.owner != p);
+        // solo: a fall brings broken solids back, so a level can't be left without a way through. In Versus they
+        // stay broken for the round (the other player may be past them)
+        if (!hrVersus && hrLevel.broken?.length) { hrLevel.solids.push(...hrLevel.broken); hrLevel.broken = []; }
     },
 
     clear() { hrRockets = []; hrBlasts = []; },
@@ -55,11 +59,25 @@ HR_MODES.rocket = {
                 const btn = hrLevel.gates.find(g => !g.pressed &&
                     isOverlapping(vec2(r.x, r.y), vec2(.2), vec2(g.button.x, g.button.y), vec2(1.1)));
                 // rockets fly through both players: only solids and buttons set them off
-                const hit = hrLevel.solids.some(s => r.x > s.l && r.x < s.r && r.y > s.bottom && r.y < s.top);
-                if (btn || hit) { this.explode(r); return false; }
+                const hits = hrLevel.solids.filter(s => r.x > s.l && r.x < s.r && r.y > s.bottom && r.y < s.top);
+                if (btn || hits.length)
+                {
+                    for (const s of hits) if (s.breakable) this.shatter(s);
+                    this.explode(r);
+                    return false;
+                }
             }
             return true;
         });
+    },
+
+    // a breakable solid hit by a rocket is gone (until a fall in solo, or a restart)
+    shatter(s)
+    {
+        hrLevel.solids.splice(hrLevel.solids.indexOf(s), 1);
+        (hrLevel.broken ||= []).push(s);
+        hrBreakFx(s);
+        for (const p of hrPlayers) if (p.floor == s) { p.grounded = false; p.floor = null; }
     },
 
     explode(r)

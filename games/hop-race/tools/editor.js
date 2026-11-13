@@ -304,7 +304,7 @@ window.hrEditor = (() =>
         if (!ED.active) return;
         if (cmd && e.code == 'KeyZ') { e.preventDefault(); return e.shiftKey ? doRedo() : doUndo(); }
         if (cmd) return;
-        const s = selSolid(), flagKeys = {KeyG: 'grip', KeyI: 'ice', KeyK: 'sticky', KeyN: 'nogrip'};
+        const s = selSolid(), flagKeys = {KeyG: 'grip', KeyI: 'ice', KeyK: 'sticky', KeyN: 'nogrip', KeyB: 'breakable'};
         if (flagKeys[e.code] && s) { snapshot(); touch(s); s[flagKeys[e.code]] ? delete s[flagKeys[e.code]] : s[flagKeys[e.code]] = true; return changed(); }
         const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1]}[e.code];
         if (nudge && sel) { e.preventDefault(); const k = e.shiftKey ? 1 : .25; snapshot(); move(nudge[0] * k, nudge[1] * k); return changed(); }
@@ -444,7 +444,7 @@ window.hrEditor = (() =>
     // solids keep the files' order: l, r, top, bottom, then the flags
     function solidLit(s)
     {
-        const keys = ['l', 'r', 'top', 'bottom', 'grip', 'ice', 'sticky', 'nogrip'];
+        const keys = ['l', 'r', 'top', 'bottom', 'grip', 'ice', 'sticky', 'nogrip', 'breakable'];
         const o = {};
         for (const k of keys) if (s[k] !== undefined && s[k] !== false) o[k] = s[k];
         for (const k of Object.keys(s)) if (!keys.includes(k)) o[k] = s[k];
@@ -813,7 +813,7 @@ window.hrEditor = (() =>
             const n = k => input('number', () => s[k], v => { touch(s); s[k] = v; }, {step: .25});
             panel.append(el('div', {className: 'grid4'}, [field('left', n('l')), field('right', n('r')), field('top', n('top')),
                 s.bottom === undefined ? el('label', {}, [el('span', {textContent: 'bottom'}), 'floor (F)']) : field('bottom', n('bottom'))]));
-            const flags = [['grip', 'grip wall (G)'], ['ice', 'ice (I)'], ['sticky', 'sticky (K)'], ['nogrip', 'no-grip (N)']];
+            const flags = [['grip', 'grip wall (G)'], ['ice', 'ice (I)'], ['sticky', 'sticky (K)'], ['nogrip', 'no-grip (N)'], ['breakable', 'breakable (B)']];
             for (const [k, label] of flags) panel.append(checkbox(label, () => s[k], v => { touch(s); v ? s[k] = true : delete s[k]; }));
             if (s._teeth) panel.append(el('div', {className: 'keys', textContent: 'A seeded tooth (hrClimbTeeth). Editing it writes all the teeth out as numbers.'}));
         }
@@ -831,7 +831,7 @@ window.hrEditor = (() =>
             <b>E</b> play / edit · <b>Shift+E</b> play from the mouse<br>
             <b>drag</b> move · <b>drag an edge</b> resize · <b>drag empty space</b> new solid<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: 1 u)<br>
-            <b>G I K N</b> grip, ice, sticky, no-grip<br>
+            <b>G I K N B</b> grip, ice, sticky, no-grip, breakable<br>
             <b>F</b> floor / floating · <b>H</b> hanging from the top<br>
             <b>T</b> solid ↔ gate (Rocket) · <b>D</b> duplicate · <b>Delete</b> remove<br>
             <b>[ ]</b> level size · <b>, .</b> previous / next level<br>

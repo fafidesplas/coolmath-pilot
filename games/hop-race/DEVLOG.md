@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Rocket: breakable solids (experiment)
+- New solid flag `breakable` (owner's idea). A rocket that hits one destroys the whole solid, with ink chunks, a low boom and a small shake. The blast still goes off, so a breakable floor under you boosts you as it breaks.
+- Broken solids come back on a fall in solo (so a level can't be left with no way through) and on a restart; in Versus they stay broken for the round.
+- Look: an ink block with jagged cracks in the background color, a fixed pattern per solid (`hrDrawCracks` in `src/render.js`).
+- Editor: **B** toggles it, and there is a "breakable" box; it is saved like the other flags.
+- Checked with a Node simulation of `HR_MODES.rocket` (stand on one, fire down: it breaks and you rise about 5.6 u; a respawn brings it back). The crack drawing and the chunks are not checked in a browser yet. No level uses it yet.
+
 ## 2026-11-13 — Rocket 2-5 Around the Corner reworked
 - Owner's editor changes: the middle block (x −9.25…−0.75) is lower (top 2.5) and no longer a grip wall; the block over the gate is lower (top 2.5, bottom −0.25), so the gate is shorter; the button floats above that block at y 4.8.
 - No live Rocket level has a grip wall now; the Rocket grip rule stays in the code.

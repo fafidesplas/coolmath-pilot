@@ -59,6 +59,7 @@ Hop is an auto-runner (owner, 2026-11-10: set in stone after testing since 2026-
 - **Ice floor** (from level 4): ground friction drops to 0.6/s, so a blast sends you gliding.
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
 - **Grip wall** (owner, 2026-11-13; no live Rocket level uses one yet): hit in the air, it holds you as in Hop. You stop (no riding up it, even moving up fast), face away and slide down at up to 3 u/s (`HR_ROCKET.clingSlide`). A blast or recoil that pushes you away from the wall lets go; a push up or into it does not. If the wall ends below you, you fall. On the ground it is a plain wall.
+- **Breakable solid** (experiment, owner, 2026-11-13; no level uses one yet): a rocket that hits it destroys the whole solid (ink chunks, a low boom). The blast still goes off where the rocket hit, so a breakable floor you stand on boosts you as it breaks. In solo, a fall brings broken solids back; in Versus they stay broken until the round restarts. A restart always brings them back. Editor: **B** or the "breakable" box.
 
 ### 3.4 Grapple
 - Same spinning launcher (3 rad/s, always clockwise, as in Rocket); it freezes while the hook is out and keeps its direction when the rope is cut. Firing never reverses it (owner decision); the old reversal stays behind a switch (`HR_GRAPPLE.reverseSpin`, off). A faint dotted sight line shows where the hook will go while it is ready.
@@ -138,6 +139,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Plain wall | Solid; turns you around in Hop | Hop 4 | Solid dark block, straight sides |
 | Icy floor | Speeds up your run, so jumps become long low dashes (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 7 | Block hanging from the top |
+| Breakable solid | A rocket hit destroys it; the blast still pushes you (Rocket, experiment) | none yet | Dark block with jagged cracks in the background color |
 | Grip wall | Hit in the air, you cling to it and slide down; press to wall-jump (Hop), blast away from it (Rocket) | Hop 7 | Dark block with a sawtooth face |
 | Launcher | Spins around you; aims rockets and the hook | Rocket 1, Grapple 1 | Short barrel in the player's color circling the player |
 | Rocket and blast | Pushes every player in range; explodes on the other player | Rocket 1 | Small capsule, ring and splash particles in the owner's color |
@@ -196,7 +198,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       solids: [                            // l, r, top, optional bottom (default: below the kill line)
         {l: -13, r: -1.5, top: -4},
         {l: 1.5, r: 13, top: -4},
-        // optional flags: grip, ice (Hop); ice, sticky (Rocket); nogrip (Grapple)
+        // optional flags: grip, ice (Hop); ice, sticky, breakable (Rocket); nogrip (Grapple)
       ],
       slabs: [],                           // Phase only: [x0, y0, x1, y1] top surface ends
       gates: [],                           // Rocket only: {solid: {l, r, top, bottom}, button: {x, y}}
@@ -378,6 +380,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-13 — Rocket (experiment): breakable solids. A rocket hit destroys one; the blast still boosts you, even standing on it. They look cracked.
 - 2026-11-13 — Rocket 2-5 Around the Corner reworked by the owner: its middle block is lower (top 2.5) and no longer a grip wall, the block over the gate is lower (2.5 to -0.25) and the button floats above it.
 - 2026-11-13 — Rocket: grip walls hold the rocket player too. Hit in the air, you stick and slide down at up to 3 u/s; a blast or recoil away from the wall lets go.
 - 2026-11-13 — Rocket: Around the Corner (`rocket-05`) is live with the owner's new layout, and it swaps places with Rapid Fire (`rocket-11`): Rapid Fire is now 2-4, Around the Corner 2-5.

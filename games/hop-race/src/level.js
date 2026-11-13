@@ -12,7 +12,7 @@ function hrLoadLevel(def)
     const make = d =>
     {
         const bottom = d.bottom ?? killY - 30;   // default: well below the kill line
-        return {l: d.l, r: d.r, top: d.top, bottom, grip: !!d.grip, ice: !!d.ice, sticky: !!d.sticky,
+        return {l: d.l, r: d.r, top: d.top, bottom, grip: !!d.grip, ice: !!d.ice, sticky: !!d.sticky, breakable: !!d.breakable,
             pos: vec2((d.l + d.r) / 2, (d.top + bottom) / 2), size: vec2(d.r - d.l, d.top - bottom)};
     };
     // a mirrored (Versus) level lists its left half; each solid gets a mirror copy, and one touching or
