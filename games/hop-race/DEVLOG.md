@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: no side squeeze
+- Owner: a quick tap still narrowed the player. The dash pose (and a low jump's lunge in flight) no longer squeezes in from the sides: it is just a little low (0.8 of the height) with the eye narrowed. `HR_LEAP.pinch` is gone.
+
 ## 2026-11-13 — Leap: no forward lean
 - Owner: remove every forward-lean frame from Leap. It showed up when you held the button through a landing, because the charge restarts at 0 and 0 is the dash pose.
 - The dash pose (fresh press, and a low jump's lunge in flight) is now upright: still squeezed from the sides with the eye narrowed, but it doesn't lean. Charging toward a full leap still leans back. `HR_LEAP.lean` is gone; jump physics are unchanged.
