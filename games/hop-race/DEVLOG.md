@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: no aim sweep
+- Owner: remove the oscillating aim. A tap should be a short forward dash and a full hold a high, far leap that tops out.
+- `HR_MODES.leap.aim`: charge sets the speed (10 to 21 u/s) and the angle (15° to 60°) together; holding past full charge stays at full. The sweep (`sweep`, `p.t`) is gone.
+- Pose follows the charge: the dash pose (side squeeze, forward lean) on a fresh press, easing out by 40 % into the crouch that leans back. Ticks stop at full charge.
+- Solver check in Chrome (BFS over every hold length, also jumping mid-slide on ice): all 10 levels can be finished. 9 and 10 need a mid-power jump off the ice, under the hanging grip wall. No console errors.
+- Next: play it by hand; if 9 and 10 feel too fiddly, raise their hanging walls a little.
+
 ## 2026-11-13 — Leap: the old charge hop as World 5
 - Owner: bring back the hop with no auto-run as a fifth world, "Leap", next to Hop (Hop is unchanged).
 - `src/modes/leap.js` is the hold-to-charge hop from before 2026-11-10 (`d93d052^`), as `HR_MODES.leap` with its own `HR_LEAP` tuning: hold to charge and sweep the aim, release to jump, ice slides, wall bounce, grip walls, the lunge pose. No countdown in solo.

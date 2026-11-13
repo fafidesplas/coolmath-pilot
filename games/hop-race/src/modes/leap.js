@@ -1,6 +1,7 @@
 /*
-    HOP RACE - World 5, Leap (GDD §3.8). Hold to charge and sweep the aim, release to jump: the hold-to-charge hop
-    that was Hop's rule until 2026-11-10 (Hop is an auto-runner now), revived on 2026-11-13 as its own world.
+    HOP RACE - World 5, Leap (GDD §3.8). Hold to charge, release to jump: a tap is a short, low dash forward, and the
+    longer you hold the higher and farther you go, up to a full leap (no aim sweep since 2026-11-13). Grew from the
+    hold-to-charge hop that was Hop's rule until 2026-11-10 (Hop is an auto-runner now).
     Ported from the prototype's Classic + Wall Jump (prototype/game.js rcStep). No auto-run and no countdown in solo.
 */
 
@@ -8,12 +9,14 @@
 
 const HR_LEAP = {
     gravity:   42,
-    vMin:      9,       // jump speed with no charge (u/s)
-    vMax:      20,      // jump speed at full charge (u/s); the prototype's 25 less 20 % for 24-30 u levels
+    // power sets both speed and angle, from a tap (vMin at angleLo: a short, low dash) to full charge (vMax at
+    // angleHi: the highest, farthest leap); holding past full charge keeps it there
+    vMin:      10,      // jump speed with no charge (u/s)
+    vMax:      21,      // jump speed at full charge (u/s)
     chargeT:   1.1,     // seconds to full power
-    angleLo:   18 * PI / 180,
-    angleHi:   80 * PI / 180,
-    sweep:     2.6,     // aim sweep speed (rad/s)
+    angleLo:   15 * PI / 180,
+    angleHi:   60 * PI / 180,
+    dashZone:  .4,      // below this much charge the player holds the dash pose (forward lunge), easing out by here
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
     clingSlide: 3,      // top slide speed down a grip wall (u/s)
     clingAccel: 12,
@@ -22,13 +25,12 @@ const HR_LEAP = {
     iceMin:    2,       // ...if it was over 2 u/s; slower landings stop dead
     iceFriction: .8,    // sliding on ice slows you at this rate (1/s)
     crouch:    .45,     // how much flatter the player gets at full charge
-    lungeCrouch: .2,    // past full charge, the squash eases to this as the aim drops flat (.2: 0.64 u tall)...
-    lungePitch: .6,     // past full charge, the charge ticks keep climbing to this much more pitch at the flattest aim (full charge is 2x)
+    lungeCrouch: .2,    // in the dash pose the squash is this (.2: 0.64 u tall)...
     pinch:     .57,     // ...while the sides squeeze in by this much (.57 with .2: 0.44 u wide)...
-    lean:      .25,     // ...how far its top leans forward, into the hop, at the flattest aim (u)...
+    lean:      .25,     // ...how far its top leans forward, into the dash (u)...
     squint:    .35,     // ...how much the eye narrows then...
     eyeDrop:   .08,     // ...and how far it sits lower (u)
-    backLean:  .25,     // charging toward a high hop, the top leans back by up to this much (u), with power times aim height
+    backLean:  .25,     // charging toward a full leap, the top leans back by up to this much (u)
     lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 };
 
@@ -38,7 +40,7 @@ HR_MODES.leap = {
         p.grounded = true;
         p.cling = 0;
         p.dir = 1;
-        p.t = p.charge = p.flat = 0;
+        p.charge = p.flat = 0;
         p.running = false;
         p.spin = 0;
         p.lunge = undefined;
@@ -47,8 +49,7 @@ HR_MODES.leap = {
     aim(p)
     {
         const H = HR_LEAP;
-        const angle = H.angleLo + (H.angleHi - H.angleLo) * (.5 - .5 * Math.cos(p.t * H.sweep));
-        const speed = H.vMin + (H.vMax - H.vMin) * p.charge;
+        const angle = lerp(H.angleLo, H.angleHi, p.charge), speed = lerp(H.vMin, H.vMax, p.charge);
         return {angle, speed, vx: Math.cos(angle) * speed * p.dir, vy: Math.sin(angle) * speed};
     },
 
@@ -58,26 +59,22 @@ HR_MODES.leap = {
         const canCharge = p.grounded || p.cling;
         if (canCharge)
         {
-            if (input.down && !p.down) { p.t = 0; p.charge = p.flat = 0; hrEmit('hold', p); }
+            if (input.down && !p.down) { p.charge = p.flat = 0; hrEmit('hold', p); }
             if (input.down)
             {
-                const before = p.charge + p.flat;
-                p.t += dt;
+                const before = p.charge;
                 p.charge = min(1, p.charge + dt / H.chargeT);
-                // squash toward the floor, deeper with more power; past full charge, as the aim sweeps back down
-                // toward a long flat hop, the squash turns into a squeeze from the sides
-                const a = this.aim(p), flat = p.flat = p.charge < 1 ? 0 : smoothStep((H.angleHi - a.angle) / (H.angleHi - H.angleLo));
+                // a fresh press is a dash: squeezed from the sides, leaning forward. As power builds, that eases into a
+                // squash toward the floor that leans back, deepest at a full leap
+                const a = this.aim(p), flat = p.flat = 1 - smoothStep(clamp(p.charge / H.dashZone));
                 p.crouch = H.crouch * p.charge * (1 - flat) + H.lungeCrouch * flat;
                 p.pinch = H.pinch * flat;
-                // high hops lean back (\), flat lunges lean forward (/); past full charge one turns into the other
-                const high = p.charge * smoothStep((a.angle - H.angleLo) / (H.angleHi - H.angleLo));
-                p.lean = H.lean * flat - H.backLean * high;
+                p.lean = H.lean * flat - H.backLean * p.charge * (1 - flat);
                 p.squint = H.squint * flat;
                 p.eyeDrop = H.eyeDrop * flat;
-                p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll hop
-                // ticks rise with power, then keep rising past full charge as the aim drops into the flat lunge
-                // (and fall back when it swings up again)
-                if (floor(min(before, 1.99) * 8) != floor(min(p.charge + flat, 1.99) * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge + flat * H.lungePitch);
+                p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll leap
+                // ticks rise with power and stop at full charge
+                if (floor(min(before, .99) * 8) != floor(min(p.charge, .99) * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
             }
             else if (p.down)
             {
@@ -126,7 +123,7 @@ HR_MODES.leap = {
                     p.dir = -side;          // turn to face away from the wall
                     p.vx = 0;
                     p.vy = clamp(p.vy, -H.clingSlide, 0);   // you stop: no riding up the wall on a hard launch
-                    p.t = p.charge = 0;
+                    p.charge = 0;
                     p.squash = .2;
                     p.pupilKick(side * .15, 0);
                     hrSfx.land.play(undefined, .6, 1.5);
@@ -157,7 +154,7 @@ HR_MODES.leap = {
                     // GDD §3.2: you land where you aimed, except on ice, which keeps most of a fast landing
                     p.vx = s.ice && abs(p.vx) > H.iceMin ? p.vx * H.iceKeep : 0;
                     p.vy = 0;
-                    p.t = p.charge = 0;
+                    p.charge = 0;
                     hrSfx.land.play();
                     hrDust(p.x, p.y - HR_PSIZE / 2);
                     hrEmit('land', p);
