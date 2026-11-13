@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: owner's launch keys
+- Owner's values from the debug panel: tap {1.5, 0}, quarter {8, 15}; half, three quarters and full unchanged; gravity 42, charge 1.1 s. A tap is now a small shuffle (0.1 u) instead of a flat dash.
+- Headless solver: 9 of 10 levels finish. 6 Low Ceiling doesn't: its block hangs 2.5 u over the gap, so it needs a jump under about 1.1 u high and about 5.5 u long, and no charge gives that now (a quarter charge is 5.9 u long but 2.7 u high).
+- Next: rework Low Ceiling for the new jump (raise the block or narrow the gap), or bring back a low, long jump early in the charge.
+
 ## 2026-11-13 — Debug panel: Leap jump tuning and arcs
 - Owner: draw the jump arc for easier tuning, and expose the Leap values in the debug panel.
 - `tools/debug.js` has a "Leap jump" section: sliders and number boxes for gravity, charge time and each launch key (forward and up speed, tap to full). "Show jump arcs" draws a faint arc for each key from a player who can jump, and a bright one for the charge you hold, which stays until the next charge. "Copy launch" copies the values as lines to paste over `HR_LEAP`; "Reset" goes back to the values in the code. Nothing is saved.
