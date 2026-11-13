@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Rocket: Around the Corner live, 2-4 and 2-5 swapped
+- Owner's editor rework of Around the Corner (`rocket-05`): the `draft` flag is gone; a tall grip block stands between the start and the gate, and the button is on the roof of the block over the gate.
+- Owner: Rapid Fire and Around the Corner swap places, so Rapid Fire is 2-4 and Around the Corner is 2-5 (order in `levels/rocket.js`; ids unchanged, so saved times stay).
+- Not re-checked with a bot or in a browser.
+
 ## 2026-11-13 — Rocket: new tutorial prompt
 - Owner's wording for 2-1: "Hold A to aim the rocket. Release to launch it." It is drawn on two lines (one per sentence): on one line it would be about as wide as the 24 u level.
 

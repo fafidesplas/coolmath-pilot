@@ -59,19 +59,29 @@ HR_LEVELS.rocket = [
         flag: {x: 12, y: -3},
     },
     {
-        draft: true,   // hidden until 2-1 to 2-3 feel right
+        id: 'rocket-11', name: 'Rapid Fire',
+        size: 28,
+        start: {x: -1.5, y: -4.5},
+        solids: [
+            {l: -14.5, r: -5, top: 8},     // tall left wall
+            {l: -7.25, r: 0.5, top: -4.5},   // the pit floor you start on
+            {l: 0, r: 6, top: 2},         // the tower: too tall to blast over from the floor
+            {l: 4.75, r: 14.25, top: -2},    // flag ledge
+            {l: 10.5, r: 15.25, top: 8, bottom: -3.25},   // right wall hanging over the flag ledge
+        ],
+        flag: {x: 8.75, y: -2},
+    },
+    {
         id: 'rocket-05', name: 'Around the Corner',
         size: 26,
         start: {x: -10.5, y: -4},
         solids: [
             {l: -14, r: 14, top: -4},
-            {l: -6, r: -4, top: -2},
             {l: 2, r: 14, top: 5.4, bottom: 2.5},
-            {l: -14, r: 2, top: 5.4, bottom: 5},
-            {l: 6, r: 7, top: 2.5, bottom: -.5},
+            {l: -9.25, r: -0.75, top: 5.5, bottom: -5.5, grip: true},
         ],
         gates: [
-            {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 3.9, y: 1.8}},
+            {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 12.15, y: 6.05}},
         ],
         flag: {x: 11, y: -4},
     },
@@ -153,18 +163,5 @@ HR_LEVELS.rocket = [
             {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 3.9, y: 1.8}},
         ],
         flag: {x: 14.3, y: -2},
-    },
-    {
-        id: 'rocket-11', name: 'Rapid Fire',
-        size: 28,
-        start: {x: -1.5, y: -4.5},
-        solids: [
-            {l: -14.5, r: -5, top: 8},     // tall left wall
-            {l: -7.25, r: 0.5, top: -4.5},   // the pit floor you start on
-            {l: 0, r: 6, top: 2},         // the tower: too tall to blast over from the floor
-            {l: 4.75, r: 14.25, top: -2},    // flag ledge
-            {l: 10.5, r: 15.25, top: 8, bottom: -3.25},   // right wall hanging over the flag ledge
-        ],
-        flag: {x: 8.75, y: -2},
     },
 ];
