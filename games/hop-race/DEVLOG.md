@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Rocket: new tutorial prompt
+- Owner's wording for 2-1: "Hold A to aim the rocket. Release to launch it." It is drawn on two lines (one per sentence): on one line it would be about as wide as the 24 u level.
+
 ## 2026-11-13 — Debug panel: Leap section removed
 - Owner: Leap is set aside, so the debug panel's Leap section (sliders, launch-key copy, jump arcs) is gone; the panel has player size and Rocket. The old section is in git history before this commit.
 - `HR_MODES.leap.draw` calls the arcs hook with `?.`, so Leap still runs if it is shown again.
