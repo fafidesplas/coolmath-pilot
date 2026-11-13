@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Rocket: 2-6 and 2-7 live, breakable levels
+- Owner's editor changes. 2-6 **The Middle** (`rocket-06`, was the Mind the Gap draft): the middle island is now a tall pillar (top 4.5) between the two small steps.
+- 2-7 **Sticky Situation** (`rocket-07`) is rebuilt around breakable solids: start on a breakable ledge high on the right, under a big ceiling block, and break through breakable pieces down to the flag at the bottom left. It has no sticky floor now; the name is kept for now.
+- New draft `rocket-12` "Sticky Situation copy": a breakable ledge on the right over an ice floor, flag at the bottom left.
+- Not re-checked with a bot or in a browser.
+
 ## 2026-11-13 — Rocket: breakable cracks run top to bottom
 - Owner: a tall breakable solid looked only half cracked (cracks stopped after about 2 u). Each crack now runs from the top to the bottom (floors: to just past the bottom of the screen), with a short side branch every 0.8 to 1.6 u along it.
 
