@@ -16,7 +16,7 @@ const HR_LEAP = {
     chargeT:   1.1,     // seconds to full power
     angleLo:   15 * PI / 180,
     angleHi:   60 * PI / 180,
-    dashZone:  .4,      // below this much charge the player holds the dash pose (low and upright: no side squeeze, no lean), easing out by here
+    stretchZone: .4,    // the launch stretch grows from none on a tap to full by this much charge (a stretch narrows the body)
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
     clingSlide: 3,      // top slide speed down a grip wall (u/s)
     clingAccel: 12,
@@ -25,11 +25,7 @@ const HR_LEAP = {
     iceMin:    2,       // ...if it was over 2 u/s; slower landings stop dead
     iceFriction: .8,    // sliding on ice slows you at this rate (1/s)
     crouch:    .45,     // how much flatter the player gets at full charge
-    lungeCrouch: .2,    // in the dash pose the squash is this (.2: 0.8 of the full height, 1.12 of the width)...
-    squint:    .35,     // ...how much the eye narrows then...
-    eyeDrop:   .08,     // ...and how far it sits lower (u)
     backLean:  .25,     // charging toward a full leap, the top leans back by up to this much (u)
-    lungeKeep: .35,     // a lunge keeps that pose for this share of the jump, then eases back to square by the end
 };
 
 HR_MODES.leap = {
@@ -38,10 +34,9 @@ HR_MODES.leap = {
         p.grounded = true;
         p.cling = 0;
         p.dir = 1;
-        p.charge = p.flat = 0;
+        p.charge = 0;
         p.running = false;
         p.spin = 0;
-        p.lunge = undefined;
     },
 
     aim(p)
@@ -57,18 +52,15 @@ HR_MODES.leap = {
         const canCharge = p.grounded || p.cling;
         if (canCharge)
         {
-            if (input.down && !p.down) { p.charge = p.flat = 0; hrEmit('hold', p); }
+            if (input.down && !p.down) { p.charge = 0; hrEmit('hold', p); }
             if (input.down)
             {
                 const before = p.charge;
                 p.charge = min(1, p.charge + dt / H.chargeT);
-                // a fresh press is a dash: a little low, upright, not squeezed from the sides. As power builds, that eases
-                // into a squash toward the floor that leans back, deepest at a full leap
-                const a = this.aim(p), flat = p.flat = 1 - smoothStep(clamp(p.charge / H.dashZone));
-                p.crouch = H.crouch * p.charge * (1 - flat) + H.lungeCrouch * flat;
-                p.lean = -H.backLean * p.charge * (1 - flat);
-                p.squint = H.squint * flat;
-                p.eyeDrop = H.eyeDrop * flat;
+                // as power builds the player squashes toward the floor and leans back, deepest at a full leap
+                const a = this.aim(p);
+                p.crouch = H.crouch * p.charge;
+                p.lean = -H.backLean * p.charge;
                 p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll leap
                 // ticks rise with power and stop at full charge
                 if (floor(min(before, .99) * 8) != floor(min(p.charge, .99) * 8)) hrSfx.charge.play(undefined, 1, 1 + p.charge);
@@ -80,13 +72,9 @@ HR_MODES.leap = {
                 p.x += p.dir * .02;           // step off the wall
                 p.grounded = false;
                 p.cling = 0;
-                p.squash = -.3 * (1 - p.flat);   // a flat lunge doesn't stretch up
+                p.squash = -.3 * smoothStep(clamp(p.charge / H.stretchZone));   // a tap doesn't stretch up
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
-                // a lunge flies in its pose, easing back over the jump's airtime (to launch height, at least .3 s)
-                p.lean = 0;   // the back lean doesn't fly with you
-                p.lunge = p.flat ? {crouch: p.crouch, squint: p.squint, eyeDrop: p.eyeDrop,
-                    t: 0, T: max(.3, 2 * a.vy / H.gravity)} : undefined;
-                if (!p.lunge) p.crouch = p.squint = p.eyeDrop = 0;
+                p.crouch = p.lean = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
@@ -94,9 +82,7 @@ HR_MODES.leap = {
         }
         p.down = input.down && canCharge;
 
-        if (p.grounded || p.cling) p.lunge = undefined;
         if (p.grounded) return this.slide(p);
-        if (p.lunge) this.easeLunge(p);
 
         if (p.cling)
         {
@@ -163,14 +149,6 @@ HR_MODES.leap = {
                     p.vy = 0;
                 }
             }
-    },
-
-    // the lunge pose in flight: held for lungeKeep of the airtime, then eased back to square
-    easeLunge(p)
-    {
-        const L = p.lunge, k = 1 - smoothStep(clamp(((L.t += timeDelta) / L.T - HR_LEAP.lungeKeep) / (1 - HR_LEAP.lungeKeep)));
-        for (const key of ['crouch', 'squint', 'eyeDrop']) p[key] = L[key] * k;
-        if (!k) p.lunge = undefined;
     },
 
     // grounded on ice with speed left: slide, stop at walls, drop off edges. You can charge while sliding

@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: no dash pose
+- Owner: remove the dash pose completely. Charging now only squashes toward the floor and leans back with power, starting from square. No squint, no lowered eye, no lunge pose in flight (`lungeCrouch`, `squint`, `eyeDrop`, `lungeKeep`, `dashZone`, `p.flat`, `p.lunge` and `easeLunge` are gone, plus the two lunge guards in `player.js`).
+- The launch stretch still fades out toward a tap (`stretchZone` .4), so a tap doesn't narrow the body. Jump physics are unchanged.
+- Next: play it by hand.
+
 ## 2026-11-13 — Leap: no side squeeze
 - Owner: a quick tap still narrowed the player. The dash pose (and a low jump's lunge in flight) no longer squeezes in from the sides: it is just a little low (0.8 of the height) with the eye narrowed. `HR_LEAP.pinch` is gone.
 
