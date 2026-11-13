@@ -335,6 +335,7 @@ window.game = {
         hrMode().warp?.(p);
     },
 };
+if (!debug) delete window.game.win;   // the release engine has debug off: no instant win in shipped builds
 
 setDebugWatermark(false);
 hrCanvasSetup();
