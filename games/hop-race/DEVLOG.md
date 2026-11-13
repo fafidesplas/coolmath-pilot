@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: shorter half charge
+- Owner's values: the half-charge launch key is {vx: 8.5, vy: 21} (was 12 forward). Half charge now goes 8.5 u (was 12) at the same 5.3 u height; the farthest leap is near three quarters (9.5 u).
+- Solver: all 3 levels can be finished. Leap's built-in ghosts made again with `tools/ghost-gen.js` (bot / ghost, s): 1 3.00/4.98, 2 4.22/6.20, 3 3.90/5.88. Hop's are unchanged.
+
 ## 2026-11-13 — Built-in ghosts for Hop and Leap
 - Owner: ghosts from the bots with the current physics, at the bot's best time + 2 s. Until a player finishes a level, it now replays a built-in ghost; their first finish replaces it with their own. The HUD shows "Ghost 5.2" where "Best" goes.
 - `tools/ghost-gen.js` (debug only, run from the console: `await import('./tools/ghost-gen.js'); await hrMakeGhosts()`): Hop uses `hopBot`'s fastest route (the bot now also returns it as `inputs`), Leap a fastest-route search over hold lengths 1 to 70 frames. Each route is replayed through `hrPlayerStep` and recorded like a run, after 2 s standing still (in Hop: pressing to run 2 s after GO). Output is `levels/ghosts.js` (13 KB), loaded after the levels in `index.html` and `build.json`.
