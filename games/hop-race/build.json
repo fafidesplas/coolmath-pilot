@@ -27,6 +27,7 @@
         "levels/climb.js",
         "levels/phase.js",
         "levels/leap.js",
+        "levels/ghosts.js",
         "src/main.js"
     ]
 }

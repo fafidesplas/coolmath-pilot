@@ -607,6 +607,7 @@ function hrDrawHud(W, H, u)
     hrText(`${label}   ${hrFmt(ms)}`, W / 2, top, 34 * u);
     const best = hrSaveLevel(hrLevelDef().id).bestMs;
     if (best) hrText('Best ' + hrFmt(best), W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
+    else if (hrGhostBuiltInMs && hrSave.settings.ghost) hrText('Ghost ' + hrFmt(hrGhostBuiltInMs), W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
     if (hrMode().countdown) hrDrawCountdown(W, H, u, hrRun.frames);
     // from level 2 on, the button hint shows for the first 3 s
     if (hrRun.hintT < 3.5 && hrLevelIndex > 0)

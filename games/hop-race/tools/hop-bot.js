@@ -121,7 +121,7 @@ window.hopBot = function (levelId, opts = {})
     const deadNodes = [...nodes].filter(([k]) => !good.has(k)).map(([, n]) => n.s);
 
     // fastest route, with each jump's timing window: how many press frames (with any hold) get to the same place
-    const route = [], routeSpots = [];
+    const route = [], routeSpots = [], inputs = [];
     if (best)
     {
         let cur = {k: best.from, wait: best.wait, hold: best.hold, to: 'FLAG'};
@@ -132,6 +132,7 @@ window.hopBot = function (levelId, opts = {})
             const what = cur.hold ? `wait ${cur.wait} f, hold ${cur.hold} f` : `run ${cur.wait} f`;
             route.unshift(`${what} → ${cur.to == 'FLAG' ? 'flag' : spot(nodes.get(cur.to).s)} [${window} f]`);
             routeSpots.unshift({x: n.s.x, y: n.s.y, window});
+            inputs.unshift({wait: cur.wait, hold: cur.hold});
             cur = n.prev && {k: n.prev.k, wait: n.prev.wait, hold: n.prev.hold, to: cur.k};
         }
     }
@@ -146,6 +147,7 @@ window.hopBot = function (levelId, opts = {})
         deadEnds: deadNodes.map(spot),
         route,
         routeSpots,                                         // where each move on the route starts
+        inputs,                                             // the route as moves {wait, hold} after the starting press (tools/ghost-gen.js replays them)
         deadSpots: deadNodes.map(s => ({x: s.x, y: s.y})),
     };
 };

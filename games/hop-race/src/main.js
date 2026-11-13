@@ -53,7 +53,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     {
         hrMatch = null;
         hrGhostLoad(def.id);
-        if (hrEditDef) hrGhostPlay = null;   // an edited level may not match the saved ghost
+        if (hrEditDef) { hrGhostPlay = null; hrGhostBuiltInMs = 0; }   // an edited level may not match the saved ghost
         hrGaDesign(`mode:${HR_WORLDS[world].id}:solo`);
     }
     hrCountdown = versus || hrMode().countdown ? 2.4 : 0;

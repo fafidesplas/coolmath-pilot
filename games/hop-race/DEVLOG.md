@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Built-in ghosts for Hop and Leap
+- Owner: ghosts from the bots with the current physics, at the bot's best time + 2 s. Until a player finishes a level, it now replays a built-in ghost; their first finish replaces it with their own. The HUD shows "Ghost 5.2" where "Best" goes.
+- `tools/ghost-gen.js` (debug only, run from the console: `await import('./tools/ghost-gen.js'); await hrMakeGhosts()`): Hop uses `hopBot`'s fastest route (the bot now also returns it as `inputs`), Leap a fastest-route search over hold lengths 1 to 70 frames. Each route is replayed through `hrPlayerStep` and recorded like a run, after 2 s standing still (in Hop: pressing to run 2 s after GO). Output is `levels/ghosts.js` (13 KB), loaded after the levels in `index.html` and `build.json`.
+- Times (bot / ghost, s): Hop 2.90/4.88, 3.90/5.88, 3.40/5.38, 7.17/9.15, 2.58/4.57, 2.07/4.05, 3.62/5.60, 8.50/10.48, 3.35/5.33, 3.72/5.70; Leap 2.48/4.47, 3.32/5.30, 3.20/5.18. Ghost times are 1 frame under +2 s because, like the game's timer, they stop on the frame before the flag touch.
+- Checked in Chrome: every ghost starts on the start spot and reaches the flag box; on 5-3 the ghost plays and the HUD shows "Ghost 5.2"; no console errors.
+- Next: Rocket, Grapple and Climb need a bot each before they can get built-in ghosts. Players who already have a best time (from before these physics changes) keep their own ghost.
+
 ## 2026-11-13 — Leap: three levels
 - Owner: keep only Leap's first three levels. `levels/leap.js` now has First Leap, Stepping Stones and Up We Go; 4 to 10 are removed (still in git history at `e15abfe`). This also drops 6 Low Ceiling, which the new jump couldn't finish.
 - The level select and the Next button already handle a world with fewer than 10 levels (Grapple has 3). Old saves for `leap-04`..`leap-10` are just ignored.
