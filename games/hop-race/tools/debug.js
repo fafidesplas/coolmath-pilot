@@ -4,7 +4,7 @@
 
     Type "debug" on any screen to open or close it. It tunes values live, while you play:
     - Player size: HR_PSIZE (u). The players keep their feet where they are, so a player on the ground stays on it.
-      The readout shows how tall the player is on screen right now. Nothing is saved: a reload goes back to 0.8.
+      The readout shows how tall the player is on screen right now. Nothing is saved: a reload goes back to the default in src/config.js.
       (Phase's drop size is fixed at load, so it ignores this; Phase is a hidden world.)
 */
 

@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Player size 1.4 u
+- Owner: the default player size is now 1.4 u (`HR_PSIZE` in `src/config.js`, was 0.8). The debug panel's Reset goes to the new default.
+- The start prompt ("Press A to leap") now sits 0.9 u above the player's top instead of a fixed 1.3 u above its center, so it clears the bigger square (same spot at 0.8 u).
+- Checked in Chrome: `hopBot` finishes all 10 Hop levels and 4 Hop Versus levels, none with dead ends; the Leap solver finishes all 10 Leap levels. Rocket 2-3, Grapple 3-2 and Climb 4-2 load and look right; no console errors.
+- Next: play Rocket, Grapple and Climb by hand (no bot there); Climb's 2 u arm looks short on the bigger body, so its length may need to scale with the player.
+
 ## 2026-11-13 — Leap: no aim sweep
 - Owner: remove the oscillating aim. A tap should be a short forward dash and a full hold a high, far leap that tops out.
 - `HR_MODES.leap.aim`: charge sets the speed (10 to 21 u/s) and the angle (15° to 60°) together; holding past full charge stays at full. The sweep (`sweep`, `p.t`) is gone.
