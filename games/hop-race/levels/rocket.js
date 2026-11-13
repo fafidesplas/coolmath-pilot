@@ -86,32 +86,33 @@ HR_LEVELS.rocket = [
         flag: {x: 11, y: -4},
     },
     {
-        draft: true,   // hidden until 2-1 to 2-3 feel right
-        id: 'rocket-06', name: 'Mind the Gap',
+        id: 'rocket-06', name: 'The Middle',
         size: 28,
         start: {x: -12, y: -4},
         solids: [
             {l: -15, r: -9, top: -4},
             {l: -6, r: -4, top: -3},
-            {l: -1, r: 1, top: -2},
+            {l: -1, r: 1, top: 4.5},
             {l: 4, r: 6, top: -3},
             {l: 9, r: 15, top: -4},
         ],
         flag: {x: 12, y: -4},
     },
     {
-        draft: true,   // hidden until 2-1 to 2-3 feel right
         id: 'rocket-07', name: 'Sticky Situation',
         size: 28,
-        start: {x: -12, y: -4},
+        start: {x: 8, y: 6},
         solids: [
-            {l: -15, r: -9, top: -4},
-            {l: -9, r: 1, top: -4, sticky: true},
-            {l: 1, r: 5, top: -1.5},
-            {l: 8.5, r: 15, top: -1.5},
-            {l: 5, r: 8.5, top: -5, sticky: true},
+            {l: 6, r: 11.25, top: 6, bottom: 5, breakable: true},
+            {l: -14.25, r: 14.25, top: -7.5, bottom: -8.75},
+            {l: -14.75, r: 6, top: 11, bottom: 5},
+            {l: 0, r: 1, top: 5, bottom: 0.75, breakable: true},
+            {l: -10, r: 14.25, top: 1, bottom: -8},
+            {l: -14.25, r: -10, top: 1, bottom: 0, breakable: true},
+            {l: -14, r: -9, top: -3.25, bottom: -4, breakable: true},
+            {l: 11.25, r: 14, top: 8.5, bottom: 0.5},
         ],
-        flag: {x: 12, y: -1.5},
+        flag: {x: -13, y: -7.5},
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -163,5 +164,17 @@ HR_LEVELS.rocket = [
             {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 3.9, y: 1.8}},
         ],
         flag: {x: 14.3, y: -2},
+    },
+    {
+        draft: true,
+        id: 'rocket-12', name: 'Sticky Situation copy',
+        size: 28,
+        start: {x: 12, y: 5},
+        solids: [
+            {l: 9, r: 14.25, top: 5, bottom: 4, breakable: true},
+            {l: -14.25, r: 14.25, top: -7.5, bottom: -8.75, ice: true},
+            {l: -14.75, r: 9, top: 11, bottom: -3.75},
+        ],
+        flag: {x: -13, y: -7.5},
     },
 ];
