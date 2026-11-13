@@ -12,8 +12,8 @@ const HR_LEAP = {
     // launch velocity {vx, vy} (u/s) by charge, evenly spaced from a tap to full charge, read with a straight lerp.
     // Owner's tuning (2026-11-13): a tap is a small shuffle forward with no hop; more charge rises steeply, the
     // farthest leap is near three quarters and a full hold goes almost straight up, the highest. Holding past full stays there.
-    // With gravity 42, to launch height: half ~8.5 u far, 5.3 u up; full ~5 u far, 10.7 u up
-    launch:    [{vx: 1.5, vy: 0}, {vx: 8, vy: 15}, {vx: 8.5, vy: 21}, {vx: 7.5, vy: 27}, {vx: 3.5, vy: 30}],
+    // With gravity 42, to launch height: half ~8.5 u far, 5.3 u up; full ~5.8 u far, 14.2 u up
+    launch:    [{vx: 1.5, vy: 0}, {vx: 8, vy: 15}, {vx: 8.5, vy: 21}, {vx: 7.5, vy: 27}, {vx: 3.5, vy: 34.5}],
     chargeT:   1.1,     // seconds to full power
     stretchZone: .4,    // the launch stretch grows from none on a tap to full by this much charge (a stretch narrows the body)
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
