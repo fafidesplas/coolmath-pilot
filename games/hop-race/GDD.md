@@ -58,6 +58,7 @@ Hop is an auto-runner (owner, 2026-11-10: set in stone after testing since 2026-
 - **Buttons and gates** (from level 3): a rocket that hits a button, or a blast within 2.5 u of it, presses it; its gate slides up into the ceiling and stays open. Gate levels have a thin ceiling just under the HUD, so the only way past a gate is its button. In Versus a gate opened by either player is open for both.
 - **Ice floor** (from level 4): ground friction drops to 0.6/s, so a blast sends you gliding.
 - **Sticky floor** (from level 7): landing on it stops you dead, and while you stand on it blasts push you at only 50 %. Get off it by blasting twice, or avoid landing on it.
+- **Grip wall** (owner, 2026-11-13; first in 2-5 Around the Corner): hit in the air, it holds you as in Hop. You stop (no riding up it, even moving up fast), face away and slide down at up to 3 u/s (`HR_ROCKET.clingSlide`). A blast or recoil that pushes you away from the wall lets go; a push up or into it does not. If the wall ends below you, you fall. On the ground it is a plain wall.
 
 ### 3.4 Grapple
 - Same spinning launcher (3 rad/s, always clockwise, as in Rocket); it freezes while the hook is out and keeps its direction when the rope is cut. Firing never reverses it (owner decision); the old reversal stays behind a switch (`HR_GRAPPLE.reverseSpin`, off). A faint dotted sight line shows where the hook will go while it is ready.
@@ -137,7 +138,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Plain wall | Solid; turns you around in Hop | Hop 4 | Solid dark block, straight sides |
 | Icy floor | Speeds up your run, so jumps become long low dashes (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 7 | Block hanging from the top |
-| Grip wall | Hit in the air, you cling to it and slide down; press to wall-jump (Hop) | Hop 7 | Dark block with a sawtooth face |
+| Grip wall | Hit in the air, you cling to it and slide down; press to wall-jump (Hop), blast away from it (Rocket) | Hop 7, Rocket 5 | Dark block with a sawtooth face |
 | Launcher | Spins around you; aims rockets and the hook | Rocket 1, Grapple 1 | Short barrel in the player's color circling the player |
 | Rocket and blast | Pushes every player in range; explodes on the other player | Rocket 1 | Small capsule, ring and splash particles in the owner's color |
 | Rocket button | A blast near it opens its gate | Rocket 3 | White target on a dark mount; becomes a white check mark when pressed |
@@ -377,6 +378,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-13 — Rocket: grip walls hold the rocket player too. Hit in the air, you stick and slide down at up to 3 u/s; a blast or recoil away from the wall lets go.
 - 2026-11-13 — Rocket: Around the Corner (`rocket-05`) is live with the owner's new layout, and it swaps places with Rapid Fire (`rocket-11`): Rapid Fire is now 2-4, Around the Corner 2-5.
 - 2026-11-13 — Rocket 2-1's prompt is "Hold A to aim the rocket. Release to launch it.", on two lines (owner).
 - 2026-11-13 — Rocket: hold to turn the launcher clockwise, release to fire (was: it spun clockwise all the time and a press fired). The hint is "Hold: aim · Release: blast" and 2-1's prompt "Hold to aim. Let go to blast." Leap is hidden for now.

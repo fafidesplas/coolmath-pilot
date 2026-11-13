@@ -57,6 +57,7 @@ window.hrDebug = (() =>
         ['iceFriction',  'Ice friction',  0, 5, .05,   ''],
         ['stickyPush',   'Sticky push',   0, 1, .05,   'blasts push at 50 % while standing on a sticky floor'],
         ['wallBounce',   'Wall bounce',   0, 1, .05,   ''],
+        ['clingSlide',   'Grip slide',    0, 10, .1,   'top slide speed down a grip wall (u/s)'],
     ];
     const ROCKET_DEFAULT = {...HR_ROCKET};
 

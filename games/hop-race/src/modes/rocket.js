@@ -20,6 +20,7 @@ const HR_ROCKET = {
     iceFriction: .6,
     stickyPush: .5,     // blasts push at 50 % while standing on a sticky floor
     wallBounce: .3,
+    clingSlide: 3,      // top slide speed down a grip wall (u/s)
 };
 
 let hrRockets = [], hrBlasts = [];
@@ -32,6 +33,7 @@ HR_MODES.rocket = {
         p.dir = 1;
         p.aimA = PI * 1.25;   // start pointing down-left, so the first press pushes you up and forward
         p.cool = 0;
+        p.cling = 0;
         hrRockets = hrRockets.filter(r => r.owner != p);
     },
 
@@ -109,12 +111,32 @@ HR_MODES.rocket = {
 
         p.vy -= R.gravity * dt;
 
+        // on a grip wall (GDD §3.3): stay on it and slide slowly down; a push away from the wall (a blast or the recoil)
+        // lets go, a push up or into it does not (no riding up it, as in Hop); let go and fall if the wall ends
+        if (p.cling)
+        {
+            if (p.vx * p.cling < 0 || !solids.some(s => s.grip && hrOverlapSolid(p.x + p.cling * .06, p.y, s))) p.cling = 0;
+            else { p.vx = 0; p.vy = clamp(p.vy, -R.clingSlide, 0); }
+        }
+
         p.x += p.vx * dt;
         for (const s of solids)
             if (hrOverlapSolid(p.x, p.y, s, .1))   // slightly short so the floor we rest on doesn't count
             {
                 const side = p.vx > 0 ? 1 : -1;
                 p.x = side > 0 ? s.l - HR_PSIZE / 2 - .001 : s.r + HR_PSIZE / 2 + .001;
+                if (s.grip && !p.grounded)
+                {
+                    // a grip wall hit in the air holds you, even moving up fast
+                    p.cling = side;
+                    p.dir = -side;   // face away from the wall
+                    p.vx = 0;
+                    p.vy = clamp(p.vy, -R.clingSlide, 0);
+                    p.squash = .2;
+                    p.pupilKick(side * .15, 0);
+                    hrSfx.land.play(undefined, .6, 1.5);
+                    continue;
+                }
                 if (abs(p.vx) > 4) { p.pupilKick(side * .2, 0); hrSfx.land.play(undefined, .5, 1.3); }
                 p.vx *= -R.wallBounce;
             }
@@ -143,6 +165,7 @@ HR_MODES.rocket = {
                     p.vy = 0;
                     p.grounded = true;
                     p.floor = s;
+                    p.cling = 0;
                 }
                 else if (p.vy > 0 && prevY + HR_PSIZE / 2 <= s.bottom + .15)   // bonk from below only
                 {
