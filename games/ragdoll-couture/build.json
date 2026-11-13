@@ -1,6 +1,0 @@
-{
-    "title": "Ragdoll Couture",
-    "name": "ragdollCouture",
-    "engine": "dist/littlejs.js",
-    "sources": ["templates/gameFx.js", "game.js"]
-}
