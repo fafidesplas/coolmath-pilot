@@ -16,7 +16,7 @@ const HR_LEAP = {
     chargeT:   1.1,     // seconds to full power
     angleLo:   15 * PI / 180,
     angleHi:   60 * PI / 180,
-    dashZone:  .4,      // below this much charge the player holds the dash pose (forward lunge), easing out by here
+    dashZone:  .4,      // below this much charge the player holds the dash pose (squeezed upright, no lean), easing out by here
     wallBounce: .35,    // plain walls reverse horizontal speed at 35 %
     clingSlide: 3,      // top slide speed down a grip wall (u/s)
     clingAccel: 12,
@@ -27,7 +27,6 @@ const HR_LEAP = {
     crouch:    .45,     // how much flatter the player gets at full charge
     lungeCrouch: .2,    // in the dash pose the squash is this (.2: 0.64 u tall)...
     pinch:     .57,     // ...while the sides squeeze in by this much (.57 with .2: 0.44 u wide)...
-    lean:      .25,     // ...how far its top leans forward, into the dash (u)...
     squint:    .35,     // ...how much the eye narrows then...
     eyeDrop:   .08,     // ...and how far it sits lower (u)
     backLean:  .25,     // charging toward a full leap, the top leans back by up to this much (u)
@@ -64,12 +63,12 @@ HR_MODES.leap = {
             {
                 const before = p.charge;
                 p.charge = min(1, p.charge + dt / H.chargeT);
-                // a fresh press is a dash: squeezed from the sides, leaning forward. As power builds, that eases into a
-                // squash toward the floor that leans back, deepest at a full leap
+                // a fresh press is a dash: squeezed from the sides, upright (no forward lean). As power builds, that eases
+                // into a squash toward the floor that leans back, deepest at a full leap
                 const a = this.aim(p), flat = p.flat = 1 - smoothStep(clamp(p.charge / H.dashZone));
                 p.crouch = H.crouch * p.charge * (1 - flat) + H.lungeCrouch * flat;
                 p.pinch = H.pinch * flat;
-                p.lean = H.lean * flat - H.backLean * p.charge * (1 - flat);
+                p.lean = -H.backLean * p.charge * (1 - flat);
                 p.squint = H.squint * flat;
                 p.eyeDrop = H.eyeDrop * flat;
                 p.look = vec2(Math.cos(a.angle) * p.dir, Math.sin(a.angle));   // the eye looks where you'll leap
@@ -86,9 +85,10 @@ HR_MODES.leap = {
                 p.squash = -.3 * (1 - p.flat);   // a flat lunge doesn't stretch up
                 p.landT = -1;   // the launch stretch replaces any landing squeeze
                 // a lunge flies in its pose, easing back over the jump's airtime (to launch height, at least .3 s)
-                p.lunge = p.flat ? {crouch: p.crouch, pinch: p.pinch, lean: max(0, p.lean), squint: p.squint, eyeDrop: p.eyeDrop,
+                p.lean = 0;   // the back lean doesn't fly with you
+                p.lunge = p.flat ? {crouch: p.crouch, pinch: p.pinch, squint: p.squint, eyeDrop: p.eyeDrop,
                     t: 0, T: max(.3, 2 * a.vy / H.gravity)} : undefined;
-                if (!p.lunge) p.crouch = p.pinch = p.lean = p.squint = p.eyeDrop = 0;
+                if (!p.lunge) p.crouch = p.pinch = p.squint = p.eyeDrop = 0;
                 p.pupilKick(-a.vx * .02, -a.vy * .02);
                 hrSfx.jump.play(undefined, 1, 1 - p.charge * .4);
                 hrEmit('jump', p);
@@ -171,7 +171,7 @@ HR_MODES.leap = {
     easeLunge(p)
     {
         const L = p.lunge, k = 1 - smoothStep(clamp(((L.t += timeDelta) / L.T - HR_LEAP.lungeKeep) / (1 - HR_LEAP.lungeKeep)));
-        for (const key of ['crouch', 'pinch', 'lean', 'squint', 'eyeDrop']) p[key] = L[key] * k;
+        for (const key of ['crouch', 'pinch', 'squint', 'eyeDrop']) p[key] = L[key] * k;
         if (!k) p.lunge = undefined;
     },
 

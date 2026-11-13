@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Leap: no forward lean
+- Owner: remove every forward-lean frame from Leap. It showed up when you held the button through a landing, because the charge restarts at 0 and 0 is the dash pose.
+- The dash pose (fresh press, and a low jump's lunge in flight) is now upright: still squeezed from the sides with the eye narrowed, but it doesn't lean. Charging toward a full leap still leans back. `HR_LEAP.lean` is gone; jump physics are unchanged.
+- Next: play it by hand to check the upright dash still reads as a dash.
+
 ## 2026-11-13 — Player size 1.4 u
 - Owner: the default player size is now 1.4 u (`HR_PSIZE` in `src/config.js`, was 0.8). The debug panel's Reset goes to the new default.
 - The start prompt ("Press A to leap") now sits 0.9 u above the player's top instead of a fixed 1.3 u above its center, so it clears the bigger square (same spot at 0.8 u).
