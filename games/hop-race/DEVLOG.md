@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Debug panel: Rocket tuning
+- `tools/debug.js` has a "Rocket" section: a slider and number box for every `HR_ROCKET` value (gravity, aim turn speed, rocket speed, cooldown, recoil, blast radius, button radius, blast power, top speed, friction, ice friction, sticky push, wall bounce). Changes apply live.
+- "Copy values" copies the whole `HR_ROCKET` block with its comments, to paste over it in `src/modes/rocket.js`; "Reset" goes back to the values in the code. Nothing is saved. Release builds still leave the panel out.
+- Next: tune Rocket's hold-to-aim in play.
+
 ## 2026-11-13 — Rocket: hold to aim, release to fire; Leap hidden
 - Owner: hide Leap for now (`hidden: true` in `HR_WORLDS`; code, levels and ghosts stay).
 - Rocket: the launcher no longer spins on its own. Holding turns it clockwise at 3 rad/s (first tried counter-clockwise; owner switched it); releasing fires (0.1 s cooldown, same rocket, recoil and blast). A tap fires where it already points; it still starts pointing down and back.
