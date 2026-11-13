@@ -77,11 +77,11 @@ HR_LEVELS.rocket = [
         start: {x: -10.5, y: -4},
         solids: [
             {l: -14, r: 14, top: -4},
-            {l: 2, r: 14, top: 5.4, bottom: 2.5},
-            {l: -9.25, r: -0.75, top: 5.5, bottom: -5.5, grip: true},
+            {l: 2, r: 14, top: 2.5, bottom: -0.25},
+            {l: -9.25, r: -0.75, top: 2.5, bottom: -5.5},
         ],
         gates: [
-            {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 12.15, y: 6.05}},
+            {solid: {l: 2, r: 3, top: -0.25, bottom: -4}, button: {x: 12.15, y: 4.8}},
         ],
         flag: {x: 11, y: -4},
     },

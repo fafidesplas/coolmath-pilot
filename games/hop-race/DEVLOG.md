@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Rocket 2-5 Around the Corner reworked
+- Owner's editor changes: the middle block (x −9.25…−0.75) is lower (top 2.5) and no longer a grip wall; the block over the gate is lower (top 2.5, bottom −0.25), so the gate is shorter; the button floats above that block at y 4.8.
+- No live Rocket level has a grip wall now; the Rocket grip rule stays in the code.
+- Not re-checked with a bot or in a browser.
+
 ## 2026-11-13 — Rocket: grip walls
 - Owner: grip walls are grippy for the rocket player too. Hit one in the air and you stick: no riding up it, you face away and slide down at up to 3 u/s (`HR_ROCKET.clingSlide`, also in the debug panel's Rocket section). A blast or recoil pushing you away from the wall lets go; a push up or into it does not. If the wall ends below you, you fall. On the ground it stays a plain wall.
 - Checked with a Node simulation of `HR_MODES.rocket.step` on 2-5's grip block (cling, slide, let go on a push away, still holds after an upward push, lands at the bottom). Not played in a browser yet.
