@@ -216,6 +216,7 @@ function hrPlayUpdate(racing)
 {
     if (hrFinishT >= 0)
     {
+        hrMoversStep();
         hrPlayers.forEach(p => hrPlayerStep(p, {down: false, pressed: false, released: false}));
         hrFinishT += timeDelta;
         if (hrFinishT > .5)
@@ -249,6 +250,7 @@ function hrPlayUpdate(racing)
     {
         hrMatch.frames++;
         const done = hrMatch.finishers = [];   // who touches the flag this frame
+        hrMoversStep();
         hrPlayers.forEach(p => hrPlayerStep(p, hrButtons[p.index]));
         if (done.length == 1) hrRoundWon(done[0]);
         else if (done.length > 1) hrRoundTie();
@@ -262,6 +264,7 @@ function hrPlayUpdate(racing)
         hrRun.started = true;
         hrGaProgress('Start', hrWorld, hrLevelIndex);
     }
+    if (hrRun.started) hrMoversStep();   // moving solids wait for the first input, like the timer
     hrPlayerStep(p, input);
     if (!hrRun.started || hrFinishT >= 0) return;
     hrGhostRecord(p, hrRun.frames);

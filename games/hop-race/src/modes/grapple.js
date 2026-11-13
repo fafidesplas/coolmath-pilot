@@ -71,9 +71,11 @@ HR_MODES.grapple = {
                     p.cool = G.missCooldown;
                     break;
                 }
-                if (solids.some(s => nx > s.l && nx < s.r && ny > s.bottom && ny < s.top))
+                const hit = solids.find(s => nx > s.l && nx < s.r && ny > s.bottom && ny < s.top);
+                if (hit)
                 {
                     h.fly = false;   // stuck: h.x / h.y stay on the last free point
+                    h.s = hit;       // a moving solid carries the hook along (hrMoveSolid)
                     hrSfx.click.play(vec2(h.x, h.y), 1, .8);
                     addScreenShake(.08, .1);
                     p.pupilKick(h.dx * .15, h.dy * .15);

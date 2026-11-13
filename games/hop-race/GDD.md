@@ -33,6 +33,7 @@ Numbers below are the prototype's values in `game.js` and are the starting point
 - **No contact between players:** players pass through each other, and nothing one player does moves the other (in Rocket too since 2026-11-11, 3.3).
 - **Falling:** dropping below the kill line (1 u under the level's bottom edge) sends you back to the level's start with zero speed. The timer keeps running; nothing else is lost. In Versus the other player keeps racing. There are no checkpoints: levels are short enough that a restart from the start is fair.
 - **Finish (Hop, Rocket, Grapple):** touch the flag's trigger box, which runs from the pole to the pennant tip (1.44 u wide) and from the ground to the top of the pole (3 u). Grounding is not needed. Phase has its own rule (3.5). Solo: the timer stops. Versus: the first player to finish wins the round.
+- **Moving solids** (owner, 2026-11-13; every mode; no level uses one yet): a solid can glide from where it is placed to a second spot and back, forever, eased at both ends (`move: {x, y, t}` in the level data: the offset to the far spot in u, and the seconds each way). Whoever stands on it or clings to its side rides along; a grapple hook or a Climb suction cup stuck in it goes along too. If it runs into a player it shoves them out the shortest way. Its middle leaves a faint dotted track between the two spots. The motion starts with the timer (solo: your first input; Versus and Hop: at GO), so a ghost always meets the solids where its run met them; a fall does not reset it. On a mirrored Versus level the mirror copy moves the mirror way. You keep no speed from the solid when you leave it. Editor: **M** or the "moving" box, then drag the see-through ghost at the far spot.
 - **Timer (solo):** starts at your first input, not when the level appears, so reading the level is free. Shown as seconds with one decimal; stored in ms.
 - **Stuck nudge (solo):** after 8 s without getting closer to the flag (your best distance to it has not improved), in any mode, a small "R to restart" fades in near the restart button. It disappears as soon as you get closer again.
 
@@ -198,7 +199,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
       solids: [                            // l, r, top, optional bottom (default: below the kill line)
         {l: -13, r: -1.5, top: -4},
         {l: 1.5, r: 13, top: -4},
-        // optional flags: grip, ice (Hop); ice, sticky, breakable (Rocket); nogrip (Grapple)
+        // optional flags: grip, ice (Hop); ice, sticky, breakable (Rocket); nogrip (Grapple); move: {x, y, t} (all)
       ],
       slabs: [],                           // Phase only: [x0, y0, x1, y1] top surface ends
       gates: [],                           // Rocket only: {solid: {l, r, top, bottom}, button: {x, y}}
@@ -380,6 +381,7 @@ New physics and new meanings for the button keep being tried while the core worl
 | Coolmath SDK, ad breaks (between levels only), size limit, GA keys | Follow `STANDARDS.md` once the shared [confirm]s are answered. | Team | Open |
 
 ## 15. Changelog
+- 2026-11-13 — Moving solids in every mode (§3.1): a solid glides to a second spot and back and carries its riders. Editor: M. The editor shows breakable (B) in Rocket only.
 - 2026-11-13 — Rocket: owner's editor levels. 2-6 The Middle (was the Mind the Gap draft; its middle island is now a tall pillar, top 4.5) and 2-7 Sticky Situation (rebuilt around breakable solids: start on a breakable ledge high on the right, break your way down to the flag at the bottom left) are live. New draft `rocket-12` (a breakable ledge over an ice floor).
 - 2026-11-13 — Rocket (experiment): breakable solids. A rocket hit destroys one; the blast still boosts you, even standing on it. They look cracked.
 - 2026-11-13 — Rocket 2-5 Around the Corner reworked by the owner: its middle block is lower (top 2.5) and no longer a grip wall, the block over the gate is lower (2.5 to -0.25) and the button floats above it.

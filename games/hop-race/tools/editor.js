@@ -10,6 +10,8 @@
 
     Mouse: click to select, drag to move, drag an edge of the selected solid to resize, drag on empty
     space to draw a new solid. Alt: no snapping (0.25 u grid). Keys are listed in the panel.
+    M makes the selected solid move (every mode): a ghost outline shows where it turns back; drag the ghost
+    to set that spot, and set the seconds each way in the panel.
 */
 
 'use strict';
@@ -36,7 +38,7 @@ window.hrEditor = (() =>
     ///////////////////////////////////////////////////////////////////////////
     // snapshots (undo) keep the hidden markers: _o (index in the file) and _teeth (Climb's seeded teeth)
 
-    const cloneSolid = s => hide(hide({...s}, '_o', s._o), '_teeth', s._teeth);
+    const cloneSolid = s => hide(hide({...s, ...(s.move && {move: {...s.move}})}, '_o', s._o), '_teeth', s._teeth);
     function cloneDef(d)
     {
         const c = {...d, start: {...d.start}, flag: {...d.flag}, solids: d.solids.map(cloneSolid)};
@@ -165,6 +167,8 @@ window.hrEditor = (() =>
         const {hh} = box();
         return {l: s.l, r: s.r, top: min(s.top, hh + HR_MARGIN), bottom: max(s.bottom ?? -1e9, hrLevel.killY - .5)};
     }
+    // a moving solid's far end: where it turns back
+    const endVis = s => { const v = vis(s), m = s.move; return {l: v.l + m.x, r: v.r + m.x, top: v.top + m.y, bottom: v.bottom + m.y}; };
     const inside = (v, p, pad = 0) => p.x > v.l - pad && p.x < v.r + pad && p.y > v.bottom - pad && p.y < v.top + pad;
     const promptPos = () => def.promptAt ? vec2(def.promptAt.x, def.promptAt.y) : vec2(0, def.start.y + 6);
 
@@ -181,17 +185,19 @@ window.hrEditor = (() =>
             if (inside(vis(g.solid), p)) return {type: 'gate', i};
         }
         for (let i = def.solids.length; i--;)
+            if (def.solids[i].move && inside(endVis(def.solids[i]), p)) return {type: 'moveEnd', i};
+        for (let i = def.solids.length; i--;)
             if (inside(vis(def.solids[i]), p)) return {type: 'solid', i};
         return null;
     }
 
-    const selSolid = () => sel?.type == 'solid' ? def.solids[sel.i] : sel?.type == 'gate' ? def.gates[sel.i].solid : null;
+    const selSolid = () => sel?.type == 'solid' || sel?.type == 'moveEnd' ? def.solids[sel.i] : sel?.type == 'gate' ? def.gates[sel.i].solid : null;
 
     // which edges of the selected solid the mouse is on (to resize)
     function edgesAt(p)
     {
         const s = selSolid();
-        if (!s) return null;
+        if (!s || sel.type == 'moveEnd') return null;
         const v = vis(s), {hh} = box(), d = .2, e = {};
         if (!inside(v, p, d)) return null;
         if (Math.abs(p.x - s.l) < d) e.l = 1;
@@ -263,6 +269,7 @@ window.hrEditor = (() =>
         };
         const shift = o => { o.x += dx; o.y += dy; };
         if (sel.type == 'solid') moveSolid(def.solids[sel.i]);
+        else if (sel.type == 'moveEnd') { const m = def.solids[sel.i].move; m.x += dx; m.y += dy; }
         else if (sel.type == 'gate') { moveSolid(def.gates[sel.i].solid); shift(def.gates[sel.i].button); }
         else if (sel.type == 'button') shift(def.gates[sel.i].button);
         else if (sel.type == 'start') shift(def.start);
@@ -305,6 +312,7 @@ window.hrEditor = (() =>
         if (cmd && e.code == 'KeyZ') { e.preventDefault(); return e.shiftKey ? doRedo() : doUndo(); }
         if (cmd) return;
         const s = selSolid(), flagKeys = {KeyG: 'grip', KeyI: 'ice', KeyK: 'sticky', KeyN: 'nogrip', KeyB: 'breakable'};
+        if (e.code == 'KeyB' && HR_WORLDS[world].id != 'rocket') return;   // breakable solids are Rocket only
         if (flagKeys[e.code] && s) { snapshot(); touch(s); s[flagKeys[e.code]] ? delete s[flagKeys[e.code]] : s[flagKeys[e.code]] = true; return changed(); }
         const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1]}[e.code];
         if (nudge && sel) { e.preventDefault(); const k = e.shiftKey ? 1 : .25; snapshot(); move(nudge[0] * k, nudge[1] * k); return changed(); }
@@ -313,6 +321,7 @@ window.hrEditor = (() =>
             case 'Backspace': case 'Delete': return remove();
             case 'Escape': sel = null; return refreshPanel();
             case 'KeyD': return duplicate();
+            case 'KeyM': return s && setMoving(s, !s.move);
             case 'KeyF': return s && setFloating(s, s.bottom === undefined);
             case 'KeyH': return s && setHanging(s, s.top < box().hh);
             case 'KeyT': return gateToggle();
@@ -325,6 +334,7 @@ window.hrEditor = (() =>
 
     function remove()
     {
+        if (sel?.type == 'moveEnd') return setMoving(def.solids[sel.i], false);
         if (sel?.type == 'solid') { snapshot(); def.solids.splice(sel.i, 1); }
         else if (sel?.type == 'gate' || sel?.type == 'button') { snapshot(); def.gates.splice(sel.i, 1); if (!def.gates.length) delete def.gates; }
         else if (sel?.type == 'prompt') { snapshot(); delete def.promptAt; }
@@ -336,9 +346,9 @@ window.hrEditor = (() =>
     function duplicate()
     {
         const s = selSolid();
-        if (!s || sel.type != 'solid') return;
+        if (!s) return;
         snapshot();
-        const c = {...s, l: s.l + 1, r: s.r + 1};
+        const c = {...s, l: s.l + 1, r: s.r + 1, ...(s.move && {move: {...s.move}})};
         def.solids.push(c);
         sel = {type: 'solid', i: def.solids.length - 1};
         changed();
@@ -349,6 +359,14 @@ window.hrEditor = (() =>
     {
         snapshot(); touch(s);
         if (on) s.bottom = max(s.top - 1, box().hh * -1 - .5); else delete s.bottom;
+        changed();
+    }
+    // M: a moving solid starts 4 u to the right and back, 2 s each way
+    function setMoving(s, on)
+    {
+        snapshot(); touch(s);
+        if (on) s.move = {x: 4, y: 0, t: 2}; else delete s.move;
+        if (!on && sel.type == 'moveEnd') sel = {type: 'solid', i: sel.i};
         changed();
     }
     // H: hanging blocks run up off the top of the level box
@@ -444,7 +462,7 @@ window.hrEditor = (() =>
     // solids keep the files' order: l, r, top, bottom, then the flags
     function solidLit(s)
     {
-        const keys = ['l', 'r', 'top', 'bottom', 'grip', 'ice', 'sticky', 'nogrip', 'breakable'];
+        const keys = ['l', 'r', 'top', 'bottom', 'grip', 'ice', 'sticky', 'nogrip', 'breakable', 'move'];
         const o = {};
         for (const k of keys) if (s[k] !== undefined && s[k] !== false) o[k] = s[k];
         for (const k of Object.keys(s)) if (!keys.includes(k)) o[k] = s[k];
@@ -638,6 +656,7 @@ window.hrEditor = (() =>
     {
         if (!s) return null;
         if (s.type == 'solid') return vis(def.solids[s.i]);
+        if (s.type == 'moveEnd') return endVis(def.solids[s.i]);
         if (s.type == 'gate') return vis(def.gates[s.i].solid);
         if (s.type == 'button') { const b = def.gates[s.i].button; return {l: b.x - .55, r: b.x + .55, bottom: b.y - .55, top: b.y + .55}; }
         if (s.type == 'start') return {l: def.start.x - .4, r: def.start.x + .4, bottom: def.start.y, top: def.start.y + .8};
@@ -677,13 +696,21 @@ window.hrEditor = (() =>
         outline({l: b.pos.x - b.size.x / 2, r: b.pos.x + b.size.x / 2, bottom: b.pos.y - b.size.y / 2, top: b.pos.y + b.size.y / 2}, .04, ink.scale(1, .3));
         // Climb's seeded teeth get a dotted outline, so you can tell them from hand-placed solids
         for (const s of def.solids) if (s._teeth) outline(vis(s), .03, HR_WHITE.scale(1, .6));
+        // moving solids: a see-through ghost where each one turns back
+        for (const s of def.solids)
+            if (s.move)
+            {
+                const v = endVis(s);
+                drawRect(vec2((v.l + v.r) / 2, (v.top + v.bottom) / 2), vec2(v.r - v.l, v.top - v.bottom), ink.scale(1, .18));
+                outline(v, .04, ink.scale(1, .5));
+            }
         // hover and selection, with resize handles on the selected solid's edges
         if (hover && !(sel && hover.type == sel.type && hover.i == sel.i)) outline(boundsOf(hover), .06, HR_BLUE.scale(1, .45));
         if (sel)
         {
             const v = boundsOf(sel);
             outline(v, .1, HR_BLUE);
-            if (selSolid())
+            if (selSolid() && sel.type != 'moveEnd')
             {
                 const s = selSolid(), hs = vec2(.22);
                 drawRect(vec2(s.l, (v.top + v.bottom) / 2), hs, HR_BLUE);
@@ -806,7 +833,7 @@ window.hrEditor = (() =>
         panel.append(el('div', {className: 'status', textContent: status || (unsaved.length ? 'Unsaved: ' + unsaved.join(', ') : 'No unsaved changes')}));
 
         // the selection
-        panel.append(el('h3', {textContent: sel ? {solid: 'Solid', gate: 'Gate', button: 'Gate button', start: 'Start', flag: 'Flag', prompt: 'Prompt position'}[sel.type] : 'Selection'}));
+        panel.append(el('h3', {textContent: sel ? {solid: 'Solid', moveEnd: 'Moving solid: turn-back spot', gate: 'Gate', button: 'Gate button', start: 'Start', flag: 'Flag', prompt: 'Prompt position'}[sel.type] : 'Selection'}));
         const s = selSolid();
         if (s)
         {
@@ -814,7 +841,16 @@ window.hrEditor = (() =>
             panel.append(el('div', {className: 'grid4'}, [field('left', n('l')), field('right', n('r')), field('top', n('top')),
                 s.bottom === undefined ? el('label', {}, [el('span', {textContent: 'bottom'}), 'floor (F)']) : field('bottom', n('bottom'))]));
             const flags = [['grip', 'grip wall (G)'], ['ice', 'ice (I)'], ['sticky', 'sticky (K)'], ['nogrip', 'no-grip (N)'], ['breakable', 'breakable (B)']];
+            if (HR_WORLDS[world].id != 'rocket' && !s.breakable) flags.pop();   // breakable: Rocket only
             for (const [k, label] of flags) panel.append(checkbox(label, () => s[k], v => { touch(s); v ? s[k] = true : delete s[k]; }));
+            if (sel.type == 'solid')
+                panel.append(checkbox('moving (M)', () => s.move, v => { touch(s); v ? s.move = {x: 4, y: 0, t: 2} : delete s.move; }));
+            if (s.move)
+            {
+                const m = k => input('number', () => s.move[k], v => { s.move[k] = k == 't' ? max(.25, v) : v; }, {step: .25});
+                panel.append(el('div', {className: 'grid4'}, [field('move x', m('x')), field('move y', m('y')), field('s each way', m('t'))]),
+                    el('div', {className: 'keys', textContent: 'Drag the ghost outline to set where it turns back. It starts moving with the run.'}));
+            }
             if (s._teeth) panel.append(el('div', {className: 'keys', textContent: 'A seeded tooth (hrClimbTeeth). Editing it writes all the teeth out as numbers.'}));
         }
         else if (sel && sel.type != 'gate')
@@ -831,7 +867,8 @@ window.hrEditor = (() =>
             <b>E</b> play / edit · <b>Shift+E</b> play from the mouse<br>
             <b>drag</b> move · <b>drag an edge</b> resize · <b>drag empty space</b> new solid<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: 1 u)<br>
-            <b>G I K N B</b> grip, ice, sticky, no-grip, breakable<br>
+            <b>G I K N</b> grip, ice, sticky, no-grip${HR_WORLDS[world].id == 'rocket' ? ', <b>B</b> breakable' : ''}<br>
+            <b>M</b> moving (drag its ghost: turn-back spot)<br>
             <b>F</b> floor / floating · <b>H</b> hanging from the top<br>
             <b>T</b> solid ↔ gate (Rocket) · <b>D</b> duplicate · <b>Delete</b> remove<br>
             <b>[ ]</b> level size · <b>, .</b> previous / next level<br>

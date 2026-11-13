@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Moving solids in the editor, every mode
+- New solid option `move: {x, y, t}`: the solid glides from where it is placed to (x, y) u away and back, t s each way, eased at both ends (`hrMoversStep` / `hrMoveSolid` in `src/level.js`). It carries anyone standing on it or clinging to its side, and a grapple hook or Climb cup stuck in it; it shoves anyone else it runs into out the shortest way. You keep no speed from it when you leave.
+- The motion runs with the timer (solo: from the first input; Versus and Hop: from GO) and keeps going through a fall, so ghosts stay in sync. Mirrored Versus copies move the mirror way. A faint dotted track shows its path. Breakable cracks keep their pattern while it moves.
+- Editor: **M** or the "moving" box (starts as 4 u right, 2 s each way). A see-through ghost marks the far spot; drag it (or Delete on it removes the movement). Fields: move x, move y, s each way. Saved after the other flags.
+- Editor: the breakable box and **B** show in Rocket only (owner).
+- Checked with a Node simulation of the modes: riders stay on in Rocket, Grapple, Climb and Hop (sideways and up and down); Hop runs off the end; a sliding block shoves a standing player; the mirror copy moves the mirror way. Not checked in a browser (the editor UI, the track drawing and the ghost dragging are untested). No level uses it yet. The Hop bot and the ghost generator don't know about moving solids.
+
 ## 2026-11-13 — Rocket: 2-6 and 2-7 live, breakable levels
 - Owner's editor changes. 2-6 **The Middle** (`rocket-06`, was the Mind the Gap draft): the middle island is now a tall pillar (top 4.5) between the two small steps.
 - 2-7 **Sticky Situation** (`rocket-07`) is rebuilt around breakable solids: start on a breakable ledge high on the right, under a big ceiling block, and break through breakable pieces down to the flag at the bottom left. It has no sticky floor now; the name is kept for now.

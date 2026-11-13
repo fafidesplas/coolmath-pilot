@@ -19,6 +19,7 @@ function hrDrawLevel()
 {
     const L = hrLevel, hw = L.w / 2, hh = L.h / 2, far = 60;
     for (const g of L.gates) hrDrawGate(g);
+    for (const s of L.solids) if (s.move) hrDrawTrack(s);
     for (const s of L.solids)
     {
         if (s.gate) continue;
@@ -42,6 +43,16 @@ function hrDrawLevel()
         if (s.breakable) hrDrawCracks(s);
     }
     hrDrawFlag();
+}
+
+// moving solid: a faint dotted track for its middle, from where it starts to where it turns back
+function hrDrawTrack(s)
+{
+    const hh = hrLevel.h / 2, top = min(s.home.top, hh), bottom = max(s.home.top - s.size.y, -hh - 1);
+    const a = vec2(s.home.l + s.size.x / 2, (top + bottom) / 2), b = a.add(vec2(s.move.x, s.move.y));
+    const n = Math.floor(a.distance(b) / .5), c = HR_INK.scale(1, .25);
+    for (let i = 0; i <= n; i++) drawCircle(a.lerp(b, n ? i / n : 0), .16, c);
+    drawCircle(a, .3, c); drawCircle(b, .3, c);
 }
 
 // icy floor: a white hatched stripe along the top
@@ -68,7 +79,7 @@ function hrDrawCracks(s)
 {
     const bg = hrWorldBg(), bottom = max(s.bottom, -hrLevel.h / 2 - 1);
     const n = max(1, Math.round((s.r - s.l) / 1.6)), w = (s.r - s.l) / n;
-    let seed = Math.abs(Math.round(s.l * 97 + s.top * 31)) + 1;
+    let seed = Math.abs(Math.round(s.home.l * 97 + s.home.top * 31)) + 1;   // home: a moving solid keeps its cracks
     const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
     const cx = x => clamp(x, s.l + .12, s.r - .12);
     for (let i = 0; i < n; i++)

@@ -230,7 +230,7 @@ HR_MODES.climb = {
         const c = hrClimbPush(x, y, s), side = abs(c.nx) > abs(c.ny);
         const nx = side ? sign(c.nx) : 0, ny = side ? 0 : sign(c.ny);
         const sx = side ? (nx > 0 ? s.r : s.l) : clamp(x, s.l, s.r), sy = side ? clamp(y, s.bottom, s.top) : (ny > 0 ? s.top : s.bottom);
-        p.pin = {x, y, nx, ny, sx, sy, age: 0, held: 0};
+        p.pin = {x, y, nx, ny, sx, sy, s, age: 0, held: 0};   // s: a moving solid carries the cup along (hrMoveSolid)
         p.armW = 0;
         hrSfx.click.play(vec2(x, y), .7, .5);   // a low thwop
         p.pupilKick(0, -.1);
