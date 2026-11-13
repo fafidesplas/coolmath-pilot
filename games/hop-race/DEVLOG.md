@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-11-13 — Rocket: breakable cracks run top to bottom
+- Owner: a tall breakable solid looked only half cracked (cracks stopped after about 2 u). Each crack now runs from the top to the bottom (floors: to just past the bottom of the screen), with a short side branch every 0.8 to 1.6 u along it.
+
 ## 2026-11-13 — Rocket: breakable solids (experiment)
 - New solid flag `breakable` (owner's idea). A rocket that hits one destroys the whole solid, with ink chunks, a low boom and a small shake. The blast still goes off, so a breakable floor under you boosts you as it breaks.
 - Broken solids come back on a fall in solo (so a level can't be left with no way through) and on a restart; in Versus they stay broken for the round.

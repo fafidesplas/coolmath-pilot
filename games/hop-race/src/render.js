@@ -61,27 +61,28 @@ function hrDrawSticky(s)
         drawCircle(vec2(s.l + step * (i + .5), s.top), step * 1.1, HR_INK);
 }
 
-// breakable solid (Rocket): jagged cracks in the background color, a fixed pattern per solid; a crack runs
-// down from the top every ~1.6 u, with a short branch
+// breakable solid (Rocket): jagged cracks in the background color, a fixed pattern per solid. A crack runs
+// from the top all the way down (to just past the screen's bottom for floors) every ~1.6 u across, with short
+// side branches spread along it, so tall solids are cracked top to bottom
 function hrDrawCracks(s)
 {
-    const bg = hrWorldBg(), hh = hrLevel.h / 2, bottom = max(s.bottom, -hh - 1), h = min(s.top - bottom, 2.4);
+    const bg = hrWorldBg(), bottom = max(s.bottom, -hrLevel.h / 2 - 1);
     const n = max(1, Math.round((s.r - s.l) / 1.6)), w = (s.r - s.l) / n;
     let seed = Math.abs(Math.round(s.l * 97 + s.top * 31)) + 1;
     const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+    const cx = x => clamp(x, s.l + .12, s.r - .12);
     for (let i = 0; i < n; i++)
     {
-        let p = vec2(s.l + w * (i + .3 + rnd() * .4), s.top), branched = false;
-        for (let y = s.top; y > s.top - h * (.6 + rnd() * .4); )
+        let p = vec2(s.l + w * (i + .3 + rnd() * .4), s.top), nextBranch = s.top - .4 - rnd() * .6;
+        while (p.y > bottom)
         {
-            y -= .3 + rnd() * .25;
-            const q = vec2(clamp(p.x + (rnd() - .5) * .7, s.l + .1, s.r - .1), y);
+            const q = vec2(cx(p.x + (rnd() - .5) * .7), max(bottom, p.y - .3 - rnd() * .25));
             drawLine(p, q, .09, bg);
-            if (!branched && rnd() < .35)
+            if (q.y < nextBranch && q.y > bottom + .3)
             {
-                branched = true;
                 const side = rnd() < .5 ? -1 : 1;
-                drawLine(q, vec2(clamp(q.x + side * (.3 + rnd() * .3), s.l + .1, s.r - .1), q.y - .25 - rnd() * .2), .07, bg);
+                drawLine(q, vec2(cx(q.x + side * (.3 + rnd() * .3)), q.y - .25 - rnd() * .2), .07, bg);
+                nextBranch = q.y - .8 - rnd() * .8;
             }
             p = q;
         }
