@@ -107,6 +107,7 @@
 - ★ **Ticket:** solve it in a run that collects the golden ticket. In levels without a ticket (1-1 to 1-3), this star comes with the solve.
 - ★ **Par:** solve it with flip count ≤ par.
 - All three stars count from one winning run, so a perfect run is always possible. **Par** = the solver's minimum flip count over all solutions that also collect the ticket.
+- **Prototype (2026-11-14):** tickets are not built yet, so the prototype's middle star is **First run** (solved on the first Go of the visit) in place of Ticket. Revisit when tickets land.
 - **Perfect run** (solved on the first Go of a visit) is not a star. It is a badge on the results screen and a mark in the daily emoji line.
 
 ### 3.13 Hints
@@ -163,8 +164,8 @@ The selected switch or signal gets a thick ink ring. Nothing depends on hover or
   1. **First Switch** (5×3): one red train, one switch, the station on one branch and a buffer stop on the other; the switch starts wrong. Par 1. Tutorial: a hand points at the switch, then at Go.
   2. **Two Turns** (6×3): one train, two switches in a row; only one of the four combos reaches the station. Par 2.
   3. **Two Colors** (6×4): red and blue on parallel lines, one switch each; red's wrong branch leads into blue's station. Par 2.
-  4. **Merge** (7×4): two trains from separate depots join on one line through a trailing switch, then the line splits; first ticket. Par 1.
-  5. **Wait Your Turn** (7×4): blue leaves at tick 0, red at tick 3 on the same line; the short branch makes them collide, the long one does not. Par 2.
+  4. **Merge** (7×4): red joins the main line through a trailing switch and gets home; blue's start setting merges it in behind red, so it crashes at the merge. Flip blue onto its own line; first ticket. Par 1. (Locked switches cannot split two merged trains to different stations, so the "then the line splits" idea is out.)
+  5. **Wait Your Turn** (7×4): red leaves at tick 0, blue at tick 3, and they use the middle line in opposite directions; red's short branch brings it into the middle line while blue is still there (head-on), the long one does not. Par 2.
   6. **Scenic Route** (7×5): the ticket sits on a longer branch that is only safe if the other train takes the short one. Par 2.
   7. **Three's Company** (8×5): first 3-train level, 3 switches, two of which are shared. Par 2.
   8. **Both Ways** (8×5): one switch is facing for red and trailing for blue; its setting must suit red without blocking blue. Par 2.
@@ -338,4 +339,5 @@ Music: an optional calm ukulele/xylophone-style loop of 30 s, synthesized, off b
 | GameAnalytics keys | One key pair per game in `src/config.js` | Team [confirm] | Open |
 
 ## 15. Changelog
+- 2026-11-14 — Prototype: levels 1-4 and 1-5 redesigned to work with locked switches (6); prototype middle star = First run until tickets exist (3.12).
 - 2026-10-19 — First draft from the brief, using the recommended answers to the phase 1a questions.
