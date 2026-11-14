@@ -16,6 +16,7 @@ export default [
   {
     id: 'world01:level01',
     name: 'First Switch',
+    tip: 'Tap the switch, then press GO.',
     w: 5, h: 3,
     tiles: [
       depot(0, 1, 1), st(1, 1, 1), sw(2, 1, 1, false, 0), st(3, 1, 1), buffer(4, 1, 3),
@@ -30,6 +31,7 @@ export default [
   {
     id: 'world01:level02',
     name: 'Two Turns',
+    tip: 'Trace the path: every switch must point the right way.',
     w: 6, h: 3,
     tiles: [
       cv(1, 0, 1), st(2, 0, 1), st(3, 0, 1), st(4, 0, 1), buffer(5, 0, 3),
@@ -44,6 +46,7 @@ export default [
   {
     id: 'world01:level03',
     name: 'Two Colors',
+    tip: 'Each train stops only at its own color and shape.',
     w: 6, h: 4,
     tiles: [
       depot(0, 0, 1), st(1, 0, 1), sw(2, 0, 1, false, 1), st(3, 0, 1), st(4, 0, 1), station(5, 0, 3, 'red'),
@@ -62,6 +65,7 @@ export default [
   {
     id: 'world01:level04',
     name: 'Merge',
+    tip: 'Coming in from a branch, a switch always lets you through.',
     w: 7, h: 4,
     tiles: [
       depot(0, 0, 1), sw(1, 0, 1, false, 1), st(2, 0, 1), st(3, 0, 1), st(4, 0, 1), st(5, 0, 1), buffer(6, 0, 3),
@@ -80,6 +84,7 @@ export default [
   {
     id: 'world01:level05',
     name: 'Wait Your Turn',
+    tip: 'Watch the clocks: blue leaves 3 ticks later.',
     w: 7, h: 4,
     tiles: [
       station(0, 0, 1, 'red'), st(1, 0, 1), cv(2, 0, 2),
