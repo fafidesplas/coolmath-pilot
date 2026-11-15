@@ -1,6 +1,6 @@
 /*
     HOP RACE - engine setup, the play state machine and the window.game testing hook.
-    Screens: title | levels | settings | playing | paused | complete | round | match
+    Screens: title | levels | settings | store | playing | paused | complete | round | match
 */
 
 'use strict';
@@ -58,6 +58,7 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     }
     hrCountdown = versus || hrMode().countdown ? 2.4 : 0;
     hrCountBeep = 4;
+    hrCmgLevelStart(world, index, !newLevel);
     hrGo('playing');
 }
 
@@ -178,6 +179,7 @@ function gameInit()
     hrSaveLoad();
     hrAudioInit();
     hrInputInit();
+    hrCmgInit();
     hrLoadLevel(hrLevelsOf(0)[0]);   // backdrop for the title screen
     hrGo('title');
     document.addEventListener('visibilitychange', () =>
@@ -188,6 +190,7 @@ function gameInit()
 
 function gameUpdate()
 {
+    if (hrSplashActive()) { hrPointerQueue = []; return; }   // the splash is not clickable
     if (window.hrEditor?.update()) return;   // the level editor has the frame
     hrInputBegin();
     hrUiAdvance(timeDelta);
@@ -309,7 +312,7 @@ function gameRender()
     window.hrEditor?.render();
 }
 
-function gameRenderPost() { hrUiRender(); }
+function gameRenderPost() { hrUiRender(); hrSplashRender(); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // testing hook (STANDARDS.md): read-only state plus helpers; win() is debug only

@@ -2,6 +2,7 @@
     "title": "Hop Race",
     "name": "hopRace",
     "engine": "dist/littlejs.js",
+    "data": ["assets/cmg-splash.png"],
     "sources": [
         "templates/gameFx.js",
         "src/config.js",
@@ -20,6 +21,8 @@
         "src/player.js",
         "src/ghost.js",
         "src/render.js",
+        "src/store.js",
+        "src/cmg.js",
         "src/ui.js",
         "levels/hop.js",
         "levels/rocket.js",

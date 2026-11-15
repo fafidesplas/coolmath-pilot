@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-15 — Coolmath SDK and store scaffolding
+- `src/cmg.js`: Coolmath game events (`start` 0 on the first Play, `start` / `replay` with a level number on every level start) and `cmgAdBreak()` midrolls when you leave the level complete or match result screen. An ad pauses the engine and mutes sound until it ends. `index.html` loads jQuery and `cmg-ads.js` at the end; the tab title follows Coolmath's format.
+- `src/store.js` and a **Store** screen (button top left of the title): the 8 hats with placeholder prices, a coin balance, buy and equip for P1. Save gains `coins` and `owned`.
+- Coolmath splash on load (`assets/cmg-splash.png`): fades in, holds 2 s, fades to the title; not clickable. `?nosplash` skips it.
+- Store: **Watch an ad: +50 coins** (`cmgRewardAds()`). Coolmath's script has no "reward earned" signal, so the coins come on the `adBreakComplete` that ends the request, even if the ad was skipped. To confirm with Coolmath.
+- Not tested in a browser yet. To test the ad pause, in the console: `cmgAdBreak = () => { document.dispatchEvent(new Event('adBreakStart')); setTimeout(() => document.dispatchEvent(new Event('adBreakComplete')), 3000); }`, then finish a level and press Next. `hrStoreAddCoins(500)` gives coins to try the store. A fake rewarded ad: `cmgRewardAds = () => document.dispatchEvent(new Event('adBreakComplete'))` (open the store after pasting it, so the button is live).
+- Next: other ways to earn coins (and whether the store replaces level-count hat unlocks), drawing hats on the players.
+
 ## 2026-11-13 — Moving solids in the editor, every mode
 - New solid option `move: {x, y, t}`: the solid glides from where it is placed to (x, y) u away and back, t s each way, eased at both ends (`hrMoversStep` / `hrMoveSolid` in `src/level.js`). It carries anyone standing on it or clinging to its side, and a grapple hook or Climb cup stuck in it; it shoves anyone else it runs into out the shortest way. You keep no speed from it when you leave.
 - The motion runs with the timer (solo: from the first input; Versus and Hop: from GO) and keeps going through a fall, so ghosts stay in sync. Mirrored Versus copies move the mirror way. A faint dotted track shows its path. Breakable cracks keep their pattern while it moves.

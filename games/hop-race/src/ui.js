@@ -65,6 +65,22 @@ function hrUiButtons()
             enabled: hrLevelsOf(i, false).length > 0,
             act: () => hrStartLevel(i, hrCardLevel(i), false)}));
         add({id: 'settings', x: W - 110 * u, y: 50 * u, w: 180 * u, h: 56 * u, label: 'Settings', act: () => hrOpenSettings('title')});
+        add({id: 'store', x: 110 * u, y: 50 * u, w: 180 * u, h: 56 * u, label: 'Store', act: () => hrGo('store')});
+    }
+    else if (hrScreen == 'store')
+    {
+        back();
+        // 4 per row; a tile equips what you own and buys what you can afford
+        const tw = 220 * u, th = 150 * u;
+        HR_STORE.forEach((it, i) =>
+        {
+            const col = i % 4, row = floor(i / 4);
+            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 1.5) * tw * 1.12, y: H * .42 + row * th * 1.2, w: tw, h: th,
+                enabled: hrStoreOwned(it.id) || hrStoreCanBuy(it.id), focus: i == 0, act: () => hrStorePick(it.id)});
+        });
+        // dimmed when the Coolmath SDK is missing (offline, file://) or an ad is already running
+        add({id: 'watchAd', x: W / 2, y: H * .86, w: 420 * u, h: 66 * u, label: `Watch an ad: +${HR_STORE_AD_COINS} coins`,
+            enabled: hrCmgCanReward(), act: hrStoreWatchAd});
     }
     else if (hrScreen == 'levels')
     {
@@ -110,14 +126,14 @@ function hrUiButtons()
         const acts = [['Menu', () => hrGo('title')], ['Retry', () => hrStartLevel(hrWorld, hrLevelIndex, false)],
             ['Next', () => next ? hrStartLevel(hrWorld, hrLevelIndex + 1, false) : hrToLevels()]];
         acts.forEach(([label, act], i) => add({id: label, x: W / 2 + (i - 1) * 230 * u, y: H * .8, w: 210 * u, h: 76 * u,
-            label, act, big: i == 2, focus: i == 2}));
+            label, act: hrThenAdBreak(act), big: i == 2, focus: i == 2}));
     }
     else if (hrScreen == 'match')
     {
         const acts = [['Menu', () => hrGo('title')], ['Levels', hrToLevels],
             ['Rematch', () => hrStartLevel(hrWorld, hrNextVersusLevel(), true)]];
         acts.forEach(([label, act], i) => add({id: label, x: W / 2 + (i - 1) * 230 * u, y: H * .78, w: 210 * u, h: 76 * u,
-            label, act, big: i == 2, focus: i == 2}));
+            label, act: hrThenAdBreak(act), big: i == 2, focus: i == 2}));
     }
     return list;
 }
@@ -151,6 +167,10 @@ function hrCardLevel(world)
     if (next >= 0) return next;
     return last && last.world == world && !last.versus ? last.index : 0;
 }
+
+// a results screen button: do its action (start the next level, ...), then ask Coolmath for a midroll,
+// which pauses the game only if an ad really shows (src/cmg.js)
+const hrThenAdBreak = act => () => { act(); hrCmgAdBreak(); };
 
 function hrToLevels() { hrMenuWorld = hrWorld; hrMenuVersus = hrVersus; hrGo('levels'); }
 function hrOpenSettings(from) { hrSettingsFrom = from; hrGo('settings'); }
@@ -199,7 +219,7 @@ function hrUiUpdate()
         if (keyWasPressed('KeyP') || keyWasPressed('Escape')) return hrGo('playing');
         if (keyWasPressed('KeyR')) return hrRestart();
     }
-    else if (keyWasPressed('Escape') && ['levels', 'settings'].includes(hrScreen)) return hrBack();
+    else if (keyWasPressed('Escape') && ['levels', 'settings', 'store'].includes(hrScreen)) return hrBack();
 
     // keyboard focus: arrows move between enabled buttons, Enter or Space presses
     const enabled = list.map((b, i) => i).filter(i => list[i].enabled !== false && list[i].id != 'back');
@@ -312,6 +332,7 @@ function hrDrawButton(b, i)
     }
     if (b.card !== undefined) return hrDrawCard(b, w, h, focused);
     if (b.tile !== undefined) return hrDrawTile(b, w, h, focused);
+    if (b.item) return hrDrawStoreItem(b, w, h, focused);
     const filled = b.toggle ? true : b.on === undefined ? true : b.on;
     const c = b.enabled === false ? HR_INK.scale(1, .25) : HR_INK;
     if (filled) hrRect(b.x, b.y, w, h, c);
@@ -540,6 +561,27 @@ function hrDrawTile(b, w, h, focused)
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
+// store item: name and its state (equipped, owned or the price); what you can't afford yet is an outline
+function hrDrawStoreItem(b, w, h, focused)
+{
+    const u = hrUnit(), it = b.item, owned = hrStoreOwned(it.id), on = hrStoreEquipped(it.id);
+    const state = on ? 'Equipped' : owned ? 'Owned' : `${it.price} coins`;
+    if (b.enabled === false)
+    {
+        hrOutline(b.x, b.y, w, h, 3 * u, HR_INK.scale(1, .25));
+        hrText(it.name, b.x, b.y - h * .12, 28 * u, HR_INK.scale(1, .4));
+        hrText(state, b.x, b.y + h * .22, 22 * u, HR_INK.scale(1, .4));
+    }
+    else
+    {
+        hrRect(b.x, b.y, w, h, HR_INK);
+        if (on) hrOutline(b.x, b.y, w + 16 * u, h + 16 * u, 4 * u, HR_INK);
+        hrText(it.name, b.x, b.y - h * .12, 28 * u, HR_YELLOW);
+        hrText(state, b.x, b.y + h * .22, 22 * u, HR_YELLOW.scale(1, on ? 1 : .7));
+    }
+    if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // screens
 
@@ -559,6 +601,13 @@ function hrUiRender()
     else if (hrScreen == 'levels')
         hrText(HR_WORLDS[hrMenuWorld].name + (hrMenuVersus ? ' · Versus' : ''), W / 2, H * .17 + y0, 54 * u);
     else if (hrScreen == 'settings') hrText('Settings', W / 2, H * .18 + y0, 54 * u);
+    else if (hrScreen == 'store')
+    {
+        hrText('Store', W / 2, H * .14 + y0, 54 * u);
+        hrText(`${hrSave.coins} coins`, W / 2, H * .23 + y0, 30 * u, HR_INK.scale(1, .7));
+        const got = timeReal - hrStoreGotT;   // "+50" rises and fades after an ad reward
+        if (got < 1.2) hrText(`+${HR_STORE_AD_COINS}`, W / 2 + 140 * u, H * .23 + y0 - got * 30 * u, 30 * u, HR_INK.scale(1, clamp(1.2 - got)));
+    }
     else if (hrScreen == 'paused')
     {
         hrText('Paused', W / 2, H * .16 + y0, 64 * u);

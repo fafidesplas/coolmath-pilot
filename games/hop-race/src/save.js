@@ -8,6 +8,7 @@
 const HR_SAVE_KEY = 'cm_hop-race_save';
 const HR_GHOST_KEY = 'cm_hop-race_ghost_';
 const hrSaveDefaults = () => ({v: 1, levels: {}, last: null, hats: {p1: null, p2: null},
+    coins: 0, owned: [],   // cosmetics store (src/store.js)
     settings: {sfx: true, music: false, ghost: true}});
 
 let hrSave = hrSaveDefaults();
@@ -17,6 +18,8 @@ function hrSaveLoad()
     const d = hrSaveDefaults(), s = readSaveData(HR_SAVE_KEY, d);
     const ok = s.v == 1 && s.levels && typeof s.levels == 'object' && s.settings && typeof s.settings == 'object';
     hrSave = ok ? {...d, ...s, settings: {...d.settings, ...s.settings}, hats: {...d.hats, ...s.hats}} : d;
+    if (!(hrSave.coins >= 0)) hrSave.coins = 0;
+    hrSave.owned = Array.isArray(hrSave.owned) ? hrSave.owned.filter(id => hrStoreItem(id)) : [];
     // Hop's rules changed to auto-run (2026-11-10): best times and ghosts from the charge hop don't compare, so
     // they are cleared once (only test saves had any)
     if (!hrSave.hopRun)
