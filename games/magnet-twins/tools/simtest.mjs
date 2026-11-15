@@ -5,7 +5,6 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { Sim } from '../src/sim.js';
 import { B, T } from '../src/config.js';
 import { encodeRecording, decodeRecording } from '../src/record.js';
-import w1l10 from '../levels/w1l10.js';
 
 const WRITE = process.argv.includes('--write');
 let failed = 0;
@@ -122,11 +121,48 @@ const cy = r => r.y + r.h / 2;
   ok(s2.gates[0].open === 0, 'a + lock ignores Minus');
 }
 
-{ // Spikes reset both robots; crates stay
-  const s = new Sim(w1l10);
+// Checkpoints (GDD 3.6). A room with spikes at column 16, a crate at 22 and, optionally, a flag
+// at column 10. Plus walks right alone; Minus stays at the start.
+const spikeRow = '#' + '.'.repeat(15) + '^' + '.'.repeat(14) + '#';
+const cpRoom = withFlag => room([{ type: 'crate', x: 22, y: 11 }, ...(withFlag ? [{ type: 'checkpoint', x: 10, y: 11 }] : [])],
+  { plus: [4, 11], minus: [2, 11] }, { 11: spikeRow });
+const RESET = Math.round(0.4 * 120);
+
+{ // Spikes with no flag: both robots go back to the level start; crates stay
+  const s = new Sim(cpRoom(false));
   run(s, 30);
-  run(s, 200, () => B.L);
-  ok(s.events.some(e => e.type === 'hazard'), 'walking into spikes triggers a reset');
+  const crateX = s.crates[0].x;
+  s.events.length = 0;
+  let k = 0;
+  while (!s.events.some(e => e.type === 'hazard') && k++ < 600) s.step(B.R);
+  ok(s.events.some(e => e.type === 'hazard' && e.kind === 'spikes'), 'walking into spikes triggers a reset');
+  run(s, RESET + 2);
+  ok(s.events.some(e => e.type === 'respawn'), 'robots rebuild after the 400 ms poof');
+  ok(s.robots[0].x === s.spawn.plus.x && s.robots[1].x === s.spawn.minus.x, 'with no checkpoint, both robots respawn at the level start');
+  ok(s.crates[0].x === crateX, 'a hazard reset leaves crates where they are');
+}
+
+{ // A flag touched by one robot is raised for both; a hazard then respawns both at the flag
+  const s = new Sim(cpRoom(true));
+  run(s, 30);
+  const f = s.flags[0];
+  ok(s.flags.length === 1 && !f.on, 'the level has one flag, down at the start');
+  let k = 0;
+  while (!f.on && k++ < 600) s.step(B.R);
+  ok(f.on && s.events.some(e => e.type === 'checkpoint' && e.pol === 'plus'), 'Plus walking past the flag raises it');
+  ok(s.robots[1].x < 3 * T, 'Minus is still far away at the start when the flag goes up');
+  s.events.length = 0;
+  k = 0;
+  while (!s.events.some(e => e.type === 'hazard') && k++ < 600) s.step(B.R);
+  ok(s.events.some(e => e.type === 'hazard'), 'Plus then walks into the spikes');
+  run(s, RESET + 2);
+  const [p, m] = s.robots;
+  ok(p.x === f.x - p.w - 2 && m.x === f.x + T + 2, `both robots respawn side by side at the flag (Plus ${p.x}, Minus ${m.x}; flag at ${f.x})`);
+  ok(p.y + p.h === f.base && m.y + m.h === f.base, 'both stand on the floor at the flag');
+  ok(p.x !== s.spawn.plus.x && m.x !== s.spawn.minus.x, 'not at the level start');
+  run(s, 60);
+  ok(p.grounded && m.grounded && !p.hidden && !m.hidden, 'after the respawn both robots stand there, visible');
+  ok(f.on, 'the flag stays up after the reset');
 }
 
 // --- Levels: recorded solutions, par, bolts and the naive bot ------------------------------

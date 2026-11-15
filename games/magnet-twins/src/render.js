@@ -362,6 +362,44 @@ export function drawExit(ctx, e, inside, t, open) {
   ctx.beginPath(); ctx.arc(x + w / 2 - 7, y + 22, 5, 0, 7); ctx.arc(x + w / 2 + 7, y + 22, 5, 0, 7); ctx.fill();
 }
 
+// Checkpoint flag (GDD 5): a pole with a pennant. Down and grey until touched, then it whips
+// up to the top, turns yellow and shows a check mark (shape, not only color). raise: 0..~1.1
+// (eased with an overshoot by the caller).
+export function drawFlag(ctx, f, raise, t) {
+  const px = f.x + T / 2, base = f.base, top = base - 74;
+  // foot plate and pole
+  rrect(ctx, px - 12, base - 7, 24, 7, 3);
+  ctx.fillStyle = C.metal; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 5; ctx.strokeStyle = C.ink;
+  ctx.beginPath(); ctx.moveTo(px, base - 6); ctx.lineTo(px, top); ctx.stroke();
+  ctx.fillStyle = f.on ? C.bolt : '#CFC3B4';
+  ctx.beginPath(); ctx.arc(px, top - 2, 5, 0, 7); ctx.fill(); ctx.lineWidth = 3; ctx.stroke();
+
+  // pennant: low on the pole when off, at the top when on
+  const low = base - 30, high = top + 4;
+  const fy = low + (high - low) * raise;
+  const wave = f.on ? Math.sin(t * 7) * 4 : 0;
+  const len = f.on ? 34 : 26;
+  ctx.beginPath();
+  ctx.moveTo(px + 2, fy);
+  ctx.quadraticCurveTo(px + len * 0.5, fy - 4 + wave, px + len, fy + 9 + wave * 0.6);
+  ctx.quadraticCurveTo(px + len * 0.5, fy + 18 - wave * 0.5, px + 2, fy + 20);
+  ctx.closePath();
+  ctx.fillStyle = f.on ? C.bolt : '#CFC3B4';
+  ctx.fill();
+  ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = C.ink; ctx.stroke();
+  if (f.on) {
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(px + 9, fy + 10 + wave * 0.3);
+    ctx.lineTo(px + 13, fy + 14 + wave * 0.3);
+    ctx.lineTo(px + 21, fy + 5 + wave * 0.4);
+    ctx.stroke();
+  }
+}
+
 export function drawBolt(ctx, b, t) {
   const bob = Math.sin(t * 3 + b.x) * 3;
   drawHex(ctx, b.x, b.y + bob, 12, C.bolt, Math.cos(t * 3 + b.y));
