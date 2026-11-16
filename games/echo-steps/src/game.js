@@ -836,9 +836,13 @@ export class Game {
       if (cue.kind === 'keys' && cue.keys === 'loop' && cue.on === 'plate' && s.running && s.liveOnCh && this.phase === 'play') {
         drawKeycap(ctx, p.x + P.w / 2, p.y - 66 + Math.sin(t * 5) * 2, 'E');
       }
+      // Room 4: with every slot full, ⌫ pops over the player too (not only by the HUD slots).
+      if (cue.kind === 'keys' && cue.keys === 'delete' && cue.on === 'full' && s.count >= sim.lv.slots && this.phase === 'play') {
+        drawKeycap(ctx, p.x + P.w / 2, p.y - 66 + Math.sin(t * 5) * 2, '⌫');
+      }
     }
     // Contextual ↓ (fast-forward) after standing still 1.5 s with an echo event still to come
-    if (!this.save.tut.ffwd && this.cue.stillT > 1.5 && s.clock < sim.lv.loopSteps - HZ) drawKeycap(ctx, p.x + P.w / 2, p.y - 66, '↓ hold', 0.9, 70);
+    if (!this.save.tut.ffwd && this.cue.stillT > 1.5 && s.count < sim.lv.slots && s.clock < sim.lv.loopSteps - HZ) drawKeycap(ctx, p.x + P.w / 2, p.y - 66, '↓ hold', 0.9, 70);
   }
 
   drawEchoes() {

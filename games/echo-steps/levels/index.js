@@ -1,10 +1,17 @@
-// Room list for the room select (GDD 6). The vertical slice has rooms 1–3 of the Lab.
+// Room list for the room select (GDD 6). Lab rooms 1–10 so far.
 import w1l01 from './w1l01.js';
 import w1l02 from './w1l02.js';
 import w1l03 from './w1l03.js';
+import w1l04 from './w1l04.js';
+import w1l05 from './w1l05.js';
+import w1l06 from './w1l06.js';
+import w1l07 from './w1l07.js';
+import w1l08 from './w1l08.js';
+import w1l09 from './w1l09.js';
+import w1l10 from './w1l10.js';
 
 export const WORLDS = [
-  { name: 'Lab', rooms: [w1l01, w1l02, w1l03] },
+  { name: 'Lab', rooms: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06, w1l07, w1l08, w1l09, w1l10] },
   { name: 'Archive', rooms: [] },
   { name: 'Core', rooms: [] },
 ];
