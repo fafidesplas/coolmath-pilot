@@ -21,6 +21,7 @@
         "src/player.js",
         "src/ghost.js",
         "src/render.js",
+        "src/hats.js",
         "src/store.js",
         "src/cmg.js",
         "src/ui.js",

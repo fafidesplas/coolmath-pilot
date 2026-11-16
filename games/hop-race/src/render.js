@@ -201,6 +201,12 @@ function hrDrawPlayer(p, part = 'all')
         }
         if (lean) drawPoly([vec2(-hx, -hy), vec2(hx, -hy), vec2(hx + lean, hy), vec2(-hx + lean, hy)], p.color, 0, p.color, pos, spin);
         else drawRect(pos, size, p.color, spin);
+        // the hat (src/hats.js) rides the top edge, faces the way the player does and follows the lean and the spin;
+        // it keeps its height while the body squashes but takes its width, and what hangs below the top edge (the
+        // helmet's sides) squashes with the body, so it never pokes out under it
+        const hat = hrPlayerHat(p);
+        if (hat)
+            hrDrawHat(hat, pos, (x, y) => shear(hy + y * (y < 0 ? size.y : HR_PSIZE)).add(vec2(x * size.x * (p.dir || 1), 0)), HR_INK, HR_WHITE, time, spin);
     }
     // the eye sits inside the top front corner and scales with the player (0.5 u at the 0.8 u default); it follows a forward lean only
     const k = HR_PSIZE / .8, d = .5 * k, m = .05 * k, ey = hy - m - d / 2 - p.eyeDrop * k;
@@ -217,7 +223,7 @@ function hrDrawStartPrompts()
     {
         if (p.intro <= 0) continue;
         const text = `${hrVersus ? p.name + ': ' : ''}Press ${p.letter} to ${verb}`, half = text.length * size * .29;
-        const x = clamp(p.x, -hw + half + .3, hw - half - .3), y = p.y + HR_PSIZE / 2 + .9 + (stacked && !p.index ? .8 : 0);   // stacked: P1 on top
+        const x = clamp(p.x, -hw + half + .3, hw - half - .3), y = p.y + HR_PSIZE / 2 + .9 + (stacked && !p.index ? .8 : 0) + (hrPlayerHat(p) ? .7 * HR_PSIZE : 0);   // stacked: P1 on top; clear of a hat
         hrWorldText(text, vec2(x, y), size, HR_INK.scale(1, p.intro));
     }
 }

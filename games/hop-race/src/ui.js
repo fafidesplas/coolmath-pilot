@@ -70,16 +70,16 @@ function hrUiButtons()
     else if (hrScreen == 'store')
     {
         back();
-        // 4 per row; a tile equips what you own and buys what you can afford
-        const tw = 220 * u, th = 150 * u;
+        // 6 per row; a tile equips what you own and buys what you can afford
+        const tw = 190 * u, th = 120 * u;   // 3 rows fit between the coin balance and the ad button
         HR_STORE.forEach((it, i) =>
         {
-            const col = i % 4, row = floor(i / 4);
-            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 1.5) * tw * 1.12, y: H * .42 + row * th * 1.2, w: tw, h: th,
+            const col = i % 6, row = floor(i / 6);
+            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 2.5) * tw * 1.07, y: H * .36 + row * th * 1.1, w: tw, h: th,
                 enabled: hrStoreOwned(it.id) || hrStoreCanBuy(it.id), focus: i == 0, act: () => hrStorePick(it.id)});
         });
         // dimmed when the Coolmath SDK is missing (offline, file://) or an ad is already running
-        add({id: 'watchAd', x: W / 2, y: H * .86, w: 420 * u, h: 66 * u, label: `Watch an ad: +${HR_STORE_AD_COINS} coins`,
+        add({id: 'watchAd', x: W / 2, y: H * .88, w: 420 * u, h: 66 * u, label: `Watch an ad: +${HR_STORE_AD_COINS} coins`,
             enabled: hrCmgCanReward(), act: hrStoreWatchAd});
     }
     else if (hrScreen == 'levels')
@@ -561,24 +561,22 @@ function hrDrawTile(b, w, h, focused)
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
-// store item: name and its state (equipped, owned or the price); what you can't afford yet is an outline
+// store item: its hat (src/hats.js), name and state (equipped, owned or the price); what you can't afford yet is an outline
 function hrDrawStoreItem(b, w, h, focused)
 {
     const u = hrUnit(), it = b.item, owned = hrStoreOwned(it.id), on = hrStoreEquipped(it.id);
     const state = on ? 'Equipped' : owned ? 'Owned' : `${it.price} coins`;
-    if (b.enabled === false)
-    {
-        hrOutline(b.x, b.y, w, h, 3 * u, HR_INK.scale(1, .25));
-        hrText(it.name, b.x, b.y - h * .12, 28 * u, HR_INK.scale(1, .4));
-        hrText(state, b.x, b.y + h * .22, 22 * u, HR_INK.scale(1, .4));
-    }
+    const off = b.enabled === false, bg = hrScreenBg(), dim = HR_INK.scale(1, .4);
+    if (off) hrOutline(b.x, b.y, w, h, 3 * u, HR_INK.scale(1, .25));
     else
     {
         hrRect(b.x, b.y, w, h, HR_INK);
         if (on) hrOutline(b.x, b.y, w + 16 * u, h + 16 * u, 4 * u, HR_INK);
-        hrText(it.name, b.x, b.y - h * .12, 28 * u, HR_YELLOW);
-        hrText(state, b.x, b.y + h * .22, 22 * u, HR_YELLOW.scale(1, on ? 1 : .7));
     }
+    // an outline tile shows the hat as in a level (ink with white), a filled one in the text color with ink
+    hrDrawHatIcon(it.id, b.x, b.y - h * .06, h * .42, h * .36, off ? dim : HR_YELLOW, off ? bg : HR_INK);
+    hrText(it.name, b.x, b.y + h * .16, 22 * u, off ? dim : HR_YELLOW);
+    hrText(state, b.x, b.y + h * .36, 18 * u, off ? dim : HR_YELLOW.scale(1, on ? 1 : .7));
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
@@ -628,7 +626,6 @@ function hrUiRender()
 function hrDrawTitle(W, H, u)
 {
     hrText('HOP RACE', W / 2, H * .14, 100 * u);
-    hrText('or pick a world', W / 2, H * .52, 26 * u, HR_INK.scale(1, .6));
 }
 
 function hrDrawHud(W, H, u)

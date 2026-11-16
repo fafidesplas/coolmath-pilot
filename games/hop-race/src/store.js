@@ -1,7 +1,8 @@
 /*
     HOP RACE - cosmetics store (scaffolding). A catalog of items, a coin balance and owned items in the
-    save, buy and equip, and coins from a rewarded ad. Not built yet: drawing hats on the players, a P2 pick.
-    The catalog is GDD §7's 8 hats with placeholder prices.
+    save, buy and equip, and coins from a rewarded ad. The hat art is in src/hats.js. Not built yet: a P2 pick.
+    The catalog is 16 hats (GDD §7's 8, with a football helmet for the propeller, and 8 more) with placeholder prices.
+    The moustache is a "hat" too: one item is worn at a time.
 */
 
 'use strict';
@@ -10,10 +11,18 @@ const HR_STORE = [
     {id: 'cap',       kind: 'hat', name: 'Cap',          price: 50},
     {id: 'beanie',    kind: 'hat', name: 'Beanie',       price: 75},
     {id: 'party',     kind: 'hat', name: 'Party Hat',    price: 100},
-    {id: 'propeller', kind: 'hat', name: 'Propeller',    price: 150},
+    {id: 'chef',      kind: 'hat', name: 'Chef Hat',     price: 125},
+    {id: 'football',  kind: 'hat', name: 'Football',     price: 150},
+    {id: 'cowboy',    kind: 'hat', name: 'Cowboy Hat',   price: 175},
     {id: 'tophat',    kind: 'hat', name: 'Top Hat',      price: 200},
+    {id: 'pilot',     kind: 'hat', name: 'Pilot Cap',    price: 225},
+    {id: 'bunny',     kind: 'hat', name: 'Bunny Ears',   price: 250},
+    {id: 'mustache',  kind: 'hat', name: 'Mustache',     price: 275},
     {id: 'viking',    kind: 'hat', name: 'Viking Horns', price: 300},
+    {id: 'jester',    kind: 'hat', name: 'Jester Hat',   price: 325},
+    {id: 'wizard',    kind: 'hat', name: 'Wizard Hat',   price: 350},
     {id: 'crown',     kind: 'hat', name: 'Crown',        price: 400},
+    {id: 'salakot',   kind: 'hat', name: 'Salakot',      price: 450},
     {id: 'halo',      kind: 'hat', name: 'Halo',         price: 500},
 ];
 

@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-15 — Hat art
+- `src/hats.js`: the store hats drawn in code as two-tone polygons (`HR_HATS`, `hrDrawHat`). In a level they are ink with white details; the halo bobs. An american football helmet (its shell covers the top, back and jaw of the square, with a face mask out in front) replaced the propeller hat.
+- P1 wears the equipped hat (`hrDrawPlayer`): it faces the player's way and follows the lean and the somersault. The start prompt moves up to clear it.
+- Store tiles show each hat over its name and state.
+- 8 more hats, 16 in all: chef's hat, cowboy hat, bunny ears, wizard hat, WW1 pilot's cap, Dali-like moustache, jester's hat, salakot. The store grid is now 6 per row in 3 rows of smaller tiles.
+- Checked only as a rendered sheet of the shapes, not in the running game yet: open the store with `hrStoreAddCoins(2000)` in the console, buy each hat and play a level.
+- Next: a P2 pick, the hat on the ghost, other ways to earn coins.
+
 ## 2026-11-15 — Coolmath SDK and store scaffolding
 - `src/cmg.js`: Coolmath game events (`start` 0 on the first Play, `start` / `replay` with a level number on every level start) and `cmgAdBreak()` midrolls when you leave the level complete or match result screen. An ad pauses the engine and mutes sound until it ends. `index.html` loads jQuery and `cmg-ads.js` at the end; the tab title follows Coolmath's format.
 - `src/store.js` and a **Store** screen (button top left of the title): the 8 hats with placeholder prices, a coin balance, buy and equip for P1. Save gains `coins` and `owned`.
