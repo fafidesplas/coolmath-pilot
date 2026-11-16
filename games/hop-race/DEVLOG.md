@@ -6,7 +6,7 @@
 - Football helmet: the face mask's middle bar now runs back to the shell across the lower half of the eye. A hat polygon can be marked `front` to draw over the eye (`hrDrawHat` layer).
 - Racing helmet: the shell closes over the eye, with a glass visor as a white band across the face.
 - A French beret was tried and removed (owner: not working).
-- Pirate hat: a tricorn with a trim, a button and a feather, and an eye patch on a strap that covers the eye. 21 hats, 7 per row in 3 full rows.
+- Pirate hat: a tricorn with a trim and a button, and an eye patch on a strap that covers the eye. 21 hats, 7 per row in 3 full rows.
 - Checked as a rendered sheet of the shapes on a player square, not in the running game.
 - Next: a P2 pick, the hat on the ghost, other ways to earn coins.
 

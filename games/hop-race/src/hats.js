@@ -209,10 +209,8 @@ const HR_HATS =
         [hrHatBox(-.345, .09, .345, .17), 1],
     ],
     // pirate's tricorn: a low wide hat with its brim folded up, a point out the front and a taller sweep at the back,
-    // a pale trim along the folded edge, a button, a feather plume off the back; and an eye patch on a strap, over
-    // the eye
+    // a pale trim along the folded edge, a button; and an eye patch on a strap, over the eye
     pirate: () => [
-        [hrHatTaper(-.3, .45, -.3, 1.12, -.86, .9, .17, 12)],
         [[[-.56, 0], [.5, 0], [.74, .04], [.94, .16], [.6, .37], [.3, .52], [.05, .44], [-.3, .58], [-.6, .52], [-.82, .34], [-.74, .12]]],
         ...[[.83, .17], [.56, .31], [.3, .43], [.05, .355], [-.3, .49], [-.57, .44], [-.72, .31]]
             .map((p, i, a) => i && [hrHatBar(a[i - 1][0], a[i - 1][1], p[0], p[1], .04), 1]).filter(Boolean),
@@ -227,7 +225,7 @@ const HR_HATS =
             [.64, -.76], [.6, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3], [-.22, 0]])],
         [hrHatBar(.57, .02, .615, -.74, .045)],
         [[[-.3, .02], [.565, .02], [.6, -.76], [-.12, -.78], [-.28, -.62], [-.3, -.3]], 0, 1],
-        [[[-.17, -.22], [.568, -.22], [.586, -.52], [-.17, -.52]], 1, 1],
+        [[[-.17, -.1], [.553, -.1], [.571, -.4], [-.17, -.4]], 1, 1],
         [hrHatBox(-.53, .07, .5, .16), 1],
         [hrHatArc(-.4, -.2, .065, .065, 0, 2 * Math.PI, 10), 1],
         ...[.2, .32, .44].map(x => [hrHatBar(x, -.79, x - .03, -.87, .04), 1]),
