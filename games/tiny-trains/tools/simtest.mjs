@@ -113,6 +113,9 @@ for (const level of ALL_LEVELS) {
   }
   ok(loose.length === 0, `${tag}: all track joins up${loose.length ? ' — loose: ' + loose.join(' ') : ''}`);
 
+  // The tip is one bold 22 px line left of the GO button (x 40 to 1060): keep it short.
+  ok(!!level.tip && level.tip.length <= 70, `${tag}: tip fits on one line (${level.tip ? level.tip.length : 0} chars)`);
+
   const depots = new Set(level.tiles.filter(t => t.t === 'depot').map(t => cellKey(t.x, t.y)));
   ok(level.trains.every(tr => depots.has(cellKey(tr.depot[0], tr.depot[1]))), `${tag}: every train starts in a depot`);
   for (const tr of level.trains) {

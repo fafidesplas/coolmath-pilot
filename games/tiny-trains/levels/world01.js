@@ -65,7 +65,7 @@ export default [
   {
     id: 'world01:level04',
     name: 'Merge',
-    tip: 'Coming in from a branch, a switch always lets you through.',
+    tip: 'Trains that join one line can never split again. Keep blue apart.',
     w: 7, h: 4,
     tiles: [
       depot(0, 0, 1), sw(1, 0, 1, false, 1), st(2, 0, 1), st(3, 0, 1), st(4, 0, 1), st(5, 0, 1), buffer(6, 0, 3),
@@ -85,7 +85,7 @@ export default [
   {
     id: 'world01:level05',
     name: 'Wait Your Turn',
-    tip: 'Watch the clocks: blue leaves 3 ticks later.',
+    tip: 'Watch the clocks: blue leaves 3 ticks later. Where will it be?',
     w: 7, h: 4,
     tiles: [
       station(0, 0, 1, 'red'), st(1, 0, 1), cv(2, 0, 2),
@@ -105,7 +105,7 @@ export default [
   {
     id: 'world01:level06',
     name: 'Scenic Route',
-    tip: 'The ticket is on the long way round. Who can take it safely?',
+    tip: 'Both long ways share the middle line. Only one train can go long.',
     w: 7, h: 5,
     tiles: [
       depot(0, 1, 1), sw(1, 1, 1, false, 1), st(2, 1, 1), st(3, 1, 1), st(4, 1, 1), sw(5, 1, 3, true, 0), station(6, 1, 3, 'red'),
@@ -145,7 +145,7 @@ export default [
   {
     id: 'world01:level08',
     name: 'Both Ways',
-    tip: 'Blue uses the main line too, going the other way.',
+    tip: 'Blue comes down the main line the other way. Find red another way.',
     w: 8, h: 5,
     tiles: [
       cv(4, 1, 1), st(5, 1, 1), sw(6, 1, 3, true, 0), station(7, 1, 3, 'red'),
