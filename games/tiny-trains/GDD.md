@@ -107,6 +107,7 @@
 - ★ **Ticket:** solve it in a run that collects the golden ticket. In levels without a ticket (1-1 to 1-3), this star comes with the solve.
 - ★ **Par:** solve it with flip count ≤ par.
 - All three stars count from one winning run, so a perfect run is always possible. **Par** = the solver's minimum flip count over all solutions that also collect the ticket.
+- **Prototype (2026-11-16):** the ticket is built, so the middle star is Ticket again (it replaced the 2026-11-14 stand-in, First run). In the prototype the ticket token pops off the board when collected, the HUD shows an empty star slot that fills in gold, and the results screen shows Home / Ticket / Par.
 - **Perfect run** (solved on the first Go of a visit) is not a star. It is a badge on the results screen and a mark in the daily emoji line.
 
 ### 3.13 Hints
@@ -163,13 +164,13 @@ The selected switch or signal gets a thick ink ring. Nothing depends on hover or
   1. **First Switch** (5×3): one red train, one switch, the station on one branch and a buffer stop on the other; the switch starts wrong. Par 1. Tutorial: a hand points at the switch, then at Go.
   2. **Two Turns** (6×3): one train, two switches in a row; only one of the four combos reaches the station. Par 2.
   3. **Two Colors** (6×4): red and blue on parallel lines, one switch each; red's wrong branch leads into blue's station. Par 2.
-  4. **Merge** (7×4): two trains from separate depots join on one line through a trailing switch, then the line splits; first ticket. Par 1.
-  5. **Wait Your Turn** (7×4): blue leaves at tick 0, red at tick 3 on the same line; the short branch makes them collide, the long one does not. Par 2.
-  6. **Scenic Route** (7×5): the ticket sits on a longer branch that is only safe if the other train takes the short one. Par 2.
-  7. **Three's Company** (8×5): first 3-train level, 3 switches, two of which are shared. Par 2.
-  8. **Both Ways** (8×5): one switch is facing for red and trailing for blue; its setting must suit red without blocking blue. Par 2.
-  9. **Round and Round** (8×5): a loop siding; one wrong setting sends a train around forever and teaches `lost`. Par 2.
-  10. **Twin Reds** (9×5): two red trains and a blue; both reds share one station, so their timing must not clash. Par 3.
+  4. **Merge** (7×4): red joins the main line through a trailing switch and gets home; blue's start setting merges it in behind red, so it crashes at the merge. Flip blue onto its own line; first ticket. Par 1. (Locked switches cannot split two merged trains to different stations, so the "then the line splits" idea is out.)
+  5. **Wait Your Turn** (7×4): red leaves at tick 0, blue at tick 3, and they use the middle line in opposite directions; red's short branch brings it into the middle line while blue is still there (head-on), the long one does not. Par 2.
+  6. **Scenic Route** (7×5): the ticket sits on a longer branch that is only safe if the other train takes the short one. Par 2. (Built: red and blue each have a short line and a long way round; the two long ways share the middle line in opposite directions, so both long = head-on. The ticket is on red's long way. Red short wins in 1 flip without the ticket; red long + blue short is the 2-flip ticket run.)
+  7. **Three's Company** (8×5): first 3-train level, 3 switches to set, two of which are shared: red and blue use the middle line in opposite directions (blue leaves at tick 4), and each end switch is facing for one and trailing for the other; both start wrong. Yellow's switch picks a short line or a scenic loop with the ticket, and starts on the loop. Par 2. (Built with a fourth, trailing-only switch where yellow's loop rejoins its line.)
+  8. **Both Ways** (8×5): one switch is facing for red and trailing for blue; its setting must suit red without blocking blue. Par 2. (Built: blue leaves at tick 2 down red's main line the other way. Red's straight branch carries it on along that line into blue (head-on), so red must take the detour, where the ticket is; blue's own switch at the far end starts pointing it at red's depot.)
+  9. **Round and Round** (8×5): a loop siding; one wrong setting sends a train around forever and teaches `lost`. Par 2. (Built as 8×4: a one-way 8-cell ring in the middle, red's line below it and blue's above. Both start with a switch that turns them onto the ring, and the ring's way-out switch starts on "round again", so the first run circles until the tick limit: "Lost in a loop!". Opening the ring alone sends blue down to the red station; blue must stay on its own line. Red then either skips the ring or takes it, where the ticket is; both are 2 flips. Three ring switches are only ever trailed.)
+  10. **Twin Reds** (9×5): two red trains and a blue; both reds share one station, so their timing must not clash. Par 3. (Built: the reds come from two depots, the second 1 tick later, and meet at a merge in front of the station; each has a short line and a detour 2 cells longer, so both short or both long reach the merge on the same tick. They start red 1 short, red 2 long, which is fine; blue's switch starts on a buffer stop. Fixing blue wins in 1 flip without the ticket. The ticket is on red 1's detour, so red 2 must switch to its short line: 3 flips.)
 - **Level data format** (`levels/world01.json` holds an array of these):
 
 ```json
@@ -338,4 +339,7 @@ Music: an optional calm ukulele/xylophone-style loop of 30 s, synthesized, off b
 | GameAnalytics keys | One key pair per game in `src/config.js` | Team [confirm] | Open |
 
 ## 15. Changelog
+- 2026-11-16 — Prototype: levels 1-9 and 1-10 built and detailed in 6. 1-9 is 8×4, not 8×5 (the ring and two lines fit in four rows). Its ticket is not a cost choice: skipping the ring and riding it are both 2 flips, so the ring is the whole puzzle. 1-10 uses two red depots and the existing rule that a station takes every train of its color (3.9); no sim change was needed.
+- 2026-11-16 — Prototype: golden ticket built (3.11, 3.12); tickets added to 1-4 (blue's line) and 1-5 (red's long branch); the middle star is Ticket again. Levels 1-6 to 1-8 built and detailed in 6. 1-7 uses a fourth, trailing-only switch for yellow's loop. In 1-8, the ticket could not sit on blue's line (blue would always collect it), so blue's timing makes red's straight branch a head-on and the ticket sits on red's detour.
+- 2026-11-14 — Prototype: levels 1-4 and 1-5 redesigned to work with locked switches (6); prototype middle star = First run until tickets exist (3.12).
 - 2026-10-19 — First draft from the brief, using the recommended answers to the phase 1a questions.
