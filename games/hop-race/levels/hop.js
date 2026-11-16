@@ -153,7 +153,7 @@ HR_VERSUS.hop = [
         solids: [
             {l: -15, r: 0, top: -5},
             {l: -1, r: 0, top: -1},            // the middle tower, 5 u: too tall to jump
-            {l: -8, r: -6, top: -3},
+            {l: -10.5, r: -8.5, top: -3},
             {l: -5, r: -3, top: -1, bottom: -2},
             {l: -1, r: 0, top: 0, bottom: -1, finish: true},   // the tower's top 1 u: bumping its side doesn't finish
         ],
