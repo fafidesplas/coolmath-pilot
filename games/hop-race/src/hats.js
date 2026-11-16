@@ -2,7 +2,8 @@
     HOP RACE - hat art (GDD §7). Each hat is a few flat shapes drawn in code, in two tones: a main color and an
     accent (in a level: ink with white; on a store tile: the tile's text color with ink).
     Hat space: the origin is the middle of the player's top edge, 1 unit is the player's width, y is up and
-    +x is the way the player faces (below 0 is over and around the body: the helmet, the pilot's flap, the moustache). A hat is a list of [points, accent] polygons, points as [x, y].
+    +x is the way the player faces (below 0 is over and around the body: the helmet, the pilot's flap, the moustache). A hat is a list of [points, accent, front] polygons, points as [x, y]; front ones are drawn over the eye (the
+    helmet's bar).
 */
 
 'use strict';
@@ -123,7 +124,8 @@ const HR_HATS =
         [hrHatArc(0, .68, .085, .085)],
     ],
     // american football helmet: a shell over the top, the back and the jaw, open at the face (the eye shows through),
-    // with a stripe, an ear hole and a face mask of bars out in front
+    // with a stripe, an ear hole and a face mask of bars out in front; its middle bar runs back to the shell across
+    // the lower half of the eye
     football: () => [
         [hrHatArc(-.02, 0, .58, .46, 0, Math.PI).concat([[-.6, -.55], [-.54, -.76], [-.4, -.86], [.3, -.86], [.42, -.79],
             [.4, -.73], [-.08, -.73], [-.2, -.62], [-.25, -.3], [-.22, 0]])],
@@ -131,7 +133,7 @@ const HR_HATS =
         [hrHatArc(-.41, -.4, .06, .06, 0, 2 * Math.PI, 10), 1],
         [hrHatBar(.5, -.03, .8, -.12, .06)],
         [hrHatBar(.79, -.1, .75, -.78, .06)],
-        [hrHatBar(.5, -.42, .77, -.43, .06)],
+        [hrHatBar(-.23, -.53, .77, -.5, .07), 0, 1],
         [hrHatBar(.38, -.79, .76, -.76, .06)],
     ],
     // chef's hat: a pleated band under a puffy top
@@ -264,13 +266,14 @@ const HR_HATS =
 };
 
 // draws a hat around pos; place(x, y) turns a hat-space point into an offset from pos (a vec2, y up; on screen too:
-// screen-space polygons are y up)
-function hrDrawHat(id, pos, place, main, accent, t = 0, angle = 0, screenSpace = false)
+// screen-space polygons are y up). layer: 0 is only what goes under the eye, 1 only what goes over it, none is all
+function hrDrawHat(id, pos, place, main, accent, t = 0, angle = 0, screenSpace = false, layer)
 {
     const hat = HR_HATS[id];
     if (!hat) return;
-    for (const [pts, isAccent] of hat(t))
-        drawPoly(pts.map(([x, y]) => place(x, y)), isAccent ? accent : main, 0, undefined, pos, angle, false, screenSpace);
+    for (const [pts, isAccent, front] of hat(t))
+        if (layer == undefined || layer == (front ? 1 : 0))
+            drawPoly(pts.map(([x, y]) => place(x, y)), isAccent ? accent : main, 0, undefined, pos, angle, false, screenSpace);
 }
 
 // a hat on screen, for menus, centered on x with its lowest point at y; s is the pixels per hat unit, less for a

@@ -191,6 +191,8 @@ function hrDrawPlayer(p, part = 'all')
     // spin (a somersault, clockwise positive) turns the body and eye together around the center
     const spin = p.spin || 0, turn = v => spin ? v.rotate(spin) : v;
     const shear = y => vec2(lean * (y + hy) / size.y, y);   // offset of a point y above the center, following the lean
+    const hat = hrPlayerHat(p);
+    const drawHat = layer => hat && hrDrawHat(hat, pos, (x, y) => shear(hy + y * (y < 0 ? size.y : HR_PSIZE)).add(vec2(x * size.x * (p.dir || 1), 0)), HR_INK, HR_WHITE, time, spin, false, layer);
     if (part == 'all')
     {
         // short trail while airborne
@@ -203,14 +205,14 @@ function hrDrawPlayer(p, part = 'all')
         else drawRect(pos, size, p.color, spin);
         // the hat (src/hats.js) rides the top edge, faces the way the player does and follows the lean and the spin;
         // it keeps its height while the body squashes but takes its width, and what hangs below the top edge (the
-        // helmet's sides) squashes with the body, so it never pokes out under it
-        const hat = hrPlayerHat(p);
-        if (hat)
-            hrDrawHat(hat, pos, (x, y) => shear(hy + y * (y < 0 ? size.y : HR_PSIZE)).add(vec2(x * size.x * (p.dir || 1), 0)), HR_INK, HR_WHITE, time, spin);
+        // helmet's sides) squashes with the body, so it never pokes out under it. What goes over the eye (the
+        // helmet's bar) comes after the eye
+        drawHat(0);
     }
     // the eye sits inside the top front corner and scales with the player (0.5 u at the 0.8 u default); it follows a forward lean only
     const k = HR_PSIZE / .8, d = .5 * k, m = .05 * k, ey = hy - m - d / 2 - p.eyeDrop * k;
     hrDrawEye(pos.add(turn((p.lean > 0 ? shear(ey) : vec2(0, ey)).add(vec2((HR_PSIZE / 2 - m - d / 2) * (p.dir || 1), 0)))), p.eye, d, hrBlinkOpen(p.blinkT) * (1 - p.squint));
+    drawHat(1);
 }
 
 // start prompt over each player: "P1: Press A to run" (solo: "Press A to run"), until that player's first press (GDD §3.1)

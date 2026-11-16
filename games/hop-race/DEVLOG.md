@@ -3,6 +3,7 @@
 ## 2026-11-15 — Hat fixes and 5 more hats
 - Pilot's cap: bigger goggles with two lenses. Cowboy hat: the brim now lies flat on the head and curls up only past its sides (it balanced on one point before); brim and crown are bigger.
 - 5 new hats, 21 in all: bowler hat, French beret, racecar driver's helmet, ninja mask, spartan helmet with a crest. The store grid is now 7 per row in 3 rows of narrower tiles.
+- Football helmet: the face mask's middle bar now runs back to the shell across the lower half of the eye. A hat polygon can be marked `front` to draw over the eye (`hrDrawHat` layer).
 - Checked as a rendered sheet of the shapes on a player square, not in the running game.
 - Next: a P2 pick, the hat on the ghost, other ways to earn coins.
 
