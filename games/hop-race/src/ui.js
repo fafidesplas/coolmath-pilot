@@ -70,12 +70,12 @@ function hrUiButtons()
     else if (hrScreen == 'store')
     {
         back();
-        // 6 per row; a tile equips what you own and buys what you can afford
-        const tw = 190 * u, th = 120 * u;   // 3 rows fit between the coin balance and the ad button
+        // 7 per row; a tile equips what you own and buys what you can afford
+        const tw = 164 * u, th = 120 * u;   // 3 rows fit between the coin balance and the ad button
         HR_STORE.forEach((it, i) =>
         {
-            const col = i % 6, row = floor(i / 6);
-            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 2.5) * tw * 1.07, y: H * .36 + row * th * 1.1, w: tw, h: th,
+            const col = i % 7, row = floor(i / 7);
+            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 3) * tw * 1.07, y: H * .36 + row * th * 1.1, w: tw, h: th,
                 enabled: hrStoreOwned(it.id) || hrStoreCanBuy(it.id), focus: i == 0, act: () => hrStorePick(it.id)});
         });
         // dimmed when the Coolmath SDK is missing (offline, file://) or an ad is already running

@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-15 — Hat fixes and 5 more hats
+- Pilot's cap: bigger goggles with two lenses. Cowboy hat: the brim now lies flat on the head and curls up only past its sides (it balanced on one point before); brim and crown are bigger.
+- 5 new hats, 21 in all: bowler hat, French beret, racecar driver's helmet, ninja mask, spartan helmet with a crest. The store grid is now 7 per row in 3 rows of narrower tiles.
+- Checked as a rendered sheet of the shapes on a player square, not in the running game.
+- Next: a P2 pick, the hat on the ghost, other ways to earn coins.
+
 ## 2026-11-15 — Hat art
 - `src/hats.js`: the store hats drawn in code as two-tone polygons (`HR_HATS`, `hrDrawHat`). In a level they are ink with white details; the halo bobs. An american football helmet (its shell covers the top, back and jaw of the square, with a face mask out in front) replaced the propeller hat.
 - P1 wears the equipped hat (`hrDrawPlayer`): it faces the player's way and follows the lean and the somersault. The start prompt moves up to clear it.

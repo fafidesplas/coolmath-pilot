@@ -35,13 +35,14 @@ function hrHatTurn(pts, cx, cy, a)
     return pts.map(([x, y]) => [cx + (x - cx) * c - (y - cy) * n, cy + (x - cx) * n + (y - cy) * c]);
 }
 
-// a cowboy hat's brim: a strip that curls up toward both ends and thins out there
-function hrHatBrim(w, lift, thick, n = 12)
+// a hat's brim: a strip that lies flat on the head out to flat on each side, then curls up toward both ends and
+// thins out there
+function hrHatBrim(w, lift, thick, flat = 0, n = 20)
 {
     const a = [], b = [];
     for (let i = 0; i <= n; i++)
     {
-        const k = i / n * 2 - 1, y = lift * k * k;
+        const k = i / n * 2 - 1, c = Math.max(0, (Math.abs(k) * w - flat) / (w - flat)), y = lift * c * c;
         a.push([k * w, y]);
         b.unshift([k * w, y + thick * (1 - k * k * k * k) + .015]);
     }
@@ -141,11 +142,11 @@ const HR_HATS =
         [hrHatArc(.25, .43, .2, .19)],
         ...[-.15, 0, .15].map(x => [hrHatBox(x - .02, .04, x + .02, .2), 1]),
     ],
-    // cowboy hat: a wide brim that curls up at the ends, a pinched crown, a band
+    // cowboy hat: a wide brim that sits flat on the head and curls up past its sides, a pinched crown, a band
     cowboy: () => [
-        [hrHatBrim(.74, .2, .08)],
-        [[[-.31, .04], [-.27, .42], [-.12, .5], [0, .43], [.12, .5], [.27, .42], [.31, .04]]],
-        [hrHatBox(-.3, .11, .3, .18), 1],
+        [hrHatBrim(.92, .2, .09, .5)],
+        [[[-.4, .05], [-.34, .5], [-.15, .6], [0, .51], [.15, .6], [.34, .5], [.4, .05]]],
+        [hrHatBox(-.385, .12, .385, .2), 1],
     ],
     // bunny ears on a headband, the back one tilted further
     bunny: () => [
@@ -161,13 +162,13 @@ const HR_HATS =
         [[[-.36, .05], [-.16, .48], [-.3, .78], [.02, .58], [.36, .05]]],
         [hrHatStar(.02, .26, .1), 1],
     ],
-    // WW1 pilot's cap: a snug leather dome with a flap down the back and a loose strap, goggles pushed up on the forehead
+    // WW1 pilot's cap: a snug leather dome with a flap down the back and a loose strap, big two-lens goggles pushed up on the forehead
     pilot: () => [
         [hrHatArc(-.02, 0, .54, .4, 0, Math.PI).concat([[-.56, -.5], [-.46, -.62], [-.32, -.62], [-.25, -.45], [-.25, 0]])],
         [hrHatBar(-.4, -.6, -.36, -.84, .07)],
-        [hrHatBar(-.5, .13, .2, .2, .05), 1],
-        [hrHatArc(.3, .2, .17, .17)],
-        [hrHatArc(.3, .2, .1, .1, 0, 2 * Math.PI, 14), 1],
+        [hrHatBar(-.5, .13, -.1, .2, .06), 1],
+        ...[-.03, .37].map(x => [hrHatArc(x, .22, .215, .215)]),
+        ...[-.03, .37].map(x => [hrHatArc(x, .22, .145, .145, 0, 2 * Math.PI, 16), 1]),
     ],
     // Dali-like moustache: under the eye, two long thin tips that sweep out and curl straight up, one in front of the
     // face and one up the cheek behind the eye
@@ -198,6 +199,46 @@ const HR_HATS =
         [hrHatBox(-.48, 0, .48, .085)],
         [hrHatBox(-.3, .085, .3, .6)],
         [hrHatBox(-.3, .15, .3, .25), 1],
+    ],
+    // bowler hat: a round crown, a short brim that curls up at the ends, a band
+    bowler: () => [
+        [hrHatBrim(.56, .06, .075, .42)],
+        [hrHatArc(0, .06, .36, .4, 0, Math.PI)],
+        [hrHatBox(-.345, .09, .345, .17), 1],
+    ],
+    // French beret: a wide soft disc that flops over the back, a thin band, a little stalk on top
+    beret: () => [
+        [hrHatTurn(hrHatArc(-.1, .19, .56, .19, 0, 2 * Math.PI, 24), -.1, .19, .14)],
+        [hrHatBox(-.32, 0, .34, .07)],
+        [hrHatBar(-.07, .36, -.03, .47, .05)],
+        [hrHatBox(-.3, .015, .32, .045), 1],
+    ],
+    // racecar driver's helmet: a full shell over the top, the back and the chin, a visor rim down the front (the eye
+    // shows through the visor), a stripe, a hinge and chin vents
+    racer: () => [
+        [hrHatArc(-.02, 0, .6, .46, 0, Math.PI).concat([[-.62, -.6], [-.56, -.82], [-.4, -.93], [.42, -.93], [.58, -.87],
+            [.64, -.76], [.6, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3], [-.22, 0]])],
+        [hrHatBar(.57, .02, .615, -.74, .045)],
+        [hrHatBox(-.53, .07, .5, .16), 1],
+        [hrHatArc(-.4, -.2, .065, .065, 0, 2 * Math.PI, 10), 1],
+        ...[.2, .32, .44].map(x => [hrHatBar(x, -.79, x - .03, -.87, .04), 1]),
+    ],
+    // ninja mask: a hood over the whole head with a slit for the eye, a forehead plate, the knot's two tails out the back
+    ninja: () => [
+        [hrHatArc(0, 0, .53, .13, 0, Math.PI).concat([[-.53, -1], [.53, -1], [.53, -.73], [-.2, -.73], [-.2, -.05], [.53, -.05]])],
+        [hrHatTaper(-.5, -.1, -.82, -.02, -1.02, -.2, .07)],
+        [hrHatTaper(-.5, -.18, -.78, -.3, -.9, -.6, .07)],
+        [hrHatArc(-.55, -.14, .08, .08, 0, 2 * Math.PI, 10)],
+        [hrHatBox(-.14, .025, .24, .085), 1],
+    ],
+    // spartan helmet: a dome with a neck and cheek guard and a nose guard around the eye, a tall crest from the brow
+    // over the top and down the back
+    spartan: () => [
+        [hrHatArc(0, 0, .72, .74, .5, Math.PI, 16).concat([[-.8, -.34], [-.64, -.4], [-.58, 0]], hrHatArc(0, 0, .5, .36, Math.PI, .5, 16))],
+        [hrHatArc(0, 0, .56, .4, 0, Math.PI).concat([[-.56, -.62], [-.46, -.9], [.12, -.9], [.34, -.77], [-.1, -.72], [-.24, -.58], [-.24, 0]])],
+        [hrHatBox(.46, -.44, .56, 0)],
+        [hrHatBox(-.5, .025, .5, .075), 1],
+        ...[.8, 1.25, 1.7, 2.15, 2.6, 3.05].map(a => [hrHatBar(Math.cos(a) * .6, Math.sin(a) * .5, Math.cos(a) * .69, Math.sin(a) * .7, .025), 1]),
     ],
     // viking helmet: a dome with a riveted band and two horns
     viking: () => [
