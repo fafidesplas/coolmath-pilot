@@ -79,6 +79,15 @@ export const SCRIPTS = {
     waitAt(d, 760, 1);
     d.hold(R, done);
   },
+  // One echo, two jobs: hold plate A until you are past gate A (clock 1.75 s), then
+  // walk to plate B and rest. Wait between the gates until gate B is open, then go.
+  w1l08(d) {
+    d.hold(L, d => d.p.x <= 222); stop(d);
+    d.hold(0, d => d.s.clock >= 210);
+    d.hold(R, d => d.p.x >= 362); stop(d); loopNow(d);
+    waitAt(d, 740, 1);
+    d.hold(R, done);
+  },
 };
 
 export function buildSolution(data) {
