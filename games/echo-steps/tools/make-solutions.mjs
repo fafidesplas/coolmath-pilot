@@ -100,6 +100,16 @@ export const SCRIPTS = {
     waitAt(d, 800, 0);
     d.hold(R, done);
   },
+  // Echo 1: Loop before moving, a step right at the spawn (no time spent). Echo 2
+  // walks to the plate and rests. Then jump onto echo 1, up the wall, run to the exit.
+  w1l10(d) {
+    loopNow(d);
+    d.hold(L, d => d.p.x <= 102); stop(d); loopNow(d);
+    d.step(R);   // start the clock with a step into the wall, so the jump is a fresh press
+    d.hold(R | J, d => d.p.grounded && d.p.ground === 2); d.step(R);
+    d.hold(R | J, d => d.p.grounded && d.p.y + PLAYER.h <= 480.01);
+    d.hold(R, done);
+  },
 };
 
 export function buildSolution(data) {
