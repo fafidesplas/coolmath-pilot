@@ -99,15 +99,18 @@ function hrHatStripe(w0, h, y0, y1, inset = .035)
     return [[-w(y0), y0], [w(y0), y0], [w(y1), y1], [-w(y1), y1]];
 }
 
-// t is seconds, for the hats that move (halo)
+// t is seconds, for the hats that move (halo); dir is the way the player faces (1 or -1), for what must not mirror
+// (the cap's letter)
 const HR_HATS =
 {
-    // baseball cap: a dome, a brim out the front, a button on top
-    cap: () => [
-        [hrHatArc(-.04, 0, .43, .36, 0, Math.PI)],
+    // baseball cap: a tall dome, a brim out the front, a button on top, a letter C on the front (turned back when
+    // the player faces left, so it always reads as a C)
+    cap: (t, dir = 1) => [
+        [hrHatArc(-.04, 0, .43, .5, 0, Math.PI)],
         [hrHatBox(.2, 0, .74, .085)],
-        [hrHatArc(-.04, .36, .06, .05)],
-        [hrHatArc(-.04, 0, .3, .25, .25, 1.15, 8).concat(hrHatArc(-.04, 0, .36, .3, 1.15, .25, 8)), 1],   // a shine
+        [hrHatArc(-.04, .5, .06, .05)],
+        [hrHatArc(.13, .24, .125, .125, .8, 2 * Math.PI - .8, 14).concat(hrHatArc(.13, .24, .065, .065, 2 * Math.PI - .8, .8, 14))
+            .map(([x, y]) => [dir < 0 ? .26 - x : x, y]), 1],
     ],
     // beanie: a tall dome, a ribbed cuff, a pompom
     beanie: () => [
@@ -271,12 +274,13 @@ const HR_HATS =
 };
 
 // draws a hat around pos; place(x, y) turns a hat-space point into an offset from pos (a vec2, y up; on screen too:
-// screen-space polygons are y up). layer: 0 is only what goes under the eye, 1 only what goes over it, none is all
-function hrDrawHat(id, pos, place, main, accent, t = 0, angle = 0, screenSpace = false, layer)
+// screen-space polygons are y up). layer: 0 is only what goes under the eye, 1 only what goes over it, none is all;
+// dir is the way the hat faces
+function hrDrawHat(id, pos, place, main, accent, t = 0, angle = 0, screenSpace = false, layer, dir = 1)
 {
     const hat = HR_HATS[id];
     if (!hat) return;
-    for (const [pts, isAccent, front] of hat(t))
+    for (const [pts, isAccent, front] of hat(t, dir))
         if (layer == undefined || layer == (front ? 1 : 0))
             drawPoly(pts.map(([x, y]) => place(x, y)), isAccent ? accent : main, 0, undefined, pos, angle, false, screenSpace);
 }

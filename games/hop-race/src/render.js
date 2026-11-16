@@ -192,7 +192,7 @@ function hrDrawPlayer(p, part = 'all')
     const spin = p.spin || 0, turn = v => spin ? v.rotate(spin) : v;
     const shear = y => vec2(lean * (y + hy) / size.y, y);   // offset of a point y above the center, following the lean
     const hat = hrPlayerHat(p);
-    const drawHat = layer => hat && hrDrawHat(hat, pos, (x, y) => shear(hy + y * (y < 0 ? size.y : HR_PSIZE)).add(vec2(x * size.x * (p.dir || 1), 0)), HR_INK, HR_WHITE, time, spin, false, layer);
+    const drawHat = layer => hat && hrDrawHat(hat, pos, (x, y) => shear(hy + y * (y < 0 ? size.y : HR_PSIZE)).add(vec2(x * size.x * (p.dir || 1), 0)), HR_INK, HR_WHITE, time, spin, false, layer, p.dir || 1);
     if (part == 'all')
     {
         // short trail while airborne
