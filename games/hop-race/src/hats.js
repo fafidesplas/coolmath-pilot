@@ -51,18 +51,6 @@ function hrHatBrim(w, lift, thick, flat = 0, n = 20)
     return a.concat(b);
 }
 
-// points along a curve from (x0, y0), bent toward (x1, y1), to (x2, y2)
-function hrHatCurve(x0, y0, x1, y1, x2, y2, n = 10)
-{
-    const pts = [];
-    for (let i = 0; i <= n; i++)
-    {
-        const t = i / n, k = 1 - t;
-        pts.push([k * k * x0 + 2 * k * t * x1 + t * t * x2, k * k * y0 + 2 * k * t * y1 + t * t * y2]);
-    }
-    return pts;
-}
-
 // a five-point star
 function hrHatStar(cx, cy, r)
 {
@@ -116,11 +104,11 @@ function hrHatStripe(w0, h, y0, y1, inset = .035)
 // (the cap's letter)
 const HR_HATS =
 {
-    // baseball cap: a tall dome, a brim that curves down toward its tip, a button on top, a letter C on the front (turned back when
+    // baseball cap: a tall dome, a straight brim out the front, a button on top, a letter C on the front (turned back when
     // the player faces left, so it always reads as a C)
     cap: (t, dir = 1) => [
         [hrHatArc(-.04, 0, .43, .5, 0, Math.PI)],
-        [hrHatCurve(.1, .1, .6, .16, .84, -.07).concat(hrHatCurve(.79, -.13, .6, .02, .3, 0))],
+        [hrHatBox(.2, 0, .78, .085)],
         [hrHatArc(-.04, .5, .06, .05)],
         [hrHatArc(.13, .24, .125, .125, .8, 2 * Math.PI - .8, 14).concat(hrHatArc(.13, .24, .065, .065, 2 * Math.PI - .8, .8, 14))
             .map(([x, y]) => [dir < 0 ? .26 - x : x, y]), 1],

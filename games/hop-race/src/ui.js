@@ -10,6 +10,8 @@ let hrScreen = 'title', hrScreenT = 0, hrFocus = -1;
 let hrPress = null;            // button being pressed: it bounces, then acts
 let hrSettingsFrom = 'title';
 let hrMenuVersus = false, hrMenuWorld = 0;
+let hrStoreScroll = 0;         // how far the store grid is scrolled, in design units (hrUnit)
+let hrStoreDrag = null;        // a pointer held on the store grid: a drag scrolls, a press without one picks the tile
 
 const HR_WORLD_SCREENS = ['playing', 'paused', 'complete', 'round', 'match'];
 const HR_LOCKED_SCREENS = ['complete', 'round', 'match'];   // 0.6 s input lock on results
@@ -20,6 +22,7 @@ function hrGo(screen)
     hrScreen = screen;
     hrScreenT = 0;
     hrPress = null;
+    if (screen == 'store') hrStoreScroll = 0, hrStoreDrag = null;
     const list = hrUiButtons();
     hrFocus = list.findIndex(b => b.focus);
     if (hrFocus < 0 && screen != 'playing') hrFocus = list.findIndex(b => b.enabled !== false);
@@ -70,12 +73,14 @@ function hrUiButtons()
     else if (hrScreen == 'store')
     {
         back();
-        // 8 per row; a tile equips what you own and buys what you can afford
-        const tw = 143 * u, th = 120 * u;   // 3 rows fit between the coin balance and the ad button
+        // a grid that scrolls between the coin balance and the ad button (hrStoreLayout); a tile equips what you own
+        // and buys what you can afford. Tiles are drawn and pressed only inside the grid's window (clip)
+        const L = hrStoreLayout();
         HR_STORE.forEach((it, i) =>
         {
-            const col = i % 8, row = floor(i / 8);
-            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 3.5) * tw * 1.07, y: H * .36 + row * th * 1.1, w: tw, h: th,
+            const col = i % L.cols, row = floor(i / L.cols);
+            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - (L.cols - 1) / 2) * L.tw * 1.07,
+                y: L.top + L.pad + L.th / 2 + row * L.pitch - hrStoreScroll * u, w: L.tw, h: L.th, clip: [L.top, L.bottom],
                 enabled: hrStoreOwned(it.id) || hrStoreCanBuy(it.id), focus: i == 0, act: () => hrStorePick(it.id)});
         });
         // dimmed when the Coolmath SDK is missing (offline, file://) or an ad is already running
@@ -184,7 +189,61 @@ function hrBack()
 ///////////////////////////////////////////////////////////////////////////////
 // input
 
-const hrHit = (b, pos) => Math.abs(pos.x - b.x) < b.w / 2 && Math.abs(pos.y - b.y) < b.h / 2;
+const hrHit = (b, pos) => Math.abs(pos.x - b.x) < b.w / 2 && Math.abs(pos.y - b.y) < b.h / 2 &&
+    (!b.clip || (pos.y > b.clip[0] && pos.y < b.clip[1]));
+
+// the store grid: 6 tiles per row in a window from top to bottom (canvas pixels); max is how far it scrolls (design units)
+function hrStoreLayout()
+{
+    const H = mainCanvasSize.y, u = hrUnit(), cols = 6, tw = 190 * u, th = 120 * u, pitch = th * 1.1, pad = 22 * u;
+    const top = H * .28, bottom = H * .88 - 52 * u, rows = Math.ceil(HR_STORE.length / cols);
+    const content = pad * 2 + th + (rows - 1) * pitch;
+    return {cols, tw, th, pitch, pad, top, bottom, max: max(0, (content - (bottom - top)) / u)};
+}
+
+// scrolls the store grid: the mouse wheel, or a drag with the mouse or a finger. A press on the grid waits for its
+// release: a tile is picked only if the pointer did not drag
+function hrStoreScrollUpdate(list)
+{
+    const L = hrStoreLayout(), u = hrUnit();
+    if (mouseWheel) hrStoreScroll += mouseWheel * 70;
+    for (const t of hrTaps)
+    {
+        if (t.pos.y <= L.top || t.pos.y >= L.bottom) continue;
+        t.used = t.scroll = true;
+        const b = list.find(b => b.item && hrHit(b, t.pos));
+        hrStoreDrag = {id: t.id, y0: t.pos.y, scroll0: hrStoreScroll, moved: false, tile: b && b.id};
+        hrFocus = -1;
+    }
+    const d = hrStoreDrag;
+    if (d)
+    {
+        const pos = hrPointers.get(d.id);
+        if (pos)
+        {
+            if (Math.abs(pos.y - d.y0) > 12 * u) d.moved = true;
+            if (d.moved) hrStoreScroll = d.scroll0 - (pos.y - d.y0) / u;
+        }
+        else
+        {
+            hrStoreDrag = null;
+            const b = !d.moved && list.find(b => b.id == d.tile);
+            if (b) hrUiActivate(b);
+        }
+    }
+    hrStoreScroll = clamp(hrStoreScroll, 0, L.max);
+}
+
+// scrolls the store grid so a tile picked with the keyboard is fully in its window
+function hrStoreReveal(b)
+{
+    if (!b || !b.item) return;
+    const L = hrStoreLayout(), u = hrUnit();
+    const over = b.y + b.h / 2 + L.pad - L.bottom, under = L.top + L.pad - (b.y - b.h / 2);
+    if (over > 0) hrStoreScroll += over / u;
+    else if (under > 0) hrStoreScroll -= under / u;
+    hrStoreScroll = clamp(hrStoreScroll, 0, L.max);
+}
 const hrConfirmKeys = ['Enter', 'Space'];
 
 function hrUiActivate(b)
@@ -201,8 +260,10 @@ function hrUiUpdate()
     const locked = HR_LOCKED_SCREENS.includes(hrScreen) && hrScreenT < .6;
     if (locked) { hrTaps.forEach(t => t.used = true); return; }
 
+    if (hrScreen == 'store') hrStoreScrollUpdate(list);
     for (const t of hrTaps)
     {
+        if (t.scroll) continue;   // the store grid has it
         const b = list.find(b => hrHit(b, t.pos));
         if (b) { t.used = true; hrFocus = -1; hrUiActivate(b); }
         else if (hrScreen != 'playing' && hrScreen != 'round') t.used = true;
@@ -230,6 +291,7 @@ function hrUiUpdate()
     {
         const at = enabled.indexOf(hrFocus);
         hrFocus = enabled[at < 0 ? 0 : (at + step + enabled.length) % enabled.length];
+        hrStoreReveal(list[hrFocus]);
     }
     const confirm = hrConfirmKeys.some(k => keyWasPressed(k)) ||
         (HR_LOCKED_SCREENS.includes(hrScreen) && (keyWasPressed('KeyA') || keyWasPressed('KeyL')));
@@ -567,6 +629,12 @@ function hrDrawStoreItem(b, w, h, focused)
     const u = hrUnit(), it = b.item, owned = hrStoreOwned(it.id), on = hrStoreEquipped(it.id);
     const state = on ? 'Equipped' : owned ? 'Owned' : `${it.price} coins`;
     const off = b.enabled === false, bg = hrScreenBg(), dim = HR_INK.scale(1, .4);
+    // only what is inside the grid's window shows
+    if (b.y + h < b.clip[0] || b.y - h > b.clip[1]) return;
+    drawContext.save();
+    drawContext.beginPath();
+    drawContext.rect(0, b.clip[0], mainCanvasSize.x, b.clip[1] - b.clip[0]);
+    drawContext.clip();
     if (off) hrOutline(b.x, b.y, w, h, 3 * u, HR_INK.scale(1, .25));
     else
     {
@@ -575,9 +643,10 @@ function hrDrawStoreItem(b, w, h, focused)
     }
     // an outline tile shows the hat as in a level (ink with white), a filled one in the text color with ink
     hrDrawHatIcon(it.id, b.x, b.y - h * .06, h * .42, h * .36, off ? dim : HR_YELLOW, off ? bg : HR_INK);
-    hrText(it.name, b.x, b.y + h * .16, 20 * u, off ? dim : HR_YELLOW);
+    hrText(it.name, b.x, b.y + h * .16, 22 * u, off ? dim : HR_YELLOW);
     hrText(state, b.x, b.y + h * .36, 18 * u, off ? dim : HR_YELLOW.scale(1, on ? 1 : .7));
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
+    drawContext.restore();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -604,6 +673,14 @@ function hrUiRender()
         hrText('Store', W / 2, H * .14 + y0, 54 * u);
         hrText(`${hrSave.coins} coins`, W / 2, H * .23 + y0, 30 * u, HR_INK.scale(1, .7));
         const got = timeReal - hrStoreGotT;   // "+50" rises and fades after an ad reward
+        // a scroll bar right of the grid: where the window is in the whole list
+        const L = hrStoreLayout();
+        if (L.max > 0)
+        {
+            const x = W / 2 + L.cols / 2 * L.tw * 1.07 + 14 * u, vh = L.bottom - L.top, th = vh * vh / (vh + L.max * u);
+            hrRect(x, (L.top + L.bottom) / 2 + y0, 6 * u, vh, HR_INK.scale(1, .2));
+            hrRect(x, L.top + th / 2 + (vh - th) * hrStoreScroll / L.max + y0, 6 * u, th, HR_INK);
+        }
         if (got < 1.2) hrText(`+${HR_STORE_AD_COINS}`, W / 2 + 140 * u, H * .23 + y0 - got * 30 * u, 30 * u, HR_INK.scale(1, clamp(1.2 - got)));
     }
     else if (hrScreen == 'paused')

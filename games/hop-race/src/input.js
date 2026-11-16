@@ -10,14 +10,18 @@ const hrButtons = [0, 1].map(() => ({down: false, pressed: false, released: fals
 const hrHeld = new Map();   // pointerId -> player index, while held in the play area
 let hrTaps = [];            // pointer presses this frame, in canvas pixels: {pos, id, used}
 let hrPointerQueue = [];    // raw events since the last frame
+const hrPointers = new Map();   // pointerId -> where it is now (canvas pixels), while it is down (drag to scroll)
 
 function hrInputInit()
 {
     const queue = type => e =>
     {
         if (type == 'down' && e.button > 0) return;   // no right-click actions
-        hrPointerQueue.push({type, id: e.pointerId, pos: hrCanvasPos(e)});
+        const pos = hrCanvasPos(e);
+        if (type == 'down') hrPointers.set(e.pointerId, pos); else hrPointers.delete(e.pointerId);
+        hrPointerQueue.push({type, id: e.pointerId, pos});
     };
+    addEventListener('pointermove', e => hrPointers.has(e.pointerId) && hrPointers.set(e.pointerId, hrCanvasPos(e)));
     addEventListener('pointerdown', queue('down'));
     addEventListener('pointerup', queue('up'));
     addEventListener('pointercancel', queue('up'));

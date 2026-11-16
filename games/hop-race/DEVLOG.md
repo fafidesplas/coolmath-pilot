@@ -7,8 +7,9 @@
 - Racing helmet: the shell closes over the eye, with a glass visor as a white band across the face.
 - A French beret was tried and removed (owner: not working).
 - Pirate hat: a tricorn with a trim and a button, and an eye patch on a strap that covers the eye. 21 hats, 7 per row in 3 full rows.
-- Cap: a curved brim that dips toward its tip, a taller dome and a letter C on the front in place of the shine. Hats now get the facing direction, so the C is not mirrored when the player faces left.
-- Astronaut's helmet (white bubble, dark visor over the eye) and deep sea diver's helmet (the eye is the porthole's glass). 23 hats; the store grid is now 8 per row in 3 rows, with narrower tiles and slightly smaller names.
+- Cap: a taller dome and a letter C on the front in place of the shine. Hats now get the facing direction, so the C is not mirrored when the player faces left.
+- Astronaut's helmet (white bubble, dark visor over the eye) and deep sea diver's helmet (the eye is the porthole's glass). 23 hats.
+- The store grid scrolls: 6 per row at the first tile size again, in a window between the coin balance and the ad button. Mouse wheel, drag (mouse or finger) and arrow keys scroll it; a scroll bar shows the position. A tile is picked on release, and only if the pointer did not drag (`hrStoreScrollUpdate`, `hrPointers` in `src/input.js`). Checked in Chrome: wheel, a simulated drag, a tap that buys, and arrow keys to the last row and back.
 - Checked as a rendered sheet of the shapes on a player square, not in the running game.
 - Next: a P2 pick, the hat on the ghost, other ways to earn coins.
 
