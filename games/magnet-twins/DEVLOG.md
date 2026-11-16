@@ -1,5 +1,11 @@
 # Magnet Twins — devlog
 
+## 2026-11-16 — Level 10: the Workshop Exam
+- `w1l10` is now the real exam on two floors. Downstairs (the old slice level): stack for the block bolt, pull the crate over the spikes, step up, hold the door. A shaft on the right: launch from a one-tile step and pull Minus up, as in Boost. Upstairs, back to the left: stepping stones over water to the exit in the top-left corner.
+- First level with a checkpoint: the flag stands where Plus lands at the top of the shaft; a fall in the upper pool respawns both robots there (checked by hand with the bot).
+- Recordings: co-op 50.6 s, solo 51.1 s, so par is 64 s in both modes. `node tools/simtest.mjs` passes in full. GDD level line and changelog updated.
+- Not yet played in a browser. Next: play it (`?level=w1l10`, or watch the bot with `?level=w1l10&replay=coop`), then worlds 2 and 3.
+
 ## 2026-11-11 — Phase 3: world 1 levels 1–9
 - Levels 1–9 and the slice level (10) are built from `tools/build-world1.mjs`; each has a solution script (`tools/solutions.mjs`) that a macro bot (`tools/bot.mjs`) plays in co-op and solo. `node tools/simtest.mjs` replays the recordings, checks 3 bolts, determinism, par (recorded time × 1.25) and that a bot that only walks right does not finish.
 - New levels: Boost (step added), Tower, Wet Feet (water stones), Carry (crate across a spike pit).

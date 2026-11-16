@@ -1,7 +1,7 @@
 # Magnet Twins — Game design document
 
 **Status:** Approved
-**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-26
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-16
 
 > Two little robots share one keyboard: red Plus pulls metal, blue Minus pushes it, and every level needs both of them working together.
 
@@ -153,7 +153,7 @@
   7. **Tower** — a 4-tile wall with a crate at its foot: Minus climbs the crate, Plus climbs Minus and jumps onto the ledge, then Plus pulls Minus up from the ledge (Minus jumps from the crate into the cone).
   8. **Wet Feet** — first water: a pool too wide to jump, crossed on three-tile-wide stepping stones that climb one tile each. Water kills even at the edge of the body, so run-ups start inside the bank. (Crates sink in water, so they are no bridge; the crate-over-spikes idea moved to level 9.)
   9. **Carry** — the crate starts on the far side of a spike pit. Plus jumps over and pulls it across, carries it (power on, walking away), rides it while Minus pushes it to the foot of the wall, then it is the step up as in level 7. (A robot cannot jump with its power on: the jump key aims up.)
-  10. **Workshop Exam** — door, launch and crates together; the first level with a par over 60 s, so it gets one checkpoint halfway.
+  10. **Workshop Exam** — door, launch and crates together on two floors; the first level with a par over 60 s (64 s in both modes), so it gets one checkpoint halfway. Downstairs, left to right: stack on your twin for the bolt on a little block, pull the crate across the spikes and step up on it, hold the door for each other. Up a shaft on the right: launch from a one-tile step and pull the twin up, as in level 6; the flag stands where they land. Upstairs, right to left: stepping stones over water to the exit, so a fall costs the upper floor only.
 - **Level data format** (one JS module per level in `levels/`, exporting this object):
 
 ```json
@@ -301,6 +301,7 @@ Power and switch counts are sent once per attempt with a value, not per press, t
 | Is a 3rd progression tier for mode acceptable for cross-game comparison? | Yes; the first two tiers match `STANDARDS.md` | Team | Open |
 
 ## 15. Changelog
+- 2026-11-16 — Level 10 built as the real Workshop Exam: a two-floor screen (lower floor left to right, upper floor right to left) so a single screen holds a review over 60 s; it also reviews water stones from level 8, not only door, launch and crates. The checkpoint sits at the top of the launch shaft, so a fall in the upper pool never repeats the launch.
 - 2026-10-26 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-21 — Feel loop: aim preview (ghost cone and target rings while the power is off), because players could not tell which way the field would fire or that up and down change it.
 - 2026-10-21 — Changes found while building the vertical slice: spikes are not solid (crates sit over them); facing locks while the power is on, and a carried crate is put down by letting go; hover damping only while falling, so launches and jumps keep their height; line of sight to a box's center or any corner; recordings store controller bitmasks; level 2 uses spikes instead of a pit (a pit can't be emptied with a 30° cone); module list updated to the real code.
