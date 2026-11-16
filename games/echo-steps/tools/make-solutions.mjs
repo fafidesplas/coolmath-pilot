@@ -13,6 +13,14 @@ const L = BIT.LEFT, R = BIT.RIGHT, J = BIT.JUMP, LOOP = BIT.LOOP;
 const stop = d => d.hold(0, d => d.p.vx === 0);
 const loopNow = d => { d.step(LOOP); d.step(0); };
 const done = d => d.s.done;
+// Final-loop wait for a gate an echo opens: run right to x, stand still until gate
+// `g` is fully open, then 0.35 s more, so the input stream still works when the
+// echo's loop is delayed by 0.25 s (the timing-tolerance rule, GDD 6).
+const waitAt = (d, x, g) => {
+  d.hold(R, d => d.p.x >= x); stop(d);
+  d.hold(0, d => d.s.open[g] >= 1);
+  d.wait(42, 0);
+};
 
 export const SCRIPTS = {
   // Walk onto the plate, Loop; then walk to the exit through the held gate.
@@ -59,6 +67,16 @@ export const SCRIPTS = {
   w1l06(d) {
     d.hold(L, d => d.p.x <= 176); stop(d); loopNow(d);
     d.hold(R, d => d.p.x >= 570); stop(d); loopNow(d);
+    d.hold(R, done);
+  },
+  // The echo holds plate A until you are past gate A (clock 1.6 s), then steps off to
+  // the left so the inverted gate opens; then run through gate A, wait between the
+  // gates until the inverted one is open, and run to the exit.
+  w1l07(d) {
+    d.hold(L, d => d.p.x <= 262); stop(d);
+    d.hold(0, d => d.s.clock >= 192);
+    d.hold(L, d => d.p.x <= 200); stop(d); loopNow(d);
+    waitAt(d, 760, 1);
     d.hold(R, done);
   },
 };
