@@ -7,7 +7,7 @@
 - Racing helmet: the shell closes over the eye, with a glass visor as a white band across the face.
 - A French beret was tried and removed (owner: not working).
 - Pirate hat: a tricorn with a trim and a button, and an eye patch on a strap that covers the eye. 21 hats, 7 per row in 3 full rows.
-- Cap: a taller dome and a letter C on the front in place of the shine. Hats now get the facing direction, so the C is not mirrored when the player faces left.
+- Cap: a curved brim that dips toward its tip, a taller dome and a letter C on the front in place of the shine. Hats now get the facing direction, so the C is not mirrored when the player faces left.
 - Checked as a rendered sheet of the shapes on a player square, not in the running game.
 - Next: a P2 pick, the hat on the ghost, other ways to earn coins.
 
