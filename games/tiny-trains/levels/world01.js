@@ -1,4 +1,4 @@
-// World 1 — Village (GDD 6), levels 1-1 to 1-5. Same shape as the GDD's level JSON,
+// World 1 — Village (GDD 6), levels 1-1 to 1-8. Same shape as the GDD's level JSON,
 // kept as a JS module so the browser and node can both import it without fetch.
 // rot: 0–3 clockwise from north. Switch `set`: 0 straight, 1 curved (the start).
 // For a switch, rot is the heading of a facing train on the straight branch; the
@@ -101,5 +101,24 @@ export default [
     tickLimit: 30,
     par: 2,
     solution: { switches: { '2,1': 1, '3,1': 0, '4,1': 0, '4,3': 0 } },
+  },
+  {
+    id: 'world01:level06',
+    name: 'Scenic Route',
+    tip: 'The ticket is on the long way round. Who can take it safely?',
+    w: 7, h: 5,
+    tiles: [
+      depot(0, 1, 1), sw(1, 1, 1, false, 1), st(2, 1, 1), st(3, 1, 1), st(4, 1, 1), sw(5, 1, 3, true, 0), station(6, 1, 3, 'red'),
+      cv(1, 2, 0), sw(2, 2, 3, true, 1), st(3, 2, 1), sw(4, 2, 1, false, 1), cv(5, 2, 3),
+      station(0, 3, 1, 'blue'), st(1, 3, 1), sw(2, 3, 1, true, 0), st(3, 3, 1), sw(4, 3, 3, false, 1), st(5, 3, 1), depot(6, 3, 3),
+    ],
+    trains: [
+      { id: 0, color: 'red', depot: [0, 1], depart: 0 },
+      { id: 1, color: 'blue', depot: [6, 3], depart: 0 },
+    ],
+    ticket: [5, 2],
+    tickLimit: 24,
+    par: 2,
+    solution: { switches: { '1,1': 1, '4,2': 0, '4,3': 0 } },
   },
 ];

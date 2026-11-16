@@ -144,6 +144,25 @@ for (const level of ALL_LEVELS) {
     `${tag}: brute force ${wins.length}/${all.length} setups win, ${tWins.length} with the ticket, min flips ${minFlips} = par ${level.par}`);
 }
 
+// Design intent per level (GDD 6).
+{
+  const L6 = findLevel('1-6');
+  if (L6) {
+    const set = sw => ({ switches: { ...defaultSetup(L6).switches, ...sw } });
+    const bothLong = run(L6, set({ '1,1': 1, '4,2': 0, '4,3': 1, '2,2': 1 }));
+    ok(bothLong.cause === 'collision' || bothLong.cause === 'swap', `1-6: both trains on the long way crash head-on (${bothLong.cause})`);
+    const redShort = run(L6, set({ '1,1': 0 }));
+    ok(redShort.result === 'win' && !redShort.ticket && flipCount(L6, set({ '1,1': 0 })) === 1, '1-6: red on the short way wins in 1 flip but misses the ticket');
+    const scenic = run(L6, set(L6.solution.switches));
+    ok(scenic.ticket && scenic.frames.flatMap(f => f.events).find(e => e.type === 'ticket').id === 0, '1-6: red collects the ticket on the scenic route');
+  }
+  const L8 = findLevel('1-8');
+  if (L8) {
+    const r = run(L8, { switches: { ...defaultSetup(L8).switches, '2,2': 1 } });
+    ok(r.cause === 'swap', `1-8: red straight on along blue's line meets blue head-on (${r.cause})`);
+  }
+}
+
 ok(findLevel('1-3') === ALL_LEVELS[2] && findLevel('world01:level05') === ALL_LEVELS[4] && findLevel('2') === ALL_LEVELS[1], '?level= accepts "1-3", ids and indexes');
 
 console.log(`\n${passed} passed, ${failed} failed`);
