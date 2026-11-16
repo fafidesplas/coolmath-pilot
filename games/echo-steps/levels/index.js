@@ -7,9 +7,10 @@ import w1l05 from './w1l05.js';
 import w1l06 from './w1l06.js';
 import w1l07 from './w1l07.js';
 import w1l08 from './w1l08.js';
+import w1l09 from './w1l09.js';
 
 export const WORLDS = [
-  { name: 'Lab', rooms: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06, w1l07, w1l08] },
+  { name: 'Lab', rooms: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06, w1l07, w1l08, w1l09] },
   { name: 'Archive', rooms: [] },
   { name: 'Core', rooms: [] },
 ];

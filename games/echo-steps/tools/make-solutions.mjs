@@ -88,6 +88,18 @@ export const SCRIPTS = {
     waitAt(d, 740, 1);
     d.hold(R, done);
   },
+  // Echo 1 rests at the foot of the shelf; echo 2 climbs it, walks onto the high plate
+  // and rests. Then run right and wait at gate B until it is open.
+  w1l09(d) {
+    const foot = d => d.p.x <= 280.01;
+    d.hold(L, foot); stop(d); loopNow(d);
+    d.hold(L, foot);
+    d.hold(L | J, d => d.p.grounded && d.p.ground === 2); d.step(L);
+    d.hold(L | J, d => d.p.grounded && d.p.y + PLAYER.h <= 480.01);
+    d.hold(L, d => d.p.x <= 214); stop(d); loopNow(d);
+    waitAt(d, 800, 0);
+    d.hold(R, done);
+  },
 };
 
 export function buildSolution(data) {
