@@ -2,7 +2,7 @@
     HOP RACE - World 4, Phase (GDD §3.5, §6). Coordinates are centered on the level box:
     a size 24 level spans x -12..12 and y -6.75..6.75. Solids are {l, r, top, bottom?}.
     Slabs are tilted bars [x0, y0, x1, y1]: the left and right ends of the top surface, 0.5 u thick.
-    The flag stands on a slab; hrSlabY gives the slab's top at x, so the pole's foot sits on it.
+    The finish block sits in the low corner; hrSlabY gives the slab's top at x, so it rests on the slab.
 */
 
 'use strict';
@@ -20,9 +20,8 @@ HR_LEVELS.phase = [
         id: 'phase-01', name: 'Melt',
         size: 24,
         start: {x: -9.5, y: hrSlabY(HR_PHASE_SLABS.melt[0], -9.5)},
-        solids: [],
+        solids: [{l: 9.8, r: 12, top: hrSlabY(HR_PHASE_SLABS.melt[0], 10.55) + .5, bottom: hrSlabY(HR_PHASE_SLABS.melt[0], 10.55) - 1.5, finish: true}],   // the corner where the drops pool
         slabs: HR_PHASE_SLABS.melt,   // one gentle slope from wall to wall: nothing can spill
-        flag: {x: 10.55, y: hrSlabY(HR_PHASE_SLABS.melt[0], 10.55)},   // its box reaches the corner where the drops pool
         prompt: 'Press to melt.',
         promptAt: {x: -4, y: 4},
     },
@@ -30,16 +29,14 @@ HR_LEVELS.phase = [
         id: 'phase-02', name: 'Switchback',
         size: 26,
         start: {x: -11, y: hrSlabY(HR_PHASE_SLABS.switch[0], -11)},
-        solids: [],
+        solids: [{l: 10.8, r: 13, top: hrSlabY(HR_PHASE_SLABS.switch[2], 11.55) + .5, bottom: hrSlabY(HR_PHASE_SLABS.switch[2], 11.55) - 1.5, finish: true}],   // the corner where the drops pool
         slabs: HR_PHASE_SLABS.switch,
-        flag: {x: 11.55, y: hrSlabY(HR_PHASE_SLABS.switch[2], 11.55)},
     },
     {
         id: 'phase-03', name: 'Spill',
         size: 28,
         start: {x: -12, y: hrSlabY(HR_PHASE_SLABS.spill[0], -12)},
-        solids: [],
+        solids: [{l: 11.8, r: 14, top: hrSlabY(HR_PHASE_SLABS.spill[1], 12.55) + .5, bottom: hrSlabY(HR_PHASE_SLABS.spill[1], 12.55) - 1.5, finish: true}],   // the corner where the drops pool
         slabs: HR_PHASE_SLABS.spill,
-        flag: {x: 12.55, y: hrSlabY(HR_PHASE_SLABS.spill[1], 12.55)},
     },
 ];

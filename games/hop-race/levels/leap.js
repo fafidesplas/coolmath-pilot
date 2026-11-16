@@ -14,8 +14,8 @@ HR_LEVELS.leap = [
         solids: [
             {l: -13, r: -1.5, top: -3.5},
             {l: 1.5, r: 13, top: -3.5},
+            {l: 8.25, r: 10.75, top: -3, bottom: -3.5, finish: true},
         ],
-        flag: {x: 9, y: -3.5},
         prompt: 'Hold A, then let go to leap!',
     },
     {
@@ -27,8 +27,8 @@ HR_LEVELS.leap = [
             {l: 9.5, r: 15, top: -3.5},
             {l: -6.5, r: -3.25, top: -4},
             {l: -1, r: 2, top: -4},
+            {l: 11.25, r: 13.75, top: -3, bottom: -3.5, finish: true},
         ],
-        flag: {x: 12, y: -3.5},
     },
     {
         id: 'leap-03', name: 'Up We Go',
@@ -37,7 +37,7 @@ HR_LEVELS.leap = [
         solids: [
             {l: -14, r: -6.5, top: -5},
             {l: -6.5, r: 14, top: 3.75, bottom: 2.75},
+            {l: 9.75, r: 12.25, top: 4.25, bottom: 3.75, finish: true},
         ],
-        flag: {x: 10.5, y: 3.75},
     },
 ];

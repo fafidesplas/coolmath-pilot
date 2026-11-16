@@ -114,7 +114,7 @@ function hopGhost(id)
             }
             if (p.finished) break;
         }
-        if (!p.finished || p.falls) { console.warn(id, 'replay missed the flag'); return null; }
+        if (!p.finished || p.falls) { console.warn(id, 'replay missed the finish'); return null; }
         return ghostResult(r.done(), Math.round(bot.bestTime * 60));
     });
 }
@@ -187,7 +187,7 @@ function leapGhost(id)
                 if (a && (q.grounded && !q.vx || q.cling)) break;
             }
         }
-        if (!q.finished || q.falls) { console.warn(id, 'replay missed the flag'); return null; }
+        if (!q.finished || q.falls) { console.warn(id, 'replay missed the finish'); return null; }
         return ghostResult(r.done(), best.dist);
     });
 }

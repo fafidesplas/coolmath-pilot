@@ -1,5 +1,13 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Finish blocks replace the flag
+- The finish is now a block type, like ice or grip: a solid with `finish: true`. Touching it on any side wins (land on it, run into it, bump it from below). The flag and its invisible 1.44 × 3 u trigger box are gone.
+- Drawn exactly on its collider: a checkered middle (two rows on a 0.5 u log) between ink end caps, with a small waving checkered flag on top as a marker only (no collider).
+- Every level's flag became a 2.5 × 0.5 u finish block on the floor where the flag stood (Versus: centered on x = 0; Phase: a block in the low corner where the drops pool). Checked in Chrome that no finish block overlaps another solid or has less than a player's height above it.
+- Phase counts drops touching a finish block; the stuck nudge measures the distance to the nearest one; `game.win()` puts the player on top of it.
+- Editor: X (or the "finish" box) marks the selected solid as a finish block; the flag handle is gone.
+- Next: play every level; regenerate the built-in ghosts if their times moved.
+
 ## 2026-11-16 — Racing helmet stripes
 - Racing helmet: the flat stripe across the brow is now racing stripes, a wide band between two pinstripes that sweeps from above the visor over the top and down the back (`hrHatBand`). The hinge moved onto the visor's edge so it no longer cuts the stripes.
 - Wizard hat: about 15% wider and taller (brim, cone and star); its tip is now 0.9 of the player's height, the tallest hat.

@@ -1,10 +1,10 @@
 /*
-    HOP RACE - level loading: solids, gates and buttons, flag trigger box, start point (GDD §6 data format).
+    HOP RACE - level loading: solids (finish blocks among them), gates and buttons, start point (GDD §6 data format).
 */
 
 'use strict';
 
-let hrLevel = null;   // the loaded level: {def, w, h, killY, solids, gates, flag, start}
+let hrLevel = null;   // the loaded level: {def, w, h, killY, solids, gates, finishes, start}
 
 function hrLoadLevel(def)
 {
@@ -12,7 +12,7 @@ function hrLoadLevel(def)
     const make = d =>
     {
         const bottom = d.bottom ?? killY - 30;   // default: well below the kill line
-        return {l: d.l, r: d.r, top: d.top, bottom, grip: !!d.grip, ice: !!d.ice, sticky: !!d.sticky, breakable: !!d.breakable,
+        return {l: d.l, r: d.r, top: d.top, bottom, grip: !!d.grip, ice: !!d.ice, sticky: !!d.sticky, breakable: !!d.breakable, finish: !!d.finish,
             move: d.move && (d.move.x || d.move.y) && d.move.t > 0 ? d.move : null, home: {l: d.l, top: d.top},
             pos: vec2((d.l + d.r) / 2, (d.top + bottom) / 2), size: vec2(d.r - d.l, d.top - bottom)};
     };
@@ -36,13 +36,9 @@ function hrLoadLevel(def)
         return {solid, closedBottom: solid.bottom, button: g.button, open: 0, pressed: false};
     });
 
-    // a mirrored level's flag stands in the middle, its trigger box centered on the pole so both sides reach it alike
-    const f = def.mirror ? {...def.flag, x: 0} : def.flag, boxX = def.mirror ? 0 : f.x + (f.dir || 1) * .65;
     hrLevel = {def, w, h, killY, solids, gates, mirror: !!def.mirror, clock: 0,
         start: vec2(def.start.x, def.start.y),
-        flag: {x: f.x, y: f.y, hang: !!f.hang, dir: f.dir || 1},
-        // GDD §3.1: trigger box from the pole to the pennant tip, 3 u tall
-        flagBox: {pos: vec2(boxX, f.hang ? f.y - 1.5 : f.y + 1.5), size: vec2(1.44, 3)},
+        finishes: solids.filter(s => s.finish),   // GDD §3.1: touching one of these wins
     };
 }
 
@@ -116,10 +112,21 @@ function hrMoveSolid(s, dx, dy)
     }
 }
 
-function hrTouchingFlag(x, y)
+// GDD §3.1: a player box touching a finish block on any side (standing on it, running into it, bumping it from
+// below). Solids push the player out, so touching means within a hair of its faces
+function hrTouchingFinish(x, y, size = HR_PSIZE)
 {
-    const b = hrLevel.flagBox;
-    return isOverlapping(vec2(x, y), vec2(HR_PSIZE), b.pos, b.size);
+    const e = .02, half = size / 2 + e;
+    return hrLevel.finishes.some(s => x + half > s.l && x - half < s.r && y + half > s.bottom && y - half < s.top);
+}
+
+// distance from a point to the nearest finish block (0 inside it), for the stuck nudge
+function hrFinishDistance(x, y)
+{
+    let d = Infinity;
+    for (const s of hrLevel.finishes)
+        d = min(d, Math.hypot(max(s.l - x, 0, x - s.r), max(s.bottom - y, 0, y - s.top)));
+    return d;
 }
 
 function hrFindLevel(id)

@@ -252,7 +252,7 @@ function hrPlayUpdate(racing)
     if (hrVersus)
     {
         hrMatch.frames++;
-        const done = hrMatch.finishers = [];   // who touches the flag this frame
+        const done = hrMatch.finishers = [];   // who touches a finish block this frame
         hrMoversStep();
         hrPlayers.forEach(p => hrPlayerStep(p, hrButtons[p.index]));
         if (done.length == 1) hrRoundWon(done[0]);
@@ -273,7 +273,7 @@ function hrPlayUpdate(racing)
     hrGhostRecord(p, hrRun.frames);
     hrRun.frames++;
 
-    // stuck nudge: 8 s without getting closer to the flag
+    // stuck nudge: 8 s without getting closer to the finish
     const d = hrFlagDistance(p);
     if (d < hrRun.best - .05) { hrRun.best = d; hrRun.stuckT = 0; hrRun.nudge = false; }
     else if ((hrRun.stuckT += timeDelta) > 8 && !hrRun.nudge)
@@ -336,7 +336,8 @@ window.game = {
         if (hrScreen != 'playing' || hrFinishT >= 0) return;
         const p = hrPlayers[0];
         if (!hrVersus && !hrRun.started) { hrRun.started = true; hrGaProgress('Start', hrWorld, hrLevelIndex); }
-        p.x = hrLevel.flag.x; p.y = hrLevel.flag.y + HR_PSIZE / 2;
+        const f = hrLevel.finishes[0];
+        p.x = (f.l + f.r) / 2; p.y = f.top + HR_PSIZE / 2;
         p.vx = p.vy = 0; p.grounded = true;
         hrMode().warp?.(p);
     },

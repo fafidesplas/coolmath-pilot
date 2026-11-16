@@ -41,7 +41,7 @@ window.hrEditor = (() =>
     const cloneSolid = s => hide(hide({...s, ...(s.move && {move: {...s.move}})}, '_o', s._o), '_teeth', s._teeth);
     function cloneDef(d)
     {
-        const c = {...d, start: {...d.start}, flag: {...d.flag}, solids: d.solids.map(cloneSolid)};
+        const c = {...d, start: {...d.start}, solids: d.solids.map(cloneSolid)};
         if (d.gates) c.gates = d.gates.map(g => hide({solid: cloneSolid(g.solid), button: {...g.button}}, '_o', g._o));
         if (d.promptAt) c.promptAt = {...d.promptAt};
         return c;
@@ -176,7 +176,6 @@ window.hrEditor = (() =>
     {
         const near = (x, y, r) => Math.hypot(p.x - x, p.y - y) < r;
         if (near(def.start.x, def.start.y + .4, .6)) return {type: 'start'};
-        if (inside({l: def.flag.x - .2, r: def.flag.x + 1.5, bottom: def.flag.y, top: def.flag.y + 3}, p)) return {type: 'flag'};
         if (def.prompt && near(promptPos().x, promptPos().y, .7)) return {type: 'prompt'};
         for (let i = (def.gates || []).length; i--;)
         {
@@ -227,7 +226,7 @@ window.hrEditor = (() =>
         if (drag && mouseWasReleased(0))
         {
             if (drag.mode == 'new') addSolid(drag.from, vec2(snap(p.x), snap(p.y)));
-            else if (drag.snapped && (sel.type == 'start' || sel.type == 'flag')) dropToFloor(sel.type == 'start' ? def.start : def.flag);
+            else if (drag.snapped && sel.type == 'start') dropToFloor(def.start);
             drag = null;
             refreshPanel();
         }
@@ -273,11 +272,10 @@ window.hrEditor = (() =>
         else if (sel.type == 'gate') { moveSolid(def.gates[sel.i].solid); shift(def.gates[sel.i].button); }
         else if (sel.type == 'button') shift(def.gates[sel.i].button);
         else if (sel.type == 'start') shift(def.start);
-        else if (sel.type == 'flag') { shift(def.flag); if (def.mirror) def.flag.x = 0; }   // a mirrored level's flag stays in the middle
         else if (sel.type == 'prompt') { const p = promptPos(); def.promptAt = {x: p.x, y: p.y}; shift(def.promptAt); }
     }
 
-    // the start and the flag's pole foot sit on the highest floor under them (within half a unit above)
+    // the start sits on the highest floor under it (within half a unit above)
     function dropToFloor(o)
     {
         const under = def.solids.filter(s => o.x > s.l && o.x < s.r && s.top <= o.y + .5).map(s => s.top);
@@ -311,7 +309,7 @@ window.hrEditor = (() =>
         if (!ED.active) return;
         if (cmd && e.code == 'KeyZ') { e.preventDefault(); return e.shiftKey ? doRedo() : doUndo(); }
         if (cmd) return;
-        const s = selSolid(), flagKeys = {KeyG: 'grip', KeyI: 'ice', KeyK: 'sticky', KeyN: 'nogrip', KeyB: 'breakable'};
+        const s = selSolid(), flagKeys = {KeyG: 'grip', KeyI: 'ice', KeyK: 'sticky', KeyN: 'nogrip', KeyX: 'finish', KeyB: 'breakable'};
         if (e.code == 'KeyB' && HR_WORLDS[world].id != 'rocket') return;   // breakable solids are Rocket only
         if (flagKeys[e.code] && s) { snapshot(); touch(s); s[flagKeys[e.code]] ? delete s[flagKeys[e.code]] : s[flagKeys[e.code]] = true; return changed(); }
         const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1]}[e.code];
@@ -418,7 +416,7 @@ window.hrEditor = (() =>
         const w = HR_WORLDS[world].id, vs = copy && def.mirror, list = vs ? HR_VERSUS[w] : HR_LEVELS[w];
         let n = list.length + 1, id;
         while (levelsOf(world).some(l => l.id == (id = `${w}${vs ? '-vs' : ''}-${String(n).padStart(2, '0')}`))) n++;
-        const d = copy ? cloneDef(def) : {size: 26, start: {x: -10, y: -4}, solids: [{l: -14, r: 14, top: -4}], flag: {x: 10, y: -4}};
+        const d = copy ? cloneDef(def) : {size: 26, start: {x: -10, y: -4}, solids: [{l: -14, r: 14, top: -4}, {l: 9, r: 11.5, top: -3.5, bottom: -4, finish: true}]};
         Object.assign(d, {id, name: copy ? def.name + ' copy' : 'New Level'});
         d.solids.forEach(s => hide(s, '_o', undefined));
         hide(d, '_new', true);
@@ -440,9 +438,9 @@ window.hrEditor = (() =>
         const r = hopBot(def.id, {started: true});
         start();   // the bot leaves the game on the title screen
         bot = r;
-        status = !r.finishable ? 'Bot: can\'t reach the flag' :
+        status = !r.finishable ? 'Bot: can\'t reach the finish' :
             `Bot: ${r.bestTime} s, ${r.moves} moves, tightest timing ${r.routeSpots.length > 1 ? Math.min(...r.routeSpots.slice(0, -1).map(s => s.window)) : '-'} frames ` +
-            `(not counting the move to the flag), ${r.deadEnds.length} dead end${r.deadEnds.length == 1 ? '' : 's'}`;
+            `(not counting the move to the finish), ${r.deadEnds.length} dead end${r.deadEnds.length == 1 ? '' : 's'}`;
         refreshPanel();
     }
 
@@ -462,7 +460,7 @@ window.hrEditor = (() =>
     // solids keep the files' order: l, r, top, bottom, then the flags
     function solidLit(s)
     {
-        const keys = ['l', 'r', 'top', 'bottom', 'grip', 'ice', 'sticky', 'nogrip', 'breakable', 'move'];
+        const keys = ['l', 'r', 'top', 'bottom', 'grip', 'ice', 'sticky', 'nogrip', 'breakable', 'finish', 'move'];
         const o = {};
         for (const k of keys) if (s[k] !== undefined && s[k] !== false) o[k] = s[k];
         for (const k of Object.keys(s)) if (!keys.includes(k)) o[k] = s[k];
@@ -540,9 +538,8 @@ window.hrEditor = (() =>
                 out.push(withComment(`            {solid: ${solidLit(gt.solid)}, button: ${lit(gt.button)}},`, gt._o !== undefined ? c.gates[gt._o] || '' : ''));
             out.push('        ],');
         }
-        const known = ['draft', 'id', 'name', 'mirror', 'size', 'start', 'solids', 'gates', 'flag', 'prompt', 'promptAt'];
+        const known = ['draft', 'id', 'name', 'mirror', 'size', 'start', 'solids', 'gates', 'prompt', 'promptAt'];
         for (const k of Object.keys(d)) if (!known.includes(k) && d[k] !== undefined) put(k, `${k}: ${lit(d[k])},`);
-        put('flag', `flag: ${lit(d.flag)},`);
         if (d.prompt) put('prompt', `prompt: ${str(d.prompt)},`);
         if (d.promptAt) put('promptAt', `promptAt: ${lit(d.promptAt)},`);
         out.push('    },');
@@ -660,7 +657,6 @@ window.hrEditor = (() =>
         if (s.type == 'gate') return vis(def.gates[s.i].solid);
         if (s.type == 'button') { const b = def.gates[s.i].button; return {l: b.x - .55, r: b.x + .55, bottom: b.y - .55, top: b.y + .55}; }
         if (s.type == 'start') return {l: def.start.x - .4, r: def.start.x + .4, bottom: def.start.y, top: def.start.y + .8};
-        if (s.type == 'flag') return {l: def.flag.x - .1, r: def.flag.x + 1.4, bottom: def.flag.y, top: def.flag.y + 3};
         if (s.type == 'prompt') { const p = promptPos(); return {l: p.x - .7, r: p.x + .7, bottom: p.y - .45, top: p.y + .45}; }
     }
 
@@ -684,7 +680,7 @@ window.hrEditor = (() =>
         drawRect(vec2(hw - 2.5, hh - .75), vec2(5, 1.5), hud);
         // kill line
         for (let x = -hw; x < hw; x += .6) drawLine(vec2(x, hrLevel.killY), vec2(x + .3, hrLevel.killY), .05, HR_RED.scale(1, .6));
-        // start (players are drawn there anyway), flag box and prompt spot
+        // start (players are drawn there anyway) and prompt spot
         outline(boundsOf({type: 'start'}), .05, ink.scale(1, .6));
         if (def.prompt)
         {
@@ -692,8 +688,6 @@ window.hrEditor = (() =>
             outline(boundsOf({type: 'prompt'}), .04, ink.scale(1, .4));
             if (!hrRun.prompt) drawText(def.prompt, p, .9, ink.scale(1, .45), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
         }
-        const b = hrLevel.flagBox;
-        outline({l: b.pos.x - b.size.x / 2, r: b.pos.x + b.size.x / 2, bottom: b.pos.y - b.size.y / 2, top: b.pos.y + b.size.y / 2}, .04, ink.scale(1, .3));
         // Climb's seeded teeth get a dotted outline, so you can tell them from hand-placed solids
         for (const s of def.solids) if (s._teeth) outline(vis(s), .03, HR_WHITE.scale(1, .6));
         // moving solids: a see-through ghost where each one turns back
@@ -833,14 +827,14 @@ window.hrEditor = (() =>
         panel.append(el('div', {className: 'status', textContent: status || (unsaved.length ? 'Unsaved: ' + unsaved.join(', ') : 'No unsaved changes')}));
 
         // the selection
-        panel.append(el('h3', {textContent: sel ? {solid: 'Solid', moveEnd: 'Moving solid: turn-back spot', gate: 'Gate', button: 'Gate button', start: 'Start', flag: 'Flag', prompt: 'Prompt position'}[sel.type] : 'Selection'}));
+        panel.append(el('h3', {textContent: sel ? {solid: 'Solid', moveEnd: 'Moving solid: turn-back spot', gate: 'Gate', button: 'Gate button', start: 'Start', prompt: 'Prompt position'}[sel.type] : 'Selection'}));
         const s = selSolid();
         if (s)
         {
             const n = k => input('number', () => s[k], v => { touch(s); s[k] = v; }, {step: .25});
             panel.append(el('div', {className: 'grid4'}, [field('left', n('l')), field('right', n('r')), field('top', n('top')),
                 s.bottom === undefined ? el('label', {}, [el('span', {textContent: 'bottom'}), 'floor (F)']) : field('bottom', n('bottom'))]));
-            const flags = [['grip', 'grip wall (G)'], ['ice', 'ice (I)'], ['sticky', 'sticky (K)'], ['nogrip', 'no-grip (N)'], ['breakable', 'breakable (B)']];
+            const flags = [['grip', 'grip wall (G)'], ['ice', 'ice (I)'], ['sticky', 'sticky (K)'], ['nogrip', 'no-grip (N)'], ['finish', 'finish (X)'], ['breakable', 'breakable (B)']];
             if (HR_WORLDS[world].id != 'rocket' && !s.breakable) flags.pop();   // breakable: Rocket only
             for (const [k, label] of flags) panel.append(checkbox(label, () => s[k], v => { touch(s); v ? s[k] = true : delete s[k]; }));
             if (sel.type == 'solid')
@@ -855,19 +849,19 @@ window.hrEditor = (() =>
         }
         else if (sel && sel.type != 'gate')
         {
-            const o = sel.type == 'start' ? def.start : sel.type == 'flag' ? def.flag : sel.type == 'button' ? def.gates[sel.i].button : null;
+            const o = sel.type == 'start' ? def.start : sel.type == 'button' ? def.gates[sel.i].button : null;
             if (o) panel.append(el('div', {className: 'grid4'}, [
                 field('x', input('number', () => o.x, v => { o.x = v; }, {step: .25})),
                 field('y', input('number', () => o.y, v => { o.y = v; }, {step: .25}))]));
             if (sel.type == 'prompt') panel.append(button('Default position', () => { snapshot(); delete def.promptAt; changed(); }));
         }
-        else panel.append(el('div', {className: 'keys', textContent: 'Click a solid, the start, the flag or the prompt.'}));
+        else panel.append(el('div', {className: 'keys', textContent: 'Click a solid, the start or the prompt.'}));
 
         panel.append(el('h3', {textContent: 'Keys'}), el('div', {className: 'keys', innerHTML: `
             <b>E</b> play / edit · <b>Shift+E</b> play from the mouse<br>
             <b>drag</b> move · <b>drag an edge</b> resize · <b>drag empty space</b> new solid<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: 1 u)<br>
-            <b>G I K N</b> grip, ice, sticky, no-grip${HR_WORLDS[world].id == 'rocket' ? ', <b>B</b> breakable' : ''}<br>
+            <b>G I K N X</b> grip, ice, sticky, no-grip, finish${HR_WORLDS[world].id == 'rocket' ? ', <b>B</b> breakable' : ''}<br>
             <b>M</b> moving (drag its ghost: turn-back spot)<br>
             <b>F</b> floor / floating · <b>H</b> hanging from the top<br>
             <b>T</b> solid ↔ gate (Rocket) · <b>D</b> duplicate · <b>Delete</b> remove<br>

@@ -81,7 +81,7 @@ function hrPlayerStep(p, input)
 
         // GDD §3.1: falling sends you back to the start with zero speed, the timer keeps running
         if (p.y < hrLevel.killY) hrRespawn(p, input.down);
-        else if (hrMode().finished ? hrMode().finished(p) : hrTouchingFlag(p.x, p.y))
+        else if (hrMode().finished ? hrMode().finished(p) : hrTouchingFinish(p.x, p.y))
         {
             p.finished = true;
             p.down = false;
@@ -127,4 +127,4 @@ function hrPlayerStep(p, input)
 }
 
 // distance used by the stuck nudge (GDD §3.1)
-function hrFlagDistance(p) { return Math.hypot(p.x - hrLevel.flag.x, p.y - hrLevel.flag.y); }
+function hrFlagDistance(p) { return hrFinishDistance(p.x, p.y); }

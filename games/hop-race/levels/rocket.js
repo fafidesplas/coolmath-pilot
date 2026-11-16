@@ -16,8 +16,8 @@ HR_LEVELS.rocket = [
         solids: [
             {l: -13, r: 13, top: -4},
             {l: -1, r: 1, top: -1},
+            {l: 9.5, r: 12, top: -3.5, bottom: -4, finish: true},
         ],
-        flag: {x: 10.25, y: -4},
         prompt: 'Hold A to aim the rocket.\nRelease to launch it.',   // two lines so it fits the 24 u level
     },
     {
@@ -28,8 +28,8 @@ HR_LEVELS.rocket = [
             {l: -14, r: -3.75, top: -4},
             {l: -5, r: 3.25, top: -1.5},
             {l: 2, r: 14, top: 1},
+            {l: 9.25, r: 11.75, top: 1.5, bottom: 1, finish: true},
         ],
-        flag: {x: 10, y: 1},
     },
     {
         id: 'rocket-03', name: 'Knock Knock',
@@ -39,11 +39,11 @@ HR_LEVELS.rocket = [
             {l: -14, r: 4, top: -4},
             {l: 8, r: 14, top: -4},
             {l: -14, r: 14, top: 5.4, bottom: 5},
+            {l: 10.25, r: 12.75, top: -3.5, bottom: -4, finish: true},
         ],
         gates: [
             {solid: {l: 3, r: 4, top: 5, bottom: -4}, button: {x: -10.5, y: 4.5}},
         ],
-        flag: {x: 11, y: -4},
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -55,8 +55,8 @@ HR_LEVELS.rocket = [
             {l: -8, r: 4, top: -4, ice: true},
             {l: -2, r: -1, top: -2.5},
             {l: 7.5, r: 15, top: -3},
+            {l: 11.25, r: 13.75, top: -2.5, bottom: -3, finish: true},
         ],
-        flag: {x: 12, y: -3},
     },
     {
         id: 'rocket-11', name: 'Rapid Fire',
@@ -68,8 +68,8 @@ HR_LEVELS.rocket = [
             {l: 0, r: 6, top: 2},         // the tower: too tall to blast over from the floor
             {l: 4.75, r: 14.25, top: -2},    // flag ledge
             {l: 10.5, r: 15.25, top: 8, bottom: -3.25},   // right wall hanging over the flag ledge
+            {l: 8, r: 10.5, top: -1.5, bottom: -2, finish: true},
         ],
-        flag: {x: 8.75, y: -2},
     },
     {
         id: 'rocket-05', name: 'Around the Corner',
@@ -79,11 +79,11 @@ HR_LEVELS.rocket = [
             {l: -14, r: 14, top: -4},
             {l: 2, r: 14, top: 2.5, bottom: -0.25},
             {l: -9.25, r: -0.75, top: 2.5, bottom: -5.5},
+            {l: 10.25, r: 12.75, top: -3.5, bottom: -4, finish: true},
         ],
         gates: [
             {solid: {l: 2, r: 3, top: -0.25, bottom: -4}, button: {x: 12.15, y: 4.8}},
         ],
-        flag: {x: 11, y: -4},
     },
     {
         id: 'rocket-06', name: 'The Middle',
@@ -95,8 +95,8 @@ HR_LEVELS.rocket = [
             {l: -1, r: 1, top: 4.5},
             {l: 4, r: 6, top: -3},
             {l: 9, r: 15, top: -4},
+            {l: 11.25, r: 13.75, top: -3.5, bottom: -4, finish: true},
         ],
-        flag: {x: 12, y: -4},
     },
     {
         id: 'rocket-07', name: 'Sticky Situation',
@@ -111,8 +111,8 @@ HR_LEVELS.rocket = [
             {l: -14.25, r: -10, top: 1, bottom: 0, breakable: true},
             {l: -14, r: -9, top: -3.25, bottom: -4, breakable: true},
             {l: 11.25, r: 14, top: 8.5, bottom: 0.5},
+            {l: -13.75, r: -11.25, top: -7, bottom: -7.5, finish: true},
         ],
-        flag: {x: -13, y: -7.5},
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -125,11 +125,11 @@ HR_LEVELS.rocket = [
             {l: 7.5, r: 9.5, top: -3},
             {l: 12, r: 15, top: -2},
             {l: -15, r: 15, top: 5.4, bottom: 5},
+            {l: 11.5, r: 14, top: -1.5, bottom: -2, finish: true},
         ],
         gates: [
             {solid: {l: 3, r: 4, top: 5, bottom: -4}, button: {x: -1, y: 3}},
         ],
-        flag: {x: 13, y: -2},
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -142,8 +142,8 @@ HR_LEVELS.rocket = [
             {l: 0, r: 3, top: -2, sticky: true},
             {l: 6, r: 8, top: 0},
             {l: 11, r: 16, top: 1},
+            {l: 12.5, r: 15, top: 1.5, bottom: 1, finish: true},
         ],
-        flag: {x: 13.5, y: 1},
     },
     {
         draft: true,   // hidden until 2-1 to 2-3 feel right
@@ -159,11 +159,11 @@ HR_LEVELS.rocket = [
             {l: 2, r: 6, top: -4, sticky: true},
             {l: 9, r: 11, top: -3},
             {l: 13, r: 16, top: -2},
+            {l: 12.5, r: 15, top: -1.5, bottom: -2, finish: true},
         ],
         gates: [
             {solid: {l: 2, r: 3, top: 2.5, bottom: -4}, button: {x: 3.9, y: 1.8}},
         ],
-        flag: {x: 14.3, y: -2},
     },
     {
         draft: true,
@@ -174,7 +174,7 @@ HR_LEVELS.rocket = [
             {l: 9, r: 14.25, top: 5, bottom: 4, breakable: true},
             {l: -14.25, r: 14.25, top: -7.5, bottom: -8.75, ice: true},
             {l: -14.75, r: 9, top: 11, bottom: -3.75},
+            {l: -13.75, r: -11.25, top: -7, bottom: -7.5, finish: true},
         ],
-        flag: {x: -13, y: -7.5},
     },
 ];

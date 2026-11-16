@@ -19,8 +19,8 @@ HR_LEVELS.grapple = [
             {l: -5.5, r: 13, top: -4},
             {l: -4.5, r: -2.5, top: 9, bottom: 1},   // the pillar over the pit's far edge, left of the HUD timer
             {l: 2.5, r: 13, top: 5.25, bottom: 4.75},   // ceiling: something to hook if you end up past the flag
+            {l: 6.25, r: 8.75, top: -3.5, bottom: -4, finish: true},
         ],
-        flag: {x: 7, y: -4},
         prompt: 'Hold to reel in. Let go to fly.',
         promptAt: {x: 0, y: -1.5},   // under the pillar, which would hide ink text at the default height
     },
@@ -33,8 +33,8 @@ HR_LEVELS.grapple = [
             {l: 6, r: 14, top: -4},
             {l: -6, r: -4.5, top: 9, bottom: 1.5},
             {l: 3, r: 4.5, top: 9, bottom: 2},
+            {l: 9.75, r: 12.25, top: -3.5, bottom: -4, finish: true},
         ],
-        flag: {x: 10.5, y: -4},
     },
     {
         id: 'grapple-03', name: 'Let Go',
@@ -45,7 +45,7 @@ HR_LEVELS.grapple = [
             {l: -1, r: 15, top: -4},
             {l: -6.5, r: -5, top: 9, bottom: 2},
             {l: -5, r: 14.5, top: 7.875, bottom: 7.125},   // ceiling: something to hook if you end up past the flag
+            {l: 9.25, r: 11.75, top: -3.5, bottom: -4, finish: true},
         ],
-        flag: {x: 10, y: -4},
     },
 ];

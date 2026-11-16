@@ -25,7 +25,7 @@ const HR_PHASE = {
     pressGap:   .15,    // presses closer than this (s) are ignored, so a double tap never skips a state
     condenseT:  .5,     // gas -> solid: the rings pull together for this long (s), then pack into a square
     condensePull: 30,   // how hard the rings pull together while condensing
-    winDrops:   40,     // drops that must touch the flag (49 to start)
+    winDrops:   40,     // drops that must touch the finish block (49 to start)
     minDrops:   12,     // fewer than this and you go back to the start
     gasTop:     1,      // gas whose center floats this far above the level box has escaped (u)
     eyeNear:    3,      // the eye sits at the center of the drops this close to its own drop (in drop sizes)
@@ -115,13 +115,11 @@ function hrPhaseSquareHits(p)
         hrPhasePush(b, p.x + (ox * ca - oy * sa) * h, p.y + (ox * sa + oy * ca) * h, 0)));
 }
 
-// how many of the player's drops touch the flag (a square touching it counts all of its drops).
-// The flag's box reaches 1 u below the pole's foot, since a flag on a slope has drops pooled lower than its foot
+// how many of the player's drops touch a finish block (a square touching it counts all of its drops)
 function hrPhaseFlagCount(p)
 {
-    const f = hrLevel.flagBox, r = p.state == 'solid' ? hrPhaseSize(p) / 2 : HR_DROP_D / 2;
-    const below = hrLevel.flag.hang ? 0 : 1, cy = f.pos.y - below / 2, hy = (f.size.y + below) / 2;
-    const near = (x, y) => abs(x - f.pos.x) < f.size.x / 2 + r && abs(y - cy) < hy + r;
+    const r = p.state == 'solid' ? hrPhaseSize(p) / 2 : HR_DROP_D / 2, e = .05;
+    const near = (x, y) => hrLevel.finishes.some(s => x + r + e > s.l && x - r - e < s.r && y + r + e > s.bottom && y - r - e < s.top);
     if (p.state == 'solid') return near(p.x, p.y) ? p.drops : 0;
     return p.parts.filter(q => near(q.x, q.y)).length;
 }
@@ -187,7 +185,7 @@ HR_MODES.phase = {
             hrPhaseEye(p);
             if (p.state == 'gas' && p.y > hrLevel.h / 2 + P.gasTop) return hrRespawn(p, input.down);   // drifted off into the sky
         }
-        // reached the flag with too few drops to ever finish
+        // reached the finish with too few drops to ever finish
         if (p.drops < P.winDrops && hrPhaseFlagCount(p) > 0) hrRespawn(p, input.down);
     },
 

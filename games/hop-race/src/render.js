@@ -23,6 +23,7 @@ function hrDrawLevel()
     for (const s of L.solids)
     {
         if (s.gate) continue;
+        if (s.finish) { hrDrawFinish(s); continue; }
         if (s.edge)
         {
             // the level box's side walls, as thick as the camera margin, so on wide screens the HUD
@@ -42,7 +43,6 @@ function hrDrawLevel()
         if (s.sticky) hrDrawSticky(s);
         if (s.breakable) hrDrawCracks(s);
     }
-    hrDrawFlag();
 }
 
 // moving solid: a faint dotted track for its middle, from where it starts to where it turns back
@@ -158,14 +158,30 @@ function hrDrawSawtooth(s)
         }
 }
 
-// checkered finish flag: 6 x 4 cells, waving more toward the free end
-function hrDrawFlag()
+// finish block (GDD §3.1): drawn exactly on its collider, an ink block with a checkered middle between two ink
+// end caps, and a small waving checkered flag on top. The flag is only a marker: touching the block is the finish
+function hrDrawFinish(s)
 {
-    const f = hrLevel.flag, w = 1.3, h = .88, cols = 6, rows = 4, cw = w / cols, ch = h / rows;
-    const corner = (x, y) => vec2(x, y + Math.sin(time * 4 - x * 2.5) * .1 * x / w);
+    const hh = hrLevel.h / 2, top = min(s.top, hh + 1), bottom = max(s.bottom, -hh - 1);
+    const w = s.r - s.l, h = top - bottom, cap = min(.3, w / 6), pad = min(.07, h / 8);
+    drawRect(vec2((s.l + s.r) / 2, (top + bottom) / 2), vec2(w, h), HR_INK);
+    const iw = w - 2 * cap, ih = h - 2 * pad, rows = max(2, Math.round(ih / .22)), ch = ih / rows;
+    const cols = max(2, Math.round(iw / ch)), cw = iw / cols;
+    for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++)
+        if ((i + j) % 2 == 0)
+            drawRect(vec2(s.l + cap + cw * (i + .5), bottom + pad + ch * (j + .5)), vec2(cw, ch), HR_WHITE);
+    if (s.top < hh - .01) hrDrawFinishFlag((s.l + s.r) / 2, s.top);
+}
+
+// the finish block's marker: a thin pole and a 4 x 3 checkered flag, waving more toward the free end
+function hrDrawFinishFlag(x, y)
+{
+    const pole = 1.5, w = .8, fh = .54, cols = 4, rows = 3, cw = w / cols, ch = fh / rows;
+    const corner = (cx, cy) => vec2(cx, cy + Math.sin(time * 4 - cx * 4) * .07 * cx / w);
     const cell = (x0, x1, y0, y1) => [corner(x0, y0), corner(x1, y0), corner(x1, y1), corner(x0, y1)];
-    const pos = vec2(f.x + .07, f.y + 3);
-    drawRect(vec2(f.x, f.y + 1.5), vec2(.14, 3), HR_INK);
+    const pos = vec2(x + .05, y + pole);
+    drawRect(vec2(x, y + pole / 2), vec2(.1, pole), HR_INK);
     for (let i = 0; i < cols; i++)
     for (let j = 0; j < rows; j++)
     {

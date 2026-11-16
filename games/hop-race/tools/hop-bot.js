@@ -5,7 +5,7 @@
     jump until the player lands, clings, falls or finishes. Landing spots are merged by platform, facing,
     speed and a 1 u grid, keeping the earliest arrival. Reports the fastest route, the timing window of each jump on
     it ("[7 f]": 7 different press frames reach the same platform), and dead ends: spots that can reach
-    neither the flag nor a pit.
+    neither the finish nor a pit.
 
     Use: serve the game over HTTP, open it, then in the console
         await import('./tools/hop-bot.js')   // or paste this file
@@ -74,7 +74,7 @@ window.hopBot = function (levelId, opts = {})
                 }
                 load(here);
             }
-            // then run on one more frame without pressing: a drop off an edge or a run into the flag is a move too
+            // then run on one more frame without pressing: a drop off an edge or a run into the finish is a move too
             step(false);
             air ||= !p.grounded && !p.cling;
             const e = end();
@@ -109,7 +109,7 @@ window.hopBot = function (levelId, opts = {})
         }
     }
 
-    // dead ends: spots that can reach neither the flag nor a fall
+    // dead ends: spots that can reach neither the finish nor a fall
     const good = new Set();
     let changed = true;
     while (changed)
@@ -130,7 +130,7 @@ window.hopBot = function (levelId, opts = {})
             const n = nodes.get(cur.k);
             const window = new Set(n.edges.filter(e => cur.to == 'FLAG' ? e.finish : e.to == cur.to).map(e => e.wait)).size;
             const what = cur.hold ? `wait ${cur.wait} f, hold ${cur.hold} f` : `run ${cur.wait} f`;
-            route.unshift(`${what} → ${cur.to == 'FLAG' ? 'flag' : spot(nodes.get(cur.to).s)} [${window} f]`);
+            route.unshift(`${what} → ${cur.to == 'FLAG' ? 'finish' : spot(nodes.get(cur.to).s)} [${window} f]`);
             routeSpots.unshift({x: n.s.x, y: n.s.y, window});
             inputs.unshift({wait: cur.wait, hold: cur.hold});
             cur = n.prev && {k: n.prev.k, wait: n.prev.wait, hold: n.prev.hold, to: cur.k};
