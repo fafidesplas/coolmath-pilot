@@ -125,28 +125,32 @@ export function drawLevels(ctx, G) {
   button(ctx, G, 'sound', 1196, 20, 64, 64, '', { icon: iconSound(G.save.settings.sfx) });
   const world = WORLDS[0];
   outlinedText(ctx, `World 1 — ${world.name}`, 640, 120, 56, '#FFFFFF', 10);
-  const n = world.levels.length, gap = 190;
-  const x0 = 640 - ((n - 1) * gap) / 2;
+  // One row up to 6 levels, then two rows (the top row takes the extra one).
+  const n = world.levels.length, rows = n > 6 ? 2 : 1, perRow = Math.ceil(n / rows);
+  const k = rows > 1 ? 0.8 : 1, gap = 190;
   world.levels.forEach((lv, i) => {
-    const x = x0 + i * gap, y = 330;
+    const row = Math.floor(i / perRow), col = i % perRow, inRow = Math.min(perRow, n - row * perRow);
+    const x = 640 - ((inRow - 1) * gap) / 2 + col * gap, y = rows > 1 ? 255 + row * 205 : 330;
     const rec = G.save.levels[lv.id];
     const open = G.isOpen(i);
     const next = i === G.nextIndex();
     const bob = next ? Math.abs(Math.sin(G.time * 4)) * -10 : 0;
-    button(ctx, G, `lvl:${i}`, x - 64, y - 64 + bob, 128, 128, '', {
-      r: 64, color: open ? (rec ? '#FFFFFF' : TRAIN_COLORS.yellow) : mix(CREAM, INK, 0.12), disabled: !open,
+    const R = 64 * k;
+    button(ctx, G, `lvl:${i}`, x - R, y - R + bob, R * 2, R * 2, '', {
+      r: R, color: open ? (rec ? '#FFFFFF' : TRAIN_COLORS.yellow) : mix(CREAM, INK, 0.12), disabled: !open,
       icon: (c, bx, by) => {
         if (!open) padlock(c, bx, by, 48);
-        else outlinedText(c, String(i + 1), bx, by + 2, 56, rec ? INK : '#FFFFFF', open && !rec ? 8 : 0.01);
+        else outlinedText(c, String(i + 1), bx, by + 2, 56 * k, rec ? INK : '#FFFFFF', open && !rec ? 8 : 0.01);
       },
     });
-    text(ctx, lv.name, x, y + 96, 22, open ? INK : mix(INK, CREAM, 0.5));
-    for (let s = 0; s < 3; s++) star(ctx, x - 36 + s * 36, y + 134, 15, rec && rec.stars > s ? TRAIN_COLORS.yellow : mix(CREAM, INK, 0.1), INK, 3);
+    text(ctx, lv.name, x, y + R + 30 * k, 22, open ? INK : mix(INK, CREAM, 0.5));
+    for (let s = 0; s < 3; s++) star(ctx, x - 36 * k + s * 36 * k, y + R + 66 * k, 15 * k, rec && rec.stars > s ? TRAIN_COLORS.yellow : mix(CREAM, INK, 0.1), INK, 3);
   });
   const total = world.levels.reduce((a, l) => a + (G.save.levels[l.id]?.stars || 0), 0);
-  star(ctx, 600, 560, 20, TRAIN_COLORS.yellow, INK, 3);
-  text(ctx, `${total} / ${n * 3}`, 660, 562, 30);
-  text(ctx, 'More worlds coming soon', 640, 640, 20, mix(INK, CREAM, 0.45), 'center', 'normal');
+  const ty = rows > 1 ? 636 : 560;
+  star(ctx, 600, ty, 20, TRAIN_COLORS.yellow, INK, 3);
+  text(ctx, `${total} / ${n * 3}`, 660, ty + 2, 30);
+  text(ctx, 'More worlds coming soon', 640, rows > 1 ? 690 : 640, 20, mix(INK, CREAM, 0.45), 'center', 'normal');
 }
 
 // ---- Playing HUD -------------------------------------------------------------------
