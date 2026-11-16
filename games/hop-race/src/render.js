@@ -171,22 +171,22 @@ function hrDrawFinish(s)
     for (let j = 0; j < rows; j++)
         if ((i + j) % 2 == 0)
             drawRect(vec2(s.l + cap + cw * (i + .5), bottom + pad + ch * (j + .5)), vec2(cw, ch), HR_WHITE);
-    if (s.top < hh - .01) hrDrawFinishFlag((s.l + s.r) / 2, s.top);
+    if (s.top < hh - .01) hrDrawFinishFlag(s.flag.x + (s.l - s.home.l), s.top, s.flag.dir);   // a moving block takes its flag along
 }
 
-// the finish block's marker: a thin pole and a 4 x 3 checkered flag, waving more toward the free end
-function hrDrawFinishFlag(x, y)
+// the finish block's marker: a pole and a 4 x 3 checkered flag pointing dir (1 right, -1 left), waving more toward the free end
+function hrDrawFinishFlag(x, y, dir = 1)
 {
-    const pole = 1.5, w = .8, fh = .54, cols = 4, rows = 3, cw = w / cols, ch = fh / rows;
-    const corner = (cx, cy) => vec2(cx, cy + Math.sin(time * 4 - cx * 4) * .07 * cx / w);
+    const pole = 3, w = 1.6, fh = 1.08, cols = 4, rows = 3, cw = w / cols, ch = fh / rows;
+    const corner = (cx, cy) => vec2(cx, cy + Math.sin(time * 4 - cx * 2) * .14 * cx / w);
     const cell = (x0, x1, y0, y1) => [corner(x0, y0), corner(x1, y0), corner(x1, y1), corner(x0, y1)];
-    const pos = vec2(x + .05, y + pole);
-    drawRect(vec2(x, y + pole / 2), vec2(.1, pole), HR_INK);
+    const pos = vec2(x + dir * .1, y + pole);
+    drawRect(vec2(x, y + pole / 2), vec2(.2, pole), HR_INK);
     for (let i = 0; i < cols; i++)
     for (let j = 0; j < rows; j++)
     {
         const c = (i + j) % 2 ? HR_INK : HR_WHITE;
-        drawPoly(cell(i * cw, (i + 1) * cw, -j * ch, -(j + 1) * ch), c, 0, c, pos);
+        drawPoly(cell(i * cw, (i + 1) * cw, -j * ch, -(j + 1) * ch).map(v => vec2(v.x * dir, v.y)), c, 0, c, pos);
     }
 }
 

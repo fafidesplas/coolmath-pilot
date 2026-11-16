@@ -40,6 +40,23 @@ function hrLoadLevel(def)
         start: vec2(def.start.x, def.start.y),
         finishes: solids.filter(s => s.finish),   // GDD §3.1: touching one of these wins
     };
+    for (const s of hrLevel.finishes) s.flag = hrPlaceFinishFlag(s, solids);
+}
+
+// where the finish block's flag marker stands: from the middle outward along the block, the first pole spot
+// where the flag (3 u pole, 1.6 u flag) clears the walls and every other solid, pointing right if it can, else left
+function hrPlaceFinishFlag(f, solids)
+{
+    const mid = (f.l + f.r) / 2, pole = 3, w = 1.7;
+    const clear = (l, r) => solids.every(s => s == f || s.l >= r || s.r <= l || s.bottom >= f.top + pole || s.top <= f.top);
+    for (const dir of [1, -1])
+        for (let k = 0; k <= 20; k++)
+        {
+            const x = mid - dir * k * .1;
+            if (x < f.l + .1 || x > f.r - .1) break;
+            if (clear(dir > 0 ? x - .1 : x - w, dir > 0 ? x + w : x + .1)) return {x, dir};
+        }
+    return {x: mid, dir: 1};
 }
 
 // shrinkY makes the box a little shorter, so a floor or ceiling you rest against doesn't count as a wall

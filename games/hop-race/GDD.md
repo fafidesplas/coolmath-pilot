@@ -136,7 +136,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
 | Ghost | Your best run on this level, replayed; before your first finish, a built-in ghost (the bot's route, 2 s slower) where the level has one; no collision | Solo | Hollow outline square, no eye, 40 % alpha |
 | Hat | Cosmetic, unlocked by levels finished | Title screen | Small ink shapes on top of the square (§7) |
 | Platform | Solid; you stand on its top | Hop 1 | Solid dark block |
-| Finish block | The goal; touch it on any side (3.1) | Hop 1 | Solid block, its middle checkered ink and white (cells about 0.2 u, two rows on a 0.5 u log) between two ink end caps, a small waving checkered flag (4 × 3 cells) on a thin pole on top. The flag is only a marker: you pass through it |
+| Finish block | The goal; touch it on any side (3.1) | Hop 1 | Solid block, its middle checkered ink and white (cells about 0.2 u, two rows on a 0.5 u log) between two ink end caps, a waving checkered flag (1.6 × 1.08 u, 4 × 3 cells) on a 3 u pole on top, pointing right where it fits and left where a wall or solid is in the way (it moves along the block to find room). The flag is only a marker: you pass through it |
 | Plain wall | Solid; turns you around in Hop | Hop 4 | Solid dark block, straight sides |
 | Icy floor | Speeds up your run, so jumps become long low dashes (Hop); low friction (Rocket) | Hop 5, Rocket 4 | Dark block with a white hatched stripe along its top |
 | Hanging wall / ceiling | Blocks upward motion; duck under it | Hop 7 | Block hanging from the top |
