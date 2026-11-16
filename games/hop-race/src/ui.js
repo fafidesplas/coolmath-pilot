@@ -70,12 +70,12 @@ function hrUiButtons()
     else if (hrScreen == 'store')
     {
         back();
-        // 7 per row; a tile equips what you own and buys what you can afford
-        const tw = 164 * u, th = 120 * u;   // 3 rows fit between the coin balance and the ad button
+        // 8 per row; a tile equips what you own and buys what you can afford
+        const tw = 143 * u, th = 120 * u;   // 3 rows fit between the coin balance and the ad button
         HR_STORE.forEach((it, i) =>
         {
-            const col = i % 7, row = floor(i / 7);
-            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 3) * tw * 1.07, y: H * .36 + row * th * 1.1, w: tw, h: th,
+            const col = i % 8, row = floor(i / 8);
+            add({id: 'item:' + it.id, item: it, x: W / 2 + (col - 3.5) * tw * 1.07, y: H * .36 + row * th * 1.1, w: tw, h: th,
                 enabled: hrStoreOwned(it.id) || hrStoreCanBuy(it.id), focus: i == 0, act: () => hrStorePick(it.id)});
         });
         // dimmed when the Coolmath SDK is missing (offline, file://) or an ad is already running
@@ -575,7 +575,7 @@ function hrDrawStoreItem(b, w, h, focused)
     }
     // an outline tile shows the hat as in a level (ink with white), a filled one in the text color with ink
     hrDrawHatIcon(it.id, b.x, b.y - h * .06, h * .42, h * .36, off ? dim : HR_YELLOW, off ? bg : HR_INK);
-    hrText(it.name, b.x, b.y + h * .16, 22 * u, off ? dim : HR_YELLOW);
+    hrText(it.name, b.x, b.y + h * .16, 20 * u, off ? dim : HR_YELLOW);
     hrText(state, b.x, b.y + h * .36, 18 * u, off ? dim : HR_YELLOW.scale(1, on ? 1 : .7));
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }

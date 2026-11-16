@@ -1,7 +1,7 @@
 /*
     HOP RACE - cosmetics store (scaffolding). A catalog of items, a coin balance and owned items in the
     save, buy and equip, and coins from a rewarded ad. The hat art is in src/hats.js. Not built yet: a P2 pick.
-    The catalog is 21 hats (GDD §7's 8, with a football helmet for the propeller, and 13 more) with placeholder prices.
+    The catalog is 23 hats (GDD §7's 8, with a football helmet for the propeller, and 15 more) with placeholder prices.
     The moustache is a "hat" too: one item is worn at a time.
 */
 
@@ -26,7 +26,9 @@ const HR_STORE = [
     {id: 'jester',    kind: 'hat', name: 'Jester Hat',   price: 325},
     {id: 'wizard',    kind: 'hat', name: 'Wizard Hat',   price: 350},
     {id: 'spartan',   kind: 'hat', name: 'Spartan',     price: 375},
+    {id: 'diver',     kind: 'hat', name: 'Diver',        price: 400},
     {id: 'crown',     kind: 'hat', name: 'Crown',        price: 400},
+    {id: 'astronaut', kind: 'hat', name: 'Astronaut',    price: 425},
     {id: 'salakot',   kind: 'hat', name: 'Salakot',      price: 450},
     {id: 'halo',      kind: 'hat', name: 'Halo',         price: 500},
 ];

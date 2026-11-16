@@ -8,6 +8,7 @@
 - A French beret was tried and removed (owner: not working).
 - Pirate hat: a tricorn with a trim and a button, and an eye patch on a strap that covers the eye. 21 hats, 7 per row in 3 full rows.
 - Cap: a curved brim that dips toward its tip, a taller dome and a letter C on the front in place of the shine. Hats now get the facing direction, so the C is not mirrored when the player faces left.
+- Astronaut's helmet (white bubble, dark visor over the eye) and deep sea diver's helmet (the eye is the porthole's glass). 23 hats; the store grid is now 8 per row in 3 rows, with narrower tiles and slightly smaller names.
 - Checked as a rendered sheet of the shapes on a player square, not in the running game.
 - Next: a P2 pick, the hat on the ghost, other ways to earn coins.
 

@@ -3,7 +3,8 @@
     accent (in a level: ink with white; on a store tile: the tile's text color with ink).
     Hat space: the origin is the middle of the player's top edge, 1 unit is the player's width, y is up and
     +x is the way the player faces (below 0 is over and around the body: the helmet, the pilot's flap, the moustache). A hat is a list of [points, accent, front] polygons, points as [x, y]; front ones are drawn over the eye (the
-    football helmet's bar, the racing helmet's visor, the pirate's eye patch).
+    football helmet's bar, the racing helmet's visor, the pirate's eye patch,
+    the astronaut's visor).
 */
 
 'use strict';
@@ -232,6 +233,30 @@ const HR_HATS =
         [hrHatArc(.2, .2, .05, .05, 0, 2 * Math.PI, 10), 1],
         [hrHatBar(-.5, -.3, .5, -.08, .06), 0, 1],
         [hrHatArc(.125, -.34, .35, .32, 0, Math.PI, 12).concat([[-.21, -.55], [-.02, -.72], [.125, -.77], [.27, -.72], [.46, -.55]]), 0, 1],
+    ],
+    // astronaut's helmet: a big white bubble around the whole head on a dark collar, a dark visor over the face (it
+    // hides the eye) with a shine, a hinge knob at the side
+    astronaut: () => [
+        [hrHatArc(0, -.42, .72, .76, -.6, Math.PI + .6, 28)],
+        [hrHatBox(-.62, -1, .62, -.8)],
+        [hrHatArc(0, -.42, .65, .69, -.56, Math.PI + .56, 28), 1],
+        [hrHatBox(-.5, -.94, -.2, -.88), 1],
+        [hrHatArc(0, -.42, .6, .64, -.7, 1.75, 18).concat([[-.34, -.15], [-.32, -.6], [-.12, -.8]]), 0, 1],
+        [hrHatArc(0, -.42, .5, .54, .25, 1.1, 8).concat(hrHatArc(0, -.42, .43, .47, 1.1, .25, 8)), 1, 1],
+        [hrHatArc(-.4, -.42, .1, .1, 0, 2 * Math.PI, 12), 0, 1],
+        [hrHatArc(-.4, -.42, .04, .04, 0, 2 * Math.PI, 8), 1, 1],
+    ],
+    // deep sea diver's helmet: a round metal shell around the whole head on a wide collar, a bolted ring around the
+    // front porthole (the eye is its glass), a small porthole at the side, a port on top, an air valve at the back
+    diver: () => [
+        [hrHatArc(0, -.42, .72, .76, -.6, Math.PI + .6, 28)],
+        [[[-.8, -1], [.8, -1], [.8, -.9], [.6, -.78], [-.6, -.78], [-.8, -.9]]],
+        [hrHatBox(-.14, .3, .14, .42)],
+        [hrHatBox(-.92, -.5, -.68, -.36)],
+        [hrHatArc(.125, -.375, .47, .47, 0, 2 * Math.PI, 24).concat(hrHatArc(.125, -.375, .37, .37, 2 * Math.PI, 0, 24)), 1],
+        ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => [hrHatArc(.125 + Math.cos(i * Math.PI / 4 + .39) * .42, -.375 + Math.sin(i * Math.PI / 4 + .39) * .42, .028, .028, 0, 2 * Math.PI, 8)]),
+        [hrHatArc(-.47, -.3, .13, .13, 0, 2 * Math.PI, 14).concat(hrHatArc(-.47, -.3, .075, .075, 2 * Math.PI, 0, 14)), 1],
+        ...[-.45, 0, .45].map(x => [hrHatArc(x, -.9, .035, .035, 0, 2 * Math.PI, 8), 1]),
     ],
     // racecar driver's helmet: a full shell over the top, the back and the chin, the face closed in over the eye, a glass visor (a
     // white band across it) with a rim down the front, a stripe, a hinge and chin vents
