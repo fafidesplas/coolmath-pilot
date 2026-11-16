@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Elf hat
+- New store hat: an elf hat (175 coins, after the Grad Cap), traced from the owner's drawing: a long ink hood swept back past the head into a point that hangs low, a white pointed ear along it, and white bangs with an ink outline and part over the top of the eye.
+- Next: check it on the somersault and in Versus.
+
 ## 2026-11-16 — Graduation cap
 - New store hat: a graduation cap (150 coins, after the Beret), traced from the owner's drawing: a board tilted back over a band, white edges on the board's front and the band, a tassel on a cord hanging off the back corner, past the head. The tassel is ink, not grey: hats have only two tones.
 - Next: check it in a level and on its store tile.
