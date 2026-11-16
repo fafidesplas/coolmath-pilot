@@ -171,9 +171,9 @@ const HR_HATS =
     ],
     // wizard hat: a round brim, a cone with its tip bent back, a star
     wizard: () => [
-        [hrHatArc(0, .045, .58, .055)],
-        [[[-.36, .05], [-.16, .48], [-.3, .78], [.02, .58], [.36, .05]]],
-        [hrHatStar(.02, .26, .1), 1],
+        [hrHatArc(0, .05, .67, .063)],
+        [[[-.41, .055], [-.18, .55], [-.35, .9], [.02, .67], [.41, .055]]],
+        [hrHatStar(.02, .3, .115), 1],
     ],
     // WW1 pilot's cap: a snug leather dome with a flap down the back and a loose strap, big two-lens goggles pushed up on the forehead
     pilot: () => [
