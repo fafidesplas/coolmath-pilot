@@ -11,7 +11,7 @@ import { Recorder, decodeRecording } from './record.js';
 import { previewTargets } from './magnet.js';
 import {
   renderTiles, drawRobot, drawField, drawAimPreview, drawCrate, drawGate, drawPlate, drawExit, drawBolt,
-  drawKeycap, rrect, text, FONT,
+  drawFlag, drawKeycap, rrect, text, FONT,
 } from './render.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
 
@@ -627,6 +627,11 @@ export class Game {
     this.exitOpen += (target - this.exitOpen) * 0.15;
     drawExit(ctx, sim.exit, inside, t, this.exitOpen);
 
+    for (const f of sim.flags) {
+      // the flag whips up in 0.35 s with a little overshoot
+      const k = f.on ? Math.min(1, (sim.steps - f.onStep) * STEP / 0.35) : 0;
+      drawFlag(ctx, f, f.on ? easeOutBack(k) : 0, t);
+    }
     for (const b of sim.bolts) if (!b.got) drawBolt(ctx, b, t);
     for (const c of sim.crates) if (c.sunk === 0) drawCrate(ctx, lx(c), ly(c));
 

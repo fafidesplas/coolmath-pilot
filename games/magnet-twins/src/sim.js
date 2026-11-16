@@ -50,7 +50,9 @@ export class Sim {
     this.order = this.bodies.slice();
     this.plates = lv.plates.map(p => ({ ...p, gate: this.gates.find(g => g.id === p.door), touched: false }));
     this.bolts = lv.bolts.map(b => ({ ...b, got: false }));
-    this.flags = lv.checkpoints.map(c => ({ x: c.x * T, y: c.y * T, w: T, h: T, on: false }));
+    // Checkpoint flags (GDD 3.6): the touch box is the pole, 2 tiles tall, standing on the floor
+    // of its tile. onStep is the step it was raised (the renderer animates from it).
+    this.flags = lv.checkpoints.map(c => ({ x: c.x * T, y: (c.y - 1) * T, w: T, h: 2 * T, base: (c.y + 1) * T, on: false, onStep: -1 }));
     this.respawn = { plus: { ...lv.spawn.plus }, minus: { ...lv.spawn.minus } };
 
     this.steps = 0;
@@ -320,16 +322,18 @@ export class Sim {
       }
     }
 
-    // Checkpoints
+    // Checkpoints: one touch from either robot raises the flag for both. The robots then
+    // respawn side by side at it, Plus on the left of the pole and Minus on the right.
     for (const f of this.flags) {
       if (f.on) continue;
-      if (this.robots.some(r => overlapsBox(r, f))) {
+      const r = this.robots.find(q => overlapsBox(q, f));
+      if (r) {
         for (const o of this.flags) o.on = false;
         f.on = true;
-        const base = f.y + T;
-        this.respawn.plus = { x: f.x - ROBOT.w - 2, y: base - ROBOT.h };
-        this.respawn.minus = { x: f.x + T + 2, y: base - ROBOT.h };
-        this.emit('checkpoint', { x: f.x + T / 2, y: f.y });
+        f.onStep = this.steps;
+        this.respawn.plus = { x: f.x - ROBOT.w - 2, y: f.base - ROBOT.h };
+        this.respawn.minus = { x: f.x + T + 2, y: f.base - ROBOT.h };
+        this.emit('checkpoint', { x: f.x + T / 2, y: f.y, pol: r.pol, index: this.flags.indexOf(f) });
       }
     }
 
@@ -379,6 +383,7 @@ export class Sim {
       r.x = r.px = s.x; r.y = r.py = s.y;
       r.vx = r.vy = 0;
       r.ground = null; r.grounded = false; r.jumping = false;
+      r.jumpBufferStep = -99; r.lastGroundStep = -99; r.aim = 'side';
       r.hidden = false;
       r.facing = r.pol === 'plus' ? 1 : -1;
     }

@@ -86,16 +86,24 @@ levels.w1l09 = () => {
     objects: [{ type: 'crate', x: 8, y: 11 }] }, g];
 };
 
-// 10. Workshop Exam: the slice level. Pull the crate across the spikes, step up on it, hold
-// the door for each other. (To be extended into the real exam with a launch and a checkpoint.)
+// 10. Workshop Exam: a review of world 1 on two floors. Downstairs, left to right: stack for the
+// bolt on the little block, pull the crate across the spikes, step up on it, hold the door for
+// each other. Up the shaft on the right: launch from the step as in Boost, then Plus pulls Minus
+// up. The checkpoint flag is where they land. Upstairs, right to left: stepping stones over
+// water to the exit.
 levels.w1l10 = () => {
   const g = new Grid();
-  g.fill(21, 21, 1, 5);                       // the wall above the door
+  g.fill(1, 24, 5, 5);                        // the upper floor
+  g.fill(5, 16, 6, 6);                        // under the pool it is two tiles thick
+  g.fill(5, 6, 5, 5, '~').fill(10, 11, 5, 5, '~').fill(15, 16, 5, 5, '~');   // the pool; stones at 7–9 and 12–14
   g.fill(8, 9, 9, 9);                         // a little block
   g.fill(13, 30, 9, 11);                      // the plateau
+  g.fill(26, 27, 8, 8);                       // the launch step in the shaft
   g.put(4, 11, '^').put(5, 11, '^');
-  return [{ id: 'w1l10', name: 'Workshop Exam', spawn: { plus: [9, 11], minus: [11, 11] }, exit: [29, 7], bolts: [[8, 8], [11, 9], [24, 6]],
-    objects: [{ type: 'crate', x: 3, y: 11 }, { type: 'door', id: 'd1', x: 21, y: 6, lock: 'any' }, { type: 'plate', door: 'd1', x: 15, y: 5 }, { type: 'plate', door: 'd1', x: 27, y: 5 }] }, g];
+  return [{ id: 'w1l10', name: 'Workshop Exam', spawn: { plus: [9, 11], minus: [11, 11] }, exit: [2, 3], bolts: [[8, 8], [25, 2], [11, 3]],
+    objects: [{ type: 'crate', x: 3, y: 11 }, { type: 'door', id: 'd1', x: 21, y: 6, lock: 'any' },
+      { type: 'plate', door: 'd1', x: 15, y: 7 }, { type: 'plate', door: 'd1', x: 29, y: 7 },
+      { type: 'checkpoint', x: 22, y: 4 }] }, g];
 };
 
 for (const [id, build] of Object.entries(levels)) {
