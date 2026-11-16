@@ -11,6 +11,7 @@ const hrHeld = new Map();   // pointerId -> player index, while held in the play
 let hrTaps = [];            // pointer presses this frame, in canvas pixels: {pos, id, used}
 let hrPointerQueue = [];    // raw events since the last frame
 const hrPointers = new Map();   // pointerId -> where it is now (canvas pixels), while it is down (drag to scroll)
+let hrMouse = null;         // where the mouse is (canvas pixels), for button hover; null for touch or off the page
 
 function hrInputInit()
 {
@@ -21,7 +22,12 @@ function hrInputInit()
         if (type == 'down') hrPointers.set(e.pointerId, pos); else hrPointers.delete(e.pointerId);
         hrPointerQueue.push({type, id: e.pointerId, pos});
     };
-    addEventListener('pointermove', e => hrPointers.has(e.pointerId) && hrPointers.set(e.pointerId, hrCanvasPos(e)));
+    addEventListener('pointermove', e =>
+    {
+        if (e.pointerType == 'mouse') hrMouse = hrCanvasPos(e);
+        if (hrPointers.has(e.pointerId)) hrPointers.set(e.pointerId, hrCanvasPos(e));
+    });
+    addEventListener('mouseout', e => { if (!e.relatedTarget) hrMouse = null; });   // left the page
     addEventListener('pointerdown', queue('down'));
     addEventListener('pointerup', queue('up'));
     addEventListener('pointercancel', queue('up'));

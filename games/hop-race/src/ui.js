@@ -12,6 +12,7 @@ let hrSettingsFrom = 'title';
 let hrMenuVersus = false, hrMenuWorld = 0;
 let hrStoreScroll = 0;         // how far the store grid is scrolled, in design units (hrUnit)
 let hrStoreDrag = null;        // a pointer held on the store grid: a drag scrolls, a press without one picks the tile
+let hrHover = null;            // the button under the mouse: {id, blinkAt}; it grows and opens a blinking eye
 
 const HR_WORLD_SCREENS = ['playing', 'paused', 'complete', 'round', 'match'];
 const HR_LOCKED_SCREENS = ['complete', 'round', 'match'];   // 0.6 s input lock on results
@@ -253,8 +254,20 @@ function hrUiActivate(b)
     hrPress = {id: b.id, t: 0, act: b.act};
 }
 
+// the button under the mouse grows and opens a googly eye in its top corner that blinks as you arrive, then every
+// 2.5-5 s (now and then twice), and looks at the mouse
+function hrHoverUpdate(list)
+{
+    const b = hrMouse && list.find(b => b.enabled !== false && hrHit(b, hrMouse));
+    if (!b) hrHover = null;
+    else if (!hrHover || hrHover.id != b.id) hrHover = {id: b.id, blinkAt: timeReal + .12};
+    else if (timeReal > hrHover.blinkAt + HR_BLINK_T) hrHover.blinkAt = timeReal + (rand() < .2 ? .3 : rand(2.5, 5));
+    mainCanvas.style.cursor = b ? 'pointer' : '';
+}
+
 function hrUiUpdate()
 {
+    hrHoverUpdate(hrUiButtons());
     if (hrPress) { hrTaps.forEach(t => t.used = true); return; }
     const list = hrUiButtons();
     const locked = HR_LOCKED_SCREENS.includes(hrScreen) && hrScreenT < .6;
@@ -373,10 +386,17 @@ function hrScreenBg() { return hrInWorld() ? hrWorldBg() : HR_YELLOW; }
 
 function hrDrawButton(b, i)
 {
-    const u = hrUnit(), pressed = hrPress && hrPress.id == b.id;
+    const pressed = hrPress && hrPress.id == b.id;
     const focused = i == hrFocus && b.enabled !== false;
-    const s = pressed ? .9 : focused ? 1.05 : 1, w = b.w * s, h = b.h * s;
-    const bg = hrScreenBg();
+    const hovered = hrHover && hrHover.id == b.id && b.enabled !== false;
+    const s = pressed ? .9 : focused || hovered ? 1.05 : 1, w = b.w * s, h = b.h * s;
+    hrDrawButtonBody(b, w, h, s, focused);
+    if (hovered && !b.icon) hrDrawHoverEye(b, w, h);
+}
+
+function hrDrawButtonBody(b, w, h, s, focused)
+{
+    const u = hrUnit(), bg = hrScreenBg();
     if (b.icon && b.chip)
     {
         // in-play HUD: an ink disc with the icon cut out in the background color and a background rim,
@@ -408,6 +428,24 @@ function hrDrawButton(b, i)
     else hrText(b.label, b.x, b.y, size, filled ? bg : HR_INK);
     if (focused && !b.side) hrRect(b.x, b.y + h / 2 + 10 * u, w * .5, 5 * u, HR_INK);
     if (focused && b.side) hrRect(b.x - w / 2 - 18 * u, b.y, 10 * u, h * .5, HR_INK);
+}
+
+// the hover eye: the player's googly eye (white, ink pupil, no outline) inside the button's top right corner
+function hrDrawHoverEye(b, w, h)
+{
+    const u = hrUnit(), d = min(min(w, h) * .34, 44 * u), m = min(w, h) * .09;
+    const x = b.x + w / 2 - m - d / 2, y = b.y - h / 2 + m + d / 2;
+    if (b.clip && (y - d / 2 < b.clip[0] || y + d / 2 > b.clip[1])) return;   // a store tile scrolled half out
+    const t = timeReal - hrHover.blinkAt, open = t >= 0 && t <= HR_BLINK_T ? hrBlinkOpen(t) : 1;
+    drawEllipse(vec2(x, y), vec2(d, d * max(open, .12)), HR_WHITE, 0, 0, BLACK, false, true);
+    if (open > .5)
+    {
+        // the pupil leans toward the mouse, up to 0.2 of the eye
+        const to = hrMouse ? hrMouse.subtract(vec2(x, y)) : vec2(), k = min(to.length() / (d * 3), 1) * d * .2;
+        const look = to.length() ? to.normalize(k) : vec2();
+        drawEllipse(vec2(x + look.x, y + look.y * open), vec2(d * .42, d * .42 * open), HR_INK, 0, 0, BLACK, false, true);
+    }
+    else drawRect(vec2(x, y), vec2(d * .7, d * .1), HR_INK, 0, false, true);   // shut: a thin ink lid line
 }
 
 function hrDrawCard(b, w, h, focused)

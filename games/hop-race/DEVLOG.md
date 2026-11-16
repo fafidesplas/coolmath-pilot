@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Button hover with a blinking eye
+- Buttons, world cards, level tiles and store tiles grow 5 % under the mouse and the cursor becomes a hand.
+- A hovered button opens a googly eye like the player's in its top right corner. It blinks as the mouse arrives, then every 2.5-5 s, and its pupil looks toward the mouse. Icon buttons (back, pause, restart) only grow. Touch never hovers.
+- Next: check the eye's spot on every screen, mostly the small Store and Settings buttons and the On/Off rows.
+
 ## 2026-11-16 — Stronger rocket blasts
 - Rocket: blast power 24 → 37.5 u/s and top speed 22 → 30.5 u/s, tuned by the owner in the debug panel. Every other `HR_ROCKET` value stays the same. GDD §3.3 is updated.
 - Next: play the Rocket levels again with the stronger blast.

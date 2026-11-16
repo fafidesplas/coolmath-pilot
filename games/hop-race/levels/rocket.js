@@ -112,6 +112,7 @@ HR_LEVELS.rocket = [
             {l: -14, r: -9, top: -3.25, bottom: -4, breakable: true},
             {l: 11.25, r: 14, top: 8.5, bottom: 0.5},
             {l: -14.25, r: -11.25, top: -7.5, bottom: -8.75, finish: true},
+            {l: 5.75, r: 12.75, top: 11, bottom: 8.5},
         ],
     },
     {
