@@ -3,6 +3,7 @@
 ## 2026-11-16 — Racing helmet stripes
 - Racing helmet: the flat stripe across the brow is now racing stripes, a wide band between two pinstripes that sweeps from above the visor over the top and down the back (`hrHatBand`). The hinge moved onto the visor's edge so it no longer cuts the stripes.
 - Wizard hat: about 15% wider and taller (brim, cone and star); its tip is now 0.9 of the player's height, the tallest hat.
+- Store: a hat you can't afford yet is one flat see-through silhouette. Its shapes used to be drawn one by one at 40% alpha, so every overlap showed darker. The hat is now drawn solid on an offscreen canvas and laid down once (`hrDrawHatIcon`). Checked in Chrome on all 23 tiles.
 - Next: more hat tweaks as the owner asks.
 
 ## 2026-11-15 — Hat fixes and 4 more hats

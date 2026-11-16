@@ -310,15 +310,18 @@ const HR_HATS =
 
 // draws a hat around pos; place(x, y) turns a hat-space point into an offset from pos (a vec2, y up; on screen too:
 // screen-space polygons are y up). layer: 0 is only what goes under the eye, 1 only what goes over it, none is all;
-// dir is the way the hat faces
-function hrDrawHat(id, pos, place, main, accent, t = 0, angle = 0, screenSpace = false, layer, dir = 1)
+// dir is the way the hat faces; context is where it draws (the main canvas by default)
+function hrDrawHat(id, pos, place, main, accent, t = 0, angle = 0, screenSpace = false, layer, dir = 1, context)
 {
     const hat = HR_HATS[id];
     if (!hat) return;
     for (const [pts, isAccent, front] of hat(t, dir))
         if (layer == undefined || layer == (front ? 1 : 0))
-            drawPoly(pts.map(([x, y]) => place(x, y)), isAccent ? accent : main, 0, undefined, pos, angle, false, screenSpace);
+            drawPoly(pts.map(([x, y]) => place(x, y)), isAccent ? accent : main, 0, undefined, pos, angle, false, screenSpace, context);
 }
+
+// an offscreen canvas for see-through hat icons (made on first use)
+let hrHatLayer;
 
 // a hat on screen, for menus, centered on x with its lowest point at y; s is the pixels per hat unit, less for a
 // hat taller than maxH pixels (the helmet)
@@ -330,7 +333,25 @@ function hrDrawHatIcon(id, x, y, s, maxH, main, accent)
     for (const [pts] of hat(0))
         for (const [px, py] of pts) x0 = Math.min(x0, px), x1 = Math.max(x1, px), y0 = Math.min(y0, py), y1 = Math.max(y1, py);
     s = Math.min(s, maxH / (y1 - y0));
-    hrDrawHat(id, vec2(x - (x0 + x1) / 2 * s, y + y0 * s), (hx, hy) => vec2(hx * s, hy * s), main, accent, timeReal, 0, true);
+    const place = (hx, hy) => vec2(hx * s, hy * s);
+    if (main.a >= 1)
+    {
+        hrDrawHat(id, vec2(x - (x0 + x1) / 2 * s, y + y0 * s), place, main, accent, timeReal, 0, true);
+        return;
+    }
+    // a see-through hat is drawn solid on its own canvas, then laid down once at main's alpha: drawn shape by shape,
+    // the overlaps would add up and show every piece instead of one silhouette
+    const m = 4, w = Math.ceil((x1 - x0) * s) + 2 * m, h = Math.ceil((y1 - y0) * s) + 2 * m;
+    hrHatLayer ||= document.createElement('canvas');
+    if (hrHatLayer.width < w || hrHatLayer.height < h)
+        hrHatLayer.width = Math.max(hrHatLayer.width, w), hrHatLayer.height = Math.max(hrHatLayer.height, h);
+    const ctx = hrHatLayer.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+    hrDrawHat(id, vec2(m - x0 * s, h - m + y0 * s), place, main.scale(1, 1 / main.a), accent, timeReal, 0, true, undefined, 1, ctx);
+    drawContext.save();
+    drawContext.globalAlpha = main.a;
+    drawContext.drawImage(hrHatLayer, 0, 0, w, h, x - (x0 + x1) / 2 * s + x0 * s - m, y - h + m, w, h);
+    drawContext.restore();
 }
 
 // the hat a player wears (the store's pick; P2 has none until there is a P2 pick)
