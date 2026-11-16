@@ -416,7 +416,7 @@ window.hrEditor = (() =>
         const w = HR_WORLDS[world].id, vs = copy && def.mirror, list = vs ? HR_VERSUS[w] : HR_LEVELS[w];
         let n = list.length + 1, id;
         while (levelsOf(world).some(l => l.id == (id = `${w}${vs ? '-vs' : ''}-${String(n).padStart(2, '0')}`))) n++;
-        const d = copy ? cloneDef(def) : {size: 26, start: {x: -10, y: -4}, solids: [{l: -14, r: 14, top: -4}, {l: 9, r: 11.5, top: -3.5, bottom: -4, finish: true}]};
+        const d = copy ? cloneDef(def) : {size: 26, start: {x: -10, y: -4}, solids: [{l: -14, r: 8, top: -4}, {l: 8, r: 14, top: -4, finish: true}]};
         Object.assign(d, {id, name: copy ? def.name + ' copy' : 'New Level'});
         d.solids.forEach(s => hide(s, '_o', undefined));
         hide(d, '_new', true);

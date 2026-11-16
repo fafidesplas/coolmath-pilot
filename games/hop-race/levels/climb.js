@@ -33,8 +33,8 @@ HR_LEVELS.climb = [
         solids: [
             {l: -13, r: 13, top: -4},
             {l: -3, r: 13, top: -3},   // a low step
-            {l: 4, r: 13, top: -1.5},  // a higher one
-            {l: 8.25, r: 10.75, top: -1, bottom: -1.5, finish: true},
+            {l: 4, r: 8.25, top: -1.5},  // a higher one
+            {l: 8.25, r: 13, top: -1.5, finish: true},
         ],
         prompt: 'Hold to swing. Let go to stop.',
     },
@@ -47,8 +47,8 @@ HR_LEVELS.climb = [
             {l: -1.5, r: 0.5, top: -4},   // past a 3.5 u pit (too wide to roll across: holding falls in), the rocks step up
             {l: 0.5, r: 3.5, top: -2.5},
             {l: 3.5, r: 6, top: -1},
-            {l: 6, r: 14, top: .5},
-            {l: 9.25, r: 11.75, top: 1, bottom: .5, finish: true},
+            {l: 6, r: 9.25, top: .5},
+            {l: 9.25, r: 14, top: .5, finish: true},
         ],
     },
     {
@@ -57,9 +57,9 @@ HR_LEVELS.climb = [
         start: {x: -12, y: -6},
         solids: [
             {l: -15, r: -2.5, top: -6},   // ends 3.5 u short of the wall: blind swinging off the teeth drops you in
-            {l: 1, r: 15, top: 1},   // a 7 u wall: strike a tooth to pop up, or stick to the face and whip
+            {l: 1, r: 11.25, top: 1},   // a 7 u wall: strike a tooth to pop up, or stick to the face and whip
             {l: 0.027, r: 1, top: -1.73, bottom: -2.088},
-            {l: 11.25, r: 13.75, top: 1.5, bottom: 1, finish: true},
+            {l: 11.25, r: 15, top: 1, finish: true},
         ],
     },
     {
@@ -69,11 +69,11 @@ HR_LEVELS.climb = [
         start: {x: -10, y: 3},
         solids: [
             {l: -14, r: -8.25, top: 3},
-            {l: 7.25, r: 14, top: 3.75},
+            {l: 7.25, r: 9.25, top: 3.75},
             {l: 1, r: 4, top: 3, bottom: -0.25},
             {l: -11, r: 10, top: -3.25},
             {l: 11.75, r: 13.5, top: 8.75, bottom: 3.25},
-            {l: 9.25, r: 11.75, top: 4.25, bottom: 3.75, finish: true},
+            {l: 9.25, r: 14, top: 3.75, finish: true},
         ],
     },
 ];

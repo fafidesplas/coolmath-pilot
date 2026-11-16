@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-16 — The finish is the whole platform
+- No more finish logs on top of a platform: every level's finish is now a whole platform. Either the last platform became the finish, or the far end of a long floor was split off as its own finish block (owner did Hop 1-4 in the editor; the rest follow the same rule).
+- Hop Versus 2 and 3: the finish sits on the middle tower that you bump to turn back, so only the tower's top 1 u is the finish. Versus 4: the shaft's floor between the towers.
+- The flag marker is twice as big and finds room along its block (pointing left if it has to). Finish blocks running past a side wall are drawn only up to it.
+- Editor: a new level's finish is the right end of its floor. Hop built-in ghosts made again; the bot finishes all 10 Hop levels.
+- Next: play Rocket, Grapple and Climb to their new finishes.
+
 ## 2026-11-16 — Finish blocks replace the flag
 - The finish is now a block type, like ice or grip: a solid with `finish: true`. Touching it on any side wins (land on it, run into it, bump it from below). The flag and its invisible 1.44 × 3 u trigger box are gone.
 - Drawn exactly on its collider: a checkered middle (two rows on a 0.5 u log) between ink end caps, with a small waving checkered flag on top as a marker only (no collider).

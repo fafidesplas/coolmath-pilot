@@ -162,15 +162,16 @@ function hrDrawSawtooth(s)
 // end caps, and a small waving checkered flag on top. The flag is only a marker: touching the block is the finish
 function hrDrawFinish(s)
 {
-    const hh = hrLevel.h / 2, top = min(s.top, hh + 1), bottom = max(s.bottom, -hh - 1);
-    const w = s.r - s.l, h = top - bottom, cap = min(.3, w / 6), pad = min(.07, h / 8);
-    drawRect(vec2((s.l + s.r) / 2, (top + bottom) / 2), vec2(w, h), HR_INK);
+    // clipped to the level box: a finish block running past a side wall stops at it
+    const hw = hrLevel.w / 2, hh = hrLevel.h / 2, top = min(s.top, hh + 1), bottom = max(s.bottom, -hh - 1);
+    const l = max(s.l, -hw), r = min(s.r, hw), w = r - l, h = top - bottom, cap = min(.3, w / 6), pad = min(.07, h / 8);
+    drawRect(vec2((l + r) / 2, (top + bottom) / 2), vec2(w, h), HR_INK);
     const iw = w - 2 * cap, ih = h - 2 * pad, rows = max(2, Math.round(ih / .22)), ch = ih / rows;
     const cols = max(2, Math.round(iw / ch)), cw = iw / cols;
     for (let i = 0; i < cols; i++)
     for (let j = 0; j < rows; j++)
         if ((i + j) % 2 == 0)
-            drawRect(vec2(s.l + cap + cw * (i + .5), bottom + pad + ch * (j + .5)), vec2(cw, ch), HR_WHITE);
+            drawRect(vec2(l + cap + cw * (i + .5), bottom + pad + ch * (j + .5)), vec2(cw, ch), HR_WHITE);
     if (s.top < hh - .01) hrDrawFinishFlag(s.flag.x + (s.l - s.home.l), s.top, s.flag.dir);   // a moving block takes its flag along
 }
 
