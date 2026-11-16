@@ -103,13 +103,17 @@ window.hrEditor = (() =>
         refreshPanel();
     }
 
+    // closes only the editor: the level you were editing restarts as a normal run. A level outside the game's
+    // lists (a draft, a new level, a hidden world) keeps playing in place of the list until you leave the level
     function close()
     {
         ED.active = ED.testing = false;
-        hrEditDef = null;
+        drag = null;
         panel.style.display = 'none';
+        const i = hrLevelsOf(world, !!def.mirror).indexOf(def);
+        if (i >= 0) { hrEditDef = null; hrStartLevel(world, i, !!def.mirror); }
+        else start();
         hrCameraReset();
-        hrGo('title');
     }
 
     function toggle(shift)
@@ -132,7 +136,12 @@ window.hrEditor = (() =>
             else if (hrFinishT >= .4) { backToEdit(); status = `${def.mirror ? finishBy + ' finished' : 'Finished'} in ${hrFmt(finishMs)} s`; refreshPanel(); }
             return false;
         }
-        if (!ED.active) return false;
+        if (!ED.active)
+        {
+            // a draft left playing by Close: once you leave the level, the game's lists are back
+            if (hrEditDef && !HR_WORLD_SCREENS.includes(hrScreen)) hrEditDef = null;
+            return false;
+        }
         hrPointerQueue = [];   // clicks in the editor never reach the game
         mouse();
         return true;

@@ -5,6 +5,7 @@
 - Hop Versus 2 and 3: the finish sits on the middle tower that you bump to turn back, so only the tower's top 1 u is the finish. Versus 4: the shaft's floor between the towers.
 - The flag marker is twice as big and finds room along its block (pointing left if it has to). Finish blocks running past a side wall are drawn only up to it.
 - Editor: a new level's finish is the right end of its floor. Hop built-in ghosts made again; the bot finishes all 10 Hop levels.
+- Editor: Close now closes only the editor; the level you were editing restarts as a normal run (it used to go back to the title). A draft keeps playing until you leave the level.
 - Next: play Rocket, Grapple and Climb to their new finishes.
 
 ## 2026-11-16 — Finish blocks replace the flag
