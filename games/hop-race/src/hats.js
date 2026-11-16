@@ -3,7 +3,7 @@
     accent (in a level: ink with white; on a store tile: the tile's text color with ink).
     Hat space: the origin is the middle of the player's top edge, 1 unit is the player's width, y is up and
     +x is the way the player faces (below 0 is over and around the body: the helmet, the pilot's flap, the moustache). A hat is a list of [points, accent, front] polygons, points as [x, y]; front ones are drawn over the eye (the
-    helmet's bar).
+    football helmet's bar, the racing helmet's visor).
 */
 
 'use strict';
@@ -215,12 +215,13 @@ const HR_HATS =
         [hrHatBar(-.07, .36, -.03, .47, .05)],
         [hrHatBox(-.3, .015, .32, .045), 1],
     ],
-    // racecar driver's helmet: a full shell over the top, the back and the chin, a visor rim down the front (the eye
-    // shows through the visor), a stripe, a hinge and chin vents
+    // racecar driver's helmet: a full shell over the top, the back and the chin, a glass visor (a white block that
+    // hides the eye) with a rim down the front, a stripe, a hinge and chin vents
     racer: () => [
         [hrHatArc(-.02, 0, .6, .46, 0, Math.PI).concat([[-.62, -.6], [-.56, -.82], [-.4, -.93], [.42, -.93], [.58, -.87],
             [.64, -.76], [.6, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3], [-.22, 0]])],
         [hrHatBar(.57, .02, .615, -.74, .045)],
+        [[[-.22, 0], [.555, 0], [.598, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3]], 1, 1],
         [hrHatBox(-.53, .07, .5, .16), 1],
         [hrHatArc(-.4, -.2, .065, .065, 0, 2 * Math.PI, 10), 1],
         ...[.2, .32, .44].map(x => [hrHatBar(x, -.79, x - .03, -.87, .04), 1]),
