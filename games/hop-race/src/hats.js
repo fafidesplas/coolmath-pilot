@@ -100,6 +100,13 @@ function hrHatStripe(w0, h, y0, y1, inset = .035)
     return [[-w(y0), y0], [w(y0), y0], [w(y1), y1], [-w(y1), y1]];
 }
 
+// a curved band between two ellipses around (cx, cy): the inner one r across and r + grow tall, the outer one r + w
+// across, from angle a0 to a1 (racing stripes)
+function hrHatBand(cx, cy, r, w, a0, a1, grow = .1, n = 20)
+{
+    return hrHatArc(cx, cy, r + w, r + w + grow, a0, a1, n).concat(hrHatArc(cx, cy, r, r + grow, a1, a0, n));
+}
+
 // t is seconds, for the hats that move (halo); dir is the way the player faces (1 or -1), for what must not mirror
 // (the cap's letter)
 const HR_HATS =
@@ -247,15 +254,18 @@ const HR_HATS =
         ...[-.45, 0, .45].map(x => [hrHatArc(x, -.9, .035, .035, 0, 2 * Math.PI, 8), 1]),
     ],
     // racecar driver's helmet: a full shell over the top, the back and the chin, the face closed in over the eye, a glass visor (a
-    // white band across it) with a rim down the front, a stripe, a hinge and chin vents
+    // white band across it) with a rim down the front, racing stripes (a wide band between two pinstripes) from the brow over
+    // the top and down the back, a hinge and chin vents
     racer: () => [
         [hrHatArc(-.02, 0, .6, .46, 0, Math.PI).concat([[-.62, -.6], [-.56, -.82], [-.4, -.93], [.42, -.93], [.58, -.87],
             [.64, -.76], [.6, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3], [-.22, 0]])],
         [hrHatBar(.57, .02, .615, -.74, .045)],
         [[[-.3, .02], [.565, .02], [.6, -.76], [-.12, -.78], [-.28, -.62], [-.3, -.3]], 0, 1],
         [[[-.17, -.1], [.553, -.1], [.571, -.4], [-.17, -.4]], 1, 1],
-        [hrHatBox(-.53, .07, .5, .16), 1],
-        [hrHatArc(-.4, -.2, .065, .065, 0, 2 * Math.PI, 10), 1],
+        [hrHatBand(0, -.15, .375, .03, .25, Math.PI + .8, .02), 1],
+        [hrHatBand(0, -.15, .43, .08, .25, Math.PI + .8, .02), 1],
+        [hrHatBand(0, -.15, .54, .03, .25, Math.PI + .8, .02), 1],
+        [hrHatArc(-.3, -.2, .065, .065, 0, 2 * Math.PI, 10), 1, 1],
         ...[.2, .32, .44].map(x => [hrHatBar(x, -.79, x - .03, -.87, .04), 1]),
     ],
     // ninja mask: a hood over the whole head with a slit for the eye, a forehead plate, the knot's two tails out the back

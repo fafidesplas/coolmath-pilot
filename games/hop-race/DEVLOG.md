@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Racing helmet stripes
+- Racing helmet: the flat stripe across the brow is now racing stripes, a wide band between two pinstripes that sweeps from above the visor over the top and down the back (`hrHatBand`). The hinge moved onto the visor's edge so it no longer cuts the stripes.
+- Next: more hat tweaks as the owner asks.
+
 ## 2026-11-15 — Hat fixes and 4 more hats
 - Pilot's cap: bigger goggles with two lenses. Cowboy hat: the brim now lies flat on the head and curls up only past its sides (it balanced on one point before); brim and crown are bigger.
 - 4 new hats, 20 in all: bowler hat, racecar driver's helmet, ninja mask, spartan helmet with a crest. The store grid is now 7 per row in 3 rows of narrower tiles.
