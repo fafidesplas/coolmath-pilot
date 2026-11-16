@@ -121,4 +121,25 @@ export default [
     par: 2,
     solution: { switches: { '1,1': 1, '4,2': 0, '4,3': 0 } },
   },
+  {
+    id: 'world01:level07',
+    name: "Three's Company",
+    tip: 'Red and blue share the middle line. Set both ends of it.',
+    w: 8, h: 5,
+    tiles: [
+      depot(0, 1, 1), st(1, 1, 1), cv(2, 1, 2),
+      station(0, 2, 1, 'blue'), st(1, 2, 1), sw(2, 2, 3, false, 1), st(3, 2, 1), st(4, 2, 1), sw(5, 2, 1, false, 1), st(6, 2, 1), station(7, 2, 3, 'red'),
+      cv(1, 3, 1), st(2, 3, 1), st(3, 3, 1), cv(4, 3, 2), cv(5, 3, 0), st(6, 3, 1), depot(7, 3, 3),
+      depot(0, 4, 1), sw(1, 4, 1, true, 1), st(2, 4, 1), st(3, 4, 1), sw(4, 4, 3, false, 0), st(5, 4, 1), st(6, 4, 1), station(7, 4, 3, 'yellow'),
+    ],
+    trains: [
+      { id: 0, color: 'red', depot: [0, 1], depart: 0 },
+      { id: 1, color: 'blue', depot: [7, 3], depart: 4 },
+      { id: 2, color: 'yellow', depot: [0, 4], depart: 0 },
+    ],
+    ticket: [3, 3],
+    tickLimit: 30,
+    par: 2,
+    solution: { switches: { '2,2': 0, '5,2': 0 } },
+  },
 ];
