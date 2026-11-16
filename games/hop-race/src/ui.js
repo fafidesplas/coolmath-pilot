@@ -37,7 +37,7 @@ function hrUiAdvance(dt)
         // a fanfare for a new best, once the time has counted up and the gap shows
         const r = hrResult;
         if (r.best && !r.fanfare && hrScreenT >= .9) { r.fanfare = true; hrSfx.fanfare.play(); }
-        if (r.coins && !r.medalSfx && hrScreenT >= HR_MEDAL_POP_T) { r.medalSfx = true; hrSfx.star.play(); }   // a new medal pays coins
+        if (r.coins && !r.medalSfx && hrScreenT >= HR_MEDAL_POP_T) { r.medalSfx = true; hrSfx.star.play(); }   // the coins pop in with the medal
     }
     if (hrPress && (hrPress.t += dt) > .09)
     {
@@ -820,7 +820,7 @@ function hrDrawComplete(W, H, u, y0)
         hrText(`${gap < 0 ? '-' : '+'}${hrFmt(Math.abs(gap))}`, W / 2, H * .44 + y0, 44 * u * max(.01, pop), HR_INK);
         hrText(`${r.best ? 'Old best' : 'Best'} ${hrFmt(r.best ? r.prevMs : r.bestMs)}`, W / 2, H * .52 + y0, 24 * u, HR_INK.scale(1, .7));
     }
-    // this run's medal pops in, with the coins if it is the level's first of that kind; under it, the next one's time
+    // this run's medal pops in with the coins it paid (the finish, plus a first medal of that kind); under it, the next one's time
     if (t < HR_MEDAL_POP_T || !r.runMedal) return;
     const pop = max(.01, hrEaseBack((t - HR_MEDAL_POP_T) / .25)), d = 46 * u * pop, my = H * .63 + y0;
     const name = HR_MEDALS[r.runMedal].name + (r.coins ? `   +${r.coins} coins` : '');
@@ -838,6 +838,7 @@ function hrDrawRound(W, H, u, y0)
     {
         hrRect(W / 2 - 220 * u, H * .38 + y0, 90 * u, 90 * u, p.color);
         hrText(`${p.name} wins the round`, W / 2 - 150 * u, H * .38 + y0, 52 * u, HR_INK, 'left');
+        hrText(`+${HR_FINISH_COINS} coins`, W / 2, H * .68 + y0, 24 * u, HR_INK.scale(1, .7));   // every finished round pays
     }
     hrPlayers.forEach((q, i) =>
     {
@@ -858,7 +859,7 @@ function hrDrawMatch(W, H, u, y0)
     const p = hrPlayers[hrMatch.winner], s = 150 * u * hrEaseBack(hrScreenT / .4);
     hrRect(W / 2, H * .32 + y0, s, s, p.color);
     hrText(`${p.name} wins the match`, W / 2, H * .56 + y0, 60 * u);
-    hrText(`${hrMatch.wins[0]} – ${hrMatch.wins[1]}`, W / 2, H * .64 + y0, 30 * u, HR_INK.scale(1, .7));
+    hrText(`${hrMatch.wins[0]} – ${hrMatch.wins[1]}   +${HR_FINISH_COINS} coins`, W / 2, H * .64 + y0, 30 * u, HR_INK.scale(1, .7));
 }
 
 function hrDrawRotate(W, H, u)

@@ -2,6 +2,7 @@
     HOP RACE - medals and the coins they pay (GDD §7; scaffolding). A solo level gives a medal for its best time:
     bronze for any finish, silver and gold for beating the level's target times. The first time a level reaches a
     medal, it pays that medal's coins (and those of the medals under it), which the store spends (src/store.js).
+    Every finish also pays a few coins, replays included (HR_FINISH_COINS).
     Target times: HR_MEDAL_TIMES where a level has them, else worked out from the bot's time (levels/ghosts.js);
     a level with neither gives bronze only.
 */
@@ -15,6 +16,15 @@ const HR_MEDALS = [
     {id: 'silver', name: 'Silver', coins: 50},
     {id: 'gold',   name: 'Gold',   coins: 75},
 ];
+
+// every finished level pays this, replays too: each solo finish and each Versus round that is won (not a tie)
+const HR_FINISH_COINS = 5;
+
+function hrFinishPay()
+{
+    hrStoreAddCoins(HR_FINISH_COINS);
+    hrGaDesign('store:earn:finish', HR_FINISH_COINS);
+}
 
 // target times by level id, in ms: {gold, silver}. An entry here wins over the bot's times.
 // Rocket, Grapple and Climb have no bot yet: add their times here once they are played in.

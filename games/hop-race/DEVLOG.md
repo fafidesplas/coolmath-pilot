@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Coins for every finish
+- Every finished level pays 5 coins (`HR_FINISH_COINS`), replays included: each solo finish on top of any medal, and each Versus round won. The level complete screen always shows the coins; the Versus round and match screens show "+5 coins".
+- Next: watch how fast replaying the shortest level earns (about 40 coins a minute) against ads and medals.
+
 ## 2026-11-16 — Medals and coins (scaffolding)
 - Medals (`src/medals.js`): bronze for a finish, silver and gold for beating target times. Hop's come from the bot's times; Rocket, Grapple and Climb have none yet and give bronze only.
 - Coins: a level's first bronze pays 25, silver 50 more, gold 75 more. With the 50 from a rewarded ad, these are the only sources; the 26 hats (6,700 coins) are the only sink. Best times from before medals are paid on load.

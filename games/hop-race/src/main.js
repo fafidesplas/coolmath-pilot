@@ -140,10 +140,12 @@ function hrSoloFinish(p)
     const prev = hrSaveLevel(def.id);
     const best = hrSaveResult(def.id, ms);
     if (best) hrGhostSave(def.id);
-    // medals (src/medals.js): this run's, the level's, and the coins a first-time medal pays
+    // medals (src/medals.js): this run's, the level's, and the coins a first-time medal pays, on top of the
+    // coins every finish pays
     const award = hrMedalAward(def.id);
+    hrFinishPay();
     hrResult = {ms, best: best && prev.bestMs > 0, bestMs: best ? ms : prev.bestMs, prevMs: prev.bestMs, fanfare: false,
-        runMedal: hrMedalFor(def.id, ms), medal: award.medal, coins: award.coins, medalSfx: false};
+        runMedal: hrMedalFor(def.id, ms), medal: award.medal, coins: award.coins + HR_FINISH_COINS, medalSfx: false};
     hrGaProgress('Complete', hrWorld, hrLevelIndex, ms);
     if (award.coins)
     {
@@ -166,6 +168,7 @@ function hrRoundWon(p)
     m.rounds++;
     hrGaDesign('versus:round:p' + (p.index + 1), Math.round(m.frames * 1000 / frameRate));
     if (m.wins[p.index] >= 3) hrGaDesign('versus:match:p' + (p.index + 1), m.rounds);
+    hrFinishPay();   // a finished round pays like a solo finish
     hrFinishFx(p);
 }
 

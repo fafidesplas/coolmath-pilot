@@ -3,8 +3,8 @@
     save, buy and equip, and coins from a rewarded ad. The store screen's grid scrolls (src/ui.js). The hat art is in src/hats.js. Not built yet: a P2 pick.
     The catalog is 26 hats (GDD §7's 8, with a football helmet for the propeller, and 15 more) with placeholder prices.
     The moustache is a "hat" too: one item is worn at a time.
-    Economy (GDD §7): coins come from medals (src/medals.js: 25 bronze, +50 silver, +75 gold, once per level) and from
-    rewarded ads; hats are the only thing to spend them on. hrEconReport() in the console prints the budget.
+    Economy (GDD §7): coins come from medals (src/medals.js: 25 bronze, +50 silver, +75 gold, once per level), from
+    every finish (5, replays too) and from rewarded ads; hats are the only thing to spend them on. hrEconReport() in the console prints the budget.
 */
 
 'use strict';
@@ -112,6 +112,7 @@ function hrEconReport()
         row('all gold at v1 (40 levels, all with target times)', v1),
         row('this save: paid by medals so far', earned),
     ]);
-    console.log(`Catalog: ${prices.length} items, ${total} coins. All gold now pays ${now}; the other ${max(0, total - now)} ` +
-        `is ${Math.ceil(max(0, total - now) / HR_STORE_AD_COINS)} rewarded ads at ${HR_STORE_AD_COINS} coins.`);
+    const rest = max(0, total - now);
+    console.log(`Catalog: ${prices.length} items, ${total} coins. All gold now pays ${now}; the other ${rest} is ` +
+        `${Math.ceil(rest / HR_FINISH_COINS)} finishes at ${HR_FINISH_COINS} coins or ${Math.ceil(rest / HR_STORE_AD_COINS)} rewarded ads at ${HR_STORE_AD_COINS}.`);
 }
