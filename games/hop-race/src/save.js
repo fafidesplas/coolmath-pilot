@@ -28,6 +28,7 @@ function hrSaveLoad()
         hrSave.hopRun = 1;
         hrSaveWrite();
     }
+    hrMedalSync();   // medals and their coins for best times saved before medals existed
 }
 
 function hrSaveWrite() { writeSaveData(HR_SAVE_KEY, hrSave); }
@@ -43,14 +44,14 @@ function hrSaveLast(id)
 function hrSaveLevel(id)
 {
     const l = hrSave.levels[id];
-    return {bestMs: l && l.bestMs > 0 ? l.bestMs : 0};
+    return {bestMs: l && l.bestMs > 0 ? l.bestMs : 0, medal: l && l.medal > 0 ? min(3, l.medal | 0) : 0};   // medal: the highest one paid (src/medals.js)
 }
 
 // returns true if this is a new best time
 function hrSaveResult(id, ms)
 {
     const old = hrSaveLevel(id), best = !old.bestMs || ms < old.bestMs;
-    hrSave.levels[id] = {bestMs: best ? ms : old.bestMs};
+    hrSave.levels[id] = {bestMs: best ? ms : old.bestMs, medal: old.medal};
     hrSaveWrite();
     return best;
 }

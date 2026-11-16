@@ -1,5 +1,12 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Medals and coins (scaffolding)
+- Medals (`src/medals.js`): bronze for a finish, silver and gold for beating target times. Hop's come from the bot's times; Rocket, Grapple and Climb have none yet and give bronze only.
+- Coins: a level's first bronze pays 25, silver 50 more, gold 75 more. With the 50 from a rewarded ad, these are the only sources; the 26 hats (6,700 coins) are the only sink. Best times from before medals are paid on load.
+- Shown: medal on the level tiles and the level complete screen ("Silver   +75 coins", "Gold at 4.3"), the next medal's time in the HUD, the coin balance under the Store button.
+- `hrEconReport()` in the console prints what medals can pay against the hat prices.
+- Next: play in target times for Rocket, Grapple and Climb (`HR_MEDAL_TIMES`), then check the rewards and prices.
+
 ## 2026-11-16 — Elf hat traced again, smoothed
 - Elf hat back to the trace of the owner's drawing, with its corners rounded (`hrHatSmooth`, corner cutting) and the points of the hood, ear and locks kept sharp. No ink outline: the white bangs run into the white of the eye.
 - Next: check it on the somersault and in Versus.

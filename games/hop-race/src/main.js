@@ -140,8 +140,16 @@ function hrSoloFinish(p)
     const prev = hrSaveLevel(def.id);
     const best = hrSaveResult(def.id, ms);
     if (best) hrGhostSave(def.id);
-    hrResult = {ms, best: best && prev.bestMs > 0, bestMs: best ? ms : prev.bestMs, prevMs: prev.bestMs, fanfare: false};
+    // medals (src/medals.js): this run's, the level's, and the coins a first-time medal pays
+    const award = hrMedalAward(def.id);
+    hrResult = {ms, best: best && prev.bestMs > 0, bestMs: best ? ms : prev.bestMs, prevMs: prev.bestMs, fanfare: false,
+        runMedal: hrMedalFor(def.id, ms), medal: award.medal, coins: award.coins, medalSfx: false};
     hrGaProgress('Complete', hrWorld, hrLevelIndex, ms);
+    if (award.coins)
+    {
+        hrGaDesign('medal:' + HR_MEDALS[award.medal].id, hrCmgLevel(hrWorld, hrLevelIndex));
+        hrGaDesign('store:earn:medal', award.coins);
+    }
     hrGaDesign(`player:respawn:${HR_WORLDS[hrWorld].id}`, p.falls);
     if (hrIsTutorial()) hrTutorial('done', ms);
     hrRun.started = false;

@@ -23,6 +23,7 @@
         "src/render.js",
         "src/hats.js",
         "src/store.js",
+        "src/medals.js",
         "src/cmg.js",
         "src/ui.js",
         "levels/hop.js",

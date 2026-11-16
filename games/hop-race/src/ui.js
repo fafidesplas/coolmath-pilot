@@ -37,6 +37,7 @@ function hrUiAdvance(dt)
         // a fanfare for a new best, once the time has counted up and the gap shows
         const r = hrResult;
         if (r.best && !r.fanfare && hrScreenT >= .9) { r.fanfare = true; hrSfx.fanfare.play(); }
+        if (r.coins && !r.medalSfx && hrScreenT >= HR_MEDAL_POP_T) { r.medalSfx = true; hrSfx.star.play(); }   // a new medal pays coins
     }
     if (hrPress && (hrPress.t += dt) > .09)
     {
@@ -658,6 +659,7 @@ function hrDrawTile(b, w, h, focused)
     const timed = !hrMenuVersus && rec.bestMs;   // the number moves up to make room for the best time
     hrText(String(b.tile + 1), b.x, b.y - (timed ? h * .12 : 0), 46 * u, HR_YELLOW);
     if (timed) hrText(hrFmt(rec.bestMs), b.x, b.y + h * .27, 24 * u, HR_YELLOW);
+    if (timed) hrDrawMedal(rec.medal, b.x + w * .32, b.y - h * .2, 26 * u, HR_YELLOW, HR_INK);
     if (focused) hrRect(b.x, b.y + h / 2 + 14 * u, w * .5, 6 * u, HR_INK);
 }
 
@@ -741,6 +743,7 @@ function hrUiRender()
 function hrDrawTitle(W, H, u)
 {
     hrText('HOP RACE', W / 2, H * .14, 100 * u);
+    hrText(`${hrSave.coins} coins`, 110 * u, 100 * u, 22 * u, HR_INK.scale(1, .7));   // under the Store button
 }
 
 function hrDrawHud(W, H, u)
@@ -766,8 +769,11 @@ function hrDrawHud(W, H, u)
     }
     const ms = hrFinishT >= 0 && hrResult ? hrResult.ms : hrRunMs();
     hrText(`${label}   ${hrFmt(ms)}`, W / 2, top, 34 * u);
-    const best = hrSaveLevel(hrLevelDef().id).bestMs;
-    if (best) hrText('Best ' + hrFmt(best), W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
+    const id = hrLevelDef().id, rec = hrSaveLevel(id), best = rec.bestMs;
+    // after the best time, the time to beat for the next medal (src/medals.js), if the level has one
+    const goalMs = best && rec.medal < 3 ? hrMedalTarget(id, rec.medal + 1) : 0;
+    const goal = goalMs ? `   ${HR_MEDALS[rec.medal + 1].name} ${hrFmt(goalMs)}` : '';
+    if (best) hrText('Best ' + hrFmt(best) + goal, W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
     else if (hrGhostBuiltInMs && hrSave.settings.ghost) hrText('Ghost ' + hrFmt(hrGhostBuiltInMs), W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
     if (hrMode().countdown) hrDrawCountdown(W, H, u, hrRun.frames);
     // from level 2 on, the button hint shows for the first 3 s
@@ -799,19 +805,29 @@ function hrDrawPrompt()
     hrWorldText(def.prompt, at, .9, HR_INK.scale(1, hrRun.prompt));
 }
 
+const HR_MEDAL_POP_T = 1.1;   // seconds into the level complete screen when the medal pops in
+
 function hrDrawComplete(W, H, u, y0)
 {
     const r = hrResult, t = hrScreenT;
-    hrText(r.best ? 'New best!' : 'Nice.', W / 2, H * .17 + y0, 60 * u);
+    hrText(r.best ? 'New best!' : 'Nice.', W / 2, H * .15 + y0, 60 * u);
     // time counts up, then the gap to the old best pops in
     const shown = r.ms * hrEaseOut((t - .15) / .6);
-    hrText(hrFmt(shown), W / 2, H * .34 + y0, 96 * u);
+    hrText(hrFmt(shown), W / 2, H * .3 + y0, 96 * u);
     if (r.prevMs)
     {
         const gap = r.ms - r.prevMs, pop = hrEaseBack(clamp((t - .8) / .25));
-        hrText(`${gap < 0 ? '-' : '+'}${hrFmt(Math.abs(gap))}`, W / 2, H * .52 + y0, 44 * u * max(.01, pop), HR_INK);
-        hrText(`${r.best ? 'Old best' : 'Best'} ${hrFmt(r.best ? r.prevMs : r.bestMs)}`, W / 2, H * .64 + y0, 24 * u, HR_INK.scale(1, .7));
+        hrText(`${gap < 0 ? '-' : '+'}${hrFmt(Math.abs(gap))}`, W / 2, H * .44 + y0, 44 * u * max(.01, pop), HR_INK);
+        hrText(`${r.best ? 'Old best' : 'Best'} ${hrFmt(r.best ? r.prevMs : r.bestMs)}`, W / 2, H * .52 + y0, 24 * u, HR_INK.scale(1, .7));
     }
+    // this run's medal pops in, with the coins if it is the level's first of that kind; under it, the next one's time
+    if (t < HR_MEDAL_POP_T || !r.runMedal) return;
+    const pop = max(.01, hrEaseBack((t - HR_MEDAL_POP_T) / .25)), d = 46 * u * pop, my = H * .63 + y0;
+    const name = HR_MEDALS[r.runMedal].name + (r.coins ? `   +${r.coins} coins` : '');
+    hrDrawMedal(r.runMedal, W / 2 - 150 * u, my + 6 * u, d, HR_INK, hrScreenBg());
+    hrText(name, W / 2 - 110 * u, my, 32 * u * pop, HR_INK, 'left');
+    const nextMs = r.medal < 3 ? hrMedalTarget(hrLevelDef().id, r.medal + 1) : 0;
+    if (nextMs) hrText(`${HR_MEDALS[r.medal + 1].name} at ${hrFmt(nextMs)}`, W / 2, H * .705 + y0, 22 * u, HR_INK.scale(1, .7));
 }
 
 function hrDrawRound(W, H, u, y0)

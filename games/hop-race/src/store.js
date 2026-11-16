@@ -3,6 +3,8 @@
     save, buy and equip, and coins from a rewarded ad. The store screen's grid scrolls (src/ui.js). The hat art is in src/hats.js. Not built yet: a P2 pick.
     The catalog is 26 hats (GDD §7's 8, with a football helmet for the propeller, and 15 more) with placeholder prices.
     The moustache is a "hat" too: one item is worn at a time.
+    Economy (GDD §7): coins come from medals (src/medals.js: 25 bronze, +50 silver, +75 gold, once per level) and from
+    rewarded ads; hats are the only thing to spend them on. hrEconReport() in the console prints the budget.
 */
 
 'use strict';
@@ -85,4 +87,31 @@ function hrStorePick(id)
 {
     if (hrStoreOwned(id)) hrStoreEquip(id);
     else if (hrStoreBuy(id)) hrStoreEquip(id);
+}
+
+// the economy at a glance, for tuning prices against rewards: type hrEconReport() in the console
+function hrEconReport()
+{
+    let levels = 0, timed = 0, earned = 0;
+    for (let w = 0; w < HR_WORLDS.length; w++)
+        for (const l of hrLevelsOf(w, false))
+        {
+            levels++;
+            timed += !!hrMedalTimes(l.id);
+            for (let m = 1; m <= hrSaveLevel(l.id).medal; m++) earned += HR_MEDALS[m].coins;
+        }
+    const [bronze, silver, gold] = [1, 2, 3].map(m => HR_MEDALS[m].coins);
+    const prices = HR_STORE.map(it => it.price).sort((a, b) => a - b), total = prices.reduce((a, b) => a + b, 0);
+    const buys = coins => { let n = 0; for (const p of prices) if ((coins -= p) >= 0) n++; return n; };   // cheapest first
+    const row = (label, coins) => ({supply: label, coins, hats: `${buys(coins)}/${prices.length}`});
+    const now = levels * bronze + timed * (silver + gold), v1 = 40 * (bronze + silver + gold);
+    console.table([
+        row(`all bronze (${levels} levels live)`, levels * bronze),
+        row(`all silver (${timed} levels with target times)`, levels * bronze + timed * silver),
+        row('all gold', now),
+        row('all gold at v1 (40 levels, all with target times)', v1),
+        row('this save: paid by medals so far', earned),
+    ]);
+    console.log(`Catalog: ${prices.length} items, ${total} coins. All gold now pays ${now}; the other ${max(0, total - now)} ` +
+        `is ${Math.ceil(max(0, total - now) / HR_STORE_AD_COINS)} rewarded ads at ${HR_STORE_AD_COINS} coins.`);
 }
