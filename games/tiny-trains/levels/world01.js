@@ -1,4 +1,4 @@
-// World 1 — Village (GDD 6), levels 1-1 to 1-8. Same shape as the GDD's level JSON,
+// World 1 — Village (GDD 6), levels 1-1 to 1-10. Same shape as the GDD's level JSON,
 // kept as a JS module so the browser and node can both import it without fetch.
 // rot: 0–3 clockwise from north. Switch `set`: 0 straight, 1 curved (the start).
 // For a switch, rot is the heading of a facing train on the straight branch; the
@@ -160,5 +160,58 @@ export default [
     tickLimit: 30,
     par: 2,
     solution: { switches: { '2,2': 1, '4,2': 1 } },
+  },
+  {
+    // A one-way ring in the middle. Red can enter it from below (S1 curved) and blue
+    // from above (B curved); both start that way. On the ring, the switch at (5,2) is
+    // the way out (straight, down to red's line) or round again (curved). It starts on
+    // "round again", so the first run is lost in a loop. The other ring switches
+    // (2,2), (5,1) and (5,3) are only ever trailed.
+    id: 'world01:level09',
+    name: 'Round and Round',
+    tip: 'A train on the ring goes round until a switch lets it out.',
+    w: 8, h: 4,
+    tiles: [
+      station(0, 0, 1, 'blue'), st(1, 0, 1), st(2, 0, 1), st(3, 0, 1), st(4, 0, 1), sw(5, 0, 3, true, 1), st(6, 0, 1), depot(7, 0, 3),
+      cv(2, 1, 1), st(3, 1, 1), st(4, 1, 1), sw(5, 1, 0, true, 0),
+      sw(2, 2, 2, true, 0), st(3, 2, 1), st(4, 2, 1), sw(5, 2, 2, false, 1),
+      depot(0, 3, 1), st(1, 3, 1), sw(2, 3, 1, true, 1), st(3, 3, 1), st(4, 3, 1), sw(5, 3, 3, false, 0), st(6, 3, 1), station(7, 3, 3, 'red'),
+    ],
+    trains: [
+      { id: 0, color: 'red', depot: [0, 3], depart: 0 },
+      { id: 1, color: 'blue', depot: [7, 0], depart: 0 },
+    ],
+    ticket: [3, 1],
+    tickLimit: 24,
+    par: 2,
+    solution: { switches: { '5,0': 0, '5,2': 0 } },
+  },
+  {
+    // Two reds share one station through the merge at (7,2). Red 1 (top) and red 2
+    // (middle, leaves 1 tick later) each have a short line and a detour 2 cells longer.
+    // Both short or both long, they reach the merge on the same tick. The start
+    // (red 1 short, red 2 long) is fine for the reds, but blue's switch at (7,4)
+    // starts on the buffer stop. Fixing blue wins in 1 flip without the ticket; the
+    // ticket is on red 1's detour, so red 2 must then take its short line: 3 flips.
+    id: 'world01:level10',
+    name: 'Twin Reds',
+    tip: 'Two reds, one station. They must not reach the merge together.',
+    w: 9, h: 5,
+    tiles: [
+      cv(1, 0, 1), st(2, 0, 1), st(3, 0, 1), st(4, 0, 1), st(5, 0, 1), cv(6, 0, 2),
+      depot(0, 1, 1), sw(1, 1, 1, true, 0), st(2, 1, 1), st(3, 1, 1), st(4, 1, 1), st(5, 1, 1), sw(6, 1, 3, false, 0), cv(7, 1, 2),
+      depot(0, 2, 1), sw(1, 2, 1, false, 1), st(2, 2, 1), st(3, 2, 1), st(4, 2, 1), st(5, 2, 1), sw(6, 2, 3, true, 0), sw(7, 2, 3, false, 0), station(8, 2, 3, 'red'),
+      cv(1, 3, 0), st(2, 3, 1), st(3, 3, 1), st(4, 3, 1), st(5, 3, 1), cv(6, 3, 3), buffer(7, 3, 2),
+      station(0, 4, 1, 'blue'), st(1, 4, 1), st(2, 4, 1), st(3, 4, 1), st(4, 4, 1), st(5, 4, 1), st(6, 4, 1), sw(7, 4, 3, false, 1), depot(8, 4, 3),
+    ],
+    trains: [
+      { id: 0, color: 'red', depot: [0, 1], depart: 0 },
+      { id: 1, color: 'red', depot: [0, 2], depart: 1 },
+      { id: 2, color: 'blue', depot: [8, 4], depart: 0 },
+    ],
+    ticket: [4, 0],
+    tickLimit: 24,
+    par: 3,
+    solution: { switches: { '1,1': 1, '1,2': 0, '7,4': 0 } },
   },
 ];

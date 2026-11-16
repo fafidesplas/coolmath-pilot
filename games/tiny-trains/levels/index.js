@@ -1,4 +1,4 @@
-// Level list for the level select (GDD 6). The prototype has World 1, levels 1–5.
+// Level list for the level select (GDD 6). The prototype has World 1, levels 1–10.
 import world01 from './world01.js';
 
 export const WORLDS = [

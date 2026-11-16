@@ -98,8 +98,26 @@ key('Enter'); frames(5);
 ok(G.level === 'world01:level06' && G.screen === 'playing', `Next after 1-5 opens 1-6 (${G.level})`);
 G.start('1-8'); frames(2); G.win(); frames(800); frames(150);
 key('Enter'); frames(5);
-ok(G.screen === 'levels', 'Next after 1-8 (the last level) opens the level select');
+ok(G.level === 'world01:level09' && G.screen === 'playing', `Next after 1-8 opens 1-9 (${G.level})`);
+G.start('1-9'); frames(2); G.win(); frames(800); frames(150);
+key('Enter'); frames(5);
+ok(G.level === 'world01:level10' && G.screen === 'playing', `Next after 1-9 opens 1-10 (${G.level})`);
+G.start('1-10'); frames(2); G.win(); frames(800); frames(150);
+key('Enter'); frames(5);
+ok(G.screen === 'levels', 'Next after 1-10 (the last level) opens the level select');
 key('Escape'); frames(2);
+
+// 1-9 with the start setting: both trains circle the ring until the tick limit (lost),
+// then the game rewinds to planning.
+G.start('1-9'); frames(3);
+const gaBefore = gaLog.length;
+key(' '); frames(5);
+const { findLevel } = await import('../levels/index.js');
+frames(Math.ceil(findLevel('1-9').tickLimit * 450 / 16) - 40);   // 450 ms ticks at 1×
+ok(G.phase === 'run' && !errors.length, '1-9: the trains are still going round just before the tick limit');
+frames(400);
+ok(G.phase === 'plan' && gaLog.slice(gaBefore).some(l => l.includes('level:crash:lost')) && !errors.length,
+  '1-9: the start setting ends lost in a loop (level:crash:lost) and rewinds to planning');
 
 // Pause, menu, level select, sound toggle, fast-forward, ?level param path
 G.start('1-5'); frames(2);
@@ -113,8 +131,13 @@ frames(30);
 key('Escape'); frames(5);
 ok(G.screen === 'title', 'Escape goes back to the title');
 key('l'); frames(2);
-tap(925, 460); frames(5);   // level 8 button: second row of the two-row select
+// Ten levels: two rows of five, 190 px apart, centred on x 640; row 2 at y 460.
+tap(640, 460); frames(5);   // level 8 button: middle of the second row
 ok(G.level === 'world01:level08' && G.screen === 'playing', `level select opens 1-8 from its button (${G.level})`);
+key('Escape'); frames(2);
+tap(520 + 120, 456 + 30); frames(30);  // pause → Levels
+tap(640 + 2 * 190, 460); frames(5);    // level 10 button: end of the second row
+ok(G.level === 'world01:level10' && G.screen === 'playing', `level select opens 1-10 from its button (${G.level})`);
 
 const saved = JSON.parse(store['cm_tiny-trains_save']);
 ok(saved.v === 1 && Object.keys(saved.levels).length === G.levels.length, `save has all ${G.levels.length} levels solved`);

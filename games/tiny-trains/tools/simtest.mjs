@@ -161,10 +161,43 @@ for (const level of ALL_LEVELS) {
     const r = run(L8, { switches: { ...defaultSetup(L8).switches, '2,2': 1 } });
     ok(r.cause === 'swap', `1-8: red straight on along blue's line meets blue head-on (${r.cause})`);
   }
+  const L9 = findLevel('1-9');
+  if (L9) {
+    const set = sw => ({ switches: { ...defaultSetup(L9).switches, ...sw } });
+    const d = run(L9, defaultSetup(L9));
+    const last = d.frames[d.frames.length - 1].trains;
+    ok(d.cause === 'lost' && d.tick === L9.tickLimit && last.every(t => t.state === 'run'),
+      `1-9: the start setting sends both trains round the ring until the tick limit (${d.cause} at ${d.tick})`);
+    // A train on the ring keeps coming back to the same cell: red passes (2,1) every 8 ticks.
+    const redAt21 = d.frames.filter(f => f.trains[0].x === 2 && f.trains[0].y === 1).map(f => f.tick);
+    ok(redAt21.length >= 3 && redAt21.every((t, i) => !i || t - redAt21[i - 1] === 8), `1-9: red laps the 8-cell ring (at (2,1) on ticks ${redAt21.join(', ')})`);
+    ok(run(L9, set({ '5,0': 0 })).cause === 'lost', '1-9: fixing blue alone leaves red lost on the ring');
+    ok(run(L9, set({ '5,2': 0 })).cause === 'wrong_station', '1-9: opening the ring with blue on it sends blue to the red station');
+    const short = run(L9, set({ '5,0': 0, '2,3': 0 }));
+    ok(short.result === 'win' && !short.ticket, '1-9: red can skip the ring (2 flips, no ticket)');
+    ok(['2,2', '5,1', '5,3'].every(k => { const s = set({ ...L9.solution.switches, [k]: 1 - (defaultSetup(L9).switches[k]) }); return run(L9, s).result === 'win'; }),
+      '1-9: the trailed ring switches (2,2), (5,1), (5,3) never change the result');
+  }
+  const L10 = findLevel('1-10');
+  if (L10) {
+    const set = sw => ({ switches: { ...defaultSetup(L10).switches, ...sw } });
+    const reds = L10.trains.filter(t => t.color === 'red');
+    ok(reds.length === 2 && L10.tiles.filter(t => t.t === 'station' && t.color === 'red').length === 1, '1-10: two red trains, one red station');
+    const blueOnly = run(L10, set({ '7,4': 0 }));
+    const homes = blueOnly.frames.flatMap(f => f.events.filter(e => e.type === 'arrive').map(e => ({ ...e, tick: f.tick })));
+    ok(blueOnly.result === 'win' && !blueOnly.ticket && homes.filter(e => e.x === 8 && e.y === 2).length === 2,
+      '1-10: both reds arrive at the shared station (fix blue: 1 flip, no ticket)');
+    const r1Long = run(L10, set({ '7,4': 0, '1,1': 1 }));
+    ok(r1Long.cause === 'collision' && r1Long.crash.x === 7 && r1Long.crash.y === 2, `1-10: both reds on their detours meet at the merge (${r1Long.cause} at ${r1Long.crash.x},${r1Long.crash.y})`);
+    const bothShort = run(L10, set({ '7,4': 0, '1,2': 0 }));
+    ok(bothShort.cause === 'collision' && bothShort.crash.x === 7, '1-10: both reds on their short lines meet at the merge too');
+  }
 }
 
-ok(['1-6', '1-7', '1-8'].every((r, i) => findLevel(r) === ALL_LEVELS[5 + i] && findLevel(`world01:level0${6 + i}`) === ALL_LEVELS[5 + i]),
-  '?level= opens 1-6, 1-7 and 1-8 by label and by id');
+ok(['1-6', '1-7', '1-8', '1-9'].every((r, i) => findLevel(r) === ALL_LEVELS[5 + i] && findLevel(`world01:level0${6 + i}`) === ALL_LEVELS[5 + i]),
+  '?level= opens 1-6 to 1-9 by label and by id');
+ok(findLevel('1-10') === ALL_LEVELS[9] && findLevel('world01:level10') === ALL_LEVELS[9] && findLevel('10') === ALL_LEVELS[9],
+  '?level= opens 1-10 by label, id and index');
 ok(findLevel('1-3') === ALL_LEVELS[2] && findLevel('world01:level05') === ALL_LEVELS[4] && findLevel('2') === ALL_LEVELS[1], '?level= accepts "1-3", ids and indexes');
 
 console.log(`\n${passed} passed, ${failed} failed`);
