@@ -92,6 +92,15 @@ for (const id of G.levels) {
   frames(150);
 }
 
+// Next after 1-5 goes to 1-6; Next after the last level goes to the level select.
+G.start('1-5'); frames(2); G.win(); frames(800); frames(150);
+key('Enter'); frames(5);
+ok(G.level === 'world01:level06' && G.screen === 'playing', `Next after 1-5 opens 1-6 (${G.level})`);
+G.start('1-8'); frames(2); G.win(); frames(800); frames(150);
+key('Enter'); frames(5);
+ok(G.screen === 'levels', 'Next after 1-8 (the last level) opens the level select');
+key('Escape'); frames(2);
+
 // Pause, menu, level select, sound toggle, fast-forward, ?level param path
 G.start('1-5'); frames(2);
 key('p'); frames(2); key('p'); frames(2);
@@ -103,8 +112,12 @@ ok(G.screen === 'levels', 'pause → Levels opens the level select');
 frames(30);
 key('Escape'); frames(5);
 ok(G.screen === 'title', 'Escape goes back to the title');
+key('l'); frames(2);
+tap(925, 460); frames(5);   // level 8 button: second row of the two-row select
+ok(G.level === 'world01:level08' && G.screen === 'playing', `level select opens 1-8 from its button (${G.level})`);
+
 const saved = JSON.parse(store['cm_tiny-trains_save']);
-ok(saved.v === 1 && Object.keys(saved.levels).length === 5, 'save has all 5 levels solved');
+ok(saved.v === 1 && Object.keys(saved.levels).length === G.levels.length, `save has all ${G.levels.length} levels solved`);
 store['cm_tiny-trains_save'] = '{broken';
 const { loadSave } = await import('../src/save.js');
 ok(loadSave().v === 1, 'a corrupted save resets to defaults');

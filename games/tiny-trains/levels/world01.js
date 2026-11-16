@@ -142,4 +142,23 @@ export default [
     par: 2,
     solution: { switches: { '2,2': 0, '5,2': 0 } },
   },
+  {
+    id: 'world01:level08',
+    name: 'Both Ways',
+    tip: 'Blue uses the main line too, going the other way.',
+    w: 8, h: 5,
+    tiles: [
+      cv(4, 1, 1), st(5, 1, 1), sw(6, 1, 3, true, 0), station(7, 1, 3, 'red'),
+      depot(0, 2, 1), st(1, 2, 1), sw(2, 2, 3, true, 0), st(3, 2, 1), sw(4, 2, 1, true, 0), st(5, 2, 1), sw(6, 2, 1, true, 0), depot(7, 2, 3),
+      station(0, 3, 1, 'blue'), st(1, 3, 1), cv(2, 3, 3),
+    ],
+    trains: [
+      { id: 0, color: 'red', depot: [0, 2], depart: 0 },
+      { id: 1, color: 'blue', depot: [7, 2], depart: 2 },
+    ],
+    ticket: [5, 1],
+    tickLimit: 30,
+    par: 2,
+    solution: { switches: { '2,2': 1, '4,2': 1 } },
+  },
 ];

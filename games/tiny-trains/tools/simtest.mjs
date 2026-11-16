@@ -163,6 +163,8 @@ for (const level of ALL_LEVELS) {
   }
 }
 
+ok(['1-6', '1-7', '1-8'].every((r, i) => findLevel(r) === ALL_LEVELS[5 + i] && findLevel(`world01:level0${6 + i}`) === ALL_LEVELS[5 + i]),
+  '?level= opens 1-6, 1-7 and 1-8 by label and by id');
 ok(findLevel('1-3') === ALL_LEVELS[2] && findLevel('world01:level05') === ALL_LEVELS[4] && findLevel('2') === ALL_LEVELS[1], '?level= accepts "1-3", ids and indexes');
 
 console.log(`\n${passed} passed, ${failed} failed`);
