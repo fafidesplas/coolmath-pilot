@@ -213,8 +213,7 @@ SCRIPTS.w1l09 = b => {
   b.wait(60);
 };
 
-// 10. Workshop Exam (the slice level): pull the crate across the spikes, use it as a step,
-// hold the door for each other, launch for the high bolt.
+// 10. Workshop Exam: downstairs as levels 1, 2 and 4, up the shaft as level 6, upstairs as level 8.
 SCRIPTS.w1l10 = b => {
   const crate = b.sim.crates[0];
   b.walkTo(0, 270);                                      // Plus is a step for Minus: the little block is 3 tiles up
@@ -232,17 +231,42 @@ SCRIPTS.w1l10 = b => {
   b.walkTo(1, crate.x + crate.w + 22);
   b.hopTo(1, crate.x + 20, crate.y);
   b.hopTo(1, 540, 360);
-  b.walkTo(0, 620);
+  b.walkTo(0, col(15));                                  // Plus holds the left plate
   b.power(0, true, B.U);
   b.wait(50);
-  b.walkTo(1, 1100);
+  b.walkTo(1, col(24));                                  // Minus goes through, over the step, holds the right plate
+  b.hopTo(1, col(29), 360);
   b.power(1, true, B.U);
   b.wait(50);
   b.power(0, false);
-  b.walkTo(0, 1040);
-  b.hopTo(0, col(24), 360);                              // a hop for the high bolt
-  b.hopTo(0, 1218, 360);
+  b.walkTo(0, col(24));                                  // Plus goes through and waits by the shaft
   b.power(1, false);
-  b.walkTo(1, 1178);
-  b.wait(60, 1);
+  // the shaft, as in level 6: Minus on the step, Plus on its head, Minus pushes up
+  b.hopTo(1, col(26), 320);
+  b.walkTo(1, col(26) + 5);
+  b.hopTo(0, b.center(1), b.R[1].y);
+  b.walkTo(0, b.center(1));
+  b.power(1, true, B.U);
+  b.steer(0, 0, 40, 1);
+  b.hopTo(0, col(22), 200);                              // Plus jumps off the field onto the upper floor (the flag)
+  b.power(1, false);
+  b.wait(30);
+  b.walkTo(0, 985);                                      // Plus at the edge facing the shaft, power on
+  b.face(0, 1);
+  b.power(0, true);
+  b.walkTo(1, 1090);
+  b.hopTo(1, 1020, 200, 3);                              // Minus jumps from the step into the cone and is pulled up
+  b.power(0, false);
+  b.wait(20);
+  // upstairs, right to left over the stepping stones (run-ups start inside the bank, as in level 8)
+  const hop = (i, from, to) => { b.walkTo(i, from); b.hopTo(i, to, 200, 6); };
+  hop(0, 702, col(13) - 20);
+  hop(1, 702, col(13) + 30);
+  hop(0, 498, col(8) - 20);
+  hop(1, 498, col(8) + 30);
+  hop(0, 298, col(2));
+  b.walkTo(0, col(2));
+  hop(1, 298, col(3) + 10);
+  b.walkTo(1, col(3));
+  b.wait(60);
 };
