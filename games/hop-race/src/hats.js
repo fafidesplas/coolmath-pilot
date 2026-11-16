@@ -268,9 +268,11 @@ const HR_HATS =
         [hrHatArc(-.3, -.2, .065, .065, 0, 2 * Math.PI, 10), 1, 1],
         ...[.2, .32, .44].map(x => [hrHatBar(x, -.79, x - .03, -.87, .04), 1]),
     ],
-    // ninja mask: a hood over the whole head with a slit for the eye, a forehead plate, the knot's two tails out the back
+    // ninja mask: a hood over the whole head with a thin slit that shows only the top half of the eye (the hood's lower
+    // part goes over the eye, which is centered at -.375), a forehead plate, the knot's two tails out the back
     ninja: () => [
-        [hrHatArc(0, 0, .53, .13, 0, Math.PI).concat([[-.53, -1], [.53, -1], [.53, -.73], [-.2, -.73], [-.2, -.05], [.53, -.05]])],
+        [hrHatArc(0, 0, .53, .13, 0, Math.PI).concat([[-.53, -1], [.53, -1], [.53, -.375], [-.2, -.375], [-.2, -.05], [.53, -.05]])],
+        [hrHatBox(-.2, -.8, .53, -.375), 0, 1],
         [hrHatTaper(-.5, -.1, -.82, -.02, -1.02, -.2, .07)],
         [hrHatTaper(-.5, -.18, -.78, -.3, -.9, -.6, .07)],
         [hrHatArc(-.55, -.14, .08, .08, 0, 2 * Math.PI, 10)],

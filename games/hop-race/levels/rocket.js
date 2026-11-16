@@ -67,8 +67,9 @@ HR_LEVELS.rocket = [
             {l: -7.25, r: 0.5, top: -4.5},   // the pit floor you start on
             {l: 0, r: 6, top: 2},         // the tower: too tall to blast over from the floor
             {l: 4.75, r: 8, top: -2},    // the ledge, its far part the finish
-            {l: 10.5, r: 15.25, top: 8, bottom: -3.25},   // right wall hanging over the finish
+            {l: 10.5, r: 15.25, top: 8, bottom: -4.5},   // right wall hanging over the finish
             {l: 8, r: 14.25, top: -2, finish: true},
+            {l: -6.5, r: 11.75, top: 11, bottom: 7.75},
         ],
     },
     {

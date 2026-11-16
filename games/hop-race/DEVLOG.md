@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Thinner ninja eye slit
+- Ninja mask: the eye slit is half as tall. The hood's lower part is drawn over the eye, so only its top half shows.
+
 ## 2026-11-16 — Button hover with a blinking eye
 - Buttons, world cards, level tiles and store tiles grow 5 % under the mouse and the cursor becomes a hand.
 - A hovered button opens a googly eye like the player's in its top right corner. It blinks as the mouse arrives, then every 2.5-5 s, and its pupil looks toward the mouse. Icon buttons (back, pause, restart) only grow. Touch never hovers.
