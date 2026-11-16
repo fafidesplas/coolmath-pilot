@@ -107,6 +107,40 @@ function hrHatBand(cx, cy, r, w, a0, a1, grow = .1, n = 20)
     return hrHatArc(cx, cy, r + w, r + w + grow, a0, a1, n).concat(hrHatArc(cx, cy, r, r + grow, a1, a0, n));
 }
 
+// a polygon with its corners rounded off (Chaikin's corner cutting, n rounds); the points listed in sharp stay corners
+function hrHatSmooth(pts, sharp = [], n = 3)
+{
+    let p = pts.map((q, i) => [q, sharp.includes(i)]);
+    for (let r = 0; r < n; r++)
+    {
+        const out = [];
+        p.forEach(([[x, y], keep], i) =>
+        {
+            if (keep) return out.push([[x, y], true]);
+            const [[ax, ay]] = p[(i + p.length - 1) % p.length], [[bx, by]] = p[(i + 1) % p.length];
+            out.push([[x * .75 + ax * .25, y * .75 + ay * .25], false], [[x * .75 + bx * .25, y * .75 + by * .25], false]);
+        });
+        p = out;
+    }
+    return p.map(([q]) => q);
+}
+
+// the elf hat's shapes, rounded once
+const HR_HAT_ELF = [
+    // hood
+    [hrHatSmooth([[-1.147, .088], [-.955, .281], [-.665, .322], [-.5, .281], [-.059, .253], [-.018, .281], [.216, .212],
+        [.037, .088], [-.183, -.242], [-.28, -.32], [-.315, -.532], [-.486, -.545], [-.555, -.656], [-.679, -.435],
+        [-.872, -.441], [-.968, -.523], [-.96, -.683], [-1.037, -1.069], [-1.142, -.683], [-1.244, -.504], [-1.258, -.187]],
+        [12, 17])],
+    // ear
+    [hrHatSmooth([[-.982, -.127], [-.817, -.132], [-.307, -.311], [-.348, -.512], [-.5, -.526], [-.596, -.394]], [0]), 1],
+    // bangs
+    [hrHatSmooth([[-.211, -.27], [-.142, -.132], [-.018, .006], [.12, .157], [.216, .204], [.326, .185], [.437, .116],
+        [.547, .033], [.602, -.063], [.616, -.201], [.594, -.284], [.547, -.105], [.519, -.215], [.478, -.063], [.456, -.242],
+        [.423, -.063], [.395, -.242], [.373, -.036], [.313, .006], [.271, .011], [.216, -.008], [.147, -.187], [.12, -.099],
+        [.07, -.182], [.037, -.105], [-.023, -.187], [-.045, -.105], [-.114, -.146]], [0, 10, 12, 14, 16, 21, 23, 25, 27]), 1, 1],
+];
+
 // t is seconds, for the hats that move (halo); dir is the way the player faces (1 or -1), for what must not mirror
 // (the cap's letter)
 const HR_HATS =
@@ -148,25 +182,10 @@ const HR_HATS =
         [[[-.978, -.2], [-.84, -.189], [-.826, -.411], [-.848, -.605], [-.92, -.689], [-1.044, -.678], [-1.061, -.578],
           [-1.005, -.411]]],
     ],
-    // elf hat: a soft hood that sweeps back and droops into a long point behind the head, a pointed ear out the back
-    // (white inside), and white locks of hair with an ink edge hanging over the top of the eye (drawn over it)
-    elf: () =>
-    {
-        const locks = [[.02, .02, -.06, -.08, -.12, -.21, .13], [.24, .04, .24, -.06, .18, -.23, .14],
-            [.45, .01, .52, -.08, .54, -.24, .12]];
-        return [
-            [hrHatTaper(-.15, .15, -1.02, .32, -.9, -.92, .2, 16)],
-            [hrHatArc(-.45, .02, .27, .4, Math.PI, 2 * Math.PI)],
-            [hrHatTaper(-.28, -.3, -.66, -.2, -1.05, -.12, .15)],
-            [hrHatTaper(-.35, -.29, -.66, -.21, -.96, -.15, .085), 1],
-            [hrHatArc(-.1, 0, .62, .4, 0, Math.PI)],
-            [hrHatArc(.21, 0, .335, .225, 0, Math.PI), 0, 1],
-            ...locks.map(([x0, y0, x1, y1, x2, y2, w]) => [hrHatTaper(x0, y0, x1, y1, x2, y2, w + .035), 0, 1]),
-            [hrHatArc(.21, 0, .3, .19, 0, Math.PI), 1, 1],
-            ...locks.map(([x0, y0, x1, y1, x2, y2, w]) => [hrHatTaper(x0, y0, x1, y1, x2, y2, w), 1, 1]),
-            [hrHatBar(.22, .16, .19, .03, .03), 0, 1],
-        ];
-    },
+    // elf hat: traced from the owner's drawing, its corners rounded (the points kept sharp): a long hood swept back past
+    // the head into a point that hangs low, a white pointed ear along it, and white bangs over the top of the eye (drawn
+    // over it)
+    elf: () => HR_HAT_ELF,
     // party hat: a striped cone with a pompom
     party: () => [
         [[[-.3, 0], [.3, 0], [0, .66]]],

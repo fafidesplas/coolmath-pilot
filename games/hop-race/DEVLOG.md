@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Elf hat traced again, smoothed
+- Elf hat back to the trace of the owner's drawing, with its corners rounded (`hrHatSmooth`, corner cutting) and the points of the hood, ear and locks kept sharp. No ink outline: the white bangs run into the white of the eye.
+- Next: check it on the somersault and in Versus.
+
 ## 2026-11-16 — Elf hat cleanup
 - Elf hat redrawn in smooth curves with the same helpers as the other hats (arcs and tapers), not as a traced outline: a rounded hood sweeping back into a long drooping point, a side flap over the back of the head, a pointed ear out the back (white inside), and three white locks with an ink edge and a part over the top of the eye.
 - Next: check it on the somersault and in Versus.
