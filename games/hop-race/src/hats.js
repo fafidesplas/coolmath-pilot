@@ -208,20 +208,14 @@ const HR_HATS =
         [hrHatArc(0, .06, .36, .4, 0, Math.PI)],
         [hrHatBox(-.345, .09, .345, .17), 1],
     ],
-    // French beret: a wide soft disc that flops over the back, a thin band, a little stalk on top
-    beret: () => [
-        [hrHatTurn(hrHatArc(-.1, .19, .56, .19, 0, 2 * Math.PI, 24), -.1, .19, .14)],
-        [hrHatBox(-.32, 0, .34, .07)],
-        [hrHatBar(-.07, .36, -.03, .47, .05)],
-        [hrHatBox(-.3, .015, .32, .045), 1],
-    ],
-    // racecar driver's helmet: a full shell over the top, the back and the chin, a glass visor (a white block that
-    // hides the eye) with a rim down the front, a stripe, a hinge and chin vents
+    // racecar driver's helmet: a full shell over the top, the back and the chin, the face closed in over the eye, a glass visor (a
+    // white band across it) with a rim down the front, a stripe, a hinge and chin vents
     racer: () => [
         [hrHatArc(-.02, 0, .6, .46, 0, Math.PI).concat([[-.62, -.6], [-.56, -.82], [-.4, -.93], [.42, -.93], [.58, -.87],
             [.64, -.76], [.6, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3], [-.22, 0]])],
         [hrHatBar(.57, .02, .615, -.74, .045)],
-        [[[-.22, 0], [.555, 0], [.598, -.72], [-.1, -.72], [-.22, -.6], [-.25, -.3]], 1, 1],
+        [[[-.3, .02], [.565, .02], [.6, -.76], [-.12, -.78], [-.28, -.62], [-.3, -.3]], 0, 1],
+        [[[-.17, -.22], [.568, -.22], [.586, -.52], [-.17, -.52]], 1, 1],
         [hrHatBox(-.53, .07, .5, .16), 1],
         [hrHatArc(-.4, -.2, .065, .065, 0, 2 * Math.PI, 10), 1],
         ...[.2, .32, .44].map(x => [hrHatBar(x, -.79, x - .03, -.87, .04), 1]),

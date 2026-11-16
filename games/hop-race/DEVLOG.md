@@ -1,10 +1,11 @@
 # Hop Race — devlog
 
-## 2026-11-15 — Hat fixes and 5 more hats
+## 2026-11-15 — Hat fixes and 4 more hats
 - Pilot's cap: bigger goggles with two lenses. Cowboy hat: the brim now lies flat on the head and curls up only past its sides (it balanced on one point before); brim and crown are bigger.
-- 5 new hats, 21 in all: bowler hat, French beret, racecar driver's helmet, ninja mask, spartan helmet with a crest. The store grid is now 7 per row in 3 rows of narrower tiles.
+- 4 new hats, 20 in all: bowler hat, racecar driver's helmet, ninja mask, spartan helmet with a crest. The store grid is now 7 per row in 3 rows of narrower tiles.
 - Football helmet: the face mask's middle bar now runs back to the shell across the lower half of the eye. A hat polygon can be marked `front` to draw over the eye (`hrDrawHat` layer).
-- Racing helmet: a glass visor, a block of white that fully covers the eye.
+- Racing helmet: the shell closes over the eye, with a glass visor as a white band across the face.
+- A French beret was tried and removed (owner: not working).
 - Checked as a rendered sheet of the shapes on a player square, not in the running game.
 - Next: a P2 pick, the hat on the ghost, other ways to earn coins.
 
