@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Graduation cap
+- New store hat: a graduation cap (150 coins, after the Beret), traced from the owner's drawing: a board tilted back over a band, white edges on the board's front and the band, a tassel on a cord hanging off the back corner, past the head. The tassel is ink, not grey: hats have only two tones.
+- Next: check it in a level and on its store tile.
+
 ## 2026-11-16 — Beret
 - New store hat: a beret (150 coins, after the Football helmet), traced from the owner's guide (`assets/beret-guide.png`): a soft puff tilted well down toward the back, where it droops past the head, its sloped underside over the top of the eye, a curled stalk on top. All ink.
 

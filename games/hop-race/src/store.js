@@ -14,6 +14,7 @@ const HR_STORE = [
     {id: 'chef',      kind: 'hat', name: 'Chef Hat',     price: 125},
     {id: 'football',  kind: 'hat', name: 'Football',     price: 150},
     {id: 'beret',     kind: 'hat', name: 'Beret',        price: 150},
+    {id: 'grad',      kind: 'hat', name: 'Grad Cap',     price: 150},
     {id: 'cowboy',    kind: 'hat', name: 'Cowboy Hat',   price: 175},
     {id: 'tophat',    kind: 'hat', name: 'Top Hat',      price: 200},
     {id: 'bowler',    kind: 'hat', name: 'Bowler Hat',   price: 200},
