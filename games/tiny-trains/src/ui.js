@@ -1,7 +1,7 @@
 // Shell screens and HUD (GDD 8), drawn on the canvas in 1280×720 design units.
 // Buttons register a hit box every frame; game.js maps their ids to actions.
 import { INK, CREAM, PANEL, GREEN, TRAIN_COLORS, WOOD, WOOD_LIGHT, GRASS, CRASH_TEXT, mix } from './config.js';
-import { roundRect, star, drawTrain } from './render.js';
+import { roundRect, star, drawTrain, GOLD } from './render.js';
 import { WORLDS, levelPos } from '../levels/index.js';
 
 export const FONT = '"Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
@@ -161,6 +161,9 @@ export function drawHUD(ctx, G) {
   const flips = G.flips();
   text(ctx, `Flips ${flips} · Par ${G.level.par}`, 760, 40, 26, flips > G.level.par ? mix(TRAIN_COLORS.red, INK, 0.2) : INK);
   text(ctx, `Run ${G.runs + (G.phase === 'plan' ? 1 : 0)}`, 950, 40, 22, mix(INK, CREAM, 0.4), 'center', 'bold');
+  if (G.level.ticket) {   // ticket slot: empty outline until a train collects it this run
+    star(ctx, 1040, 40, 18, G.ticketGot ? GOLD : mix(CREAM, INK, 0.1), G.ticketGot ? INK : mix(INK, CREAM, 0.45), 3);
+  }
   button(ctx, G, 'reset', 1100, 10, 164, 56, 'Reset', { size: 24, disabled: G.phase !== 'plan' || flips === 0 });
 
   // Go / Stop and fast-forward
@@ -223,8 +226,8 @@ export function drawComplete(ctx, G) {
   ctx.fillStyle = CREAM; ctx.strokeStyle = INK; ctx.lineWidth = 5;
   roundRect(ctx, 350, py, 580, 470, 32); ctx.fill(); ctx.stroke();
   outlinedText(ctx, 'All aboard!', 640, py + 60, 54, TRAIN_COLORS.yellow, 10);
-  const labels = ['Home', 'First run', 'Par'];
-  const earned = [true, R.first, R.flips <= R.par];
+  const labels = ['Home', 'Ticket', 'Par'];
+  const earned = [true, R.ticket, R.flips <= R.par];
   for (let i = 0; i < 3; i++) {
     const x = 640 + (i - 1) * 140, y = py + 160;
     const at = 0.45 + i * 0.35;

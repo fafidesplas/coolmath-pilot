@@ -1,12 +1,12 @@
 // Game states (GDD 3, 8): title → levels → playing (plan ⇄ run → crash → rewind | win) → complete.
-import { run, defaultSetup, flipCount, switchTiles, cellKey, buildBoard } from './sim.js';
+import { run, ticketStar, defaultSetup, flipCount, switchTiles, cellKey, buildBoard } from './sim.js';
 import { opp } from './track.js';
 import {
   VIEW_W, VIEW_H, TICK_S, CRASH_HOLD_S, REWIND_S, WIN_HOLD_S, CREAM, INK, TRAIN_COLORS, mix,
 } from './config.js';
 import {
   computeLayout, buildBoardLayer, drawSwitch, drawStation, drawDepot, drawTrain, pathPoint,
-  emit, FX, updateParticles, drawParticles, clearParticles, MAT,
+  emit, FX, updateParticles, drawParticles, clearParticles, MAT, drawTicket, GOLD,
 } from './render.js';
 import {
   resetButtons, hitButton, drawTitle, drawLevels, drawHUD, drawPause, drawComplete, drawCrashLabel, drawHand,
@@ -29,7 +29,7 @@ export function boot(canvas) {
     runs: 0, fails: 0, sel: -1, kb: false, fast: false,
     res: null, pos: 0, done: 0, arrivals: 0,
     swAnim: {}, swVel: {}, swPulse: {}, stBounce: {}, shake: 0,
-    result: null, starsPlayed: 0, pressId: null, flippedOnce: false, crashAt: null,
+    result: null, starsPlayed: 0, ticketGot: false, ticketT: 0, pressId: null, flippedOnce: false, crashAt: null,
     flips() { return flipCount(G.level, G.setup); },
     isOpen(i) { return i <= furthest() + 2 || !!G.save.levels[LEVELS[i]?.id]; },
     nextIndex() { const i = LEVELS.findIndex(l => !G.save.levels[l.id]); return i; },
@@ -57,7 +57,7 @@ export function boot(canvas) {
     G.swAnim = {}; G.swVel = {}; G.swPulse = {}; G.stBounce = {};
     for (const t of G.switches) { const k = cellKey(t.x, t.y); G.swAnim[k] = G.setup.switches[k]; G.swVel[k] = 0; G.swPulse[k] = 9; }
     G.phase = 'plan'; G.paused = false; G.runs = 0; G.fails = 0; G.sel = -1; G.kb = false; G.fast = false;
-    G.res = null; G.result = null; G.flippedOnce = false;
+    G.res = null; G.result = null; G.flippedOnce = false; G.ticketGot = false; G.ticketT = 0;
     clearParticles();
     G.screen = 'playing';
     if (idx === 0) GA.design('tutorial:step01');
@@ -90,6 +90,7 @@ export function boot(canvas) {
       G.res = run(G.level, G.setup);
       G.runs++;
       G.pos = 0; G.done = 0; G.arrivals = 0;
+      G.ticketGot = false; G.ticketT = 0;
       G.phase = 'run';
       GA.progression('Start', G.level.id);
       if (G.index === 0 && G.runs === 1) GA.design('tutorial:step03');
@@ -118,6 +119,13 @@ export function boot(canvas) {
         emit(FX.CONF, x, y - c * 0.2, 24, TRAIN_COLORS[tr.color]);
         emit(FX.CONF, x, y - c * 0.2, 8, '#FFFFFF');
         G.stBounce[cellKey(ev.x, ev.y)] = 1;
+      } else if (ev.type === 'ticket') {
+        G.ticketGot = true; G.ticketT = 0;
+        const x = G.L.ox + (ev.x + 0.5) * c, y = G.L.oy + (ev.y + 0.5) * c;
+        emit(FX.STAR, x, y, 8, GOLD, 0.9);
+        emit(FX.CONF, x, y, 10, GOLD, 0.6);
+        sfx.star(2);
+        GA.design('level:ticket');
       } else if (ev.type === 'depart') {
         const tr = G.level.trains[ev.id];
         emit(FX.STEAM, G.L.ox + (tr.depot[0] + 0.5) * c, G.L.oy + (tr.depot[1] + 0.5) * c - c * 0.2, 5, '#fff', 0.8);
@@ -156,7 +164,8 @@ export function boot(canvas) {
   function complete() {
     const lv = G.level;
     const flips = G.flips(), first = G.runs === 1;
-    const stars = 1 + (first ? 1 : 0) + (flips <= lv.par ? 1 : 0);
+    const ticket = ticketStar(lv, G.res);
+    const stars = 1 + (ticket ? 1 : 0) + (flips <= lv.par ? 1 : 0);
     const rec = G.save.levels[lv.id] || { stars: 0, bestFlips: 99 };
     rec.stars = Math.max(rec.stars, stars);
     rec.bestFlips = Math.min(rec.bestFlips, flips);
@@ -166,7 +175,7 @@ export function boot(canvas) {
     GA.design('level:runs', G.runs);
     if (first) GA.design('level:perfect');
     if (G.index === 2) GA.design('tutorial:done');
-    G.result = { stars, flips, par: lv.par, first, bestStars: rec.stars };
+    G.result = { stars, flips, par: lv.par, first, ticket, hasTicket: !!lv.ticket, bestStars: rec.stars };
     G.screen = 'complete'; G.t = 0; G.starsPlayed = 0;
   }
 
@@ -296,12 +305,13 @@ export function boot(canvas) {
   // ---- Update ----------------------------------------------------------------------
   function update(dt) {
     G.time += dt;
+    G.ticketT += dt;
     updateParticles(dt);
     G.shake = Math.max(0, G.shake - dt);
     if (G.screen === 'complete') {
       G.t += dt;
       const R = G.result;
-      const earned = [true, R.first, R.flips <= R.par];
+      const earned = [true, R.ticket, R.flips <= R.par];
       while (G.starsPlayed < 3 && G.t > 0.45 + G.starsPlayed * 0.35) {
         if (earned[G.starsPlayed]) {
           sfx.star(G.starsPlayed);
@@ -333,7 +343,7 @@ export function boot(canvas) {
       if (G.t >= CRASH_HOLD_S) beginRewind();
     } else if (G.phase === 'rewind') {
       G.t += dt;
-      if (G.t >= REWIND_S) { G.phase = 'plan'; G.res = null; }
+      if (G.t >= REWIND_S) { G.phase = 'plan'; G.res = null; G.ticketGot = false; }
     } else if (G.phase === 'win') {
       G.t += dt;
       if (G.t >= WIN_HOLD_S) complete();
@@ -393,6 +403,13 @@ export function boot(canvas) {
         interactive: plan, selected: G.kb && G.sel === i && plan, pulse: G.swPulse[key],
       });
     });
+    // golden ticket: on its cell until a train collects it this run; pops away, comes back on rewind
+    if (lv.ticket) {
+      const tx = L.ox + (lv.ticket[0] + 0.5) * L.cell, ty = L.oy + (lv.ticket[1] + 0.5) * L.cell;
+      if (!G.ticketGot) drawTicket(ctx, tx, ty, L.cell, G.time);
+      else if (G.phase === 'rewind') drawTicket(ctx, tx, ty, L.cell, G.time, { scale: Math.min(1, G.t / REWIND_S) });
+      else if (G.ticketT < 0.35) drawTicket(ctx, tx, ty - G.ticketT * L.cell * 1.2, L.cell, G.time, { scale: 1 + G.ticketT * 1.5, alpha: 1 - G.ticketT / 0.35 });
+    }
     // depots under the trains
     for (const t of lv.tiles) if (t.t === 'depot') drawDepot(ctx, t, L, lv.trains.filter(tr => tr.depot[0] === t.x && tr.depot[1] === t.y));
     // trains

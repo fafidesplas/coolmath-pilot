@@ -4,7 +4,7 @@
 // with the level's par.
 //   node tools/simtest.mjs
 import { tileEdges, exitEdge, switchArms, DX, DY, opp } from '../src/track.js';
-import { run, defaultSetup, flipCount, switchTiles, cellKey, buildBoard } from '../src/sim.js';
+import { run, ticketStar, defaultSetup, flipCount, switchTiles, cellKey, buildBoard } from '../src/sim.js';
 import { ALL_LEVELS, findLevel } from '../levels/index.js';
 
 let passed = 0, failed = 0;
@@ -71,6 +71,20 @@ const NOSW = { switches: {} };
   ok(run(ring, { switches: { '1,1': 1 } }).cause === 'lost', 'the ring switch is only ever trailed, so its setting does not matter');
 }
 
+{ // Golden ticket (GDD 3.11, 3.12): the first train through the cell collects it; it
+  // only earns the Ticket star in a winning run.
+  const l = lv([T(0, 0, 'depot', 1), T(1, 0, 'straight', 1), T(2, 0, 'straight', 1), T(3, 0, 'station', 3, { color: 'red' })],
+    [{ id: 0, color: 'red', depot: [0, 0], depart: 0 }, { id: 1, color: 'red', depot: [0, 0], depart: 2 }], { ticket: [1, 0] });
+  const r = run(l, NOSW);
+  const ev = r.frames.flatMap(f => f.events).filter(e => e.type === 'ticket');
+  ok(r.result === 'win' && r.ticket && ev.length === 1 && ev[0].id === 0, 'the first train through the ticket cell collects it, once');
+  ok(r.frames[0].ticket === -1 && r.frames[1].ticket === 0, 'frames record when the ticket is collected');
+  ok(ticketStar(l, r) && !ticketStar({ ...l, ticket: [5, 5] }, run({ ...l, ticket: [5, 5] }, NOSW)), 'Ticket star needs the ticket when the level has one');
+  ok(ticketStar({ ...l, ticket: undefined }, run({ ...l, ticket: undefined }, NOSW)), 'Ticket star comes with the solve on a level without a ticket');
+  const lb = { ...l, tiles: [...l.tiles.slice(0, 3), T(3, 0, 'buffer', 3)] };
+  ok(!ticketStar(lb, run(lb, NOSW)), 'collecting the ticket in a run that crashes earns nothing');
+}
+
 // ---- Levels (GDD 6) ---------------------------------------------------------------
 const sameRun = (a, b) => JSON.stringify(a.frames) === JSON.stringify(b.frames);
 
@@ -112,12 +126,22 @@ for (const level of ALL_LEVELS) {
   ok(r1.tick < level.tickLimit, `${tag}: solution length ${r1.tick} is under the tick limit ${level.tickLimit}`);
   ok(flipCount(level, sol) === level.par, `${tag}: reference solution uses par flips (${flipCount(level, sol)} = ${level.par})`);
 
+  if (level.ticket) {
+    const tt = board.get(cellKey(level.ticket[0], level.ticket[1]));
+    ok(!!tt && !['station', 'depot', 'buffer'].includes(tt.t), `${tag}: golden ticket sits on a track cell (${level.ticket})`);
+  }
+  ok(ticketStar(level, r1), `${tag}: reference solution earns the Ticket star${level.ticket ? ' (collects the ticket)' : ' (no ticket on this level)'}`);
+
   const d = run(level, defaultSetup(level));
   ok(d.result !== 'win', `${tag}: start setting does not win (${d.cause} at tick ${d.tick})`);
 
-  const wins = allSetups(level).filter(s => run(level, s).result === 'win');
-  const minFlips = Math.min(...wins.map(s => flipCount(level, s)));
-  ok(wins.length > 0 && minFlips === level.par, `${tag}: brute force ${wins.length}/${allSetups(level).length} setups win, min flips ${minFlips} = par ${level.par}`);
+  // Par (GDD 3.12) = minimum flip count over the wins that also earn the Ticket star.
+  const all = allSetups(level).map(s => ({ s, r: run(level, s) }));
+  const wins = all.filter(o => o.r.result === 'win');
+  const tWins = wins.filter(o => ticketStar(level, o.r));
+  const minFlips = Math.min(...tWins.map(o => flipCount(level, o.s)));
+  ok(tWins.length > 0 && minFlips === level.par,
+    `${tag}: brute force ${wins.length}/${all.length} setups win, ${tWins.length} with the ticket, min flips ${minFlips} = par ${level.par}`);
 }
 
 ok(findLevel('1-3') === ALL_LEVELS[2] && findLevel('world01:level05') === ALL_LEVELS[4] && findLevel('2') === ALL_LEVELS[1], '?level= accepts "1-3", ids and indexes');

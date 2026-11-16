@@ -28,6 +28,10 @@ export function defaultSetup(level) {
 }
 
 // Flip count = switches whose setting differs from the level's start (net changes, GDD 3.5).
+// The Ticket star (GDD 3.12): a winning run that collects the ticket, or any win on a
+// level without one.
+export const ticketStar = (level, res) => res.result === 'win' && (!level.ticket || res.ticket);
+
 export function flipCount(level, setup) {
   let n = 0;
   for (const t of switchTiles(level)) if ((setup.switches[cellKey(t.x, t.y)] | 0) !== (t.set | 0)) n++;
@@ -49,6 +53,7 @@ export function createSim(level, setup) {
     })),
     events: [],
     crash: null,
+    ticket: null,             // { id, tick } of the train that collected the golden ticket (GDD 3.11)
     done: false,
     result: null,             // 'win' | 'crash'
   };
@@ -84,6 +89,12 @@ export function step(s) {
       continue;
     }
     tr.x = nx; tr.y = ny; tr.inE = inE; tr.moved = true;
+    // Golden ticket (GDD 3.11): the first train through its cell collects it.
+    const tk = s.level.ticket;
+    if (tk && !s.ticket && tk[0] === nx && tk[1] === ny) {
+      s.ticket = { id: tr.id, tick: s.tick };
+      s.events.push({ type: 'ticket', id: tr.id, x: nx, y: ny });
+    }
     if (t.t === 'station') {
       tr.dir = opp(inE);
       if (t.color === tr.color) {
@@ -148,6 +159,7 @@ function snapshot(s) {
     trains: s.trains.map(tr => ({ id: tr.id, state: tr.state, x: tr.x, y: tr.y, px: tr.px, py: tr.py, inE: tr.inE, dir: tr.dir, moved: tr.moved, cause: tr.cause })),
     events: s.events.slice(),
     crash: s.crash,
+    ticket: s.ticket ? s.ticket.id : -1,
   };
 }
 
@@ -162,6 +174,7 @@ export function run(level, setup) {
     cause: s.crash ? s.crash.cause : null,
     tick: s.tick,
     crash: s.crash,
+    ticket: !!s.ticket,       // the ticket was collected during this run
     frames,
   };
 }

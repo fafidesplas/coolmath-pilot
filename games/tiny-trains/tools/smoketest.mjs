@@ -79,7 +79,7 @@ ok(G.flips === 0, 'R resets the switches in planning');
 tap(640 - 2.5 * 112 + 2.5 * 112, 92 + (536 - 336) / 2 + 1.5 * 112); frames(2);
 ok(G.flips === 1, 'tapping the switch flips it');
 key(' '); frames(600);
-ok(G.screen === 'complete' && G.score === 2, `solving on run 2 gives ${G.score} stars (home + par, not first run)`);
+ok(G.screen === 'complete' && G.score === 3, `solving on run 2 gives ${G.score} stars (home + ticket, a level without a ticket, + par)`);
 frames(120);
 key('Enter'); frames(5);
 ok(G.level === 'world01:level02' && G.screen === 'playing', 'Next goes to level 1-2');
@@ -88,7 +88,7 @@ ok(G.level === 'world01:level02' && G.screen === 'playing', 'Next goes to level 
 for (const id of G.levels) {
   G.start(id); frames(3);
   G.win(); frames(800);
-  ok(G.screen === 'complete' && G.score === 3 && !errors.length, `${id}: reference solution completes with 3 stars (first run, par)`);
+  ok(G.screen === 'complete' && G.score === 3 && !errors.length, `${id}: reference solution completes with 3 stars (home, ticket, par)`);
   frames(150);
 }
 

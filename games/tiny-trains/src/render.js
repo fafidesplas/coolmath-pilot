@@ -306,6 +306,30 @@ export function drawTrain(ctx, x, y, ang, color, c, opts = {}) {
   ctx.restore();
 }
 
+// Golden ticket (GDD 3.11): a gold star token with a shine, on a little round base so it
+// reads as a pickup, not as the yellow train's triangle. Gold = yellow pushed towards wood.
+export const GOLD = mix(TRAIN_COLORS.yellow, WOOD, 0.3);
+export function drawTicket(ctx, x, y, c, t, opts = {}) {
+  const sc = opts.scale ?? 1, a = opts.alpha ?? 1;
+  if (sc <= 0.01 || a <= 0.01) return;
+  const bob = Math.sin(t * 3) * c * 0.03;
+  const r = c * 0.2 * sc;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = 'rgba(46,36,64,0.22)';
+  ctx.beginPath(); ctx.ellipse(x, y + c * 0.16 * sc, r * 0.95, r * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y + bob, r * 1.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  star(ctx, x, y + bob, r, GOLD, INK, 2.5, Math.sin(t * 2) * 0.12);
+  // shine sweep
+  const sh = (t * 0.8) % 1.6;
+  if (sh < 1) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(2, c * 0.03); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(x, y + bob, r * 0.7, -2.4 + sh * 2, -1.9 + sh * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function drawShape(ctx, shape, x, y, r, fill, stroke, lw) {
   ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round';
   ctx.beginPath();

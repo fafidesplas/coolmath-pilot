@@ -107,7 +107,7 @@
 - ★ **Ticket:** solve it in a run that collects the golden ticket. In levels without a ticket (1-1 to 1-3), this star comes with the solve.
 - ★ **Par:** solve it with flip count ≤ par.
 - All three stars count from one winning run, so a perfect run is always possible. **Par** = the solver's minimum flip count over all solutions that also collect the ticket.
-- **Prototype (2026-11-14):** tickets are not built yet, so the prototype's middle star is **First run** (solved on the first Go of the visit) in place of Ticket. Revisit when tickets land.
+- **Prototype (2026-11-16):** the ticket is built, so the middle star is Ticket again (it replaced the 2026-11-14 stand-in, First run). In the prototype the ticket token pops off the board when collected, the HUD shows an empty star slot that fills in gold, and the results screen shows Home / Ticket / Par.
 - **Perfect run** (solved on the first Go of a visit) is not a star. It is a badge on the results screen and a mark in the daily emoji line.
 
 ### 3.13 Hints
@@ -339,5 +339,6 @@ Music: an optional calm ukulele/xylophone-style loop of 30 s, synthesized, off b
 | GameAnalytics keys | One key pair per game in `src/config.js` | Team [confirm] | Open |
 
 ## 15. Changelog
+- 2026-11-16 — Prototype: golden ticket built (3.11, 3.12); tickets added to 1-4 and 1-5; the middle star is Ticket again.
 - 2026-11-14 — Prototype: levels 1-4 and 1-5 redesigned to work with locked switches (6); prototype middle star = First run until tickets exist (3.12).
 - 2026-10-19 — First draft from the brief, using the recommended answers to the phase 1a questions.
