@@ -1,5 +1,8 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Beret
+- New store hat: a beret (150 coins, after the Football helmet). A soft flat puff tilted down toward the back, where it droops past the head, a short stalk on top and a white band at the brow.
+
 ## 2026-11-16 — Thinner ninja eye slit
 - Ninja mask: the eye slit is half as tall. The hood's lower part is drawn over the eye, so only its top half shows.
 

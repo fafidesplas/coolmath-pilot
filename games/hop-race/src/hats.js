@@ -127,6 +127,14 @@ const HR_HATS =
         ...[-.3, -.1, .1, .3].map(x => [hrHatBox(x - .025, .035, x + .025, .135), 1]),
         [hrHatArc(0, .55, .11, .11)],
     ],
+    // beret: a soft flat puff tilted down toward the back, where it droops past the head; a cap under it that hugs the
+    // top of the head, a thin band at the brow and a short stalk on top
+    beret: () => [
+        [hrHatArc(0, 0, .49, .26, 0, Math.PI)],
+        [hrHatTurn(hrHatArc(-.12, .22, .62, .23, 0, 2 * Math.PI, 24), -.12, .22, .22)],
+        [hrHatTaper(.04, .44, .05, .52, .11, .57, .045, 6)],
+        [hrHatBox(-.49, 0, .49, .045), 1],
+    ],
     // party hat: a striped cone with a pompom
     party: () => [
         [[[-.3, 0], [.3, 0], [0, .66]]],
