@@ -127,12 +127,15 @@ const HR_HATS =
         ...[-.3, -.1, .1, .3].map(x => [hrHatBox(x - .025, .035, x + .025, .135), 1]),
         [hrHatArc(0, .55, .11, .11)],
     ],
-    // beret: a soft flat puff tilted well down toward the back, where it droops past the head; a cap under it that hugs
-    // the top of the head and a short stalk on top
+    // beret: traced from the owner's guide (assets/beret-guide.png): a soft puff tilted well down toward the back, where it
+    // droops past the head, its underside a slope that covers the top of the eye (drawn over it), a curled stalk on top
     beret: () => [
-        [hrHatArc(0, 0, .49, .26, 0, Math.PI)],
-        [hrHatTurn(hrHatArc(-.22, .2, .64, .23, 0, 2 * Math.PI, 24), -.22, .2, .34)],
-        [hrHatTaper(-.06, .45, -.05, .53, .01, .58, .045, 6)],
+        [[[-.75, -.27], [-.68, -.22], [-.61, -.13], [-.54, -.03], [-.47, .09], [-.4, .16], [-.33, .22], [-.25, .27], [-.18, .27],
+          [-.11, .29], [-.04, .3], [.03, .3], [.1, .29], [.17, .29], [.24, .28], [.32, .27], [.39, .21], [.46, .16], [.53, .11],
+          [.53, .08], [.46, -.05], [.39, -.09], [.32, -.12], [.24, -.14], [.17, -.16], [.1, -.19], [.03, -.2], [-.04, -.22],
+          [-.11, -.25], [-.18, -.27], [-.25, -.28], [-.33, -.31], [-.4, -.33], [-.47, -.37], [-.54, -.4], [-.61, -.42],
+          [-.68, -.37], [-.75, -.33]], 0, 1],
+        [[[-.32, .37], [-.28, .37], [-.25, .35], [-.24, .31], [-.21, .27], [-.27, .27], [-.3, .31], [-.33, .34]], 0, 1],
     ],
     // party hat: a striped cone with a pompom
     party: () => [
