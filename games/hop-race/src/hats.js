@@ -3,7 +3,7 @@
     accent (in a level: ink with white; on a store tile: the tile's text color with ink).
     Hat space: the origin is the middle of the player's top edge, 1 unit is the player's width, y is up and
     +x is the way the player faces (below 0 is over and around the body: the helmet, the pilot's flap, the moustache). A hat is a list of [points, accent, front] polygons, points as [x, y]; front ones are drawn over the eye (the
-    football helmet's bar, the racing helmet's visor).
+    football helmet's bar, the racing helmet's visor, the pirate's eye patch).
 */
 
 'use strict';
@@ -207,6 +207,18 @@ const HR_HATS =
         [hrHatBrim(.56, .06, .075, .42)],
         [hrHatArc(0, .06, .36, .4, 0, Math.PI)],
         [hrHatBox(-.345, .09, .345, .17), 1],
+    ],
+    // pirate's tricorn: a low wide hat with its brim folded up, a point out the front and a taller sweep at the back,
+    // a pale trim along the folded edge, a button, a feather plume off the back; and an eye patch on a strap, over
+    // the eye
+    pirate: () => [
+        [hrHatTaper(-.3, .45, -.3, 1.12, -.86, .9, .17, 12)],
+        [[[-.56, 0], [.5, 0], [.74, .04], [.94, .16], [.6, .37], [.3, .52], [.05, .44], [-.3, .58], [-.6, .52], [-.82, .34], [-.74, .12]]],
+        ...[[.83, .17], [.56, .31], [.3, .43], [.05, .355], [-.3, .49], [-.57, .44], [-.72, .31]]
+            .map((p, i, a) => i && [hrHatBar(a[i - 1][0], a[i - 1][1], p[0], p[1], .04), 1]).filter(Boolean),
+        [hrHatArc(.2, .2, .05, .05, 0, 2 * Math.PI, 10), 1],
+        [hrHatBar(-.5, -.3, .5, -.08, .06), 0, 1],
+        [hrHatArc(.125, -.34, .35, .32, 0, Math.PI, 12).concat([[-.21, -.55], [-.02, -.72], [.125, -.77], [.27, -.72], [.46, -.55]]), 0, 1],
     ],
     // racecar driver's helmet: a full shell over the top, the back and the chin, the face closed in over the eye, a glass visor (a
     // white band across it) with a rim down the front, a stripe, a hinge and chin vents
