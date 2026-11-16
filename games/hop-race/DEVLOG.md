@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-16 — Stronger rocket blasts
+- Rocket: blast power 24 → 37.5 u/s and top speed 22 → 30.5 u/s, tuned by the owner in the debug panel. Every other `HR_ROCKET` value stays the same. GDD §3.3 is updated.
+- Next: play the Rocket levels again with the stronger blast.
+
 ## 2026-11-16 — The finish is the whole platform
 - No more finish logs on top of a platform: every level's finish is now a whole platform. Either the last platform became the finish, or the far end of a long floor was split off as its own finish block (owner did Hop 1-4 in the editor; the rest follow the same rule).
 - Hop Versus 2 and 3: the finish sits on the middle tower that you bump to turn back, so only the tower's top 1 u is the finish. Versus 4: the shaft's floor between the towers.

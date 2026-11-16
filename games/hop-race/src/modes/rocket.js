@@ -15,8 +15,8 @@ const HR_ROCKET = {
     recoil:    4,       // kick opposite the firing direction (u/s)
     radius:    4,       // blast radius (u)
     switchRadius: 2.5,  // a blast this close to a button presses it
-    power:     24,      // blast speed at the center (u/s); the prototype's 30 less 20 % for 24-30 u levels
-    maxSpeed:  22,      // top speed after a blast; the prototype's 27 less 20 %
+    power:     37.5,    // blast speed at the center (u/s); tuned up in the debug panel (owner, 2026-11-16; was 24)
+    maxSpeed:  30.5,    // top speed after a blast (owner, 2026-11-16; was 22)
     friction:  7,       // ground friction (1/s)
     iceFriction: .6,
     stickyPush: .5,     // blasts push at 50 % while standing on a sticky floor
