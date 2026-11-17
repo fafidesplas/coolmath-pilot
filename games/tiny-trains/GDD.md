@@ -95,6 +95,7 @@
 | `lost` | The tick limit is reached before every train arrives |
 
 - **On a crash:** the sim stops. All trains freeze. The crash cell gets a comic puff (cloud particles, stars) and a 150 ms shake of 6 px. The cause shows as an icon and two words ("Head-on crash!", "Wrong station!", "Off the rails!", "Lost in a loop!") next to the cell.
+- **Lost runs skip ahead (prototype, 2026-11-17):** once every train has left its depot and the whole board (each train's cell, heading and state) repeats an earlier tick, the run can only end `lost`, so playback runs at 90 ms per tick until the tick limit, with "Going round in circles… skipping ahead" on the tip line. The sim, the result and the crash tick do not change. 1-9's first run drops from 10.8 s to 6.4 s.
 - After 1.2 s (or a tap to skip), the trains rewind to their depots in 400 ms. The game goes back to planning with the switches as they were. Signals reset to red.
 
 ### 3.11 Golden ticket
@@ -115,6 +116,12 @@
 - A hint sets one switch to its solution setting and locks it with a small padlock and a pulse. It takes the wrong switch that the earliest train reaches. The game uses the solver solution closest to the player's current setup.
 - Using a hint on a level means that run cannot earn the par star. A hint never gives away more than one switch.
 - No hints in the daily puzzle.
+- **Prototype (2026-11-17):** built as above. Details decided while building:
+  - "Solver solutions" are the setups that win **and** earn the Ticket star (the ones par is measured on), so a hint never steers a player away from the ticket. Closest = fewest switches different from the current setup; ties go to fewer flips, then the reference solution. Every later hint keeps the earlier padlocks.
+  - Each further hint needs 2 more failed runs. Reset keeps padlocked switches. Retry or leaving the level starts a clean visit (no padlocks, par possible again).
+  - The button sits beside Go at the bottom (the top bar had no room); it slides in, shows a bulb, "Hint" and the H key. After a hint, the tip line shows "The padlocked switch is set right. No par star now." for 5 s, and the results screen labels the third star "Par (hint used)".
+  - If the setup already solves the level with the ticket, the hint locks nothing and says "Your switches already work. Press GO!".
+  - `?hints=now` (presenter demo) shows the button from the first plan.
 
 ## 4. Controls
 | Action | Mouse / touch | Keyboard |
@@ -221,7 +228,7 @@ The selected switch or signal gets a thick ink ring. Nothing depends on hover or
 
 - **Title:** logo with a little train looping across it, big **Play** (goes straight to the next unsolved level), **Levels**, **Daily** (with the streak flame), **Garage**, settings cog (music, sound).
 - **Level select:** 4 world tabs with their scenery; a grid of 12–13 round buttons with stars; the next level bounces; locked levels show a padlock. A star counter shows the next livery goal.
-- **Playing HUD (top bar, 80 px):** Pause · level name ("1-4 Merge") · flips counter ("Flips 1 · Par 1") · ticket slot (empty or gold) · Reset · Hint (after 2 fails). The big **Go** button sits at the bottom right (it turns into Stop during the run), with the ⏩ button next to it during the run.
+- **Playing HUD (top bar, 80 px):** Pause · level name ("1-4 Merge") · flips counter ("Flips 1 · Par 1") · ticket slot (empty or gold) · Reset. The **Hint** button (after 2 fails) sits left of Go (prototype, 2026-11-17). The big **Go** button sits at the bottom right (it turns into Stop during the run), with the ⏩ button next to it during the run.
 - **Pause:** Resume, Restart, Levels, sound toggles.
 - **Level complete:** 3 star slots fill one by one (each with a ding and a burst). "Flips 2 · Par 2" counts up. A "Perfect run!" badge shows when it applies. Best result. Next / Retry / Menu.
 - **Daily complete:** stars, runs, the emoji line preview, **Copy**, streak flame with the count-up.
@@ -339,6 +346,7 @@ Music: an optional calm ukulele/xylophone-style loop of 30 s, synthesized, off b
 | GameAnalytics keys | One key pair per game in `src/config.js` | Team [confirm] | Open |
 
 ## 15. Changelog
+- 2026-11-17 — Prototype: hints built (3.13, with the details decided while building); the hint button sits beside Go, not in the top bar (8). Lost-in-a-loop runs skip ahead once the board repeats (3.10). Pars and solver results unchanged.
 - 2026-11-16 — Prototype: levels 1-9 and 1-10 built and detailed in 6. 1-9 is 8×4, not 8×5 (the ring and two lines fit in four rows). Its ticket is not a cost choice: skipping the ring and riding it are both 2 flips, so the ring is the whole puzzle. 1-10 uses two red depots and the existing rule that a station takes every train of its color (3.9); no sim change was needed.
 - 2026-11-16 — Prototype: golden ticket built (3.11, 3.12); tickets added to 1-4 (blue's line) and 1-5 (red's long branch); the middle star is Ticket again. Levels 1-6 to 1-8 built and detailed in 6. 1-7 uses a fourth, trailing-only switch for yellow's loop. In 1-8, the ticket could not sit on blue's line (blue would always collect it), so blue's timing makes red's straight branch a head-on and the ticket sits on red's detour.
 - 2026-11-14 — Prototype: levels 1-4 and 1-5 redesigned to work with locked switches (6); prototype middle star = First run until tickets exist (3.12).
