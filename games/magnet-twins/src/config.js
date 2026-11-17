@@ -41,6 +41,15 @@ export const MAGNET = {
 
 export const CRATE = { size: 40, decel: 2400 };
 
+// Hanging platform (GDD 3.5): a 3×1 slab that slides only along its rail, at half the field
+// acceleration, with no gravity. With no force (or a force against its motion) it brakes at
+// maxSpeed / 0.2 s, so it stops within 0.2 s from any speed.
+export const PLATFORM = {
+  w: 120, h: 40,
+  accelScale: 0.5,
+  brake: 480 / 0.2,
+};
+
 export const DOOR = {
   openTime: 0.3,
   closeTime: 0.6,

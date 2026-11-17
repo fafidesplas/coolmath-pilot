@@ -66,6 +66,7 @@ function push(r, target, o, d) {
 // Sets ax/ay on every affected body and marks touched lock plates.
 export function applyFields(w) {
   for (const b of w.bodies) { b.ax = 0; b.ay = 0; b.inField = false; }
+  for (const p of w.platforms) { p.ax = 0; p.ay = 0; p.inField = false; }
   for (const p of w.plates) p.touched = false;
 
   for (const r of w.robots) {
@@ -80,6 +81,16 @@ export function applyFields(w) {
       if (d < 0 || !canSeeBox(w.tiles, o, b)) continue;
       push(r, b, o, d);
       r.hits.push(b.x + b.w / 2, b.y + b.h / 2);
+    }
+
+    // Hanging platforms. A field never moves the platform its own robot stands on, so a
+    // platform always needs the twin (or a ride from the twin) to move.
+    for (const p of w.platforms) {
+      if (r.ground === p) continue;
+      const d = coneDist(o, dir, p.x + p.w / 2, p.y + p.h / 2);
+      if (d < 0 || !canSeeBox(w.tiles, o, p)) continue;
+      push(r, p, o, d);
+      r.hits.push(p.x + p.w / 2, p.y + p.h / 2);
     }
 
     for (const p of w.plates) {
@@ -125,6 +136,11 @@ export function previewTargets(w, r, aim, out) {
     if (b === r || b.sunk > 0 || b.hidden) continue;
     const d = coneDist(o, dir, b.x + b.w / 2, b.y + b.h / 2);
     if (d >= 0 && canSeeBox(w.tiles, o, b)) out.push(b.x + b.w / 2, b.y + b.h / 2);
+  }
+  for (const p of w.platforms) {
+    if (r.ground === p) continue;
+    const d = coneDist(o, dir, p.x + p.w / 2, p.y + p.h / 2);
+    if (d >= 0 && canSeeBox(w.tiles, o, p)) out.push(p.x + p.w / 2, p.y + p.h / 2);
   }
   for (const p of w.plates) {
     if (p.gate.lock !== 'any' && p.gate.lock !== r.pol) continue;

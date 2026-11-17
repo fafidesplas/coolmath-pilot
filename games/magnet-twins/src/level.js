@@ -22,12 +22,21 @@ export function parseLevel(data) {
     y: (ty + 1) * T - ROBOT.h,
   });
 
-  const crates = [], doors = [], plates = [], checkpoints = [];
+  const crates = [], doors = [], plates = [], checkpoints = [], platforms = [];
   for (const o of data.objects || []) {
     if (o.type === 'crate') crates.push({ x: o.x * T, y: o.y * T + (T - CRATE.size) });
     else if (o.type === 'door') doors.push({ id: o.id, tx: o.x, ty: o.y, lock: o.lock || 'any' });
     else if (o.type === 'plate') plates.push({ door: o.door, x: (o.x + 0.5) * T, y: (o.y + 0.5) * T });
     else if (o.type === 'checkpoint') checkpoints.push({ x: o.x, y: o.y });
+    else if (o.type === 'platform') {
+      // x, y: the slab's left tile. from/to: the rail's end tiles (inclusive) along its axis;
+      // a horizontal slab is 3 tiles wide, so its left tile runs from `from` to `to - 2`.
+      const rail = o.rail === 'v' ? 'v' : 'h';
+      const lo = o.from * T, hi = (rail === 'h' ? o.to - 2 : o.to) * T;
+      const x = o.x * T, y = o.y * T, at = rail === 'h' ? x : y;
+      if (hi < lo || at < lo || at > hi) throw new Error(`${data.id}: platform at ${o.x},${o.y} does not fit its rail ${o.from}..${o.to}`);
+      platforms.push({ rail, x, y, min: lo, max: hi });
+    }
   }
 
   return {
@@ -36,7 +45,7 @@ export function parseLevel(data) {
     spawn: { plus: robotAt(data.spawn.plus), minus: robotAt(data.spawn.minus) },
     exit: { x: data.exit[0] * T, y: data.exit[1] * T, w: 2 * T, h: 2 * T },
     bolts: (data.bolts || []).map(([bx, by]) => ({ x: (bx + 0.5) * T, y: (by + 0.5) * T })),
-    crates, doors, plates, checkpoints,
+    crates, doors, plates, checkpoints, platforms,
   };
 }
 

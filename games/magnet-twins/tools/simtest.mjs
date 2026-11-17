@@ -165,6 +165,92 @@ const RESET = Math.round(0.4 * 120);
   ok(f.on, 'the flag stays up after the reset');
 }
 
+// Hanging platform on a horizontal rail (GDD 3.5). The slab hangs at row 8 (top y = 320), its
+// rail runs from column 6 to column 21, so its left edge stays between x = 240 and x = 760.
+const railRoom = (spawn, extra = [], rail = { from: 6, to: 21 }) =>
+  room([{ type: 'platform', x: 10, y: 8, rail: 'h', ...rail }, ...extra], spawn);
+const STOP_STEPS = Math.round(0.2 * 120);
+
+{ // Moves only along its rail, with no gravity
+  const s = new Sim(railRoom({ plus: [12, 11], minus: [2, 11] }));
+  const pf = s.platforms[0], y0 = pf.y;
+  run(s, 240);
+  ok(pf.x === 400 && pf.y === y0, 'a platform with no field stays put: no gravity, no drift');
+  // Plus stands under the slab's right end and pulls up: the force is diagonal, the slab only
+  // slides along its rail
+  run(s, 2, () => B.P | B.U);
+  run(s, 240, () => B.P);
+  ok(pf.y === y0, `pulled at an angle, the slab keeps its height (y ${pf.y})`);
+  ok(pf.x > 400 && Math.abs(pf.x + pf.w / 2 - (s.robots[0].x + 15)) < 20, `it slides over to sit above Plus (slab center ${(pf.x + 60).toFixed(0)}, Plus ${(s.robots[0].x + 15).toFixed(0)})`);
+}
+
+{ // Half acceleration: the slab gets half of what a crate gets at the same spot
+  // Plus stands on a shelf at the slab's height, 120 px from the slab's center (full strength).
+  const spot = { plus: [7, 7], minus: [2, 11] };
+  const extraRows = { 8: '#' + '#'.repeat(7) + '.'.repeat(23) + '#' };
+  const mk = objs => new Sim(room(objs, spot, extraRows));
+  const s = mk([{ type: 'platform', x: 9, y: 8, rail: 'h', from: 8, to: 20 }]);
+  const c = mk([{ type: 'crate', x: 10, y: 8 }]);                       // crate center = slab center
+  s.step(B.P); c.step(B.P);                                             // first step: no time to fall
+  const pv = s.platforms[0].v, cv = c.crates[0].vx;
+  ok(pv < 0 && Math.abs(pv / cv - 0.5) < 1e-9, `pulled towards Plus, the slab gains half of a crate's speed in one step (${pv.toFixed(3)} vs ${cv.toFixed(3)} px/s)`);
+  // and at full strength, straight along the rail: Plus on a shelf level with the slab's center
+  const s2 = mk([{ type: 'platform', x: 9, y: 8, rail: 'h', from: 8, to: 20 }]);
+  s2.platforms[0].y = s2.robots[0].y + 18 - 20;                         // slab center level with Plus's, 120 px away
+  s2.step(B.P);
+  ok(Math.abs(s2.platforms[0].v * 120 + 1500) < 1e-6, `straight along the rail at full strength: ${(-s2.platforms[0].v * 120).toFixed(1)} px/s² (GDD: 1500)`);
+}
+
+{ // Clamps at both rail ends
+  // Plus starts under the slab and leads it a step at a time, far past each rail end.
+  const s2 = new Sim(railRoom({ plus: [11, 11], minus: [2, 11] }));
+  const p2 = s2.platforms[0];
+  run(s2, 2, () => B.P | B.U);
+  let maxX = 0;
+  for (let i = 0; i < 900; i++) { s2.step(B.P | (i % 48 < 16 ? B.R : 0)); maxX = Math.max(maxX, p2.x); }
+  ok(maxX === 760 && p2.x === 760, `led right, the slab stops at the right rail end (x ${p2.x}, max seen ${maxX})`);
+  const s3 = new Sim(railRoom({ plus: [11, 11], minus: [2, 11] }));
+  const p3 = s3.platforms[0];
+  run(s3, 2, () => B.P | B.U);
+  let minX = 999;
+  for (let i = 0; i < 600; i++) { s3.step(B.P | (i % 48 < 16 ? B.L : 0)); minX = Math.min(minX, p3.x); }
+  ok(minX === 240 && p3.x === 240, `led left, the slab stops at the left rail end (x ${p3.x}, min seen ${minX})`);
+}
+
+{ // Stops within 0.2 s when the field lets go, from full speed
+  const s = new Sim(railRoom({ plus: [11, 11], minus: [2, 11] }));
+  const pf = s.platforms[0];
+  // Minus-free shove: Plus pulls up from under the right end so the slab gets going, then lets go
+  run(s, 2, () => B.P | B.U);
+  let top = 0;
+  for (let i = 0; i < 120 && Math.abs(pf.v) < 100; i++) { s.step(B.P | B.R); top = Math.max(top, Math.abs(pf.v)); }
+  const v0 = Math.abs(pf.v);
+  let k = 0;
+  while (pf.v !== 0 && k < 200) { s.step(0); k++; }
+  ok(v0 >= 100 && k <= STOP_STEPS, `moving at ${v0.toFixed(0)} px/s, it stops ${k} steps after the field lets go (max ${STOP_STEPS})`);
+  // and from the speed cap
+  pf.v = 480;
+  k = 0;
+  while (pf.v !== 0 && k < 200) { s.step(0); k++; }
+  ok(k <= STOP_STEPS, `from 480 px/s it stops in ${k} steps (${(k / 120).toFixed(3)} s)`);
+}
+
+{ // Carries a rider; a robot cannot move the platform it stands on
+  const s = new Sim(railRoom({ plus: [11, 11], minus: [11, 7] }));
+  const pf = s.platforms[0], m = s.robots[1];
+  run(s, 60);
+  ok(m.ground === pf, 'Minus stands on the platform');
+  run(s, 2, () => (B.P | B.D) << 8);
+  run(s, 120, () => B.P << 8);
+  ok(pf.x === 400, 'Minus aiming down at its own platform does not move it');
+  run(s, 1, () => 0);
+  const dxRider = m.x, dxSlab = pf.x;
+  run(s, 2, () => B.P | B.U);
+  for (let i = 0; i < 240; i++) s.step(B.P | (i % 48 < 16 ? B.R : 0));
+  ok(pf.x > dxSlab + 40 && Math.abs((m.x - dxRider) - (pf.x - dxSlab)) < 0.001, `the rider moves with the slab (slab +${(pf.x - dxSlab).toFixed(1)}, Minus +${(m.x - dxRider).toFixed(1)})`);
+  ok(m.ground === pf && m.y + m.h === pf.y, 'and stays standing on it');
+}
+
 // --- Levels: recorded solutions, par, bolts and the naive bot ------------------------------
 // Every level has a solution script (tools/solutions.mjs) run in co-op and in solo. The
 // recordings (levels/solutions/<id>.<mode>.json) must reach the exit, collect all 3 bolts,

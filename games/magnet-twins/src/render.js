@@ -278,6 +278,83 @@ export function drawCrate(ctx, x, y, s = 40) {
   for (const [rx, ry] of [[6, 6], [s - 6, 6], [6, s - 6], [s - 6, s - 6]]) { ctx.beginPath(); ctx.arc(x + rx, y + ry, 2.2, 0, 7); ctx.fill(); }
 }
 
+// Hanging platform (GDD 5: slab hanging from a track with wheels). The track sits above a
+// rider's head and is hung from the ceiling at both ends; arrows on the slab show its axis.
+// x, y: the slab's interpolated position.
+const TRACK_RISE = 58;
+export function drawPlatform(ctx, p, tiles, x, y, t) {
+  const w = p.w, h = p.h;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (p.rail === 'h') {
+    const ty = p.y - TRACK_RISE, x0 = p.min, x1 = p.max + w;
+    // hangers from the ceiling to the track ends
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (const hx of [x0 + 6, x1 - 6]) {
+      let row = Math.floor((ty - 1) / T);
+      while (row >= 0 && tileAt(tiles, Math.floor(hx / T), row) !== TILE.SOLID) row--;
+      const top = (row + 1) * T;
+      if (top < ty) { ctx.moveTo(hx, top); ctx.lineTo(hx, ty); }
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    // the track: a chunky bar with end stops
+    rrect(ctx, x0, ty - 5, x1 - x0, 10, 5);
+    ctx.fillStyle = '#7D8894'; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.fillStyle = C.ink;
+    ctx.fillRect(x0 - 2, ty - 10, 6, 20); ctx.fillRect(x1 - 4, ty - 10, 6, 20);
+    // arms from the wheels down to the slab
+    const wy = ty - 1;
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 4;
+    ctx.beginPath();
+    for (const ax of [x + 14, x + w - 14]) { ctx.moveTo(ax, wy); ctx.lineTo(ax, y + 2); }
+    ctx.stroke();
+    // wheels roll with the slab
+    for (const ax of [x + 14, x + w - 14]) {
+      ctx.beginPath(); ctx.arc(ax, wy, 8, 0, 7);
+      ctx.fillStyle = C.metal; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+      const a = x / 8;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ax - Math.cos(a) * 5, wy - Math.sin(a) * 5); ctx.lineTo(ax + Math.cos(a) * 5, wy + Math.sin(a) * 5); ctx.stroke();
+    }
+  } else {
+    // vertical chain: a dashed chain along the rail, through the slab's middle
+    const cx = p.x + w / 2;
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(cx, p.min - 20); ctx.lineTo(cx, p.max + h + 20); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.ink;
+    ctx.fillRect(cx - 10, p.min - 24, 20, 6); ctx.fillRect(cx - 10, p.max + h + 18, 20, 6);
+  }
+  // the slab
+  rrect(ctx, x + 1, y + 1, w - 2, h - 2, 7);
+  ctx.fillStyle = C.metal; ctx.fill();
+  ctx.fillStyle = 'rgba(43,34,56,0.18)';
+  ctx.fillRect(x + 4, y + h - 13, w - 8, 9);
+  rrect(ctx, x + 1, y + 1, w - 2, h - 2, 7);
+  ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(x + 8, y + 5, w - 16, 3);
+  ctx.fillStyle = C.ink;
+  for (const [rx, ry] of [[7, 8], [w - 7, 8], [7, h - 8], [w - 7, h - 8]]) { ctx.beginPath(); ctx.arc(x + rx, y + ry, 2.4, 0, 7); ctx.fill(); }
+  // axis arrows (shape, not color, says which way it can move)
+  ctx.fillStyle = 'rgba(43,34,56,0.55)';
+  const mx = x + w / 2, my = y + h / 2 + 1;
+  ctx.beginPath();
+  if (p.rail === 'h') {
+    ctx.moveTo(mx - 30, my); ctx.lineTo(mx - 20, my - 7); ctx.lineTo(mx - 20, my + 7); ctx.closePath();
+    ctx.moveTo(mx + 30, my); ctx.lineTo(mx + 20, my - 7); ctx.lineTo(mx + 20, my + 7); ctx.closePath();
+  } else {
+    ctx.moveTo(mx - 24, my - 9); ctx.lineTo(mx - 31, my); ctx.lineTo(mx - 17, my); ctx.closePath();
+    ctx.moveTo(mx + 24, my + 9); ctx.lineTo(mx + 17, my); ctx.lineTo(mx + 31, my); ctx.closePath();
+  }
+  ctx.fill();
+  if (p.inField) {
+    ctx.strokeStyle = `rgba(255,197,49,${0.5 + Math.sin(t * 20) * 0.2})`; ctx.lineWidth = 3;
+    rrect(ctx, x - 4, y - 4, w + 8, h + 8, 10); ctx.stroke();
+  }
+}
+
 export function drawGate(ctx, g) {
   // posts
   ctx.fillStyle = C.ink;
