@@ -1,5 +1,14 @@
 # Magnet Twins — devlog
 
+## 2026-11-17 — World 2 begins: hanging platform and levels 11–13
+- New element: the hanging platform on a horizontal rail. A 3×1 metal slab on a ceiling track (drawn with wheels, arms, end stops and ◀ ▶ arrows on the slab). It moves only along its rail between the rail ends, at half the field acceleration, with no gravity, and stops within 0.2 s when no field holds it. Riders are carried. A robot's field never moves the platform it stands on. The vertical chain variant is parsed and drawn too but not tested or used yet.
+- Levels 11–13 from `tools/build-world2.mjs`: **Hang On** (Plus on the monkey bars, Minus jetpacks onto the beam, Plus holds the gate), **Piggyback** (Plus rides Minus's dash and jetpack), **Cable Car** (Minus rides the platform while Plus leads it from below, then holds the door for Plus). Par 14 / 14 / 18 s in both modes.
+- Level select: world tabs are buttons. World 2 opens when level 10 is finished, and Next on the results of level 10 goes to 11. Add `?unlock` to the URL to open every world for a demo.
+- Try it: `?level=w2l13` (add `&mode=solo` for solo), watch the bot with `?level=w2l13&replay=coop` or `replay=solo`, the same for `w2l11` and `w2l12`.
+- Tests: `node tools/simtest.mjs` runs 136 checks, all passing. That is the 102 old ones (world 1 unchanged), 13 new platform checks (only moves on its axis, no gravity, half acceleration exactly 1500 px/s², clamps at both rail ends, stops in ≤ 24 steps = 0.2 s, carries a rider, a rider can't move its own platform), and 21 for the new levels.
+- Found while building: the platform's sideways pull from below is at most half the force (30° cone), so it can't keep up with a robot running underneath. It does follow short steps. Level 13 is built around that, and it is written down in the GDD.
+- Not played in a browser yet (none on this machine): the platform drawing was only checked against a stub canvas. Next: play 11–13 in co-op and solo, check the slab render and that "lead it in steps" reads without text; monkey bars still run at full speed (the GDD says 50%); then levels 14–20.
+
 ## 2026-11-16 — Level 10: the Workshop Exam
 - `w1l10` is now the real exam on two floors. Downstairs (the old slice level): stack for the block bolt, pull the crate over the spikes, step up, hold the door. A shaft on the right: launch from a one-tile step and pull Minus up, as in Boost. Upstairs, back to the left: stepping stones over water to the exit in the top-left corner.
 - First level with a checkpoint: the flag stands where Plus lands at the top of the shaft; a fall in the upper pool respawns both robots there (checked by hand with the bot).

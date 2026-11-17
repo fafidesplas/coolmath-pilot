@@ -1,7 +1,7 @@
 # Magnet Twins — Game design document
 
 **Status:** Approved
-**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-16
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-17
 
 > Two little robots share one keyboard: red Plus pulls metal, blue Minus pushes it, and every level needs both of them working together.
 
@@ -65,7 +65,7 @@
 ### 3.5 Metal objects
 - **Crate (1×1 tile):** dynamic, mass 1. Falls with gravity, ground deceleration 2400 px/s², stacks, can be stood on. A robot walking into a crate pushes it slowly, at 80 px/s, along the ground; lifting, throwing or moving it at a distance needs magnets. A crate that falls in water sinks and respawns at its start position after 1 s, waiting until that spot is clear of robots and other bodies.
 - **Fixed plate (1×1 tile, riveted):** part of the tile map, solid. Anchor for Plus grapple and Minus jetpack and dash.
-- **Hanging platform (3×1 tiles):** metal slab on a rail. Two kinds: **horizontal rail** (hangs from a ceiling track) and **vertical chain** (slides up and down a chain). It moves only along its rail, between the rail's ends, under magnet force at half the normal acceleration (1500 px/s²). With no force it stops within 0.2 s and stays where it was left (no gravity). Riders are carried.
+- **Hanging platform (3×1 tiles):** metal slab on a rail. Two kinds: **horizontal rail** (hangs from a ceiling track) and **vertical chain** (slides up and down a chain). It moves only along its rail, between the rail's ends, under magnet force at half the normal acceleration (1500 px/s²). With no force it stops within 0.2 s and stays where it was left (no gravity). Riders are carried. Only the part of the (radial) force along the rail counts, so Plus pulling from below makes the slab glide over to sit above Plus; it brakes the same way when the force points against its motion, so it settles instead of swinging. Because a 30° cone gives at most half of that sideways, a slab led from below follows a robot that walks in short steps, not one that runs. **A robot's field never moves the platform it stands on**, so moving a platform with a rider always takes the twin.
 - **Magnetic door:** a 1×3 metal gate in a frame with a lock plate on each side. While any field touches a lock plate, the gate slides up (open in 300 ms). When no field touches it, the gate falls shut in 600 ms. A closing gate never crushes a robot and never stays open for one: it gently pushes a robot standing in the doorway out to the side it came from (crates too). Lock plates sit at least 5 tiles from their gate, or out of reach behind a wall or on a ledge, so the robot holding a door can't walk through it (see 6).
 - **Polarity lock door:** like the magnetic door, but its lock plates show **+** (only Plus can open it) or **−** (only Minus can open it).
 - **Spring plate (1×1, on a floor rail):** anything that lands on it is launched up at 1000 px/s (about 6 tiles). Magnets slide it along its floor rail, so players reposition it before using it.
@@ -154,6 +154,11 @@
   8. **Wet Feet** — first water: a pool too wide to jump, crossed on three-tile-wide stepping stones that climb one tile each. Water kills even at the edge of the body, so run-ups start inside the bank. (Crates sink in water, so they are no bridge; the crate-over-spikes idea moved to level 9.)
   9. **Carry** — the crate starts on the far side of a spike pit. Plus jumps over and pulls it across, carries it (power on, walking away), rides it while Minus pushes it to the foot of the wall, then it is the step up as in level 7. (A robot cannot jump with its power on: the jump key aims up.)
   10. **Workshop Exam** — door, launch and crates together on two floors; the first level with a par over 60 s (64 s in both modes), so it gets one checkpoint halfway. Downstairs, left to right: stack on your twin for the bolt on a little block, pull the crate across the spikes and step up on it, hold the door for each other. Up a shaft on the right: launch from a one-tile step and pull the twin up, as in level 6; the flag stands where they land. Upstairs, right to left: stepping stones over water to the exit, so a fall costs the upper floor only.
+- **World 2 (Scrapyard), first levels:**
+  11. **Hang On** — first fixed plates. A metal beam hangs over a spike field. Plus grabs it from below and crosses on the monkey bars (a bolt hangs under the beam); Minus jetpacks off a floor plate onto the top of the beam, where a gate blocks the way. Across, Plus holds the gate's lock plate so Minus can walk over the beam. (Over the beam, Minus's down field jetpacks off the beam itself, so Minus lets go to land on it.)
+  12. **Piggyback** — fixed plates used on your twin. Plus rides on Minus's head: Minus dashes off a wall plate and jumps a spike strip too wide to jump, then jetpacks off a floor plate with Plus aboard up to the exit ledge. A bolt high over the floor plate needs the piggyback.
+  13. **Cable Car** — first hanging platform. The upper floor has a 12-tile gap with a platform hanging on a rail across it. Minus rides it while Plus, in the corridor below, pulls it along a step at a time. Across, Minus holds the lock plate of a door in the corridor so Plus can reach the exit, then drops through a hole by the wall.
+  14–20 to come: the shield-drop lesson (letting go of a twin's field by turning your own power on), platforms pushed by Minus, platforms with crates, and a Scrapyard exam.
 - **Level data format** (one JS module per level in `levels/`, exporting this object):
 
 ```json
@@ -179,7 +184,7 @@
 }
 ```
 
-  Tile characters: `.` empty, `#` solid, `M` fixed metal plate, `~` water, `^` spikes. `par` holds the co-op and solo par times in seconds, filled in from the two solution recordings. A recording is `{ "v": 1, "level": "w1l04", "mode": "coop", "frames": N, "inputs": [[step, bits], …] }`: the controller bitmask, stored only when it changes, where `step` is the 120 Hz simulation step. Door `lock` is `"any"`, `"plus"` or `"minus"`. Platform `rail` is `"h"` or `"v"`, with `from`/`to` in tiles along that axis.
+  Tile characters: `.` empty, `#` solid, `M` fixed metal plate, `~` water, `^` spikes. `par` holds the co-op and solo par times in seconds, filled in from the two solution recordings. A recording is `{ "v": 1, "level": "w1l04", "mode": "coop", "frames": N, "inputs": [[step, bits], …] }`: the controller bitmask, stored only when it changes, where `step` is the 120 Hz simulation step. Door `lock` is `"any"`, `"plus"` or `"minus"`. Platform `rail` is `"h"` or `"v"`, with `from`/`to` the rail's end tiles (inclusive) along that axis; `x`, `y` is the slab's left tile, so a horizontal slab's left tile runs from `from` to `to − 2`.
 
 ## 7. Progression and retention
 - **Unlocks:** finishing a level unlocks the next. A world unlocks when the previous world's level 10 is finished. No star gates, so no one gets stuck behind a wall of stars.
@@ -301,6 +306,7 @@ Power and switch counts are sent once per attempt with a value, not per press, t
 | Is a 3rd progression tier for mode acceptable for cross-game comparison? | Yes; the first two tiers match `STANDARDS.md` | Team | Open |
 
 ## 15. Changelog
+- 2026-11-17 — World 2 started: level lines for 11–13 written (the GDD had none yet) and built. Hanging platform rules made precise while building it: only the force along the rail counts, it also brakes against a force opposing its motion, a robot's field never moves the platform it stands on (no self-propelled rides), and a slab led from below follows short steps, not a run. Level format: platform `from`/`to` are the rail's end tiles.
 - 2026-11-16 — Level 10 built as the real Workshop Exam: a two-floor screen (lower floor left to right, upper floor right to left) so a single screen holds a review over 60 s; it also reviews water stones from level 8, not only door, launch and crates. The checkpoint sits at the top of the launch shaft, so a fall in the upper pool never repeats the launch.
 - 2026-10-26 — Approved by Pao. Stage moves to `slice`.
 - 2026-10-21 — Feel loop: aim preview (ghost cone and target rings while the power is off), because players could not tell which way the field would fire or that up and down change it.
