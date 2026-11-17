@@ -10,10 +10,11 @@ import { Input } from './input.js';
 import { Sound } from './audio.js';
 import { FX } from './fx.js';
 import { GA } from './analytics.js';
-import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
+import { loadSave, storeSave, loadSettings, storeSettings, roomDone, roomPassed, markSkipped, mergeBest } from './save.js';
+import { buildHints, hintsUnlocked, skipUnlocked, HINT_RULES } from './hints.js';
 import { Recorder, decodeRecording } from './record.js';
 import { renderRoom, roomOffset, wirePath, drawFigure, drawSilhouette, drawBadge, drawPlate, drawGate, drawExit, drawKeycap, drawRing, drawStar, drawGlow, rrect, text, rgba } from './render.js';
-import { drawHud, fmtTime, fmtTenths, iconLoop, iconClock, iconDelete } from './hud.js';
+import { drawHud, fmtTime, fmtTenths, iconLoop, iconClock, iconDelete, drawBulb } from './hud.js';
 import { WORLDS, findRoom, roomPos } from '../levels/index.js';
 
 const easeOutBack = k => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;
@@ -43,6 +44,10 @@ export class Game {
     this.fixedHz = Number(this.params.get('hz')) || 0;
     this.lastRecording = null;
     this.slotShake = 0; this.slotPop = [0, 0, 0, 0];
+    // Hints and skip (GDD 7). ?hints=now makes both available at once (demo, debug).
+    this.hintDemo = this.params.get('hints') === 'now';
+    this.hintData = {};   // room id -> buildHints() result (null while loading or missing)
+    this.hs = null;       // hint state of the current room, kept across restarts
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -133,6 +138,13 @@ export class Game {
       get view() { return { scale: g.scale, ox: g.ox, oy: g.oy }; },
       get analytics() { return GA.log; },
       get save() { return g.save; },
+      get hints() {
+        if (!g.hs) return null;
+        const h = g.hintsFor();
+        return { steps: g.hs.steps, loops: g.hs.loops, shown: g.hs.shown, total: h ? h.total : 0, available: g.hintsAvailable(), canSkip: g.canSkip() };
+      },
+      hint() { return g.showHint(); },
+      skip() { return g.skipRoom(); },
     };
   }
 
@@ -142,9 +154,12 @@ export class Game {
 
   roomPos(id) { return roomPos(id); }
   roomNumber(id) { const p = roomPos(id); return (p.world - 1) * ROOMS_PER_WORLD + p.level; }
-  isDone(id) { const r = this.save.rooms[id]; return !!(r && r.stars && r.stars[0]); }
-  isUnlocked(i) { const rooms = WORLDS[0].rooms; return i === 0 || (rooms[i - 1] && this.isDone(rooms[i - 1].id)); }
+  isDone(id) { return roomDone(this.save.rooms[id]); }
+  // A skipped room counts as passed: the next room unlocks (GDD 7).
+  isPassed(id) { return roomPassed(this.save.rooms[id]); }
+  isUnlocked(i) { const rooms = WORLDS[0].rooms; return i === 0 || (rooms[i - 1] && this.isPassed(rooms[i - 1].id)); }
   nextRoom() {
+    for (const w of WORLDS) for (const r of w.rooms) if (!this.isPassed(r.id)) return r;
     for (const w of WORLDS) for (const r of w.rooms) if (!this.isDone(r.id)) return r;
     return WORLDS[0].rooms[0];
   }
@@ -178,6 +193,59 @@ export class Game {
     this.sound.want(true);
     this.sound.restartMusic();
     if (!replayFrames) { const pos = roomPos(room.id); GA.progression('Start', pos.world, pos.level); }
+    // Hint state survives R (same room); a new room, a finish or the menu resets it.
+    if (replayFrames) this.hs = null;
+    else if (!this.hs || this.hs.id !== room.id) this.hs = { id: room.id, steps: 0, loops: 0, shown: 0, demo: this.hintDemo, unlockT: -1 };
+    this.loadHints(room);
+  }
+
+  // ---- Hints and skip (GDD 7) -----------------------------------------------------------
+
+  // Hint paths come from the reference solution, replayed through the real sim.
+  loadHints(room) {
+    const id = room.id;
+    if (id in this.hintData) return;
+    this.hintData[id] = null;
+    fetch(`levels/solutions/${id}.json`)
+      .then(r => r.json())
+      .then(rec => { this.hintData[id] = buildHints(room, rec); })
+      .catch(e => console.warn('No hints for', id, e));
+  }
+
+  hintsFor() { return this.room && this.hs ? this.hintData[this.room.id] || null : null; }
+  hintsAvailable() { return !!(this.hs && !this.replay && this.hintsFor() && hintsUnlocked(this.hs)); }
+  canSkip() {
+    if (!this.hs || this.replay || !this.room || !this.sim || this.sim.s.done || this.isDone(this.room.id)) return false;
+    const h = this.hintsFor();
+    return skipUnlocked(this.hs, h ? h.total : 0);
+  }
+  // Seconds of room time left until the hint / skip unlocks by time (for the pause menu).
+  hintWait(limit) { return this.hs ? Math.max(0, limit - this.hs.steps / HZ) : limit; }
+
+  showHint() {
+    const h = this.hintsFor();
+    if (!this.hintsAvailable() || !this.sim || this.sim.s.done || this.hs.shown >= h.total) return false;
+    this.hs.shown++;
+    GA.design('ui:hint', this.hs.shown);
+    this.sound.play('click');
+    if (!this.save.tut.hint) { this.save.tut.hint = true; storeSave(this.save); }
+    return true;
+  }
+
+  // Skip room: the next room unlocks, this one keeps a ↷ mark and no stars until finished.
+  skipRoom() {
+    if (!this.canSkip()) return false;
+    const room = this.room, pos = roomPos(room.id);
+    this.endAttempt();                 // Fail (GDD 11: a skip counts as a fail)
+    GA.design('ui:skip');
+    markSkipped(this.save, room.id);
+    storeSave(this.save);
+    this.paused = false;
+    this.hs = null;
+    const next = WORLDS[pos.world - 1].rooms[pos.level];
+    if (next) this.startRoom(next);
+    else { this.sim = null; this.toMenu('levels'); }
+    return true;
   }
 
   async startReplay(id) {
@@ -222,6 +290,7 @@ export class Game {
 
   toMenu(screen = 'title') {
     if (this.screen === 'playing') this.endAttempt();
+    this.hs = null;
     this.screen = screen;
     this.paused = false;
     this.sim = null; this.lv = null;
@@ -250,6 +319,10 @@ export class Game {
       return;
     }
     if (this.screen === 'playing' && code === 'KeyR' && !this.paused && !this.sim.s.done) { this.restart(); return; }
+    if (this.screen === 'playing' && code === 'KeyH' && this.sim && !this.sim.s.done) {
+      if (this.showHint() && this.paused) this.pause(false);
+      return;
+    }
     if (this.phase === 'rewind' && this.live()) {
       // Any key skips the rest of the rewind; Loop and Delete only skip.
       if (code === 'KeyE' || code === 'Enter' || code === 'Backspace' || code === 'Delete') this.input.clear(BIT.LOOP | BIT.DEL);
@@ -346,6 +419,7 @@ export class Game {
       this.acc -= STEP;
     }
     if (this.phase !== 'play') this.acc = 0;
+    if (this.hs && this.hs.unlockT < 0 && this.hintsAvailable()) this.hs.unlockT = this.t;
     // Contextual ↓ keycap: standing still with an echo event still to come.
     if (s.running && p.grounded && p.vx === 0 && s.count > 0) this.cue.stillT += dt; else this.cue.stillT = 0;
   }
@@ -354,7 +428,9 @@ export class Game {
     const sim = this.sim;
     const bits = this.replay ? (this.replay[sim.s.n] ?? 0) : this.input.sample();
     if (this.recorder) this.recorder.push(bits);
+    const before = sim.s.roomSteps;
     sim.step(bits);
+    if (this.hs && !this.replay) this.hs.steps += sim.s.roomSteps - before;
     this.handleEvents();
   }
 
@@ -431,6 +507,7 @@ export class Game {
     const L = sim.last;
     if (e.reason === 'early') this.tut('s5', 'tutorial:step05');
     if (e.slot >= 0 && e.reason !== 'delete') this.tut('s2', 'tutorial:step02');
+    if (e.reason !== 'delete' && this.hs && !this.replay) this.hs.loops++;
     snd.play('rewind');
     snd.stopMusic();
     if (e.reason !== 'delete' && e.slot < 0) {
@@ -468,12 +545,8 @@ export class Game {
     const echoes = s.count, time = sim.roomTime;
     const run = [1, echoes <= lv.par.echoes ? 1 : 0, s.roomSteps <= lv.par.time * HZ ? 1 : 0];
     const prev = this.save.rooms[room.id];
-    const best = {
-      stars: prev ? prev.stars.map((v, i) => (v || run[i] ? 1 : 0)) : run.slice(),
-      echoes: prev && prev.echoes !== undefined ? Math.min(prev.echoes, echoes) : echoes,
-      time: prev && prev.time !== undefined ? Math.min(prev.time, Math.round(time * 10) / 10) : Math.round(time * 10) / 10,
-      skipped: false,
-    };
+    const best = mergeBest(prev, run, echoes, time);
+    this.hs = null;    // the room ended: its hints are cleared
     if (!this.replay) {
       this.save.rooms[room.id] = best;
       const pos = roomPos(room.id);
@@ -690,7 +763,13 @@ export class Game {
           text(c, 'EXIT', b.x + 35, b.y + 143, 9, rgba(C.pale, 0.5), 'center', 800);
           text(c, 'ECHO', b.x + 75, b.y + 143, 9, rgba(C.pale, 0.5), 'center', 800);
           text(c, 'TIME', b.x + 115, b.y + 143, 9, rgba(C.pale, 0.5), 'center', 800);
-          if (rec) {
+          if (rec && rec.skipped && !rec.stars[0]) {
+            // Skipped (GDD 7): a ↷ mark, no stars until finished.
+            rrect(c, b.x + 104, b.y + 10, 36, 28, 9); c.fillStyle = rgba(C.pale, 0.12); c.fill();
+            c.lineWidth = 2; c.strokeStyle = rgba(C.pale, 0.7); c.stroke();
+            text(c, '↷', b.x + 122, b.y + 24, 20, C.pale, 'center', 900);
+            text(c, 'skipped', b.x + 75, b.y + 173, 13, rgba(C.pale, 0.6), 'center', 800);
+          } else if (rec && rec.echoes !== undefined) {
             iconLoop(c, b.x + 30, b.y + 172, 6, C.violet);
             text(c, String(rec.echoes), b.x + 42, b.y + 173, 15, C.pale, 'left', 800);
             iconClock(c, b.x + 78, b.y + 172, 6, C.yellow);
@@ -744,6 +823,7 @@ export class Game {
     if (src) this.drawFromHistory(src, idx, !!rw);
     else {
       if (this.settings.paths) this.drawPaths();
+      this.drawHints();
       this.drawEchoes();
       if (this.phase !== 'exit' || this.exitT < 0.4) this.drawLive();
     }
@@ -805,6 +885,61 @@ export class Game {
         const c = Math.max(0, tapeLen - 1), x = P2.x[c] + P.w / 2 + 16, y = P2.y[c] + 4;
         ctx.fillStyle = rgba(C.pale, 0.7); ctx.fillRect(x, y, 2.5, 10); ctx.fillRect(x + 5, y, 2.5, 10);
       }
+    }
+  }
+
+  // Hints (GDD 7): hint k draws echo k of the reference solution as a pale dotted path
+  // with a "?" ghost walking it on a loop and a ‖ where it rests; the last hint draws
+  // the live route of the winning loop. All shown ghosts share one clock, so their
+  // timing matches the solution.
+  drawHints() {
+    const h = this.hintsFor(), n = this.hs ? this.hs.shown : 0;
+    if (!h || !n) return;
+    const ctx = this.ctx, t = this.t, ne = Math.min(n, h.echoes.length), showLive = n > h.echoes.length;
+    let cycle = 0;
+    for (let k = 0; k < ne; k++) cycle = Math.max(cycle, h.echoes[k].end + 1);
+    if (showLive) cycle = Math.max(cycle, h.live.len);
+    cycle += Math.round(0.8 * HZ);             // a short pause at the end of each run
+    const c = Math.floor(t * HZ) % cycle;
+    const dots = (x, y, len) => {
+      ctx.fillStyle = rgba(C.pale, 0.6);
+      let lx = -99, ly = -99;
+      for (let i = 0; i < len; i += 4) {
+        if (Math.abs(x[i] - lx) + Math.abs(y[i] - ly) < 6) continue;   // no piles of dots while it stands
+        lx = x[i]; ly = y[i];
+        ctx.beginPath(); ctx.arc(x[i] + P.w / 2, y[i] + P.h / 2, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    };
+    const ghost = (x, y, len, label, solid) => {
+      const i = Math.min(c, len - 1), j = Math.max(0, i - 3);
+      const dx = x[i] - x[j], moving = i < len - 1 && Math.abs(dx) > 0.5;
+      drawFigure(ctx, x[i] + P.w / 2, y[i] + P.h, { color: C.pale, alpha: solid ? 0.45 : 0.6, dashed: !solid, facing: dx < 0 ? -1 : 1, run: moving, air: Math.abs(y[i] - y[j]) > 0.5, t });
+      const bx = x[i] + P.w / 2, by = y[i] - 20;
+      ctx.beginPath(); ctx.arc(bx, by, 11, 0, Math.PI * 2);
+      ctx.fillStyle = C.navy; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = C.pale; ctx.stroke();
+      text(ctx, label, bx, by + 1, label.length > 1 ? 11 : 14, C.pale, 'center', 900);
+    };
+    for (let k = 0; k < ne; k++) {
+      const e = h.echoes[k], len = e.end + 1;
+      dots(e.x, e.y, len);
+      // ▼ where it starts holding a plate
+      ctx.fillStyle = C.pale;
+      for (let i = 0; i < len; i++) if (e.hold[i] && (i === 0 || !e.hold[i - 1])) {
+        const x = e.x[i] + P.w / 2, y = e.y[i] - 34;
+        ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y - 5); ctx.lineTo(x, y + 2); ctx.fill();
+      }
+      // ‖ where it rests, with the E keycap when the loop was ended early
+      const rx = e.x[e.end] + P.w / 2, ry = e.y[e.end] + P.h / 2;
+      ctx.fillStyle = C.pale; ctx.fillRect(rx + 18, ry - 8, 3, 14); ctx.fillRect(rx + 24, ry - 8, 3, 14);
+      if (e.early) {
+        drawKeycap(ctx, rx + 46, ry - 1, 'E', 0.85);
+        if (e.tapeLen === 0) text(ctx, 'before moving', rx + 46, ry + 24, 12, rgba(C.pale, 0.8), 'center', 800);
+      }
+      ghost(e.x, e.y, len, `?${k + 1}`, false);
+    }
+    if (showLive) {
+      dots(h.live.x, h.live.y, h.live.len);
+      ghost(h.live.x, h.live.y, h.live.len, '?', true);
     }
   }
 
@@ -899,7 +1034,7 @@ export class Game {
 
   drawPause() {
     const ctx = this.ctx;
-    const { x, y } = this.drawPanel(560, 560);
+    const { x, y } = this.drawPanel(560, 660);
     text(ctx, 'PAUSED', VIEW_W / 2, y + 50, 40, C.pale, 'center', 900);
     const bx = x + 40, bw = 230, bx2 = x + 290;
     this.addButton({ key: 'resume', x: bx, y: y + 100, w: bw, h: 58, label: 'RESUME', primary: true, size: 22, isDefault: true, action: () => this.pause(false) });
@@ -908,10 +1043,22 @@ export class Game {
     this.addButton({ key: 'p:music', x: bx2, y: y + 176, w: bw, h: 58, label: this.settings.music ? 'MUSIC: ON' : 'MUSIC: OFF', size: 20, action: () => this.toggleMusic() });
     this.addButton({ key: 'p:sound', x: bx, y: y + 252, w: bw, h: 58, label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', size: 20, action: () => this.toggleSfx() });
     this.addButton({ key: 'p:menu', x: bx2, y: y + 252, w: bw, h: 58, label: 'MENU', size: 20, action: () => this.toMenu('levels') });
+    // Hint and Skip room (GDD 7, 8): greyed with a countdown until they unlock.
+    if (this.hs && !this.replay) {
+      const h = this.hintsFor(), total = h ? h.total : 0, shown = this.hs.shown;
+      const hintLabel = !h ? 'HINT' : this.hintsAvailable() ? (shown >= total ? 'ALL HINTS SHOWN' : `HINT ${shown + 1}/${total}`) : `HINT IN ${fmtTime(Math.ceil(this.hintWait(HINT_RULES.time)))}`;
+      this.addButton({ key: 'p:hint', x: bx, y: y + 328, w: bw, h: 58, label: hintLabel, size: 18, disabled: !this.hintsAvailable() || shown >= total,
+        action: () => { if (this.showHint()) this.pause(false); },
+        draw: (c, b) => { drawBulb(c, b.x + 30, b.y + b.h / 2 - 2, 0.8, false); text(c, b.label, b.x + b.w / 2 + 16, b.y + b.h / 2 + 1, 17, C.pale, 'center', 900); } });
+      if (!this.isDone(this.room.id)) {
+        const skipLabel = this.canSkip() ? 'SKIP ROOM ↷' : `SKIP IN ${fmtTime(Math.ceil(this.hintWait(HINT_RULES.skipTime)))}`;
+        this.addButton({ key: 'p:skip', x: bx2, y: y + 328, w: bw, h: 58, label: skipLabel, size: 18, disabled: !this.canSkip(), action: () => this.skipRoom() });
+      }
+    }
     // Controls card
-    const cy = y + 340;
-    rrect(ctx, x + 40, cy, 480, 190, 14); ctx.fillStyle = rgba(C.pale, 0.05); ctx.fill();
-    const rows = [['← → / A D', 'Move'], ['SPACE / ↑ / W', 'Jump (hold for full height)'], ['E / ENTER', 'Loop now: end the loop, make an echo'], ['BACKSPACE', 'Delete the latest echo, retry the loop'], ['hold ↓ / S', 'Fast-forward while standing still'], ['R  ·  P / ESC', 'Restart room  ·  Pause']];
+    const cy = y + 410;
+    rrect(ctx, x + 40, cy, 480, 220, 14); ctx.fillStyle = rgba(C.pale, 0.05); ctx.fill();
+    const rows = [['← → / A D', 'Move'], ['SPACE / ↑ / W', 'Jump (hold for full height)'], ['E / ENTER', 'Loop now: end the loop, make an echo'], ['BACKSPACE', 'Delete the latest echo, retry the loop'], ['hold ↓ / S', 'Fast-forward while standing still'], ['R  ·  P / ESC', 'Restart room  ·  Pause'], ['H', 'Hint (when the bulb shows)']];
     rows.forEach(([k, v], i) => {
       text(ctx, k, x + 200, cy + 24 + i * 29, 14, C.yellow, 'right', 800);
       text(ctx, v, x + 216, cy + 24 + i * 29, 14, C.pale, 'left', 600);
