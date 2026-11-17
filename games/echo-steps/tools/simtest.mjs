@@ -11,6 +11,8 @@ import { Driver, replayLoops } from './driver.mjs';
 import { loneBot } from './lonebot.mjs';
 import { buildSolution } from './make-solutions.mjs';
 import { WORLDS } from '../levels/index.js';
+import { buildHints, hintsUnlocked, skipUnlocked, HINT_RULES } from '../src/hints.js';
+import { markSkipped, mergeBest, roomPassed, roomDone } from '../src/save.js';
 
 const L = BIT.LEFT, R = BIT.RIGHT, J = BIT.JUMP, LOOP = BIT.LOOP, DEL = BIT.DEL;
 let failed = 0, passed = 0;
@@ -292,6 +294,95 @@ for (const w of WORLDS) for (const data of w.rooms) {
   let plateRule = true;
   for (const g of lv.gates) for (const p of lv.plates) if (g.chans.includes(p.ch) && Math.abs(g.col - p.col) < 3) plateRule = false;
   ok(plateRule, `${data.id}: every plate is at least 3 tiles from its gate`);
+}
+
+// ---- Hints and skip (GDD 7) -----------------------------------------------------------
+
+// Independent capture: replay the solution step by step and keep the live player's
+// positions per loop (what each echo will replay) and the echoes' positions in the
+// winning loop.
+function captureLoops(data, frames) {
+  const sim = new Sim(parseLevel(data));
+  const loops = [];
+  let cur = { x: [], y: [] }, final = null;
+  for (const bits of frames) {
+    const ran = sim.s.clock;
+    sim.step(bits);
+    const ev = sim.events.splice(0);
+    if (sim.s.clock > ran || sim.s.done) { cur.x.push(Math.fround(sim.s.p.x)); cur.y.push(Math.fround(sim.s.p.y)); }
+    const end = ev.find(e => e.type === 'loopEnd');
+    if (end) {
+      // A Loop press ends the loop before anything moves; a timeout ends it after the
+      // last step, with the live player already rewound: take that step from the snapshot.
+      if (end.reason === 'timeout') { cur.x.push(sim.last.live.x[ran]); cur.y.push(sim.last.live.y[ran]); }
+      loops.push(cur); cur = { x: [], y: [] };
+    } else if (ev.some(e => e.type === 'delete')) cur = { x: [], y: [] };
+    if (sim.s.done) {
+      final = { live: cur, echoes: Array.from({ length: sim.s.count }, (_, k) => ({ x: sim.hist[k].x.slice(0, sim.s.clock), y: sim.hist[k].y.slice(0, sim.s.clock) })) };
+      break;
+    }
+  }
+  return { loops, final, sim };
+}
+const same = (a, b, n) => { for (let i = 0; i < n; i++) if (a[i] !== b[i]) return false; return true; };
+
+for (const w of WORLDS) for (const data of w.rooms) {
+  const file = new URL(`../levels/solutions/${data.id}.json`, import.meta.url);
+  if (!existsSync(file)) continue;
+  const rec = JSON.parse(readFileSync(file, 'utf8'));
+  let h;
+  try { h = buildHints(data, rec); } catch (e) { ok(false, `${data.id}: hints build (${e.message})`); continue; }
+  const cap = captureLoops(data, decodeRecording(rec));
+  const L = Math.round(data.loop * HZ);
+  ok(h.echoes.length === data.par.echoes && h.total === data.par.echoes + 1 && h.echoes.every(e => e.x.length === L && e.end < L),
+    `${data.id}: ${h.total} hints (${h.echoes.length} echo path(s) of the whole ${data.loop} s loop + the live route)`);
+  // Echo k's hint path = what the live player did in loop k (the solution's recorded echo).
+  let match = cap.loops.length >= h.echoes.length;
+  h.echoes.forEach((e, k) => {
+    const lp = cap.loops[k];
+    if (!lp || lp.x.length !== e.tapeLen || !same(e.x, lp.x, e.tapeLen) || !same(e.y, lp.y, e.tapeLen)) match = false;
+  });
+  ok(match, `${data.id}: hint paths match the reference echoes step for step (tapes ${h.echoes.map(e => e.tapeLen).join(', ')})`);
+  // ...and what the echoes really did in the winning loop, rests and drops included.
+  const fin = cap.final;
+  let finalMatch = !!fin;
+  if (fin) h.echoes.forEach((e, k) => { if (!same(e.x, fin.echoes[k].x, fin.echoes[k].x.length) || !same(e.y, fin.echoes[k].y, fin.echoes[k].y.length)) finalMatch = false; });
+  ok(finalMatch, `${data.id}: hint paths match the echoes of the winning loop`);
+  ok(!!fin && h.live.len === fin.live.x.length && same(h.live.x, fin.live.x, h.live.len) && same(h.live.y, fin.live.y, h.live.len),
+    `${data.id}: last hint is the live route of the winning loop (${(h.live.len / HZ).toFixed(2)} s)`);
+  // The live route ends in the exit.
+  const lv = parseLevel(data), n = h.live.len - 1, ex = lv.exit;
+  ok(h.live.x[n] + PLAYER.w > ex.x && h.live.x[n] < ex.x + ex.w && h.live.y[n] + PLAYER.h > ex.y, `${data.id}: live route hint ends in the exit`);
+}
+{ // Room 10: the step at the spawn is an empty tape resting at the spawn (shown with E before moving)
+  const data = WORLDS[0].rooms.find(r => r.id === 'w1l10');
+  const h = buildHints(data, JSON.parse(readFileSync(new URL('../levels/solutions/w1l10.json', import.meta.url), 'utf8')));
+  const sp = parseLevel(data).spawn;
+  ok(h.echoes[0].tapeLen === 0 && h.echoes[0].early && h.echoes[0].x[h.echoes[0].end] === sp.x, 'w1l10: hint 1 is the Loop-before-moving step resting at the spawn');
+}
+{ // Unlock thresholds
+  const st = (steps, loops, shown = 0, demo = false) => ({ steps, loops, shown, demo });
+  ok(!hintsUnlocked(st(60 * HZ - 1, 7)), 'hints locked at 59.99 s and 7 loops');
+  ok(hintsUnlocked(st(60 * HZ, 0)), 'hints unlock after 60 s of room time');
+  ok(hintsUnlocked(st(0, 8)), 'hints unlock after 8 loops');
+  ok(!skipUnlocked(st(180 * HZ - 1, 50, 2), 3), 'skip locked at 2:59.99 with 2 of 3 hints shown');
+  ok(skipUnlocked(st(180 * HZ, 0), 3), 'skip unlocks after 3 minutes of room time');
+  ok(skipUnlocked(st(10 * HZ, 8, 3), 3), 'skip unlocks once every hint has been shown');
+  ok(!skipUnlocked(st(0, 0, 0), 0), 'skip never unlocks early when a room has no hints');
+  ok(hintsUnlocked(st(0, 0, 0, true)) && skipUnlocked(st(0, 0, 0, true), 3), '?hints=now (demo) unlocks hints and skip at once');
+  ok(HINT_RULES.time === 60 && HINT_RULES.loops === 8 && HINT_RULES.skipTime === 180, 'thresholds are the GDD numbers (60 s / 8 loops / 3 min)');
+}
+{ // Skip save shape (cm_echo-steps_save)
+  const save = { v: 1, rooms: { w1l01: { stars: [1, 1, 0], echoes: 1, time: 4.2, skipped: false } }, trail: 'default', tut: {} };
+  markSkipped(save, 'w1l02');
+  const back = JSON.parse(JSON.stringify(save));
+  ok(JSON.stringify(back.rooms.w1l02) === JSON.stringify({ stars: [0, 0, 0], skipped: true }), 'a skip saves { stars: [0,0,0], skipped: true }');
+  ok(roomPassed(back.rooms.w1l02) && !roomDone(back.rooms.w1l02), 'a skipped room unlocks the next one but is not done (no stars)');
+  markSkipped(save, 'w1l01');
+  ok(save.rooms.w1l01.stars[0] === 1 && save.rooms.w1l01.skipped === false, 'skipping never overwrites a finished room');
+  const best = mergeBest(back.rooms.w1l02, [1, 0, 1], 2, 6.04);
+  ok(JSON.stringify(best) === JSON.stringify({ stars: [1, 0, 1], echoes: 2, time: 6, skipped: false }), 'finishing a skipped room clears the mark and saves its stars');
+  ok(!roomPassed(undefined) && !roomPassed({ stars: [0, 0, 0] }), 'a room never played or never finished does not unlock the next');
 }
 
 console.log(failed ? `\n${failed} of ${passed + failed} checks FAILED` : `\nall ${passed} checks passed`);
