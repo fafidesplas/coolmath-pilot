@@ -270,3 +270,95 @@ SCRIPTS.w1l10 = b => {
   b.walkTo(1, col(3));
   b.wait(60);
 };
+
+// ---- World 2: Scrapyard -------------------------------------------------------------------
+
+// 11. Hang On: Minus jetpacks onto the beam, Plus crosses under it on the monkey bars and holds
+// the lock plate, Minus walks over the beam through the gate.
+SCRIPTS.w2l11 = b => {
+  b.walkTo(1, 200);                                      // Minus on the floor plate, aiming down: jetpack
+  b.power(1, true, B.D);
+  b.wait(120, 1);
+  b.focus(1);                                            // jumps off the field towards the beam...
+  for (let k = 0; k < 240; k++) {
+    const m = b.R[1];
+    b.tick(b.frame(1, B.U | (b.center(1) < col(10) ? B.R : 0)));
+    if (b.center(1) >= col(9) && m.y + m.h < 315) break;
+  }
+  b.power(1, false);                                     // ...and lets go over it (over the beam the field
+  b.settle(1);                                           // would jetpack off the beam itself)
+  b.hopTo(1, col(11), 320);                              // a hop on the beam for the bolt above it
+  b.walkTo(1, col(14));                                  // and waits at the gate
+  b.power(0, true, B.U);                                 // Plus grabs the beam from below
+  b.wait(60);
+  b.walkTo(0, col(22));                                  // monkey bars over the spikes (bolt under the beam)
+  b.power(0, false);
+  b.settle(0);
+  b.walkTo(0, col(26));                                  // Plus holds the lock plate
+  b.power(0, true, B.U);
+  b.wait(40);
+  b.walkTo(1, col(20));                                  // Minus through the gate, over the beam
+  b.hopTo(1, col(24), 480);                              // jumps off the end for the high bolt
+  b.power(0, false);
+  b.walkTo(0, col(29));
+  b.walkTo(1, col(28));
+  b.wait(60);
+};
+
+// 12. Piggyback: Plus rides on Minus's head over the spikes (dash) and up the ledge (jetpack).
+SCRIPTS.w2l12 = b => {
+  b.hopTo(0, b.center(1), b.R[1].y);                     // Plus on Minus's head
+  b.walkTo(0, b.center(1));
+  b.hopTo(0, b.center(1), b.R[1].y);                     // a hop from the head for the bolt above the start
+  b.walkTo(0, b.center(1));
+  b.power(1, true);                                      // Minus faces the wall plate: pushed away from it
+  b.focus(1);
+  for (let k = 0; k < 18; k++) b.tick(b.frame(1, 0));
+  for (let k = 0; k < 40; k++) b.tick(b.frame(1, B.U));  // and jumps the spikes, Plus aboard
+  for (let k = 0; k < 120 && !b.R[1].grounded; k++) b.tick(b.frame(1, 0));
+  b.power(1, false);
+  b.settle(1);
+  b.walkTo(1, col(12));                                  // the bolt behind the spikes
+  b.walkTo(1, 600);                                      // onto the floor plate, Plus still aboard
+  b.walkTo(0, b.center(1));
+  b.power(1, true, B.D);                                 // jetpack: both go up
+  b.wait(150, 1);
+  b.hopTo(0, b.center(1), b.R[1].y);                     // Plus hops from the top for the high bolt
+  b.walkTo(0, b.center(1));
+  b.hopTo(0, col(18), 320);                              // and onto the ledge
+  b.hopTo(1, col(18) + 20, 320);                         // Minus jumps off its own field
+  b.power(1, false);
+  b.walkTo(0, col(29));
+  b.walkTo(1, col(28));
+  b.wait(60);
+};
+
+// 13. Cable Car: Minus rides the platform while Plus, below, leads it a step at a time.
+SCRIPTS.w2l13 = b => {
+  const pf = b.sim.platforms[0];
+  b.walkTo(0, col(1));                                   // the bolt in the corner
+  b.walkTo(1, pf.x + 60);                                // Minus steps onto the platform
+  b.walkTo(0, pf.x + 60);                                // Plus under it, pulling up
+  b.power(0, true, B.U);
+  const lead = untilX => {                               // short steps: the platform glides after Plus
+    b.focus(0);
+    for (let k = 0; k < 60 && pf.x < untilX; k++) {
+      for (let s = 0; s < 16; s++) b.tick(b.frame(0, B.R));
+      for (let s = 0; s < 32; s++) b.tick(b.frame(0, 0));
+    }
+  };
+  lead(560);
+  b.hopTo(1, pf.x + 60, 320);                            // Minus hops on the platform for the bolt in the air
+  lead(pf.max);
+  b.walkTo(1, col(24));
+  b.hopTo(1, col(24), 320);                              // a bolt above the right bank
+  b.walkTo(1, col(27));                                  // Minus holds the lock plate
+  b.power(1, true, B.U);
+  b.wait(40);
+  b.power(0, false);
+  b.walkTo(0, col(27));                                  // Plus through the door to the exit
+  b.power(1, false);
+  b.walkTo(1, col(30));                                  // Minus drops through the hole by the wall
+  b.walkTo(1, 1148);
+  b.wait(60);
+};
