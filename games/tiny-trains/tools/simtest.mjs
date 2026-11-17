@@ -6,6 +6,7 @@
 import { tileEdges, exitEdge, switchArms, DX, DY, opp } from '../src/track.js';
 import { run, ticketStar, defaultSetup, flipCount, switchTiles, cellKey, buildBoard } from '../src/sim.js';
 import { ALL_LEVELS, findLevel } from '../levels/index.js';
+import { pickHint, loopTick, ticketSolutions } from '../src/solver.js';
 
 let passed = 0, failed = 0;
 const ok = (cond, msg) => { console.log(`${cond ? 'PASS' : 'FAIL'}  ${msg}`); if (cond) passed++; else failed++; };
@@ -195,6 +196,56 @@ for (const level of ALL_LEVELS) {
     const bothShort = run(L10, set({ '7,4': 0, '1,2': 0 }));
     ok(bothShort.cause === 'collision' && bothShort.crash.x === 7, '1-10: both reds on their short lines meet at the merge too');
   }
+}
+
+// ---- Hints (GDD 3.13) and loop skipping, against this file's own brute force -------------
+for (const level of ALL_LEVELS) {
+  const tag = `${level.id} ${level.name}`;
+  const setups = allSetups(level);
+  const runs = setups.map(s => run(level, s));
+  const tSols = setups.filter((s, i) => ticketStar(level, runs[i]));
+  const isTSol = s => tSols.some(t => Object.keys(t.switches).every(k => t.switches[k] === s.switches[k]));
+  ok(ticketSolutions(level).length === tSols.length, `${tag}: solver finds the same ${tSols.length} ticket solutions as brute force`);
+
+  // From every possible setup: a hint changes exactly one switch that is wrong now, to its
+  // setting in a ticket solution; following hints only (each kept locked) reaches a
+  // ticket solution in at most one hint per switch; a solved setup gets no hint.
+  let oneSwitch = true, matches = true, converges = true, noneWhenSolved = true, maxHints = 0;
+  for (const s of setups) {
+    if (isTSol(s)) { if (pickHint(level, s) !== null) noneWhenSolved = false; continue; }
+    let cur = { switches: { ...s.switches } }, locked = {}, n = 0;
+    while (!isTSol(cur) && n <= switchTiles(level).length) {
+      const h = pickHint(level, cur, locked);
+      if (!h) { converges = false; break; }
+      const next = { switches: { ...cur.switches, [h.key]: h.value } };
+      const diff = Object.keys(next.switches).filter(k => next.switches[k] !== cur.switches[k]);
+      if (diff.length !== 1 || h.key in locked) oneSwitch = false;
+      if (!isTSol(h.solution) || h.solution.switches[h.key] !== h.value
+        || Object.keys(locked).some(k => h.solution.switches[k] !== locked[k])) matches = false;
+      locked[h.key] = h.value;
+      // the player sets the rest of the closest solution only after the last hint
+      cur = next; n++;
+    }
+    if (!isTSol(cur)) converges = false;
+    maxHints = Math.max(maxHints, n);
+  }
+  ok(oneSwitch, `${tag}: every hint, from any of the ${setups.length} setups, reveals exactly one switch`);
+  ok(matches, `${tag}: every hinted setting matches a ticket solution that keeps the earlier hints`);
+  ok(converges && noneWhenSolved, `${tag}: hints alone always lead to a ticket solution (at most ${maxHints}); no hint once solved`);
+
+  // Loop skip: the board repeating means the run ends lost; never on a win or a crash.
+  const sound = runs.every(r => { const lt = loopTick(r); return lt < 0 || (r.cause === 'lost' && lt < r.tick); });
+  ok(sound, `${tag}: loop detection only fires on runs that end lost (${runs.filter(r => loopTick(r) >= 0).length} of ${runs.length} setups)`);
+}
+{
+  const L9 = findLevel('1-9');
+  const d = run(L9, defaultSetup(L9));
+  ok(d.cause === 'lost' && d.tick === L9.tickLimit && loopTick(d) === 12,
+    `1-9: start setting is still lost at tick ${d.tick}; its board repeats from tick ${loopTick(d)}, so the game skips ahead`);
+  const h = pickHint(L9, defaultSetup(L9));
+  ok(h && h.key === '5,0' && h.value === 0, `1-9: the first hint from the start sends blue straight home (${h && h.key} → ${h && h.value})`);
+  const L1 = findLevel('1-1');
+  ok(pickHint(L1, defaultSetup(L1)).key === Object.keys(L1.solution.switches)[0], '1-1: the hint is the one switch');
 }
 
 ok(['1-6', '1-7', '1-8', '1-9'].every((r, i) => findLevel(r) === ALL_LEVELS[5 + i] && findLevel(`world01:level0${6 + i}`) === ALL_LEVELS[5 + i]),

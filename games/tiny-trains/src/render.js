@@ -200,12 +200,34 @@ export function drawSwitch(ctx, t, L, set, anim, opts) {
   ctx.restore();
   ctx.fillStyle = WOOD_DARK; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(kx, ky, c * 0.05, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  if (opts.locked) {
+    // Set by a hint (GDD 3.13): a gold ring that pulses for a moment, then settles, and
+    // a small padlock in the corner (shape, not just color).
+    const k = Math.max(0, 1 - (opts.pulse || 0) / 1.2);
+    const ring = 0.56 + 0.04 * Math.sin((opts.time || 0) * 4) + 0.25 * k;
+    ctx.strokeStyle = GOLD; ctx.lineWidth = 5 + 4 * k;
+    ctx.beginPath(); ctx.arc(px, py, c * ring, 0, Math.PI * 2); ctx.stroke();
+    drawPadlock(ctx, px + c * 0.36, py - c * 0.36, c * 0.26);
+  }
   if (opts.selected) {
     ctx.strokeStyle = INK; ctx.lineWidth = 6;
     ctx.setLineDash([10, 7]);
     ctx.beginPath(); ctx.arc(px, py, c * 0.6, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([]);
   }
+}
+
+// Padlock of size s centred on x, y (a hinted switch).
+export function drawPadlock(ctx, x, y, s) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = INK; ctx.lineWidth = Math.max(2.5, s * 0.16);
+  ctx.beginPath(); ctx.arc(x, y - s * 0.12, s * 0.3, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle = GOLD; ctx.lineWidth = Math.max(2.5, s * 0.12);
+  roundRect(ctx, x - s * 0.45, y - s * 0.14, s * 0.9, s * 0.66, s * 0.14); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = INK;
+  ctx.beginPath(); ctx.arc(x, y + s * 0.14, s * 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 // ---- Stations and depots -----------------------------------------------------------
