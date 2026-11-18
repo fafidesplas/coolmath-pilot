@@ -39,6 +39,18 @@ export function iconRestart(ctx, x, y, r, color) {
   ctx.restore();
 }
 
+// Lightbulb drawn in code (no emoji, so it looks the same everywhere).
+export function drawBulb(ctx, x, y, s, lit) {
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(s, s);
+  ctx.lineWidth = 2.5; ctx.strokeStyle = C.yellow; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(0, -4, 9, Math.PI * 0.8, Math.PI * 2.2);
+  ctx.lineTo(4, 9); ctx.lineTo(-4, 9); ctx.closePath();
+  ctx.fillStyle = rgba(C.yellow, lit ? 0.7 : 0.2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4, 12.5); ctx.lineTo(4, 12.5); ctx.moveTo(-2.5, 16); ctx.lineTo(2.5, 16); ctx.stroke();
+  ctx.restore();
+}
+
 export function drawHud(g) {
   const ctx = g.ctx, sim = g.sim, s = sim.s, lv = sim.lv, t = g.t;
   ctx.fillStyle = C.navy;
@@ -102,6 +114,19 @@ export function drawHud(g) {
     draw: (c, b) => { iconRestart(c, b.x + 28, b.y + 24, 10, C.pale); text(c, 'R', b.x + 28, b.y + 46, 12, C.pale, 'center', 900); } });
   g.addButton({ key: 'hud:pause', hud: true, x: 1200, y: 12, w: 56, h: 56, r: 14, action: () => g.pause(true),
     draw: (c, b) => { c.fillStyle = C.pale; c.fillRect(b.x + 20, b.y + 14, 6, 20); c.fillRect(b.x + 31, b.y + 14, 6, 20); text(c, 'P', b.x + 28, b.y + 46, 12, C.pale, 'center', 900); } });
+  // Hint (GDD 7): the bulb appears once hints unlock; it pulses until the first one is used.
+  if (g.hintsAvailable()) {
+    const h = g.hintsFor(), shown = g.hs.shown, left = h.total - shown;
+    const fresh = shown === 0, k = fresh ? 0.5 + 0.5 * Math.sin(t * 5) : 0;
+    const age = g.t - g.hs.unlockT, pop = age < 0.4 ? 1 + (1 - age / 0.4) * 0.5 : 1;
+    g.addButton({ key: 'hud:hint', hud: true, x: 252, y: 12, w: 56, h: 56, r: 14, disabled: left <= 0,
+      action: () => g.showHint(),
+      draw: (c, b) => {
+        if (fresh) { rrect(c, b.x - 4, b.y - 4, b.w + 8, b.h + 8, 17); c.lineWidth = 2.5; c.strokeStyle = rgba(C.yellow, 0.35 + 0.5 * k); c.stroke(); }
+        drawBulb(c, b.x + 28, b.y + 22, 0.9 * pop, fresh);
+        text(c, left > 0 ? `H ${shown + 1}/${h.total}` : `H ${h.total}/${h.total}`, b.x + 28, b.y + 46, 11, C.pale, 'center', 900);
+      } });
+  }
 }
 
 // Bar from 0 to the loop length with a playhead; one lane per echo (GDD 3.6).

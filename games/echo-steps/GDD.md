@@ -1,7 +1,7 @@
 # Echo Steps — Game design document
 
 **Status:** Approved
-**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-10-27
+**Owner:** Fafi · **Reviewed by:** Pao · **Last updated:** 2026-11-17
 
 > Every try leaves a glowing echo that does exactly what you did. Stand on plates, climb on your own head, take a laser hit for your future self: solve each room by teaming up with your past.
 
@@ -254,7 +254,7 @@
 
 ## 7. Progression and retention
 - **Unlocks:** finishing a room unlocks the next. A world unlocks when the previous world's room 12 is finished. No star gates.
-- **Hints:** after **60 s of room time or 8 loops** in a room, a 💡 button appears in the HUD. Hint *k* shows the path of echo *k* of the reference solution as a white dotted path with a "?" ghost walking it on a loop, and where it rests; the last hint shows the live route. Hints are free (no star is lost) and stay visible until the room ends; each one sends `ui:hint`.
+- **Hints:** after **60 s of room time or 8 loops** in a room, a 💡 button appears in the HUD. Hint *k* shows the path of echo *k* of the reference solution as a white dotted path with a "?" ghost walking it on a loop, and where it rests; the last hint shows the live route. Hints are free (no star is lost) and stay visible until the room ends; each one sends `ui:hint`. The 60 s, 8 loops and 3 minutes are counted from entering the room and keep counting through R, so restarting never hides the 💡 or the skip again.
 - **Skip:** after 3 minutes of room time, or once every hint has been shown, the pause menu offers **Skip room**: the next room unlocks, this one shows a ↷ mark and no stars until it is finished. Sends `ui:skip`. Nobody gets stuck behind one puzzle.
 - **Trails (the time-attack reward):** cosmetic trails for the live player; echoes copy the trail's shape in violet. Unlocked by **time stars**: Comet at 6, Pixel at 15, Ribbon at 24, and the **Speed Echo** (a string of quick afterimages) at 30 of 36. No currency. Trails never change the player's cyan, the echoes' violet, dashed outlines or number badges.
 - **Return reasons:** missing echo and time stars on every room tile (with best echoes and best time shown under it), the next trail and its star count on the title, and a replay of your winning loop on the results screen that makes a better solution tempting.
@@ -370,7 +370,7 @@ Counts are sent once per attempt with a value, never one event per action, to ke
 - **Level editor (phase 3, debug only, `?edit`):** paint tiles, place and link objects, set the loop length, slots and pars, play from the editor, record the reference solution, export JSON. It draws the reach envelope from 3.3 (jump, +1 echo, +2 echoes) at the cursor so impossible ledges are seen while drawing.
 - **Save keys:** `cm_echo-steps_save` → `{ v: 1, rooms: { "w1l03": { stars: [1,1,0], echoes: 2, time: 11.4, skipped: false } }, trail: "default", tut: { … } }` and `cm_echo-steps_settings` → `{ v: 1, music: true, sfx: true, paths: true }`. Reads in `try/catch`; broken data resets to defaults. Saved after every room complete and every settings change.
 - **Testing hook:** `window.game` with `screen`, `level`, `score`, `loop` (time in the current loop), `echoes` (count), `start()`, `restart()`, `win()` (debug only), and `replay()` to play the reference solution (debug only).
-- **Debug URL flags:** `?room=w1l03`, `?record`, `?replay`, `?hz=144`, `?edit`, `?forecast` (draws the pre-run for every channel).
+- **Debug URL flags:** `?room=w1l03`, `?record`, `?replay`, `?hz=144`, `?edit`, `?forecast` (draws the pre-run for every channel), `?hints=now` (hints and Skip room available at once, for demos).
 - **Riskiest piece:** the echo model, in feel more than in code: do players read the paths, the ring and the timeline, and do rests, breaks and the rewind make sense? **Prove it first** in phase 2: the three tutorial rooms plus a debug sandbox room with an inverted gate and a switch (to provoke breaks), played cold by someone who hasn't read this document.
 - **Second risk:** glow rendering on a 4 GB Chromebook with five figures, trails, paths and a rewind. Pre-rendered sprites and room layers; test with 4× CPU throttle in the slice.
 - **Acceptance (from the brief):** two new players finish rooms 1–3 and explain what an echo is without being told; checked at the end of phase 2 and again before release.
@@ -399,6 +399,7 @@ Counts are sent once per attempt with a value, never one event per action, to ke
 | GameAnalytics game key and secret | One key per game in a config file | Team | Open |
 
 ## 15. Changelog
+- 2026-11-17 — Hints and skip built. Clarified: the hint and skip thresholds count room time and loops from entering the room and keep counting through R (room time for the time star still resets on R), and shown hints stay through R until the room is finished or left. Added the `?hints=now` debug flag.
 - 2026-11-16 — Lab rooms 7–10 built. Let Go: spawn moved from col 10 to col 8 (2 tiles from the plate) so the echo opens gate ▲ well before you get there; with the spawn at col 10 a 0.25 s late echo left you bumping a shut gate (timing tolerance rule). High Plate: plate at col 5, 17 tiles from its gate (was "15"), gate in a 3-tile corridor. Spawn Step: plate-to-gate distance corrected to 18 tiles (was "13"). Pars from the reference solutions: Let Go 1 echo / 7 s, Two Jobs 1 / 8 s, High Plate 2 / 7 s, Spawn Step 2 / 6 s.
 - 2026-10-27 — Vertical slice build: rooms 1–3 built as data with pars from their reference solutions (echo par 1 / 1 / 2, time par 4 / 5 / 5 s). Resting echoes only land on older echoes (deleting the latest echo can never change an older one). 2-tile time above the ledge corrected to 267 ms (measured with the 120 Hz integration; the other rows match). Room files are `.js` modules exporting the JSON object. Reference solutions come from `tools/make-solutions.mjs` until they can be recorded in a browser. The 0.25 s tolerance test is defined as the live player standing still for 0.25 s after that loop's clock starts. A key still held when a room starts (Enter, Space from the menu) is ignored until released, so confirming a menu never makes an echo.
 - 2026-10-27 — Approved by Pao. Stage moves to `slice`.
