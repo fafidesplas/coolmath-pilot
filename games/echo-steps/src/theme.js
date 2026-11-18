@@ -20,7 +20,7 @@ export const THEMES = [
     id: 'pixel', name: 'Pixel Meadow',
     colors: { navy: '#2B2240', pale: '#FFF7E8', cyan: '#4FB8FF', violet: '#F27BE0', yellow: '#FFC93C', pink: '#E8483B' },
     bg: '#1B1528', dark: '#3A2E4F', overlay: 'rgba(27,21,40,0.62)',
-    font: '"Silkscreen", ' + SYSTEM_FONT, fontFile: 'Silkscreen-Bold.ttf', fontFamily: 'Silkscreen', fontScale: 0.8,
+    font: '"Silkscreen", ' + SYSTEM_FONT, fontFile: 'Silkscreen-Bold.ttf', fontFamily: 'Silkscreen', fontScale: 0.75,
     glow: false, pixelated: true, ui: { radius: 0.25, shadow: 4 },
     images: {
       tiles: 'tilemap_packed.png',

@@ -34,6 +34,8 @@ export class Game {
     this.sound.setEnabled(this.settings.sfx);
     this.sound.musicOn = this.settings.music;
     this.fx = new FX();
+    this.uifx = new FX();      // particles above panels (confetti on Room Complete)
+    this.screenAt = 0;         // time the current screen appeared (intro motion)
     this.input = new Input(code => this.onKey(code));
 
     this.screen = 'title';
@@ -427,6 +429,7 @@ export class Game {
     this.slotShake = Math.max(0, this.slotShake - dt * 3);
     for (let i = 0; i < 4; i++) this.slotPop[i] = Math.max(0, this.slotPop[i] - dt * 3);
     this.fx.update(dt);
+    this.uifx.update(dt);
     this.draw();
     requestAnimationFrame(n => this.frame(n));
   }
@@ -642,6 +645,8 @@ export class Game {
     if (this.screen !== this.lastScreen) {
       if (!(this.lastScreen === 'playing' && this.screen === 'complete')) this.fade = 1;
       this.lastScreen = this.screen;
+      this.screenAt = this.t;
+      if (this.screen !== 'complete') this.uifx.clear();
     }
     if (this.fade > 0) {
       ctx.globalAlpha = Math.min(1, this.fade) ** 2;
@@ -649,6 +654,7 @@ export class Game {
       ctx.globalAlpha = 1;
       this.fade = Math.max(0, this.fade - this.frameDt / 0.3);
     }
+    this.uifx.draw(ctx);
     drawScanlines(ctx);
     const a = this.artToast;
     if (a) {
@@ -714,6 +720,8 @@ export class Game {
     // Logo with two violet echoes trailing behind
     ctx.save();
     ctx.translate(VIEW_W / 2, 140 + Math.sin(t * 1.6) * 3);
+    const intro = easeOutBack(clamp01((t - this.screenAt) / 0.6));   // logo pops in
+    ctx.scale(intro, intro);
     for (let k = 2; k >= 1; k--) {
       ctx.globalAlpha = 0.5 - k * 0.15;
       text(ctx, 'ECHO STEPS', -k * 14 * (1 + Math.sin(t * 2) * 0.15), k * 4, 96, C.violet, 'center', 900);
@@ -1153,7 +1161,16 @@ export class Game {
       if (lit) {
         const q = Math.min(1, (e - at) / 0.25);
         sc = 1 + (1 - q) * 1.2;
-        if (!r.stamped[i]) { r.stamped[i] = true; this.sound.play('star', { i }); this.fx.shake(3, 0.1); }
+        if (!r.stamped[i]) {
+          r.stamped[i] = true; this.sound.play('star', { i }); this.fx.shake(3, 0.1);
+          // confetti from the star, in the style's colors
+          const cx = VIEW_W / 2 - 150 + i * 150, cy = y + 140, cols = [C.yellow, C.cyan, C.violet, C.pink];
+          for (let q = 0; q < 26; q++) {
+            const ang = -Math.PI / 2 + (this.uifx.rnd() - 0.5) * 2.4, sp = 220 + this.uifx.rnd() * 260;
+            this.uifx.spawn({ x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, color: cols[q % 4], type: 'square', life: 0.9 + this.uifx.rnd() * 0.6, size: 4 + this.uifx.rnd() * 4, g: 700 });
+          }
+          if (i === 2 || !r.run[i + 1]) this.uifx.ring(cx, cy, C.yellow, 30, 0.5);
+        }
       }
       const sx = VIEW_W / 2 - 150 + i * 150, sy = y + 140;
       ctx.save(); ctx.translate(sx, sy); ctx.scale(sc, sc);
