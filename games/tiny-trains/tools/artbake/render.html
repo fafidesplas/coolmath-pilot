@@ -1,0 +1,36 @@
+<script type="importmap">{"imports":{"three":"/tooling/node_modules/three/build/three.module.js","three/addons/":"/tooling/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+const L = new GLTFLoader();
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const cache = {};
+async function load(u) { if (!cache[u]) cache[u] = (await L.loadAsync(u)).scene; return cache[u].clone(true); }
+// job: { items: [{url, pos:[x,y,z], rotY, scale}], rect:[x0,z0,x1,z1], px:[w,h], light:{dir:[x,y,z], amb, sun}, flat:bool, tilt: 0 }
+window.render = async (job) => {
+  const scene = new THREE.Scene();
+  const root0 = new THREE.Group(); scene.add(root0); const root = new THREE.Group(); root.rotation.y = job.spin || 0; root0.add(root);
+  if (job.oblique) { root0.matrixAutoUpdate = false; root0.matrix.set(1,0,0,0, 0,1,0,0, 0,-job.oblique,1,0, 0,0,0,1); }
+  for (const it of job.items) {
+    const m = await load(it.url);
+    m.position.set(...(it.pos || [0, 0, 0])); m.rotation.y = it.rotY || 0; if (it.scale) m.scale.setScalar(it.scale);
+    if (job.flat) m.traverse(o => { if (o.isMesh) { const mm = o.material; o.material = new THREE.MeshBasicMaterial({ map: mm.map, color: mm.color, vertexColors: mm.vertexColors, transparent: mm.transparent }); } });
+    root.add(m);
+  }
+  const lt = job.light || {};
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, lt.amb ?? 1.4));
+  const sun = new THREE.DirectionalLight(0xffffff, lt.sun ?? 2.2); sun.position.set(...(lt.dir || [-3, 10, -4])); scene.add(sun);
+  const [x0, z0, x1, z1] = job.rect, [w, h] = job.px;
+  const cam = new THREE.OrthographicCamera(x0, x1, -z0, -z1, 0.01, 100);
+  // looking straight down: screen right = +x, screen down = +z
+  cam.position.set(0, 50, 0); cam.up.set(0, 0, -1); cam.lookAt(0, 0, 0);
+  renderer.setSize(w, h, false); renderer.setPixelRatio(1);
+  renderer.setClearColor(0x000000, 0);
+  renderer.render(scene, cam);
+  return renderer.domElement.toDataURL('image/png');
+};
+window.ready = true;
+</script>

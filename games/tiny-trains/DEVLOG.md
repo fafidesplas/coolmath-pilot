@@ -1,5 +1,12 @@
 # Tiny Trains — devlog
 
+## 2026-11-18 — Art styles from real art packs
+- Replaced the Pixel Town, Storybook Meadow and Night Neon styles (palette and code-drawn variations of the classic art) with styles built from third-party packs. Classic stays first and unchanged.
+- New sprite-kit renderer (`src/render.js`, `kitImages` in `src/theme.js`): track straights and curves, switch branches, ground tiles, scenery and trains come from PNG sprites; trains use a 16-heading atlas per color. Hitboxes, simulation and UI are untouched; stations, depots, levers and shape symbols stay in code.
+- `voxel` (Voxel Railway): Kytric's Voxel Path And Terrain + Voxel Vehicles (CC0), rendered top-down with `tools/artbake`.
+- Previews in `assets/art/previews/`, credits in `assets/CREDITS.md`, list in `art-options.json`.
+- Next: two more pack-based styles.
+
 ## 2026-11-18 — Switchable art styles for the presentation
 - **Four art styles, switchable live** (`src/theme.js`): `?art=classic` (default, unchanged look), `?art=pixel` **Pixel Town**, `?art=meadow` **Storybook Meadow**, `?art=neon` **Night Neon**. Switch with the **Art** pill (title, level select, under the pause panel) or the **A** key on any screen, even mid-level or mid-run. The level, the switches and the run stay as they are. A toast shows the style name. The URL updates without a reload and keeps the other params (`?level=1-7&hints=now&art=meadow`).
 - **What each style changes:** palette (live `let` bindings in `config.js`), font (embedded TTF via `FontFace`, OFL), track look (wooden toy track / sleepers and steel rails / glowing neon rails), board (procedural grass and trees, or the pack's grass tiles and sprites), UI corner radius, trains (steam loco with brass bands in Meadow, glow in Neon) and sound set (Kenney CC0 samples in Pixel and Meadow, decoded after the first click, with the synth as fallback). Pixel Town draws the board into a 1/3-size buffer and scales it up with no smoothing; the HUD stays sharp. Shape symbols are 1.3× there so they stay readable.

@@ -190,7 +190,7 @@ export function buildBoardLayer(level, L, scale) {
   roundRect(ctx, -MAT + 4, -MAT + 8, W, H, 28); ctx.fill();
   ctx.fillStyle = GRASS; ctx.strokeStyle = INK; ctx.lineWidth = 4;
   roundRect(ctx, -MAT, -MAT, W, H, 28 * T.radius); ctx.fill();
-  const tiled = grassTiles(ctx, level, c, W, H);
+  const tiled = T.kit ? kitGround(ctx, level, c, W, H) : grassTiles(ctx, level, c, W, H);
   ctx.strokeStyle = INK; ctx.lineWidth = 4;
   roundRect(ctx, -MAT, -MAT, W, H, 28 * T.radius); ctx.stroke();
   // Checker tint so cells read as a grid
@@ -204,21 +204,23 @@ export function buildBoardLayer(level, L, scale) {
     if (used.has(`${x},${y}`)) continue;
     const r = hash(x, y, 1);
     const cx = (x + 0.3 + hash(x, y, 2) * 0.4) * c, cy = (y + 0.3 + hash(x, y, 3) * 0.4) * c;
-    if (spriteScenery(ctx, x, y, c)) continue;
+    if (T.kit ? kitScenery(ctx, x, y, c) : spriteScenery(ctx, x, y, c)) continue;
     if (r < 0.55) tree(ctx, cx, cy, c * (0.2 + hash(x, y, 4) * 0.08));
     else if (r < 0.8) { tree(ctx, cx - c * 0.15, cy, c * 0.14); tree(ctx, cx + c * 0.15, cy + c * 0.08, c * 0.12); }
     else flowers(ctx, cx, cy, c);
   }
   // Track (not switches): outline pass, bed pass, groove pass so joints merge
   const tiles = level.tiles.filter(t => t.t !== 'switch');
-  for (let layer = 0; layer < 3; layer++) {
+  if (T.kit) {
+    for (const t of tiles) for (const seg of tileSegments(t)) kitSeg(ctx, (t.x + 0.5) * c, (t.y + 0.5) * c, c, seg, 1);
+  } else for (let layer = 0; layer < 3; layer++) {
     for (const t of tiles) {
       const px = (t.x + 0.5) * c, py = (t.y + 0.5) * c;
       for (const seg of tileSegments(t)) strokeSeg(ctx, px, py, c, seg, layer, false);
     }
   }
   // Buffer stops (static)
-  for (const t of level.tiles) if (t.t === 'buffer') bufferStop(ctx, (t.x + 0.5) * c, (t.y + 0.5) * c, c, t.rot);
+  for (const t of level.tiles) if (t.t === 'buffer') (img('buffer') ? kitBuffer : bufferStop)(ctx, (t.x + 0.5) * c, (t.y + 0.5) * c, c, t.rot);
   return cv;
 }
 
@@ -296,6 +298,69 @@ function bufferStop(ctx, px, py, c, rot) {
   ctx.restore();
 }
 
+// ---- Sprite kits (art styles baked from a 3D pack, see theme.js) -------------------------
+// Ground tiles over the whole mat, clipped to its corners.
+function kitGround(ctx, level, c, W, H) {
+  const keys = T.kit.ground.filter(k => img(k));
+  if (!keys.length) return false;
+  ctx.save();
+  roundRect(ctx, -MAT, -MAT, W, H, 28 * T.radius); ctx.clip();
+  for (let y = -1; y <= level.h; y++) for (let x = -1; x <= level.w; x++) {
+    const k = keys[Math.floor(hash(x + 50, y + 50, 7) * keys.length)];
+    ctx.drawImage(img(k), x * c, y * c, c + 0.5, c + 0.5);
+  }
+  ctx.restore();
+  return true;
+}
+
+// Scenery sprites (trees, bushes, stones) in an empty cell: one big or two small.
+function kitScenery(ctx, x, y, c) {
+  const keys = T.kit.scenery.filter(k => img(k));
+  if (!keys.length) return false;
+  const pick = i => img(keys[Math.floor(hash(x, y, 10 + i) * keys.length)]);
+  const put = (im, cx, cy, h) => { const w = h * im.width / im.height; ctx.drawImage(im, cx - w / 2, cy - h * 0.75, w, h); };
+  const k = T.sceneryScale || 1, r = hash(x, y, 1);
+  if (r < 0.5) put(pick(0), (x + 0.5) * c, (y + 0.55) * c, c * 0.95 * k);
+  else { put(pick(1), (x + 0.3) * c, (y + 0.4) * c, c * 0.65 * k); put(pick(2), (x + 0.7) * c, (y + 0.8) * c, c * 0.65 * k); }
+  return true;
+}
+
+// One track segment from the kit: a straight (whole or the half from edge e1 to the
+// middle) or a curve. Sprites cover exactly one cell.
+function kitSeg(ctx, px, py, c, seg, alpha) {
+  const [e1, e2, s0, s1] = seg;
+  let im;
+  if (((e1 - e2) & 3) === 2) im = img(e1 & 1 ? 'track_h' : 'track_v');
+  else im = img('curve' + (((e1 + 1) & 3) === e2 ? e1 : e2));
+  if (!im) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  if (s1 - s0 < 1) {   // half track: keep the half of the cell on the e1 side
+    const hx = DX[e1], hy = DY[e1];
+    ctx.beginPath();
+    ctx.rect(px - c / 2 + (hx > 0 ? c / 2 : 0), py - c / 2 + (hy > 0 ? c / 2 : 0), hx ? c / 2 : c, hy ? c / 2 : c);
+    ctx.clip();
+  }
+  ctx.drawImage(im, px - c / 2, py - c / 2, c, c);
+  ctx.restore();
+}
+
+function kitBuffer(ctx, px, py, c, rot) {
+  const im = img('buffer'), s = c * 0.5;
+  ctx.drawImage(im, px - s / 2, py - s * 0.6, s, s);
+}
+
+// Train sprite: the baked frame nearest to the heading (16 per color), drawn unrotated
+// (the context is already turned to the heading, so undo that first).
+const KIT_ROW = { red: 0, blue: 1, yellow: 2, green: 3 };
+function kitTrain(ctx, color, c, ang, opts) {
+  const im = img('trains'), S = im.height / 4;
+  const i = ((Math.round(ang / (Math.PI / 8)) % 16) + 16) % 16;
+  ctx.rotate(-ang);
+  const d = c * (T.trainScale || 1);
+  ctx.drawImage(im, i * S, KIT_ROW[color] * S, S, S, -d / 2, -d / 2, d, d);
+}
+
 // ---- Switches (dynamic) ------------------------------------------------------------
 // anim: 0..1 position of the lever (0 straight, 1 curved), may overshoot.
 export function drawSwitch(ctx, t, L, set, anim, opts) {
@@ -307,8 +372,10 @@ export function drawSwitch(ctx, t, L, set, anim, opts) {
     ctx.fillStyle = T.neon ? 'rgba(79,240,255,0.14)' : 'rgba(255,255,255,0.35)';
     ctx.beginPath(); ctx.arc(px, py, c * 0.5, 0, Math.PI * 2); ctx.fill();
   }
+  if (T.kit) { kitSeg(ctx, px, py, c, idle, 0.35); kitSeg(ctx, px, py, c, active, 1); } else {
   for (let layer = 0; layer < 3; layer++) strokeSeg(ctx, px, py, c, idle, layer, true);
   for (let layer = 0; layer < 3; layer++) strokeSeg(ctx, px, py, c, active, layer, false);
+  }
   // Arrow on the active branch
   const a = switchArms(t);
   const out = set ? a.curved : a.straight;
@@ -440,6 +507,7 @@ export function drawTrain(ctx, x, y, ang, color, c, opts = {}) {
   ctx.rotate(ang + (opts.tilt || 0));
   ctx.scale(sc * (opts.stretch || 1), sc / (opts.stretch || 1));
   const L = c * 0.66, Wd = c * 0.4;
+  if (T.kit && img('trains')) { kitTrain(ctx, color, c, ang, opts); ctx.restore(); drawTrainSymbol(ctx, x, y, ang, color, c, sc, L, opts); return; }
   if (T.glow) { ctx.shadowColor = col; ctx.shadowBlur = c * 0.25; }
   ctx.fillStyle = 'rgba(46,36,64,0.25)';
   roundRect(ctx, -L / 2 + 3, -Wd / 2 + 5, L, Wd, Wd * 0.35); ctx.fill();
@@ -461,7 +529,11 @@ export function drawTrain(ctx, x, y, ang, color, c, opts = {}) {
   ctx.beginPath(); ctx.arc(L * 0.32, 0, c * 0.035, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
-  // Shape symbol on the roof, kept upright
+  drawTrainSymbol(ctx, x, y, ang, color, c, sc, L, opts);
+}
+
+// Shape symbol on the roof, kept upright
+function drawTrainSymbol(ctx, x, y, ang, color, c, sc, L, opts) {
   ctx.save();
   ctx.globalAlpha = opts.alpha ?? 1;
   const ox = Math.cos(ang) * L * 0.02, oy = Math.sin(ang) * L * 0.02;

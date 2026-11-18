@@ -1,34 +1,16 @@
 # Tiny Trains — art credits
 
-Art styles switch with `?art=<id>`, the **Art** pill (title, level select, pause) or the **A** key. Only the files the game uses are kept in `assets/art/<id>/`, each with its pack's license file. Licenses were checked on each pack's own page on 2026-11-18.
+Art styles switch with `?art=<id>`, the **Art** pill (title, level select, pause) or the **A** key. Every style except classic replaces the track, trains, ground and scenery with art from a third-party pack. Only the files the game uses are kept in `assets/art/<id>/`, each with its pack's license file. Licenses were checked on each pack's own page on 2026-11-18. The list of styles with previews is in `art-options.json`.
+
+The packs are 3D model kits; the PNGs are top-down renders of their models (orthographic camera, slight three-quarter tilt), made with `tools/artbake`. Nothing is redrawn or recolored by hand. Station houses, depots, switch levers, the golden ticket and the HUD stay drawn in code in every style, so the shape symbols and colors read the same everywhere.
 
 ## classic — Classic Toybox
 - Everything drawn in code (palette, shapes, particles) with synthesized WebAudio sounds. No third-party assets.
 
-## pixel — Pixel Town
+## voxel — Voxel Railway
 | Asset | Author | License | Source |
 |---|---|---|---|
-| Tiny Town (grass tiles, trees, bushes, mushrooms: `tiles/tile_00xx.png`) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/tiny-town |
-| Digital Audio (sound effects: `sfx/*.mp3`, converted from OGG) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/digital-audio |
-| Pixelify Sans (font: `PixelifySans.ttf`) | The Pixelify Sans Project Authors (github.com/eifetx/Pixelify-Sans) | SIL Open Font License 1.1 | https://fonts.google.com/specimen/Pixelify+Sans |
+| Voxel Path And Terrain (forest ground tiles, trees, stones, rails, dead end) | Kytric | CC0 1.0 | https://kytric.itch.io/voxel-path-and-terrain |
+| Voxel Vehicles (train-v1 locomotives in red, blue, yellow, green) | Kytric | CC0 1.0 | https://kytric.itch.io/voxel-vehicles |
 
-License files: `art/pixel/License-TinyTown.txt`, `art/pixel/License-DigitalAudio.txt`, `art/pixel/OFL-PixelifySans.txt`.
-
-## meadow — Storybook Meadow
-| Asset | Author | License | Source |
-|---|---|---|---|
-| Medieval RTS (grass tiles, pines, cypresses, bushes, rock: `sprites/*.png`, environment sprites trimmed) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/medieval-rts |
-| Interface Sounds (switch, click, confirmations, glass ding: `sfx/*.mp3`, converted from OGG) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/interface-sounds |
-| Impact Sounds (crash: `sfx/impactWood_heavy_000.mp3`, `sfx/impactPlank_medium_000.mp3`) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
-| Fredoka (font: `Fredoka.ttf`) | The Fredoka Project Authors (github.com/hafontia/Fredoka-One) | SIL Open Font License 1.1 | https://fonts.google.com/specimen/Fredoka |
-
-License files: `art/meadow/License-MedievalRTS.txt`, `art/meadow/License-InterfaceSounds.txt`, `art/meadow/License-ImpactSounds.txt`, `art/meadow/OFL-Fredoka.txt`.
-
-## neon — Night Neon
-| Asset | Author | License | Source |
-|---|---|---|---|
-| Audiowide (font: `Audiowide.ttf`) | Astigmatic (Brian J. Bonislawsky) | SIL Open Font License 1.1 | https://fonts.google.com/specimen/Audiowide |
-
-Everything else (glowing rails, trains, board, sounds) is drawn or synthesized in code. License file: `art/neon/OFL-Audiowide.txt`.
-
-Fonts are embedded as local files (loaded with `FontFace`), not fetched from Google, so the game stays self-contained (STANDARDS.md). Kenney asks for nothing in return; crediting is appreciated, not required.
+Attribution is not required by CC0; credit line used: "Voxel art by Kytric (CC0 1.0)". License file: `art/voxel/License-Kytric.txt`.

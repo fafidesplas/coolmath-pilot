@@ -7,6 +7,19 @@ import { applyPalette, CLASSIC_PALETTE } from './config.js';
 const ART = new URL('../assets/art/', import.meta.url).href;
 const SYS_FONT = '"Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
+// Sprite kits (styles baked from a 3D pack into top-down sprites by tools/artbake):
+// track_h, track_v, curve0..3 (curve r joins edges r and r+1), groundN, scenery
+// sprites, an optional buffer stop and trains.png (16 headings x 4 colors).
+function kitImages(dir, n) {
+  const im = { trains: `${dir}/trains.png`, track_h: `${dir}/track_h.png`, track_v: `${dir}/track_v.png` };
+  for (let r = 0; r < 4; r++) im['curve' + r] = `${dir}/curve${r}.png`;
+  const ground = [], scenery = [];
+  for (let i = 1; i <= (n.ground || 0); i++) { im['ground' + i] = `${dir}/ground${i}.png`; ground.push('ground' + i); }
+  for (const k of ['tree', 'bush', 'stone', 'rock', 'flower']) for (let i = 1; i <= (n[k] || 0); i++) { im[k + i] = `${dir}/${k}${i}.png`; scenery.push(k + i); }
+  if (n.buffer) im.buffer = `${dir}/buffer.png`;
+  return { images: im, ground, scenery };
+}
+
 export const THEMES = [
   {
     id: 'classic', name: 'Classic Toybox',
@@ -14,61 +27,15 @@ export const THEMES = [
     track: 'wood', pixel: 0, radius: 1, outline: 1,
   },
   {
-    id: 'pixel', name: 'Pixel Town',
+    id: 'voxel', name: 'Voxel Railway',
     palette: {
-      ink: '#2B1E2F', cream: '#E9F2D0', wood: '#B7764A',
-      red: '#E0473C', blue: '#3A6FD0', yellow: '#F2C230', green: '#5CB34A',
-      grass: '#8BC34A', grassDark: '#6FA83A', panel: '#D7E5B4',
+      ink: '#26303A', cream: '#EEF3E2', wood: '#7A5A3C',
+      red: '#D23B33', blue: '#2F78D0', yellow: '#E8C21E', green: '#2E9E46',
+      grass: '#1F9A3E', grassDark: '#178535', panel: '#DCE6CF',
     },
-    font: { family: 'Pixelify Sans', file: 'pixel/PixelifySans.ttf', weight: '400 700' },
-    track: 'rail', pixel: 3, radius: 0.3, outline: 1, symbol: 1.3,
-    images: {
-      grass0: 'pixel/tiles/tile_0000.png', grass1: 'pixel/tiles/tile_0001.png', grass2: 'pixel/tiles/tile_0002.png',
-      bush: 'pixel/tiles/tile_0005.png', treeA: 'pixel/tiles/tile_0016.png', treeB: 'pixel/tiles/tile_0015.png',
-      treeC: 'pixel/tiles/tile_0028.png', treeD: 'pixel/tiles/tile_0027.png',
-      shroom: 'pixel/tiles/tile_0029.png',
-    },
-    grassTiles: ['grass0', 'grass0', 'grass1', 'grass2'],
-    scenery: ['treeA', 'treeA', 'treeB', 'treeC', 'treeD', 'bush', 'bush', 'shroom'],
-    sfx: {
-      click: 'pixel/sfx/pepSound1.mp3', pop: 'pixel/sfx/pepSound3.mp3', whistle: 'pixel/sfx/powerUp2.mp3',
-      ding: 'pixel/sfx/twoTone1.mp3', crash: 'pixel/sfx/lowDown.mp3', rewind: 'pixel/sfx/phaserDown1.mp3',
-      star: 'pixel/sfx/highUp.mp3', win: 'pixel/sfx/threeTone1.mp3',
-    },
-  },
-  {
-    id: 'meadow', name: 'Storybook Meadow',
-    palette: {
-      ink: '#3B2A1E', cream: '#F6EED8', wood: '#9A6A3E',
-      red: '#D9533F', blue: '#3C7FB8', yellow: '#F0B537', green: '#5FA35A',
-      grass: '#7DBE5E', grassDark: '#5FA349', panel: '#EADFC2',
-    },
-    font: { family: 'Fredoka', file: 'meadow/Fredoka.ttf', weight: '300 700' },
-    track: 'rail', pixel: 0, radius: 1.4, outline: 0.75, loco: true,
-    images: {
-      grass0: 'meadow/sprites/medievalTile_57.png', grass1: 'meadow/sprites/medievalTile_58.png',
-      cypress: 'meadow/sprites/medievalEnvironment_01.png', pineS: 'meadow/sprites/medievalEnvironment_02.png',
-      pine: 'meadow/sprites/medievalEnvironment_03.png', rock: 'meadow/sprites/medievalEnvironment_07.png',
-      bush: 'meadow/sprites/medievalEnvironment_12.png', berry: 'meadow/sprites/medievalEnvironment_19.png',
-      cypress2: 'meadow/sprites/medievalEnvironment_21.png',
-    },
-    grassTiles: ['grass0', 'grass1'],
-    scenery: ['pine', 'pine', 'cypress', 'pineS', 'cypress2', 'bush', 'berry', 'rock'],
-    sfx: {
-      click: 'meadow/sfx/switch_002.mp3', pop: 'meadow/sfx/click_002.mp3', whistle: 'meadow/sfx/confirmation_001.mp3',
-      ding: 'meadow/sfx/glass_001.mp3', crash: ['meadow/sfx/impactWood_heavy_000.mp3', 'meadow/sfx/impactPlank_medium_000.mp3'],
-      rewind: 'meadow/sfx/minimize_006.mp3', star: 'meadow/sfx/confirmation_002.mp3', win: 'meadow/sfx/confirmation_004.mp3',
-    },
-  },
-  {
-    id: 'neon', name: 'Night Neon',
-    palette: {
-      ink: '#EDEBFF', cream: '#13102A', wood: '#5B4C99',
-      red: '#FF4F6E', blue: '#3FA7FF', yellow: '#FFD23F', green: '#2EE59D',
-      grass: '#1B1739', grassDark: '#262050', panel: '#1D1940', paper: '#2B2558', dark: '#13102A',
-    },
-    font: { family: 'Audiowide', file: 'neon/Audiowide.ttf', weight: '400' },
-    track: 'neon', neon: '#4FF0FF', pixel: 0, radius: 0.6, outline: 1, glow: true,
+    track: 'kit', pixel: 0, radius: 0.4, outline: 1, symbol: 1.15,
+    kit: kitImages('voxel', { ground: 4, tree: 4, stone: 2, buffer: true }),
+    trainScale: 1.45, sceneryScale: 1.0,
   },
 ];
 
@@ -104,6 +71,7 @@ function loadAssets(th) {
   if (th.img) return;
   th.img = {};
   const bump = () => { if (T === th) { artRev++; onChange(); } };
+  if (th.kit && !th.images) th.images = th.kit.images;
   if (th.images && typeof Image !== 'undefined') {
     for (const [k, f] of Object.entries(th.images)) {
       const im = new Image();

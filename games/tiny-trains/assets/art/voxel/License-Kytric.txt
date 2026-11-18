@@ -1,0 +1,11 @@
+Voxel Path And Terrain and Voxel Vehicles by Kytric
+https://kytric.itch.io/voxel-path-and-terrain
+https://kytric.itch.io/voxel-vehicles
+
+License: Creative Commons Zero v1.0 Universal (CC0 1.0)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+From the packs (info.txt): "Voxel Path and Terrain / CC0 / Created by Kytric" and "Voxel Vehicles / CC0 / Created by Kytric".
+From the pack pages: "Free to use in private and commercial projects. You can modify the assets as you want. Credits are welcome but not necessary."
+
+The PNG files here are top-down renders of the pack models (tracks, forest ground, trees, bushes, stones, dead end, train-v1 in four colors), made with tools/artbake.

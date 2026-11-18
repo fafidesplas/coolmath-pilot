@@ -2,33 +2,21 @@
   {
     "id": "classic",
     "name": "Classic Toybox",
-    "description": "The original look: wooden toy track, chunky outlined trains, all drawn in code with synthesized sounds.",
+    "description": "The original look: wooden toy track and chunky outlined trains drawn in code, with synthesized sounds.",
     "pack": "None (procedural, drawn in code)",
+    "author": "Tiny Trains team",
     "license": "Original work",
-    "url": ""
+    "url": "",
+    "preview": "assets/art/previews/classic.png"
   },
   {
-    "id": "pixel",
-    "name": "Pixel Town",
-    "description": "Retro pixel art: the board is rendered at low resolution, Kenney Tiny Town grass and trees, railway track, Pixelify Sans font and chiptune sound effects.",
-    "pack": "Kenney Tiny Town + Kenney Digital Audio + Pixelify Sans (Google Fonts)",
-    "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
-    "url": "https://kenney.nl/assets/tiny-town"
-  },
-  {
-    "id": "meadow",
-    "name": "Storybook Meadow",
-    "description": "Soft storybook countryside: Kenney Medieval RTS grass, pines and rocks, sleepers and steel rails, steam locos with brass bands, Fredoka font and Kenney UI and impact sounds.",
-    "pack": "Kenney Medieval RTS + Kenney Interface Sounds + Kenney Impact Sounds + Fredoka (Google Fonts)",
-    "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
-    "url": "https://kenney.nl/assets/medieval-rts"
-  },
-  {
-    "id": "neon",
-    "name": "Night Neon",
-    "description": "Arcade night look: dark navy board, glowing cyan rails and glowing trains, all drawn in code, Audiowide font, synthesized sounds.",
-    "pack": "None (procedural) + Audiowide (Google Fonts)",
-    "license": "SIL OFL 1.1 (font); everything else original",
-    "url": "https://fonts.google.com/specimen/Audiowide"
+    "id": "voxel",
+    "name": "Voxel Railway",
+    "description": "Chunky voxel blocks: the pack's forest ground, trees, stones, rails, dead end and locomotives, rendered top-down at a three-quarter angle.",
+    "pack": "Voxel Path And Terrain + Voxel Vehicles",
+    "author": "Kytric",
+    "license": "CC0 1.0",
+    "url": "https://kytric.itch.io/voxel-path-and-terrain",
+    "preview": "assets/art/previews/voxel.png"
   }
 ]
