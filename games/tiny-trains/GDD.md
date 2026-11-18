@@ -246,6 +246,7 @@ The selected switch or signal gets a thick ink ring. Nothing depends on hover or
   | `#4DB35E` | Green train and station, grass and trees (Village tint) |
   The golden ticket uses yellow plus a white shine and a star shape, so it reads as different from the yellow train.
 - **Key visuals:** chunky wooden rails on a rounded board with grass edges; trains as rounded wooden engines with a shape symbol on the roof; stations as small houses with colored roofs; switches with a big lever knob; the scenery per world (cottages, barns and hay, city blocks, pines and snow) stays at the edges and never covers the track.
+- **Art style options (for the 2026-11-19 presentation, not decided):** Toybox Flat above stays the default (`?art=classic`). Three alternatives can be switched live to compare: `pixel` (Pixel Town: low-res board, Kenney Tiny Town tiles, railway track, Pixelify Sans), `meadow` (Storybook Meadow: Kenney Medieval RTS scenery, sleepers and steel rails, steam locos, Fredoka) and `neon` (Night Neon: dark board, glowing rails and trains, Audiowide). Shapes, colors per train and every rule stay the same in all of them. Details and licenses: `assets/CREDITS.md`, `art-options.json`.
 - **Juice list:**
   - Switch flip: 120 ms snap with overshoot, lever wiggle, small dust puff.
   - Go: trains squash then stretch as they leave; a puff of steam from each chimney.
@@ -346,6 +347,7 @@ Music: an optional calm ukulele/xylophone-style loop of 30 s, synthesized, off b
 | GameAnalytics keys | One key pair per game in `src/config.js` | Team [confirm] | Open |
 
 ## 15. Changelog
+- 2026-11-18 — Prototype: switchable art styles for the presentation (9). Classic stays the default; nothing in the design changes.
 - 2026-11-17 — Prototype: hints built (3.13, with the details decided while building); the hint button sits beside Go, not in the top bar (8). Lost-in-a-loop runs skip ahead once the board repeats (3.10). Pars and solver results unchanged.
 - 2026-11-16 — Prototype: levels 1-9 and 1-10 built and detailed in 6. 1-9 is 8×4, not 8×5 (the ring and two lines fit in four rows). Its ticket is not a cost choice: skipping the ring and riding it are both 2 flips, so the ring is the whole puzzle. 1-10 uses two red depots and the existing rule that a station takes every train of its color (3.9); no sim change was needed.
 - 2026-11-16 — Prototype: golden ticket built (3.11, 3.12); tickets added to 1-4 (blue's line) and 1-5 (red's long branch); the middle star is Ticket again. Levels 1-6 to 1-8 built and detailed in 6. 1-7 uses a fourth, trailing-only switch for yellow's loop. In 1-8, the ticket could not sit on blue's line (blue would always collect it), so blue's timing makes red's straight branch a head-on and the ticket sits on red's detour.

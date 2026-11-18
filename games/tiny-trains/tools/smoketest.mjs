@@ -267,6 +267,12 @@ ok(loadSave().v === 1, 'a corrupted save resets to defaults');
   tap(120, 676); frames(20);
   ok(D.art === ids[1], `the Art pill on the title switches the style (${D.art})`);
   ok(D.screen === 'title' && !errors.length, 'no runtime errors while switching styles');
+  // Mid-run: switching through every style keeps the run going and ends normally.
+  D.start('1-7'); frames(5); D.go(); frames(40);
+  for (let i = 0; i < ids.length; i++) { key('a'); frames(15); }
+  ok(D.phase === 'run' && D.art === ids[1], `switching styles mid-run keeps the run going (${D.phase}, ${D.art})`);
+  frames(900);
+  ok(D.phase === 'plan' && !errors.length, 'that run still ends and rewinds with no errors');
   await new Promise(r => setTimeout(r, 0));
   ok(!missing.length, `every style image file exists (${missing.length ? missing.join(', ') : 'all found'})`);
 }

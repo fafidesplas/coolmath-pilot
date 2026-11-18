@@ -226,6 +226,8 @@ export function boot(canvas) {
     if (G.index === 2) GA.design('tutorial:done');
     G.result = { stars, flips, par: lv.par, parStar: par, hint: G.hintUsed, first, ticket, hasTicket: !!lv.ticket, bestStars: rec.stars };
     G.screen = 'complete'; G.t = 0; G.starsPlayed = 0;
+    // confetti shower over the results panel
+    for (const [i, col] of ['red', 'blue', 'yellow', 'green'].entries()) emit(FX.CONF, 380 + i * 170, 60, 14, TRAIN_COLORS[col], 1.3);
   }
 
   function retry() { startLevel(G.level); }
@@ -375,6 +377,15 @@ export function boot(canvas) {
   function update(dt) {
     G.time += dt;
     G.artT += dt; G.fadeT += dt;
+    if (G.screen === 'title') {
+      G.titleT = (G.titleT || 0) + dt;
+      G.steamT = (G.steamT || 0) + dt;
+      if (G.steamT > 0.3) {   // puffs from the lead train's chimney on the title oval
+        G.steamT = 0;
+        const a = G.time * 0.7 + 1.0;
+        emit(FX.STEAM, 640 + Math.cos(a) * 360, 342 + Math.sin(a) * 66 - 12, 1, '#fff', 0.5);
+      }
+    } else G.titleT = 0;
     G.ticketT += dt;
     G.hintT += dt;
     G.hintVisT = G.screen === 'playing' && G.hintReady() ? (G.hintVisT || 0) + dt : 0;   // hint button slide-in

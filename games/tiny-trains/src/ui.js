@@ -160,7 +160,10 @@ export function drawTitle(ctx, G) {
     const ch = letters[i];
     const w = (ctx.font = `bold 108px ${FONT}`, ctx.measureText(ch).width);
     if (ch !== ' ') {
-      const bob = Math.sin(G.time * 3 + i * 0.6) * 4;
+      // intro: each letter drops in with a little overshoot, left to right
+      const k = Math.min(1, Math.max(0, ((G.titleT ?? 9) - 0.1 - i * 0.06) / 0.45));
+      const back = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2);
+      const bob = Math.sin(G.time * 3 + i * 0.6) * 4 - (1 - back) * 260;
       outlinedText(ctx, ch, x + w / 2, 150 + bob, 108, cols[ci++ % 4], 12);
     }
     x += w + 4;
