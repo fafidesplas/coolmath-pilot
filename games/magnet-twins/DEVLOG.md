@@ -1,5 +1,12 @@
 # Magnet Twins — devlog
 
+## 2026-11-18 — Art styles from real art packs
+- Feedback: the old styles (pixel, factory, neon) read as recolors of the code art. They are replaced by three styles built on downloaded art packs, all CC0: `?art=bay` Sunset Bay (pixel art: Gum Bot robots by GrafxKid, Mega Bot Areas and Stomper tiles by ansimuz), `?art=lab` Sci-Fi Lab (illustrated: The Robot and the Sci-Fi Platformer Tileset by pzUH / GameArt2D), `?art=yard` Robot Yard (flat vector: Kenney Robot Pack and Platformer Pack Redux). `classic` stays the default.
+- The pack sprites now draw the robots (idle, walk, jump frames, flipped with the facing), solid and metal tiles, spikes, water/acid, crates, gates, the platform slab, the exit door, bolts and, where the pack has one, the checkpoint flag and lock plates. Fields, aim previews, the HUD and menus stay drawn in code with each style's palette and font. Each robot keeps a plus/minus badge so color is never the only cue. Hitboxes and the sim are untouched.
+- New `src/sprites.js` holds the sprite drawers; `src/art.js` describes each style as sprite rects on small sheets in `assets/art/<id>/` (about 0.3, 0.5 and 0.2 MB). The fonts and Kenney sounds from the old styles moved to the new ones. Credits in `assets/CREDITS.md`, list in `art-options.json`, previews (1600x900, level 1-10) in `assets/art/previews/`.
+- Tests: `node tools/arttest.mjs` and `node tools/simtest.mjs` pass. Seen in headless Chromium: level 1-10 in all four styles.
+- Next: pick a direction with Coolmath; then draw the missing pieces (plates, flags) in the chosen pack's style.
+
 ## 2026-11-18 — Art styles for the Coolmath presentation
 - Four looks you can switch live, for comparing in the meeting: `?art=classic` (default, the GDD look), `?art=pixel` (Pixel Workshop), `?art=factory` (Toy Factory), `?art=neon` (Night Neon). The pill at the bottom left or the V key cycles them without a reload and rewrites `?art=` in the URL, keeping the other params (`?level=w1l10&art=neon`). `&pill=0` hides the pill for clean captures. Gameplay and the sim are untouched.
 - Each style changes the palette, font, tiles, background, buttons/panels and sounds. Pixel and Toy Factory use Kenney CC0 sprite packs, and Pixel draws the world at 45% resolution for real pixels. Night Neon is drawn in code with glow, plus an OFL font and Kenney sci-fi sounds. Files are in `assets/art/<id>/`, credits and licenses are in `assets/CREDITS.md`, and the list for the presentation page is `art-options.json`. Total about 600 KB.

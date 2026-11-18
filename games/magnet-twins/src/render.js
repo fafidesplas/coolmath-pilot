@@ -4,7 +4,8 @@ import { T, COLS, ROWS, VIEW_W, HUD_H, COLORS, MAGNET } from './config.js';
 import { TILE, tileAt } from './level.js';
 import { fieldDir } from './magnet.js';
 import { drawHex } from './fx.js';
-import { art, fontSpec, paintTile, paintBackground, crateSprite, blit } from './art.js';
+import { art, fontSpec, paintTile, paintBackground } from './art.js';
+import { drawRobotSprite, drawCrateSprite, drawGateSprite, drawPlateSprite, drawSlabSprite, drawExitSprite, drawFlagSprite, drawBoltSprite } from './sprites.js';
 
 const C = COLORS;
 // The active art style's font stack (live binding, see art.js).
@@ -66,10 +67,10 @@ export function renderTiles(tiles, pixelScale) {
 
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
     const t = tileAt(tiles, x, y), px = x * T, py = y * T;
-    if (t === TILE.SOLID && paintTile(ctx, solid(x, y - 1) ? 'fill' : 'top', px, py)) { sprites = true; continue; }
-    if (t === TILE.METAL && paintTile(ctx, 'metal', px, py)) { sprites = true; continue; }
-    if (t === TILE.SPIKES && paintTile(ctx, 'spikes', px, py)) continue;
-    if (t === TILE.WATER && paintTile(ctx, tileAt(tiles, x, y - 1) === TILE.WATER ? 'water' : 'waterTop', px, py)) continue;
+    if (t === TILE.SOLID && paintTile(ctx, solid(x, y - 1) ? 'fill' : 'top', px, py, x, y)) { sprites = true; continue; }
+    if (t === TILE.METAL && paintTile(ctx, 'metal', px, py, x, y)) { sprites = true; continue; }
+    if (t === TILE.SPIKES && paintTile(ctx, 'spikes', px, py, x, y)) continue;
+    if (t === TILE.WATER && paintTile(ctx, tileAt(tiles, x, y - 1) === TILE.WATER ? 'water' : 'waterTop', px, py, x, y)) continue;
     if (t === TILE.SOLID) {
       ctx.fillStyle = C.tileFill;
       ctx.fillRect(px, py, T, T);
@@ -132,6 +133,7 @@ export function renderTiles(tiles, pixelScale) {
 
 // x, y: bottom center. look: unit-ish vector for the pupils.
 export function drawRobot(ctx, x, y, pol, facing, opt = {}) {
+  if (drawRobotSprite(ctx, x, y, pol, facing, opt)) return;
   const color = pol === 'plus' ? C.plus : C.minus;
   const sx = opt.sx ?? 1, sy = opt.sy ?? 1, t = opt.t ?? 0;
   const W = 38 * sx, H = 36 * sy;
@@ -285,8 +287,7 @@ export function drawAimPreview(ctx, pol, aim, facing, ox, oy, targets, t) {
 // ---- Metal and level objects ----------------------------------------------------
 
 export function drawCrate(ctx, x, y, s = 40) {
-  const spr = crateSprite();
-  if (spr && blit(ctx, spr, x, y, s, s)) return;
+  if (drawCrateSprite(ctx, x, y, s)) return;
   rrect(ctx, x + 1, y + 1, s - 2, s - 2, 5);
   ctx.fillStyle = C.metal; ctx.fill();
   ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
@@ -347,18 +348,21 @@ export function drawPlatform(ctx, p, tiles, x, y, t) {
     ctx.fillRect(cx - 10, p.min - 24, 20, 6); ctx.fillRect(cx - 10, p.max + h + 18, 20, 6);
   }
   // the slab
-  rrect(ctx, x + 1, y + 1, w - 2, h - 2, 7);
-  ctx.fillStyle = C.metal; ctx.fill();
-  ctx.fillStyle = 'rgba(43,34,56,0.18)';
-  ctx.fillRect(x + 4, y + h - 13, w - 8, 9);
-  rrect(ctx, x + 1, y + 1, w - 2, h - 2, 7);
-  ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fillRect(x + 8, y + 5, w - 16, 3);
-  ctx.fillStyle = C.ink;
-  for (const [rx, ry] of [[7, 8], [w - 7, 8], [7, h - 8], [w - 7, h - 8]]) { ctx.beginPath(); ctx.arc(x + rx, y + ry, 2.4, 0, 7); ctx.fill(); }
+  const slab = drawSlabSprite(ctx, x, y, w, h);
+  if (!slab) {
+    rrect(ctx, x + 1, y + 1, w - 2, h - 2, 7);
+    ctx.fillStyle = C.metal; ctx.fill();
+    ctx.fillStyle = 'rgba(43,34,56,0.18)';
+    ctx.fillRect(x + 4, y + h - 13, w - 8, 9);
+    rrect(ctx, x + 1, y + 1, w - 2, h - 2, 7);
+    ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(x + 8, y + 5, w - 16, 3);
+    ctx.fillStyle = C.ink;
+    for (const [rx, ry] of [[7, 8], [w - 7, 8], [7, h - 8], [w - 7, h - 8]]) { ctx.beginPath(); ctx.arc(x + rx, y + ry, 2.4, 0, 7); ctx.fill(); }
+  }
   // axis arrows (shape, not color, says which way it can move)
-  ctx.fillStyle = 'rgba(43,34,56,0.55)';
+  ctx.fillStyle = slab ? 'rgba(255,255,255,0.85)' : 'rgba(43,34,56,0.55)';
   const mx = x + w / 2, my = y + h / 2 + 1;
   ctx.beginPath();
   if (p.rail === 'h') {
@@ -376,6 +380,7 @@ export function drawPlatform(ctx, p, tiles, x, y, t) {
 }
 
 export function drawGate(ctx, g) {
+  if (drawGateSprite(ctx, g)) return;
   // posts
   ctx.fillStyle = C.ink;
   ctx.fillRect(g.x - 4, g.y, 4, g.fullH);
@@ -405,6 +410,7 @@ export function drawPlate(ctx, p, tiles, t) {
   ctx.beginPath(); ctx.moveTo(p.x, top); ctx.lineTo(p.x, p.y - 16); ctx.stroke();
   ctx.setLineDash([]);
 
+  if (drawPlateSprite(ctx, p, t)) return;
   if (p.touched) {
     ctx.fillStyle = 'rgba(255,197,49,0.45)';
     ctx.beginPath(); ctx.arc(p.x, p.y, 24 + Math.sin(t * 20) * 2, 0, 7); ctx.fill();
@@ -432,17 +438,20 @@ export function drawPlate(ctx, p, tiles, t) {
 
 export function drawExit(ctx, e, inside, t, open) {
   const x = e.x + 4, y = e.y, w = e.w - 8, h = e.h;
-  rrect(ctx, x - 4, y - 8, w + 8, h + 8, 10);
-  ctx.fillStyle = C.ink; ctx.fill();
-  ctx.fillStyle = C.exitIn;
-  ctx.fillRect(x, y, w, h);
-  const o = open * (w / 2 - 4);
-  ctx.fillStyle = C.bolt;
-  ctx.fillRect(x, y, w / 2 - o, h);
-  ctx.fillRect(x + w / 2 + o, y, w / 2 - o, h);
-  ctx.strokeStyle = C.ink; ctx.lineWidth = 3;
-  ctx.strokeRect(x, y, w / 2 - o, h);
-  ctx.strokeRect(x + w / 2 + o, y, w / 2 - o, h);
+  const door = drawExitSprite(ctx, e, open);
+  if (!door) {
+    rrect(ctx, x - 4, y - 8, w + 8, h + 8, 10);
+    ctx.fillStyle = C.ink; ctx.fill();
+    ctx.fillStyle = C.exitIn;
+    ctx.fillRect(x, y, w, h);
+    const o = open * (w / 2 - 4);
+    ctx.fillStyle = C.bolt;
+    ctx.fillRect(x, y, w / 2 - o, h);
+    ctx.fillRect(x + w / 2 + o, y, w / 2 - o, h);
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w / 2 - o, h);
+    ctx.strokeRect(x + w / 2 + o, y, w / 2 - o, h);
+  }
   // two lamps: + and −, lit when that robot is inside
   for (let i = 0; i < 2; i++) {
     const lx = x + w * (i ? 0.75 : 0.25), ly = y - 18;
@@ -454,6 +463,7 @@ export function drawExit(ctx, e, inside, t, open) {
     if (!i) { ctx.moveTo(lx, ly - 4); ctx.lineTo(lx, ly + 4); }
     ctx.stroke();
   }
+  if (door) return;
   // little "two robots" sign
   ctx.fillStyle = C.ink;
   ctx.beginPath(); ctx.arc(x + w / 2 - 7, y + 22, 5, 0, 7); ctx.arc(x + w / 2 + 7, y + 22, 5, 0, 7); ctx.fill();
@@ -463,6 +473,7 @@ export function drawExit(ctx, e, inside, t, open) {
 // up to the top, turns yellow and shows a check mark (shape, not only color). raise: 0..~1.1
 // (eased with an overshoot by the caller).
 export function drawFlag(ctx, f, raise, t) {
+  if (drawFlagSprite(ctx, f, raise, t)) return;
   const px = f.x + T / 2, base = f.base, top = base - 74;
   // foot plate and pole
   rrect(ctx, px - 12, base - 7, 24, 7, 3);
@@ -499,6 +510,7 @@ export function drawFlag(ctx, f, raise, t) {
 
 export function drawBolt(ctx, b, t) {
   const bob = Math.sin(t * 3 + b.x) * 3;
+  if (drawBoltSprite(ctx, b.x, b.y + bob, t)) return;
   if (art.style.glow) { ctx.shadowColor = C.bolt; ctx.shadowBlur = 14; }
   drawHex(ctx, b.x, b.y + bob, 12, C.bolt, Math.cos(t * 3 + b.y));
   ctx.shadowBlur = 0;

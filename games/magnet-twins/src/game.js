@@ -6,6 +6,7 @@ import { Input, KEY_LABELS } from './input.js';
 import { Sound } from './audio.js';
 import { FX, drawHex } from './fx.js';
 import { art, applyArt, ART_IDS, styleById, fontSpec } from './art.js';
+import { drawBoltSprite } from './sprites.js';
 import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
@@ -845,7 +846,7 @@ export class Game {
       const sq = this.fx.squash[r.pol];
       drawRobot(ctx, x, y, r.pol, r.facing, {
         sx: sq.sx, sy: sq.sy, t, look, power: r.power,
-        walk: r.grounded && Math.abs(r.vx) > 20, blink: (t * 0.7 + i * 1.7) % 4 < 0.1,
+        walk: r.grounded && Math.abs(r.vx) > 20, air: !r.grounded && !r.riding, blink: (t * 0.7 + i * 1.7) % 4 < 0.1,
       });
       if (this.mode === 'solo' && sim.active === i && !sim.done) {
         const ay = y - 66 + Math.sin(t * 6) * 3;
@@ -899,8 +900,10 @@ export class Game {
 
     for (let i = 0; i < 3; i++) {
       const s = this.boltSlot(i);
-      if (i < sim.boltCount) drawHex(ctx, s.x, s.y, 14, C.bolt);
-      else { ctx.globalAlpha = 0.35; drawHex(ctx, s.x, s.y, 14, C.dim); ctx.globalAlpha = 1; }
+      const got = i < sim.boltCount;
+      if (!got) ctx.globalAlpha = 0.35;
+      if (!drawBoltSprite(ctx, s.x, s.y, 0)) drawHex(ctx, s.x, s.y, 14, got ? C.bolt : C.dim);
+      ctx.globalAlpha = 1;
     }
 
     const par = this.level.par[this.mode];

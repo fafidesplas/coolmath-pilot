@@ -1,0 +1,9 @@
+Gum Bot sprites
+by GrafxKid
+https://opengameart.org/content/gum-bot-sprites
+
+License: Creative Commons Zero (CC0 1.0), as stated on the pack page (checked 2026-11-18).
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Used here: the blue walking, blinking and jumping frames, and a red copy made by swapping the
+blue palette for the pack's own red Gum Bot colors.

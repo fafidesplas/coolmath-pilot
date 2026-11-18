@@ -1,0 +1,11 @@
+The Robot - Free Sprite
+Free Sci-Fi Platformer Game Tileset
+by pzUH (GameArt2D.com)
+https://opengameart.org/content/the-robot-free-sprite
+https://opengameart.org/content/free-sci-fi-platformer-game-tileset
+
+License: Creative Commons Zero (CC0 1.0), as stated on both pack pages (checked 2026-11-18).
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Used here: robot idle, run and jump frames (scaled down, the yellow armor recolored red for Plus
+and blue for Minus) and tiles and objects from the tileset (scaled to 80 px).
