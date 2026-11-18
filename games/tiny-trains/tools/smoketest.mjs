@@ -107,17 +107,67 @@ key('Enter'); frames(5);
 ok(G.screen === 'levels', 'Next after 1-10 (the last level) opens the level select');
 key('Escape'); frames(2);
 
-// 1-9 with the start setting: both trains circle the ring until the tick limit (lost),
-// then the game rewinds to planning.
+// 1-9 with the start setting: both trains circle the ring. Once the board repeats
+// (tick 12), the rest of the run to the tick limit (24) plays 5× fast, then it ends
+// lost and the game rewinds to planning.
 G.start('1-9'); frames(3);
 const gaBefore = gaLog.length;
 key(' '); frames(5);
 const { findLevel } = await import('../levels/index.js');
-frames(Math.ceil(findLevel('1-9').tickLimit * 450 / 16) - 40);   // 450 ms ticks at 1×
-ok(G.phase === 'run' && !errors.length, '1-9: the trains are still going round just before the tick limit');
+const { loopTick } = await import('../src/solver.js');
+const { run: runSim, defaultSetup: defSetup } = await import('../src/sim.js');
+const L9 = findLevel('1-9'), loop9 = loopTick(runSim(L9, defSetup(L9)));
+frames(Math.floor(loop9 * 450 / 16) - 10);   // just before the loop is detected, at 1×
+ok(G.phase === 'run' && !G.looping && !errors.length, `1-9: the first ${loop9} ticks of the loop play at normal speed`);
+frames(20);
+ok(G.phase === 'run' && G.looping, '1-9: then the run skips ahead ("Going round in circles")');
+let lostMs = (loop9 * 450) + 10 * 16;
+while (G.phase === 'run' && lostMs < 20000) { frames(1); lostMs += 16; }
+ok(G.phase === 'crash' && lostMs < 7000, `1-9: the lost run now ends after ${(lostMs / 1000).toFixed(1)} s (was ${(L9.tickLimit * 0.45).toFixed(1)} s)`);
 frames(400);
-ok(G.phase === 'plan' && gaLog.slice(gaBefore).some(l => l.includes('level:crash:lost')) && !errors.length,
-  '1-9: the start setting ends lost in a loop (level:crash:lost) and rewinds to planning');
+ok(G.phase === 'plan' && gaLog.slice(gaBefore).some(l => l.includes(`level:crash:lost`) && l.includes(String(L9.tickLimit))) && !errors.length,
+  '1-9: the start setting still ends lost at the tick limit (level:crash:lost, tick 24) and rewinds to planning');
+
+// ---- Hints (GDD 3.13) -----------------------------------------------------------------
+{
+  const { ticketSolutions } = await import('../src/solver.js');
+  const { flipCount } = await import('../src/sim.js');
+  const L = findLevel('1-7');
+  G.start('1-7'); frames(3);
+  ok(!G.hintVisible, '1-7: no hint button on a fresh level');
+  key(' '); frames(500);
+  ok(G.phase === 'plan' && G.fails === 1 && !G.hintVisible, '1-7: still no hint button after 1 failed run');
+  key('h'); frames(2);
+  ok(Object.keys(G.locked).length === 0 && !G.hintUsed, '1-7: H does nothing before the button shows');
+  key(' '); frames(500);
+  ok(G.phase === 'plan' && G.fails === 2 && G.hintVisible, '1-7: the hint button shows after 2 failed runs');
+  frames(30);   // let it slide in
+  const before = G.switches, gaAt = gaLog.length;
+  tap(884 + 80, 642 + 33); frames(5);   // the Hint button beside GO
+  const locked = G.locked, keys = Object.keys(locked), after = G.switches;
+  const changed = Object.keys(after).filter(k => after[k] !== before[k]);
+  ok(keys.length === 1 && changed.length === 1 && changed[0] === keys[0] && after[keys[0]] === locked[keys[0]],
+    `1-7: tapping Hint sets and padlocks exactly one switch (${keys[0]} → ${locked[keys[0]]})`);
+  const sols = ticketSolutions(L);
+  ok(sols.some(s => s.switches[keys[0]] === locked[keys[0]]) && before[keys[0]] !== locked[keys[0]],
+    '1-7: the hint fixes a wrong switch to its setting in a solution that wins with the ticket');
+  ok(gaLog.slice(gaAt).some(l => l === 'design ui:hint = 2'), '1-7: ui:hint is sent with the fails before the hint (2)');
+  ok(!G.hintVisible, '1-7: the button hides again until 2 more failed runs');
+  G.flip(+keys[0].split(',')[0], +keys[0].split(',')[1]); frames(2);
+  ok(G.switches[keys[0]] === locked[keys[0]], '1-7: a padlocked switch cannot be flipped');
+  key('r'); frames(2);
+  ok(G.switches[keys[0]] === locked[keys[0]], '1-7: Reset keeps the hinted switch');
+  // Finish with a par-flip ticket solution that agrees with the hint: the par star is off.
+  const target = sols.filter(s => s.switches[keys[0]] === locked[keys[0]]).sort((a, b) => flipCount(L, a) - flipCount(L, b))[0];
+  for (const k in target.switches) if (G.switches[k] !== target.switches[k]) G.flip(+k.split(',')[0], +k.split(',')[1]);
+  key(' '); frames(800);
+  const R = G.result;
+  ok(G.screen === 'complete' && R && R.flips <= R.par && !R.parStar && G.score === 2,
+    `1-7: a win after a hint with ${R && R.flips} flips (par ${L.par}) earns ${G.score} stars: no par star`);
+  frames(150);
+  key('r'); frames(5);   // Retry: a fresh visit
+  ok(G.screen === 'playing' && !G.hintUsed && Object.keys(G.locked).length === 0 && !G.hintVisible, '1-7: Retry starts clean (no padlock, no hint button)');
+}
 
 // Pause, menu, level select, sound toggle, fast-forward, ?level param path
 G.start('1-5'); frames(2);
@@ -144,6 +194,21 @@ ok(saved.v === 1 && Object.keys(saved.levels).length === G.levels.length, `save 
 store['cm_tiny-trains_save'] = '{broken';
 const { loadSave } = await import('../src/save.js');
 ok(loadSave().v === 1, 'a corrupted save resets to defaults');
+
+// ?hints=now (presenter demo): a second boot with the flag shows the hint at once.
+{
+  const urls = [];
+  globalThis.location = { search: '?level=1-3&hints=now' };
+  globalThis.history = { replaceState(a, b, u) { urls.push(u); } };
+  boot(mkCanvas());
+  const D = globalThis.game;
+  frames(5);
+  ok(D.level === 'world01:level03' && D.fails === 0 && D.hintVisible, '?hints=now: the hint button shows with no failed runs');
+  ok(urls.at(-1) === '?level=world01:level03&hints=now', `?hints=now survives the URL update (${urls.at(-1)})`);
+  D.hint(); frames(3);
+  ok(Object.keys(D.locked).length === 1 && D.hintUsed, '?hints=now: a hint padlocks one switch');
+  ok(!errors.length, 'no runtime errors with the demo flag');
+}
 
 if (errors.length) for (const e of errors) origLog(e);
 origLog(`\n${passed} passed, ${failed} failed`);

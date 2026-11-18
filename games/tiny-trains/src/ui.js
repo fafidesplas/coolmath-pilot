@@ -177,8 +177,54 @@ export function drawHUD(ctx, G) {
     disabled: !(G.phase === 'plan' || running),
   });
   if (running) button(ctx, G, 'fast', 976, 642, 66, 66, '', { color: G.fast ? TRAIN_COLORS.blue : '#FFFFFF', icon: iconFast(G.fast) });
-  if (G.level.tip && G.phase === 'plan') text(ctx, G.level.tip, 40, 676, 22, mix(INK, CREAM, 0.2), 'left', 'bold');
+
+  // Hint button (GDD 3.13): slides up beside GO once it is earned.
+  const hint = G.hintReady();
+  if (hint) {
+    const k = ease(G.hintVisT / 0.3);
+    const wob = G.hintUsed ? 0 : Math.sin(G.time * 5) * 2 * Math.max(0, Math.sin(G.time * 1.3));
+    button(ctx, G, 'hint', 884, 642 + (1 - k) * 90 + wob, 160, 66, '', { color: TRAIN_COLORS.yellow, r: 22, icon: iconHint });
+  }
+  // Bottom line: the hint message for a few seconds after a hint, the loop notice while a
+  // looping run fast-forwards, otherwise the level tip.
+  const tipW = hint ? 820 : 1000;
+  if (G.phase === 'plan' && G.hintMsg && G.hintT < 5) {
+    const a = Math.min(1, G.hintT / 0.2);
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = TRAIN_COLORS.yellow; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+    roundRect(ctx, 30, 652, Math.min(tipW + 10, 700), 48, 24); ctx.fill(); ctx.stroke();
+    iconBulb(ctx, 58, 676, 0.8);
+    lineText(ctx, G.hintMsg, 82, 677, 22, INK, Math.min(tipW, 640));
+    ctx.restore();
+  } else if (running && G.loopAt >= 0 && G.pos >= G.loopAt) {
+    lineText(ctx, 'Going round in circles… skipping ahead', 40, 676, 22, mix(INK, CREAM, 0.2), tipW);
+  } else if (G.level.tip && G.phase === 'plan') {
+    lineText(ctx, G.level.tip, 40, 676, 22, mix(INK, CREAM, 0.2), tipW);
+  }
 }
+
+function lineText(ctx, s, x, y, size, color, maxW) {
+  ctx.font = `bold ${size}px ${FONT}`;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = color;
+  ctx.fillText(s, x, y, maxW);
+}
+
+// Light bulb: round glass, two filament lines, a ribbed base.
+function iconBulb(ctx, x, y, s = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(0, -5, 12, Math.PI * 0.8, Math.PI * 2.2); ctx.lineTo(5, 10); ctx.lineTo(-5, 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4, 2); ctx.lineTo(0, -4); ctx.lineTo(4, 2); ctx.stroke();
+  ctx.fillStyle = mix(INK, CREAM, 0.35);
+  roundRect(ctx, -6, 10, 12, 8, 3); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+const iconHint = (ctx, x, y) => {
+  iconBulb(ctx, x - 40, y - 2, 1);
+  text(ctx, 'Hint', x + 12, y + 1, 28, INK);
+  text(ctx, 'H', x + 58, y + 18, 13, mix(INK, CREAM, 0.35));
+};
 
 // Tutorial hand (level 1-1): points at the switch, then at Go.
 export function drawHand(ctx, x, y, t) {
@@ -230,8 +276,8 @@ export function drawComplete(ctx, G) {
   ctx.fillStyle = CREAM; ctx.strokeStyle = INK; ctx.lineWidth = 5;
   roundRect(ctx, 350, py, 580, 470, 32); ctx.fill(); ctx.stroke();
   outlinedText(ctx, 'All aboard!', 640, py + 60, 54, TRAIN_COLORS.yellow, 10);
-  const labels = ['Home', 'Ticket', 'Par'];
-  const earned = [true, R.ticket, R.flips <= R.par];
+  const labels = ['Home', 'Ticket', R.hint ? 'Par (hint used)' : 'Par'];
+  const earned = [true, R.ticket, R.parStar];
   for (let i = 0; i < 3; i++) {
     const x = 640 + (i - 1) * 140, y = py + 160;
     const at = 0.45 + i * 0.35;

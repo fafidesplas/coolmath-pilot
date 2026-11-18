@@ -6,6 +6,8 @@ export const BOARD_AREA = { x: 40, y: 92, w: 1200, h: 536 };
 export const CELL_MIN = 72, CELL_MAX = 112;
 
 export const TICK_S = 0.45;          // 1× tick; 2× fast-forward halves it
+export const LOOP_TICK_S = 0.09;     // once the board repeats (the run can only end lost), play the rest 5× fast
+export const HINT_FAILS = 2;         // failed runs before the hint button shows (GDD 3.13)
 export const CRASH_HOLD_S = 1.2;     // crash shown before rewind (tap to skip)
 export const REWIND_S = 0.4;
 export const WIN_HOLD_S = 0.9;       // after the last arrival, before the results panel

@@ -1,8 +1,9 @@
 // Game states (GDD 3, 8): title → levels → playing (plan ⇄ run → crash → rewind | win) → complete.
 import { run, ticketStar, defaultSetup, flipCount, switchTiles, cellKey, buildBoard } from './sim.js';
 import { opp } from './track.js';
+import { pickHint, loopTick } from './solver.js';
 import {
-  VIEW_W, VIEW_H, TICK_S, CRASH_HOLD_S, REWIND_S, WIN_HOLD_S, CREAM, INK, TRAIN_COLORS, mix,
+  VIEW_W, VIEW_H, TICK_S, LOOP_TICK_S, CRASH_HOLD_S, REWIND_S, WIN_HOLD_S, HINT_FAILS, CREAM, INK, TRAIN_COLORS, mix,
 } from './config.js';
 import {
   computeLayout, buildBoardLayer, drawSwitch, drawStation, drawDepot, drawTrain, pathPoint,
@@ -30,6 +31,13 @@ export function boot(canvas) {
     res: null, pos: 0, done: 0, arrivals: 0,
     swAnim: {}, swVel: {}, swPulse: {}, stBounce: {}, shake: 0,
     result: null, starsPlayed: 0, ticketGot: false, ticketT: 0, pressId: null, flippedOnce: false, crashAt: null,
+    // Hints (GDD 3.13). locked = { "x,y": value }: switches set and padlocked by hints this visit.
+    // ?hints=now (presenter demo) shows the button from the first plan, without failing twice.
+    demoHints: new URLSearchParams(location.search).get('hints') === 'now',
+    locked: {}, hintUsed: false, hintFails: 0, hintT: 9, hintMsg: null,
+    loopAt: -1,   // tick from which this run's board repeats (it can only end lost), or -1
+    // The button shows in planning after HINT_FAILS failed runs since the last hint.
+    hintReady() { return G.phase === 'plan' && !G.paused && (G.demoHints || G.fails - G.hintFails >= HINT_FAILS); },
     flips() { return flipCount(G.level, G.setup); },
     isOpen(i) { return i <= furthest() + 2 || !!G.save.levels[LEVELS[i]?.id]; },
     nextIndex() { const i = LEVELS.findIndex(l => !G.save.levels[l.id]); return i; },
@@ -58,15 +66,17 @@ export function boot(canvas) {
     for (const t of G.switches) { const k = cellKey(t.x, t.y); G.swAnim[k] = G.setup.switches[k]; G.swVel[k] = 0; G.swPulse[k] = 9; }
     G.phase = 'plan'; G.paused = false; G.runs = 0; G.fails = 0; G.sel = -1; G.kb = false; G.fast = false;
     G.res = null; G.result = null; G.flippedOnce = false; G.ticketGot = false; G.ticketT = 0;
+    G.locked = {}; G.hintUsed = false; G.hintFails = 0; G.hintT = 9; G.hintMsg = null; G.loopAt = -1;
     clearParticles();
     G.screen = 'playing';
     if (idx === 0) GA.design('tutorial:step01');
-    try { history.replaceState(null, '', `?level=${level.id}`); } catch { /* file:// */ }
+    try { history.replaceState(null, '', `?level=${level.id}${G.demoHints ? '&hints=now' : ''}`); } catch { /* file:// */ }
   }
 
   function flip(t) {
     if (G.phase !== 'plan' || G.paused) return;
     const k = cellKey(t.x, t.y);
+    if (k in G.locked) { G.swPulse[k] = 0; sfx.pop(); return; }   // padlocked by a hint: wiggle, no flip
     G.setup.switches[k] ^= 1;
     G.swPulse[k] = 0;
     sfx.click(G.setup.switches[k]);
@@ -77,17 +87,45 @@ export function boot(canvas) {
   }
 
   function resetSwitches() {
-    if (G.phase !== 'plan' || G.flips() === 0) return;
-    G.setup = defaultSetup(G.level);
+    if (G.phase !== 'plan' || G.flips() === hintFlips()) return;
+    G.setup = { switches: { ...defaultSetup(G.level).switches, ...G.locked } };   // hinted switches stay set
     for (const t of G.switches) G.swPulse[cellKey(t.x, t.y)] = 0;
     sfx.pop();
     GA.design('ui:restart');
+  }
+
+  // Flips that hints forced (Reset keeps them).
+  function hintFlips() {
+    const d = defaultSetup(G.level).switches;
+    return Object.keys(G.locked).filter(k => G.locked[k] !== d[k]).length;
+  }
+
+  // Hint (GDD 3.13): set and padlock one switch of the ticket solution closest to the
+  // player's setup: the wrong one a train reaches first. No par star for the rest of
+  // this visit. Each further hint needs HINT_FAILS more failed runs.
+  function useHint() {
+    if (G.screen !== 'playing' || !G.hintReady()) return;
+    const h = pickHint(G.level, G.setup, G.locked);
+    G.hintT = 0;
+    if (!h) { G.hintMsg = 'Your switches already work. Press GO!'; sfx.pop(); return; }
+    GA.design('ui:hint', G.fails);
+    G.locked[h.key] = h.value;
+    G.setup.switches[h.key] = h.value;
+    G.swPulse[h.key] = 0;
+    G.hintUsed = true;
+    G.hintFails = G.fails;
+    G.hintMsg = 'The padlocked switch is set right. No par star now.';
+    G.sel = G.switches.findIndex(t => cellKey(t.x, t.y) === h.key);
+    const c = G.L.cell, t = G.switches[G.sel];
+    emit(FX.STAR, G.L.ox + (t.x + 0.5) * c, G.L.oy + (t.y + 0.5) * c, 10, GOLD, 1);
+    sfx.click(h.value); sfx.star(1);
   }
 
   function go() {
     if (G.paused) return;
     if (G.phase === 'plan') {
       G.res = run(G.level, G.setup);
+      G.loopAt = loopTick(G.res);   // the board repeats: the run can only end lost, so play the rest fast
       G.runs++;
       G.pos = 0; G.done = 0; G.arrivals = 0;
       G.ticketGot = false; G.ticketT = 0;
@@ -165,7 +203,8 @@ export function boot(canvas) {
     const lv = G.level;
     const flips = G.flips(), first = G.runs === 1;
     const ticket = ticketStar(lv, G.res);
-    const stars = 1 + (ticket ? 1 : 0) + (flips <= lv.par ? 1 : 0);
+    const par = flips <= lv.par && !G.hintUsed;   // a hint costs the par star (GDD 3.13)
+    const stars = 1 + (ticket ? 1 : 0) + (par ? 1 : 0);
     const rec = G.save.levels[lv.id] || { stars: 0, bestFlips: 99 };
     rec.stars = Math.max(rec.stars, stars);
     rec.bestFlips = Math.min(rec.bestFlips, flips);
@@ -175,7 +214,7 @@ export function boot(canvas) {
     GA.design('level:runs', G.runs);
     if (first) GA.design('level:perfect');
     if (G.index === 2) GA.design('tutorial:done');
-    G.result = { stars, flips, par: lv.par, first, ticket, hasTicket: !!lv.ticket, bestStars: rec.stars };
+    G.result = { stars, flips, par: lv.par, parStar: par, hint: G.hintUsed, first, ticket, hasTicket: !!lv.ticket, bestStars: rec.stars };
     G.screen = 'complete'; G.t = 0; G.starsPlayed = 0;
   }
 
@@ -214,6 +253,7 @@ export function boot(canvas) {
     else if (id === 'go') go();
     else if (id === 'fast') toggleFast();
     else if (id === 'reset') resetSwitches();
+    else if (id === 'hint') useHint();
     else if (id === 'retry') retry();
     else if (id === 'next') next();
   }
@@ -290,6 +330,7 @@ export function boot(canvas) {
     if (k === ' ') { go(); return; }
     if (k === 'r' || k === 'R') { if (G.phase === 'run') beginRewind(); else resetSwitches(); return; }
     if (k === 'f' || k === 'F') { toggleFast(); return; }
+    if (k === 'h' || k === 'H') { useHint(); return; }
     if (k === 'Tab' && G.switches.length) {
       G.kb = true;
       const n = G.switches.length;
@@ -306,12 +347,14 @@ export function boot(canvas) {
   function update(dt) {
     G.time += dt;
     G.ticketT += dt;
+    G.hintT += dt;
+    G.hintVisT = G.screen === 'playing' && G.hintReady() ? (G.hintVisT || 0) + dt : 0;   // hint button slide-in
     updateParticles(dt);
     G.shake = Math.max(0, G.shake - dt);
     if (G.screen === 'complete') {
       G.t += dt;
       const R = G.result;
-      const earned = [true, R.ticket, R.flips <= R.par];
+      const earned = [true, R.ticket, R.parStar];
       while (G.starsPlayed < 3 && G.t > 0.45 + G.starsPlayed * 0.35) {
         if (earned[G.starsPlayed]) {
           sfx.star(G.starsPlayed);
@@ -336,7 +379,8 @@ export function boot(canvas) {
     if (G.paused) return;
     if (G.phase === 'run') {
       const last = G.res.frames.length - 1;
-      G.pos = Math.min(last, G.pos + dt / (TICK_S * (G.fast ? 0.5 : 1)));
+      const looping = G.loopAt >= 0 && G.pos >= G.loopAt;
+      G.pos = Math.min(last, G.pos + dt / (looping ? LOOP_TICK_S : TICK_S * (G.fast ? 0.5 : 1)));
       while (G.done < Math.floor(G.pos)) { G.done++; onFrame(G.done); if (G.phase !== 'run') break; }
     } else if (G.phase === 'crash') {
       G.t += dt;
@@ -401,6 +445,7 @@ export function boot(canvas) {
       const key = cellKey(t.x, t.y);
       drawSwitch(ctx, t, L, G.setup.switches[key], G.swAnim[key], {
         interactive: plan, selected: G.kb && G.sel === i && plan, pulse: G.swPulse[key],
+        locked: key in G.locked, time: G.time,
       });
     });
     // golden ticket: on its cell until a train collects it this run; pops away, comes back on rewind
@@ -497,6 +542,13 @@ export function boot(canvas) {
     get score() { return G.result ? G.result.stars : 0; },
     get flips() { return G.level ? G.flips() : 0; },
     get switches() { return G.setup ? { ...G.setup.switches } : {}; },
+    get fails() { return G.fails; },
+    get hintVisible() { return G.screen === 'playing' && G.hintReady(); },
+    get hintUsed() { return G.hintUsed; },
+    get locked() { return { ...G.locked }; },
+    get looping() { return G.phase === 'run' && G.loopAt >= 0 && G.pos >= G.loopAt; },
+    get result() { return G.result ? { ...G.result } : null; },
+    hint() { useHint(); },
     levels: ALL_LEVELS.map(l => l.id),
     start(ref) { const l = findLevel(String(ref ?? '1-1')) || LEVELS[0]; startLevel(l); },
     restart() { if (G.level) retry(); },
@@ -507,6 +559,7 @@ export function boot(canvas) {
       if (!G.level) startLevel(LEVELS[0]);
       if (G.phase !== 'plan') return;
       G.setup = { switches: { ...defaultSetup(G.level).switches, ...G.level.solution.switches } };
+      G.locked = {}; G.hintUsed = false;   // win() is always the clean reference run
       go();
     },
   };
