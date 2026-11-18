@@ -168,9 +168,11 @@ main, .top { position: relative; z-index: 2; }
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 40px 120px -30px var(--a1), 0 30px 80px -40px var(--a2);
   isolation: isolate;
 }
-.screen::before {
-  content: ""; position: absolute; inset: -2px; z-index: -1; border-radius: inherit;
-  background: conic-gradient(from var(--spin, 0deg), var(--a1), var(--a2), var(--a1));
+.screen::after {
+  content: ""; position: absolute; inset: 0; z-index: 4; border-radius: inherit; padding: 3px; pointer-events: none;
+  background: conic-gradient(from var(--spin, 0deg), var(--a1), transparent 30%, var(--a2) 50%, transparent 80%, var(--a1));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
   animation: spin 6s linear infinite;
 }
 @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
