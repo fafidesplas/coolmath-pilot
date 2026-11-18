@@ -4,7 +4,7 @@
 import { DX, DY, opp, switchArms } from './track.js';
 import {
   INK, CREAM, WOOD, WOOD_LIGHT, WOOD_DARK, GRASS, GRASS_DARK, GREEN, TRAIN_COLORS, TRAIN_SHAPES,
-  BOARD_AREA, CELL_MIN, CELL_MAX, mix, GOLD,
+  BOARD_AREA, CELL_MIN, CELL_MAX, mix, GOLD, PAPER,
 } from './config.js';
 import { T, img } from './theme.js';
 export { GOLD };
@@ -65,6 +65,7 @@ export function tileSegments(t) {
 // Wooden toy track: ink outline, wood bed, two grooves. `layer` 0 = outline, 1 = bed, 2 = grooves.
 function strokeSeg(ctx, px, py, cell, seg, layer, faded) {
   if (T.track === 'rail') { railSeg(ctx, px, py, cell, seg, layer, faded); return; }
+  if (T.track === 'neon') { neonSeg(ctx, px, py, cell, seg, layer, faded); return; }
   const [e1, e2, s0, s1] = seg;
   ctx.lineCap = 'butt';
   if (layer === 0) {
@@ -116,6 +117,59 @@ function railSeg(ctx, px, py, cell, seg, layer, faded) {
       ctx.strokeStyle = INK; ctx.lineWidth = Math.max(3, cell * 0.06); ctx.stroke();
       ctx.strokeStyle = RAIL; ctx.lineWidth = Math.max(1.5, cell * 0.03); ctx.stroke();
     }
+  }
+  ctx.restore();
+}
+
+// Neon track (art style 'neon'): a dark bed, faint ties and two glowing rails.
+function neonSeg(ctx, px, py, cell, seg, layer, faded) {
+  const [e1, e2, s0, s1] = seg;
+  ctx.save();
+  ctx.lineCap = 'butt';
+  if (faded) ctx.globalAlpha = 0.3;
+  if (layer === 0) {
+    ctx.strokeStyle = mix(CREAM, INK, 0.1);
+    ctx.lineWidth = cell * 0.44;
+    ctx.beginPath(); segPath(ctx, px, py, cell, e1, e2, s0, s1, 0); ctx.stroke();
+  } else if (layer === 1) {
+    ctx.strokeStyle = mix(CREAM, T.neon, 0.25); ctx.lineWidth = Math.max(1, cell * 0.02);
+    const n = Math.max(1, Math.round((s1 - s0) * 4));
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      pathPoint(e1, e2, s0 + (s1 - s0) * ((i + 0.5) / n), P);
+      const nx = -Math.sin(P.a) * 0.2, ny = Math.cos(P.a) * 0.2;
+      ctx.moveTo(px + (P.x - nx) * cell, py + (P.y - ny) * cell); ctx.lineTo(px + (P.x + nx) * cell, py + (P.y + ny) * cell);
+    }
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = T.neon; ctx.lineWidth = Math.max(2, cell * 0.035);
+    if (!faded) { ctx.shadowColor = T.neon; ctx.shadowBlur = cell * 0.12; }
+    ctx.beginPath();
+    segPath(ctx, px, py, cell, e1, e2, s0, s1, -0.12);
+    segPath(ctx, px, py, cell, e1, e2, s0, s1, 0.12);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Oval track for the title screen, in the current style's track look.
+export function ovalTrack(ctx, cx, cy, rx, ry) {
+  ctx.save();
+  const ring = (dr, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.ellipse(cx, cy, rx + dr, ry + dr, 0, 0, Math.PI * 2); ctx.stroke(); };
+  if (T.track === 'rail' || T.track === 'neon') {
+    const neon = T.track === 'neon';
+    ring(0, neon ? mix(CREAM, INK, 0.1) : mix(INK, CREAM, 0.15), 46);
+    if (!neon) ring(0, mix(WOOD, '#B8B2A6', 0.7), 42);
+    ctx.strokeStyle = neon ? mix(CREAM, T.neon, 0.25) : WOOD_DARK; ctx.lineWidth = neon ? 2 : 8;
+    for (let i = 0; i < 72; i++) {
+      const a = (i / 72) * Math.PI * 2, x = Math.cos(a), y = Math.sin(a);
+      ctx.beginPath(); ctx.moveTo(cx + x * (rx - 19), cy + y * (ry - 19)); ctx.lineTo(cx + x * (rx + 19), cy + y * (ry + 19)); ctx.stroke();
+    }
+    if (neon) { ctx.shadowColor = T.neon; ctx.shadowBlur = 12; ring(-12, T.neon, 3); ring(12, T.neon, 3); }
+    else { for (const d of [-12, 12]) { ring(d, INK, 6); ring(d, '#9AA0A8', 3); } }
+  } else {
+    ring(0, INK, 46); ring(0, WOOD_LIGHT, 40);
+    ring(-9, WOOD, 3); ring(9, WOOD, 3);
   }
   ctx.restore();
 }
@@ -250,7 +304,7 @@ export function drawSwitch(ctx, t, L, set, anim, opts) {
   const active = segs[set ? 1 : 0], idle = segs[set ? 0 : 1];
   // Interactive halo so switches read as tappable
   if (opts.interactive) {
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillStyle = T.neon ? 'rgba(79,240,255,0.14)' : 'rgba(255,255,255,0.35)';
     ctx.beginPath(); ctx.arc(px, py, c * 0.5, 0, Math.PI * 2); ctx.fill();
   }
   for (let layer = 0; layer < 3; layer++) strokeSeg(ctx, px, py, c, idle, layer, true);
@@ -362,7 +416,7 @@ export function drawDepot(ctx, t, L, trains) {
   // clock badge per train: shape token + pips (one pip per departure tick)
   let bx = px + c * 0.3, by = py - c * 0.36;
   for (const tr of trains) {
-    ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
+    ctx.fillStyle = PAPER; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
     const w = c * 0.16 + Math.max(1, tr.depart) * c * 0.06;
     roundRect(ctx, bx - c * 0.12, by - c * 0.1, w, c * 0.2, c * 0.1); ctx.fill(); ctx.stroke();
     drawShape(ctx, TRAIN_SHAPES[tr.color], bx - c * 0.03, by, c * 0.055 * (T.symbol || 1), TRAIN_COLORS[tr.color], INK, 2);
@@ -386,6 +440,7 @@ export function drawTrain(ctx, x, y, ang, color, c, opts = {}) {
   ctx.rotate(ang + (opts.tilt || 0));
   ctx.scale(sc * (opts.stretch || 1), sc / (opts.stretch || 1));
   const L = c * 0.66, Wd = c * 0.4;
+  if (T.glow) { ctx.shadowColor = col; ctx.shadowBlur = c * 0.25; }
   ctx.fillStyle = 'rgba(46,36,64,0.25)';
   roundRect(ctx, -L / 2 + 3, -Wd / 2 + 5, L, Wd, Wd * 0.35); ctx.fill();
   // wheels
@@ -452,7 +507,7 @@ export function drawTicket(ctx, x, y, c, t, opts = {}) {
   ctx.globalAlpha = a;
   ctx.fillStyle = 'rgba(46,36,64,0.22)';
   ctx.beginPath(); ctx.ellipse(x, y + c * 0.16 * sc, r * 0.95, r * 0.35, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+  ctx.fillStyle = PAPER; ctx.strokeStyle = INK; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(x, y + bob, r * 1.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   star(ctx, x, y + bob, r, GOLD, INK, 2.5, Math.sin(t * 2) * 0.12);
   // shine sweep

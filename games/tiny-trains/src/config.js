@@ -29,7 +29,7 @@ export function mix(a, b, t) {
   const ch = s => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
   return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
 }
-export let WOOD_LIGHT, WOOD_DARK, GRASS, GRASS_DARK, PANEL, GOLD;
+export let WOOD_LIGHT, WOOD_DARK, GRASS, GRASS_DARK, PANEL, GOLD, PAPER, DARK;
 
 // p: { ink, cream, wood, red, blue, yellow, green, grass? } (hex colors)
 export function applyPalette(p) {
@@ -41,6 +41,8 @@ export function applyPalette(p) {
   GRASS = p.grass || mix(GREEN, CREAM, 0.55);
   GRASS_DARK = p.grassDark || mix(GREEN, CREAM, 0.3);
   PANEL = p.panel || mix(CREAM, INK, 0.06);
+  PAPER = p.paper || '#FFFFFF';
+  DARK = p.dark || INK;          // text on bright surfaces (yellow hint button, hint message)   // light surfaces under ink text (buttons, labels, badges)
   GOLD = mix(TRAIN_COLORS.yellow, WOOD, 0.3);   // golden ticket: yellow pushed towards wood
 }
 export const CLASSIC_PALETTE = { ink: INK, cream: CREAM, wood: WOOD, ...TRAIN_COLORS };

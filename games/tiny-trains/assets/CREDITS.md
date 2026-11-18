@@ -24,4 +24,11 @@ License files: `art/pixel/License-TinyTown.txt`, `art/pixel/License-DigitalAudio
 
 License files: `art/meadow/License-MedievalRTS.txt`, `art/meadow/License-InterfaceSounds.txt`, `art/meadow/License-ImpactSounds.txt`, `art/meadow/OFL-Fredoka.txt`.
 
+## neon — Night Neon
+| Asset | Author | License | Source |
+|---|---|---|---|
+| Audiowide (font: `Audiowide.ttf`) | Astigmatic (Brian J. Bonislawsky) | SIL Open Font License 1.1 | https://fonts.google.com/specimen/Audiowide |
+
+Everything else (glowing rails, trains, board, sounds) is drawn or synthesized in code. License file: `art/neon/OFL-Audiowide.txt`.
+
 Fonts are embedded as local files (loaded with `FontFace`), not fetched from Google, so the game stays self-contained (STANDARDS.md). Kenney asks for nothing in return; crediting is appreciated, not required.

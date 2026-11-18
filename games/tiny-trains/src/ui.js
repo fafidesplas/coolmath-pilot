@@ -1,7 +1,7 @@
 // Shell screens and HUD (GDD 8), drawn on the canvas in 1280×720 design units.
 // Buttons register a hit box every frame; game.js maps their ids to actions.
-import { INK, CREAM, PANEL, GREEN, TRAIN_COLORS, WOOD, WOOD_LIGHT, GRASS, CRASH_TEXT, mix } from './config.js';
-import { roundRect, star, drawTrain, GOLD } from './render.js';
+import { PAPER, DARK, INK, CREAM, PANEL, GREEN, TRAIN_COLORS, WOOD, WOOD_LIGHT, GRASS, CRASH_TEXT, mix } from './config.js';
+import { roundRect, star, drawTrain, GOLD, ovalTrack } from './render.js';
 import { WORLDS, levelPos } from '../levels/index.js';
 
 import { T, FONT, img, THEMES } from './theme.js';
@@ -36,7 +36,7 @@ export function button(ctx, G, id, x, y, w, h, label, o = {}) {
   buttons.push({ id, x, y, w, h, disabled: !!o.disabled });
   const pressed = G.pressId === id;
   const dy = pressed ? 4 : 0;
-  const col = o.disabled ? mix(o.color || CREAM, CREAM, 0.6) : (o.color || '#FFFFFF');
+  const col = o.disabled ? mix(o.color || CREAM, CREAM, 0.6) : (o.color || PAPER);
   ctx.fillStyle = 'rgba(46,36,64,0.85)';
   const r = Math.min((o.r ?? 16) * T.radius, h / 2);
   roundRect(ctx, x, y + 5, w, h, r); ctx.fill();
@@ -142,12 +142,7 @@ export function drawTitle(ctx, G) {
   scenery(ctx);
   // Oval wooden track with a train looping round
   const cx = 640, cy = 342, rx = 360, ry = 66;
-  ctx.lineWidth = 46; ctx.strokeStyle = INK;
-  ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.lineWidth = 40; ctx.strokeStyle = WOOD_LIGHT; ctx.stroke();
-  ctx.lineWidth = 3; ctx.strokeStyle = WOOD;
-  ctx.beginPath(); ctx.ellipse(cx, cy, rx - 9, ry - 9, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(cx, cy, rx + 9, ry + 9, 0, 0, Math.PI * 2); ctx.stroke();
+  ovalTrack(ctx, cx, cy, rx, ry);
   const order = ['red', 'blue', 'yellow'];
   order.forEach((col, i) => {
     const a = G.time * 0.7 + i * 0.5;
@@ -197,7 +192,7 @@ export function drawLevels(ctx, G) {
     const bob = next ? Math.abs(Math.sin(G.time * 4)) * -10 : 0;
     const R = 64 * k;
     button(ctx, G, `lvl:${i}`, x - R, y - R + bob, R * 2, R * 2, '', {
-      r: R, color: open ? (rec ? '#FFFFFF' : TRAIN_COLORS.yellow) : mix(CREAM, INK, 0.12), disabled: !open,
+      r: R, color: open ? (rec ? PAPER : TRAIN_COLORS.yellow) : mix(CREAM, INK, 0.12), disabled: !open,
       icon: (c, bx, by) => {
         if (!open) padlock(c, bx, by, 48);
         else outlinedText(c, String(i + 1), bx, by + 2, 56 * k, rec ? INK : '#FFFFFF', open && !rec ? 8 : 0.01);
@@ -221,7 +216,7 @@ export function drawHUD(ctx, G) {
   button(ctx, G, 'pause', 16, 10, 56, 56, '', { icon: iconPause });
   const pos = levelPos(G.level);
   ctx.fillStyle = INK; roundRect(ctx, 88, 20, 64, 38, 19); ctx.fill();
-  text(ctx, pos.label, 120, 40, 22, '#FFFFFF');
+  text(ctx, pos.label, 120, 40, 22, CREAM);
   text(ctx, G.level.name, 166, 40, 30, INK, 'left');
   const flips = G.flips();
   text(ctx, `Flips ${flips} · Par ${G.level.par}`, 760, 40, 26, flips > G.level.par ? mix(TRAIN_COLORS.red, INK, 0.2) : INK);
@@ -237,7 +232,7 @@ export function drawHUD(ctx, G) {
     color: running ? TRAIN_COLORS.red : GREEN, textColor: '#FFFFFF', size: 34, r: 22,
     disabled: !(G.phase === 'plan' || running),
   });
-  if (running) button(ctx, G, 'fast', 976, 642, 66, 66, '', { color: G.fast ? TRAIN_COLORS.blue : '#FFFFFF', icon: iconFast(G.fast) });
+  if (running) button(ctx, G, 'fast', 976, 642, 66, 66, '', { color: G.fast ? TRAIN_COLORS.blue : PAPER, icon: iconFast(G.fast) });
 
   // Hint button (GDD 3.13): slides up beside GO once it is earned.
   const hint = G.hintReady();
@@ -255,7 +250,7 @@ export function drawHUD(ctx, G) {
     ctx.fillStyle = TRAIN_COLORS.yellow; ctx.strokeStyle = INK; ctx.lineWidth = 3;
     roundRect(ctx, 30, 652, Math.min(tipW + 10, 700), 48, 24); ctx.fill(); ctx.stroke();
     iconBulb(ctx, 58, 676, 0.8);
-    lineText(ctx, G.hintMsg, 82, 677, 22, INK, Math.min(tipW, 640));
+    lineText(ctx, G.hintMsg, 82, 677, 22, DARK, Math.min(tipW, 640));
     ctx.restore();
   } else if (running && G.loopAt >= 0 && G.pos >= G.loopAt) {
     lineText(ctx, 'Going round in circles… skipping ahead', 40, 676, 22, mix(INK, CREAM, 0.2), tipW);
@@ -283,8 +278,8 @@ function iconBulb(ctx, x, y, s = 1) {
 }
 const iconHint = (ctx, x, y) => {
   iconBulb(ctx, x - 40, y - 2, 1);
-  text(ctx, 'Hint', x + 12, y + 1, 28, INK);
-  text(ctx, 'H', x + 58, y + 18, 13, mix(INK, CREAM, 0.35));
+  text(ctx, 'Hint', x + 12, y + 1, 28, DARK);
+  text(ctx, 'H', x + 58, y + 18, 13, DARK);
 };
 
 // Tutorial hand (level 1-1): points at the switch, then at Go.
@@ -309,7 +304,7 @@ export function drawCrashLabel(ctx, G, x, y, cause, t) {
   ctx.font = `bold 30px ${FONT}`;
   const w = ctx.measureText(msg).width + 76;
   ctx.fillStyle = 'rgba(46,36,64,0.3)'; roundRect(ctx, -w / 2 + 4, -28 + 6, w, 56, 28); ctx.fill();
-  ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = INK; ctx.lineWidth = 4;
+  ctx.fillStyle = PAPER; ctx.strokeStyle = INK; ctx.lineWidth = 4;
   roundRect(ctx, -w / 2, -28, w, 56, 28); ctx.fill(); ctx.stroke();
   star(ctx, -w / 2 + 30, 0, 17, TRAIN_COLORS.red, INK, 3, t * 2);
   text(ctx, msg, 18, 2, 30, INK);

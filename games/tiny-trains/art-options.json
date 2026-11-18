@@ -22,5 +22,13 @@
     "pack": "Kenney Medieval RTS + Kenney Interface Sounds + Kenney Impact Sounds + Fredoka (Google Fonts)",
     "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
     "url": "https://kenney.nl/assets/medieval-rts"
+  },
+  {
+    "id": "neon",
+    "name": "Night Neon",
+    "description": "Arcade night look: dark navy board, glowing cyan rails and glowing trains, all drawn in code, Audiowide font, synthesized sounds.",
+    "pack": "None (procedural) + Audiowide (Google Fonts)",
+    "license": "SIL OFL 1.1 (font); everything else original",
+    "url": "https://fonts.google.com/specimen/Audiowide"
   }
 ]

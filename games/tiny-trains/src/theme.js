@@ -60,6 +60,16 @@ export const THEMES = [
       rewind: 'meadow/sfx/minimize_006.mp3', star: 'meadow/sfx/confirmation_002.mp3', win: 'meadow/sfx/confirmation_004.mp3',
     },
   },
+  {
+    id: 'neon', name: 'Night Neon',
+    palette: {
+      ink: '#EDEBFF', cream: '#13102A', wood: '#5B4C99',
+      red: '#FF4F6E', blue: '#3FA7FF', yellow: '#FFD23F', green: '#2EE59D',
+      grass: '#1B1739', grassDark: '#262050', panel: '#1D1940', paper: '#2B2558', dark: '#13102A',
+    },
+    font: { family: 'Audiowide', file: 'neon/Audiowide.ttf', weight: '400' },
+    track: 'neon', neon: '#4FF0FF', pixel: 0, radius: 0.6, outline: 1, glow: true,
+  },
 ];
 
 // The current style (a live binding) and its font stack.
