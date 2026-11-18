@@ -42,7 +42,7 @@ export function button(ctx, G, id, x, y, w, h, label, o = {}) {
   roundRect(ctx, x, y + 5, w, h, r); ctx.fill();
   ctx.fillStyle = col; ctx.strokeStyle = o.disabled ? mix(INK, CREAM, 0.5) : INK; ctx.lineWidth = 4;
   roundRect(ctx, x, y + dy, w, h, r); ctx.fill(); ctx.stroke();
-  if (!o.disabled && !o.flat) {   // glossy top highlight
+  if (!o.disabled && !o.flat && T.id !== 'classic') {   // glossy top highlight (new styles only; classic keeps its look)
     ctx.fillStyle = 'rgba(255,255,255,0.28)';
     roundRect(ctx, x + 6, y + dy + 5, w - 12, Math.min(h * 0.32, 18), Math.min(r, 9)); ctx.fill();
   }
