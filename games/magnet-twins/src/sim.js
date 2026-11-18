@@ -1,7 +1,7 @@
 // The deterministic game world. No DOM here: the same code runs in the browser
 // and in Node (tools/simtest.mjs). One call to step() = one 120 Hz tick.
 import {
-  T, HZ, STEP, ROBOT, GRAVITY, MAX_FALL, MAGNET, CRATE, DOOR, SPIKE_H,
+  T, HZ, STEP, ROBOT, GRAVITY, MAX_FALL, MAGNET, CRATE, DOOR, SPIKE_H, PLATFORM,
   EXIT_STEPS, RESET_STEPS, LAND_EVENT_SPEED, CLANK_SPEED, B,
 } from './config.js';
 import { parseLevel, TILE, tileAt } from './level.js';
@@ -46,7 +46,12 @@ export class Sim {
     this.gates = lv.doors.map(d => ({
       kind: 'gate', id: d.id, lock: d.lock, x: d.tx * T, y: d.ty * T, w: T, h: 3 * T, fullH: 3 * T, open: 0,
     }));
-    this.obstacles = [...this.bodies, ...this.gates];
+    // Hanging platforms (GDD 3.5): solid, moved by fields along one axis only, no gravity.
+    this.platforms = lv.platforms.map(p => ({
+      kind: 'platform', rail: p.rail, x: p.x, y: p.y, w: PLATFORM.w, h: PLATFORM.h, px: p.x, py: p.y,
+      min: p.min, max: p.max, v: 0, ax: 0, ay: 0, inField: false, ground: null, lastDx: 0, lastDy: 0,
+    }));
+    this.obstacles = [...this.bodies, ...this.gates, ...this.platforms];
     this.order = this.bodies.slice();
     this.plates = lv.plates.map(p => ({ ...p, gate: this.gates.find(g => g.id === p.door), touched: false }));
     this.bolts = lv.bolts.map(b => ({ ...b, got: false }));
@@ -76,6 +81,7 @@ export class Sim {
     if (this.done) return;
     this.steps++;
     for (const b of this.bodies) { b.px = b.x; b.py = b.y; }
+    for (const p of this.platforms) { p.px = p.x; p.py = p.y; p.lastDx = 0; p.lastDy = 0; }
 
     if (this.resetTimer > 0) {
       if (--this.resetTimer === 0) this.respawnRobots();
@@ -105,6 +111,9 @@ export class Sim {
     applyFields(this);
     for (const r of this.robots) this.integrateRobot(r);
     for (const c of this.crates) this.integrateCrate(c);
+
+    // Platforms move first: they carry whatever stands on them.
+    for (const p of this.platforms) this.movePlatform(p);
 
     // Lowest bodies first, so carriers move before their riders.
     this.order.sort((a, b) => (b.y + b.h) - (a.y + a.h));
@@ -199,6 +208,24 @@ export class Sim {
       if (b.vy < -MAGNET.maxSpeed && !b.jumping) b.vy = -MAGNET.maxSpeed;
     }
     if (b.vy > MAX_FALL) b.vy = MAX_FALL;
+  }
+
+  // A platform keeps only the force along its rail, at half strength. It brakes when no field
+  // touches it, or when the field pulls against its motion (so it settles instead of swinging).
+  movePlatform(p) {
+    const h = p.rail === 'h';
+    const a = (h ? p.ax : p.ay) * PLATFORM.accelScale;
+    p.v += a * STEP;
+    if (a === 0 || Math.sign(p.v) !== Math.sign(a)) p.v = approach(p.v, 0, PLATFORM.brake * STEP);
+    p.v = Math.max(-MAGNET.maxSpeed, Math.min(MAGNET.maxSpeed, p.v));
+    if (p.v === 0) return;
+    const pos = h ? p.x : p.y;
+    const want = Math.max(p.min, Math.min(p.max, pos + p.v * STEP));
+    const hit = want !== pos && (h ? moveX(this, p, want - pos) : moveY(this, p, want - pos));
+    const now = h ? p.x : p.y;
+    if (hit || now <= p.min || now >= p.max) p.v = 0;   // a rail end or a body in the way stops it
+    p.lastDx = p.x - p.px;
+    p.lastDy = p.y - p.py;
   }
 
   moveBody(b) {

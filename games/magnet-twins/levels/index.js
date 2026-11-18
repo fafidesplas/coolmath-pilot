@@ -10,11 +10,14 @@ import w1l07 from './w1l07.js';
 import w1l08 from './w1l08.js';
 import w1l09 from './w1l09.js';
 import w1l10 from './w1l10.js';
+import w2l11 from './w2l11.js';
+import w2l12 from './w2l12.js';
+import w2l13 from './w2l13.js';
 import sandbox from './sandbox.js';
 
 export const WORLDS = [
-  { name: 'Workshop', levels: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06, w1l07, w1l08, w1l09, w1l10] },   // the other levels are being added
-  { name: 'Scrapyard', levels: [] },
+  { name: 'Workshop', levels: [w1l01, w1l02, w1l03, w1l04, w1l05, w1l06, w1l07, w1l08, w1l09, w1l10] },
+  { name: 'Scrapyard', levels: [w2l11, w2l12, w2l13] },   // levels 14–20 are being added
   { name: 'Power Plant', levels: [] },
 ];
 

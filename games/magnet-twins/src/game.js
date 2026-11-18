@@ -10,7 +10,7 @@ import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
 import { previewTargets } from './magnet.js';
 import {
-  renderTiles, drawRobot, drawField, drawAimPreview, drawCrate, drawGate, drawPlate, drawExit, drawBolt,
+  renderTiles, drawRobot, drawField, drawAimPreview, drawCrate, drawGate, drawPlate, drawPlatform, drawExit, drawBolt,
   drawFlag, drawKeycap, rrect, text, FONT,
 } from './render.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
@@ -156,8 +156,27 @@ export class Game {
 
   starsFor(id) { return this.save.stars[id] || [0, 0, 0]; }
 
+  // A world opens when the previous world's level 10 is finished (GDD 7). ?unlock opens all (debug).
+  worldOpen(i) {
+    if (i === 0) return true;
+    if (!WORLDS[i] || !WORLDS[i].levels.length) return false;
+    const gate = WORLDS[i - 1].levels[LEVELS_PER_WORLD - 1];
+    return this.params.has('unlock') || !!(gate && this.starsFor(gate.id)[0]);
+  }
+
+  // The level after this one, crossing into the next world if it is open.
+  levelAfter(id) {
+    const pos = this.levelPos(id);
+    if (!pos.world) return null;
+    const here = WORLDS[pos.world - 1].levels[pos.level];
+    if (here) return here;
+    return this.worldOpen(pos.world) ? WORLDS[pos.world].levels[0] || null : null;
+  }
+
   nextLevel() {
-    for (const w of WORLDS) for (const l of w.levels) if (!this.starsFor(l.id)[0]) return l;
+    for (let w = 0; w < WORLDS.length && this.worldOpen(w); w++) {
+      for (const l of WORLDS[w].levels) if (!this.starsFor(l.id)[0]) return l;
+    }
     return WORLDS[0].levels[0];
   }
 
@@ -218,6 +237,7 @@ export class Game {
 
   toMenu(screen = 'title') {
     if (this.screen === 'playing') this.endAttempt();
+    this.worldTab = null;          // the level select opens on the world of the last level played
     this.sound.stopHums();
     this.screen = screen;
     this.paused = false;
@@ -537,7 +557,7 @@ export class Game {
       action: () => { this.setMode('solo'); this.startLevel(this.nextLevel(), 'solo'); } });
     this.addButton({ x: 660, y: cy, w: 280, h: 104, color: C.minus, textColor: '#fff', label: '2 PLAYERS', size: 36, isDefault: this.mode === 'coop',
       action: () => { this.setMode('coop'); this.startLevel(this.nextLevel(), 'coop'); } });
-    this.addButton({ x: 500, y: cy + 140, w: 280, h: 72, label: 'LEVELS', size: 30, action: () => { this.screen = 'levels'; this.focus = -1; } });
+    this.addButton({ x: 500, y: cy + 140, w: 280, h: 72, label: 'LEVELS', size: 30, action: () => { this.screen = 'levels'; this.focus = -1; this.worldTab = null; } });
     this.addButton({ x: VIEW_W - 250, y: 28, w: 220, h: 56, size: 22,
       key: 'sound', label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
 
@@ -561,18 +581,26 @@ export class Game {
       color: this.mode === 'solo' ? '#F6C3BE' : '#BFD6F5',
       action: () => this.setMode(this.mode === 'solo' ? 'coop' : 'solo') });
 
-    // World tabs
+    const next = this.nextLevel();
+    if (this.worldTab == null) {
+      const pos = this.levelPos((this.level || next).id);
+      this.worldTab = pos.world && this.worldOpen(pos.world - 1) ? pos.world - 1 : 0;
+    }
+
+    // World tabs: open worlds are buttons, the selected one is yellow
     WORLDS.forEach((w, i) => {
-      const x = 250 + i * 270, open = w.levels.length > 0;
-      rrect(ctx, x, 120, 240, 56, 14);
-      ctx.fillStyle = i === 0 ? C.bolt : '#CFC3B4'; ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
-      text(ctx, `${i + 1}  ${w.name.toUpperCase()}`, x + 120, 149, 22, C.ink);
-      if (!open) this.drawLock(x + 214, 148, 0.7);
+      const x = 250 + i * 270, open = this.worldOpen(i), sel = i === this.worldTab;
+      this.addButton({
+        key: `world:${i}`, x, y: 116, w: 240, h: 56, r: 14, disabled: !open, color: sel ? C.bolt : '#fff',
+        action: () => { this.worldTab = i; this.focus = -1; },
+        draw: (c, b) => {
+          text(c, `${i + 1}  ${w.name.toUpperCase()}`, b.x + 120, b.y + 29, 22, open ? C.ink : '#8C7F72');
+          if (!open) this.drawLock(b.x + 214, b.y + 28, 0.7);
+        },
+      });
     });
 
-    const next = this.nextLevel();
-    const world = WORLDS[0];
+    const world = WORLDS[this.worldTab];
     for (let i = 0; i < LEVELS_PER_WORLD; i++) {
       const col = i % 5, row = Math.floor(i / 5);
       const x = 255 + col * 160, y = 230 + row * 200;
@@ -621,6 +649,7 @@ export class Game {
 
     for (const p of sim.plates) drawPlate(ctx, p, sim.tiles, t);
     for (const g of sim.gates) drawGate(ctx, g);
+    for (const p of sim.platforms) drawPlatform(ctx, p, sim.tiles, lx(p), ly(p), t);
 
     const inside = sim.inExit || [false, false];
     const target = sim.done ? 1 : (inside[0] + inside[1]) * 0.25;
@@ -684,7 +713,8 @@ export class Game {
     if (sim.done) return;
     const near = (r, d) => {
       const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-      return sim.crates.some(c => Math.hypot(c.x + 20 - cx, c.y + 20 - cy) < d) || sim.plates.some(p => Math.hypot(p.x - cx, p.y - cy) < d);
+      return sim.crates.some(c => Math.hypot(c.x + 20 - cx, c.y + 20 - cy) < d) || sim.plates.some(p => Math.hypot(p.x - cx, p.y - cy) < d)
+        || sim.platforms.some(p => Math.hypot(p.x + p.w / 2 - cx, p.y + p.h / 2 - cy) < d);
     };
     const nearPlate = r => sim.plates.some(p => Math.abs(p.x - (r.x + r.w / 2)) < 60 && p.y < r.y);
     sim.robots.forEach((r, i) => {
@@ -818,8 +848,7 @@ export class Game {
 
     if (e < 0.35) return;
     const by = y + 372;
-    const pos = this.levelPos(this.level.id);
-    const nextLevel = pos.world ? WORLDS[pos.world - 1].levels[pos.level] : null;
+    const nextLevel = this.levelAfter(this.level.id);
     this.addButton({ x: x + 40, y: by, w: 170, h: 64, label: 'MENU', size: 24, action: () => this.toMenu('levels') });
     this.addButton({ x: x + 225, y: by, w: 170, h: 64, label: 'RETRY', size: 24, action: () => this.startLevel(this.level, this.mode) });
     this.addButton({ x: x + 410, y: by, w: 170, h: 64, label: 'NEXT ›', size: 24, color: C.bolt,
