@@ -14,6 +14,7 @@ export class Sound {
     this.seq = null;
     this.layers = 0;           // echoes in the room: each adds a music layer
     this.wantMusic = false;    // the game wants music now (in a room, not paused)
+    this.style = 'classic';    // art style id: picks the voice of a few sounds
   }
 
   unlock() {
@@ -73,6 +74,7 @@ export class Sound {
 
   play(name, opt = {}) {
     if (!this.ctx || !this.enabled) return;
+    if (this.styled(name, opt)) return;
     switch (name) {
       case 'click': this.tone('square', 900, 700, 0.05, 0.06); break;
       case 'tick': { const late = opt.late; this.tone('triangle', late ? 1500 : 1100, late ? 1400 : 1000, 0.04, late ? 0.16 : 0.06); break; }
@@ -93,6 +95,30 @@ export class Sound {
       case 'sparkle': { const f = NOTE(CHORD[(opt.i || 0) % 4] + 24); this.tone('sine', f, f, 0.25, 0.08); break; }
       case 'star': { const f = NOTE([12, 16, 19][Math.min(2, opt.i || 0)] + 12); this.tone('triangle', 180, 90, 0.12, 0.25); this.tone('sine', f, f, 0.3, 0.2, 0.03); break; }
     }
+  }
+
+  // Per art style (theme.js): a few sounds get the style's voice. Chip styles use square
+  // and pulse waves, Toybox uses soft round pops. Everything else stays shared.
+  styled(name, opt) {
+    const st = this.style;
+    if (st === 'pixel' || st === 'terminal') {
+      const hi = st === 'terminal' ? 1.5 : 1;
+      switch (name) {
+        case 'click': this.tone('square', 1200 * hi, 1200 * hi, 0.035, 0.05); return true;
+        case 'jump': this.tone('square', 260 * hi, 820 * hi, 0.11, 0.07); return true;
+        case 'land': this.tone('square', 120, 60, 0.05, 0.08); return true;
+        case 'plateDown': this.tone('square', 440 * hi, 440 * hi, 0.05, 0.07); this.tone('square', 660 * hi, 660 * hi, 0.06, 0.07, 0.05); return true;
+        case 'star': { const f = NOTE([12, 16, 19][Math.min(2, opt.i || 0)] + 12) * hi; this.tone('square', f, f, 0.12, 0.09); this.tone('square', f * 2, f * 2, 0.12, 0.05, 0.08); return true; }
+      }
+    } else if (st === 'toybox') {
+      switch (name) {
+        case 'click': this.tone('sine', 700, 1100, 0.06, 0.12); return true;
+        case 'jump': this.tone('sine', 330, 660, 0.12, 0.14); this.tone('triangle', 660, 990, 0.06, 0.04, 0.03); return true;
+        case 'land': this.tone('sine', 180, 90, 0.08, 0.16); return true;
+        case 'plateDown': this.tone('sine', 520, 260, 0.1, 0.14); return true;
+      }
+    }
+    return false;
   }
 
   // ---- Music (GDD 10): a soft pad and pulse at 120 BPM that restart with every

@@ -1,7 +1,7 @@
 // Juice outside the simulation: pooled particles, screen shake, squash and stretch.
 // Has its own random generator, so the sim never sees it. (Copied from Flip Runner and adapted.)
 import { COLORS, } from './config.js';
-import { FONT } from './render.js';
+import { fontFor } from './theme.js';
 
 const MAX = 400;
 
@@ -88,7 +88,7 @@ export class FX {
       } else if (q.type === 'square') {
         ctx.fillRect(q.x - q.size / 2, q.y - q.size / 2, q.size, q.size);
       } else if (q.type === 'text') {
-        ctx.font = `900 ${q.size}px ${FONT}`;
+        ctx.font = fontFor(q.size, 900);
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.strokeStyle = COLORS.navy; ctx.strokeText(q.label, q.x, q.y);
         ctx.fillText(q.label, q.x, q.y);

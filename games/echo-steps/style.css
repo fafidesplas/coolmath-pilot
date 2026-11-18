@@ -14,3 +14,22 @@ canvas {
   touch-action: none;
   outline: none;
 }
+/* Art-style switcher (presentation build): small pill, bottom center. */
+#art-pill {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(234, 240, 255, 0.55);
+  background: rgba(10, 14, 34, 0.72);
+  color: #EAF0FF;
+  font: 700 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  opacity: 0.75;
+  outline: none;
+}
+#art-pill:hover { opacity: 1; border-color: #3EE6FF; }

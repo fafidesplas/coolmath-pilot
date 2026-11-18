@@ -1,0 +1,34 @@
+[
+  {
+    "id": "classic",
+    "name": "Night Neon",
+    "description": "The current look: dark navy rooms, a glowing cyan player and violet echoes, all drawn in code.",
+    "pack": "None (drawn in code, system font)",
+    "license": "Own art",
+    "url": ""
+  },
+  {
+    "id": "pixel",
+    "name": "Pixel Meadow",
+    "description": "Bright pixel art: earth and grass tiles, a sky with clouds and trees, a little astronaut whose echoes are pink copies.",
+    "pack": "Kenney Pixel Platformer + Silkscreen font",
+    "license": "CC0 1.0 (art), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/pixel-platformer"
+  },
+  {
+    "id": "toybox",
+    "name": "Toybox Shapes",
+    "description": "Chunky flat toy shapes: blue zig-zag floors, red lock blocks for gates, a round blue character with green echoes, rounded Fredoka type.",
+    "pack": "Kenney Abstract Platformer + Fredoka font",
+    "license": "CC0 1.0 (art), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/abstract-platformer"
+  },
+  {
+    "id": "terminal",
+    "name": "Green Terminal",
+    "description": "Retro computer screen: 1-bit sprites in green phosphor, scanlines and a vignette, VT323 terminal font, chip-style sounds.",
+    "pack": "Kenney 1-Bit Pack + VT323 font",
+    "license": "CC0 1.0 (art), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/1-bit-pack"
+  }
+]

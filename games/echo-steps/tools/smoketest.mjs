@@ -1,6 +1,7 @@
 // Smoke test of the real game (src/game.js) in Node with a stubbed DOM: the real
 // frame loop, key presses and pointer clicks on canvas buttons. Covers hints and
-// skip (GDD 7) and replays every room's reference solution through the UI.
+// skip (GDD 7), replays every room's reference solution through the UI and boots every
+// art style (?art=<id>, presentation build).
 //   node tools/smoketest.mjs
 import { readFileSync } from 'node:fs';
 import { WORLDS } from '../levels/index.js';
@@ -167,6 +168,54 @@ for (const room of WORLDS[0].rooms) {
   await boot(`?replay&room=${room.id}`);
   for (let i = 0; i < 60 * 60 && api.screen !== 'complete'; i++) frames(1);
   ok(api.screen === 'complete' && api.hints === null && !btn('hud:hint'), `${room.id}: ?replay reaches the exit through the UI (no hints in replays)`);
+}
+
+// ---- 6. Art styles (?art=<id>, V cycles): every style boots and draws every screen ---------------
+// Images "load" at once here (stub), so the styles' sprite and tile hooks run, not only the fallbacks.
+{
+  const { existsSync } = await import('node:fs');
+  const { THEMES, ART, artBase } = await import('../src/theme.js');
+  const options = JSON.parse(readFileSync(new URL('../art-options.json', import.meta.url), 'utf8'));
+  ok(JSON.stringify(options.map(o => o.id)) === JSON.stringify(THEMES.map(t => t.id)), `art-options.json lists the styles in selector order (${THEMES.map(t => t.id).join(', ')})`);
+  ok(options.every(o => o.name && o.description && o.pack && o.license && 'url' in o), 'art-options.json: every entry has name, description, pack, license, url');
+  const missing = [];
+  for (const t of THEMES) for (const f of [...Object.values(t.images || {}), ...(t.fontFile ? [t.fontFile] : [])]) {
+    if (!existsSync(new URL(`../${artBase(t.id)}${f}`, import.meta.url))) missing.push(`${t.id}/${f}`);
+  }
+  ok(missing.length === 0, `every art file a style uses exists${missing.length ? ': missing ' + missing.join(', ') : ''}`);
+  globalThis.Image = class { constructor() { this.width = 64; this.height = 64; } set src(v) { this._src = v; setTimeout(() => this.onload && this.onload(), 0); } get src() { return this._src; } };
+  for (const t of THEMES) {
+    let err = null;
+    try {
+      store.clear();
+      await boot(`?art=${t.id}`);
+      frames(5);
+      const onTitle = api.art === t.id && api.screen === 'title';
+      click('rooms'); frames(5);
+      const onRooms = api.screen === 'levels';
+      await boot(`?art=${t.id}&room=w1l05&hints=now`);
+      await flush(); frames(3);
+      const loaded = t.images ? Object.keys(ART.img).length === Object.keys(t.images).length : true;
+      api.hint(); frames(30);
+      tap('KeyP'); frames(3); tap('KeyP');
+      await boot(`?art=${t.id}&replay&room=w1l05`);
+      for (let i = 0; i < 60 * 30 && api.screen !== 'complete'; i++) frames(1);
+      frames(90);
+      ok(onTitle && onRooms && loaded && api.screen === 'complete', `?art=${t.id}: title, rooms, a room with hints, pause and a full replay draw without errors${loaded ? '' : ' (images not all loaded)'}`);
+    } catch (e) { err = e; }
+    if (err) ok(false, `?art=${t.id}: threw ${err && err.stack}`);
+  }
+  await boot('?art=nope&room=w1l01');
+  ok(api.art === 'classic', 'an unknown ?art id falls back to classic');
+  // V cycles in order and wraps, in the middle of a room, without touching the sim; A still moves.
+  await boot('?room=w1l01&art=classic');
+  const seen = [api.art];
+  for (let i = 0; i < THEMES.length; i++) { tap('KeyV'); seen.push(api.art); }
+  ok(JSON.stringify(seen) === JSON.stringify([...THEMES.map(t => t.id), THEMES[0].id]), `V cycles ${seen.join(' → ')}`);
+  const x0 = api.sim.s.p.x;
+  key('KeyA'); frames(20); key('KeyA', 'keyup'); frames(2);
+  ok(api.sim.s.p.x < x0 && api.art === THEMES[0].id, 'A still moves left and does not change the style');
+  delete globalThis.Image;
 }
 
 console.log(failed ? `\n${failed} of ${passed + failed} smoke checks FAILED` : `\nall ${passed} smoke checks passed`);

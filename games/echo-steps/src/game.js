@@ -15,6 +15,8 @@ import { buildHints, hintsUnlocked, skipUnlocked, HINT_RULES } from './hints.js'
 import { Recorder, decodeRecording } from './record.js';
 import { renderRoom, roomOffset, wirePath, drawFigure, drawSilhouette, drawBadge, drawPlate, drawGate, drawExit, drawKeycap, drawRing, drawStar, drawGlow, rrect, text, rgba } from './render.js';
 import { drawHud, fmtTime, fmtTenths, iconLoop, iconClock, iconDelete, drawBulb } from './hud.js';
+import { ART, THEMES, setTheme, findTheme, nextThemeId } from './theme.js';
+import { drawBackdrop, drawScanlines } from './art.js';
 import { WORLDS, findRoom, roomPos } from '../levels/index.js';
 
 const easeOutBack = k => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;
@@ -48,6 +50,15 @@ export class Game {
     this.hintDemo = this.params.get('hints') === 'now';
     this.hintData = {};   // room id -> buildHints() result (null while loading or missing)
     this.hs = null;       // hint state of the current room, kept across restarts
+    // Art style (presentation): ?art=<id>, V cycles. Unknown ids fall back to classic.
+    this.artToast = null;      // { name, t } shown for a moment after a switch
+    this.fade = 0;             // screen transition (1 → 0)
+    this.lastScreen = 'title';
+    this.onArtChange = null;   // set by main.js to keep the URL and the DOM pill in sync
+    ART.onChange = () => this.relayer();
+    const artParam = this.params.get('art');
+    setTheme(findTheme(artParam) ? artParam : 'classic');
+    this.sound.style = ART.cur.id;
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -79,6 +90,22 @@ export class Game {
     this.dpr = dpr;
     if (this.lv) this.layer = renderRoom(this.lv, this.scale * dpr, this.off);
   }
+
+  // Re-render cached layers after a style switch or when one of its files arrives.
+  relayer() {
+    if (this.lv && this.scale) this.layer = renderRoom(this.lv, this.scale * this.dpr, this.off);
+  }
+
+  setArt(id, toast = true) {
+    if (!findTheme(id)) return false;
+    const t = setTheme(id);
+    this.sound.style = t.id;
+    if (toast) { this.artToast = { name: t.name, t: this.t }; this.fade = Math.max(this.fade, 0.5); }
+    if (this.onArtChange) this.onArtChange(t.id);
+    return true;
+  }
+
+  cycleArt() { return this.setArt(nextThemeId(ART.cur.id)); }
 
   bindPointer() {
     const toView = e => ({ x: (e.clientX - this.ox) / this.scale, y: (e.clientY - this.oy) / this.scale });
@@ -138,6 +165,10 @@ export class Game {
       get view() { return { scale: g.scale, ox: g.ox, oy: g.oy }; },
       get analytics() { return GA.log; },
       get save() { return g.save; },
+      get art() { return ART.cur.id; },
+      get arts() { return THEMES.map(t => t.id); },
+      setArt(id) { return g.setArt(id); },
+      cycleArt() { return g.cycleArt(); },
       get hints() {
         if (!g.hs) return null;
         const h = g.hintsFor();
@@ -313,6 +344,8 @@ export class Game {
 
   onKey(code) {
     this.sound.unlock();
+    if (code === 'KeyV') { this.cycleArt(); this.sound.play('click'); return; }   // art style (A moves, so V)
+    if (code === 'KeyM') { this.toggleSfx(); return; }                             // mute sound effects
     if (this.touchMode) { this.touchMode = false; this.touches.clear(); this.input.touchBits = 0; }
     if (this.screen === 'playing' && (code === 'KeyP' || code === 'Escape')) {
       if (this.sim && !this.sim.s.done) { this.pause(!this.paused); this.sound.play('click'); }
@@ -387,6 +420,7 @@ export class Game {
     if (this.fixedHz) dt = 1 / this.fixedHz;
     dt = Math.min(Math.max(dt, 0), MAX_FRAME_DT);
     this.t += dt;
+    this.frameDt = dt;
 
     if (this.screen === 'playing' && !this.paused && this.sim) this.update(dt);
     else if (this.screen === 'complete' && this.result) this.result.replayT += dt;
@@ -583,7 +617,7 @@ export class Game {
   draw() {
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#070A18';
+    ctx.fillStyle = ART.cur.bg;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.setTransform(this.dpr * this.scale, 0, 0, this.dpr * this.scale, this.dpr * this.ox, this.dpr * this.oy);
     ctx.save();
@@ -597,8 +631,38 @@ export class Game {
       if (this.paused) this.drawPause();
       if (this.screen === 'complete') this.drawComplete();
     }
+    this.drawOverlays();
     ctx.restore();
     if (this.touchMode && this.screen === 'playing' && !this.paused) this.drawTouch();
+  }
+
+  // Screen transition fade, the art-style toast and CRT scanlines (when the style has them).
+  drawOverlays() {
+    const ctx = this.ctx;
+    if (this.screen !== this.lastScreen) {
+      if (!(this.lastScreen === 'playing' && this.screen === 'complete')) this.fade = 1;
+      this.lastScreen = this.screen;
+    }
+    if (this.fade > 0) {
+      ctx.globalAlpha = Math.min(1, this.fade) ** 2;
+      ctx.fillStyle = ART.cur.bg; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.globalAlpha = 1;
+      this.fade = Math.max(0, this.fade - this.frameDt / 0.3);
+    }
+    drawScanlines(ctx);
+    const a = this.artToast;
+    if (a) {
+      const e = this.t - a.t;
+      if (e > 1.6) { this.artToast = null; return; }
+      const k = Math.min(1, e / 0.2) * Math.min(1, (1.6 - e) / 0.3);
+      const y = VIEW_H - 70 + (1 - k) * 30;
+      ctx.globalAlpha = k;
+      rrect(ctx, VIEW_W / 2 - 170, y - 24, 340, 48, 24 * (ART.cur.ui.radius ?? 1));
+      ctx.fillStyle = rgba(C.navy, 0.92); ctx.fill();
+      ctx.lineWidth = 2.5; ctx.strokeStyle = C.cyan; ctx.stroke();
+      text(ctx, `ART: ${a.name.toUpperCase()}`, VIEW_W / 2, y + 1, 20, C.pale, 'center', 900);
+      ctx.globalAlpha = 1;
+    }
   }
 
   addButton(b) {
@@ -612,13 +676,18 @@ export class Game {
     ctx.save();
     ctx.translate(0, lift);
     ctx.globalAlpha = b.disabled ? 0.4 : 1;
-    rrect(ctx, b.x, b.y, b.w, b.h, b.r ?? 16);
-    ctx.fillStyle = b.primary ? C.cyan : rgba(C.pale, 0.06);
+    const ui = ART.cur.ui, rad = (b.r ?? 16) * (ui.radius ?? 1);
+    if (ui.shadow && !b.hud) {   // chunky drop shadow (Pixel, Toybox)
+      rrect(ctx, b.x, b.y + ui.shadow - lift, b.w, b.h, rad);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+    }
+    rrect(ctx, b.x, b.y, b.w, b.h, rad);
+    ctx.fillStyle = b.primary ? C.cyan : ui.shadow ? rgba(C.navy, 0.85) : rgba(C.pale, 0.06);
     ctx.fill();
     ctx.lineWidth = 2.5; ctx.strokeStyle = b.primary ? C.cyan : rgba(C.pale, 0.6); ctx.stroke();
     if (focused || hot) {
       ctx.lineWidth = 3; ctx.strokeStyle = C.yellow;
-      rrect(ctx, b.x - 5, b.y - 5, b.w + 10, b.h + 10, (b.r ?? 16) + 5); ctx.stroke();
+      rrect(ctx, b.x - 5, b.y - 5, b.w + 10, b.h + 10, rad + 5); ctx.stroke();
     }
     if (b.draw) b.draw(ctx, b);
     else text(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2 + 1, b.size || 26, b.primary ? C.navy : C.pale, 'center', 900);
@@ -639,10 +708,7 @@ export class Game {
 
   drawTitle() {
     const ctx = this.ctx, t = this.t;
-    ctx.fillStyle = C.navy; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    ctx.strokeStyle = rgba(C.cyan, 0.04); ctx.lineWidth = 1;
-    for (let x = 0; x <= VIEW_W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VIEW_H); ctx.stroke(); }
-    for (let y = 0; y <= VIEW_H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VIEW_W, y); ctx.stroke(); }
+    this.drawBack(t);
     this.drawTitleDemo(t);
 
     // Logo with two violet echoes trailing behind
@@ -670,6 +736,15 @@ export class Game {
       label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
     this.addButton({ key: 'music', x: VIEW_W - 250, y: 88, w: 220, h: 52, size: 20,
       label: this.settings.music ? 'MUSIC: ON' : 'MUSIC: OFF', action: () => this.toggleMusic() });
+  }
+
+  drawBack(t) {
+    const ctx = this.ctx;
+    if (drawBackdrop(ctx, t)) return;
+    ctx.fillStyle = C.navy; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.strokeStyle = rgba(C.cyan, 0.04); ctx.lineWidth = 1;
+    for (let x = 0; x <= VIEW_W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VIEW_H); ctx.stroke(); }
+    for (let y = 0; y <= VIEW_H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VIEW_W, y); ctx.stroke(); }
   }
 
   // Behind the title: the player and three echoes loop a little demo on a plate and a gate.
@@ -724,7 +799,7 @@ export class Game {
 
   drawRooms() {
     const ctx = this.ctx, t = this.t;
-    ctx.fillStyle = C.navy; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    this.drawBack(t);
     this.addButton({ key: 'back', x: 30, y: 24, w: 140, h: 56, label: '‹ BACK', size: 22, action: () => { this.screen = 'title'; this.focus = -1; } });
     text(ctx, 'ROOMS', VIEW_W / 2, 52, 40, C.pale, 'center', 900);
     WORLD_NAMES.forEach((name, i) => {
@@ -1025,9 +1100,9 @@ export class Game {
   drawPanel(w, h, k = 1) {
     const ctx = this.ctx;
     const x = (VIEW_W - w) / 2, y = (VIEW_H - h) / 2 + (1 - k) * 500;
-    ctx.fillStyle = 'rgba(7,10,24,0.6)';
+    ctx.fillStyle = ART.cur.overlay;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    rrect(ctx, x, y, w, h, 24); ctx.fillStyle = C.navy; ctx.fill();
+    rrect(ctx, x, y, w, h, 24 * (ART.cur.ui.radius ?? 1)); ctx.fillStyle = C.navy; ctx.fill();
     ctx.lineWidth = 2.5; ctx.strokeStyle = rgba(C.cyan, 0.7); ctx.stroke();
     return { x, y };
   }

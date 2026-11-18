@@ -3,9 +3,11 @@
 // sprites, so no shadowBlur is used per frame.
 import { T, COLS, ROWS, PLAYER, COLORS as C } from './config.js';
 import { isSolid } from './level.js';
+import { ART, fontFor } from './theme.js';
 
+// The font and the room's outer color come from the current art style (theme.js).
 export const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const DARK = '#0A0E22';
+const hook = name => ART.cur.hooks && ART.cur.hooks[name];
 
 export function rrect(ctx, x, y, w, h, r) {
   r = Math.min(r, w / 2, h / 2);
@@ -19,7 +21,7 @@ export function rrect(ctx, x, y, w, h, r) {
 }
 
 export function text(ctx, str, x, y, size, color = C.pale, align = 'center', weight = 800) {
-  ctx.font = `${weight} ${size}px ${FONT}`;
+  ctx.font = fontFor(size, weight);
   ctx.textAlign = align;
   ctx.textBaseline = 'middle';
   ctx.fillStyle = color;
@@ -49,7 +51,7 @@ export function glow(color) {
   glowCache.set(color, cv);
   return cv;
 }
-export const drawGlow = (ctx, color, x, y, r) => ctx.drawImage(glow(color), x - r, y - r, r * 2, r * 2);
+export const drawGlow = (ctx, color, x, y, r) => { if (ART.cur.glow) ctx.drawImage(glow(color), x - r, y - r, r * 2, r * 2); };
 
 // ---- Channel glyphs (shape, not color: ▲ ● ■ ◆) -----------------------------------------------
 
@@ -103,10 +105,12 @@ export function renderRoom(lv, pixelScale, off) {
   cv.height = Math.ceil(ROWS * T * pixelScale);
   const ctx = cv.getContext('2d');
   ctx.scale(pixelScale, pixelScale);
-  ctx.fillStyle = DARK;
+  ctx.fillStyle = ART.cur.dark;
   ctx.fillRect(0, 0, COLS * T, ROWS * T);
-  ctx.translate(off.ox, off.oy);
   const solid = (c, r) => isSolid(lv, c, r);
+  const h = hook('room');
+  if (h && h(ctx, lv, off, solid)) return cv;
+  ctx.translate(off.ox, off.oy);
   // Open cells: navy with a 4% cyan grid (Lab).
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     if (solid(c, r)) continue;
@@ -143,6 +147,8 @@ export function renderRoom(lv, pixelScale, off) {
 
 // A capsule figure with a round head, feet at (cx, bottom). Drawn about 32×44.
 export function drawFigure(ctx, cx, bottom, o) {
+  const h = hook('figure');
+  if (h && h(ctx, cx, bottom, o)) return;
   const { color, alpha = 1, dashed = false, facing = 1, run = false, air = false, t = 0, sx = 1, sy = 1 } = o;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -189,6 +195,8 @@ export function drawBadge(ctx, x, y, n, opt = {}) {
 // ---- Devices ------------------------------------------------------------------------------
 
 export function drawPlate(ctx, p, pressed, t) {
+  const hk = hook('plate');
+  if (hk && hk(ctx, p, pressed, t)) { drawGlyph(ctx, p.ch, p.x0 + T / 2, p.y + 14, 6, pressed ? C.yellow : rgba(C.yellow, 0.75)); return; }
   const sink = pressed ? 4 : 0;
   const x = p.x0 + 4, y = p.y - 6 + sink;
   if (pressed) drawGlow(ctx, C.yellow, p.x0 + T / 2, p.y, 30);
@@ -201,7 +209,9 @@ export function drawPlate(ctx, p, pressed, t) {
 
 export function drawGate(ctx, g, open, wantOpen) {
   const h = g.hpx * (1 - open);
-  if (h > 0.5) {
+  const hk = hook('gate');
+  if (hk && hk(ctx, g, h)) { /* body drawn by the art style; header below */ }
+  else if (h > 0.5) {
     ctx.save();
     ctx.beginPath(); ctx.rect(g.x + 6, g.y, T - 12, h); ctx.clip();
     ctx.fillStyle = rgba(C.pink, 0.3); ctx.fillRect(g.x + 6, g.y, T - 12, h);
@@ -220,6 +230,8 @@ export function drawGate(ctx, g, open, wantOpen) {
 }
 
 export function drawExit(ctx, ex, t) {
+  const hk = hook('exit');
+  if (hk && hk(ctx, ex, t)) return;
   const cx = ex.col * T + T / 2, bottom = (ex.row + 1) * T;
   drawGlow(ctx, C.cyan, cx, bottom - 36, 52 + Math.sin(t * 3) * 4);
   ctx.beginPath();
@@ -237,7 +249,7 @@ export function drawExit(ctx, ex, t) {
 export function drawKeycap(ctx, x, y, label, alpha = 1, w = 0) {
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.font = `800 16px ${FONT}`;
+  ctx.font = fontFor(16, 800);
   const ww = w || Math.max(30, label.length * 10 + 16);
   rrect(ctx, x - ww / 2, y - 15, ww, 30, 7);
   ctx.fillStyle = rgba(C.navy, 0.9); ctx.fill();
