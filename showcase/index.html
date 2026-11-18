@@ -6,19 +6,23 @@
 <title>Coolmath pilot</title>
 <meta name="color-scheme" content="dark">
 <meta property="og:title" content="Coolmath pilot">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#111112">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Cpath d='M13 10l9 6-9 6z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     color-scheme: dark;
-    --bg: #000;
-    --ink: #fff;
-    --ink-2: rgba(255,255,255,.62);
-    --ink-3: rgba(255,255,255,.36);
-    --line: rgba(255,255,255,.1);
+    --bg: #111112;
+    --ink: #eceae4;
+    --ink-2: #a7a49d;
+    --ink-3: #75736d;
+    --line: #2c2c30;
+    --accent: #f0703f;
     --gap: 10px;
-    --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); }
@@ -27,7 +31,7 @@
   img { display: block; max-width: 100%; }
   a { color: inherit; text-decoration: none; }
   button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
-  :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .over { font: 600 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
 
   /* ---- top bar ---- */
@@ -36,82 +40,75 @@
     display: flex; align-items: center; gap: 18px; padding: 0 22px;
     transition: background .3s ease, backdrop-filter .3s ease;
   }
-  .top.solid { background: rgba(0,0,0,.72); backdrop-filter: saturate(180%) blur(14px); }
+  .top.solid { background: rgba(17,17,18,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
   .brand { display: flex; align-items: center; gap: 9px; font-weight: 590; letter-spacing: -.02em; font-size: 15px; }
-  .brand i { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: block; }
+  .brand i { width: 8px; height: 8px; background: var(--ink); display: block; }
   .top .right { margin-left: auto; display: flex; gap: 20px; font-size: 13px; color: var(--ink-2); }
   .top .right a:hover { color: #fff; }
 
   /* ---- hero ---- */
-  .hero { position: relative; height: clamp(520px, 82vh, 860px); overflow: hidden; background: #000; }
+  .hero { position: relative; height: clamp(520px, 78vh, 820px); overflow: hidden; background: var(--bg); }
   .hero-layer { position: absolute; inset: 0; will-change: transform; cursor: pointer; }
   .hero .slide {
-    position: absolute; inset: 0; opacity: 0; transform: scale(1.03);
-    transition: opacity .9s ease, transform 1.4s cubic-bezier(.2,.7,.3,1);
+    position: absolute; inset: 0; opacity: 0;
+    transition: opacity .6s ease;
   }
   .hero .slide.on { opacity: 1; transform: none; }
-  .hero, .top { opacity: 0; animation: wake .9s .05s ease forwards; }
-  .top { animation-delay: .35s; }
-  @keyframes wake { to { opacity: 1; } }
   /* The art is a 16:9 schematic that already animates: show it whole (contain) over a
      blurred copy of itself, so nothing important is ever cropped by the hero's shape. */
   .hero .slide img { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .hero .slide .bg { object-fit: cover; filter: blur(48px) saturate(1.25) brightness(.5); transform: scale(1.2); }
+  .hero .slide .bg { object-fit: cover; filter: blur(48px) saturate(.6) brightness(.35); transform: scale(1.2); }
   .hero .slide .fg { object-fit: contain; }
   .hero::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background:
-      linear-gradient(to top, #000 1%, rgba(0,0,0,.72) 26%, rgba(0,0,0,0) 58%),
-      linear-gradient(to right, rgba(0,0,0,.6) 0%, rgba(0,0,0,.12) 42%, rgba(0,0,0,0) 68%),
-      linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 20%);
+      linear-gradient(to top, #111112 1%, rgba(17,17,18,.72) 26%, rgba(17,17,18,0) 58%),
+      linear-gradient(to right, rgba(17,17,18,.6) 0%, rgba(17,17,18,.12) 42%, rgba(17,17,18,0) 68%),
+      linear-gradient(to bottom, rgba(17,17,18,.55) 0%, rgba(17,17,18,0) 20%);
   }
   .hero-body {
     position: absolute; z-index: 2; left: 0; right: 0; bottom: 0;
     padding: 0 22px 34px; display: flex; align-items: flex-end; gap: 24px;
     will-change: opacity, transform;
   }
-  .hero-txt > * { animation: liftIn .7s cubic-bezier(.2,.7,.3,1) both; }
-  .hero-txt .over { animation-delay: .25s; }
-  .hero-txt h1 { animation-delay: .32s; }
-  .hero-txt .cta { animation-delay: .42s; }
-  @keyframes liftIn { from { opacity: 0; transform: translateY(14px); } }
-  /* scroll hint */
-  .hint {
-    position: absolute; z-index: 2; left: 50%; bottom: 16px; width: 1px; height: 34px;
-    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.45));
-    overflow: hidden; pointer-events: none;
-  }
-  .hint::after {
-    content: ""; position: absolute; left: -1px; width: 3px; height: 10px; border-radius: 2px; background: #fff;
-    animation: drop 2.2s cubic-bezier(.6,0,.4,1) infinite;
-  }
-  @keyframes drop { 0% { top: -12px; opacity: 0 } 30% { opacity: 1 } 70% { opacity: 1 } 100% { top: 34px; opacity: 0 } }
   .hero-txt { min-width: 0; }
   .hero .over { color: var(--ink-2); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .hero .over .n { color: #fff; }
-  .hero .over .sep { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .5; }
+  .hero .over .sep { width: 3px; height: 3px; background: currentColor; opacity: .5; }
   .hero h1 {
-    margin: 14px 0 0; font-size: clamp(40px, 7.4vw, 96px); font-weight: 620; letter-spacing: -.045em; line-height: .96;
+    margin: 14px 0 0; font-size: clamp(40px, 7vw, 92px); font-weight: 600; letter-spacing: -.04em; line-height: 1;
   }
   .hero .cta { margin-top: 24px; display: flex; align-items: center; gap: 14px; }
   .btn {
-    display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 24px; border-radius: 999px;
-    background: #fff; color: #000; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
-    transition: transform .18s ease, opacity .18s ease;
+    display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px; border-radius: 6px;
+    background: var(--ink); color: #111112; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
+    transition: background .15s ease;
   }
-  .btn:hover { transform: scale(1.03); }
-  .btn .tri { width: 0; height: 0; border: 6px solid transparent; border-left: 10px solid #000; margin-left: -2px; }
+  .btn:hover { background: #fff; }
+  .btn .tri { width: 0; height: 0; border: 5px solid transparent; border-left: 9px solid #111112; margin-left: -2px; }
   .ticks { margin-left: auto; display: flex; gap: 8px; align-items: flex-end; flex: none; }
   .ticks button {
-    width: 54px; height: 3px; background: rgba(255,255,255,.26); border-radius: 2px; position: relative; overflow: hidden;
+    width: 54px; height: 3px; background: rgba(236,234,228,.22); position: relative; overflow: hidden;
   }
-  .ticks button i { position: absolute; inset: 0 auto 0 0; width: 0; background: #fff; display: block; }
-  .ticks button[aria-current="true"] { background: rgba(255,255,255,.4); }
+  .ticks button i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--ink); display: block; }
+  .ticks button[aria-current="true"] { background: rgba(236,234,228,.36); }
   @media (max-width: 760px) {
     .hero-body { flex-direction: column; align-items: flex-start; gap: 20px; padding-bottom: 26px; }
     .ticks { margin-left: 0; }
     .ticks button { width: 34px; }
   }
+
+  /* ---- review band ---- */
+  .review { margin: 40px 22px 0; padding: 28px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 40px; align-items: center; }
+  .review .over { color: var(--ink-3); display: flex; align-items: center; gap: 12px; }
+  .review .over::before { content: ""; width: 28px; height: 2px; background: var(--accent); }
+  .review h2 { margin: 12px 0 0; font-size: clamp(24px, 3vw, 34px); font-weight: 600; letter-spacing: -.025em; line-height: 1.1; }
+  .review p { margin: 8px 0 0; color: var(--ink-2); }
+  .review .acts { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid #3a3a3f; }
+  .btn.ghost:hover { border-color: var(--ink-3); background: #18181a; }
+  @media (max-width: 760px) { .review { grid-template-columns: 1fr; } }
 
   /* ---- library ---- */
   .lib-head {
@@ -139,11 +136,9 @@
     background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.18) 36%, rgba(0,0,0,0) 62%);
     opacity: .9; transition: opacity .3s ease;
   }
-  .tile { opacity: 0; transform: translateY(14px); }
+  .tile { opacity: 0; }
   .tile.in { opacity: 1; transform: none; transition-delay: var(--d, 0ms); }
-  .wall:hover .tile.in { opacity: .42; transition-delay: 0ms; }
-  .wall:hover .tile.in:hover, .tile.in:focus-visible { opacity: 1; transform: scale(1.012); z-index: 2; }
-  .tile:hover img { transform: scale(1.05); }
+  .tile:hover, .tile:focus-visible { box-shadow: 0 0 0 1px #5a5852; }
   .tile.soon img { filter: grayscale(1) brightness(.5); }
   .tile.soon:hover img { filter: grayscale(.55) brightness(.62); }
   .tile .label {
@@ -158,12 +153,12 @@
   }
   .tile:hover .gn, .tile:focus-visible .gn { opacity: 1; transform: none; }
   .tile .circle {
-    margin-left: auto; flex: none; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.96);
+    margin-left: auto; flex: none; width: 36px; height: 36px; border-radius: 4px; background: var(--ink);
     display: grid; place-items: center; opacity: 0; transform: scale(.8); transition: opacity .25s ease, transform .25s ease;
   }
   .tile.big .circle { width: 46px; height: 46px; }
   .tile:hover .circle, .tile:focus-visible .circle { opacity: 1; transform: none; }
-  .tile .circle::after { content: ""; width: 0; height: 0; border: 5px solid transparent; border-left: 9px solid #000; margin-left: 4px; }
+  .tile .circle::after { content: ""; width: 0; height: 0; border: 5px solid transparent; border-left: 9px solid #111112; margin-left: 4px; }
   .tile.soon .circle { display: none; }
   .tile .soon-tag {
     position: absolute; z-index: 2; top: 12px; left: 13px; color: var(--ink-2);
@@ -212,7 +207,7 @@
 <div class="top" id="top">
   <a class="brand" href="#"><i aria-hidden="true"></i> Coolmath pilot</a>
   <div class="right">
-    <a href="presentation/">Presentation</a>
+    <a href="presentation/">Prototype review</a>
     <a href="../index.html">Dashboard</a>
     <a id="repo" href="#" target="_blank" rel="noopener" hidden>GitHub</a>
   </div>
@@ -221,8 +216,7 @@
 <main>
   <section class="hero" id="hero" aria-label="Featured">
     <div class="hero-layer" id="slides"></div>
-    <span class="hint" id="hint" aria-hidden="true"></span>
-    <div class="hero-body">
+        <div class="hero-body">
       <div class="hero-txt">
         <div class="over" id="h-over"></div>
         <h1 id="h-title"></h1>
@@ -234,6 +228,17 @@
     </div>
   </section>
 
+  <section class="review" aria-label="Prototype review">
+    <div>
+      <span class="over">Internal review · 19 November 2026</span>
+      <h2>Prototype Review: Magnet Twins, Echo Steps, Tiny Trains</h2>
+      <p>Idea, live demo, status and art options for each game, plus the decisions we need from the team.</p>
+    </div>
+    <div class="acts">
+      <a class="btn" href="presentation/#present">Present</a>
+      <a class="btn ghost" href="presentation/">Read as a document</a>
+    </div>
+  </section>
   <div class="lib-head">
     <span class="over">All games</span>
     <span class="stat" id="stat"></span>
@@ -442,22 +447,8 @@ function reveal(tiles) {
   tiles.forEach(t => io.observe(t));
 }
 
-// The hero drifts and fades as the wall comes up over it.
-let queued = false;
-function onScroll() {
-  $('top').classList.toggle('solid', scrollY > 40);
-  if (calm || queued) return;
-  queued = true;
-  requestAnimationFrame(() => {
-    queued = false;
-    const h = $('hero').offsetHeight || 1;
-    const y = Math.min(scrollY, h);
-    $('slides').style.transform = `translate3d(0, ${(y * 0.3).toFixed(1)}px, 0)`;
-    const body = document.querySelector('.hero-body');
-    if (body) body.style.opacity = Math.max(0, 1 - y / (h * 0.68));
-    $('hint').style.opacity = Math.max(0, 1 - scrollY / 160);
-  });
-}
+// The top bar gets a solid background once the page scrolls.
+function onScroll() { $('top').classList.toggle('solid', scrollY > 40); }
 addEventListener('scroll', onScroll, { passive: true });
 
 load();
