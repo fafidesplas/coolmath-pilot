@@ -4,8 +4,10 @@
 import { DX, DY, opp, switchArms } from './track.js';
 import {
   INK, CREAM, WOOD, WOOD_LIGHT, WOOD_DARK, GRASS, GRASS_DARK, GREEN, TRAIN_COLORS, TRAIN_SHAPES,
-  BOARD_AREA, CELL_MIN, CELL_MAX, mix,
+  BOARD_AREA, CELL_MIN, CELL_MAX, mix, GOLD,
 } from './config.js';
+import { T, img } from './theme.js';
+export { GOLD };
 
 export const MAT = 22; // grass margin around the board
 
@@ -62,6 +64,7 @@ export function tileSegments(t) {
 
 // Wooden toy track: ink outline, wood bed, two grooves. `layer` 0 = outline, 1 = bed, 2 = grooves.
 function strokeSeg(ctx, px, py, cell, seg, layer, faded) {
+  if (T.track === 'rail') { railSeg(ctx, px, py, cell, seg, layer, faded); return; }
   const [e1, e2, s0, s1] = seg;
   ctx.lineCap = 'butt';
   if (layer === 0) {
@@ -82,6 +85,41 @@ function strokeSeg(ctx, px, py, cell, seg, layer, faded) {
   }
 }
 
+// Railway track (art styles 'pixel' and 'meadow'): gravel bed, wooden sleepers, two
+// steel rails. Same three passes as the wooden track so joints merge.
+const RAIL = '#9AA0A8';
+function railSeg(ctx, px, py, cell, seg, layer, faded) {
+  const [e1, e2, s0, s1] = seg;
+  ctx.save();
+  if (faded) ctx.globalAlpha = 0.4;
+  ctx.lineCap = 'butt';
+  if (layer === 0) {
+    ctx.strokeStyle = mix(INK, CREAM, 0.15);
+    ctx.lineWidth = cell * 0.5 + 4;
+    ctx.beginPath(); segPath(ctx, px, py, cell, e1, e2, s0, s1, 0); ctx.stroke();
+    ctx.strokeStyle = mix(WOOD, '#B8B2A6', 0.7);
+    ctx.lineWidth = cell * 0.5;
+    ctx.stroke();
+  } else if (layer === 1) {
+    ctx.fillStyle = WOOD_DARK;
+    const n = Math.max(1, Math.round((s1 - s0) * 4));
+    for (let i = 0; i < n; i++) {
+      pathPoint(e1, e2, s0 + (s1 - s0) * ((i + 0.5) / n), P);
+      ctx.save();
+      ctx.translate(px + P.x * cell, py + P.y * cell); ctx.rotate(P.a);
+      ctx.fillRect(-cell * 0.045, -cell * 0.24, cell * 0.09, cell * 0.48);
+      ctx.restore();
+    }
+  } else {
+    for (const off of [-0.13, 0.13]) {
+      ctx.beginPath(); segPath(ctx, px, py, cell, e1, e2, s0, s1, off);
+      ctx.strokeStyle = INK; ctx.lineWidth = Math.max(3, cell * 0.06); ctx.stroke();
+      ctx.strokeStyle = RAIL; ctx.lineWidth = Math.max(1.5, cell * 0.03); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 // ---- Static board layer ------------------------------------------------------------
 function hash(x, y, k) { let h = (x * 374761393 + y * 668265263 + k * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -97,10 +135,13 @@ export function buildBoardLayer(level, L, scale) {
   ctx.fillStyle = 'rgba(46,36,64,0.18)';
   roundRect(ctx, -MAT + 4, -MAT + 8, W, H, 28); ctx.fill();
   ctx.fillStyle = GRASS; ctx.strokeStyle = INK; ctx.lineWidth = 4;
-  roundRect(ctx, -MAT, -MAT, W, H, 28); ctx.fill(); ctx.stroke();
+  roundRect(ctx, -MAT, -MAT, W, H, 28 * T.radius); ctx.fill();
+  const tiled = grassTiles(ctx, level, c, W, H);
+  ctx.strokeStyle = INK; ctx.lineWidth = 4;
+  roundRect(ctx, -MAT, -MAT, W, H, 28 * T.radius); ctx.stroke();
   // Checker tint so cells read as a grid
   ctx.fillStyle = GRASS_DARK;
-  ctx.globalAlpha = 0.25;
+  ctx.globalAlpha = tiled ? 0.12 : 0.25;
   for (let y = 0; y < level.h; y++) for (let x = 0; x < level.w; x++) if ((x + y) & 1) ctx.fillRect(x * c, y * c, c, c);
   ctx.globalAlpha = 1;
   // Scenery in empty cells: trees, bushes, flowers (never on track)
@@ -109,6 +150,7 @@ export function buildBoardLayer(level, L, scale) {
     if (used.has(`${x},${y}`)) continue;
     const r = hash(x, y, 1);
     const cx = (x + 0.3 + hash(x, y, 2) * 0.4) * c, cy = (y + 0.3 + hash(x, y, 3) * 0.4) * c;
+    if (spriteScenery(ctx, x, y, c)) continue;
     if (r < 0.55) tree(ctx, cx, cy, c * (0.2 + hash(x, y, 4) * 0.08));
     else if (r < 0.8) { tree(ctx, cx - c * 0.15, cy, c * 0.14); tree(ctx, cx + c * 0.15, cy + c * 0.08, c * 0.12); }
     else flowers(ctx, cx, cy, c);
@@ -124,6 +166,47 @@ export function buildBoardLayer(level, L, scale) {
   // Buffer stops (static)
   for (const t of level.tiles) if (t.t === 'buffer') bufferStop(ctx, (t.x + 0.5) * c, (t.y + 0.5) * c, c, t.rot);
   return cv;
+}
+
+// Image grass (art styles with a tile pack): tiles over the mat, clipped to its corners.
+function grassTiles(ctx, level, c, W, H) {
+  const keys = (T.grassTiles || []).filter(k => img(k));
+  if (!keys.length) return false;
+  const n = T.pixel ? 2 : 1, s = c / n;
+  ctx.save();
+  roundRect(ctx, -MAT, -MAT, W, H, 28 * T.radius); ctx.clip();
+  ctx.imageSmoothingEnabled = !T.pixel;
+  const x0 = -Math.ceil(MAT / s), y0 = -Math.ceil(MAT / s);
+  for (let y = y0; y < level.h * n - y0; y++) for (let x = x0; x < level.w * n - x0; x++) {
+    const k = keys[Math.floor(hash(x + 50, y + 50, 7) * keys.length)];
+    ctx.drawImage(img(k), x * s, y * s, s + 0.5, s + 0.5);
+  }
+  ctx.restore();
+  return true;
+}
+
+// Image scenery in an empty cell: one big sprite, or two small ones. False if the style
+// has none loaded (the procedural trees draw instead).
+function spriteScenery(ctx, x, y, c) {
+  const keys = (T.scenery || []).filter(k => img(k));
+  if (!keys.length) return false;
+  ctx.imageSmoothingEnabled = !T.pixel;
+  const pick = i => img(keys[Math.floor(hash(x, y, 10 + i) * keys.length)]);
+  const put = (im, cx, cy, h) => {
+    if (!T.pixel) h *= im.height / 96;   // trimmed sprites keep their relative sizes (tall pines, low bushes)
+    const w = h * im.width / im.height;
+    ctx.fillStyle = 'rgba(46,36,64,0.18)';
+    ctx.beginPath(); ctx.ellipse(cx + h * 0.06, cy + h * 0.42, w * 0.38, h * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.drawImage(im, cx - w / 2, cy - h / 2, w, h);
+  };
+  const r = hash(x, y, 1);
+  const big = T.pixel ? 0.62 : 0.95, small = T.pixel ? 0.42 : 0.62;
+  if (r < 0.55) put(pick(0), (x + 0.5) * c, (y + 0.5) * c, c * big);
+  else {
+    put(pick(1), (x + 0.3) * c, (y + 0.32) * c, c * small);
+    put(pick(2), (x + 0.68) * c, (y + 0.66) * c, c * small);
+  }
+  return true;
 }
 
 function tree(ctx, x, y, r) {
@@ -257,7 +340,7 @@ export function drawStation(ctx, t, L, bounce) {
   ctx.moveTo(-c * 0.4, 0); ctx.lineTo(-c * 0.22, -c * 0.26); ctx.lineTo(c * 0.22, -c * 0.26); ctx.lineTo(c * 0.4, 0); ctx.closePath();
   ctx.fill(); ctx.stroke();
   // shape sign on the roof
-  drawShape(ctx, TRAIN_SHAPES[t.color], 0, -c * 0.13, c * 0.085, '#FFFFFF', INK, 2.5);
+  drawShape(ctx, TRAIN_SHAPES[t.color], 0, -c * 0.13, c * 0.085 * (T.symbol || 1), '#FFFFFF', INK, 2.5);
   ctx.restore();
   ctx.restore();
 }
@@ -282,7 +365,7 @@ export function drawDepot(ctx, t, L, trains) {
     ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
     const w = c * 0.16 + Math.max(1, tr.depart) * c * 0.06;
     roundRect(ctx, bx - c * 0.12, by - c * 0.1, w, c * 0.2, c * 0.1); ctx.fill(); ctx.stroke();
-    drawShape(ctx, TRAIN_SHAPES[tr.color], bx - c * 0.03, by, c * 0.055, TRAIN_COLORS[tr.color], INK, 2);
+    drawShape(ctx, TRAIN_SHAPES[tr.color], bx - c * 0.03, by, c * 0.055 * (T.symbol || 1), TRAIN_COLORS[tr.color], INK, 2);
     if (tr.depart === 0) {
       ctx.fillStyle = GREEN; ctx.beginPath(); ctx.arc(bx + c * 0.07, by, c * 0.03, 0, Math.PI * 2); ctx.fill();
     } else {
@@ -308,6 +391,8 @@ export function drawTrain(ctx, x, y, ang, color, c, opts = {}) {
   // wheels
   ctx.fillStyle = INK;
   for (const wx of [-0.22, 0.02, 0.22]) { roundRect(ctx, wx * c - c * 0.06, -Wd / 2 - c * 0.04, c * 0.12, Wd + c * 0.08, 3); ctx.fill(); }
+  if (T.loco) locoBody(ctx, col, c, L, Wd);
+  else {
   // body
   ctx.fillStyle = col; ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.lineJoin = 'round';
   roundRect(ctx, -L / 2, -Wd / 2, L, Wd, Wd * 0.35); ctx.fill(); ctx.stroke();
@@ -319,18 +404,45 @@ export function drawTrain(ctx, x, y, ang, color, c, opts = {}) {
   ctx.beginPath(); ctx.arc(L * 0.32, 0, c * 0.07, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = mix(col, '#FFFFFF', 0.4);
   ctx.beginPath(); ctx.arc(L * 0.32, 0, c * 0.035, 0, Math.PI * 2); ctx.fill();
+  }
   ctx.restore();
   // Shape symbol on the roof, kept upright
   ctx.save();
   ctx.globalAlpha = opts.alpha ?? 1;
   const ox = Math.cos(ang) * L * 0.02, oy = Math.sin(ang) * L * 0.02;
-  drawShape(ctx, TRAIN_SHAPES[color], x + ox, y + oy + (opts.bob || 0), c * 0.09 * sc, '#FFFFFF', INK, 2.5);
+  drawShape(ctx, TRAIN_SHAPES[color], x + ox, y + oy + (opts.bob || 0), c * 0.09 * sc * (T.symbol || 1), '#FFFFFF', INK, 2.5);
   ctx.restore();
 }
 
+// Storybook steam loco (art style 'meadow'): round boiler with brass bands, a roofed cab,
+// a red buffer beam and a lamp at the front.
+function locoBody(ctx, col, c, L, Wd) {
+  ctx.lineJoin = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
+  // buffer beam
+  ctx.fillStyle = TRAIN_COLORS.red;
+  roundRect(ctx, L * 0.42, -Wd * 0.58, L * 0.1, Wd * 1.16, 3); ctx.fill(); ctx.stroke();
+  // boiler
+  ctx.fillStyle = col;
+  roundRect(ctx, -L * 0.18, -Wd * 0.42, L * 0.64, Wd * 0.84, Wd * 0.42); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = mix(col, '#FFFFFF', 0.35);
+  roundRect(ctx, -L * 0.14, -Wd * 0.3, L * 0.56, Wd * 0.16, Wd * 0.08); ctx.fill();
+  ctx.strokeStyle = GOLD; ctx.lineWidth = Math.max(2, c * 0.025);
+  for (const bx of [0.02, 0.2]) { ctx.beginPath(); ctx.moveTo(L * bx, -Wd * 0.4); ctx.lineTo(L * bx, Wd * 0.4); ctx.stroke(); }
+  // chimney and lamp
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
+  ctx.fillStyle = mix(INK, CREAM, 0.15);
+  ctx.beginPath(); ctx.arc(L * 0.33, 0, c * 0.065, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = TRAIN_COLORS.yellow;
+  ctx.beginPath(); ctx.arc(L * 0.47, 0, c * 0.03, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // cab with a roof
+  ctx.fillStyle = mix(col, INK, 0.25);
+  roundRect(ctx, -L * 0.5, -Wd * 0.52, L * 0.34, Wd * 1.04, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = mix(col, INK, 0.45);
+  roundRect(ctx, -L * 0.47, -Wd * 0.4, L * 0.28, Wd * 0.8, 4); ctx.fill();
+}
+
 // Golden ticket (GDD 3.11): a gold star token with a shine, on a little round base so it
-// reads as a pickup, not as the yellow train's triangle. Gold = yellow pushed towards wood.
-export const GOLD = mix(TRAIN_COLORS.yellow, WOOD, 0.3);
+// reads as a pickup, not as the yellow train's triangle. GOLD lives in config.js.
 export function drawTicket(ctx, x, y, c, t, opts = {}) {
   const sc = opts.scale ?? 1, a = opts.alpha ?? 1;
   if (sc <= 0.01 || a <= 0.01) return;

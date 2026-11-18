@@ -10,20 +10,30 @@ import {
   emit, FX, updateParticles, drawParticles, clearParticles, MAT, drawTicket, GOLD,
 } from './render.js';
 import {
-  resetButtons, hitButton, drawTitle, drawLevels, drawHUD, drawPause, drawComplete, drawCrashLabel, drawHand,
+  resetButtons, hitButton, drawTitle, drawLevels, drawHUD, drawPause, drawComplete, drawCrashLabel, drawHand, drawArtToast,
 } from './ui.js';
+import { T, THEMES, setTheme, findTheme, nextThemeId, artRev, artUrl } from './theme.js';
 import { WORLDS, ALL_LEVELS, findLevel } from '../levels/index.js';
 import { loadSave, storeSave } from './save.js';
 import { GA } from './analytics.js';
-import { sfx, audio, unlockAudio } from './audio.js';
+import { sfx, audio, unlockAudio, setSampleSet } from './audio.js';
 
 const LEVELS = WORLDS[0].levels;
 
+function applyArt(id) {
+  const th = setTheme(findTheme(id) ? id : 'classic');
+  setSampleSet(th.sfx ? Object.fromEntries(Object.entries(th.sfx).map(([k, v]) => [k, Array.isArray(v) ? v.map(artUrl) : artUrl(v)])) : null);
+}
+
 export function boot(canvas) {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d'), mainCtx = ctx;
   const view = { scale: 1, ox: 0, oy: 0, dpr: 1 };
 
+  // Art style (presentation): ?art=<id>, default classic.
+  applyArt(new URLSearchParams(location.search).get('art'));
+
   const G = {
+    artT: 9, fadeT: 9, shownScreen: null,
     screen: 'title', save: loadSave(), time: 0, t: 0,
     level: null, index: -1, L: null, board: null, layer: null, layerScale: 0,
     switches: [], setup: null, phase: 'plan', paused: false,
@@ -70,7 +80,7 @@ export function boot(canvas) {
     clearParticles();
     G.screen = 'playing';
     if (idx === 0) GA.design('tutorial:step01');
-    try { history.replaceState(null, '', `?level=${level.id}${G.demoHints ? '&hints=now' : ''}`); } catch { /* file:// */ }
+    try { history.replaceState(null, '', `?level=${level.id}${G.demoHints ? '&hints=now' : ''}${T.id === 'classic' ? '' : `&art=${T.id}`}`); } catch { /* file:// */ }
   }
 
   function flip(t) {
@@ -223,6 +233,22 @@ export function boot(canvas) {
     if (G.hasNext()) startLevel(ALL_LEVELS[G.index + 1]);
     else G.screen = 'levels';
   }
+  // Next art style (Art pill or A): palette, font, board and sounds change in place; the
+  // game state, the level and the run are untouched. The URL keeps its other params.
+  function switchArt(id) {
+    applyArt(id || nextThemeId());
+    G.artT = 0;
+    G.layer = null;
+    try {
+      const p = new URLSearchParams(location.search);
+      if (T.id === 'classic') p.delete('art'); else p.set('art', T.id);
+      const q = p.toString().replace(/%3A/gi, ':');
+      history.replaceState(null, '', q ? `?${q}` : location.pathname);
+    } catch { /* file:// */ }
+    emit(FX.CONF, 640, 120, 18, TRAIN_COLORS.yellow, 0.7);
+    emit(FX.CONF, 640, 120, 12, TRAIN_COLORS.blue, 0.7);
+  }
+
   function toggleSound() {
     G.save.settings.sfx = !G.save.settings.sfx;
     audio.enabled = G.save.settings.sfx;
@@ -245,6 +271,7 @@ export function boot(canvas) {
     else if (id === 'levels') G.screen = 'levels';
     else if (id === 'back') G.screen = 'title';
     else if (id === 'sound') toggleSound();
+    else if (id === 'art') switchArt();
     else if (id.startsWith('lvl:')) startLevel(LEVELS[+id.slice(4)]);
     else if (id === 'pause') G.paused = true;
     else if (id === 'resume') G.paused = false;
@@ -302,6 +329,7 @@ export function boot(canvas) {
     const k = e.key;
     if (k === 'Tab' || k === ' ') e.preventDefault();
     if (e.repeat && k !== 'Tab') return;
+    if ((k === 'a' || k === 'A') && !e.ctrlKey && !e.metaKey) { switchArt(); return; }   // art style (presentation)
     if (G.screen === 'title') {
       if (k === 'Enter' || k === ' ') play();
       else if (k === 'l' || k === 'L') G.screen = 'levels';
@@ -346,6 +374,7 @@ export function boot(canvas) {
   // ---- Update ----------------------------------------------------------------------
   function update(dt) {
     G.time += dt;
+    G.artT += dt; G.fadeT += dt;
     G.ticketT += dt;
     G.hintT += dt;
     G.hintVisT = G.screen === 'playing' && G.hintReady() ? (G.hintVisT || 0) + dt : 0;   // hint button slide-in
@@ -432,10 +461,23 @@ export function boot(canvas) {
     return true;
   }
 
+  // Pixel styles draw the board into a small buffer and blow it up with no smoothing;
+  // the HUD and labels stay sharp on top.
+  let pix = null, pixCtx = null;
   function drawPlaying() {
     const L = G.L, lv = G.level;
-    const k = view.scale * view.dpr;
-    if (!G.layer || G.layerScale !== k) { G.layer = buildBoardLayer(lv, L, k); G.layerScale = k; }
+    const px = T.pixel;
+    let ctx = mainCtx;
+    if (px) {
+      const w = Math.round(VIEW_W / px), h = Math.round(VIEW_H / px);
+      if (!pix) { pix = document.createElement('canvas'); pixCtx = pix.getContext('2d'); }
+      if (pix.width !== w || pix.height !== h) { pix.width = w; pix.height = h; }
+      ctx = pixCtx;
+      ctx.setTransform(w / VIEW_W, 0, 0, h / VIEW_H, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+    }
+    const k = px ? 1 / px : view.scale * view.dpr;
+    if (!G.layer || G.layerScale !== k || G.layerRev !== artRev) { G.layer = buildBoardLayer(lv, L, k); G.layerScale = k; G.layerRev = artRev; }
     ctx.fillStyle = CREAM; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     ctx.save();
     if (G.shake > 0) ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
@@ -478,8 +520,14 @@ export function boot(canvas) {
     }
     for (const t of lv.tiles) if (t.t === 'station') drawStation(ctx, t, L, G.stBounce[cellKey(t.x, t.y)] || 0);
     drawParticles(ctx);
-    if (G.phase === 'crash' && G.crashAt) drawCrashLabel(ctx, G, G.crashAt.x, G.crashAt.y, G.res.cause, G.t);
     ctx.restore();
+    if (px) {
+      ctx = mainCtx;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(pix, 0, 0, VIEW_W, VIEW_H);
+      ctx.imageSmoothingEnabled = true;
+    }
+    if (G.phase === 'crash' && G.crashAt) drawCrashLabel(ctx, G, G.crashAt.x, G.crashAt.y, G.res.cause, G.t);
 
     drawHUD(ctx, G);
     if (lv.tutorial && plan && !G.paused) {
@@ -505,6 +553,15 @@ export function boot(canvas) {
       drawPlaying();
       if (G.screen === 'complete') { resetButtons(); drawComplete(ctx, G); drawParticles(ctx); }
     }
+    // Screen change: a short fade from the backdrop color (results overlay excluded).
+    const base = G.screen === 'complete' ? 'playing' : G.screen;
+    if (base !== G.shownScreen) { if (G.shownScreen) G.fadeT = 0; G.shownScreen = base; }   // no fade on the first screen
+    if (G.fadeT < 0.3) {
+      ctx.globalAlpha = 1 - G.fadeT / 0.3;
+      ctx.fillStyle = CREAM; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.globalAlpha = 1;
+    }
+    if (G.artT < 1.6) { drawArtToast(ctx, G.artT); drawParticles(ctx); }
     ctx.restore();
   }
 
@@ -549,6 +606,9 @@ export function boot(canvas) {
     get looping() { return G.phase === 'run' && G.loopAt >= 0 && G.pos >= G.loopAt; },
     get result() { return G.result ? { ...G.result } : null; },
     hint() { useHint(); },
+    get art() { return T.id; },
+    arts: THEMES.map(t => t.id),
+    setArt(id) { switchArt(id); },
     levels: ALL_LEVELS.map(l => l.id),
     start(ref) { const l = findLevel(String(ref ?? '1-1')) || LEVELS[0]; startLevel(l); },
     restart() { if (G.level) retry(); },

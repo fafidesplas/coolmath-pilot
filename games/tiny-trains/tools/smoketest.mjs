@@ -11,6 +11,7 @@ const ctxStub = () => new Proxy({}, {
     if (k in t) return t[k];
     if (k === 'measureText') return s => ({ width: String(s).length * 20 });
     if (k === 'getImageData') return () => ({ data: [] });
+    if (k === 'drawImage') return im => { if (!im || typeof im !== 'object') throw new TypeError('drawImage: not an image'); };
     return () => {};
   },
   set(t, k, v) { t[k] = v; return true; },
@@ -208,6 +209,66 @@ ok(loadSave().v === 1, 'a corrupted save resets to defaults');
   D.hint(); frames(3);
   ok(Object.keys(D.locked).length === 1 && D.hintUsed, '?hints=now: a hint padlocks one switch');
   ok(!errors.length, 'no runtime errors with the demo flag');
+}
+
+// Art styles (presentation): every ?art id boots, plays a crash and a win, draws every
+// screen, and the A key / Art pill cycle the styles and keep the other URL params.
+{
+  const fs = await import('node:fs');
+  // Image stub: "loads" on the next frame if the file exists, so the image paths of
+  // every style are checked and the image code paths (tiles, sprites) are drawn.
+  const missing = [];
+  globalThis.Image = class {
+    set src(u) {
+      this._src = u;
+      const ok = fs.existsSync(new URL(u));
+      if (!ok) missing.push(u);
+      this.width = 16; this.height = 16;
+      queueMicrotask(() => (ok ? this.onload : this.onerror)?.());
+    }
+    get src() { return this._src; }
+  };
+  const opts = JSON.parse(fs.readFileSync(new URL('../art-options.json', import.meta.url), 'utf8'));
+  const ids = globalThis.game.arts;
+  ok(JSON.stringify(opts.map(o => o.id)) === JSON.stringify(ids), `art-options.json lists the styles in selector order (${ids.join(', ')})`);
+  for (const id of ids) {
+    const urls = [];
+    globalThis.location = { search: `?level=1-4&art=${id}`, pathname: '/games/tiny-trains/' };
+    globalThis.history = { replaceState(a, b, u) { urls.push(u); } };
+    const before = errors.length;
+    for (const k in listeners) delete listeners[k];   // only the newest boot listens
+    boot(mkCanvas());
+    const D = globalThis.game;
+    frames(2);
+    await new Promise(r => setTimeout(r, 0));   // let the style's images "load"
+    D.restart(); key('Escape'); frames(5); tap(520 + 120, 456 + 30); frames(5); key('Escape'); frames(5);   // title, level select, back
+    D.start('1-4'); frames(10);
+    ok(D.art === id && D.level === 'world01:level04', `?art=${id} boots into the level with that style`);
+    D.go(); frames(600);
+    ok(D.phase === 'plan', `?art=${id}: a failed run plays and rewinds`);
+    D.win(); frames(600);
+    ok(D.screen === 'complete' && D.score >= 1, `?art=${id}: the reference solution wins (${D.score} stars)`);
+    key('Escape'); frames(40); key('Escape'); frames(40);
+    ok(errors.length === before, `?art=${id}: no runtime errors on any screen`);
+    ok(id === 'classic' ? !urls.at(-1)?.includes('art=') : urls.some(u => u.includes(`art=${id}`)), `?art=${id} stays in the URL (${urls.at(-1)})`);
+  }
+  // Cycling: A on the title goes to the next style and writes it to the URL.
+  const urls = [];
+  globalThis.location = { search: '?hints=now', pathname: '/games/tiny-trains/' };
+  globalThis.history = { replaceState(a, b, u) { urls.push(u); globalThis.location.search = u.startsWith('?') ? u : ''; } };
+  for (const k in listeners) delete listeners[k];
+  boot(mkCanvas());
+  const D = globalThis.game;
+  frames(5);
+  const seen = [D.art];
+  for (let i = 0; i < ids.length; i++) { key('a'); frames(20); seen.push(D.art); }
+  ok(JSON.stringify(seen) === JSON.stringify([...ids, ids[0]]), `A cycles every style and back (${seen.join(' → ')})`);
+  ok(urls.some(u => u.includes('hints=now') && u.includes(`art=${ids[1]}`)), `switching keeps the other params (${urls[0]})`);
+  tap(120, 676); frames(20);
+  ok(D.art === ids[1], `the Art pill on the title switches the style (${D.art})`);
+  ok(D.screen === 'title' && !errors.length, 'no runtime errors while switching styles');
+  await new Promise(r => setTimeout(r, 0));
+  ok(!missing.length, `every style image file exists (${missing.length ? missing.join(', ') : 'all found'})`);
 }
 
 if (errors.length) for (const e of errors) origLog(e);

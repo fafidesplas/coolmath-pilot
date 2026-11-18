@@ -4,7 +4,8 @@ import { INK, CREAM, PANEL, GREEN, TRAIN_COLORS, WOOD, WOOD_LIGHT, GRASS, CRASH_
 import { roundRect, star, drawTrain, GOLD } from './render.js';
 import { WORLDS, levelPos } from '../levels/index.js';
 
-export const FONT = '"Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+import { T, FONT, img, THEMES } from './theme.js';
+export { FONT };
 export const buttons = [];
 
 export function resetButtons() { buttons.length = 0; }
@@ -37,9 +38,14 @@ export function button(ctx, G, id, x, y, w, h, label, o = {}) {
   const dy = pressed ? 4 : 0;
   const col = o.disabled ? mix(o.color || CREAM, CREAM, 0.6) : (o.color || '#FFFFFF');
   ctx.fillStyle = 'rgba(46,36,64,0.85)';
-  roundRect(ctx, x, y + 5, w, h, o.r ?? 16); ctx.fill();
+  const r = Math.min((o.r ?? 16) * T.radius, h / 2);
+  roundRect(ctx, x, y + 5, w, h, r); ctx.fill();
   ctx.fillStyle = col; ctx.strokeStyle = o.disabled ? mix(INK, CREAM, 0.5) : INK; ctx.lineWidth = 4;
-  roundRect(ctx, x, y + dy, w, h, o.r ?? 16); ctx.fill(); ctx.stroke();
+  roundRect(ctx, x, y + dy, w, h, r); ctx.fill(); ctx.stroke();
+  if (!o.disabled && !o.flat) {   // glossy top highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    roundRect(ctx, x + 6, y + dy + 5, w - 12, Math.min(h * 0.32, 18), Math.min(r, 9)); ctx.fill();
+  }
   if (o.icon) o.icon(ctx, x + w / 2, y + h / 2 + dy, o.disabled);
   else text(ctx, label, x + w / 2, y + h / 2 + dy + 1, o.size || 26, o.disabled ? mix(INK, CREAM, 0.5) : (o.textColor || INK));
 }
@@ -74,9 +80,62 @@ function padlock(ctx, x, y, s) {
 // ---- Title --------------------------------------------------------------------------
 function scenery(ctx) {
   ctx.fillStyle = CREAM; ctx.fillRect(0, 0, 1280, 720);
+  const keys = (T.grassTiles || []).filter(k => img(k));
+  if (keys.length) {
+    // Image styles: a strip of the pack's grass tiles with its trees along the bottom.
+    const s = T.pixel ? 48 : 64;
+    ctx.save();
+    ctx.imageSmoothingEnabled = !T.pixel;
+    ctx.beginPath(); ctx.ellipse(250, 770, 560, 150, 0, 0, Math.PI * 2); ctx.ellipse(1050, 790, 600, 170, 0, 0, Math.PI * 2); ctx.clip();
+    for (let y = 600; y < 720; y += s) for (let x = 0; x < 1280; x += s) ctx.drawImage(img(keys[(Math.floor(x / s) * 7 + Math.floor(y / s) * 3) % keys.length]), x, y, s + 0.5, s + 0.5);
+    ctx.restore();
+    const trees = (T.scenery || []).filter(k => img(k));
+    ctx.imageSmoothingEnabled = !T.pixel;
+    [[70, 640, 1], [170, 668, 0.8], [1110, 646, 1.1], [1210, 676, 0.8], [990, 690, 0.7]].forEach(([x, y, k], i) => {
+      const im = img(trees[i % trees.length]); if (!im) return;
+      const h = (T.pixel ? 96 : im.height * 1.3) * k, w = h * im.width / im.height;
+      ctx.drawImage(im, x - w / 2, y - h / 2, w, h);
+    });
+    ctx.imageSmoothingEnabled = true;
+    return;
+  }
   ctx.fillStyle = GRASS;
   ctx.beginPath(); ctx.ellipse(250, 760, 520, 170, 0, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(1050, 780, 560, 190, 0, 0, Math.PI * 2); ctx.fill();
+}
+
+// Art style pill (presentation): shows the style name, cycles on tap (or the A key).
+export function artPill(ctx, G, x, y) {
+  ctx.font = `bold 20px ${FONT}`;
+  const label = `Art: ${T.name}`;
+  const w = Math.max(200, ctx.measureText(label).width + 70);
+  button(ctx, G, 'art', x, y, w, 48, '', {
+    r: 24, flat: true,
+    icon: (c, bx, by) => {
+      const n = THEMES.length, i = THEMES.indexOf(T);
+      for (let k = 0; k < n; k++) {
+        c.fillStyle = k === i ? INK : mix(INK, CREAM, 0.7);
+        c.beginPath(); c.arc(x + 20 + k * 11, by, k === i ? 4.5 : 3.5, 0, Math.PI * 2); c.fill();
+      }
+      text(c, label, x + 22 + n * 11 + (w - 22 - n * 11) / 2, by + 1, 20, INK);
+    },
+  });
+}
+
+// Toast after a style switch: the style name drops in at the top for a moment.
+export function drawArtToast(ctx, t) {
+  if (t > 1.6) return;
+  const k = t < 0.2 ? t / 0.2 : t > 1.3 ? (1.6 - t) / 0.3 : 1;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, k);
+  ctx.translate(640, 120 - (1 - Math.min(1, t / 0.2)) * 30);
+  ctx.font = `bold 34px ${FONT}`;
+  const w = ctx.measureText(T.name).width + 80;
+  ctx.fillStyle = 'rgba(46,36,64,0.3)'; roundRect(ctx, -w / 2 + 4, -32 + 6, w, 64, 32 * T.radius); ctx.fill();
+  ctx.fillStyle = CREAM; ctx.strokeStyle = INK; ctx.lineWidth = 4;
+  roundRect(ctx, -w / 2, -32, w, 64, Math.min(32, 32 * T.radius)); ctx.fill(); ctx.stroke();
+  text(ctx, T.name, 0, 2, 34, INK);
+  ctx.restore();
 }
 
 export function drawTitle(ctx, G) {
@@ -116,6 +175,7 @@ export function drawTitle(ctx, G) {
   button(ctx, G, 'levels', 540, 568, 200, 64, 'Levels', { size: 28 });
   button(ctx, G, 'sound', 1196, 20, 64, 64, '', { icon: iconSound(G.save.settings.sfx) });
   text(ctx, 'Prototype', 1240, 700, 16, mix(INK, CREAM, 0.5), 'right', 'normal');
+  artPill(ctx, G, 20, 652);
 }
 
 // ---- Level select ------------------------------------------------------------------
@@ -150,6 +210,7 @@ export function drawLevels(ctx, G) {
   const ty = rows > 1 ? 636 : 560;
   star(ctx, 600, ty, 20, TRAIN_COLORS.yellow, INK, 3);
   text(ctx, `${total} / ${n * 3}`, 660, ty + 2, 30);
+  artPill(ctx, G, 20, 652);
   text(ctx, 'More worlds coming soon', 640, rows > 1 ? 690 : 640, 20, mix(INK, CREAM, 0.45), 'center', 'normal');
 }
 
@@ -258,12 +319,14 @@ export function drawCrashLabel(ctx, G, x, y, cause, t) {
 export function drawPause(ctx, G) {
   ctx.fillStyle = 'rgba(46,36,64,0.55)'; ctx.fillRect(0, 0, 1280, 720);
   ctx.fillStyle = CREAM; ctx.strokeStyle = INK; ctx.lineWidth = 5;
-  roundRect(ctx, 440, 170, 400, 400, 28); ctx.fill(); ctx.stroke();
+  roundRect(ctx, 440, 170, 400, 400, 28 * T.radius); ctx.fill(); ctx.stroke();
   outlinedText(ctx, 'Paused', 640, 230, 52, '#FFFFFF', 10);
   button(ctx, G, 'resume', 520, 290, 240, 66, 'Resume', { color: GREEN, textColor: '#FFFFFF', size: 30 });
   button(ctx, G, 'restart', 520, 376, 240, 60, 'Restart', { size: 26 });
   button(ctx, G, 'menu', 520, 456, 240, 60, 'Levels', { size: 26 });
   button(ctx, G, 'sound', 790, 186, 40, 40, '', { r: 12, icon: iconSound(G.save.settings.sfx) });
+  ctx.font = `bold 20px ${FONT}`;
+  artPill(ctx, G, 640 - Math.max(200, ctx.measureText(`Art: ${T.name}`).width + 70) / 2, 590);
 }
 
 const ease = t => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
@@ -272,9 +335,9 @@ export function drawComplete(ctx, G) {
   const t = G.t, R = G.result;
   ctx.fillStyle = `rgba(46,36,64,${0.5 * ease(t / 0.3)})`; ctx.fillRect(0, 0, 1280, 720);
   const py = 130 + (1 - ease(t / 0.35)) * 600;
-  ctx.fillStyle = 'rgba(46,36,64,0.4)'; roundRect(ctx, 356, py + 10, 568, 470, 32); ctx.fill();
+  ctx.fillStyle = 'rgba(46,36,64,0.4)'; roundRect(ctx, 356, py + 10, 568, 470, 32 * T.radius); ctx.fill();
   ctx.fillStyle = CREAM; ctx.strokeStyle = INK; ctx.lineWidth = 5;
-  roundRect(ctx, 350, py, 580, 470, 32); ctx.fill(); ctx.stroke();
+  roundRect(ctx, 350, py, 580, 470, 32 * T.radius); ctx.fill(); ctx.stroke();
   outlinedText(ctx, 'All aboard!', 640, py + 60, 54, TRAIN_COLORS.yellow, 10);
   const labels = ['Home', 'Ticket', R.hint ? 'Par (hint used)' : 'Par'];
   const earned = [true, R.ticket, R.parStar];

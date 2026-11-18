@@ -1,0 +1,26 @@
+[
+  {
+    "id": "classic",
+    "name": "Classic Toybox",
+    "description": "The original look: wooden toy track, chunky outlined trains, all drawn in code with synthesized sounds.",
+    "pack": "None (procedural, drawn in code)",
+    "license": "Original work",
+    "url": ""
+  },
+  {
+    "id": "pixel",
+    "name": "Pixel Town",
+    "description": "Retro pixel art: the board is rendered at low resolution, Kenney Tiny Town grass and trees, railway track, Pixelify Sans font and chiptune sound effects.",
+    "pack": "Kenney Tiny Town + Kenney Digital Audio + Pixelify Sans (Google Fonts)",
+    "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/tiny-town"
+  },
+  {
+    "id": "meadow",
+    "name": "Storybook Meadow",
+    "description": "Soft storybook countryside: Kenney Medieval RTS grass, pines and rocks, sleepers and steel rails, steam locos with brass bands, Fredoka font and Kenney UI and impact sounds.",
+    "pack": "Kenney Medieval RTS + Kenney Interface Sounds + Kenney Impact Sounds + Fredoka (Google Fonts)",
+    "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/medieval-rts"
+  }
+]

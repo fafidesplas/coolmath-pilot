@@ -14,12 +14,14 @@ export const WIN_HOLD_S = 0.9;       // after the last arrival, before the resul
 
 export const SAVE_KEY = 'cm_tiny-trains_save';
 
-export const INK = '#2E2440';
-export const CREAM = '#FFF3DC';
-export const WOOD = '#C98B4F';
+// Palette. These are live bindings (`let`): applyPalette() swaps them when the art style
+// changes (src/theme.js), and every module that imports them sees the new values.
+export let INK = '#2E2440';
+export let CREAM = '#FFF3DC';
+export let WOOD = '#C98B4F';
 export const TRAIN_COLORS = { red: '#E8483B', blue: '#3B7DD8', yellow: '#F5C327', green: '#4DB35E' };
 export const TRAIN_SHAPES = { red: 'circle', blue: 'square', yellow: 'triangle', green: 'diamond' };
-export const GREEN = TRAIN_COLORS.green;
+export let GREEN = TRAIN_COLORS.green;
 
 // Tints and shades of the palette only.
 export function mix(a, b, t) {
@@ -27,11 +29,22 @@ export function mix(a, b, t) {
   const ch = s => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
   return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
 }
-export const WOOD_LIGHT = mix(WOOD, '#FFFFFF', 0.35);
-export const WOOD_DARK = mix(WOOD, INK, 0.25);
-export const GRASS = mix(GREEN, CREAM, 0.55);
-export const GRASS_DARK = mix(GREEN, CREAM, 0.3);
-export const PANEL = mix(CREAM, INK, 0.06);
+export let WOOD_LIGHT, WOOD_DARK, GRASS, GRASS_DARK, PANEL, GOLD;
+
+// p: { ink, cream, wood, red, blue, yellow, green, grass? } (hex colors)
+export function applyPalette(p) {
+  INK = p.ink; CREAM = p.cream; WOOD = p.wood;
+  TRAIN_COLORS.red = p.red; TRAIN_COLORS.blue = p.blue; TRAIN_COLORS.yellow = p.yellow; TRAIN_COLORS.green = p.green;
+  GREEN = p.green;
+  WOOD_LIGHT = mix(WOOD, '#FFFFFF', 0.35);
+  WOOD_DARK = mix(WOOD, INK, 0.25);
+  GRASS = p.grass || mix(GREEN, CREAM, 0.55);
+  GRASS_DARK = p.grassDark || mix(GREEN, CREAM, 0.3);
+  PANEL = p.panel || mix(CREAM, INK, 0.06);
+  GOLD = mix(TRAIN_COLORS.yellow, WOOD, 0.3);   // golden ticket: yellow pushed towards wood
+}
+export const CLASSIC_PALETTE = { ink: INK, cream: CREAM, wood: WOOD, ...TRAIN_COLORS };
+applyPalette(CLASSIC_PALETTE);
 
 export const CRASH_TEXT = {
   collision: 'Crash!',
