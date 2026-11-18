@@ -709,6 +709,12 @@ export class Game {
     this.addButton({ x: VIEW_W - 250, y: 28, w: 220, h: 56, size: 22,
       key: 'sound', label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
 
+    if (art.style.sprites) {
+      // the floor is a sprite tile here: put the controls on a card so they stay readable
+      rrect(ctx, VIEW_W / 2 - 330, VIEW_H - 80, 660, 72, 14);
+      ctx.fillStyle = C.panel; ctx.globalAlpha = 0.92; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.lineWidth = 3; ctx.strokeStyle = C.line; ctx.stroke();
+    }
     text(ctx, '2 players: WASD + F   and   Arrows + /', VIEW_W / 2, VIEW_H - 58, 22, C.text, 'center', 700);
     text(ctx, '1 player: TAB swaps robots', VIEW_W / 2, VIEW_H - 28, 22, C.text, 'center', 700);
   }

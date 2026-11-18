@@ -101,7 +101,12 @@ for (const s of STYLES) {
 {
   const opts = JSON.parse(readFileSync(new URL('art-options.json', ROOT), 'utf8'));
   ok(JSON.stringify(opts.map(o => o.id)) === JSON.stringify(ART_IDS), `art-options.json ids match the selector order (${ART_IDS.join(', ')})`);
-  ok(opts.every(o => o.name && o.description && o.license && 'url' in o && o.pack), 'art-options.json entries have name, description, pack, license, url');
+  ok(opts.every(o => o.name && o.description && o.license && 'url' in o && o.pack && o.author), 'art-options.json entries have name, description, pack, author, license, url');
+  const noPreview = opts.filter(o => !o.preview || !existsSync(new URL(o.preview, ROOT))).map(o => o.id);
+  ok(!noPreview.length, `every style has its preview image${noPreview.length ? ' — missing ' + noPreview.join(', ') : ''}`);
+  // pack styles must draw the robots from sprites, not only recolor the code art
+  const noRobots = STYLES.filter(s => s.id !== 'classic' && !(s.sprites?.robot && s.images?.plus && s.images?.minus)).map(s => s.id);
+  ok(!noRobots.length, `every pack style has robot sprite sheets${noRobots.length ? ' — missing in ' + noRobots.join(', ') : ''}`);
 }
 
 // Boot the real game on a level that has crates, doors, plates, spikes, water and a checkpoint.
@@ -129,7 +134,10 @@ for (const id of ART_IDS) {
   ok(!err, `${id}: title, level select, levels ${levelIds.join(' + ')}, pause and results draw without errors${err ? ' — ' + (err.stack || err) : ''}`);
   ok(new URL(href).searchParams.get('art') === id && new URL(href).searchParams.get('level') === 'w1l01', `${id}: URL updated to ?art=${id}, other params kept`);
   const sheets = Object.values(art.style.images || {}).map(f => `assets/art/${id}/${f}`);
-  if (sheets.length) ok(sheets.some(f => drawn.has(f)), `${id}: sprite sheets are actually drawn`);
+  if (sheets.length) {
+    const unused = sheets.filter(f => !drawn.has(f));
+    ok(!unused.length, `${id}: every sprite sheet is actually drawn${unused.length ? ' — not drawn: ' + unused.join(', ') : ''}`);
+  }
 }
 
 // The pill and the V key cycle through every style and wrap around.
