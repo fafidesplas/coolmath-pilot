@@ -3,83 +3,398 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Coolmath pilot · Three new games</title>
-<meta name="description" content="Magnet Twins, Echo Steps and Tiny Trains: three original puzzle games for Coolmath, playable in the browser.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23101024'/%3E%3Ccircle cx='11' cy='16' r='5' fill='%23ff4d6d'/%3E%3Ccircle cx='21' cy='16' r='5' fill='%2337e2ff'/%3E%3C/svg%3E">
+<title>Coolmath Pilot — Prototype Review, 19 Nov 2026</title>
+<meta name="description" content="Internal review of three Coolmath pilot prototypes: Magnet Twins, Echo Steps and Tiny Trains.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23141415'/%3E%3Crect x='9' y='9' width='14' height='14' fill='%23ECEAE4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="fx" aria-hidden="true"></canvas>
-<div class="grain" aria-hidden="true"></div>
 
-<header class="top">
-  <a class="brand" href="#top"><span class="dot r"></span><span class="dot c"></span><span class="dot y"></span> Coolmath pilot</a>
-  <nav class="top-links" id="top-links"></nav>
-  <button class="btn ghost small" id="present-top" type="button" title="Present (F)">▶ Present <kbd>F</kbd></button>
+<header class="doc-head">
+  <div class="doc-head-in">
+    <span class="doc-brand">Coolmath Pilot <span>/ Prototype Review</span></span>
+    <nav class="doc-nav">
+      <a href="#magnet-twins">Magnet Twins</a>
+      <a href="#echo-steps">Echo Steps</a>
+      <a href="#tiny-trains">Tiny Trains</a>
+      <a href="#next">Next steps</a>
+      <a href="../">All games</a>
+    </nav>
+    <button class="btn" type="button" id="present-btn">Present <kbd>F</kbd></button>
+  </div>
 </header>
 
-<main id="top">
-  <section class="hero">
-    <p class="kicker reveal">Coolmath pilot · Studio showcase · <span id="hero-date">November 2026</span></p>
-    <h1 class="hero-title reveal" aria-label="Three games. Ready to play.">
-      <span class="line"><span class="word">Three</span> <span class="word">games.</span></span>
-      <span class="line grad"><span class="word">Ready</span> <span class="word">to</span> <span class="word">play.</span></span>
-    </h1>
-    <p class="hero-sub reveal">Original puzzle games built for the browser, the classroom Chromebook and a five-minute break. Every one runs right here, live, in 4 art styles per game.</p>
-    <div class="hero-cta reveal">
-      <button class="btn primary big" id="present-hero" type="button">▶ Start the presentation</button>
-      <a class="btn ghost big" href="#games">Explore the games ↓</a>
-    </div>
-    <div class="hero-games reveal" id="hero-games"></div>
-  </section>
+<div class="deck" id="deck">
+<div class="stage" id="stage">
 
-  <div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"></div></div>
-
-  <section id="games" class="games"></section>
-
-  <section class="closing" id="closing">
-    <p class="kicker">That's the lineup</p>
-    <h2 class="closing-title">Pick one. <span class="grad">Press play.</span></h2>
-    <div class="stats" id="stats"></div>
-    <div class="closing-play" id="closing-play"></div>
-    <p class="fine">Built with plain HTML5 Canvas and JavaScript, no frameworks. Fonts: Bricolage Grotesque, Inter and JetBrains Mono (SIL Open Font License).</p>
-  </section>
-</main>
-
-<!-- Compare art styles -->
-<div class="modal" id="compare" role="dialog" aria-modal="true" aria-labelledby="compare-title" hidden>
-  <div class="modal-box">
-    <div class="modal-head">
-      <h3 id="compare-title">Compare art styles</h3>
-      <div class="modal-pick" id="compare-pick"></div>
-      <button class="btn ghost small" id="compare-close" type="button" aria-label="Close">✕ Close</button>
-    </div>
-    <div class="compare-grid" id="compare-grid"></div>
-    <p class="modal-foot">Pick any of the 4 styles (all shown by default). Every view is the real game running with <code>?art=&lt;style&gt;</code>. Click a view to play it.</p>
+<!-- 1. Cover -->
+<section class="slide s-cover" data-section="">
+  <div class="cover-top">
+    <span class="rule"></span>
+    <p class="label">Internal review</p>
   </div>
-</div>
-
-<!-- Slides -->
-<div class="deck" id="deck" hidden>
-  <div class="deck-bg" aria-hidden="true"></div>
-  <div class="deck-stage" id="deck-stage"></div>
-  <div class="deck-ui">
-    <button class="deck-nav prev" id="deck-prev" type="button" aria-label="Previous slide">‹</button>
-    <button class="deck-nav next" id="deck-next" type="button" aria-label="Next slide">›</button>
-    <div class="deck-bar"><i id="deck-progress"></i></div>
-    <div class="deck-meta">
-      <span id="deck-count">1 / 1</span>
-      <button type="button" id="deck-fs" title="Full screen (F)">⛶</button>
-      <button type="button" id="deck-close" title="Close (Esc)">✕</button>
-    </div>
-    <p class="deck-help" id="deck-help">← → / Space to move · F full screen · P play this game · Esc to close · PgUp/PgDn work inside a live game</p>
+  <div class="cover-main">
+    <p class="cover-kicker">Coolmath Pilot</p>
+    <h1>Prototype Review</h1>
+    <p class="cover-sub">Magnet Twins, Echo Steps, Tiny Trains</p>
   </div>
-</div>
+  <dl class="cover-meta">
+    <div><dt>Date</dt><dd>19 November 2026</dd></div>
+    <div><dt>Presented by</dt><dd>Fafi Desplas</dd></div>
+    <div><dt>Format</dt><dd>3 prototypes, live demos, decisions</dd></div>
+  </dl>
+</section>
 
-<noscript><p style="padding:2rem;color:#fff">This page needs JavaScript. Play the games directly: <a href="../../games/magnet-twins/">Magnet Twins</a>, <a href="../../games/echo-steps/">Echo Steps</a>, <a href="../../games/tiny-trains/">Tiny Trains</a>.</p></noscript>
+<!-- 2. Context -->
+<section class="slide s-context" data-section="Context">
+  <div class="col-text">
+    <p class="label">Context</p>
+    <h2>The pilot</h2>
+    <p class="lead">12 original HTML5 game concepts for Coolmath, ranked by fit and built in parallel by two people since October 2026.</p>
+    <ul class="facts">
+      <li>Every game follows the same six phases. A teammate review closes each one.</li>
+      <li>Plain HTML5 Canvas and JavaScript. No frameworks, no build step. Targets the school Chromebook.</li>
+      <li>Deterministic simulations, with automated tests that solve every level.</li>
+      <li>Today: three prototypes. For each one: the idea, a live demo, where it stands and the art options.</li>
+    </ul>
+  </div>
+  <div class="col-table">
+    <table class="pipeline" aria-label="Where each game stands">
+      <thead>
+        <tr><th class="g">Game</th><th>Brief</th><th>Design</th><th>Slice</th><th>Content</th><th>Polish</th><th>Done</th></tr>
+      </thead>
+      <tbody>
+        <tr data-stage-row="magnet-twins" data-stage="content"><th class="g"><b>Magnet Twins</b><span>Rank 1 · 13 of 30 levels</span></th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr data-stage-row="echo-steps" data-stage="slice"><th class="g"><b>Echo Steps</b><span>Rank 6 · 10 of 36 rooms</span></th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr data-stage-row="tiny-trains" data-stage="gdd"><th class="g"><b>Tiny Trains</b><span>Rank 5 · 10 of 50 levels</span></th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Stage from each game's <code>meta.json</code>. Tiny Trains is a playable prototype built from a draft design document; its design review is still open.</p>
+  </div>
+</section>
+
+<!-- ============ Magnet Twins ============ -->
+<section class="slide s-overview" id="magnet-twins" data-game="magnet-twins" data-section="01 Magnet Twins">
+  <div class="col-text">
+    <p class="label"><span class="num">01</span> Co-op puzzle platformer</p>
+    <h2>Magnet Twins</h2>
+    <p class="lead">Two robots share one keyboard. One pulls metal, the other pushes it. Every level needs both.</p>
+    <dl class="points">
+      <div><dt>Plus and Minus</dt><dd>Red pulls metal and the other robot, blue pushes. Each power is a cone about 4 tiles long, aimed in 4 directions.</dd></div>
+      <div><dt>Metal world</dt><dd>Crates, magnetic doors, fixed plates to grapple or jetpack off, platforms hanging on rails.</dd></div>
+      <div><dt>One keyboard</dt><dd>WASD + F and arrows + /. In solo mode, Tab swaps robots.</dd></div>
+      <div><dt>Short, forgiving</dt><dd>Levels of 30 to 90 seconds. Stars for the exit, 3 bolts and par time. No lives.</dd></div>
+    </dl>
+  </div>
+  <figure class="col-media">
+    <img src="img/magnet-twins.jpg" alt="Magnet Twins, level 2-3 Cable Car" width="1600" height="900">
+    <figcaption>Level 2-3, Cable Car, played by the solution bot in co-op.</figcaption>
+  </figure>
+</section>
+
+<section class="slide s-demo" data-game="magnet-twins" data-section="01 Magnet Twins">
+  <div class="demo-main">
+    <div class="demo-frame live" style="background-image:url(img/magnet-twins.jpg)" data-slug="magnet-twins" data-query="" data-interactive></div>
+    <div class="demo-bar"><p class="demo-hint"><span class="when-idle">Click the game to play.</span><span class="when-playing">Playing.</span> <kbd>Esc</kbd> returns to the slides.</p><a href="../../games/magnet-twins/" target="_blank" rel="noopener" class="demo-open">Open in a new tab</a></div>
+  </div>
+  <aside class="demo-side">
+    <p class="label"><span class="num">01</span> Live demo</p>
+    <h3>Magnet Twins</h3>
+    <div class="presets" role="group" aria-label="Start from">
+      <button type="button" data-query="" aria-pressed="true">Title screen</button>
+      <button type="button" data-query="level=w2l13&amp;replay=coop">Level 2-3, bot replay</button>
+      <button type="button" data-query="level=w1l10&amp;mode=solo">Level 1-10, solo</button>
+      <button type="button" data-query="unlock">All worlds unlocked</button>
+    </div>
+    <dl class="keys">
+      <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>D</kbd> <kbd>F</kbd></dt><dd>Plus: move, jump, power</dd></div>
+      <div><dt><kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd> <kbd>/</kbd></dt><dd>Minus: move, jump, power</dd></div>
+      <div><dt><kbd>Tab</kbd></dt><dd>Swap robot (solo)</dd></div>
+      <div><dt><kbd>V</kbd></dt><dd>Next art style</dd></div>
+    </dl>
+  </aside>
+</section>
+
+<section class="slide s-status" data-game="magnet-twins" data-section="01 Magnet Twins">
+  <p class="label"><span class="num">01</span> Status</p>
+  <h2>Magnet Twins: where it stands</h2>
+  <div class="figures">
+    <div><b>13<small>/30</small></b><span>levels built</span><i class="bar"><i style="width:43.3%"></i></i></div>
+    <div><b data-stage-name="magnet-twins">Content</b><span>stage · design approved 26 Oct</span></div>
+    <div><b>156</b><span>automated checks passing</span></div>
+    <div><b>4</b><span>art styles, switchable live</span></div>
+  </div>
+  <div class="lists">
+    <div><h4>Done</h4><ul>
+      <li>World 1, the Workshop: 10 levels, ending with the two-floor Workshop Exam.</li>
+      <li>World 2 started: hanging platform on a rail, levels 11 to 13.</li>
+      <li>Co-op and solo. A bot solves every level in both and sets the par time.</li>
+      <li>Full shell: title, level select, pause, results, saving, sound.</li>
+    </ul></div>
+    <div><h4>Open</h4><ul>
+      <li>Levels 14 to 30: rest of the Scrapyard, then the Power Plant.</li>
+      <li>New elements: spring plates, platforms on a chain.</li>
+      <li>Paint shop (24 cosmetic items).</li>
+      <li>Hand playtest of levels 11 to 13; keyboard test on a Chromebook.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="slide s-art" data-game="magnet-twins" data-section="01 Magnet Twins" data-art="magnet-twins" data-art-key="V" data-art-query="level=w2l13&amp;replay=coop&amp;pill=0" data-art-loop="24">
+  <div class="art-head">
+    <div>
+      <p class="label"><span class="num">01</span> Art direction</p>
+      <h2>Magnet Twins: art options</h2>
+    </div>
+    <p class="art-note"></p>
+  </div>
+  <div class="art-grid"></div>
+</section>
+
+<!-- ============ Echo Steps ============ -->
+<section class="slide s-overview" id="echo-steps" data-game="echo-steps" data-section="02 Echo Steps">
+  <div class="col-text">
+    <p class="label"><span class="num">02</span> Time-loop puzzle platformer</p>
+    <h2>Echo Steps</h2>
+    <p class="lead">Every attempt leaves an echo that replays what you did. You solve each room with your past selves.</p>
+    <dl class="points">
+      <div><dt>Loops</dt><dd>A loop lasts 5 to 10 seconds. The clock waits for your first move; E ends a loop early.</dd></div>
+      <div><dt>Echoes</dt><dd>Each attempt replays exactly. Echoes hold plates, open gates and can be stood on. Up to 4 per room.</dd></div>
+      <div><dt>Nothing hidden</dt><dd>Echo paths, the next second and gate timings are always drawn.</dd></div>
+      <div><dt>Stars</dt><dd>Reach the exit, use the fewest echoes, beat the time par. A room takes 1 to 3 minutes.</dd></div>
+    </dl>
+  </div>
+  <figure class="col-media">
+    <img src="img/echo-steps.jpg" alt="Echo Steps, room 9 High Plate" width="1600" height="900">
+    <figcaption>Room 9, High Plate: two echoes and the live player (reference solution).</figcaption>
+  </figure>
+</section>
+
+<section class="slide s-demo" data-game="echo-steps" data-section="02 Echo Steps">
+  <div class="demo-main">
+    <div class="demo-frame live" style="background-image:url(img/echo-steps.jpg)" data-slug="echo-steps" data-query="" data-interactive></div>
+    <div class="demo-bar"><p class="demo-hint"><span class="when-idle">Click the game to play.</span><span class="when-playing">Playing.</span> <kbd>Esc</kbd> returns to the slides.</p><a href="../../games/echo-steps/" target="_blank" rel="noopener" class="demo-open">Open in a new tab</a></div>
+  </div>
+  <aside class="demo-side">
+    <p class="label"><span class="num">02</span> Live demo</p>
+    <h3>Echo Steps</h3>
+    <div class="presets" role="group" aria-label="Start from">
+      <button type="button" data-query="" aria-pressed="true">Title screen</button>
+      <button type="button" data-query="room=w1l07&amp;hints=now">Room 7 with hints</button>
+      <button type="button" data-query="replay&amp;room=w1l09">Room 9, reference solution</button>
+      <button type="button" data-query="room=w1l10">Room 10, Spawn Step</button>
+    </div>
+    <dl class="keys">
+      <div><dt><kbd>&larr;</kbd><kbd>&rarr;</kbd> <kbd>Space</kbd></dt><dd>Move, jump</dd></div>
+      <div><dt><kbd>E</kbd></dt><dd>End the loop, make an echo</dd></div>
+      <div><dt><kbd>&#9003;</kbd> <kbd>R</kbd></dt><dd>Delete last echo, restart</dd></div>
+      <div><dt><kbd>H</kbd> <kbd>V</kbd></dt><dd>Hint, next art style</dd></div>
+    </dl>
+  </aside>
+</section>
+
+<section class="slide s-status" data-game="echo-steps" data-section="02 Echo Steps">
+  <p class="label"><span class="num">02</span> Status</p>
+  <h2>Echo Steps: where it stands</h2>
+  <div class="figures">
+    <div><b>10<small>/36</small></b><span>rooms built</span><i class="bar"><i style="width:27.8%"></i></i></div>
+    <div><b data-stage-name="echo-steps">Slice</b><span>stage · design approved 27 Oct</span></div>
+    <div><b>263</b><span>automated checks passing</span></div>
+    <div><b>4</b><span>art styles, switchable live</span></div>
+  </div>
+  <div class="lists">
+    <div><h4>Done</h4><ul>
+      <li>The Lab, rooms 1 to 10, each with a reference solution.</li>
+      <li>Every room is checked: solvable at par, 0.25 s timing tolerance, impossible without echoes.</li>
+      <li>Hints drawn from the reference solutions; Skip room after 3 minutes.</li>
+      <li>Full shell, saving, synthesized sound and music that adds a layer per echo.</li>
+    </ul></div>
+    <div><h4>Open</h4><ul>
+      <li>Slice gate: a teammate plays the rooms cold.</li>
+      <li>Rooms 11 to 36: end of the Lab, the Archive, the Core.</li>
+      <li>New elements: one-way ledges, switches, bridges, keys, lasers, lifts.</li>
+      <li>Trails (cosmetics); real-time check on a Chromebook.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="slide s-art" data-game="echo-steps" data-section="02 Echo Steps" data-art="echo-steps" data-art-key="V" data-art-query="replay&amp;room=w1l09" data-art-loop="20">
+  <div class="art-head">
+    <div>
+      <p class="label"><span class="num">02</span> Art direction</p>
+      <h2>Echo Steps: art options</h2>
+    </div>
+    <p class="art-note"></p>
+  </div>
+  <div class="art-grid"></div>
+</section>
+
+<!-- ============ Tiny Trains ============ -->
+<section class="slide s-overview" id="tiny-trains" data-game="tiny-trains" data-section="03 Tiny Trains">
+  <div class="col-text">
+    <p class="label"><span class="num">03</span> Routing puzzle</p>
+    <h2>Tiny Trains</h2>
+    <p class="lead">Flip the track switches so every colored train reaches its own station without crashing.</p>
+    <dl class="points">
+      <div><dt>Plan</dt><dd>Time is frozen while you set the switches. Click or tap; Tab and Enter on the keyboard.</dd></div>
+      <div><dt>Run</dt><dd>Press GO. A crash or a wrong station stops the run, shows why and rewinds.</dd></div>
+      <div><dt>Stars</dt><dd>All trains home, the golden ticket, and par switch flips.</dd></div>
+      <div><dt>Hints</dt><dd>After two failed runs, a hint sets one correct switch and locks it.</dd></div>
+    </dl>
+  </div>
+  <figure class="col-media">
+    <img src="img/tiny-trains.jpg" alt="Tiny Trains, level 1-7 Three's Company" width="1600" height="900">
+    <figcaption>Level 1-7, Three's Company, in planning.</figcaption>
+  </figure>
+</section>
+
+<section class="slide s-demo" data-game="tiny-trains" data-section="03 Tiny Trains">
+  <div class="demo-main">
+    <div class="demo-frame live" style="background-image:url(img/tiny-trains.jpg)" data-slug="tiny-trains" data-query="" data-interactive></div>
+    <div class="demo-bar"><p class="demo-hint"><span class="when-idle">Click the game to play.</span><span class="when-playing">Playing.</span> <kbd>Esc</kbd> returns to the slides.</p><a href="../../games/tiny-trains/" target="_blank" rel="noopener" class="demo-open">Open in a new tab</a></div>
+  </div>
+  <aside class="demo-side">
+    <p class="label"><span class="num">03</span> Live demo</p>
+    <h3>Tiny Trains</h3>
+    <div class="presets" role="group" aria-label="Start from">
+      <button type="button" data-query="" aria-pressed="true">Title screen</button>
+      <button type="button" data-query="level=1-7&amp;hints=now">Level 1-7 with hints</button>
+      <button type="button" data-query="level=1-9">Level 1-9, the loop</button>
+      <button type="button" data-query="level=1-10">Level 1-10, Twin Reds</button>
+    </div>
+    <dl class="keys">
+      <div><dt>Click</dt><dd>Flip a switch</dd></div>
+      <div><dt><kbd>Space</kbd></dt><dd>GO / stop</dd></div>
+      <div><dt><kbd>H</kbd> <kbd>R</kbd></dt><dd>Hint, reset</dd></div>
+      <div><dt><kbd>A</kbd></dt><dd>Next art style</dd></div>
+    </dl>
+  </aside>
+</section>
+
+<section class="slide s-status" data-game="tiny-trains" data-section="03 Tiny Trains">
+  <p class="label"><span class="num">03</span> Status</p>
+  <h2>Tiny Trains: where it stands</h2>
+  <div class="figures">
+    <div><b>10<small>/50</small></b><span>levels built</span><i class="bar"><i style="width:20%"></i></i></div>
+    <div><b data-stage-name="tiny-trains">Design</b><span>stage · design document in draft</span></div>
+    <div><b>298</b><span>automated checks passing</span></div>
+    <div><b>4</b><span>art styles, switchable live</span></div>
+  </div>
+  <div class="lists">
+    <div><h4>Done</h4><ul>
+      <li>Village levels 1-1 to 1-10. Every par is confirmed by a brute-force solver.</li>
+      <li>Golden ticket and three stars; five crash causes, each with a rewind.</li>
+      <li>Hints that lock one correct switch; endless loops fast-forward.</li>
+      <li>Full shell: title, level select, pause, results, saving.</li>
+    </ul></div>
+    <div><h4>Open</h4><ul>
+      <li>Design document review and approval.</li>
+      <li>Levels 1-11 and 1-12, then the Farm, City and Mountain worlds (38 levels).</li>
+      <li>New elements: crossings, flip switches, bridges, signals, tunnels.</li>
+      <li>Daily puzzle, liveries, music, level editor.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="slide s-art" data-game="tiny-trains" data-section="03 Tiny Trains" data-art="tiny-trains" data-art-key="A" data-art-query="level=1-7" data-art-loop="0">
+  <div class="art-head">
+    <div>
+      <p class="label"><span class="num">03</span> Art direction</p>
+      <h2>Tiny Trains: art options</h2>
+    </div>
+    <p class="art-note"></p>
+  </div>
+  <div class="art-grid"></div>
+</section>
+
+<!-- Next steps -->
+<section class="slide s-next" id="next" data-section="Next steps">
+  <p class="label">Next steps</p>
+  <h2>What happens next</h2>
+  <div class="cols3">
+    <div>
+      <h4><span class="num">01</span> Magnet Twins</h4>
+      <ol>
+        <li>Play levels 11 to 13 by hand in co-op and solo.</li>
+        <li>Build levels 14 to 20 to finish the Scrapyard.</li>
+        <li>Add spring plates and chain platforms for the Power Plant.</li>
+        <li>Write the chosen art style into the design document.</li>
+      </ol>
+    </div>
+    <div>
+      <h4><span class="num">02</span> Echo Steps</h4>
+      <ol>
+        <li>Cold playtest of rooms 1 to 10 to pass the slice gate.</li>
+        <li>Add one-way ledges to the sim; build rooms 11 and 12.</li>
+        <li>Start the Archive: switches, bridges, keys and locks.</li>
+        <li>Make the chosen style the default and retune its colors.</li>
+      </ol>
+    </div>
+    <div>
+      <h4><span class="num">03</span> Tiny Trains</h4>
+      <ol>
+        <li>Review and approve the design document.</li>
+        <li>Write and build levels 1-11 and 1-12.</li>
+        <li>Start the Farm: flat crossings and flip switches.</li>
+        <li>Play levels 1-4 to 1-10 by hand; tune the tips.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- Decisions -->
+<section class="slide s-decisions" data-section="Decisions">
+  <p class="label">Decisions</p>
+  <h2>What we need from the team</h2>
+  <table class="decisions">
+    <thead><tr><th class="n">#</th><th>Decision</th><th>Proposal</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>Art direction for each game</td><td>Pick one option per game from the comparison. It becomes the default and goes into the design document.</td><td>All three devlogs</td></tr>
+      <tr><td class="n">2</td><td>The other art styles</td><td>Drop them, or keep them as unlockable liveries. Decide if the style switcher stays in release builds.</td><td>Tiny Trains, Echo Steps devlogs</td></tr>
+      <tr><td class="n">3</td><td>Coolmath SDK, ad breaks, branding, size limit</td><td>Ads only between levels, never mid-level. Aim for under 1 MB per game.</td><td>Open question in all three GDDs</td></tr>
+      <tr><td class="n">4</td><td>GameAnalytics keys</td><td>One key pair per game, in a config file.</td><td>Open question in all three GDDs</td></tr>
+      <tr><td class="n">5</td><td>Tiny Trains: does a hint cost the par star?</td><td>Yes. It keeps par meaningful; revisit with hint data.</td><td>Tiny Trains GDD</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Close -->
+<section class="slide s-close" data-section="">
+  <div class="close-main">
+    <span class="rule"></span>
+    <h2>Thank you</h2>
+    <p class="lead">Questions and feedback welcome. Everything shown today is playable in the browser.</p>
+  </div>
+  <dl class="close-links">
+    <div><dt>Magnet Twins</dt><dd><a href="../../games/magnet-twins/" target="_blank" rel="noopener">fafidesplas.github.io/coolmath-pilot/games/magnet-twins</a></dd></div>
+    <div><dt>Echo Steps</dt><dd><a href="../../games/echo-steps/" target="_blank" rel="noopener">fafidesplas.github.io/coolmath-pilot/games/echo-steps</a></dd></div>
+    <div><dt>Tiny Trains</dt><dd><a href="../../games/tiny-trains/" target="_blank" rel="noopener">fafidesplas.github.io/coolmath-pilot/games/tiny-trains</a></dd></div>
+    <div><dt>This review</dt><dd><a href="./">fafidesplas.github.io/coolmath-pilot/showcase/presentation</a></dd></div>
+  </dl>
+</section>
+
+<div class="chrome" aria-hidden="true">
+  <span class="chrome-title">Coolmath Pilot <span>/ Prototype Review</span></span>
+  <span class="chrome-section" id="chrome-section"></span>
+</div>
+</div><!-- /stage -->
+
+<div class="deck-ui">
+  <button type="button" id="nav-prev" aria-label="Previous slide">&lsaquo;</button>
+  <span id="counter">01 / 17</span>
+  <button type="button" id="nav-next" aria-label="Next slide">&rsaquo;</button>
+</div>
+<p class="deck-help" id="deck-help">Arrows or Space to move · F full screen · P open this game · Esc exit</p>
+</div><!-- /deck -->
+
+<footer class="doc-foot">
+  <p>Coolmath Pilot · Prototype Review · 19 November 2026 · Fafi Desplas. Fonts: Inter and IBM Plex Mono (SIL Open Font License).</p>
+</footer>
+
 <script src="app.js"></script>
 </body>
 </html>
