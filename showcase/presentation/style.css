@@ -254,6 +254,9 @@ main, .top { position: relative; z-index: 2; }
 .chip.compare-btn { background: transparent; border-style: dashed; color: var(--ink-2); }
 .chip.compare-btn::before { content: "⇆"; width: auto; height: auto; background: none; }
 .chips .note { font-size: 13px; color: var(--ink-3); }
+.art-help { margin: 10px 0 0; font-size: 13px; color: var(--ink-3); }
+.art-help kbd { font: 700 12px var(--mono); padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: var(--ink); }
+.art-help a { color: var(--a1); }
 .play-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 34px; }
 .demo-links { display: flex; flex-wrap: wrap; gap: 8px; }
 

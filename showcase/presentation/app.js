@@ -21,9 +21,10 @@
         ['🎮', 'Two friends, one Chromebook', 'Same-keyboard co-op, or solo mode where one player swaps robots with Tab.'],
         ['⭐', 'Short levels, three stars', 'Finish, grab all 3 bolts, beat the par time. No lives, no game over.'],
       ],
-      controls: [[['W', 'A', 'D'], 'Plus: move, jump'], [['F'], 'Plus: power (hold)'], [['←', '↑', '→'], 'Minus: move, jump'], [['/'], 'Minus: power (hold)'], [['Tab'], 'Swap robot (solo)']],
+      controls: [[['W', 'A', 'D'], 'Plus: move, jump'], [['F'], 'Plus: power (hold)'], [['←', '↑', '→'], 'Minus: move, jump'], [['/'], 'Minus: power (hold)'], [['Tab'], 'Swap robot (solo)'], [['V'], 'Switch art style']],
+      artKey: 'V',
       progress: { done: 13, total: 30, unit: 'levels built' },
-      notes: ['World 1, the Workshop, is complete (10 levels)', 'World 2 started: hanging platform on a rail, levels 11–13', '136 automated checks; a bot solves every level in co-op and solo'],
+      notes: ['World 1, the Workshop, is complete (10 levels)', 'World 2 started: hanging platform on a rail, levels 11–13', '4 art styles, switch live with V or the on-screen pill', '156 automated checks (136 sim + 20 art); a bot solves every level in co-op and solo'],
       stage: 'content',
       preview: 'level=w2l13&replay=coop', loop: 26,
       previewNote: 'Live: the bot playing level 13, Cable Car, in co-op.',
@@ -39,9 +40,10 @@
         ['💡', 'Hints that show the way', 'A lightbulb appears when you are stuck and draws the next echo’s route right on the room.'],
         ['↷', 'Never stuck for good', 'After 3 minutes or all hints, Skip room moves on; come back later for the stars.'],
       ],
-      controls: [[['←', '→'], 'Move'], [['Space'], 'Jump'], [['E'], 'Loop now: make an echo'], [['⌫'], 'Delete last echo'], [['H'], 'Hint'], [['R'], 'Restart room']],
+      controls: [[['←', '→'], 'Move'], [['Space'], 'Jump'], [['E'], 'Loop now: make an echo'], [['⌫'], 'Delete last echo'], [['H'], 'Hint'], [['R'], 'Restart room'], [['V'], 'Switch art style']],
+      artKey: 'V',
       progress: { done: 10, total: 36, unit: 'rooms built' },
-      notes: ['The Lab: rooms 1–10, each with a reference solution', 'New: hints and Skip room for the presentation', '212 automated checks passing'],
+      notes: ['The Lab: rooms 1–10, each with a reference solution', 'New: hints and Skip room for the presentation', '4 art styles, switch live with V or the on-screen pill', '263 automated checks passing (212 sim + 51 smoke)'],
       stage: 'slice',
       preview: 'replay&room=w1l09', loop: 34,
       previewNote: 'Live: the reference solution of room 9, High Plate.',
@@ -57,16 +59,17 @@
         ['🎫', 'Par stars and a golden ticket', 'Stars for a first-run win, for par switch flips and for collecting the golden ticket.'],
         ['💡', 'Hints after two misses', 'A hint locks one right switch in place. Endless loops fast-forward on their own.'],
       ],
-      controls: [[['Click'], 'Flip a switch'], [['Space'], 'GO / Stop'], [['F'], 'Fast-forward'], [['Tab', '↵'], 'Select, flip'], [['H'], 'Hint'], [['R'], 'Reset']],
+      controls: [[['Click'], 'Flip a switch'], [['Space'], 'GO / Stop'], [['F'], 'Fast-forward'], [['Tab', '↵'], 'Select, flip'], [['H'], 'Hint'], [['R'], 'Reset'], [['A'], 'Switch art style']],
+      artKey: 'A',
       progress: { done: 10, total: 50, unit: 'levels built' },
-      notes: ['Village levels 1-1 to 1-10, every par checked by a solver', 'New: hints with padlocked switches and the loop skip', '219 automated checks passing'],
+      notes: ['Village levels 1-1 to 1-10, every par checked by a solver', 'New: hints with padlocked switches and the loop skip', '4 art styles, switch live with A or the on-screen pill', '298 automated checks passing (219 sim + 79 smoke)'],
       stage: 'gdd',
       preview: 'level=1-9', loop: 0,
       previewNote: 'Live: level 1-9, Round and Round.',
       demos: [['Hints on, level 1-7', 'level=1-7&hints=now'], ['The loop level', 'level=1-9']],
     },
   ];
-  const STATS = [['3', 'original games'], ['33', 'levels and rooms playable'], ['567', 'automated checks passing'], ['0', 'frameworks']];
+  const STATS = [['3', 'original games'], ['33', 'levels and rooms playable'], ['717', 'automated checks passing'], ['4', 'art styles per game'], ['0', 'frameworks']];
 
   // ---------- helpers ----------
   const $ = id => document.getElementById(id);
@@ -92,6 +95,7 @@
     return GAMES_ROOT + g.slug + '/' + (s ? '?' + s : '');
   }
   const svgUrl = g => GAMES_ROOT + g.slug + '/mechanic.svg';
+  const creditsUrl = g => GAMES_ROOT + g.slug + '/assets/CREDITS.md';
   async function getJSON(url) {
     try {
       const r = await fetch(url, { cache: 'no-cache' });
@@ -268,6 +272,8 @@
         el('div', { class: 'controls' }, g.controls.map(([keys, label]) => el('div', null, el('span', { class: 'keys' }, keys.map(k => el('kbd', { text: k }))), el('span', { text: label })))),
         el('div', { class: 'block-title', text: 'Art styles' }),
         el('div', { class: 'chips', 'data-art': g.slug }, el('a', { class: 'chip', href: play, target: '_blank', rel: 'noopener', text: 'Classic' })),
+        el('p', { class: 'art-help' }, 'In the game: press ', el('kbd', { text: g.artKey }), ' or tap the Art pill to switch styles live. ',
+          el('a', { href: creditsUrl(g), target: '_blank', rel: 'noopener', text: 'Credits & licenses ↗' })),
         el('div', { class: 'block-title', text: 'Where it is' }),
         el('div', { class: 'status' }, phases, names,
           el('div', { class: 'count' }, el('b', null, String(g.progress.done), el('small', { text: ' / ' + g.progress.total })), el('span', { text: g.progress.unit })),
@@ -325,7 +331,8 @@
   // ---------- compare modal ----------
   let compareOpen = false, compareGame = null, comparePick = [];
   const compareScreens = [];
-  function defaultPick(g) { return (art[g.slug] || [CLASSIC]).slice(0, 3).map(o => o.id); }
+  const MAX_PICK = 4;
+  function defaultPick(g) { return (art[g.slug] || [CLASSIC]).slice(0, MAX_PICK).map(o => o.id); }
 
   function artFigure(g, o, opts = {}) {
     const s = makeScreen(g, g.preview, { loop: g.loop, link: gameUrl(g, '', o.id), interactive: false });
@@ -343,7 +350,8 @@
     compareOpen = true; pausePage();
     const m = $('compare');
     m.style.cssText = accent(g);
-    $('compare-title').textContent = `${g.name}: art styles`;
+    const n = (art[g.slug] || [CLASSIC]).length;
+    $('compare-title').textContent = `${g.name}: ${n} art styles`;
     m.hidden = false; document.body.style.overflow = 'hidden';
     renderCompare();
     $('compare-close').focus();
@@ -354,7 +362,7 @@
       type: 'button', 'aria-pressed': String(comparePick.includes(o.id)), text: o.name,
       onclick: () => {
         if (comparePick.includes(o.id)) { if (comparePick.length > 1) comparePick = comparePick.filter(x => x !== o.id); }
-        else { comparePick.push(o.id); if (comparePick.length > 3) comparePick.shift(); }
+        else { comparePick.push(o.id); if (comparePick.length > MAX_PICK) comparePick.shift(); }
         renderCompare();
       },
     })));
@@ -417,11 +425,11 @@
       s._screens.push(scr); s._shot = shot;
 
       const opts = art[g.slug] || [CLASSIC];
-      const pick = opts.slice(0, 3);
+      const pick = opts.slice(0, MAX_PICK);
       const a = add('s-art', g,
         el('p', { class: 'kicker', text: g.num + ' · ' + g.name + ' · Art styles' }),
         el('h2', null, pick.length > 1 ? 'Same game, ' : 'The look: ', el('span', { class: 'grad', text: pick.length > 1 ? `${pick.length} looks.` : 'Classic.' })),
-        el('p', { class: 'lead', text: pick.length > 1 ? 'Each view is the real game switched with one URL parameter, ?art=<style>.' : 'More art directions are in the works; they plug in with one URL parameter, ?art=<style>.' }));
+        el('p', { class: 'lead', text: pick.length > 1 ? `Each view is the real game switched with one URL parameter, ?art=<style>. In the game, press ${g.artKey} to switch live.` : 'More art directions are in the works; they plug in with one URL parameter, ?art=<style>.' }));
       const grid = el('div', { class: 'compare-grid' + (pick.length > 1 ? '' : ' solo'), style: `--n:${pick.length}` });
       pick.forEach(o => { const { screen, fig } = artFigure(g, o, { desc: pick.length < 3 }); a._screens.push(screen); grid.append(fig); });
       a.append(grid);
