@@ -5,13 +5,14 @@ import { Sim } from './sim.js';
 import { Input, KEY_LABELS } from './input.js';
 import { Sound } from './audio.js';
 import { FX, drawHex } from './fx.js';
+import { art, applyArt, ART_IDS, styleById, fontSpec } from './art.js';
 import { GA } from './analytics.js';
 import { loadSave, storeSave, loadSettings, storeSettings } from './save.js';
 import { Recorder, decodeRecording } from './record.js';
 import { previewTargets } from './magnet.js';
 import {
   renderTiles, drawRobot, drawField, drawAimPreview, drawCrate, drawGate, drawPlate, drawPlatform, drawExit, drawBolt,
-  drawFlag, drawKeycap, rrect, text, FONT,
+  drawFlag, drawKeycap, rrect, text, syncFont,
 } from './render.js';
 import { WORLDS, LEVELS_PER_WORLD, findLevel } from '../levels/index.js';
 
@@ -28,7 +29,7 @@ function drawStar(ctx, x, y, r, filled, scale = 1) {
     i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
   }
   ctx.closePath();
-  ctx.fillStyle = filled ? C.bolt : '#D9CDBD';
+  ctx.fillStyle = filled ? C.bolt : C.starOff;
   ctx.fill();
   ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2.5, r * 0.14); ctx.strokeStyle = C.ink; ctx.stroke();
   ctx.restore();
@@ -69,6 +70,9 @@ export class Game {
     window.addEventListener('resize', () => this.resize());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.pause(true); });
     this.bindPointer();
+    this.bindArtPill();
+    this.sound.setSamples(art.style.sounds, art.style.volume);
+    this.fadeAt = 0; this.fadeLen = 0.6; this.lastScreen = this.screen;   // fade in from black on load
 
     const debugLevel = this.params.get('level');
     const replayMode = this.params.get('replay');
@@ -93,8 +97,11 @@ export class Game {
     this.ox = (w - VIEW_W * this.scale) / 2;
     this.oy = (h - VIEW_H * this.scale) / 2;
     this.dpr = dpr;
-    if (this.sim) this.layer = renderTiles(this.sim.tiles, this.scale * dpr);
+    if (this.sim) this.layer = renderTiles(this.sim.tiles, this.layerScale());
   }
+
+  // Pixel styles pre-render the tiles at their low resolution; the others at screen resolution.
+  layerScale() { return art.style.pixel || this.scale * this.dpr; }
 
   bindPointer() {
     const toView = e => ({ x: (e.clientX - this.ox) / this.scale, y: (e.clientY - this.oy) / this.scale });
@@ -186,7 +193,7 @@ export class Game {
     this.sim = new Sim(level, mode);
     this.replay = replayFrames;
     this.recorder = this.params.has('record') && !replayFrames ? new Recorder() : null;
-    this.layer = renderTiles(this.sim.tiles, this.scale * this.dpr);
+    this.layer = renderTiles(this.sim.tiles, this.layerScale());
     this.screen = 'playing';
     this.paused = false;
     this.acc = 0;
@@ -273,6 +280,7 @@ export class Game {
 
   onKey(code) {
     this.sound.unlock();
+    if (code === 'KeyV') { this.cycleArt(1); return; }   // art style (presentation)
     const playing = this.screen === 'playing' && !this.paused && !(this.sim && this.sim.done);
     if (this.screen === 'playing' && (code === 'KeyP' || code === 'Escape')) {
       if (!(this.sim && this.sim.done)) { this.pause(!this.paused); this.sound.play('click'); }
@@ -466,7 +474,7 @@ export class Game {
   draw() {
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = C.ink;
+    ctx.fillStyle = C.frame;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.setTransform(this.dpr * this.scale, 0, 0, this.dpr * this.scale, this.dpr * this.ox, this.dpr * this.oy);
     ctx.save();
@@ -476,13 +484,116 @@ export class Game {
     if (this.screen === 'title') this.drawTitle();
     else if (this.screen === 'levels') this.drawLevels();
     else if (this.sim) {
-      this.drawWorld();
+      if (art.style.pixel) {
+        this.pixelPass(() => this.drawWorld(false));
+        ctx.save(); ctx.translate(0, HUD_H); this.drawPrompts(...this.lerpFns()); ctx.restore();
+      } else this.drawWorld();
       this.drawHud();
       if (this.paused) this.drawPause();
       if (this.screen === 'complete') this.drawComplete();
+      // particles on top of everything (they live in playfield coordinates)
+      ctx.save(); ctx.translate(0, HUD_H); this.fx.draw(ctx); ctx.restore();
     }
     if (this.keytest) this.drawKeytest();
+    this.drawOverlays();
     ctx.restore();
+  }
+
+  // Draws fn into a low-resolution canvas and scales it up with hard pixels (pixel styles).
+  pixelPass(fn) {
+    const k = art.style.pixel, w = Math.round(VIEW_W * k), h = Math.round(VIEW_H * k);
+    if (!this.low || this.low.width !== w || this.low.height !== h) {
+      this.low = document.createElement('canvas');
+      this.low.width = w; this.low.height = h;
+      this.lowCtx = this.low.getContext('2d');
+    }
+    const lc = this.lowCtx, main = this.ctx;
+    lc.setTransform(1, 0, 0, 1, 0, 0);
+    lc.clearRect(0, 0, w, h);
+    lc.setTransform(k, 0, 0, k, 0, 0);
+    lc.imageSmoothingEnabled = false;
+    this.ctx = lc;
+    try { fn(); } finally { this.ctx = main; }
+    main.imageSmoothingEnabled = false;
+    main.drawImage(this.low, 0, 0, VIEW_W, VIEW_H);
+    main.imageSmoothingEnabled = true;
+  }
+
+  // Screen fades, the art-style toast and the flash when the style changes.
+  drawOverlays() {
+    const ctx = this.ctx, t = this.t;
+    if (this.screen !== this.lastScreen) {
+      // fade between menus and levels; the results panel has its own motion
+      if (this.screen !== 'complete' && this.lastScreen !== 'complete' || this.screen === 'levels') { this.fadeAt = t; this.fadeLen = 0.28; }
+      this.lastScreen = this.screen;
+    }
+    const f = 1 - (t - this.fadeAt) / this.fadeLen;
+    if (f > 0) { ctx.globalAlpha = f * f; ctx.fillStyle = C.frame; ctx.fillRect(0, 0, VIEW_W, VIEW_H); ctx.globalAlpha = 1; }
+    if (this.flashAt !== undefined) {
+      const k = 1 - (t - this.flashAt) / 0.3;
+      if (k > 0) { ctx.globalAlpha = k * 0.6; ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, VIEW_W, VIEW_H); ctx.globalAlpha = 1; }
+    }
+    if (this.toast) {
+      const e = t - this.toast.at;
+      if (e > 1.8) { this.toast = null; return; }
+      const a = Math.min(1, e / 0.15, (1.8 - e) / 0.3);
+      const y = 112 - (1 - easeOutBack(Math.min(1, e / 0.35))) * 40;
+      ctx.globalAlpha = Math.max(0, a);
+      const w = 360;
+      rrect(ctx, VIEW_W / 2 - w / 2, y - 30, w, 60, 30);
+      ctx.fillStyle = C.panel; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.line; ctx.stroke();
+      text(ctx, this.toast.text, VIEW_W / 2, y + 1, 26, C.text, 'center', 900);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---- Art styles (presentation build) ------------------------------------------
+
+  bindArtPill() {
+    this.pill = document.getElementById('artpill');
+    if (!this.pill) return;
+    if (this.params.get('pill') === '0') this.pill.hidden = true;
+    this.pill.addEventListener('click', e => {
+      e.preventDefault();
+      this.sound.unlock();
+      this.cycleArt(1);
+      this.pill.blur();
+      this.canvas.focus();
+    });
+    this.updatePill();
+  }
+
+  updatePill() {
+    if (document.body) document.body.dataset.art = art.style.id;
+    if (!this.pill) return;
+    const i = ART_IDS.indexOf(art.style.id);
+    this.pill.textContent = `ART ${i + 1}/${ART_IDS.length}: ${art.style.name.toUpperCase()}  ›`;
+    this.pill.title = 'Change the art style (V)';
+  }
+
+  async cycleArt(d) {
+    if (this.artBusy) return;
+    const i = ART_IDS.indexOf(art.style.id);
+    this.artBusy = true;
+    try { await this.setArt(ART_IDS[(i + d + ART_IDS.length) % ART_IDS.length]); } finally { this.artBusy = false; }
+  }
+
+  async setArt(id) {
+    if (!styleById(id)) return;
+    await applyArt(id);
+    syncFont();
+    this.backdrop = null;
+    if (this.sim) this.layer = renderTiles(this.sim.tiles, this.layerScale());
+    this.sound.setSamples(art.style.sounds, art.style.volume);
+    this.sound.play('switch');
+    this.updatePill();
+    this.toast = { text: art.style.name.toUpperCase(), at: this.t };
+    this.flashAt = this.t;
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set('art', art.style.id);
+      history.replaceState(history.state, '', u);
+    } catch { /* file:// or sandboxed: the style still changes */ }
   }
 
   addButton(b) {
@@ -499,21 +610,34 @@ export class Game {
     rrect(ctx, b.x, b.y + 6, b.w, b.h, b.r ?? 18);
     ctx.fillStyle = C.ink; ctx.fill();
     rrect(ctx, b.x, b.y, b.w, b.h, b.r ?? 18);
-    ctx.fillStyle = b.disabled ? '#CFC3B4' : (b.color || '#fff');
+    ctx.fillStyle = b.disabled ? C.off : (b.color || C.panel);
     ctx.fill();
-    ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.lineWidth = 4; ctx.strokeStyle = C.line; ctx.stroke();
     if (focused || hot) {
       ctx.lineWidth = 3; ctx.strokeStyle = C.bolt;
       rrect(ctx, b.x - 6, b.y - 6, b.w + 12, b.h + 12, (b.r ?? 18) + 6); ctx.stroke();
     }
     if (b.draw) b.draw(ctx, b);
-    else text(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2 + 1, b.size || 28, b.textColor || C.ink);
+    else text(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2 + 1, b.size || 28, b.textColor || (b.color === C.bolt ? C.onBolt : C.text));
     ctx.restore();
     return b;
   }
 
   drawBackdrop() {
     const ctx = this.ctx;
+    if (art.style.id !== 'classic') {
+      // Same background and floor tiles as the levels: a fake 16-row grid with a 2-row floor,
+      // drawn 70 px down so its floor top lands at VIEW_H - 90 where the twins stand.
+      if (!this.backdrop || this.backdropKey !== art.style.id + this.layerScale()) {
+        const grid = new Uint8Array(32 * 16);
+        grid.fill(1, 14 * 32);
+        this.backdrop = renderTiles(grid, this.layerScale());
+        this.backdropKey = art.style.id + this.layerScale();
+      }
+      ctx.drawImage(this.backdrop, 0, 0, VIEW_W, VIEW_H - HUD_H);     // sky for the top strip
+      ctx.drawImage(this.backdrop, 0, 70, VIEW_W, VIEW_H - 70);
+      return;
+    }
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     ctx.fillStyle = 'rgba(43,34,56,0.06)';
@@ -531,26 +655,48 @@ export class Game {
     ctx.save();
     ctx.translate(x, y + Math.sin(t * 2) * 4);
     ctx.rotate(Math.sin(t * 1.3) * 0.015);
-    text(ctx, 'MAGNET', -size * 1.55, 0, size, C.plus, 'center', 900, size * 0.22);
-    text(ctx, 'TWINS', size * 1.95, 0, size, C.minus, 'center', 900, size * 0.22);
+    if (art.style.glow) { ctx.shadowColor = C.minus; ctx.shadowBlur = 24; }
+    if (art.style.id === 'classic') {
+      text(ctx, 'MAGNET', -size * 1.55, 0, size, C.plus, 'center', 900, size * 0.22);
+      text(ctx, 'TWINS', size * 1.95, 0, size, C.minus, 'center', 900, size * 0.22);
+    } else {
+      // other fonts have other widths: measure, then center both words around x (+20 like classic)
+      ctx.font = fontSpec(size, 900);
+      const a = ctx.measureText('MAGNET').width, b = ctx.measureText('TWINS').width, gap = size * 0.4;
+      const x0 = 20 - (a + gap + b) / 2;
+      text(ctx, 'MAGNET', x0 + a / 2, 0, size, C.plus, 'center', 900, size * 0.22);
+      text(ctx, 'TWINS', x0 + a + gap + b / 2, 0, size, C.minus, 'center', 900, size * 0.22);
+    }
     ctx.restore();
   }
 
   drawTitle() {
     const ctx = this.ctx, t = this.t;
-    this.drawBackdrop();
-    this.drawLogo(VIEW_W / 2 - 20, 150, 92);
+    if (this.lastScreen !== 'title') this.titleAt = t;
+    const intro = k => Math.min(1, Math.max(0, (t - (this.titleAt || 0) - k) / 0.55));
 
-    // The twins idle at each side and watch the pointer.
-    const look = (x, y) => { const dx = this.mouse.x - x, dy = this.mouse.y - y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d }; };
-    const bob = k => 1 + Math.sin(t * 3 + k) * 0.04;
-    const blink = k => (t * 0.7 + k) % 4 < 0.1;
-    ctx.save(); ctx.translate(190, VIEW_H - 90); ctx.scale(2.6, 2.6);
-    drawRobot(ctx, 0, 0, 'plus', 1, { sx: 2 - bob(0), sy: bob(0), t, look: look(190, 520), blink: blink(0) });
-    ctx.restore();
-    ctx.save(); ctx.translate(VIEW_W - 190, VIEW_H - 90); ctx.scale(2.6, 2.6);
-    drawRobot(ctx, 0, 0, 'minus', -1, { sx: 2 - bob(1.5), sy: bob(1.5), t, look: look(VIEW_W - 190, 520), blink: blink(2) });
-    ctx.restore();
+    // The twins idle at each side, watch the pointer, and slide in when the title opens.
+    const scene = () => {
+      const c = this.ctx;
+      this.drawBackdrop();
+      const look = (x, y) => { const dx = this.mouse.x - x, dy = this.mouse.y - y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d }; };
+      const bob = k => 1 + Math.sin(t * 3 + k) * 0.04;
+      const blink = k => (t * 0.7 + k) % 4 < 0.1;
+      const slide = (1 - easeOutBack(intro(0.1))) * 340;
+      c.save(); c.translate(190 - slide, VIEW_H - 90); c.scale(2.6, 2.6);
+      drawRobot(c, 0, 0, 'plus', 1, { sx: 2 - bob(0), sy: bob(0), t, look: look(190, 520), blink: blink(0) });
+      c.restore();
+      c.save(); c.translate(VIEW_W - 190 + slide, VIEW_H - 90); c.scale(2.6, 2.6);
+      drawRobot(c, 0, 0, 'minus', -1, { sx: 2 - bob(1.5), sy: bob(1.5), t, look: look(VIEW_W - 190, 520), blink: blink(2) });
+      c.restore();
+    };
+    if (art.style.pixel) this.pixelPass(scene); else scene();
+    const ls = easeOutBack(intro(0));
+    if (ls > 0.01) {
+      ctx.save(); ctx.translate(VIEW_W / 2, 150); ctx.scale(ls, ls); ctx.translate(-VIEW_W / 2, -150);
+      this.drawLogo(VIEW_W / 2 - 20, 150, 92);
+      ctx.restore();
+    }
 
     const cy = 300;
     this.addButton({ x: 340, y: cy, w: 280, h: 104, color: C.plus, textColor: '#fff', label: '1 PLAYER', size: 36, isDefault: this.mode === 'solo',
@@ -561,8 +707,8 @@ export class Game {
     this.addButton({ x: VIEW_W - 250, y: 28, w: 220, h: 56, size: 22,
       key: 'sound', label: this.settings.sfx ? 'SOUND: ON' : 'SOUND: OFF', action: () => this.toggleSfx() });
 
-    text(ctx, '2 players: WASD + F   and   Arrows + /', VIEW_W / 2, VIEW_H - 58, 22, C.ink, 'center', 700);
-    text(ctx, '1 player: TAB swaps robots', VIEW_W / 2, VIEW_H - 28, 22, C.ink, 'center', 700);
+    text(ctx, '2 players: WASD + F   and   Arrows + /', VIEW_W / 2, VIEW_H - 58, 22, C.text, 'center', 700);
+    text(ctx, '1 player: TAB swaps robots', VIEW_W / 2, VIEW_H - 28, 22, C.text, 'center', 700);
   }
 
   toggleSfx() {
@@ -578,7 +724,7 @@ export class Game {
     this.addButton({ x: 30, y: 26, w: 150, h: 60, label: '‹ BACK', size: 24, action: () => { this.screen = 'title'; this.focus = -1; } });
     this.addButton({ x: VIEW_W - 290, y: 26, w: 260, h: 60, size: 22,
       key: 'mode', label: this.mode === 'solo' ? 'MODE: 1 PLAYER' : 'MODE: 2 PLAYERS',
-      color: this.mode === 'solo' ? '#F6C3BE' : '#BFD6F5',
+      color: this.mode === 'solo' ? C.soloTint : C.coopTint,
       action: () => this.setMode(this.mode === 'solo' ? 'coop' : 'solo') });
 
     const next = this.nextLevel();
@@ -591,10 +737,10 @@ export class Game {
     WORLDS.forEach((w, i) => {
       const x = 250 + i * 270, open = this.worldOpen(i), sel = i === this.worldTab;
       this.addButton({
-        key: `world:${i}`, x, y: 116, w: 240, h: 56, r: 14, disabled: !open, color: sel ? C.bolt : '#fff',
+        key: `world:${i}`, x, y: 116, w: 240, h: 56, r: 14, disabled: !open, color: sel ? C.bolt : C.panel,
         action: () => { this.worldTab = i; this.focus = -1; },
         draw: (c, b) => {
-          text(c, `${i + 1}  ${w.name.toUpperCase()}`, b.x + 120, b.y + 29, 22, open ? C.ink : '#8C7F72');
+          text(c, `${i + 1}  ${w.name.toUpperCase()}`, b.x + 120, b.y + 29, 22, !open ? C.dim : sel ? C.onBolt : C.text);
           if (!open) this.drawLock(b.x + 214, b.y + 28, 0.7);
         },
       });
@@ -607,9 +753,9 @@ export class Game {
       const level = world.levels[i];
       if (!level) {
         rrect(ctx, x, y + 6, 130, 130, 22); ctx.fillStyle = C.ink; ctx.fill();
-        rrect(ctx, x, y, 130, 130, 22); ctx.fillStyle = '#E2D6C6'; ctx.fill();
-        ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
-        text(ctx, String(i + 1), x + 65, y + 50, 40, '#B4A797');
+        rrect(ctx, x, y, 130, 130, 22); ctx.fillStyle = C.slot; ctx.fill();
+        ctx.lineWidth = 4; ctx.strokeStyle = C.line; ctx.stroke();
+        text(ctx, String(i + 1), x + 65, y + 50, 40, C.slotText);
         this.drawLock(x + 65, y + 96, 1);
         continue;
       }
@@ -617,7 +763,7 @@ export class Game {
       const isNext = level === next;
       const bounce = isNext ? Math.abs(Math.sin(t * 4)) * -6 : 0;
       this.addButton({
-        key: `level:${level.id}`, x, y: y + bounce, w: 130, h: 130, r: 22, color: isNext ? '#FFE9A8' : '#fff', isDefault: isNext,
+        key: `level:${level.id}`, x, y: y + bounce, w: 130, h: 130, r: 22, color: isNext ? C.next : C.panel, isDefault: isNext,
         action: () => this.startLevel(level, this.mode),
         draw: (c, b) => {
           text(c, String(i + 1), b.x + 65, b.y + 52, 48);
@@ -625,7 +771,7 @@ export class Game {
         },
       });
     }
-    text(ctx, world.levels[0] ? world.levels[0].name : '', VIEW_W / 2, VIEW_H - 45, 24, C.ink, 'center', 700);
+    text(ctx, world.levels[0] ? world.levels[0].name : '', VIEW_W / 2, VIEW_H - 45, 24, C.text, 'center', 700);
   }
 
   drawLock(x, y, s) {
@@ -633,14 +779,19 @@ export class Game {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     ctx.lineWidth = 4; ctx.strokeStyle = C.ink;
     ctx.beginPath(); ctx.arc(0, -8, 9, Math.PI, 0); ctx.stroke();
-    rrect(ctx, -14, -8, 28, 22, 5); ctx.fillStyle = '#9C8F80'; ctx.fill(); ctx.stroke();
+    rrect(ctx, -14, -8, 28, 22, 5); ctx.fillStyle = C.lock; ctx.fill(); ctx.stroke();
     ctx.restore();
   }
 
-  drawWorld() {
+  // Interpolation between the last two sim steps, for smooth drawing at any frame rate.
+  lerpFns() {
+    const a = this.paused || this.sim.done ? 1 : Math.min(1, this.acc / STEP);
+    return [b => b.px + (b.x - b.px) * a, b => b.py + (b.y - b.py) * a];
+  }
+
+  drawWorld(prompts = true) {
     const ctx = this.ctx, sim = this.sim, t = this.t;
-    const a = this.paused || sim.done ? 1 : Math.min(1, this.acc / STEP);
-    const lx = b => b.px + (b.x - b.px) * a, ly = b => b.py + (b.y - b.py) * a;
+    const [lx, ly] = this.lerpFns();
     const [sx, sy] = this.fx.offset();
 
     ctx.save();
@@ -703,7 +854,7 @@ export class Game {
       }
     });
 
-    this.drawPrompts(lx, ly);
+    if (prompts) this.drawPrompts(lx, ly);
     ctx.restore();
   }
 
@@ -738,23 +889,23 @@ export class Game {
 
   drawHud() {
     const ctx = this.ctx, sim = this.sim;
-    ctx.fillStyle = C.ink;
+    ctx.fillStyle = C.hud;
     ctx.fillRect(0, 0, VIEW_W, HUD_H);
     const pos = this.levelPos(this.level.id);
     rrect(ctx, 20, 18, 70, 44, 10); ctx.fillStyle = C.bolt; ctx.fill();
-    text(ctx, pos.world ? `${pos.world}-${pos.level}` : '–', 55, 41, 24);
-    text(ctx, this.level.name.toUpperCase(), 108, 41, 24, C.bg, 'left', 800);
+    text(ctx, pos.world ? `${pos.world}-${pos.level}` : '–', 55, 41, 24, C.onBolt);
+    text(ctx, this.level.name.toUpperCase(), 108, 41, 24, C.hudText, 'left', 800);
 
     for (let i = 0; i < 3; i++) {
       const s = this.boltSlot(i);
       if (i < sim.boltCount) drawHex(ctx, s.x, s.y, 14, C.bolt);
-      else { ctx.globalAlpha = 0.35; drawHex(ctx, s.x, s.y, 14, '#8C7F9C'); ctx.globalAlpha = 1; }
+      else { ctx.globalAlpha = 0.35; drawHex(ctx, s.x, s.y, 14, C.dim); ctx.globalAlpha = 1; }
     }
 
     const par = this.level.par[this.mode];
     const over = sim.time > par;
-    text(ctx, fmt(sim.time), 760, 33, 30, C.bg, 'center', 800);
-    text(ctx, `PAR ${fmt(par)}`, 760, 62, 15, over ? '#8C7F9C' : C.bolt, 'center', 800);
+    text(ctx, fmt(sim.time), 760, 33, 30, C.hudText, 'center', 800);
+    text(ctx, `PAR ${fmt(par)}`, 760, 62, 15, over ? C.dim : C.bolt, 'center', 800);
 
     if (this.mode === 'solo') {
       const r = sim.robots[sim.active];
@@ -765,12 +916,12 @@ export class Game {
     }
 
     const pause = { key: 'hud:pause', hud: true, x: 1124, y: 14, w: 52, h: 52, r: 26, action: () => this.pause(true),
-      draw: (c, b) => { c.fillStyle = C.ink; c.fillRect(b.x + 18, b.y + 15, 6, 22); c.fillRect(b.x + 29, b.y + 15, 6, 22); } };
+      draw: (c, b) => { c.fillStyle = C.text; c.fillRect(b.x + 18, b.y + 15, 6, 22); c.fillRect(b.x + 29, b.y + 15, 6, 22); } };
     const restart = { key: 'hud:restart', hud: true, x: 1196, y: 14, w: 52, h: 52, r: 26, action: () => this.restart(),
       draw: (c, b) => {
-        c.strokeStyle = C.ink; c.lineWidth = 4.5; c.lineCap = 'round';
+        c.strokeStyle = C.text; c.lineWidth = 4.5; c.lineCap = 'round';
         c.beginPath(); c.arc(b.x + 26, b.y + 26, 12, -0.3, Math.PI * 1.55); c.stroke();
-        c.fillStyle = C.ink; c.beginPath(); c.moveTo(b.x + 38, b.y + 13); c.lineTo(b.x + 40, b.y + 27); c.lineTo(b.x + 27, b.y + 21); c.fill();
+        c.fillStyle = C.text; c.beginPath(); c.moveTo(b.x + 38, b.y + 13); c.lineTo(b.x + 40, b.y + 27); c.lineTo(b.x + 27, b.y + 21); c.fill();
       } };
     if (this.screen === 'playing' && !this.paused && !sim.done) { this.addButton(pause); this.addButton(restart); }
   }
@@ -781,15 +932,15 @@ export class Game {
     ctx.fillStyle = 'rgba(43,34,56,0.55)';
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     rrect(ctx, x, y + 8, w, h, 28); ctx.fillStyle = C.ink; ctx.fill();
-    rrect(ctx, x, y, w, h, 28); ctx.fillStyle = C.bg; ctx.fill();
-    ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+    rrect(ctx, x, y, w, h, 28); ctx.fillStyle = art.style.glow ? C.panel : C.bg; ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = C.line; ctx.stroke();
     return { x, y };
   }
 
   drawPause() {
     const ctx = this.ctx;
     const { x, y } = this.drawPanel(640, 520);
-    text(ctx, 'PAUSED', VIEW_W / 2, y + 56, 46, C.ink, 'center', 900);
+    text(ctx, 'PAUSED', VIEW_W / 2, y + 56, 46, C.text, 'center', 900);
     const bx = x + 60, bw = 240;
     this.addButton({ x: bx, y: y + 110, w: bw, h: 64, label: 'RESUME', color: C.bolt, size: 26, action: () => this.pause(false) });
     this.addButton({ x: bx, y: y + 190, w: bw, h: 64, label: 'RESTART', size: 26, action: () => this.restart() });
@@ -800,18 +951,18 @@ export class Game {
 
     // Controls card for the current mode
     const cx = x + 340, cy = y + 120;
-    rrect(ctx, cx, cy, 250, 300, 18); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
-    text(ctx, 'CONTROLS', cx + 125, cy + 28, 20, C.ink, 'center', 900);
+    rrect(ctx, cx, cy, 250, 300, 18); ctx.fillStyle = C.panel; ctx.fill(); ctx.lineWidth = 3.5; ctx.strokeStyle = C.line; ctx.stroke();
+    text(ctx, 'CONTROLS', cx + 125, cy + 28, 20, C.text, 'center', 900);
     const rows = this.mode === 'solo'
       ? [['MOVE', 'A D'], ['JUMP', 'W'], ['POWER', 'F (tap)'], ['AIM UP', 'W + F'], ['SWAP', 'TAB']]
       : [['', 'PLUS', 'MINUS'], ['MOVE', 'A D', '← →'], ['JUMP', 'W', '↑'], ['POWER', 'F', '/'], ['AIM UP', 'W+F', '↑+/']];
     rows.forEach((row, i) => {
       const ry = cy + 72 + i * 44;
-      text(ctx, row[0], cx + 18, ry, 15, C.ink, 'left', 800);
-      if (row.length === 2) text(ctx, row[1], cx + 232, ry, 17, C.ink, 'right', 800);
+      text(ctx, row[0], cx + 18, ry, 15, C.text, 'left', 800);
+      if (row.length === 2) text(ctx, row[1], cx + 232, ry, 17, C.text, 'right', 800);
       else {
-        text(ctx, row[1], cx + 150, ry, 17, i ? C.ink : C.plus, 'center', 800);
-        text(ctx, row[2], cx + 215, ry, 17, i ? C.ink : C.minus, 'center', 800);
+        text(ctx, row[1], cx + 150, ry, 17, i ? C.text : C.plus, 'center', 800);
+        text(ctx, row[2], cx + 215, ry, 17, i ? C.text : C.minus, 'center', 800);
       }
     });
   }
@@ -822,7 +973,7 @@ export class Game {
     const e = this.t - r.shownAt;
     const k = easeOutBack(Math.min(1, e / 0.45));
     const { x, y } = this.drawPanel(620, 470, k);
-    text(ctx, 'LEVEL COMPLETE!', VIEW_W / 2, y + 58, 42, C.ink, 'center', 900);
+    text(ctx, 'LEVEL COMPLETE!', VIEW_W / 2, y + 58, 42, C.text, 'center', 900);
 
     for (let i = 0; i < 3; i++) {
       const at = 0.5 + i * 0.35;
@@ -836,14 +987,14 @@ export class Game {
       drawStar(ctx, VIEW_W / 2 - 110 + i * 110, y + 150, i === 1 ? 46 : 40, lit, s);
     }
     const labels = ['FINISH', 'ALL BOLTS', 'UNDER PAR'];
-    labels.forEach((l, i) => text(ctx, l, VIEW_W / 2 - 110 + i * 110, y + 205, 13, r.run[i] ? C.ink : '#A89A8A', 'center', 800));
+    labels.forEach((l, i) => text(ctx, l, VIEW_W / 2 - 110 + i * 110, y + 205, 13, r.run[i] ? C.text : C.faint, 'center', 800));
 
     const shown = Math.min(r.time, r.time * Math.min(1, Math.max(0, e - 0.3) / 0.8));
-    text(ctx, `TIME  ${fmt(shown)}`, VIEW_W / 2, y + 252, 28, C.ink, 'center', 800);
-    text(ctx, `BEST ${fmt(r.best)}   ·   PAR ${fmt(r.par)}`, VIEW_W / 2, y + 288, 18, '#6B5D7A', 'center', 700);
+    text(ctx, `TIME  ${fmt(shown)}`, VIEW_W / 2, y + 252, 28, C.text, 'center', 800);
+    text(ctx, `BEST ${fmt(r.best)}   ·   PAR ${fmt(r.par)}`, VIEW_W / 2, y + 288, 18, C.sub, 'center', 700);
     for (let i = 0; i < 3; i++) {
       if (i < r.bolts) drawHex(ctx, VIEW_W / 2 - 40 + i * 40, y + 326, 13, C.bolt);
-      else { ctx.globalAlpha = 0.35; drawHex(ctx, VIEW_W / 2 - 40 + i * 40, y + 326, 13, '#8C7F9C'); ctx.globalAlpha = 1; }
+      else { ctx.globalAlpha = 0.35; drawHex(ctx, VIEW_W / 2 - 40 + i * 40, y + 326, 13, C.dim); ctx.globalAlpha = 1; }
     }
 
     if (e < 0.35) return;

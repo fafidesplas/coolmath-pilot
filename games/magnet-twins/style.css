@@ -39,3 +39,30 @@ canvas {
 }
 #touch button.power { background: rgba(255, 197, 49, 0.9); }
 #touch button.on { transform: translateY(4px); box-shadow: 0 1px 0 #2B2238; }
+
+/* Art style switcher (presentation build): a small pill at the bottom center. */
+#artpill {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 3px solid #2B2238;
+  background: rgba(255, 241, 220, 0.9);
+  color: #2B2238;
+  font: 800 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 5;
+  white-space: nowrap;
+}
+#artpill:hover { opacity: 1; transform: translateY(-2px); }
+#artpill:empty { display: none; }
+body[data-art="pixel"] #artpill { border-radius: 0; background: #F4ECD6; border-color: #262B44; color: #262B44; }
+body[data-art="factory"] #artpill { background: #FFFFFF; border-color: #35414F; color: #35414F; }
+body[data-art="neon"] #artpill { background: #211A47; border-color: #9B7BFF; color: #EDE9FF; box-shadow: 0 0 12px #9B7BFF; }
+body[data-art="pixel"] { background: #181425; }
+body[data-art="factory"] { background: #26303B; }
+body[data-art="neon"] { background: #05040C; }

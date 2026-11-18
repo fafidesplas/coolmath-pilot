@@ -1,0 +1,38 @@
+[
+  {
+    "id": "classic",
+    "name": "Classic",
+    "description": "The look from the GDD: drawn in code, warm workshop, thick outlines.",
+    "pack": "None (procedural canvas drawing, system font, synthesized sound)",
+    "license": "Original work",
+    "url": "",
+    "preview": "games/magnet-twins/?art=classic"
+  },
+  {
+    "id": "pixel",
+    "name": "Pixel Workshop",
+    "description": "Retro pixel art: Kenney pixel tiles, the whole world rendered at low resolution, 8-bit sounds.",
+    "pack": "Kenney Pixel Platformer + Pixel Platformer Industrial Expansion + Digital Audio; font Press Start 2P",
+    "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/pixel-platformer",
+    "preview": "games/magnet-twins/?art=pixel"
+  },
+  {
+    "id": "factory",
+    "name": "Toy Factory",
+    "description": "Clean flat vector art: Kenney industrial tiles and metal crates in a sunny yard, chunky rounded font, real metal clanks.",
+    "pack": "Kenney Platformer Pack Industrial + New Platformer Pack (backgrounds) + Impact Sounds + Interface Sounds; font Lilita One",
+    "license": "CC0 1.0 (Kenney packs), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/platformer-pack-industrial",
+    "preview": "games/magnet-twins/?art=factory"
+  },
+  {
+    "id": "neon",
+    "name": "Night Neon",
+    "description": "Dark synthwave arcade: glowing outlines and fields, neon grid, techno font, sci-fi sounds.",
+    "pack": "Kenney Sci-fi Sounds; font Orbitron (visuals drawn in code)",
+    "license": "CC0 1.0 (Kenney pack), SIL OFL 1.1 (font)",
+    "url": "https://kenney.nl/assets/sci-fi-sounds",
+    "preview": "games/magnet-twins/?art=neon"
+  }
+]

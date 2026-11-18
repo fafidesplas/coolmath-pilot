@@ -4,14 +4,15 @@ import { T, COLS, ROWS, VIEW_W, HUD_H, COLORS, MAGNET } from './config.js';
 import { TILE, tileAt } from './level.js';
 import { fieldDir } from './magnet.js';
 import { drawHex } from './fx.js';
+import { art, fontSpec, paintTile, paintBackground, crateSprite, blit } from './art.js';
 
 const C = COLORS;
-export const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const TILE_FILL = '#E9C9A0';
-const TILE_TOP = '#F7E3C4';
-const TILE_DARK = '#D4AE84';
+// The active art style's font stack (live binding, see art.js).
+export let FONT = art.font;
+export function syncFont() { FONT = art.font; }
 
 export function rrect(ctx, x, y, w, h, r) {
+  r *= art.style.round ?? 1;
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -21,8 +22,8 @@ export function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-export function text(ctx, str, x, y, size, color = C.ink, align = 'center', weight = 800, outline = 0) {
-  ctx.font = `${weight} ${size}px ${FONT}`;
+export function text(ctx, str, x, y, size, color = C.text, align = 'center', weight = 800, outline = 0) {
+  ctx.font = fontSpec(size, weight);
   ctx.textAlign = align;
   ctx.textBaseline = 'middle';
   if (outline) {
@@ -44,41 +45,50 @@ export function renderTiles(tiles, pixelScale) {
   const ctx = cv.getContext('2d');
   ctx.scale(pixelScale, pixelScale);
 
-  // Background: warm wall with a pegboard pattern and a soft vignette.
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, 0, VIEW_W, ROWS * T);
-  ctx.fillStyle = 'rgba(43,34,56,0.06)';
-  for (let y = 20; y < ROWS * T; y += 40) for (let x = 20; x < VIEW_W; x += 40) {
-    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+  if (art.style.pixel) ctx.imageSmoothingEnabled = false;
+  if (!paintBackground(ctx, VIEW_W, ROWS * T)) {
+    // Background: warm wall with a pegboard pattern and a soft vignette.
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, VIEW_W, ROWS * T);
+    ctx.fillStyle = 'rgba(43,34,56,0.06)';
+    for (let y = 20; y < ROWS * T; y += 40) for (let x = 20; x < VIEW_W; x += 40) {
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    const g = ctx.createRadialGradient(VIEW_W / 2, 300, 200, VIEW_W / 2, 300, 800);
+    g.addColorStop(0, 'rgba(255,255,255,0.25)');
+    g.addColorStop(1, 'rgba(43,34,56,0.10)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VIEW_W, ROWS * T);
   }
-  const g = ctx.createRadialGradient(VIEW_W / 2, 300, 200, VIEW_W / 2, 300, 800);
-  g.addColorStop(0, 'rgba(255,255,255,0.25)');
-  g.addColorStop(1, 'rgba(43,34,56,0.10)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, VIEW_W, ROWS * T);
 
   const solid = (x, y) => { const t = tileAt(tiles, x, y); return t === TILE.SOLID || t === TILE.METAL; };
+  let sprites = false;
 
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
     const t = tileAt(tiles, x, y), px = x * T, py = y * T;
+    if (t === TILE.SOLID && paintTile(ctx, solid(x, y - 1) ? 'fill' : 'top', px, py)) { sprites = true; continue; }
+    if (t === TILE.METAL && paintTile(ctx, 'metal', px, py)) { sprites = true; continue; }
+    if (t === TILE.SPIKES && paintTile(ctx, 'spikes', px, py)) continue;
+    if (t === TILE.WATER && paintTile(ctx, tileAt(tiles, x, y - 1) === TILE.WATER ? 'water' : 'waterTop', px, py)) continue;
     if (t === TILE.SOLID) {
-      ctx.fillStyle = TILE_FILL;
+      ctx.fillStyle = C.tileFill;
       ctx.fillRect(px, py, T, T);
-      if (!solid(x, y - 1)) { ctx.fillStyle = TILE_TOP; ctx.fillRect(px, py, T, 10); }
+      if (!solid(x, y - 1)) { ctx.fillStyle = C.tileTop; ctx.fillRect(px, py, T, 10); }
       if ((x * 7 + y * 13) % 5 === 0) {
-        ctx.fillStyle = TILE_DARK;
+        ctx.fillStyle = C.tileDark;
         ctx.beginPath(); ctx.arc(px + 12, py + 26, 2.5, 0, 7); ctx.arc(px + 28, py + 26, 2.5, 0, 7); ctx.fill();
       }
     } else if (t === TILE.METAL) {
-      ctx.fillStyle = '#7D8894';
+      ctx.fillStyle = C.metalDark;
       ctx.fillRect(px, py, T, T);
       ctx.fillStyle = C.metal;
       ctx.fillRect(px + 4, py + 4, T - 8, T - 8);
       ctx.fillStyle = C.ink;
       for (const [rx, ry] of [[9, 9], [31, 9], [9, 31], [31, 31]]) { ctx.beginPath(); ctx.arc(px + rx, py + ry, 3, 0, 7); ctx.fill(); }
     } else if (t === TILE.SPIKES) {
-      ctx.fillStyle = '#C8CED6';
-      ctx.strokeStyle = C.ink;
+      if (art.style.glow) { ctx.shadowColor = C.spike; ctx.shadowBlur = 10; }
+      ctx.fillStyle = art.style.glow ? 'rgba(255,61,127,0.35)' : C.spike;
+      ctx.strokeStyle = art.style.glow ? C.spike : C.ink;
       ctx.lineWidth = 2.5;
       ctx.lineJoin = 'round';
       for (let i = 0; i < 3; i++) {
@@ -90,15 +100,19 @@ export function renderTiles(tiles, pixelScale) {
         ctx.closePath();
         ctx.fill(); ctx.stroke();
       }
+      ctx.shadowBlur = 0;
     } else if (t === TILE.WATER) {
-      ctx.fillStyle = 'rgba(47,127,224,0.45)';
+      ctx.fillStyle = C.water;
       ctx.fillRect(px, py + 8, T, T - 8);
+      if (art.style.glow && tileAt(tiles, x, y - 1) !== TILE.WATER) { ctx.fillStyle = C.minus; ctx.fillRect(px, py + 7, T, 2); }
     }
   }
+  if (sprites) return cv;      // sprite tiles carry their own outlines
 
-  // Thick outlines where solid meets air.
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 4;
+  // Thick outlines where solid meets air (neon: glowing edges).
+  ctx.strokeStyle = C.edge || C.ink;
+  if (art.style.glow) { ctx.shadowColor = C.edge; ctx.shadowBlur = 12; }
+  ctx.lineWidth = art.style.glow ? 3 : 4;
   ctx.lineCap = 'round';
   ctx.beginPath();
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -110,6 +124,7 @@ export function renderTiles(tiles, pixelScale) {
     if (!solid(x + 1, y) && x < COLS - 1) { ctx.moveTo(px + T, py); ctx.lineTo(px + T, py + T); }
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
   return cv;
 }
 
@@ -138,7 +153,9 @@ export function drawRobot(ctx, x, y, pol, facing, opt = {}) {
 
   // body
   rrect(ctx, -W / 2, top, W, H, 14 * Math.min(sx, sy));
+  if (art.style.glow) { ctx.shadowColor = color; ctx.shadowBlur = opt.power ? 26 : 16; }
   ctx.fillStyle = color; ctx.fill();
+  ctx.shadowBlur = 0;
   ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
   // shine
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
@@ -188,7 +205,8 @@ export function drawField(ctx, r, ox, oy, t) {
   const ang = Math.atan2(d.y, d.x), h = MAGNET.halfAngle, R = MAGNET.range;
 
   ctx.save();
-  ctx.globalAlpha = 0.10;
+  if (art.style.glow) { ctx.shadowColor = color; ctx.shadowBlur = 14; }
+  ctx.globalAlpha = art.style.glow ? 0.16 : 0.10;
   ctx.fillStyle = color;
   ctx.beginPath(); ctx.moveTo(ox, oy); ctx.arc(ox, oy, R, ang - h, ang + h); ctx.closePath(); ctx.fill();
 
@@ -267,6 +285,8 @@ export function drawAimPreview(ctx, pol, aim, facing, ox, oy, targets, t) {
 // ---- Metal and level objects ----------------------------------------------------
 
 export function drawCrate(ctx, x, y, s = 40) {
+  const spr = crateSprite();
+  if (spr && blit(ctx, spr, x, y, s, s)) return;
   rrect(ctx, x + 1, y + 1, s - 2, s - 2, 5);
   ctx.fillStyle = C.metal; ctx.fill();
   ctx.lineWidth = 3.5; ctx.strokeStyle = C.ink; ctx.stroke();
@@ -299,7 +319,7 @@ export function drawPlatform(ctx, p, tiles, x, y, t) {
     ctx.stroke(); ctx.setLineDash([]);
     // the track: a chunky bar with end stops
     rrect(ctx, x0, ty - 5, x1 - x0, 10, 5);
-    ctx.fillStyle = '#7D8894'; ctx.fill();
+    ctx.fillStyle = C.metalDark; ctx.fill();
     ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
     ctx.fillStyle = C.ink;
     ctx.fillRect(x0 - 2, ty - 10, 6, 20); ctx.fillRect(x1 - 4, ty - 10, 6, 20);
@@ -414,7 +434,7 @@ export function drawExit(ctx, e, inside, t, open) {
   const x = e.x + 4, y = e.y, w = e.w - 8, h = e.h;
   rrect(ctx, x - 4, y - 8, w + 8, h + 8, 10);
   ctx.fillStyle = C.ink; ctx.fill();
-  ctx.fillStyle = '#5A4A6E';
+  ctx.fillStyle = C.exitIn;
   ctx.fillRect(x, y, w, h);
   const o = open * (w / 2 - 4);
   ctx.fillStyle = C.bolt;
@@ -427,7 +447,7 @@ export function drawExit(ctx, e, inside, t, open) {
   for (let i = 0; i < 2; i++) {
     const lx = x + w * (i ? 0.75 : 0.25), ly = y - 18;
     ctx.beginPath(); ctx.arc(lx, ly, 9, 0, 7);
-    ctx.fillStyle = inside[i] ? (i ? C.minus : C.plus) : '#CFC3B4';
+    ctx.fillStyle = inside[i] ? (i ? C.minus : C.plus) : C.off;
     ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.moveTo(lx - 4, ly); ctx.lineTo(lx + 4, ly);
@@ -451,7 +471,7 @@ export function drawFlag(ctx, f, raise, t) {
   ctx.lineCap = 'round';
   ctx.lineWidth = 5; ctx.strokeStyle = C.ink;
   ctx.beginPath(); ctx.moveTo(px, base - 6); ctx.lineTo(px, top); ctx.stroke();
-  ctx.fillStyle = f.on ? C.bolt : '#CFC3B4';
+  ctx.fillStyle = f.on ? C.bolt : C.off;
   ctx.beginPath(); ctx.arc(px, top - 2, 5, 0, 7); ctx.fill(); ctx.lineWidth = 3; ctx.stroke();
 
   // pennant: low on the pole when off, at the top when on
@@ -464,7 +484,7 @@ export function drawFlag(ctx, f, raise, t) {
   ctx.quadraticCurveTo(px + len * 0.5, fy - 4 + wave, px + len, fy + 9 + wave * 0.6);
   ctx.quadraticCurveTo(px + len * 0.5, fy + 18 - wave * 0.5, px + 2, fy + 20);
   ctx.closePath();
-  ctx.fillStyle = f.on ? C.bolt : '#CFC3B4';
+  ctx.fillStyle = f.on ? C.bolt : C.off;
   ctx.fill();
   ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = C.ink; ctx.stroke();
   if (f.on) {
@@ -479,15 +499,17 @@ export function drawFlag(ctx, f, raise, t) {
 
 export function drawBolt(ctx, b, t) {
   const bob = Math.sin(t * 3 + b.x) * 3;
+  if (art.style.glow) { ctx.shadowColor = C.bolt; ctx.shadowBlur = 14; }
   drawHex(ctx, b.x, b.y + bob, 12, C.bolt, Math.cos(t * 3 + b.y));
+  ctx.shadowBlur = 0;
 }
 
 export function drawKeycap(ctx, label, x, y, alpha = 1) {
   ctx.globalAlpha = alpha;
-  ctx.font = `800 15px ${FONT}`;
+  ctx.font = fontSpec(15, 800);
   const w = Math.max(28, ctx.measureText(label).width + 14);
   rrect(ctx, x - w / 2, y - 14, w, 28, 7);
-  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.fillStyle = C.panel; ctx.fill();
   ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
   ctx.fillStyle = 'rgba(43,34,56,0.15)';
   ctx.fillRect(x - w / 2 + 3, y + 8, w - 6, 3);

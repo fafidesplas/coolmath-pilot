@@ -7,6 +7,47 @@ export class Sound {
     this.enabled = true;
     this.hums = {};
     this.noise = null;
+    this.sampleUrls = {};       // name -> [url, ...] for the active art style (see art.js)
+    this.sampleVol = 0.6;
+    this.buffers = {};          // url -> AudioBuffer | null (failed) | Promise (loading)
+  }
+
+  // Art styles can swap synthesized effects for CC0 samples; anything missing stays synthesized.
+  setSamples(map, vol = 0.6) {
+    this.sampleUrls = map || {};
+    this.sampleVol = vol;
+    this.loadSamples();
+  }
+
+  loadSamples() {
+    if (!this.ctx || typeof fetch === 'undefined') return;
+    for (const urls of Object.values(this.sampleUrls)) for (const url of urls) {
+      if (url in this.buffers) continue;
+      this.buffers[url] = fetch(url)
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        .then(data => new Promise((ok, no) => this.ctx.decodeAudioData(data, ok, no)))
+        .then(buf => { this.buffers[url] = buf; })
+        .catch(() => { this.buffers[url] = null; });
+    }
+  }
+
+  sample(name, opt) {
+    const urls = this.sampleUrls[name];
+    if (!urls) return false;
+    const ready = urls.map(u => this.buffers[u]).filter(b => b && b.getChannelData);
+    if (!ready.length) return false;
+    const buf = ready[Math.floor(Math.random() * ready.length)];
+    const src = this.ctx.createBufferSource(), g = this.ctx.createGain();
+    src.buffer = buf;
+    let rate = 0.94 + Math.random() * 0.12;
+    if (name === 'clank') rate *= Math.min(1.3, 0.8 + (opt.speed || 300) / 1200);
+    if (name === 'star') rate *= 1 + (opt.i || 0) * 0.12;
+    if (name === 'bolt') rate *= 1 + ((opt.n || 1) - 1) * 0.12;
+    src.playbackRate.value = rate;
+    g.gain.value = this.sampleVol;
+    src.connect(g).connect(this.master);
+    src.start();
+    return true;
   }
 
   unlock() {
@@ -17,6 +58,7 @@ export class Sound {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.enabled ? 0.5 : 0;
       this.master.connect(this.ctx.destination);
+      setTimeout(() => this.loadSamples(), 0);
       const len = this.ctx.sampleRate;
       this.noise = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const d = this.noise.getChannelData(0);
@@ -61,6 +103,7 @@ export class Sound {
 
   play(name, opt = {}) {
     if (!this.ctx || !this.enabled) return;
+    if (this.sample(name, opt)) return;
     switch (name) {
       case 'click': this.tone('square', 900, 700, 0.05, 0.08); break;
       case 'jump': this.tone('square', 260, 520, 0.12, 0.08); break;
