@@ -281,6 +281,7 @@ export class Game {
   onKey(code) {
     this.sound.unlock();
     if (code === 'KeyV') { this.cycleArt(1); return; }   // art style (presentation)
+    if (code === 'KeyM') { this.toggleSfx(); this.toast = { text: this.settings.sfx ? 'SOUND ON' : 'SOUND OFF', at: this.t }; return; }
     const playing = this.screen === 'playing' && !this.paused && !(this.sim && this.sim.done);
     if (this.screen === 'playing' && (code === 'KeyP' || code === 'Escape')) {
       if (!(this.sim && this.sim.done)) { this.pause(!this.paused); this.sound.play('click'); }
