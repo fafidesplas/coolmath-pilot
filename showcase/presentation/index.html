@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coolmath pilot · Three new games</title>
+<meta name="description" content="Magnet Twins, Echo Steps and Tiny Trains: three original puzzle games for Coolmath, playable in the browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23101024'/%3E%3Ccircle cx='11' cy='16' r='5' fill='%23ff4d6d'/%3E%3Ccircle cx='21' cy='16' r='5' fill='%2337e2ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="brand" href="#top"><span class="dot r"></span><span class="dot c"></span><span class="dot y"></span> Coolmath pilot</a>
+  <nav class="top-links" id="top-links"></nav>
+  <button class="btn ghost small" id="present-top" type="button" title="Present (F)">▶ Present <kbd>F</kbd></button>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <p class="kicker reveal">Coolmath pilot · Studio showcase · <span id="hero-date">November 2026</span></p>
+    <h1 class="hero-title reveal" aria-label="Three games. Ready to play.">
+      <span class="line"><span class="word">Three</span> <span class="word">games.</span></span>
+      <span class="line grad"><span class="word">Ready</span> <span class="word">to</span> <span class="word">play.</span></span>
+    </h1>
+    <p class="hero-sub reveal">Original puzzle games built for the browser, the classroom Chromebook and a five-minute break. Every one runs right here, live.</p>
+    <div class="hero-cta reveal">
+      <button class="btn primary big" id="present-hero" type="button">▶ Start the presentation</button>
+      <a class="btn ghost big" href="#games">Explore the games ↓</a>
+    </div>
+    <div class="hero-games reveal" id="hero-games"></div>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"></div></div>
+
+  <section id="games" class="games"></section>
+
+  <section class="closing" id="closing">
+    <p class="kicker">That's the lineup</p>
+    <h2 class="closing-title">Pick one. <span class="grad">Press play.</span></h2>
+    <div class="stats" id="stats"></div>
+    <div class="closing-play" id="closing-play"></div>
+    <p class="fine">Built with plain HTML5 Canvas and JavaScript, no frameworks. Fonts: Bricolage Grotesque, Inter and JetBrains Mono (SIL Open Font License).</p>
+  </section>
+</main>
+
+<!-- Compare art styles -->
+<div class="modal" id="compare" role="dialog" aria-modal="true" aria-labelledby="compare-title" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="compare-title">Compare art styles</h3>
+      <div class="modal-pick" id="compare-pick"></div>
+      <button class="btn ghost small" id="compare-close" type="button" aria-label="Close">✕ Close</button>
+    </div>
+    <div class="compare-grid" id="compare-grid"></div>
+    <p class="modal-foot">Pick up to 3 styles. Every view is the real game running with <code>?art=&lt;style&gt;</code>. Click a view to play it.</p>
+  </div>
+</div>
+
+<!-- Slides -->
+<div class="deck" id="deck" hidden>
+  <div class="deck-bg" aria-hidden="true"></div>
+  <div class="deck-stage" id="deck-stage"></div>
+  <div class="deck-ui">
+    <button class="deck-nav prev" id="deck-prev" type="button" aria-label="Previous slide">‹</button>
+    <button class="deck-nav next" id="deck-next" type="button" aria-label="Next slide">›</button>
+    <div class="deck-bar"><i id="deck-progress"></i></div>
+    <div class="deck-meta">
+      <span id="deck-count">1 / 1</span>
+      <button type="button" id="deck-fs" title="Full screen (F)">⛶</button>
+      <button type="button" id="deck-close" title="Close (Esc)">✕</button>
+    </div>
+    <p class="deck-help" id="deck-help">← → / Space to move · F full screen · P play this game · Esc to close · PgUp/PgDn work inside a live game</p>
+  </div>
+</div>
+
+<noscript><p style="padding:2rem;color:#fff">This page needs JavaScript. Play the games directly: <a href="../../games/magnet-twins/">Magnet Twins</a>, <a href="../../games/echo-steps/">Echo Steps</a>, <a href="../../games/tiny-trains/">Tiny Trains</a>.</p></noscript>
+<script src="app.js"></script>
+</body>
+</html>
