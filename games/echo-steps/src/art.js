@@ -1,7 +1,7 @@
 // Drawing hooks for the downloaded art styles (see theme.js and assets/CREDITS.md).
 // Every hook returns false while its images are still loading, so the drawn-shape
 // version from render.js shows instead. Sprites are tinted once into small cached
-// canvases (echoes = the player's sprite tinted with the echo color), never per frame.
+// canvases, never per frame. Echoes use a second character of the pack where it has one.
 import { T, COLS, ROWS, VIEW_W, VIEW_H, COLORS as C } from './config.js';
 import { THEMES, ART } from './theme.js';
 import { rgba } from './render.js';
@@ -102,182 +102,258 @@ function cachedBackdrop(id, w, h, paint) {
   return cv;
 }
 
-// ---- Pixel Meadow: Kenney "Pixel Platformer" (CC0), 18 px tiles, 24 px characters -------------
-
-const PX = 18, PC = 24;
-const pxTile = (img, c, r) => sprite(img, c * PX, r * PX, PX, PX);
-
-// Kenney's 3-row background strip: sky (stretched up), clouds and trees, ground (stretched down).
-// floorY puts the trees just behind the room's floor.
-function pixelSky(ctx, w, h, floorY = h - 40) {
-  const bg = ART.img.bgs;
-  const tw = PC * 4;
-  const yClouds = floorY - tw + 10, yGround = yClouds + tw;
-  ctx.imageSmoothingEnabled = false;
-  for (let i = 0, x = 0; x < w; i++, x += tw) {
-    const col = i % 4;
-    ctx.drawImage(bg, col * PC, 0, PC, PC, x, 0, tw, yClouds + 1);
-    ctx.drawImage(bg, col * PC, PC, PC, PC, x, yClouds, tw, tw);
-    ctx.drawImage(bg, col * PC, PC * 2, PC, PC, x, yGround, tw, Math.max(tw, h - yGround));
-  }
-}
-
-const pixel = {
-  room(ctx, lv, off, solid) {
-    const im = ART.img;
-    if (!im.tiles || !im.bgs) return false;
-    let floor = 0;
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!solid(c, r)) floor = Math.max(floor, r + 1);
-    pixelSky(ctx, COLS * T, ROWS * T, floor * T + off.oy);
-    ctx.translate(off.ox, off.oy);
-    ctx.imageSmoothingEnabled = false;
-    const dirt = [pxTile(im.tiles, 4, 0), pxTile(im.tiles, 5, 0), pxTile(im.tiles, 4, 1), pxTile(im.tiles, 5, 1)];
-    const grass = pxTile(im.tiles, 2, 0);
-    eachTile(off, (c, r) => {
-      if (!solid(c, r)) return;
-      const n = c >= 0 && c < COLS && r >= 0 && r < ROWS && near(solid, c, r);
-      const open = n ? openSides(solid, c, r) : [false, false, false, false];
-      ctx.drawImage(open[0] ? grass : dirt[hash(c, r) % 4], c * T, r * T, T, T);
-      if (!n) { ctx.fillStyle = 'rgba(30,20,40,0.3)'; ctx.fillRect(c * T, r * T, T, T); }
-      else edgeLines(ctx, c, r, [false, open[1], open[2], open[3]], '#3F2F4F', 4);
-    });
-    // a few plants on the floor for life (never on plates, gates, spawn or exit)
-    const busy = new Set([...lv.plates.map(p => `${p.col},${p.row}`), ...lv.gates.flatMap(g => [`${g.col},${g.row + g.h - 1}`]), `${lv.spawn.col},${lv.spawn.row}`, `${lv.exit.col},${lv.exit.row}`]);
-    const deco = [pxTile(im.tiles, 4, 6), pxTile(im.tiles, 5, 6), pxTile(im.tiles, 6, 6)];
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      if (solid(c, r) || !solid(c, r + 1) || busy.has(`${c},${r}`) || busy.has(`${c - 1},${r}`) || busy.has(`${c + 1},${r}`)) continue;
-      if (hash(c, r) % 7 !== 0) continue;
-      ctx.globalAlpha = 0.9;
-      ctx.drawImage(deco[hash(r, c) % 3], c * T, r * T, T, T);
-      ctx.globalAlpha = 1;
-    }
-    return true;
-  },
-  figure(ctx, cx, bottom, o) {
-    const img = ART.img.chars;
-    if (!img) return false;
-    const frame = o.air ? 1 : o.run ? (Math.floor(o.t * 10) % 2) : 0;
-    const [col, amt] = roleTint(o, null);
-    const cv = sprite(img, (2 + frame) * PC, 0, PC, PC, col, amt);
-    ctx.imageSmoothingEnabled = false;
-    drawSpriteFigure(ctx, cv, cx, bottom, o, 48, 48, 2);
-    return true;
-  },
-  plate(ctx, p, pressed) {
-    const img = ART.img.tiles;
-    if (!img) return false;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(pxTile(img, pressed ? 9 : 8, 7), p.x0, p.y - T + (pressed ? 2 : 0), T, T);
-    return true;
-  },
-  gate(ctx, g, h) {
-    const img = ART.img.tiles;
-    if (!img) return false;
-    if (h <= 0.5) return true;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(g.x, g.y, T, h); ctx.clip();
-    ctx.imageSmoothingEnabled = false;
-    const block = pxTile(img, 9, 0), lock = pxTile(img, 10, 0);
-    for (let y = g.y + h - T, i = 0; y > g.y - T; y -= T, i++) ctx.drawImage(i === 0 ? lock : block, g.x, y, T, T);
-    ctx.restore();
-    return true;
-  },
-  exit(ctx, ex, t) {
-    const img = ART.img.tiles;
-    if (!img) return false;
-    const x = ex.col * T, bottom = (ex.row + 1) * T;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(pxTile(img, 10, 6), x, bottom - 2 * T, T, T);
-    ctx.drawImage(pxTile(img, 10, 7), x, bottom - T, T, T);
-    ctx.drawImage(pxTile(img, 11, 5), x + T * 0.55, bottom - 2 * T - 30 + Math.sin(t * 3) * 2, T, T);   // flag
-    arrowAbove(ctx, x + T / 2, bottom - 2 * T - 14 + Math.sin(t * 4) * 3);
-    return true;
-  },
-  // Title and room select: earth all around, a strip of sky where the title demo walks.
-  backdrop(ctx) {
-    const im = ART.img;
-    if (!im.bgs || !im.tiles) return false;
-    ctx.drawImage(cachedBackdrop('pixel', VIEW_W, VIEW_H, (g, w, h) => {
-      g.imageSmoothingEnabled = false;
-      const dirt = [pxTile(im.tiles, 4, 0), pxTile(im.tiles, 5, 0), pxTile(im.tiles, 4, 1), pxTile(im.tiles, 5, 1)];
-      for (let r = 0; r * T < h; r++) for (let c = 0; c * T < w; c++) g.drawImage(dirt[hash(c, r) % 4], c * T, r * T, T, T);
-      g.fillStyle = 'rgba(30,20,40,0.45)'; g.fillRect(0, 0, w, h);
-      const top = 480, floor = 650;
-      g.save(); g.beginPath(); g.rect(0, top, w, floor - top); g.clip();
-      pixelSky(g, w, h, floor);
-      g.restore();
-      g.fillStyle = '#3F2F4F'; g.fillRect(0, top - 4, w, 4);
-      const grass = pxTile(im.tiles, 2, 0);
-      for (let c = 0; c * T < w; c++) g.drawImage(grass, c * T, floor, T, T);
-    }), 0, 0);
-    return true;
-  },
-};
-
 function arrowAbove(ctx, x, y) {
   ctx.beginPath(); ctx.moveTo(x - 8, y + 5); ctx.lineTo(x, y - 4); ctx.lineTo(x + 8, y + 5);
   ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = C.cyan; ctx.stroke();
 }
 
-// ---- Toybox Shapes: Kenney "Abstract Platformer" (CC0), 64 px tiles --------------------------
-
-function toyBack(ctx, w, h, shift = 0) {
-  ctx.fillStyle = '#54417A'; ctx.fillRect(0, 0, w, h);
-  const im = ART.img;
-  ctx.imageSmoothingEnabled = true;
-  if (im.shapes) { ctx.globalAlpha = 0.55; for (let x = -shift % 1280; x < w; x += 1280) ctx.drawImage(im.shapes, x, h - 960, 1280, 960); ctx.globalAlpha = 1; }
-  if (im.hills) for (let x = 0; x < w; x += 1280) ctx.drawImage(im.hills, x, h - 900, 1280, 960);
+// Lowest open row of the room (+1): where the floor is, so skies line up with it.
+function floorRow(solid) {
+  let floor = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!solid(c, r)) floor = Math.max(floor, r + 1);
+  return floor;
 }
 
-const toybox = {
+// Frame i of a horizontal strip of square-ish frames (fw wide).
+const frame = (img, i, fw, fh = img.height) => [img, (i % Math.max(1, Math.floor(img.width / fw))) * fw, 0, fw, fh];
+
+// ---- Pixel Adventure: Pixel Frog "Pixel Adventure 1" (CC0), 16 px terrain, 32 px characters ----
+// Player: Virtual Guy. Echoes: Pink Man (a different character of the pack, not a recolor).
+
+const PA = 16;
+const paTile = (img, c, r) => sprite(img, c * PA, r * PA, PA, PA);
+
+function paBack(ctx, w, h) {
+  const bg = ART.img.bg;
+  ctx.imageSmoothingEnabled = false;
+  for (let y = 0; y < h; y += 128) for (let x = 0; x < w; x += 128) ctx.drawImage(bg, x, y, 128, 128);
+}
+
+const adventure = {
   room(ctx, lv, off, solid) {
     const im = ART.img;
-    if (!im.top || !im.fill) return false;
-    toyBack(ctx, COLS * T, ROWS * T);
+    if (!im.terrain || !im.bg) return false;
+    paBack(ctx, COLS * T, ROWS * T);
     ctx.translate(off.ox, off.oy);
-    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingEnabled = false;
+    // grass block of the terrain sheet: a 3×3 slice at tiles (6..8, 0..2)
     eachTile(off, (c, r) => {
       if (!solid(c, r)) return;
       const inGrid = c >= 0 && c < COLS && r >= 0 && r < ROWS;
-      const open = inGrid ? openSides(solid, c, r) : [false, false, false, false];
-      const deep = !inGrid || !near(solid, c, r);
-      let img = open[0] ? im.top : im.fill;
-      if (!open[0] && deep && im.deco && hash(c, r) % 29 === 0) img = hash(r, c) % 2 ? im.deco : im.deco2 || im.deco;
-      ctx.drawImage(img, c * T, r * T, T + 0.5, T + 0.5);
-      if (!open[0]) edgeLines(ctx, c, r, [false, open[1], open[2], open[3]], 'rgba(255,255,255,0.18)', 3);
+      const o = inGrid ? openSides(solid, c, r) : [false, false, false, false];
+      const col = o[3] && !o[1] ? 6 : o[1] && !o[3] ? 8 : 7;
+      const row = o[0] ? 0 : o[2] ? 2 : 1;
+      ctx.drawImage(paTile(im.terrain, col, row), c * T, r * T, T, T);
+      if (!inGrid || !near(solid, c, r)) { ctx.fillStyle = 'rgba(33,31,48,0.35)'; ctx.fillRect(c * T, r * T, T, T); }
     });
     return true;
   },
   figure(ctx, cx, bottom, o) {
     const im = ART.img;
-    if (!im.stand) return false;
-    let img = im.stand;
-    if (o.air && im.up) img = im.up;
-    else if (o.run) img = im[`walk${1 + (Math.floor(o.t * 12) % 5)}`] || im.stand;
-    const [col, amt] = roleTint(o, null);
-    const cv = sprite(img, 0, 0, img.width, img.height, col, amt);
+    const echo = o.color === C.violet;
+    const set = echo ? [im.eIdle, im.eRun, im.eJump, im.eFall] : [im.idle, im.run, im.jump, im.fall];
+    if (set.some(x => !x)) return false;
+    const [idle, run, jump, fall] = set;
+    const img = o.air ? (o.t % 0.6 < 0.3 ? jump : fall) : o.run ? run : idle;
+    const n = Math.floor(o.t * 20);            // the pack's animations run at 20 fps
+    const [src, sx, sy, sw, sh] = frame(img, n, 32, 32);
+    const tint = !echo && o.color !== C.cyan ? [C.pale, 0.7] : [null, 0];
+    const cv = sprite(src, sx, sy, sw, sh, ...tint);
+    ctx.imageSmoothingEnabled = false;
+    drawSpriteFigure(ctx, cv, cx, bottom, { ...o, dashed: false }, 64, 64, 0);
+    return true;
+  },
+  plate(ctx, p, pressed) {
+    const im = ART.img;
+    if (!im.plate || !im.plateOn) return false;
+    ctx.imageSmoothingEnabled = false;
+    if (pressed) ctx.drawImage(sprite(im.plateOn, 0, 0, 32, 8), p.x0, p.y - 6, T, 10);
+    else ctx.drawImage(im.plate, p.x0, p.y - 10, T, 10);
+    return true;
+  },
+  gate(ctx, g, h) {
+    const im = ART.img;
+    if (!im.terrain) return false;
+    if (h <= 0.5) return true;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(g.x, g.y, T, h); ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    const gold = sprite(im.terrain, 272, 144, 16, 16);   // riveted gold block
+    for (let y = g.y + h - T; y > g.y - T; y -= T) ctx.drawImage(gold, g.x, y, T, T);
+    ctx.restore();
+    return true;
+  },
+  exit(ctx, ex, t) {
+    const im = ART.img;
+    if (!im.trophy) return false;
+    const cx = ex.col * T + T / 2, bottom = (ex.row + 1) * T;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(im.trophy, cx - 48, bottom - 96, 96, 96);
+    arrowAbove(ctx, cx, bottom - 82 + Math.sin(t * 4) * 3);
+    return true;
+  },
+  backdrop(ctx) {
+    const im = ART.img;
+    if (!im.terrain || !im.bg) return false;
+    ctx.drawImage(cachedBackdrop('adventure', VIEW_W, VIEW_H, (g, w, h) => {
+      paBack(g, w, h);
+      g.imageSmoothingEnabled = false;
+      const floor = 650;
+      for (let c = 0; c * T < w; c++) {
+        g.drawImage(paTile(im.terrain, 7, 0), c * T, floor, T, T);
+        g.drawImage(paTile(im.terrain, 7, 1), c * T, floor + T, T, T);
+      }
+    }), 0, 0);
+    return true;
+  },
+};
+
+// ---- Robot Lab: GameArt2D "Free Sci-Fi Platformer Tileset" + "The Robot" (CC0), vector art ------
+// Player: the yellow robot. Echoes: the same robot washed in the echo color (the pack has one robot).
+
+function labBack(ctx, w, h) {
+  const im = ART.img;
+  ctx.imageSmoothingEnabled = true;
+  for (let r = 0; r * 80 < h; r++) for (let c = 0; c * 80 < w; c++) {
+    const k = hash(c, r);
+    const img = k % 23 === 0 && im.lamp ? im.lamp : k % 2 ? im.back : im.back2 || im.back;
+    ctx.drawImage(img, c * 80, r * 80, 80, 80);
+  }
+}
+
+const lab = {
+  room(ctx, lv, off, solid) {
+    const im = ART.img;
+    if (!im.top || !im.fill || !im.back) return false;
+    labBack(ctx, COLS * T, ROWS * T);
+    ctx.fillStyle = 'rgba(10,12,20,0.25)'; ctx.fillRect(0, 0, COLS * T, ROWS * T);
+    ctx.translate(off.ox, off.oy);
     ctx.imageSmoothingEnabled = true;
-    drawSpriteFigure(ctx, cv, cx, bottom, o, 38, 46, 1);
+    eachTile(off, (c, r) => {
+      if (!solid(c, r)) return;
+      const inGrid = c >= 0 && c < COLS && r >= 0 && r < ROWS;
+      const o = inGrid ? openSides(solid, c, r) : [false, false, false, false];
+      ctx.drawImage(o[0] ? im.top : im.fill, c * T, r * T, T + 0.5, T + 0.5);
+      if (!inGrid || !near(solid, c, r)) { ctx.fillStyle = 'rgba(8,10,16,0.55)'; ctx.fillRect(c * T, r * T, T + 0.5, T + 0.5); }
+      else edgeLines(ctx, c, r, [false, o[1], o[2], o[3]], '#D9D2C7', 3);
+    });
+    return true;
+  },
+  figure(ctx, cx, bottom, o) {
+    const im = ART.img;
+    if (!im.idle || !im.run || !im.jump) return false;
+    const fw = 114;
+    let src;
+    if (o.air) src = frame(im.jump, o.t % 0.6 < 0.3 ? 0 : 1, fw);
+    else if (o.run) src = frame(im.run, Math.floor(o.t * 16), fw);
+    else src = frame(im.idle, Math.floor(o.t * 8), fw);
+    const [col, amt] = roleTint(o, null);
+    const cv = sprite(...src, col, amt * 0.85);
+    ctx.imageSmoothingEnabled = true;
+    drawSpriteFigure(ctx, cv, cx, bottom, { ...o, dashed: false }, 46, 52, 1);
+    return true;
+  },
+  plate(ctx, p, pressed) {
+    const im = ART.img;
+    if (!im.ledge) return false;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(im.ledge, 0, 0, 80, 26, p.x0 + 1, p.y - (pressed ? 6 : 12), T - 2, 13);
+    ctx.fillStyle = pressed ? C.yellow : 'rgba(0,0,0,0.6)';   // the slot lights up when held
+    ctx.fillRect(p.x0 + 12, p.y - (pressed ? 2 : 8), T - 24, 3);
+    return true;
+  },
+  gate(ctx, g, h) {
+    const im = ART.img;
+    if (!im.door) return false;
+    if (h <= 0.5) return true;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(g.x - 4, g.y, T + 8, h); ctx.clip();
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(im.door, g.x - 3, g.y + h - g.hpx, T + 6, g.hpx);   // the door slides up into the ceiling
+    ctx.restore();
+    return true;
+  },
+  exit(ctx, ex, t) {
+    const im = ART.img;
+    if (!im.exit) return false;
+    const cx = ex.col * T + T / 2, bottom = (ex.row + 1) * T;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(im.exit, cx - 26, bottom - 86, 52, 86);
+    arrowAbove(ctx, cx, bottom - 100 + Math.sin(t * 4) * 3);
+    return true;
+  },
+  backdrop(ctx) {
+    const im = ART.img;
+    if (!im.back || !im.top) return false;
+    ctx.drawImage(cachedBackdrop('lab', VIEW_W, VIEW_H, (g, w, h) => {
+      labBack(g, w, h);
+      g.fillStyle = 'rgba(10,12,20,0.45)'; g.fillRect(0, 0, w, h);
+      for (let c = 0; c * T < w; c++) { g.drawImage(im.top, c * T, 650, T, T); g.drawImage(im.fill, c * T, 690, T, T); }
+    }), 0, 0);
+    return true;
+  },
+};
+
+// ---- Alien Planet: Kenney "Platformer Pack Redux" (CC0), flat vector ----------------------------
+// Player: the green alien. Echoes: the blue alien of the same pack.
+
+function planetSky(ctx, w, h, floorY) {
+  const sky = ART.img.sky;
+  ctx.fillStyle = '#D2F4F7'; ctx.fillRect(0, 0, w, h);
+  ctx.imageSmoothingEnabled = true;
+  const s = Math.max(w, 720), y0 = floorY + 30 - s * 0.66;   // the hills meet the floor
+  for (let x = 0; x < w; x += s) ctx.drawImage(sky, x, y0, s, s);
+  ctx.fillStyle = '#C6ECEF'; ctx.fillRect(0, y0 + s - 1, w, Math.max(0, h - (y0 + s - 1)));
+}
+
+const planet = {
+  room(ctx, lv, off, solid) {
+    const im = ART.img;
+    if (!im.top || !im.fill || !im.sky) return false;
+    planetSky(ctx, COLS * T, ROWS * T, floorRow(solid) * T + off.oy);
+    ctx.translate(off.ox, off.oy);
+    ctx.imageSmoothingEnabled = true;
+    eachTile(off, (c, r) => {
+      if (!solid(c, r)) return;
+      const inGrid = c >= 0 && c < COLS && r >= 0 && r < ROWS;
+      const o = inGrid ? openSides(solid, c, r) : [false, false, false, false];
+      ctx.drawImage(o[0] ? im.top : im.fill, c * T, r * T, T + 0.5, T + 0.5);
+      if (!inGrid || !near(solid, c, r)) { ctx.fillStyle = 'rgba(58,51,84,0.35)'; ctx.fillRect(c * T, r * T, T + 0.5, T + 0.5); }
+      else edgeLines(ctx, c, r, [false, o[1], o[2], o[3]], '#8E86A8', 3);
+    });
+    return true;
+  },
+  figure(ctx, cx, bottom, o) {
+    const im = ART.img;
+    const echo = o.color === C.violet;
+    const p = echo ? 'e' : '';
+    const k = s => im[p ? p + s[0].toUpperCase() + s.slice(1) : s];
+    const stand = k('stand');
+    if (!stand) return false;
+    let img = stand;
+    if (o.air) img = k('jump') || stand;
+    else if (o.run) img = k(Math.floor(o.t * 8) % 2 ? 'walk2' : 'walk1') || stand;
+    const tint = !echo && o.color !== C.cyan ? [C.pale, 0.6] : [null, 0];
+    const cv = sprite(img, 0, 0, img.width, img.height, ...tint);
+    ctx.imageSmoothingEnabled = true;
+    drawSpriteFigure(ctx, cv, cx, bottom, { ...o, dashed: false }, 36, 48, 0);
     return true;
   },
   plate(ctx, p, pressed) {
     const img = pressed ? ART.img.buttonDown : ART.img.button;
     if (!img) return false;
-    ctx.drawImage(img, p.x0 + 2, p.y - 21, 36, 21);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(img, p.x0, p.y - 37, T, T);
     return true;
   },
   gate(ctx, g, h) {
     const im = ART.img;
-    if (!im.lockMid) return false;
+    if (!im.lock) return false;
     if (h <= 0.5) return true;
     ctx.save();
     ctx.beginPath(); ctx.rect(g.x, g.y, T, h); ctx.clip();
-    const n = Math.max(1, Math.ceil(g.hpx / T));
-    for (let i = 0; i < n; i++) {
-      const y = g.y + h - (i + 1) * T;
-      const img = i === 0 ? im.lockBottom : i === n - 1 ? im.lockTop : im.lockMid;
-      ctx.drawImage(img || im.lockMid, g.x + 3, y, T - 6, T);
-    }
+    ctx.imageSmoothingEnabled = true;
+    for (let y = g.y + h - T; y > g.y - T; y -= T) ctx.drawImage(im.lock, g.x, y, T, T);
     ctx.restore();
     return true;
   },
@@ -285,88 +361,19 @@ const toybox = {
     const im = ART.img;
     if (!im.door || !im.doorTop) return false;
     const x = ex.col * T, bottom = (ex.row + 1) * T;
-    ctx.drawImage(im.doorTop, x - 2, bottom - 2 * T - 4, T + 4, T + 4);
-    ctx.drawImage(im.door, x - 2, bottom - T, T + 4, T);
-    if (im.flag) ctx.drawImage(im.flag, x + T * 0.5, bottom - 2 * T - 40, T, T);
-    arrowAbove(ctx, x + T / 2, bottom - 2 * T - 18 + Math.sin(t * 4) * 3);
-    return true;
-  },
-  backdrop(ctx, t) {
-    if (!ART.img.shapes) return false;
-    ctx.fillStyle = '#54417A'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    const im = ART.img;
-    ctx.globalAlpha = 0.55;
-    const s = (t * 12) % 1280;
-    ctx.drawImage(im.shapes, -s, VIEW_H - 960, 1280, 960);
-    ctx.drawImage(im.shapes, 1280 - s, VIEW_H - 960, 1280, 960);
-    ctx.globalAlpha = 1;
-    if (im.hills) ctx.drawImage(im.hills, 0, VIEW_H - 900, 1280, 960);
-    ctx.fillStyle = 'rgba(30,24,52,0.35)'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    return true;
-  },
-};
-
-// ---- Green Terminal: Kenney "1-Bit Pack" (CC0), 16 px monochrome tiles, scanlines --------------
-
-const OB = 16;
-const obTile = (img, c, r, color) => sprite(img, c * OB, r * OB, OB, OB, color, 1);
-
-const terminal = {
-  room(ctx, lv, off, solid) {
-    const img = ART.img.sheet;
-    if (!img) return false;
-    ctx.fillStyle = '#030803'; ctx.fillRect(0, 0, COLS * T, ROWS * T);
-    ctx.translate(off.ox, off.oy);
-    ctx.imageSmoothingEnabled = false;
-    const brick = obTile(img, 10, 17, '#2E7A35');
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      if (!solid(c, r)) {
-        ctx.fillStyle = rgba(C.cyan, 0.08);
-        ctx.fillRect(c * T + T / 2 - 1, r * T + T / 2 - 1, 2, 2);
-        continue;
-      }
-      if (!near(solid, c, r)) continue;
-      ctx.drawImage(brick, c * T, r * T, T, T);
-      edgeLines(ctx, c, r, openSides(solid, c, r), C.pale, 2);
-    }
-    return true;
-  },
-  figure(ctx, cx, bottom, o) {
-    const img = ART.img.sheet;
-    if (!img) return false;
-    const frame = o.run ? (Math.floor(o.t * 8) % 2) : 0;
-    const cv = obTile(img, frame ? 26 : 25, 0, o.color);
-    ctx.imageSmoothingEnabled = false;
-    drawSpriteFigure(ctx, cv, cx, bottom, o, 42, 42, 1);
-    return true;
-  },
-  gate(ctx, g, h) {
-    const img = ART.img.sheet;
-    if (!img) return false;
-    if (h <= 0.5) return true;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(g.x, g.y, T, h); ctx.clip();
-    ctx.imageSmoothingEnabled = false;
-    const tile = obTile(img, 1, 9, C.pink);
-    for (let y = g.y + h - T; y > g.y - T; y -= T) ctx.drawImage(tile, g.x, y, T, T);
-    ctx.restore();
-    return true;
-  },
-  exit(ctx, ex, t) {
-    const img = ART.img.sheet;
-    if (!img) return false;
-    const x = ex.col * T, bottom = (ex.row + 1) * T;
-    ctx.imageSmoothingEnabled = false;
-    ctx.globalAlpha = 0.75 + Math.sin(t * 6) * 0.25;
-    ctx.drawImage(obTile(img, 3, 9, C.cyan), x - 8, bottom - 56, 56, 56);
-    ctx.globalAlpha = 1;
-    arrowAbove(ctx, x + T / 2, bottom - 74 + Math.sin(t * 4) * 3);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(im.doorTop, x - 4, bottom - 2 * T - 8, T + 8, T + 8);
+    ctx.drawImage(im.door, x - 4, bottom - T, T + 8, T);
+    arrowAbove(ctx, x + T / 2, bottom - 2 * T - 22 + Math.sin(t * 4) * 3);
     return true;
   },
   backdrop(ctx) {
-    ctx.fillStyle = '#030803'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    ctx.fillStyle = rgba(C.cyan, 0.07);
-    for (let y = 20; y < VIEW_H; y += 40) for (let x = 20; x < VIEW_W; x += 40) ctx.fillRect(x - 1, y - 1, 2, 2);
+    const im = ART.img;
+    if (!im.sky || !im.top) return false;
+    ctx.drawImage(cachedBackdrop('planet', VIEW_W, VIEW_H, (g, w, h) => {
+      planetSky(g, w, h, 650);
+      for (let c = 0; c * T < w; c++) { g.drawImage(im.top, c * T, 650, T, T); g.drawImage(im.fill, c * T, 690, T, T); }
+    }), 0, 0);
     return true;
   },
 };
@@ -393,5 +400,5 @@ export function drawBackdrop(ctx, t) {
   return !!(h && hasDOM() && h(ctx, t));
 }
 
-const HOOKS = { pixel, toybox, terminal };
+const HOOKS = { adventure, lab, planet };
 for (const th of THEMES) if (HOOKS[th.id]) th.hooks = HOOKS[th.id];

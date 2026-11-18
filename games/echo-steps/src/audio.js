@@ -98,11 +98,11 @@ export class Sound {
   }
 
   // Per art style (theme.js): a few sounds get the style's voice. Chip styles use square
-  // and pulse waves, Toybox uses soft round pops. Everything else stays shared.
+  // and pulse waves, Alien Planet uses soft round pops. Everything else stays shared.
   styled(name, opt) {
     const st = this.style;
-    if (st === 'pixel' || st === 'terminal') {
-      const hi = st === 'terminal' ? 1.5 : 1;
+    if (st === 'adventure' || st === 'lab') {
+      const hi = st === 'lab' ? 1.5 : 1;
       switch (name) {
         case 'click': this.tone('square', 1200 * hi, 1200 * hi, 0.035, 0.05); return true;
         case 'jump': this.tone('square', 260 * hi, 820 * hi, 0.11, 0.07); return true;
@@ -110,7 +110,7 @@ export class Sound {
         case 'plateDown': this.tone('square', 440 * hi, 440 * hi, 0.05, 0.07); this.tone('square', 660 * hi, 660 * hi, 0.06, 0.07, 0.05); return true;
         case 'star': { const f = NOTE([12, 16, 19][Math.min(2, opt.i || 0)] + 12) * hi; this.tone('square', f, f, 0.12, 0.09); this.tone('square', f * 2, f * 2, 0.12, 0.05, 0.08); return true; }
       }
-    } else if (st === 'toybox') {
+    } else if (st === 'planet') {
       switch (name) {
         case 'click': this.tone('sine', 700, 1100, 0.06, 0.12); return true;
         case 'jump': this.tone('sine', 330, 660, 0.12, 0.14); this.tone('triangle', 660, 990, 0.06, 0.04, 0.03); return true;

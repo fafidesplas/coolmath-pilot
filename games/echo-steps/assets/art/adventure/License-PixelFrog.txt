@@ -1,0 +1,12 @@
+Pixel Adventure 1 by Pixel Frog
+Pack page: https://pixelfrog-assets.itch.io/pixel-adventure-1
+Mirror (same files, downloaded from here): https://opengameart.org/content/pixel-adventure-1
+
+License, as stated on the pack page by the author:
+"These assets are released under a Creative Commons Zero (CC0) license.
+You can distribute, remix, adapt, and build upon the material in any medium
+or format, even for commercial purposes. Attribution is not required."
+Full text: https://creativecommons.org/publicdomain/zero/1.0/
+
+The OpenGameArt mirror is tagged CC-BY 4.0, so this game credits
+"Pixel Frog" in assets/CREDITS.md in any case.

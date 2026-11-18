@@ -683,7 +683,7 @@ export class Game {
     ctx.translate(0, lift);
     ctx.globalAlpha = b.disabled ? 0.4 : 1;
     const ui = ART.cur.ui, rad = (b.r ?? 16) * (ui.radius ?? 1);
-    if (ui.shadow && !b.hud) {   // chunky drop shadow (Pixel, Toybox)
+    if (ui.shadow && !b.hud) {   // chunky drop shadow (Pixel Adventure, Alien Planet)
       rrect(ctx, b.x, b.y + ui.shadow - lift, b.w, b.h, rad);
       ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
     }

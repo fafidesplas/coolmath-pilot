@@ -1,5 +1,11 @@
 # Echo Steps — devlog
 
+## 2026-11-18 — Art styles from real art packs
+- Replaced the three earlier styles (Pixel Meadow, Toybox Shapes, Green Terminal) with styles built from downloaded packs by different authors: Pixel Adventure (Pixel Frog, pixel art), Robot Lab (GameArt2D, illustrated sci-fi with an animated robot) and Alien Planet (Kenney Platformer Pack Redux, flat vector). Classic stays first.
+- Each style swaps the tiles, background, player, echoes (a second character of the pack where it has one), plates, gates and exit; hitboxes and logic are untouched.
+- art-options.json gains author and preview; previews of room 9 per style in assets/art/previews/; credits and license files per pack.
+- Next: feedback from the presentation, pick a direction.
+
 ## 2026-11-18 — Art styles to compare in the presentation
 - **Four switchable looks**, for the Coolmath meeting: `?art=classic` (Night Neon, the default and unchanged), `?art=pixel` (Pixel Meadow: Kenney *Pixel Platformer* + Silkscreen font), `?art=toybox` (Toybox Shapes: Kenney *Abstract Platformer* + Fredoka) and `?art=terminal` (Green Terminal: Kenney *1-Bit Pack* + VT323, scanlines and vignette). Art is CC0 and the fonts are OFL, all downloaded into `assets/art/<id>/` with their license files (512 KB in total). Credits are in `assets/CREDITS.md`, and `art-options.json` lists the styles in selector order for the presentation page.
 - **Switching:** a pill at the bottom center ("ART 2/4: Pixel Meadow ›") or the **V** key cycles the styles live, mid-room included. A was asked for, but A moves left. It updates `?art=` in the URL without a reload and keeps the other params (`?room=`, `?hints=now`, `?replay`…). A toast shows the new style's name. All styles preload 1.5 s after start, so switching is instant.

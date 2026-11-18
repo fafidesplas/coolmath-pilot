@@ -2,33 +2,41 @@
   {
     "id": "classic",
     "name": "Night Neon",
-    "description": "The current look: dark navy rooms, a glowing cyan player and violet echoes, all drawn in code.",
+    "description": "The original look: dark navy rooms, a glowing cyan player and violet echoes, all drawn in code.",
     "pack": "None (drawn in code, system font)",
+    "author": "Echo Steps team",
     "license": "Own art",
-    "url": ""
+    "url": "",
+    "preview": "assets/art/previews/classic.png"
   },
   {
-    "id": "pixel",
-    "name": "Pixel Meadow",
-    "description": "Bright pixel art: earth and grass tiles, a sky with clouds and trees, a little astronaut whose echoes are pink copies.",
-    "pack": "Kenney Pixel Platformer + Silkscreen font",
-    "license": "CC0 1.0 (art), SIL OFL 1.1 (font)",
-    "url": "https://kenney.nl/assets/pixel-platformer"
+    "id": "adventure",
+    "name": "Pixel Adventure",
+    "description": "Pixel art with grass and earth terrain, a tiled sky, Virtual Guy as the player, Pink Man as the echoes, gold blocks as gates and a trophy as the exit.",
+    "pack": "Pixel Adventure 1 (+ Silkscreen font)",
+    "author": "Pixel Frog (font: Jason Kottke)",
+    "license": "CC0 1.0 (font: SIL OFL 1.1)",
+    "url": "https://pixelfrog-assets.itch.io/pixel-adventure-1",
+    "preview": "assets/art/previews/adventure.png"
   },
   {
-    "id": "toybox",
-    "name": "Toybox Shapes",
-    "description": "Chunky flat toy shapes: blue zig-zag floors, red lock blocks for gates, a round blue character with green echoes, rounded Fredoka type.",
-    "pack": "Kenney Abstract Platformer + Fredoka font",
-    "license": "CC0 1.0 (art), SIL OFL 1.1 (font)",
-    "url": "https://kenney.nl/assets/abstract-platformer"
+    "id": "lab",
+    "name": "Robot Lab",
+    "description": "Illustrated sci-fi lab: steel girder walls and floors, an animated yellow robot whose echoes are blue copies, sliding blast doors as gates.",
+    "pack": "Free Sci-Fi Platformer Tileset + The Robot (+ Chakra Petch font)",
+    "author": "GameArt2D (font: Cadson Demak)",
+    "license": "CC0 1.0 (font: SIL OFL 1.1)",
+    "url": "https://www.gameart2d.com/free-sci-fi-platformer-tileset.html",
+    "preview": "assets/art/previews/lab.png"
   },
   {
-    "id": "terminal",
-    "name": "Green Terminal",
-    "description": "Retro computer screen: 1-bit sprites in green phosphor, scanlines and a vignette, VT323 terminal font, chip-style sounds.",
-    "pack": "Kenney 1-Bit Pack + VT323 font",
-    "license": "CC0 1.0 (art), SIL OFL 1.1 (font)",
-    "url": "https://kenney.nl/assets/1-bit-pack"
+    "id": "planet",
+    "name": "Alien Planet",
+    "description": "Flat vector: alien ground under a pale mushroom sky, a green alien as the player and a blue alien as the echoes, yellow floor buttons and red lock blocks.",
+    "pack": "Platformer Pack Redux (+ Fredoka font)",
+    "author": "Kenney (font: Milena Brandao)",
+    "license": "CC0 1.0 (font: SIL OFL 1.1)",
+    "url": "https://kenney.nl/assets/platformer-pack-redux",
+    "preview": "assets/art/previews/planet.png"
   }
 ]

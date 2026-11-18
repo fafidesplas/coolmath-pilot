@@ -1,0 +1,15 @@
+Free Sci-Fi Platformer Tileset and The Robot (free sprites) by GameArt2D (Zuhria Alfitra)
+Pack pages:
+  https://www.gameart2d.com/free-sci-fi-platformer-tileset.html
+  https://www.gameart2d.com/the-robot---free-sprites.html
+License page: https://www.gameart2d.com/license.html
+
+License, as stated on the license page:
+"Assets in the Freebies section are licensed under Creative Commons Zero (CC0) /
+Public Domain. Use them in any commercial or non-commercial projects, including
+games, templates, courses, or other materials. There are no fees, royalties, or
+hidden costs. You don't need to credit me or link the site, but you're welcome to."
+Full text: https://creativecommons.org/publicdomain/zero/1.0/
+
+Files here are resized PNGs from the packs (tiles and doors scaled down, robot
+frames cropped and joined into strips).

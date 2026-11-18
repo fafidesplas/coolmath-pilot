@@ -1,5 +1,5 @@
 // Switchable art styles (presentation build). ?art=<id> picks one; the default is
-// "classic", the Night Neon look from GDD 9. A style swaps the six palette colors in
+// "classic", the Night Neon look from GDD 9; the others use downloaded art packs. A style swaps the six palette colors in
 // place (COLORS is shared by every draw call), the font, the UI chrome and, through
 // hooks registered by art.js, the room tiles, figures and devices. Images and fonts load
 // in the background; until they arrive everything falls back to the drawn shapes, so a
@@ -17,40 +17,43 @@ export const THEMES = [
     font: SYSTEM_FONT, glow: true, ui: { radius: 1, shadow: 0 },
   },
   {
-    id: 'pixel', name: 'Pixel Meadow',
-    colors: { navy: '#2B2240', pale: '#FFF7E8', cyan: '#4FB8FF', violet: '#F27BE0', yellow: '#FFC93C', pink: '#E8483B' },
-    bg: '#1B1528', dark: '#3A2E4F', overlay: 'rgba(27,21,40,0.62)',
+    id: 'adventure', name: 'Pixel Adventure',
+    colors: { navy: '#211F30', pale: '#FFFFFF', cyan: '#3FA9F5', violet: '#F06FC0', yellow: '#FFC93C', pink: '#E8483B' },
+    bg: '#211F30', dark: '#211F30', overlay: 'rgba(33,31,48,0.62)',
     font: '"Silkscreen", ' + SYSTEM_FONT, fontFile: 'Silkscreen-Bold.ttf', fontFamily: 'Silkscreen', fontScale: 0.75,
     glow: false, pixelated: true, ui: { radius: 0.25, shadow: 4 },
     images: {
-      tiles: 'tilemap_packed.png',
-      chars: 'tilemap-characters_packed.png',
-      bgs: 'tilemap-backgrounds_packed.png',
+      terrain: 'terrain.png', bg: 'bg-blue.png',
+      idle: 'vguy-idle.png', run: 'vguy-run.png', jump: 'vguy-jump.png', fall: 'vguy-fall.png',
+      eIdle: 'pinkman-idle.png', eRun: 'pinkman-run.png', eJump: 'pinkman-jump.png', eFall: 'pinkman-fall.png',
+      plate: 'plate-off.png', plateOn: 'plate-on.png', trophy: 'trophy.png',
     },
   },
   {
-    id: 'toybox', name: 'Toybox Shapes',
-    colors: { navy: '#2F2A4A', pale: '#FFFFFF', cyan: '#3DA5F5', violet: '#7EE08A', yellow: '#FFD23F', pink: '#F2545B' },
-    bg: '#2A2442', dark: '#3B3360', overlay: 'rgba(30,24,52,0.6)',
+    id: 'lab', name: 'Robot Lab',
+    colors: { navy: '#1C1F2B', pale: '#F2F4F7', cyan: '#FFC21A', violet: '#5FD3F3', yellow: '#9BE15D', pink: '#FF5A4E' },
+    bg: '#14161F', dark: '#14161F', overlay: 'rgba(16,18,26,0.66)',
+    font: '"Chakra Petch", ' + SYSTEM_FONT, fontFile: 'ChakraPetch-Bold.ttf', fontFamily: 'Chakra Petch', maxWeight: 700,
+    glow: false, ui: { radius: 0.4, shadow: 0 },
+    images: {
+      top: 'tile-2.png', fill: 'tile-5.png', ledge: 'tile-12.png', back: 'bgtile-3.png', back2: 'bgtile-4.png', lamp: 'bgtile-1.png',
+      door: 'doorlocked.png', exit: 'dooropen.png',
+      idle: 'robot-idle.png', run: 'robot-run.png', jump: 'robot-jump.png',
+    },
+  },
+  {
+    id: 'planet', name: 'Alien Planet',
+    colors: { navy: '#3A3354', pale: '#FFFFFF', cyan: '#62C46B', violet: '#5AA8E8', yellow: '#FFCC00', pink: '#F0662F' },
+    bg: '#D2F4F7', dark: '#3A3354', overlay: 'rgba(40,34,62,0.55)',
     font: '"Fredoka", ' + SYSTEM_FONT, fontFile: 'Fredoka.ttf', fontFamily: 'Fredoka', maxWeight: 700,
     glow: false, ui: { radius: 1.4, shadow: 6 },
     images: {
-      top: 'tileBlue_05.png', fill: 'tileBlue_03.png', deco: 'tileBlue_08.png', deco2: 'tileBlue_17.png',
-      hills: 'set2_hills.png', shapes: 'set2_tiles.png',
-      stand: 'playerBlue_stand.png', walk1: 'playerBlue_walk1.png', walk2: 'playerBlue_walk2.png', walk3: 'playerBlue_walk3.png',
-      walk4: 'playerBlue_walk4.png', walk5: 'playerBlue_walk5.png', up: 'playerBlue_up1.png', fall: 'playerBlue_fall.png',
-      button: 'buttonRed.png', buttonDown: 'buttonRed_pressed.png',
-      lockTop: 'lockRedTop.png', lockMid: 'lockRedMid.png', lockBottom: 'lockRedBottom.png',
-      door: 'doorOpen.png', doorTop: 'doorOpen_top.png', flag: 'flagGreen_up.png',
+      top: 'planetMid.png', fill: 'planetCenter.png', sky: 'blue_shroom.png',
+      stand: 'alienGreen_stand.png', walk1: 'alienGreen_walk1.png', walk2: 'alienGreen_walk2.png', jump: 'alienGreen_jump.png',
+      eStand: 'alienBlue_stand.png', eWalk1: 'alienBlue_walk1.png', eWalk2: 'alienBlue_walk2.png', eJump: 'alienBlue_jump.png',
+      button: 'switchYellow.png', buttonDown: 'switchYellow_pressed.png', lock: 'lockRed.png',
+      door: 'doorOpen_mid.png', doorTop: 'doorOpen_top.png',
     },
-  },
-  {
-    id: 'terminal', name: 'Green Terminal',
-    colors: { navy: '#061208', pale: '#B8FFB0', cyan: '#7CFF6B', violet: '#3FD6C6', yellow: '#FFD23F', pink: '#FF6B5B' },
-    bg: '#020603', dark: '#040B05', overlay: 'rgba(2,8,3,0.7)',
-    font: '"VT323", ui-monospace, Menlo, Consolas, monospace', fontFile: 'VT323.ttf', fontFamily: 'VT323', maxWeight: 400, fontScale: 1.3,
-    glow: true, pixelated: true, scanlines: true, ui: { radius: 0, shadow: 0 },
-    images: { sheet: 'monochrome-transparent_packed.png' },
   },
 ];
 
