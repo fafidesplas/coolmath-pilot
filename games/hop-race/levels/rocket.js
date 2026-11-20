@@ -87,19 +87,6 @@ HR_LEVELS.rocket = [
         ],
     },
     {
-        id: 'rocket-06', name: 'The Middle',
-        size: 28,
-        start: {x: -12, y: -4},
-        solids: [
-            {l: -15, r: -9, top: -4},
-            {l: -6, r: -4, top: -3},
-            {l: -1, r: 1, top: 4.5},
-            {l: 4, r: 6, top: -3},
-            {l: 9, r: 11.25, top: -4},
-            {l: 11.25, r: 15, top: -4, finish: true},
-        ],
-    },
-    {
         id: 'rocket-07', name: 'Sticky Situation',
         size: 28,
         start: {x: 8, y: 6},
@@ -114,6 +101,19 @@ HR_LEVELS.rocket = [
             {l: 11.25, r: 14, top: 8.5, bottom: 0.5},
             {l: -14.25, r: -11.25, top: -7.5, bottom: -8.75, finish: true},
             {l: 5.75, r: 12.75, top: 11, bottom: 8.5},
+        ],
+    },
+    {
+        id: 'rocket-06', name: 'The Middle',
+        size: 28,
+        start: {x: -12, y: -4},
+        solids: [
+            {l: -15, r: -9, top: -4},
+            {l: -6, r: -4, top: -3},
+            {l: -1, r: 1, top: 4.5},
+            {l: 4, r: 6, top: -3},
+            {l: 9, r: 11.25, top: -4},
+            {l: 11.25, r: 15, top: -4, finish: true},
         ],
     },
     {

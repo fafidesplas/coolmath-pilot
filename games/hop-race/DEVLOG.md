@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-20 — Rocket: Sticky Situation before The Middle
+- Swapped in `levels/rocket.js` (owner): 2-6 is now Sticky Situation, 2-7 The Middle. Level ids don't change, so best times and medals stay with their level. The playtest sequence follows the same order.
+- Next: see how the breakable solids land earlier in the playtest.
+
 ## 2026-11-20 — Playtest build
 - `index.html?playtest` (`tools/playtest.js`, debug only, not in `build.json`): the title has only Play 1P and Play 2P. Play 1P runs all 23 live levels in order (Hop, Rocket, Grapple, Climb) and Next crosses worlds; Play 2P is always 3 rounds, each on a random level of a different random world, and the most wins takes the match.
 - Fresh every load (the normal save is never read or written), no coins on the results screens (medals stay), no ads, no Levels button, ghost off, no level editor.
