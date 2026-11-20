@@ -7,6 +7,8 @@
     - Play 2P: a match is always 3 rounds, each on a random level of a different random world (mode). A tie replays
       the same level. The match winner has the most wins. Rematch picks 3 new levels.
     - Fresh every load: nothing is read from or written to the normal save, so a reload is a new tester.
+    - Skip Level in the pause menu (Play 1P only): leaves the level unfinished and starts the next one, like Next
+      (the title after the last). Play 1P's resume treats a skipped level as done. Sends ui:skip.
     - No coins on the results screens (medals stay), no ads, no Levels button, ghost off, no level editor.
     It changes the game only by replacing functions of src/save.js, src/cmg.js and src/ui.js, so it loads after
     them and before src/main.js.
@@ -19,6 +21,7 @@ const HR_PT_WORLDS = ['hop', 'rocket', 'grapple', 'climb'];   // Play 1P's order
 const HR_PT_ROUNDS = 3;                                       // rounds in a Play 2P match
 
 let hrPtSolo = null;   // the last solo level started: {world, index}
+const hrPtSkipped = new Set();   // ids of levels skipped from the pause menu this session
 
 const hrPtWorld = id => HR_WORLDS.findIndex(w => w.id == id);
 
@@ -50,7 +53,7 @@ function hrPtNextSolo()
 // Play 1P: the last solo level if it is not finished, else the first level not finished, else Hop 1
 function hrPtPlaySolo()
 {
-    const seq = hrPtSequence(), done = s => hrSaveLevel(s.id).bestMs > 0;
+    const seq = hrPtSequence(), done = s => hrSaveLevel(s.id).bestMs > 0 || hrPtSkipped.has(s.id);
     const last = hrPtSolo && seq.find(s => s.world == hrPtSolo.world && s.index == hrPtSolo.index);
     hrPtStartSolo(last && !done(last) ? last : seq.find(s => !done(s)) || seq[0]);
 }
@@ -68,6 +71,16 @@ function hrPtPlayVersus()
     }
     hrStartLevel(plan[0].world, plan[0].index, true);
     hrMatch.plan = plan;
+}
+
+// Skip Level (pause menu, solo): the attempt counts as a Fail, then the next level in the sequence, or the title after the last
+function hrPtSkip()
+{
+    const next = hrPtNextSolo();
+    hrLeaveAttempt();
+    hrPtSkipped.add(hrLevelDef().id);
+    hrGaDesign('ui:skip', hrCmgLevel(hrWorld, hrLevelIndex));
+    next ? hrPtStartSolo(next) : hrGo('title');
 }
 
 const hrPtMatchWinner = () => hrMatch.wins[0] > hrMatch.wins[1] ? 0 : 1;
@@ -112,7 +125,12 @@ function hrPlaytestSetup()
         if (hrScreen == 'title')
             return list.filter(b => b.id == 'play1' || b.id == 'play2').map(b => ({...b, y: H * .55}));
         if (hrScreen == 'paused')
-            return list.filter(b => b.id != 'Levels').map((b, i) => ({...b, y: H * (.38 + i * .11)}));
+        {
+            const keep = list.filter(b => b.id != 'Levels');
+            if (!hrVersus)   // Skip Level goes under Restart
+                keep.splice(keep.findIndex(b => b.id == 'Restart') + 1, 0, {...keep[0], id: 'Skip Level', label: 'Skip Level', act: hrPtSkip, focus: false});
+            return keep.map((b, i) => ({...b, y: H * (.38 + i * .11)}));
+        }
         if (hrScreen == 'complete' && !hrVersus)
         {
             const next = hrPtNextSolo();

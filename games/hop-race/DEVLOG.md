@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-20 — Playtest: Skip Level
+- Playtest build only: **Skip Level** in the pause menu (Play 1P, under Restart) leaves the level unfinished and starts the next one in the sequence, or goes to the title after the last. Play 1P's resume treats a skipped level as done. Sends `ui:skip` (the level number) after the attempt's Fail.
+- Next: note which levels testers skip.
+
 ## 2026-11-20 — Rocket: Sticky Situation before The Middle
 - Swapped in `levels/rocket.js` (owner): 2-6 is now Sticky Situation, 2-7 The Middle. Level ids don't change, so best times and medals stay with their level. The playtest sequence follows the same order.
 - Next: see how the breakable solids land earlier in the playtest.
