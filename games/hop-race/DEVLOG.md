@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-20 — Playtest build
+- `index.html?playtest` (`tools/playtest.js`, debug only, not in `build.json`): the title has only Play 1P and Play 2P. Play 1P runs all 23 live levels in order (Hop, Rocket, Grapple, Climb) and Next crosses worlds; Play 2P is always 3 rounds, each on a random level of a different random world, and the most wins takes the match.
+- Fresh every load (the normal save is never read or written), no coins on the results screens (medals stay), no ads, no Levels button, ghost off, no level editor.
+- Next: playtest this afternoon; turn the notes into level and tuning changes.
+
 ## 2026-11-16 — Coins for every finish
 - Every finished level pays 5 coins (`HR_FINISH_COINS`), replays included: each solo finish on top of any medal, and each Versus round won. The level complete screen always shows the coins; the Versus round and match screens show "+5 coins".
 - Next: watch how fast replaying the shortest level earns (about 40 coins a minute) against ads and medals.
