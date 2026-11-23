@@ -1,5 +1,9 @@
 # Hop Race — devlog
 
+## 2026-11-23 — A on the results screen goes to Next
+- Playtest fix: pressing A on the level complete screen retried the level. LittleJS also sends A as ArrowLeft (its WASD-as-arrows option), so one press moved focus from Next to Retry and then pressed it. That option is now off (`src/main.js`). A, L, Space and Enter press Next; the arrow keys still move between buttons.
+- Next: check the Versus match screen and the menus with A in the next playtest.
+
 ## 2026-11-20 — Playtest: Skip Level
 - Playtest build only: **Skip Level** in the pause menu (Play 1P, under Restart) leaves the level unfinished and starts the next one in the sequence, or goes to the title after the last. Play 1P's resume treats a skipped level as done. Sends `ui:skip` (the level number) after the attempt's Fail.
 - Next: note which levels testers skip.

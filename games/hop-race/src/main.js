@@ -190,6 +190,9 @@ function gameInit()
     hrSaveLoad();
     hrAudioInit();
     hrInputInit();
+    // A is a hop and confirm key; LittleJS would also send it as ArrowLeft, which moved the results
+    // screen's focus from Next to Retry on the same press
+    setInputWASDEmulateDirection(false);
     hrCmgInit();
     hrLoadLevel(hrLevelsOf(0)[0]);   // backdrop for the title screen
     hrGo('title');
