@@ -368,6 +368,7 @@ New physics and new meanings for the button keep being tried while the core worl
 ## 14. Open questions
 | Question | Recommendation | Who decides | Status |
 |---|---|---|---|
+| Game name: "Hop Race" names only the first world now that Rocket, Grapple and Climb exist (2026-11-19) | Owner's direction: a name built on the square hero. Options: **Square Dash**, **Block Race**, **Cube Clash**, **Box Racers**, **Box vs. Box**, **Box-to-Box**, **Square Racers**, **Square Hoppers**, **Two Squares and a Finish Line**. Search the shortlist on Coolmath and app stores for clashes before picking one. | Pao | Open |
 | World 4's name: "Phase" is a working name | Moot: Phase is rejected (§13). | Pao | Closed |
 | Hats: thresholds assume 40 core levels (3 … 40), but v1 had 30 after Phase was rejected | Moot: Climb grew into World 4, so v1 is 40 levels again and the thresholds stand. | Pao | Closed |
 | 3–4 players on one keyboard? | Not in v1: many keyboards can't register 3–4 held keys at once, and touch quarters are too small. Revisit with a ghosting test. | Pao | Later |
@@ -397,6 +398,7 @@ New physics and new meanings for the button keep being tried while the core worl
 
 ## 15. Changelog
 - 2026-11-20 — Rocket: Sticky Situation and The Middle swap places (owner): Sticky Situation is 2-6, The Middle 2-7.
+- 2026-11-19 — Open question on the game's name (§14): "Hop Race" fits only World 1. The owner chose the square hero as the theme; six options listed.
 - 2026-11-16 — Every finish pays 5 coins, replays and Versus rounds included (§7; owner), so playing always earns something. The round and match result screens show "+5 coins" (§8). New event `store:earn:finish` (§11).
 - 2026-11-16 — Medals and coins (§7, scaffolding; owner): bronze, silver and gold per solo level by best time, target times from the bot where there is one; a first medal pays coins (25, 50, 75), the store's hats are what they buy. Hats no longer unlock by levels finished (never built). Medal on level tiles, the level complete screen and the HUD (§8); new events (§11); `medal` in the save (§12).
 - 2026-11-16 — The finish is a block type (§3.1, §5, §6): touch a checkered finish block (`finish: true`) on any side to win. It replaces the flag and its invisible trigger box. Every level's finish is a whole platform (the last one, or the far end of a floor), with a flag on top as a marker. Editor: X.
