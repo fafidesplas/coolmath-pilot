@@ -16,6 +16,7 @@ const HR_HOP = {
     iceAccel:  9,       // ...at this rate (u/s²)
     groundBrake: 10,    // off the ice, a faster run slows back to runSpeed at this rate (u/s²)
     dashCost:  .35,     // at full ice speed the takeoff is this much weaker: a long, low dash
+    sticky:    .5,      // how much a sticky floor holds you, 0 (a plain floor) to 1 (stuck): it slows the run and weakens the takeoff by this much
     runJump:   12,      // takeoff speed straight up (u/s): a tap is about 1.7 u high
     holdGravity: 12,    // lighter gravity while you hold and rise, for up to holdTime: held all the way, about 4.5 u high
     holdTime:  .4,      // (s)
@@ -39,7 +40,7 @@ HR_MODES.hop = {
         p.running = p.rising = false;
         p.coyote = p.spin = 0;
         p.speed = HR_HOP.runSpeed;
-        p.onIce = false;
+        p.onIce = p.onSticky = false;
         p.flipT = -1;   // somersault time, -1 when not flipping
     },
 
@@ -67,6 +68,7 @@ HR_MODES.hop = {
             p.cling = 0;
             // the faster you run, the weaker the takeoff: speed from the ice turns a jump into a long, low dash
             p.vy = H.runJump * (1 - H.dashCost * clamp((p.speed - H.runSpeed) / (H.iceSpeed - H.runSpeed)));
+            if (p.onSticky) p.vy *= 1 - H.sticky;   // a sticky floor holds you back: a weaker takeoff
             p.rising = true;
             p.holdT = 0;
             p.grounded = false;
@@ -83,7 +85,8 @@ HR_MODES.hop = {
         if (p.rising && p.down && (p.holdT += dt) >= H.holdTime && p.flipT < 0) { p.flipT = 0; p.flipDir = p.dir; }
         if (!p.down || p.vy <= 0 || p.holdT >= H.holdTime) p.rising = false;
         if (p.grounded)
-            p.speed = p.onIce ? min(H.iceSpeed, p.speed + H.iceAccel * dt) : max(H.runSpeed, p.speed - H.groundBrake * dt);
+            p.speed = p.onSticky ? H.runSpeed * (1 - H.sticky)   // a sticky floor slows you at once; in the air you keep that speed
+                : p.onIce ? min(H.iceSpeed, p.speed + H.iceAccel * dt) : max(H.runSpeed, p.speed - H.groundBrake * dt);
         if (p.cling)
         {
             // on a grip wall: slide slowly down it; let go and fall if it ends
@@ -136,6 +139,7 @@ HR_MODES.hop = {
                     p.grounded = true;
                     p.cling = 0;
                     p.onIce = s.ice;
+                    p.onSticky = s.sticky;
                     if (!wasGrounded)
                     {
                         p.pupilKick(0, max(-.3, p.vy * .015));
@@ -144,6 +148,7 @@ HR_MODES.hop = {
                         hrSfx.land.play();
                         hrDust(p.x, p.y - HR_PSIZE / 2);
                         if (s.ice) hrSplash(p.x, p.y - HR_PSIZE / 2);
+                        if (s.sticky) hrSfx.goo.play();
                         hrEmit('land', p);
                     }
                     p.vy = 0;
@@ -168,7 +173,7 @@ HR_MODES.hop = {
         const upright = p.grounded && p.flipT < 0, ice = upright && p.onIce ? clamp((p.speed - H.runSpeed) / (H.iceSpeed - H.runSpeed)) : 0;
         const lean = min(H.maxLean, H.runLean * p.speed / H.runSpeed);
         p.lean += ((upright ? lerp(lean, H.iceLean, ice) : 0) - p.lean) * min(1, dt * 12);
-        p.crouch += (H.iceCrouch * ice - p.crouch) * min(1, dt * 12);
+        p.crouch += ((upright && p.onSticky ? .25 : H.iceCrouch * ice) - p.crouch) * min(1, dt * 12);   // flattened on sticky floors, as in Rocket
         if (p.grounded && p.onIce && p.speed > H.runSpeed + 1 && rand() < .3) hrSparkle(p.x, p.y - HR_PSIZE / 2);
         // droplets flicked up and back from the foot on the ice, more the faster you go
         if (p.grounded && p.onIce && rand() < .25 + .6 * ice) hrDroplet(p.x - p.dir * HR_PSIZE * .3, p.y - HR_PSIZE / 2, p.dir, ice);

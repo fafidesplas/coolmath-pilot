@@ -8,6 +8,7 @@
       (Phase's drop size is fixed at load, so it ignores this; Phase is a hidden world.)
     - Rocket: every value in HR_ROCKET (gravity, aim turn speed, rocket speed, cooldown, recoil, blast and ground values).
       "Copy values" puts the whole HR_ROCKET block on the clipboard, comments included, ready to paste over it in src/modes/rocket.js.
+    - Hop: HR_HOP.sticky, how much a sticky floor holds you (0 plain floor, 1 stuck). Copy the value into src/modes/hop.js by hand.
 */
 
 'use strict';
@@ -97,6 +98,9 @@ window.hrDebug = (() =>
             button(`Reset (${DEFAULT})`, () => setSize(DEFAULT))]),
         readout,
         rocketSection(),
+        el('div', {style: 'border-top:1px solid #4A4552;margin-top:10px;padding-top:8px'}, [
+            el('b', {textContent: 'Hop'}),
+            tuneRow('Sticky', 0, .95, .05, () => HR_HOP.sticky, v => HR_HOP.sticky = v)]),
         el('div', {textContent: 'Type "debug" to close. Not saved.', style: 'color:#6E6976;font-size:11px;margin-top:6px'}));
 
     // one tuning row: label, slider, number box; get/set read and write the live value

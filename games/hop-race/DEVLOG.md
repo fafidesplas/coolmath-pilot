@@ -1,5 +1,10 @@
 # Hop Race — devlog
 
+## 2026-11-23 — Sticky floors in Hop
+- Sticky floors did nothing in Hop. Now they hold you back by `HR_HOP.sticky` (0 plain floor, 1 stuck; default 0.5): a slower run and a weaker takeoff, and the slow speed carries into the jump. Goo sound on landing, and the square is flattened as in Rocket.
+- Debug panel (type "debug"): new Hop section with a Sticky slider, applied live.
+- Next: tune the value on hop-12 and decide which Hop levels get sticky floors.
+
 ## 2026-11-23 — Stacked Versus levels; Versus plays only Versus levels
 - Playtest fix: Versus no longer races on solo levels, where both players start on the same spot (testers were confused even with the overlap drawing). `hrLevelsOf(world, true)` returns only `HR_VERSUS.<world>`.
 - New stacked Versus levels (`stack: true`, `src/level.js`): a level lists P1's lane, the top half; P2 races an exact copy one floor down, both from the left. Ink bands close each lane; touching the band under your lane is a fall. One per world: Hop Two Floors (hop-vs-05, after the 4 mirrored ones), Rocket Double Decker, Grapple Bunk Beds, Climb Upstairs. The editor edits P1's lane and tints P2's copy.

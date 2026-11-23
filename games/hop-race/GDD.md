@@ -46,6 +46,7 @@ Hop is an auto-runner (owner, 2026-11-10: set in stone after testing since 2026-
 - **Walls** turn you around and drop you back to 6 u/s, in the air or on the ground.
 - **Ice floor** (from level 5) speeds you up: running on it builds speed from 6 to 15 u/s at 9 u/s² (full speed after 1 s). In the air you keep the speed you took off with, and the faster you go, the weaker the takeoff (up to 35 % weaker at 15 u/s), so a jump off ice is a long, low dash: at full ice speed a tap is 0.8 u high and 5.8 u long and a full hold 2.2 u high and 12 u long. Off the ice you slow back to 6 u/s at 10 u/s² (about 0.9 s from full speed). On ice: white sparkles, white droplets flicked up and back from your foot (more the faster you go, plus a small splash on landing), and the lean grows to 0.42 u at full ice speed while the square squashes 0.2 flatter and wider, low to the ground.
 - **Grip walls** (from level 7): one hit **in the air** holds you. You stop (no riding up it), face away and slide down at up to 3 u/s, and a press jumps you off it, away from the wall, with the same hold-for-higher jump. If the wall ends below you, you let go and fall. On the ground a grip wall turns you around like any wall.
+- **Sticky floor** (owner, 2026-11-23; draft hop-12 only): it holds you back by `HR_HOP.sticky` (0 is a plain floor, 1 is stuck; now 0.5, tunable live in the debug panel). On it you run at 6 u/s × (1 − sticky) and take off at 12 u/s × (1 − sticky); in the air you keep the slow speed. At 0.5 that is 3 u/s, and a tap is about 0.4 u high, a full hold about 1.5 u. Landing on it plays the goo sound and flattens the square as in Rocket. Off it you run at 6 u/s again at once.
 - **Ceilings** stop upward motion; you keep running.
 - Level 1's prompt is "Press A to run, press again to jump!"; the hint is "Press: jump · Hold: higher".
 - **Tried and dropped (2026-10-25):** charging while running with the power setting the angle (too tight), and a 20 u/s launch cut short on release (popped up too fast).
@@ -201,7 +202,7 @@ The mode screen says that Versus needs a keyboard or a touch screen.
         {l: -13, r: -1.5, top: -4},
         {l: 1.5, r: 9, top: -4},
         {l: 9, r: 13, top: -4, finish: true},   // the finish: a whole platform
-        // optional flags: finish (all); grip, ice (Hop); ice, sticky, breakable (Rocket); nogrip (Grapple); move: {x, y, t} (all)
+        // optional flags: finish (all); grip, ice, sticky (Hop); ice, sticky, breakable (Rocket); nogrip (Grapple); move: {x, y, t} (all)
       ],
       slabs: [],                           // Phase only: [x0, y0, x1, y1] top surface ends
       gates: [],                           // Rocket only: {solid: {l, r, top, bottom}, button: {x, y}}
