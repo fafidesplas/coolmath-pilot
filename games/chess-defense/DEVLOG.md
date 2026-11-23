@@ -1,5 +1,8 @@
 # Chess Defense — devlog
 
+## 2026-11-23 — Removed The Ward Lab
+- Deleted the test board and the `wardsOnly` wave table (`WARD_WAVES`, endless ward waves, editor checkbox). Boards renumbered `level01` to `level07`.
+
 ## 2026-10-20 — Into the GDD phase
 - Picked as one of three prototypes to take forward (with Vending Machine Sim and Stay Awake); stage set to `gdd`.
 - Next: phase 1a of `PHASES.md`, the open questions, then a draft `GDD.md`.

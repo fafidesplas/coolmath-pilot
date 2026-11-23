@@ -1,19 +1,23 @@
-// NEW BOARD — Gambit Defense level (editor.html)
+// Vertical Waves Test — Gambit Defense level (editor.html)
+//
+// Plays by the normal rules (gold, shop, build anywhere) for now, with the free
+// pick after every wave that all boards get. The gold-free roguelike ruleset is
+// parked, not removed — to bring it back, add these fields to the addLevel call
+// below and see notes/vertical-waves-ideas.md:
+//     draft: true,        // no gold; 5 picks at the start, 1 after every wave
+//     buildRows: [7, 8],  // only these rows hold pieces
 addLevel({
-    name:  "NEW BOARD",
-    blurb: "Describe the board in one line.",
-    gridW: 8,
-    gridH: 16,
-    bases: [[15, 0], [15, 1], [15, 2], [15, 5], [15, 4], [15, 3], [15, 6], [15, 7]],
+    name:  "Vertical Waves Test",
+    blurb: "Five straight lanes, one King per lane.",
+    gridW: 5,
+    gridH: 10,
+    bases: [[9, 4], [9, 3], [9, 2], [9, 1], [9, 0]],
     hpMul: 1,
     paths: [
-        [[0, 0], [15, 0]],
-        [[0, 1], [15, 1]],
-        [[0, 2], [15, 2]],
-        [[0, 3], [15, 3]],
-        [[0, 4], [15, 4]],
-        [[0, 5], [15, 5]],
-        [[0, 6], [15, 6]],
-        [[0, 7], [15, 7]],
+        [[0, 0], [9, 0]],
+        [[0, 1], [9, 1]],
+        [[0, 2], [9, 2]],
+        [[0, 3], [9, 3]],
+        [[0, 4], [9, 4]],
     ],
 });

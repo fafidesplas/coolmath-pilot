@@ -70,8 +70,6 @@ function openLevel(def)
         blocked: def.blocked ?? [],
         walls: def.walls ?? [],
     }));
-    if (def.wardsOnly)
-        level.wardsOnly = true;
     // draft-board fields have no editor controls yet; carry them through a re-save
     if (def.draft)
         level.draft = true;
@@ -242,8 +240,6 @@ function levelSource()
             : `    bases: ${pairList(level.bases)},`,
         `    hpMul: ${level.hpMul},`,
     ];
-    if (level.wardsOnly)
-        lines.push('    wardsOnly: true,');
     if (level.draft)
         lines.push('    draft: true,');
     if (level.buildRows)
@@ -520,7 +516,6 @@ function syncFields()
 {
     for (const key of ['name', 'blurb', 'gridW', 'gridH', 'hpMul'])
         $(key).value = level[key];
-    $('wardsOnly').checked = !!level.wardsOnly;
 }
 
 function readFields()
@@ -533,10 +528,6 @@ function readFields()
     level.hpMul = Math.max(.1, Number($('hpMul').value) || 1);
     level.blocked = level.blocked.filter(inBounds);   // shrinking drops them (undo restores)
     level.walls   = level.walls.filter(inBounds);
-    if ($('wardsOnly').checked)
-        level.wardsOnly = true;
-    else
-        delete level.wardsOnly;
     refresh();
 }
 
@@ -858,7 +849,7 @@ document.addEventListener('keydown', e =>
         setTool('wall');
 });
 
-for (const key of ['name', 'blurb', 'gridW', 'gridH', 'hpMul', 'wardsOnly'])
+for (const key of ['name', 'blurb', 'gridW', 'gridH', 'hpMul'])
     $(key).addEventListener('change', readFields);
 $('number').addEventListener('input', refresh);
 

@@ -27,8 +27,8 @@ const CELL_SIZE = 1.6;
 // `hpMul` is the per-map difficulty knob (enemy health multiplier). A two-lane
 // map halves the traffic per route, but it also halves how much of your board
 // can reach any given creep, so shape alone already makes more lanes harder.
-// `wardsOnly` swaps in WARD_WAVES; `pathRoutes` tags lanes (e.g. 'diag' for
-// Couriers, which only walk tagged lanes).
+// `pathRoutes` tags lanes (e.g. 'diag' for Couriers, which only walk tagged
+// lanes).
 //
 // Filled at startup from levels/levelNN.js — see levels.js, and editor.html
 // to make new ones.
@@ -256,19 +256,6 @@ const WAVES = [
      {type:'courier', count:8, gap:.5, delay:3}],
     [{type:'shield', count:10, gap:.8},  {type:'brute',  count:8,  gap:1.2, delay:2}],
     [{type:'boss',   count:1,  gap:1},   {type:'grunt',  count:20, gap:.3, delay:2}],
-];
-
-// The ward-lab table, used by any map flagged `wardsOnly`. Single color first
-// so a board that cannot touch it fails visibly and immediately, then the
-// mirror, then both at once — which is the only case where covering one color
-// well is provably not enough. No grunts to chip in and no Titan to blame.
-const WARD_WAVES = [
-    [{type:'alabaster', count:4, gap:1.4}],
-    [{type:'obsidian',  count:4, gap:1.4}],
-    [{type:'alabaster', count:6, gap:1},   {type:'obsidian', count:6, gap:1,  delay:.5}],
-    [{type:'obsidian',  count:9, gap:.7}],
-    [{type:'alabaster', count:9, gap:.7}],
-    [{type:'alabaster', count:9, gap:.6}, {type:'obsidian', count:9, gap:.6, delay:.3}],
 ];
 
 ///////////////////////////////////////////////////////////////////////////////

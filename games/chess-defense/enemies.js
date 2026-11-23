@@ -84,23 +84,9 @@ function eligibleLanes(type)
     return lanes;
 }
 
-// Endless waves for the ward lab. Both colors from here on, in equal number, so
-// no amount of leaning on one color carries a board past the scripted list.
-function proceduralWardWave(wave)
-{
-    const over = wave - WARD_WAVES.length;
-    return [
-        {type:'alabaster', count: 9 + over * 2, gap:.55},
-        {type:'obsidian',  count: 9 + over * 2, gap:.55, delay:.3},
-    ];
-}
-
-// A board can carry its own wave list — the ward lab sends nothing but the
-// warded pair. Everything downstream reads the table through here, so the two
-// lists stay independent right through to how fast health scales past the end.
 function waveTable()
 {
-    return mapDef().wardsOnly ? WARD_WAVES : WAVES;
+    return WAVES;
 }
 
 function waveGroups(wave)
@@ -108,7 +94,7 @@ function waveGroups(wave)
     const table = waveTable();
     if (wave <= table.length)
         return table[wave - 1];
-    return mapDef().wardsOnly ? proceduralWardWave(wave) : proceduralWave(wave);
+    return proceduralWave(wave);
 }
 
 // Rank-and-file creeps need to scale fast enough to threaten a filled board on

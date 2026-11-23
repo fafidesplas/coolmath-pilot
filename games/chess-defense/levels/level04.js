@@ -1,18 +1,13 @@
-// THE WARD LAB — Gambit Defense level (editor.html)
-//
-// Test board: `wardsOnly` swaps the wave table for WARD_WAVES, which sends
-// nothing but Alabaster and Obsidian. One lane, inset one square from every
-// edge so pawns (which only hit up-board) have a rank to stand on below every
-// stretch of it, and so both square colors have open squares on both sides.
+// Asymmetric — Gambit Defense level (editor.html)
 addLevel({
-    name:  "THE WARD LAB",
-    blurb: "Test board: Alabaster and Obsidian only, nothing else.",
-    gridW: 11,
+    name:  "Asymmetric",
+    blurb: "Describe the board in one line.",
+    gridW: 15,
     gridH: 11,
-    base:  [9, 5],
-    hpMul: 1,
-    wardsOnly: true,
+    base:  [5, 0],
+    hpMul: 2,
     paths: [
-        [[1, 1], [1, 9], [5, 9], [5, 1], [9, 1], [9, 5]],
+        [[2, 14], [2, 12], [8, 12], [8, 10], [1, 10], [1, 6], [8, 6], [8, 4], [1, 4], [1, 2], [4, 2], [4, 0], [5, 0]],
+        [[3, 14], [10, 14], [10, 0], [5, 0]],
     ],
 });

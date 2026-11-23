@@ -36,7 +36,7 @@ Mouse and keyboard. Mouse wheel scrolls the board select.
 - No touch support, pause or settings.
 
 ## Progression and content (what exists now)
-- 8 boards in `levels/`: The Long Gambit, Pincer, Diagonal Pincer, The Ward Lab (warded creeps only), Asymmetric, two boards still named "NEW BOARD", and Vertical Waves Test. Boards can have several spawns, several Kings sharing one HP pool, unusable squares and walls that stop sliding pieces.
+- 7 boards in `levels/`: The Long Gambit, Pincer, Diagonal Pincer, Asymmetric, two boards still named "NEW BOARD", and Vertical Waves Test. Boards can have several spawns, several Kings sharing one HP pool, unusable squares and walls that stop sliding pieces.
 - `editor.html` is a level editor that writes `levels/levelNN.js`.
 - Best wave reached per board is saved (`chessDefenseBest` in local storage). No stars or unlocks.
 
@@ -68,7 +68,7 @@ Gaps against `STANDARDS.md` and decisions for the GDD:
 - **Shell:** the board select works as a menu; there is no title, settings, sound toggles or pause.
 - **Saving and testing hook:** only the best wave is saved; no GameAnalytics; no `window.game`.
 - **Size:** `sfxData.js` is 1.6 MB of embedded audio.
-- **Boards:** two boards still have placeholder names and blurbs; Vertical Waves Test and The Ward Lab are test boards.
+- **Boards:** two boards still have placeholder names and blurbs; Vertical Waves Test is a test board.
 - **UI bug:** placing a drafted piece lights up every square instead of matching normal placement (from the notes).
 
 ## Definition of done
@@ -79,7 +79,7 @@ Gaps against `STANDARDS.md` and decisions for the GDD:
 - **Syntax check:** `node --check game.js` (and the other files); there is no test suite or linter.
 - **Release zip (only when shipping):** copy `littlejs.release.js` from the LittleJS plugin's `dist/` into `./dist/`, then `npm install && npm run build`. Output is `build/index.html` plus `chessDefense.zip` (both gitignored). The build concatenates `levels/*.js` into the bundle.
 - **Files:** `constants.js` (all tuning tables: pieces, perks, enemies, waves, economy), `board.js` (grid, routes, `canBuildAt`), `towers.js` (targeting, firing, perks, badges), `enemies.js`, `upgrades.js` (lane upgrades), `signatures.js` (draft), `ui.js` (HUD, cards, board select), `fx.js`, `game.js` (run state, phases, input).
-- **Levels:** one `addLevel({...})` call per file in `levels/`, written by `editor.html`. Fields: `gridW`, `gridH`, `base` or `bases`, `paths`, `hpMul`, optional `blocked`, `walls`, `pathRoutes`, `wardsOnly`, `draft`, `buildRows`, `startPieces`.
+- **Levels:** one `addLevel({...})` call per file in `levels/`, written by `editor.html`. Fields: `gridW`, `gridH`, `base` or `bases`, `paths`, `hpMul`, optional `blocked`, `walls`, `pathRoutes`, `draft`, `buildRows`, `startPieces`.
 - **State machine:** `phase` is `menu` | `prep` | `combat` | `draft` | `over`.
 - **Vendored:** `dist/littlejs.js`, `build.mjs` and `templates/` come from LittleJS (`linguist-vendored` in `.gitattributes`). Don't edit or review them.
 - **LittleJS gotchas:** circle/ellipse sizes are diameters, `ParticleEmitter` speed is per frame, Y is up; WebGL does not fill concave polygons correctly, so perk icons use convex shapes only.
