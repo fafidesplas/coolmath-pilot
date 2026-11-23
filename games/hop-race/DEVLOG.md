@@ -17,6 +17,11 @@
 - Fresh every load (the normal save is never read or written), no coins on the results screens (medals stay), no ads, no Levels button, ghost off, no level editor.
 - Next: playtest this afternoon; turn the notes into level and tuning changes.
 
+## 2026-11-18 — Ghost off by default
+- The ghost now starts off (Settings > Ghost turns it on). Saves from before get it turned off once. The level designs still change, so a ghost would race an old route.
+- Kept: recording your best run, `levels/ghosts.js` (medal target times come from it) and `tools/ghost-gen.js`.
+- Next: turn it back on by default once the levels are final, and make the built-in ghosts again first.
+
 ## 2026-11-16 — Coins for every finish
 - Every finished level pays 5 coins (`HR_FINISH_COINS`), replays included: each solo finish on top of any medal, and each Versus round won. The level complete screen always shows the coins; the Versus round and match screens show "+5 coins".
 - Next: watch how fast replaying the shortest level earns (about 40 coins a minute) against ads and medals.

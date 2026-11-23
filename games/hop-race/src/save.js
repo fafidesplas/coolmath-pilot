@@ -9,7 +9,7 @@ const HR_SAVE_KEY = 'cm_hop-race_save';
 const HR_GHOST_KEY = 'cm_hop-race_ghost_';
 const hrSaveDefaults = () => ({v: 1, levels: {}, last: null, hats: {p1: null, p2: null},
     coins: 0, owned: [],   // cosmetics store (src/store.js)
-    settings: {sfx: true, music: false, ghost: true}});
+    settings: {sfx: true, music: false, ghost: false}});   // ghost off while the levels still change (2026-11-18)
 
 let hrSave = hrSaveDefaults();
 
@@ -26,6 +26,14 @@ function hrSaveLoad()
     {
         for (const id in hrSave.levels) if (id.startsWith('hop-')) { delete hrSave.levels[id]; hrGhostClear(id); }
         hrSave.hopRun = 1;
+        hrSaveWrite();
+    }
+    // the ghost is off by default while the level designs still change (2026-11-18): turn it off once in
+    // saves made when it defaulted to on; the Settings toggle still turns it back on
+    if (!hrSave.ghostOff)
+    {
+        hrSave.settings.ghost = false;
+        hrSave.ghostOff = 1;
         hrSaveWrite();
     }
     hrMedalSync();   // medals and their coins for best times saved before medals existed
