@@ -32,8 +32,8 @@ const HR_WORLDS = [
 ];
 const HR_LEVELS_PER_WORLD = 10;
 
-// level data files add their worlds here (HR_LEVELS.hop = [...]); a world's Versus levels, if it has its own
-// (mirrored: P2 starts on the mirror side, the flag in the middle, GDD §3.1), go in HR_VERSUS.<world>
+// level data files add their worlds here (HR_LEVELS.hop = [...]); a world's Versus levels go in HR_VERSUS.<world>
+// (GDD §6: mirrored, P2 starts on the mirror side with the finish in the middle; or stacked, P2's lane one floor down)
 const HR_LEVELS = {};
 const HR_VERSUS = {};
 
@@ -44,11 +44,11 @@ const HR_MARGIN = .5;    // camera margin around the level box (u)
 const HR_UNLOCK_RULE = 'all';   // 'all' | 'linear'
 
 // levels marked draft: true, and every level of a hidden world, are hidden everywhere (level select, Play, window.game.start).
-// Versus plays the world's own Versus levels when it has them, its solo levels otherwise
+// Versus plays only Versus levels: on a solo level both players would start on the same spot (owner, 2026-11-23)
 function hrLevelsOf(worldIndex, versus = hrVersus)
 {
     const world = HR_WORLDS[worldIndex];
-    return world.hidden ? [] : ((versus && HR_VERSUS[world.id]) || HR_LEVELS[world.id] || []).filter(l => !l.draft);
+    return world.hidden ? [] : ((versus ? HR_VERSUS : HR_LEVELS)[world.id] || []).filter(l => !l.draft);
 }
 const hrHasVersusLevels = worldIndex => !!HR_VERSUS[HR_WORLDS[worldIndex].id];
 

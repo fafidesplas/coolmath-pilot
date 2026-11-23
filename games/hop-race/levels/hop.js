@@ -130,8 +130,9 @@ HR_LEVELS.hop = [
     },
 ];
 
-// Versus (GDD §6, a 3-level test since 2026-11-10): mirrored levels. Each lists its left half; the game adds the
-// mirror copy, P2 starts on the mirror side facing left, and the finish block sits in the middle
+// Versus (GDD §6, a test since 2026-11-10): mirrored levels (mirror: true) list their left half; the game adds the
+// mirror copy, P2 starts on the mirror side facing left, and the finish block sits in the middle. The stacked level
+// (stack: true) lists P1's lane, the top half of the level box (y 0.5 to 10.25 at size 40); P2 races it one floor down
 HR_VERSUS.hop = [
     {
         id: 'hop-vs-01', name: 'Face Off',
@@ -182,6 +183,21 @@ HR_VERSUS.hop = [
             {l: -4.5, r: -1.5, top: 5},        // the tower: plain inside, so the drop down the shaft doesn't cling
             {l: -9, r: -8, top: 4, bottom: -3, grip: true},     // the floating pillar: run under it into the chimney
             {l: -1.5, r: 0, top: -7, finish: true},   // the shaft's floor
+        ],
+    },
+    {
+        id: 'hop-vs-05', name: 'Two Floors',
+        stack: true,
+        size: 40,
+        start: {x: -17, y: 2},
+        solids: [
+            {l: -21, r: -11, top: 2},
+            {l: -8, r: -1, top: 2},
+            {l: -5, r: -4, top: 3},            // a low block: a tap is too short, hold a little
+            {l: 2, r: 6, top: 4},
+            {l: 9, r: 12, top: 6},
+            {l: 12, r: 16, top: 2},
+            {l: 16, r: 21, top: 2, finish: true},
         ],
     },
 ];

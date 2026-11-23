@@ -30,7 +30,8 @@ window.hrEditor = (() =>
 
     // a world's levels in the editor: its solo levels, then its mirrored Versus levels (HR_VERSUS, same file)
     const levelsOf = w => [...(HR_LEVELS[HR_WORLDS[w].id] || []), ...(HR_VERSUS[HR_WORLDS[w].id] || [])];
-    const listOf = d => (d.mirror ? HR_VERSUS : HR_LEVELS)[HR_WORLDS[world].id];
+    const isVs = d => !!(d.mirror || d.stack);   // a Versus level: mirrored or stacked (GDD §6)
+    const listOf = d => (isVs(d) ? HR_VERSUS : HR_LEVELS)[HR_WORLDS[world].id];
     const worlds = () => HR_WORLDS.map((w, i) => i).filter(i => !HR_WORLDS[i].hidden && HR_LEVELS[HR_WORLDS[i].id]);
     const hide = (o, k, v) => (Object.defineProperty(o, k, {value: v, writable: true, configurable: true}), o);
     const box = () => ({hw: hrLevel.w / 2, hh: hrLevel.h / 2});
@@ -77,7 +78,7 @@ window.hrEditor = (() =>
     function start()
     {
         hrEditDef = def;
-        hrStartLevel(world, listOf(def).indexOf(def), !!def.mirror);   // a Versus level plays with both players
+        hrStartLevel(world, listOf(def).indexOf(def), isVs(def));   // a Versus level plays with both players
     }
     function reload() { hrLoadLevel(def); hrPlayers.forEach(hrResetPlayer); }
 
@@ -110,8 +111,8 @@ window.hrEditor = (() =>
         ED.active = ED.testing = false;
         drag = null;
         panel.style.display = 'none';
-        const i = hrLevelsOf(world, !!def.mirror).indexOf(def);
-        if (i >= 0) { hrEditDef = null; hrStartLevel(world, i, !!def.mirror); }
+        const i = hrLevelsOf(world, isVs(def)).indexOf(def);
+        if (i >= 0) { hrEditDef = null; hrStartLevel(world, i, isVs(def)); }
         else start();
         hrCameraReset();
     }
@@ -133,7 +134,7 @@ window.hrEditor = (() =>
         if (ED.testing)
         {
             if (!HR_WORLD_SCREENS.includes(hrScreen)) { ED.testing = false; hrEditDef = null; panel.style.display = 'none'; }
-            else if (hrFinishT >= .4) { backToEdit(); status = `${def.mirror ? finishBy + ' finished' : 'Finished'} in ${hrFmt(finishMs)} s`; refreshPanel(); }
+            else if (hrFinishT >= .4) { backToEdit(); status = `${isVs(def) ? finishBy + ' finished' : 'Finished'} in ${hrFmt(finishMs)} s`; refreshPanel(); }
             return false;
         }
         if (!ED.active)
@@ -422,7 +423,7 @@ window.hrEditor = (() =>
     // a new level is a solo one; a duplicate stays in its list (a Versus level's copy is a Versus level)
     function newLevel(copy)
     {
-        const w = HR_WORLDS[world].id, vs = copy && def.mirror, list = vs ? HR_VERSUS[w] : HR_LEVELS[w];
+        const w = HR_WORLDS[world].id, vs = copy && isVs(def), list = vs ? HR_VERSUS[w] : HR_LEVELS[w];
         let n = list.length + 1, id;
         while (levelsOf(world).some(l => l.id == (id = `${w}${vs ? '-vs' : ''}-${String(n).padStart(2, '0')}`))) n++;
         const d = copy ? cloneDef(def) : {size: 26, start: {x: -10, y: -4}, solids: [{l: -14, r: 8, top: -4}, {l: 8, r: 14, top: -4, finish: true}]};
@@ -524,6 +525,7 @@ window.hrEditor = (() =>
         if (d.draft) put('draft', 'draft: true,');
         out.push(withComment(`        id: ${str(d.id)}, name: ${str(d.name)},`, c.fields.id));
         if (d.mirror) put('mirror', 'mirror: true,');
+        if (d.stack) put('stack', 'stack: true,');
         put('size', `size: ${num(d.size)},`);
         put('start', `start: ${lit(d.start)},`);
         put('solids', 'solids: [');
@@ -547,7 +549,7 @@ window.hrEditor = (() =>
                 out.push(withComment(`            {solid: ${solidLit(gt.solid)}, button: ${lit(gt.button)}},`, gt._o !== undefined ? c.gates[gt._o] || '' : ''));
             out.push('        ],');
         }
-        const known = ['draft', 'id', 'name', 'mirror', 'size', 'start', 'solids', 'gates', 'prompt', 'promptAt'];
+        const known = ['draft', 'id', 'name', 'mirror', 'stack', 'size', 'start', 'solids', 'gates', 'prompt', 'promptAt'];
         for (const k of Object.keys(d)) if (!known.includes(k) && d[k] !== undefined) put(k, `${k}: ${lit(d[k])},`);
         if (d.prompt) put('prompt', `prompt: ${str(d.prompt)},`);
         if (d.promptAt) put('promptAt', `promptAt: ${lit(d.promptAt)},`);
@@ -631,7 +633,7 @@ window.hrEditor = (() =>
                     else
                     {
                         // a new level goes at the end of HR_LEVELS.<world> (HR_VERSUS.<world> for a Versus level)
-                        const head = text.indexOf(`${d.mirror ? 'HR_VERSUS' : 'HR_LEVELS'}.${id} = [`);
+                        const head = text.indexOf(`${isVs(d) ? 'HR_VERSUS' : 'HR_LEVELS'}.${id} = [`);
                         const close = matchClose(text, text.indexOf('[', head), '[', ']');
                         const at = text.lastIndexOf('\n', close) + 1;
                         text = text.slice(0, at) + levelSource(d) + text.slice(at);
@@ -682,6 +684,13 @@ window.hrEditor = (() =>
             drawRect(vec2(hw / 2, 0), vec2(hw, hh * 2), HR_WHITE.scale(1, .12));
             for (let y = -hh; y < hh; y += .6) drawLine(vec2(0, y), vec2(0, y + .3), .06, ink.scale(1, .5));
             drawText('mirror (P2)', vec2(hw / 2, -hh + .6), .5, ink.scale(1, .4), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
+        }
+        // a stacked (Versus) level: you edit P1's lane, the top half; the bottom half is its copy (P2's lane)
+        if (def.stack)
+        {
+            const st = hrLevel.stack, mid = st.bottom - st.drop + st.lane / 2;
+            drawRect(vec2(0, mid), vec2(hw * 2, st.lane), HR_WHITE.scale(1, .12));
+            drawText('copy (P2)', vec2(0, mid), .5, ink.scale(1, .4), 0, BLACK, 'center', HR_FONT, HR_FONT_STYLE);
         }
         // the HUD's spots: keep the top 1.5 u clear near the center and the right edge (GDD §6)
         const hud = HR_RED.scale(1, .14);
@@ -814,7 +823,7 @@ window.hrEditor = (() =>
         const pickLevel = el('select', {onchange: e => { const [w, i] = e.target.value.split(':').map(Number); open(w, i); }});
         for (const w of worlds())
             levelsOf(w).forEach((d, i) => pickLevel.append(el('option', {value: `${w}:${i}`, selected: d == def,
-                textContent: `${HR_WORLDS[w].name} ${d.mirror ? 'Versus ' + (i + 1 - (HR_LEVELS[HR_WORLDS[w].id] || []).length) : i + 1}: ${d.name}${d.draft ? ' (draft)' : ''}${dirty.has(d) ? ' •' : ''}`})));
+                textContent: `${HR_WORLDS[w].name} ${isVs(d) ? 'Versus ' + (i + 1 - (HR_LEVELS[HR_WORLDS[w].id] || []).length) : i + 1}: ${d.name}${d.draft ? ' (draft)' : ''}${dirty.has(d) ? ' •' : ''}`})));
         panel.append(pickLevel);
 
         panel.append(el('h3', {textContent: 'Level'}),

@@ -177,3 +177,21 @@ HR_LEVELS.rocket = [
         ],
     },
 ];
+
+// Versus, stacked (GDD §6; owner, 2026-11-23): solids are P1's lane, the top half of the level box (y 0.5 to 9.125 at
+// size 36); P2 races the same lane one floor down. Both start on the left and finish on the right
+HR_VERSUS.rocket = [
+    {
+        id: 'rocket-vs-01', name: 'Double Decker',
+        stack: true,
+        size: 36,
+        start: {x: -15, y: 2},
+        solids: [
+            {l: -19, r: 2, top: 2},
+            {l: -9, r: -7, top: 4},            // a block to blast over
+            {l: -2, r: 0, top: 6.5},           // a wall with 2.6 u under the ceiling: blast up, not just forward
+            {l: 7, r: 12, top: 3.5},           // past a 5 u pit
+            {l: 12, r: 19, top: 3.5, finish: true},
+        ],
+    },
+];

@@ -1,5 +1,11 @@
 # Hop Race — devlog
 
+## 2026-11-23 — Stacked Versus levels; Versus plays only Versus levels
+- Playtest fix: Versus no longer races on solo levels, where both players start on the same spot (testers were confused even with the overlap drawing). `hrLevelsOf(world, true)` returns only `HR_VERSUS.<world>`.
+- New stacked Versus levels (`stack: true`, `src/level.js`): a level lists P1's lane, the top half; P2 races an exact copy one floor down, both from the left. Ink bands close each lane; touching the band under your lane is a fall. One per world: Hop Two Floors (hop-vs-05, after the 4 mirrored ones), Rocket Double Decker, Grapple Bunk Beds, Climb Upstairs. The editor edits P1's lane and tints P2's copy.
+- Checked headless (node, stubbed browser): both lanes stay exactly alike under the same random input on all 4; Hop bot 5.4 s, no dead ends; Rocket, Grapple and Climb finished by random input. Not yet seen in a browser.
+- Next: play them in 2P; Rocket, Grapple and Climb have one Versus level each, so their rounds repeat it.
+
 ## 2026-11-23 — A on the results screen goes to Next
 - Playtest fix: pressing A on the level complete screen retried the level. LittleJS also sends A as ArrowLeft (its WASD-as-arrows option), so one press moved focus from Next to Retry and then pressed it. That option is now off (`src/main.js`). A, L, Space and Enter press Next; the arrow keys still move between buttons.
 - Next: check the Versus match screen and the menus with A in the next playtest.

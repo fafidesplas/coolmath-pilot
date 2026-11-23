@@ -18,17 +18,33 @@ function hrLoadLevel(def)
     };
     // a mirrored (Versus) level lists its left half; each solid gets a mirror copy, and one touching or
     // crossing the middle becomes one symmetric solid
-    const src = !def.mirror ? def.solids : def.solids.flatMap(s => s.l <= 0 && s.r >= 0
+    const stack = def.stack ? hrStackLanes(def.size) : null;
+    let src = !def.mirror ? def.solids : def.solids.flatMap(s => s.l <= 0 && s.r >= 0
         ? [{...s, l: min(s.l, -s.r), r: max(s.r, -s.l)}]
         : [s, {...s, l: -s.r, r: -s.l, move: s.move && {...s.move, x: -s.move.x}}]);   // the mirror copy moves the mirror way
+    // a stacked (Versus) level lists P1's lane, the top half; P2's lane is the same, one floor down. A solid with no
+    // bottom reaches down to its lane's floor band. Ink bands close each lane above and below, so both lanes are alike
+    if (stack)
+    {
+        const down = s => ({...s, top: s.top - stack.drop, bottom: s.bottom - stack.drop});
+        src = src.map(s => ({...s, bottom: s.bottom ?? stack.bottom})).flatMap(s => [s, down(s)]);
+        const wide = {l: -w / 2 - 5, r: w / 2 + 5};
+        src.push({...wide, top: h / 2 + 30, bottom: h / 2 - stack.band, band: true},
+            {...wide, top: stack.band / 2, bottom: -stack.band / 2, band: true},
+            {...wide, top: -h / 2 + stack.band, bottom: killY - 30, band: true});
+    }
     const solids = src.map(make);
+    src.forEach((d, i) => { if (d.band) solids[i].band = true; });
     // GDD §3.1: the level box's left and right edges act as plain walls
     solids.push(make({l: -w / 2 - 5, r: -w / 2, top: h / 2 + 30, bottom: killY - 30}));
     solids.push(make({l: w / 2, r: w / 2 + 5, top: h / 2 + 30, bottom: killY - 30}));
     solids[solids.length - 1].edge = solids[solids.length - 2].edge = true;
 
     // GDD §3.3: a gate is a solid until its button is pressed, then it slides up into the ceiling
-    const gates = (def.gates || []).map(g =>
+    const gateDefs = !stack ? def.gates || [] : (def.gates || []).flatMap(g => [g, {
+        solid: {...g.solid, top: g.solid.top - stack.drop, bottom: g.solid.bottom - stack.drop},
+        button: {x: g.button.x, y: g.button.y - stack.drop}}]);
+    const gates = gateDefs.map(g =>
     {
         const solid = make(g.solid);
         solid.gate = true;
@@ -36,11 +52,30 @@ function hrLoadLevel(def)
         return {solid, closedBottom: solid.bottom, button: g.button, open: 0, pressed: false};
     });
 
-    hrLevel = {def, w, h, killY, solids, gates, mirror: !!def.mirror, clock: 0,
+    hrLevel = {def, w, h, killY, solids, gates, mirror: !!def.mirror, stack, clock: 0,
         start: vec2(def.start.x, def.start.y),
         finishes: solids.filter(s => s.finish),   // GDD §3.1: touching one of these wins
     };
     for (const s of hrLevel.finishes) s.flag = hrPlaceFinishFlag(s, solids);
+}
+
+// a stacked level's lanes (GDD §6): the level box (size wide, 16:9) holds an ink band at the top, P1's lane, a band,
+// P2's lane and a band at the bottom. P1's lane runs from y = bottom to top; P2's is the same, drop lower
+const HR_STACK_BAND = 1;   // band thickness (u)
+function hrStackLanes(size)
+{
+    const band = HR_STACK_BAND, h = size * 9 / 16, lane = (h - 3 * band) / 2;
+    return {band, lane, bottom: band / 2, top: band / 2 + lane, drop: lane + band};
+}
+
+// how far down a player's lane is: P2's on a stacked level, 0 otherwise
+function hrLaneDrop(p) { return hrLevel.stack && p.index == 1 ? hrLevel.stack.drop : 0; }
+
+// a player falls out when their center drops under this: on a stacked level, touching the band under their lane
+function hrKillY(p)
+{
+    const s = hrLevel.stack;
+    return s ? s.bottom - hrLaneDrop(p) + HR_PSIZE / 2 + .05 : hrLevel.killY;
 }
 
 // where the finish block's flag marker stands: from the middle outward along the block, the first pole spot

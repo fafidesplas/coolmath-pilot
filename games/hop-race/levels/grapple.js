@@ -49,3 +49,22 @@ HR_LEVELS.grapple = [
         ],
     },
 ];
+
+// Versus, stacked (GDD §6; owner, 2026-11-23): solids are P1's lane, the top half of the level box (y 0.5 to 9.125 at
+// size 36); P2 races the same lane one floor down. Both start on the left and finish on the right
+HR_VERSUS.grapple = [
+    {
+        id: 'grapple-vs-01', name: 'Bunk Beds',
+        stack: true,
+        size: 36,
+        start: {x: -15.5, y: 2},
+        solids: [
+            {l: -19, r: -12, top: 2},
+            {l: -5, r: 1, top: 2},
+            {l: 8, r: 12, top: 2},
+            {l: -9.5, r: -8, top: 9.125, bottom: 5.5},   // pillars over the pits; the lane's ceiling holds a hook too
+            {l: 4, r: 5.5, top: 9.125, bottom: 5.5},
+            {l: 12, r: 19, top: 2, finish: true},
+        ],
+    },
+];

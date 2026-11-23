@@ -46,10 +46,10 @@ function hrMode() { return HR_MODES[HR_WORLDS[hrWorld].id]; }
 
 function hrResetPlayer(p)
 {
-    // on a mirrored (Versus) level P2 starts on the mirror side, facing the other way
+    // on a mirrored (Versus) level P2 starts on the mirror side, facing the other way; on a stacked one, one floor down
     const mirrored = hrLevel.mirror && p.index == 1;
     p.x = mirrored ? -hrLevel.start.x : hrLevel.start.x;
-    p.y = hrLevel.start.y + HR_PSIZE / 2;
+    p.y = hrLevel.start.y - hrLaneDrop(p) + HR_PSIZE / 2;
     p.vx = p.vy = 0;
     p.down = false;
     p.squash = p.crouch = p.pinch = p.lean = p.squint = p.eyeDrop = 0;
@@ -80,7 +80,7 @@ function hrPlayerStep(p, input)
         hrMode().step(p, input);
 
         // GDD §3.1: falling sends you back to the start with zero speed, the timer keeps running
-        if (p.y < hrLevel.killY) hrRespawn(p, input.down);
+        if (p.y < hrKillY(p)) hrRespawn(p, input.down);
         else if (hrMode().finished ? hrMode().finished(p) : hrTouchingFinish(p.x, p.y))
         {
             p.finished = true;

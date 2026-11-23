@@ -77,3 +77,22 @@ HR_LEVELS.climb = [
         ],
     },
 ];
+
+// Versus, stacked (GDD §6; owner, 2026-11-23): solids are P1's lane, the top half of the level box (y 0.5 to 7.44 at
+// size 30); P2 races the same lane one floor down. Both start on the left and finish on the right
+HR_VERSUS.climb = [
+    {
+        id: 'climb-vs-01', name: 'Upstairs',
+        stack: true,
+        size: 30,
+        start: {x: -12.5, y: 1.5},
+        solids: [                              // no pits: a suction cup on the band under the lane could cross one
+            {l: -16, r: -7, top: 1.5},
+            {l: -7, r: -2, top: 2.5},
+            {l: -2, r: 4, top: 4},
+            {l: 4, r: 7, top: 1.5},            // a trough to climb out of
+            {l: 7, r: 10.5, top: 4.5},
+            {l: 10.5, r: 16, top: 4.5, finish: true},
+        ],
+    },
+];

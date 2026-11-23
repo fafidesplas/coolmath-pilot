@@ -149,9 +149,9 @@ function hrPlay(versus)
 {
     // Play 1P / 2P go back to the last level played (solo or versus); a new player starts at
     // the first level not finished yet, in world and level order
-    // (a world with its own Versus levels: Play 2P goes to the last of those, Play 1P to the last solo one)
+    // (Play 2P goes to the last Versus level played, or that world's first; Play 1P to the last solo one)
     const last = hrFindLevel(hrSave.last);
-    if (last && last.versus == (versus && hrHasVersusLevels(last.world)) && isUnlocked(last.world, last.index, versus))
+    if (last && last.versus == versus && isUnlocked(last.world, last.index, versus))
         return hrStartLevel(last.world, last.index, versus);
     if (last && versus && hrHasVersusLevels(last.world)) return hrStartLevel(last.world, 0, true);
     for (let w = 0; w < HR_WORLDS.length; w++)

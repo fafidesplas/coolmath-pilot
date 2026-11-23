@@ -340,7 +340,7 @@ window.game = {
     start(levelId = 'hop-01', versus = false)
     {
         const f = hrFindLevel(levelId);
-        if (!f || (versus && !f.versus && hrHasVersusLevels(f.world))) return false;   // that world races on its own Versus levels
+        if (!f || (versus && !f.versus)) return false;   // Versus plays only Versus levels
         hrStartLevel(f.world, f.index, f.versus || versus);
         return true;
     },
