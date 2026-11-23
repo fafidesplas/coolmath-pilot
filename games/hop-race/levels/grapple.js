@@ -16,25 +16,24 @@ HR_LEVELS.grapple = [
         start: {x: -11, y: -4},
         solids: [
             {l: -13, r: -8.5, top: -4},
-            {l: -5.5, r: 6.25, top: -4},
-            {l: -4.5, r: -2.5, top: 9, bottom: 1},   // the pillar over the pit's far edge, left of the HUD timer
-            {l: 2.5, r: 13, top: 5.25, bottom: 4.75},   // ceiling: something to hook if you end up past the finish
+            {l: 0.25, r: 9.5, top: -4},
+            {l: -12.75, r: 13, top: 7.25, bottom: 4.25},   // ceiling: something to hook if you end up past the finish
             {l: 6.25, r: 13, top: -4, finish: true},
         ],
-        prompt: 'Hold to reel in. Let go to fly.',
+        prompt: 'Tap and hold A to launch your grapple.\nRelease A to detach.',   // also on 3-2 (owner, 2026-11-23)
         promptAt: {x: 0, y: -1.5},   // under the pillar, which would hide ink text at the default height
     },
     {
-        id: 'grapple-02', name: 'Two Pillars',
+        id: 'grapple-02', name: 'Bigger Gap',
         size: 26,
         start: {x: -11, y: -4},
         solids: [
             {l: -14, r: -8, top: -4},
-            {l: 6, r: 9.75, top: -4},
-            {l: -6, r: -4.5, top: 9, bottom: 1.5},
-            {l: 3, r: 4.5, top: 9, bottom: 2},
-            {l: 9.75, r: 14, top: -4, finish: true},
+            {l: -14, r: 13.25, top: 9, bottom: 4.75},
+            {l: 8, r: 13.25, top: -4, finish: true},
         ],
+        prompt: 'Tap and hold A to launch your grapple.\nRelease A to detach.',
+        promptAt: {x: 0, y: -1.5},   // over the pit, under the pillars
     },
     {
         id: 'grapple-03', name: 'Let Go',
@@ -42,10 +41,19 @@ HR_LEVELS.grapple = [
         start: {x: -12, y: -4},
         solids: [
             {l: -15, r: -9, top: -4},
-            {l: -1, r: 9.25, top: -4},
-            {l: -6.5, r: -5, top: 9, bottom: 2},
-            {l: -5, r: 14.5, top: 7.875, bottom: 7.125},   // ceiling: something to hook if you end up past the finish
-            {l: 9.25, r: 15, top: -4, finish: true},
+            {l: -15.25, r: 14.5, top: 7.875, bottom: 7.125},   // ceiling: something to hook if you end up past the finish
+            {l: 10, r: 14, top: 2.5, bottom: 1.75, finish: true},
+        ],
+    },
+    {
+        id: 'grapple-04', name: 'Brittle Beginnings',
+        size: 26,
+        start: {x: -10, y: -4},
+        solids: [
+            {l: -14, r: -7.5, top: -4},
+            {l: 7, r: 13, top: -4, finish: true},
+            {l: -0.75, r: 0.5, top: 1.5},
+            {l: -13, r: 13.25, top: 7.25, bottom: 6.5, breakable: true},
         ],
     },
 ];

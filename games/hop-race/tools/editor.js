@@ -16,6 +16,8 @@
 
 'use strict';
 
+const HR_BREAKABLE_WORLDS = ['rocket', 'grapple'];   // worlds where B marks a solid breakable
+
 window.hrEditor = (() =>
 {
     const PANEL = 300;      // panel width in CSS px
@@ -320,7 +322,7 @@ window.hrEditor = (() =>
         if (cmd && e.code == 'KeyZ') { e.preventDefault(); return e.shiftKey ? doRedo() : doUndo(); }
         if (cmd) return;
         const s = selSolid(), flagKeys = {KeyG: 'grip', KeyI: 'ice', KeyK: 'sticky', KeyN: 'nogrip', KeyX: 'finish', KeyB: 'breakable'};
-        if (e.code == 'KeyB' && HR_WORLDS[world].id != 'rocket') return;   // breakable solids are Rocket only
+        if (e.code == 'KeyB' && !HR_BREAKABLE_WORLDS.includes(HR_WORLDS[world].id)) return;   // breakable solids: Rocket and Grapple
         if (flagKeys[e.code] && s) { snapshot(); touch(s); s[flagKeys[e.code]] ? delete s[flagKeys[e.code]] : s[flagKeys[e.code]] = true; return changed(); }
         const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1]}[e.code];
         if (nudge && sel) { e.preventDefault(); const k = e.shiftKey ? 1 : .25; snapshot(); move(nudge[0] * k, nudge[1] * k); return changed(); }
@@ -458,7 +460,7 @@ window.hrEditor = (() =>
     // saving: write the changed levels into levels/<world>.js
 
     const num = n => String(Math.round(n * 1000) / 1000 || 0);
-    const str = s => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}'`;
+    const str = s => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}'`;   // a two-line prompt keeps its \n
     function lit(v)
     {
         if (typeof v == 'number') return num(v);
@@ -853,7 +855,7 @@ window.hrEditor = (() =>
             panel.append(el('div', {className: 'grid4'}, [field('left', n('l')), field('right', n('r')), field('top', n('top')),
                 s.bottom === undefined ? el('label', {}, [el('span', {textContent: 'bottom'}), 'floor (F)']) : field('bottom', n('bottom'))]));
             const flags = [['grip', 'grip wall (G)'], ['ice', 'ice (I)'], ['sticky', 'sticky (K)'], ['nogrip', 'no-grip (N)'], ['finish', 'finish (X)'], ['breakable', 'breakable (B)']];
-            if (HR_WORLDS[world].id != 'rocket' && !s.breakable) flags.pop();   // breakable: Rocket only
+            if (!HR_BREAKABLE_WORLDS.includes(HR_WORLDS[world].id) && !s.breakable) flags.pop();   // breakable: Rocket and Grapple
             for (const [k, label] of flags) panel.append(checkbox(label, () => s[k], v => { touch(s); v ? s[k] = true : delete s[k]; }));
             if (sel.type == 'solid')
                 panel.append(checkbox('moving (M)', () => s.move, v => { touch(s); v ? s.move = {x: 4, y: 0, t: 2} : delete s.move; }));
@@ -879,7 +881,7 @@ window.hrEditor = (() =>
             <b>E</b> play / edit · <b>Shift+E</b> play from the mouse<br>
             <b>drag</b> move · <b>drag an edge</b> resize · <b>drag empty space</b> new solid<br>
             <b>Alt</b> no snap · <b>arrows</b> nudge (Shift: 1 u)<br>
-            <b>G I K N X</b> grip, ice, sticky, no-grip, finish${HR_WORLDS[world].id == 'rocket' ? ', <b>B</b> breakable' : ''}<br>
+            <b>G I K N X</b> grip, ice, sticky, no-grip, finish${HR_BREAKABLE_WORLDS.includes(HR_WORLDS[world].id) ? ', <b>B</b> breakable' : ''}<br>
             <b>M</b> moving (drag its ghost: turn-back spot)<br>
             <b>F</b> floor / floating · <b>H</b> hanging from the top<br>
             <b>T</b> solid ↔ gate (Rocket) · <b>D</b> duplicate · <b>Delete</b> remove<br>

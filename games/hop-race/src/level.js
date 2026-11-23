@@ -164,12 +164,35 @@ function hrMoveSolid(s, dx, dy)
     }
 }
 
-// GDD §3.1: a player box touching a finish block on any side (standing on it, running into it, bumping it from
-// below). Solids push the player out, so touching means within a hair of its faces
+// a breakable solid is gone (Rocket: hit by a rocket; Grapple: its rope let go), until a fall in solo or a restart.
+// Anyone standing on it falls, and a hook still stuck in it comes loose
+function hrShatter(s)
+{
+    const i = hrLevel.solids.indexOf(s);
+    if (i < 0) return;
+    hrLevel.solids.splice(i, 1);
+    (hrLevel.broken ||= []).push(s);
+    hrBreakFx(s);
+    for (const p of hrPlayers)
+    {
+        if (p.floor == s) { p.grounded = false; p.floor = null; }
+        if (p.hook && !p.hook.fly && p.hook.s == s) p.hook = null;
+    }
+}
+
+// solo: a fall brings broken solids back, so a level can't be left without a way through. In Versus they stay
+// broken for the round (the other player may be past them)
+function hrRestoreBroken()
+{
+    if (!hrVersus && hrLevel.broken?.length) { hrLevel.solids.push(...hrLevel.broken); hrLevel.broken = []; }
+}
+
+// GDD §3.1: a player box on top of a finish block: its bottom at the block's top and over its width. Touching its
+// side or bumping it from below does not count. Solids push the player out, so on top means within a hair of the top
 function hrTouchingFinish(x, y, size = HR_PSIZE)
 {
-    const e = .02, half = size / 2 + e;
-    return hrLevel.finishes.some(s => x + half > s.l && x - half < s.r && y + half > s.bottom && y - half < s.top);
+    const e = .02, half = size / 2;
+    return hrLevel.finishes.some(s => x + half > s.l && x - half < s.r && y > s.top && y - half < s.top + e);
 }
 
 // distance from a point to the nearest finish block (0 inside it), for the stuck nudge

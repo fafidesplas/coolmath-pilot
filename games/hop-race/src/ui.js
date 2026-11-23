@@ -10,6 +10,7 @@ let hrScreen = 'title', hrScreenT = 0, hrFocus = -1;
 let hrPress = null;            // button being pressed: it bounces, then acts
 let hrSettingsFrom = 'title';
 let hrMenuVersus = false, hrMenuWorld = 0;
+let hrLevelPage = 0;   // the level select shows HR_LEVELS_PER_WORLD levels a page; arrows turn the page
 let hrStoreScroll = 0;         // how far the store grid is scrolled, in design units (hrUnit)
 let hrStoreDrag = null;        // a pointer held on the store grid: a drag scrolls, a press without one picks the tile
 let hrHover = null;            // the button under the mouse: {id, blinkAt}; it grows and opens a blinking eye
@@ -24,6 +25,7 @@ function hrGo(screen)
     hrScreenT = 0;
     hrPress = null;
     if (screen == 'store') hrStoreScroll = 0, hrStoreDrag = null;
+    if (screen == 'levels') hrLevelPage = hrLevelPageOf(hrMenuVersus ? 0 : hrCardLevel(hrMenuWorld));
     const list = hrUiButtons();
     hrFocus = list.findIndex(b => b.focus);
     if (hrFocus < 0 && screen != 'playing') hrFocus = list.findIndex(b => b.enabled !== false);
@@ -92,13 +94,24 @@ function hrUiButtons()
     else if (hrScreen == 'levels')
     {
         back();
-        const tw = 160 * u, th = 140 * u;
-        for (let i = 0; i < HR_LEVELS_PER_WORLD; i++)
+        const tw = 160 * u, th = 140 * u, first = hrLevelPage * HR_LEVELS_PER_WORLD;
+        for (let k = 0; k < HR_LEVELS_PER_WORLD; k++)
         {
-            const col = i % 5, row = floor(i / 5);
+            const i = first + k, col = k % 5, row = floor(k / 5);
             add({id: 'level' + i, tile: i, x: W / 2 + (col - 2) * tw * 1.12, y: H * .42 + row * th * 1.18, w: tw, h: th,
                 enabled: isUnlocked(hrMenuWorld, i, hrMenuVersus), focus: i == (hrMenuVersus ? 0 : hrNextLevel(hrMenuWorld)),
                 act: () => hrStartLevel(hrMenuWorld, i, hrMenuVersus)});
+        }
+        // more than one page of levels: arrows left and right of the grid, dimmed on the first and last page.
+        // Added after the tiles, so a keyboard press on one keeps the focus on it for the next press
+        const pages = hrLevelPages();
+        if (pages > 1)
+        {
+            const ax = 2 * tw * 1.12 + tw / 2 + 70 * u, ay = H * .42 + th * 1.18 / 2, as = 72 * u;
+            add({id: 'pagePrev', x: W / 2 - ax, y: ay, w: as, h: as, icon: 'back', enabled: hrLevelPage > 0,
+                act: () => hrLevelPage--});
+            add({id: 'pageNext', x: W / 2 + ax, y: ay, w: as, h: as, icon: 'next', enabled: hrLevelPage < pages - 1,
+                act: () => hrLevelPage++});
         }
     }
     else if (hrScreen == 'settings')
@@ -129,7 +142,7 @@ function hrUiButtons()
     }
     else if (hrScreen == 'complete')
     {
-        const next = hrLevelIndex + 1 < HR_LEVELS_PER_WORLD && isUnlocked(hrWorld, hrLevelIndex + 1);
+        const next = isUnlocked(hrWorld, hrLevelIndex + 1);   // false past the world's last level
         const acts = [['Menu', () => hrGo('title')], ['Retry', () => hrStartLevel(hrWorld, hrLevelIndex, false)],
             ['Next', () => next ? hrStartLevel(hrWorld, hrLevelIndex + 1, false) : hrToLevels()]];
         acts.forEach(([label, act], i) => add({id: label, x: W / 2 + (i - 1) * 230 * u, y: H * .8, w: 210 * u, h: 76 * u,
@@ -159,6 +172,10 @@ function hrPlay(versus)
             if (isUnlocked(w, i, versus) && !hrSaveLevel(hrLevelsOf(w, versus)[i].id).bestMs) return hrStartLevel(w, i, versus);
     hrStartLevel(0, 0, versus);
 }
+
+// level select pages: HR_LEVELS_PER_WORLD levels each, as many as the world has levels
+const hrLevelPages = () => max(1, Math.ceil(hrLevelsOf(hrMenuWorld, hrMenuVersus).length / HR_LEVELS_PER_WORLD));
+const hrLevelPageOf = index => clamp(floor(index / HR_LEVELS_PER_WORLD), 0, hrLevelPages() - 1);
 
 function hrNextLevel(world)
 {
@@ -378,9 +395,12 @@ function hrIcon(icon, x, y, s, c)
         drawPoly(pts, c, 0, c, vec2(x, y), 0, false, true);
         drawPoly([vec2(0, -s * .17), vec2(s * .2, 0), vec2(0, s * .17)], c, 0, c, vec2(x + s * .06, y - s * .24), 0, false, true);
     }
-    else if (icon == 'back')
-        drawPoly([vec2(s * .18, -s * .24), vec2(-s * .18, 0), vec2(s * .18, s * .24)], CLEAR_WHITE, s * .11, c,
+    else if (icon == 'back' || icon == 'next')
+    {
+        const d = icon == 'back' ? 1 : -1;   // 'next' is the same chevron pointing right
+        drawPoly([vec2(s * .18 * d, -s * .24), vec2(-s * .18 * d, 0), vec2(s * .18 * d, s * .24)], CLEAR_WHITE, s * .11, c,
             vec2(x, y), 0, false, true);
+    }
 }
 
 function hrScreenBg() { return hrInWorld() ? hrWorldBg() : HR_YELLOW; }
@@ -409,7 +429,7 @@ function hrDrawButtonBody(b, w, h, s, focused)
     }
     if (b.icon)
     {
-        hrIcon(b.icon, b.x, b.y, w, HR_INK);
+        hrIcon(b.icon, b.x, b.y, w, b.enabled === false ? HR_INK.scale(1, .25) : HR_INK);
         if (focused) hrRect(b.x, b.y + h * .55, w * .6, 4 * u, HR_INK);
         return;
     }
@@ -458,8 +478,9 @@ function hrDrawCard(b, w, h, focused)
     if (world.lab) hrText('LAB', b.x, b.y - h * .39, 20 * u, HR_INK, 'center', world.bg);   // a feel test, not a finished world
     if (live)
     {
-        const done = hrLevelsOf(b.card, false).filter(l => hrSaveLevel(l.id).bestMs).length;
-        hrText(`${done}/${world.lab ? hrLevelsOf(b.card, false).length : HR_LEVELS_PER_WORLD} done`, b.x, b.y + h * .4, 24 * u, HR_INK, 'center', world.bg);
+        // out of the world's live levels (drafts left out), so it follows the level files
+        const levels = hrLevelsOf(b.card, false), done = levels.filter(l => hrSaveLevel(l.id).bestMs).length;
+        hrText(`${done}/${levels.length} done`, b.x, b.y + h * .4, 24 * u, HR_INK, 'center', world.bg);
         hrDrawSchematic(b.card, b.x, b.y - h * .12, w * .7);
     }
     else hrText('Soon', b.x, b.y - h * .1, 28 * u, HR_INK.scale(1, .5), 'center', world.bg.scale(1, .5));
@@ -777,7 +798,7 @@ function hrDrawHud(W, H, u)
     else if (hrGhostBuiltInMs && hrSave.settings.ghost) hrText('Ghost ' + hrFmt(hrGhostBuiltInMs), W / 2, top + 34 * u, 22 * u, HR_INK.scale(1, .6));
     if (hrMode().countdown) hrDrawCountdown(W, H, u, hrRun.frames);
     // from level 2 on, the button hint shows for the first 3 s
-    if (hrRun.hintT < 3.5 && hrLevelIndex > 0)
+    if (hrRun.hintT < 3.5 && hrLevelIndex > 0 && !hrLevelDef().prompt)   // a level with its own prompt skips the hint
         hrText(HR_WORLDS[hrWorld].hint, W / 2, H - 40 * u, 26 * u, HR_INK.scale(1, clamp(3.5 - hrRun.hintT)));
     if (hrRun.nudge)
     {

@@ -1,9 +1,25 @@
 # Hop Race — devlog
 
+## 2026-11-23 — Level select pages
+- The level select shows 10 levels a page. With more than 10, arrows left and right of the grid turn the page (mouse, touch, or keyboard focus then Enter); they dim on the first and last page. It opens on the page with the world's next level (`hrLevelPage` in `src/ui.js`).
+- Next on the level complete screen now goes on past level 10 when the world has more levels.
+- Next: Coolmath's level numbers (`hrCmgLevel`) still assume 10 levels a world, so Hop's level 11 posts the same number as Rocket's level 1.
+
+## 2026-11-23 — World "done" count follows the level count
+- The world cards on the title screen showed "done" out of a fixed 10 (`HR_LEVELS_PER_WORLD`), so Hop read 11/10. Every world now counts out of its live levels (drafts left out), as Lab worlds already did.
+
 ## 2026-11-23 — Sticky floors in Hop
 - Sticky floors did nothing in Hop. Now they hold you back by `HR_HOP.sticky` (0 plain floor, 1 stuck; default 0.5): a slower run and a weaker takeoff, and the slow speed carries into the jump. Goo sound on landing, and the square is flattened as in Rocket.
 - Debug panel (type "debug"): new Hop section with a Sticky slider, applied live.
 - Next: tune the value on hop-12 and decide which Hop levels get sticky floors.
+
+## 2026-11-23 — Grapple prompt on levels 1 and 2
+- Grapple's prompt is now "Tap and hold A to launch your grapple." / "Release A to detach." (two lines), on 3-1 and 3-2. Any level with `prompt` now shows it (only level 1s had one); a level with its own prompt skips the bottom button hint.
+- Next: check that the two lines fit and read well on both levels.
+
+## 2026-11-23 — Sight lines in player colors
+- Rocket and Grapple sight lines are drawn in each player's color (`hrDrawSightDot` in `src/render.js`) instead of faint ink: a thin white rim so P2's red reads on Rocket's coral, P1's dots square and P2's round so they differ by shape too, fading with distance.
+- Next: check how it reads in 2P on all three backgrounds.
 
 ## 2026-11-23 — Stacked Versus levels; Versus plays only Versus levels
 - Playtest fix: Versus no longer races on solo levels, where both players start on the same spot (testers were confused even with the overlap drawing). `hrLevelsOf(world, true)` returns only `HR_VERSUS.<world>`.

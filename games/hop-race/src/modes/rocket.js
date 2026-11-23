@@ -36,9 +36,7 @@ HR_MODES.rocket = {
         p.cool = 0;
         p.cling = 0;
         hrRockets = hrRockets.filter(r => r.owner != p);
-        // solo: a fall brings broken solids back, so a level can't be left without a way through. In Versus they
-        // stay broken for the round (the other player may be past them)
-        if (!hrVersus && hrLevel.broken?.length) { hrLevel.solids.push(...hrLevel.broken); hrLevel.broken = []; }
+        hrRestoreBroken();
     },
 
     clear() { hrRockets = []; hrBlasts = []; },
@@ -62,22 +60,13 @@ HR_MODES.rocket = {
                 const hits = hrLevel.solids.filter(s => r.x > s.l && r.x < s.r && r.y > s.bottom && r.y < s.top);
                 if (btn || hits.length)
                 {
-                    for (const s of hits) if (s.breakable) this.shatter(s);
+                    for (const s of hits) if (s.breakable) hrShatter(s);
                     this.explode(r);
                     return false;
                 }
             }
             return true;
         });
-    },
-
-    // a breakable solid hit by a rocket is gone (until a fall in solo, or a restart)
-    shatter(s)
-    {
-        hrLevel.solids.splice(hrLevel.solids.indexOf(s), 1);
-        (hrLevel.broken ||= []).push(s);
-        hrBreakFx(s);
-        for (const p of hrPlayers) if (p.floor == s) { p.grounded = false; p.floor = null; }
     },
 
     explode(r)
@@ -203,8 +192,8 @@ HR_MODES.rocket = {
         p.crouch = p.floor && p.floor.sticky ? .25 : 0;   // flattened on sticky floors
     },
 
-    // launcher: a white-outlined tube with a wide muzzle in the player's color, faded while cooling down, with a faint dotted
-    // sight line (as in Grapple) to where the rocket would explode: the first solid or unpressed button
+    // launcher: a white-outlined tube with a wide muzzle in the player's color, faded while cooling down, with a dotted
+    // sight line (hrDrawSightDot) (as in Grapple) to where the rocket would explode: the first solid or unpressed button
     draw(p)
     {
         if (p.finished) return;
@@ -215,7 +204,7 @@ HR_MODES.rocket = {
                 const q = pos.add(d.scale(.6 + i * .7));
                 if (hrLevel.solids.some(s => q.x > s.l && q.x < s.r && q.y > s.bottom && q.y < s.top)) break;
                 if (hrLevel.gates.some(g => !g.pressed && isOverlapping(q, vec2(.1), vec2(g.button.x, g.button.y), vec2(1.1)))) break;
-                drawRect(q, vec2(.1), HR_INK.scale(1, max(.08, .45 - i * .018)));
+                hrDrawSightDot(p, q, i);
             }
         // a long tube with a wide muzzle, outlined in white so it reads on coral and on ink floors; the part
         // inside the square is hidden by the player, drawn on top

@@ -247,6 +247,15 @@ function hrDrawStartPrompts()
     }
 }
 
+// one dot of a Rocket or Grapple sight line, the i-th from the player: in the player's color with a thin white rim
+// (so P2's red reads on coral), fading with distance; P1's dots are square, P2's round, so they differ by shape too
+function hrDrawSightDot(p, q, i)
+{
+    const a = max(.15, .75 - i * .03), rim = HR_WHITE.scale(1, a), c = p.color.scale(1, a);
+    if (p.index) { drawCircle(q, .19, rim); drawCircle(q, .13, c); }
+    else { drawRect(q, vec2(.16), rim); drawRect(q, vec2(.11), c); }
+}
+
 // Versus: where the two bodies overlap, diagonal stripes in the back player's color, so you can tell two players
 // are there even on the same spot. Drawing only (players pass through each other); lean and spin are ignored
 function hrDrawOverlap(front, back)

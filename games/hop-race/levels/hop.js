@@ -57,9 +57,8 @@ HR_LEVELS.hop = [
         start: {x: -12, y: -1.5},
         solids: [
             {l: -15, r: -8, top: -1.5},
-            {l: -4.5, r: 4, top: -4.5, ice: true},
+            {l: -4.5, r: 14, top: -4.5, ice: true},
             {l: 4, r: 5, top: -3.5},         // a bump that stops a slide
-            {l: 5, r: 10.25, top: -4.5, ice: true},
             {l: 10.25, r: 15, top: -4.5, finish: true},
         ],
     },
@@ -79,9 +78,10 @@ HR_LEVELS.hop = [
         start: {x: -10, y: -5},
         solids: [
             {l: -14, r: 1.5, top: -5},
-            {l: -2.5, r: -1.5, top: 0, bottom: -3.3, grip: true},   // hop in under it
+            {l: -2.5, r: -1.5, top: 0, bottom: -3.25, grip: true},   // hop in under it
             {l: 1.5, r: 8.25, top: 0, grip: true},                    // 3 u across the shaft, 5 u up
             {l: 8.25, r: 14, top: 0, finish: true},
+            {l: -3, r: -2.25, top: 0, bottom: -3.25},
         ],
     },
     {
@@ -93,7 +93,7 @@ HR_LEVELS.hop = [
             {l: -5, r: 3.75, top: -5},
             {l: 3.5, r: 4.5, top: 5.5, bottom: -5.25, grip: true},   // a grip pillar, 3 u from the cliff
             {l: 3.5, r: 9.25, top: 1.5},                          // the cliff
-            {l: -9.75, r: 8.75, top: 6, bottom: 5},
+            {l: -10, r: 8.75, top: 6, bottom: 5},
             {l: 3.5, r: 8.75, top: 5.25, bottom: 0.25},
             {l: -4, r: -2, top: 1, bottom: 0, ice: true},
             {l: -9.75, r: -7.75, top: 2, bottom: 1},
@@ -102,16 +102,17 @@ HR_LEVELS.hop = [
         ],
     },
     {
-        id: 'hop-09', name: 'Slide and Climb',
+        id: 'hop-09', name: 'Threading the Needle',
         size: 30,
         start: {x: -13, y: -3},
         solids: [
             {l: -16, r: -10, top: -3},
-            {l: -8, r: -0.5, top: -4.5, ice: true},   // ends at the pit
+            {l: -8, r: -5.25, top: -4.5, ice: true},   // ends at the pit
             {l: 3, r: 7, top: -4.5},
-            {l: 3, r: 4, top: 1, bottom: -2.3, grip: true},
+            {l: 3.5, r: 4, top: 1, bottom: -2.5, grip: true},
             {l: 7, r: 10.25, top: 1, grip: true},
             {l: 10.25, r: 16, top: 1, finish: true},
+            {l: 3, r: 4, top: 1, bottom: -2.5},
         ],
     },
     {
@@ -126,6 +127,29 @@ HR_LEVELS.hop = [
             {l: 3.5, r: 4.5, top: 2, bottom: -2, grip: true},
             {l: 7.5, r: 11.25, top: 1.5, grip: true},
             {l: 11.25, r: 16, top: 1.5, finish: true},
+        ],
+    },
+    {
+        id: 'hop-11', name: 'Elevator Jump',
+        size: 26,
+        start: {x: -12, y: 4.5},
+        solids: [
+            {l: -11.25, r: -6.5, top: 4.5, bottom: 3.75, move: {x: 19.75, y: -11, t: 5}},
+            {l: 1.75, r: 3, top: 7.75, bottom: 1, grip: true},
+            {l: -13, r: -7.75, top: -6.25, bottom: -7.25, finish: true},
+            {l: -13.25, r: -11.5, top: 4.5, bottom: 3.75},
+            {l: -13.25, r: -9, top: -1, bottom: -2},
+        ],
+    },
+    {
+        id: 'hop-12', name: 'Sticky Sitch',
+        size: 26,
+        start: {x: -11.75, y: 1.5},
+        solids: [
+            {l: -15.75, r: -9.25, top: 1.5},
+            {l: 9, r: 13, top: -1, bottom: -2.75, finish: true},
+            {l: 0.25, r: 5, top: 1.5, bottom: 0.75, move: {x: -9.5, y: 0, t: 3}},
+            {l: 3, r: 7.25, top: -1.25, bottom: -2, sticky: true},
         ],
     },
 ];

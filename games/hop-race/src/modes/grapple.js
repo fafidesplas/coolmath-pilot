@@ -1,7 +1,7 @@
 /*
     HOP RACE - World 3, Grapple (GDD §3.4). The same spinning launcher fires a hook: press to fire,
     hold to reel in, release to cut the rope and keep your speed. Ported from the prototype's
-    Grappling Hook (prototype/game.js rcGrappleStep).
+    Grappling Hook (prototype/game.js rcGrappleStep). A hook in a breakable solid breaks it when you let go (owner, 2026-11-23).
 */
 
 'use strict';
@@ -32,6 +32,7 @@ HR_MODES.grapple = {
         p.spinDir = 1;
         p.cool = 0;
         p.hook = null;
+        hrRestoreBroken();
     },
 
     step(p, input)
@@ -43,8 +44,10 @@ HR_MODES.grapple = {
         if (!input.down && p.hook)
         {
             // release cuts the rope; the first release after a pull fades the tutorial prompt
-            if (!p.hook.fly) hrEmit('fire', p);
+            const h = p.hook;
             p.hook = null;
+            if (!h.fly) hrEmit('fire', p);
+            if (!h.fly && h.s?.breakable) hrShatter(h.s);   // a breakable solid breaks once you let go of it
         }
         if (input.pressed && !p.hook && p.cool <= 0)
         {
@@ -162,7 +165,7 @@ HR_MODES.grapple = {
         if (abs(p.vx) > 1) p.dir = sign(p.vx);
     },
 
-    // launcher: a short barrel circling the player, with a faint dotted sight line up to the first
+    // launcher: a short barrel circling the player, with a dotted sight line (hrDrawSightDot) up to the first
     // solid while the hook is ready; the rope is a line with a small white hook tip. Barrel, rope and
     // hook take the player's color, so they show against ink floors and pillars
     draw(p)
@@ -181,7 +184,7 @@ HR_MODES.grapple = {
             {
                 const q = pos.add(d.scale(.6 + i * .7));
                 if (hrLevel.solids.some(s => q.x > s.l && q.x < s.r && q.y > s.bottom && q.y < s.top)) break;
-                drawRect(q, vec2(.1), HR_INK.scale(1, max(.08, .45 - i * .018)));
+                hrDrawSightDot(p, q, i);
             }
         const c = p.color.scale(1, p.cool > 0 && !p.hook ? .4 : 1);
         drawRect(pos.add(d.scale(.78)), vec2(.5, .2), c, -p.aimA);

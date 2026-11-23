@@ -32,7 +32,8 @@ function hrStartLevel(world, index, versus = hrVersus, keepMatch = false)
     hrPlayers = versus ? [hrMakePlayer(0), hrMakePlayer(1)] : [hrMakePlayer(0)];
     hrPlayers.forEach(hrResetPlayer);
     hrRun = {started: false, frames: 0, best: 1e9, stuckT: 0, nudge: false,
-        prompt: index == 0 && def.prompt ? 1 : 0, promptFade: false, hintT: index == 0 ? 0 : 3,
+        prompt: def.prompt ? 1 : 0,   // usually level 1 only; a level can carry its own (Grapple 2)
+        promptFade: false, hintT: index == 0 ? 0 : 3,
         promptSeen: hrRun && !newLevel ? hrRun.promptSeen : false};
     if (hrRun.promptSeen) hrRun.prompt = 0;
     if (!versus && hrRun.prompt) hrPlayers[0].intro = 0;   // a solo tutorial level has its own prompt
