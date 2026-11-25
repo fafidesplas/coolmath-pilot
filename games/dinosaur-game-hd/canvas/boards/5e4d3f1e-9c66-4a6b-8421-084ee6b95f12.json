@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "nodes": [
+    {
+      "id": "gdd-doc",
+      "type": "document",
+      "title": "Game design document",
+      "description": "Main design document: mechanics, original tuning numbers, runners, screens, art, audio, analytics, tech plan and scope. Mirrors GDD.md.",
+      "data": {
+        "documentId": "gdd"
+      }
+    }
+  ],
+  "edges": [],
+  "id": "5e4d3f1e-9c66-4a6b-8421-084ee6b95f12"
+}

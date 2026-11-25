@@ -1,7 +1,7 @@
 # Dinosaur Game: Cool Edition — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-01
+**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-24
 
 > The offline browser dino you already know, with the same jump, the same speed and the same "one mistake and it's over". Now in 16-bit pixel art, with eggs to collect, new runners to hatch and unlock, a golden egg that earns a bonus pterodactyl flight, and a race against a friend on the same keyboard.
 
@@ -104,11 +104,12 @@ All sizes and rules are the original's. Each obstacle type uses its original col
 - **Where:** alone, where the runner's middle is at the **apex of the held jump over that obstacle's middle** (over a pterodactyl, the egg drifts with it like its eggs do), so it takes a near-full jump to get: its top is 6 px above the lane top (lane y −6), so only a jump higher than about 80 px reaches it, never the shortest jump. A held jump grabs it from a takeoff window of 11–14 frames (183–233 ms) and clears everything on the way (tested). Missed is missed: it doesn't come back in that run.
 - **Grabbing it** never changes the run: a chime, a sparkle, and a gold egg icon appears next to the HUD egg count. The run carries on as normal.
 - **Modes:** endless only. **Not in 2P races** (no eggs at all there), so a race stays a pure race.
+- **Debug builds** (`DEBUG` in `config.js`, while the title's temporary DEBUG button is ON): a golden egg on a cactus or low pterodactyl about every **300 m** (`GOLD.debugEvery`), even with a flight banked (a second flight is still not banked), so testers see it without a hotkey. Release builds keep the 1500–1900 m rule.
 
 ### 3.8 Bonus flight (pterodactyl, Jetpack Joyride style)
 A 20-second bonus round after the run, earned with the golden egg. It is the only "level" in the game, and it plays outside the run, so the run itself stays exactly like the original.
 
-- **Start:** after a run with the golden egg, the results panel shows a big **Fly!** button (Space) next to **Retry**. Fly starts the flight at once. **Retry skips it** and banks it: only **1 flight** can be banked at a time: while one is waiting, no golden egg appears in later runs. A **Fly** button on the title and the golden egg on the results show that it is waiting. Nothing is ever lost.
+- **Start:** after a run with the golden egg, the golden egg itself hops on the sand beside the results panel (8). Clicking it (or Space) starts the flight at once. **Retry skips it** and banks it: only **1 flight** can be banked at a time: while one is waiting, no golden egg appears in later runs. A **Fly** button on the title and the (calmer) hopping golden egg on the results show that it is waiting. Nothing is ever lost.
 - **The mount:** the equipped runner rides a pterodactyl. All runners use the same mount and the same hitbox: the rider's body plus the pterodactyl's body, **38×40 px** (the wings and the rider's head stay outside it, Joyride-style forgiveness). Prototype: the mount is the obstacle pterodactyl (46×40) turned to face right, in teal, with the runner's jump frame on its back.
 - **Controls, Joyride-style:** hold (Space, Up, W, mouse or touch anywhere) to flap up; release to glide down. Values at 60 Hz: **gravity 0.45** px/frame², **flap 0.9** px/frame² upward while held (net 0.45 up), vertical speed capped at **±7** px/frame. The play area is the full 640×360 frame: the ceiling is y = 40 (below the HUD), the floor is the ground at y = 300; touching either is safe, the mount skims along it.
 - **Scroll:** a fixed **8 px/frame** (480 px/s), no ramp. The flight lasts **20 s** (about 9,600 px). Distance in the flight does **not** count for the score, the best or any distance achievement.
@@ -116,9 +117,9 @@ A 20-second bonus round after the run, earned with the golden egg. It is the onl
 - **Eggs:** Joyride's coin shapes, built from eggs: lines, sine waves, blocks (8×5), walls (10×6), staircases and arrows, one after the other for the whole 20 s at random heights, with a short gap (about 140 px) between shapes. A full flight holds **about 800 eggs** (600 to 1,100); a player flying well grabs a good part of them.
 - **Difficulty:** none by design. The only skill is steering up and down to sweep the shapes. Measured (`tools/flight-test.mjs`): about 810 eggs a flight, every egg inside the flying area, and a simple bot grabs about 40% of them.
 - **No hit:** nothing can end the flight early. **Every egg grabbed is kept**, also when the player leaves early.
-- **End:** after 20 s (or a hit), "+N eggs" counts up over the sky, then back to the results, with the egg total and hatch progress updated. Space retries the run.
+- **End:** after 20 s, "+N eggs" counts up over the sky, then back to the results, with the egg total and hatch progress updated. Space retries the run.
 - **First flight:** a "Hold to fly up" icon for the first 3 s (the save's `flown` remembers it has shown).
-- **Leaving early:** Restart or Menu from the pause screen ends the flight; its eggs so far are kept, like a hit.
+- **Leaving early:** Restart or Menu from the pause screen ends the flight; its eggs so far are kept.
 - **Seed:** the flight has its own PRNG stream derived from the run seed, so replays are deterministic.
 - **Achievements:** flight eggs count for everything eggs count for (hatching). Nothing else in the flight counts.
 
@@ -222,23 +223,22 @@ Best distance, the golden egg and its bonus flight (a reason to take the full ju
 ## 8. Screens and UI flow
 ```
 Title ──Play / Space──▶ Playing ──crash──▶ Results ──Retry / Space / R──▶ Playing
-  │                        │                  ├──Fly! (golden egg)──▶ Bonus flight ──end or hit──▶ Results
-  │                        │                  ├──Runners──▶ Runners
+  │                        │                  ├──golden egg (click)──▶ Bonus flight ──end──▶ Results
   │                        └─P─▶ Paused       └──Menu──▶ Title
   ├──2 Players──▶ Race setup ──Race!──▶ Racing ──first crash──▶ Race results ──Rematch──▶ Racing
   ├──Runners──▶ Runners (hatch / equip)
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (Night Ink with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (Night Ink with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. While `DEBUG` is true, a temporary **DEBUG ON / OFF** button bottom left turns the debug keys (G, H, I, U) and the 300 m golden eggs on and off for the page's life (starts ON; removed in release builds). Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
-- **Results (1P):** the panel slides up over the frozen scene **500 ms** after the crash. Space, Up and W can't restart for **1.2 s** after the crash (the original's lock against accidental restarts) and restart on key release, as in the original; R, Enter and the Retry button work at once. Distance and eggs count up, best distance, "NEW BEST" if it is one, any runner unlocked in this run (sprite and name), the next hatch's progress bar. Buttons: **Retry** (big) / **Runners** / **Menu**. Space (after the lock), R or Enter retries; the new run starts in under 1 s. **When a flight is waiting** (this run's golden egg, or banked ones), there is no Fly button: the **golden egg itself**, big (each art pixel 8×8 px), stands on the sand to the right of the panel and hops like an eager dog wanting to be clicked (squash on landing, stretch on takeoff, leaning toward the panel in the air, an excited double hop every third hop; calmer hops when the flight is a banked one). Clicking it starts the flight; after a golden egg run Space does too. R and Retry still start a run at once and bank the flight. After a flight from the results, the panel slides up again with the flight's eggs added.
+- **Results (1P):** the panel slides up over the frozen scene **500 ms** after the crash. Space, Up and W can't restart for **1.2 s** after the crash (the original's lock against accidental restarts) and restart on key release, as in the original; R, Enter and the Retry button work at once. Distance and eggs count up, best distance, "NEW BEST" if it is one, any runner unlocked in this run (sprite and name), the next hatch's progress bar. Buttons: **Retry** (orange) and **Menu**, side by side at the same height; Runners is on the title only, so the panel stays uncluttered. Space (after the lock), R or Enter retries; the new run starts in under 1 s. **When a flight is waiting** (this run's golden egg, or banked ones), there is no Fly button: the **golden egg itself**, big (each art pixel 8×8 px), stands on the sand to the right of the panel and hops like an eager dog wanting to be clicked (squash on landing, stretch on takeoff, leaning toward the panel in the air, an excited double hop every third hop; calmer hops when the flight is a banked one). Clicking it starts the flight; after a golden egg run Space does too. R and Retry still start a run at once and bank the flight. After a flight from the results, the panel slides up again with the flight's eggs added.
 - **Race setup (2P):** both lanes with their runners on a treadmill, each lane with its label (**P1** / **P2** as plain text with an orange or teal drop shadow, like the title; never in a box, so it never looks like a button), the runner's name and that player's keys. P1 changes runner with A/D, P2 with Left/Right; on touch, arrows beside each runner (48 px hit squares). P1's runner is the equipped one (changing it equips it); P2 starts with the last runner P2 used (the T-Rex at first). One big **Race!** button on the seam between the lanes (Space or Enter too): two clicks from the title. **Back** (top right) or Esc returns to the title.
 - **Racing:** no countdown: both lanes run from the same seed at the same speed. **The first crash ends the race:** the crashed runner stays in its lane as a ghost (faded, X eyes) and the lane freezes; the race ends at once and the results come up (no victory lap). Both crashing in the same step is a **Draw**. Each lane's HUD shows its tag and its distance; the pause button is top center.
 - **Race results:** "P1 WINS" (or P2, or DRAW) with a crown on the winner, the winner's distance, and a running tally ("P1 2 – 1 P2") kept until you return to the menu. A smaller, centered panel with two buttons of the same height: **Rematch** (orange) and **Home**. Space or R also rematches. No best-of-3.
-- **Runners:** pages of 8 cards (2 rows of 4), in the order of 7.1: the T-Rex, the 3 egg dinosaurs, then the achievement runners; page 2 holds the rest. Arrow buttons beside the grid turn the page (shown only when there is a page that way). The focused runner runs on a treadmill on the desert below-left of the cards (the scene scrolls behind it), with its name and a hint line under the cards. Unlocked ones show their sprite at 1.5× (each art pixel 3×3 px), centered in the card (no label; the equipped one has no hint line, the others say how to run with them). Left/Right (or A/D) move the focus through every runner, across pages; Up/Down (or W/S) move a row; Space or Enter equips or hatches; Esc or Back returns to the screen it was opened from (the title, or the results with their run). Locked egg dinosaurs show as an egg with a progress bar and the price (🥚3000), and a **Hatch** button when there are enough eggs; locked achievement runners show as a Night Ink silhouette with a progress bar and a short goal ("1000 M"), and the hint line gives the full goal ("REACH 1000 M IN ONE RUN"). Click an unlocked runner to equip it. The total egg bank is shown top right.
+- **Runners:** pages of 8 cards (2 rows of 4), in the order of 7.1: the T-Rex, the 3 egg dinosaurs, then the achievement runners; page 2 holds the rest. Arrow buttons beside the grid turn the page (shown only when there is a page that way). The focused runner runs on a treadmill on the desert below-left of the cards (the scene scrolls behind it), with its name and a hint line under the cards. Unlocked ones show their sprite at 1.5× (each art pixel 3×3 px), centered in the card (no label; the equipped one has no hint line, the others say how to run with them). Left/Right (or A/D) move the focus through every runner, across pages; Up/Down (or W/S) move a row; Space or Enter equips or hatches; Esc or Back returns to the title. Locked egg dinosaurs show as an egg with a progress bar and the price (🥚3000), and a **Hatch** button when there are enough eggs; locked achievement runners show as a Night Ink silhouette with a progress bar and a short goal ("1000 M"), and the hint line gives the full goal ("REACH 1000 M IN ONE RUN"). Click an unlocked runner to equip it. The total egg bank is shown top right.
 
 ## 9. Art direction
 - **Family:** HD Pixel (new): a 16-bit SNES look, chunky sprites with dark outlines.
@@ -258,7 +258,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - **Chunky pixels:** like the one-pager, every art pixel is 2×2 logical px: sprites are cell maps (`src/art.js`) with a 1 art pixel Night Ink outline, the background layers are drawn at half resolution and scaled up, and dust, icons, panels and text step in 2 px. Positions, speeds and hitboxes stay in 640×360 logical px, and motion stays smooth (sprites are not snapped to the art grid). On a 1440p screen an art pixel is 8 screen pixels.
   - **Runners:** about 44×47 logical px each (22×23 art pixels), 1 art pixel Night Ink outline, 3–5 colors each. The crash frame has dizzy eyes. Final art is a PNG sprite sheet in `assets/` (about 100 KB) drawn in a pixel editor; until then, the prototype uses best-effort placeholder sprites drawn in code.
   - **Obstacles:** cacti with strong silhouettes and arms; a pterodactyl with a big wing flap.
-  - **Bonus flight:** a bigger pterodactyl mount (about 56×32 px) with the equipped runner's jump frame on its back; the golden egg in gold (`#F5C542`) with a white sparkle; thunderclouds in Night Ink with a cream zigzag bar; the same desert sky, seen higher up (more sky, the mesas low).
+  - **Bonus flight:** a bigger pterodactyl mount (about 56×32 px) with the equipped runner's jump frame on its back; the golden egg in gold (`#F5C542`) with a white sparkle; the same desert sky, seen higher up (more sky, the mesas low).
   - **Background:** 3 parallax layers (dunes at 0.2×, mesas at 0.1×, clouds at 0.05× the scroll speed), each pre-rendered once to an offscreen canvas. A warm sunset band by day; stars and a moon at night.
   - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
@@ -295,7 +295,6 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 | Achievement | runner unlocked (results) | rising 5-note fanfare |
 | Golden egg | golden egg picked up | bright 3-note chime with a shimmer |
 | Flap | each flap press in the bonus flight | soft "whup" |
-| Warning | wild pterodactyl warning in the flight | 2 short high blips |
 | Win | 2P race won | short victory jingle |
 | UI click | any button | soft tick |
 
@@ -321,7 +320,7 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | `achievement:<id>` | a runner is unlocked by achievement | — |
 | `bonus:golden-egg` | golden egg picked up | distance (m) |
 | `bonus:start` | a bonus flight starts | flights still banked |
-| `bonus:end:<hit\|complete>` | a bonus flight ends | eggs in the flight |
+| `bonus:end:<hit\|complete>` | a bonus flight ends (`hit` = left early from the pause screen) | eggs in the flight |
 | `bonus:bank` | Retry skips an earned flight | flights banked |
 | `versus:start` | race starts | — |
 | `versus:winner:<p1\|p2\|draw>` | race ends | — |
@@ -336,15 +335,16 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 
 ## 12. Tech plan
 - **Stack:** static HTML5, ES modules, Canvas 2D, no engine, no build step.
-- **Modules (`src/`):** `main.js` (loop, screens), `sim.js` (runner physics, obstacles, eggs, collisions: no drawing), `gen.js` (seeded PRNG and obstacle/egg generator), `flight.js` (bonus flight physics, hazards and egg shapes: no drawing), `render.js` (scene, parallax, HUD), `sprites.js` (loads the sprite sheet and slices it into frames; in the prototype, builds the sprites from the cell maps in `art.js`), `input.js` (keys and pointers, 1P and 2P zones), `ui.js` (title, results, runners, race setup), `font.js` (the pixel bitmap font), `audio.js`, `save.js`, `analytics.js`.
+- **Modules (`src/`):** `main.js` (loop, screens), `sim.js` (runner physics, obstacles, eggs, collisions: no drawing), `gen.js` (seeded PRNG and obstacle/egg generator), `flight.js` (bonus flight physics and egg shapes: no drawing), `render.js` (scene, parallax, HUD), `sprites.js` (loads the sprite sheet and slices it into frames; in the prototype, builds the sprites from the cell maps in `art.js`), `input.js` (keys and pointers, 1P and 2P zones), `ui.js` (title, results, runners, race setup), `font.js` (the pixel bitmap font), `audio.js`, `save.js`, `analytics.js`.
 - **Rendering:** draw the 640×360 scene straight onto the display canvas through a scale transform, with smoothing off, and draw each frame between the last two sim steps (render interpolation) snapped to device pixels, so 144 Hz screens don't judder. Use the **largest integer scale that fills at least 85%** of the window; when no integer scale does, use the exact fit. The rest of the window shows more sky and sand (no black bars); obstacles and eggs are not clipped: they spawn and leave 640 px past the view (3.5). `devicePixelRatio` capped at 2. Background layers are pre-rendered once, with a night-tinted copy of each faded in at night.
 - **Simulation:** fixed 60 Hz step, deterministic (3.2). The sim runs headless, so a test can replay a seed and a list of inputs.
 - **Save:** one key, `cm_dinosaur-game-hd_save`:
   `{ v: 1, best, eggs, flights, totalEggs, totalDistance, totalNights, versusWins, unlocked: [ids], equipped, p2Runner, firstRunDone, flown, tutorial: { jump, duck, done }, settings: { sfx } }` (`tutorial` remembers which `tutorial:*` events were sent; `flown`, that the first flight's hint has shown), read inside `try/catch` (a broken save resets to defaults). Saved after every run, hatch, equip and settings change.
-- **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused' | 'bonus'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds.
+- **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused' | 'bonus'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds. Debug keys: **G** golden egg, **H** hitboxes, **I** invincible, **U** show every runner as unlocked.
+- **Headless tests (`tools/`):** `physics-test.mjs`, `art-test.mjs` (every frame covers the hitbox template), `egg-test.mjs` (every pattern's move collects its eggs safely), `golden-test.mjs` (placement and reach), `flight-test.mjs` (egg count, bounds, bot reach).
 - **Riskiest piece: matching the original's feel.** Prove it first: build `sim.js` with the original's numbers, then compare jump apex, airtime, the gap range at 3 speeds and the time to top speed against `chrome://dino` (frame-by-frame screen recordings), and log the measured values in `DEVLOG.md`. Only then add art and eggs.
 - **Second risk: runner art.** 10 dinosaurs × 8 frames plus the Hangman beast × 5 frames is 85 sprites, plus eggs, hatching, obstacles and backgrounds. The shared run cycle keeps that manageable. Prototype with placeholders; draw the Spinosaurus and the Parasaurolophus early as rough sprites over the hitbox template to check that the sail and the crest fit at 44×47, and put the 4 big theropods side by side to check that they read as different dinosaurs.
-- **Third risk: the bonus flight's fairness.** Every flight must have a path through. `flight.js` runs headless, so a test flies 1,000 seeds with a simple bot and checks that each one can be finished.
+- **Third risk: the bonus flight's payout.** The flight has no hazards, so the risk is the egg amount, not fairness. `flight.js` runs headless; `tools/flight-test.mjs` checks the egg count, that every egg is inside the flying area, and that a simple bot reaches them (about 40%).
 
 ## 13. Scope
 - **v1:** 1P endless, 2P race (keyboard and touch), eggs, the golden egg and its 20 s bonus pterodactyl flight, 11 runners (10 dinosaurs at 8 frames, the Hangman beast at 5 frames), day and night, one desert scene.
@@ -367,11 +367,14 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | Achievement targets | Keep; check against real run data in phase 4. | Pao | Open |
 | Coolmath ad breaks | Only between runs, and never more often than every few minutes; never on Retry. | Coolmath | Open |
 | Mouse and trackpad players rarely duck (they must move to the bottom third), so duck-line eggs mostly reward keyboard and touch players. OK? | Accept: the original never forces a duck (a mid pterodactyl can be jumped). Check in playtest. | Playtest | Open |
-| Bonus flight egg rate (~120 in a flight, 60–90 for a good one) | Keep; a flight should feel like a jackpot next to a 20–50 egg run, but not make hatching trivial. Retune with the hatch prices in phase 4. | Pao | Open |
+| Bonus flight egg rate (~810 in a flight since the hazards were cut; a simple bot grabs ~40%) | A flight should feel like a jackpot next to a 20–50 egg run, but not make hatching trivial. With 1 flight banked at a time and the golden egg at 1500–1900 m it stays rare; retune with the hatch prices in phase 4. | Pao | Open |
 | Golden egg window (1500–1900 m) | Moved from 500–900 m to 1000–1200 m to 1500–1900 m (Pao's call). Placed over a cactus or low pterodactyl, since gaps run out past ~1600 m. If data shows few players ever see it, move it earlier. | Pao | Open |
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-11-24 — Synced with the build (no design change): the results show the hopping golden egg instead of a Fly! button, Retry and Menu only (3.8, 8); the flight has no hazards, so no hit end, no warning sound, no thunderclouds (3.8, 9, 10, 12); flight egg rate ~810 (14); debug builds put a golden egg every 300 m and the title has a temporary DEBUG button (3.7, 8, 12); `tools/` tests listed (12). This document is also the canvas main design document.
+- 2026-11-03 — Debug builds: a golden egg about every 300 m, and a temporary DEBUG ON / OFF button on the title (3.7, 8).
+- 2026-11-02 — The bonus flight is eggs only (3.8): thunderclouds and wild pterodactyls cut (too hard for a bonus); about 810 eggs a flight in Joyride shapes. Flight is 20 s.
 - 2026-11-02 — Golden egg window 500–900 m → 1500–1900 m (3.7, 5, 14; Pao's call). It is now placed on the apex of the held jump over a cactus or low pterodactyl, not in a gap, because no gap is long enough past ~1600 m.
 - 2026-11-02 — Title screen text is "COOL DINO GAME" with no "COOL EDITION" line (8; Pao's call). The game's working name elsewhere (browser tab, docs) is unchanged.
 - 2026-11-02 — One banked flight at a time (3.7, 3.8, 8; Pao's call): `maxFlights` 3 → 1, and the golden egg doesn't appear while a flight is waiting. An older save with more is cut to 1.

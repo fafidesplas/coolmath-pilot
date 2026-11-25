@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "boards": [
+    {
+      "id": "5e4d3f1e-9c66-4a6b-8421-084ee6b95f12",
+      "name": "Untitled"
+    }
+  ],
+  "documents": [
+    {
+      "id": "gdd",
+      "title": "Dinosaur Game: Cool Edition \u2014 GDD"
+    }
+  ],
+  "mainDocumentId": "gdd"
+}

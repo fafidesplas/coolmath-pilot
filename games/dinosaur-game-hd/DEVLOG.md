@@ -1,5 +1,8 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-25 — GDD on the OhMyGame canvas
+- Pao: the GDD is now also the OhMyGame canvas main design document (`canvas/documents/gdd.md`, same text as `GDD.md` plus the mechanic diagram; change both together). `GDD.md` synced with the build, no design change: the hopping golden egg instead of a Fly! button, Retry and Menu on the results, a flight with no hazards (~810 eggs), the debug golden egg every 300 m and the DEBUG button, the `tools/` tests. Next: playtest; the hatch prices are still open.
+
 ## 2026-11-03 — Temporary DEBUG button on the title
 - Pao: a temporary **DEBUG ON / OFF** button, bottom left of the title (only while `DEBUG` in `config.js` is true), turns the debug features on and off for the page's life: the G, H, I and U keys and the golden egg every 300 m. Off also clears invincible, hitboxes and unlocked-runner peek, and a banked flight blocks the golden egg again. It starts ON and resets on reload. Checked in Chrome. To remove it: the `debug` button in `ui.js` (`layout`), `toggleDebug` and the `debugOn` field in `main.js`.
 

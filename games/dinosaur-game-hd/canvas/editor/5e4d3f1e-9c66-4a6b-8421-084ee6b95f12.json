@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "nodes": {
+    "gdd-doc": {
+      "x": 0,
+      "y": 0,
+      "width": 720,
+      "height": 900
+    }
+  },
+  "viewport": {
+    "x": 64,
+    "y": 32,
+    "zoom": 1
+  },
+  "view": "canvas"
+}
