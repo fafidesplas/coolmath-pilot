@@ -10,6 +10,10 @@
     {
       "id": "gdd",
       "title": "Dinosaur Game: Cool Edition \u2014 GDD"
+    },
+    {
+      "id": "sprite-redraw",
+      "title": "Sprite redraw in Aseprite: plan"
     }
   ],
   "mainDocumentId": "gdd"

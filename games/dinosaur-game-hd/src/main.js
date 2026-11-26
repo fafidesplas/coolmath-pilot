@@ -529,7 +529,9 @@ keys.onDown = (code, first) => {
     if (s === 'playing') pause();
     else if (s === 'paused') resume();
   } else if (g.debugOn && code === 'KeyH') g.showBoxes = !g.showBoxes;
-  else if (g.debugOn && code === 'KeyI') {
+  else if (g.debugOn && code === 'KeyN' && s === 'playing' && !g.run.nightMs) {   // night now, for the night art
+    g.run.nightMs = 1; g.run.night = true;
+  } else if (g.debugOn && code === 'KeyI') {
     g.invincible = !g.invincible;
     if (g.run) g.run.invincible = g.invincible;
     console.log(`invincible: ${g.invincible}`);
@@ -576,6 +578,7 @@ canvas.addEventListener('pointerdown', e => {
   const b = hitButton(layout(g, performance.now(), r), x, y);
   if (b) {
     sfx.click();
+    g.press = { id: b.id, x: b.x, y: b.y, at: performance.now() };   // the pressed frame (ui.js)
     ACTIONS[b.id](b);
   } else if (g.screen === 'bonus') {
     if (g.flightEndAt) return;

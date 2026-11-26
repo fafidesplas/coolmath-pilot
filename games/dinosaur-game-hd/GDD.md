@@ -1,7 +1,7 @@
 # Dinosaur Game: Cool Edition — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-24
+**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-25
 
 > The offline browser dino you already know, with the same jump, the same speed and the same "one mistake and it's over". Now in 16-bit pixel art, with eggs to collect, new runners to hatch and unlock, a golden egg that earns a bonus pterodactyl flight, and a race against a friend on the same keyboard.
 
@@ -19,7 +19,7 @@
 ## 2. Core loop
 - **Moment (seconds):** see the obstacle → jump (tap or hold) or duck → grab the eggs on the riskier path, or play it safe.
 - **Run (a minute):** sleeping dino → any key → run as the speed rises and day turns to night → one hit ends it → distance and eggs count up → Space, and you are running again. If the golden egg was grabbed, the results offer a 20 s **bonus flight** first (3.8).
-- **Meta (days):** eggs hatch 3 dinosaurs → achievements unlock 6 more dinosaurs and the Hangman beast → 2P races with a friend.
+- **Meta (days):** eggs hatch 3 dinosaurs → achievements unlock 6 more dinosaurs → 2P races with a friend.
 
 ## 3. Mechanics
 
@@ -192,9 +192,8 @@ An endless runner has no levels: the run itself is the level, and the original's
 ## 7. Progression and retention
 
 ### 7.1 Runners
-11 runners: 10 dinosaurs and the Hangman beast. All are cosmetic: same jump, same speed, same hitbox. Each is drawn inside the 44×47 / 59×25 footprint, over the hitbox template (3.4). Every dinosaur is a two-legged runner, so it fits the T-Rex's silhouette; four-legged dinosaurs (Triceratops, Stegosaurus) are out because they can't.
+10 runners, all dinosaurs. All are cosmetic: same jump, same speed, same hitbox. Each is drawn inside the 44×47 / 59×25 footprint, over the hitbox template (3.4). Every dinosaur is a two-legged runner, so it fits the T-Rex's silhouette; four-legged dinosaurs (Triceratops, Stegosaurus) are out because they can't.
 - **Dinosaurs: 8 frames** (4 run, 1 jump, 2 slide, 1 crash; a crash while sliding reuses a slide frame with dizzy eyes). They share one two-legged run cycle, redrawn per species.
-- **Hangman beast: 5 frames** (2 run, 1 jump, 1 slide, 1 crash). It bounces instead of running.
 
 | Runner | Unlock | How it moves |
 |---|---|---|
@@ -206,7 +205,6 @@ An endless runner has no levels: the run itself is the level, and the original's
 | **Ceratosaurus** | reach **2000 m** in one run | nose horn and a bumpy back, red-orange stripes |
 | **Megalosaurus** | run **50 km** in total | the first dinosaur ever named: a plain, heavy theropod, brown with a cream belly |
 | **Therizinosaurus** | reach **3000 m** in one run | pot belly, long neck, giant scythe claws that swing on the run; fluffy, pale gold |
-| **Hangman beast** | see **10 nights** in total (each run past 700, 1400… m adds its nights) | black fur ball with horns; light rim so it shows at night |
 | **Allosaurus** | win **10 two-player races** | horn crests over the eyes, purple-gray; the **2P-only bonus** |
 | **Spinosaurus** | unlock every other runner **except Allosaurus** | tall back sail, long croc snout, deep blue with an orange sail; the completionist prize |
 
@@ -215,7 +213,6 @@ An endless runner has no levels: the run itself is the level, and the original's
 - **Achievement runners** unlock when the condition is met. They are announced on the results screen, not during the run.
 - **Fitting the footprint:** the Spinosaurus's sail and the Parasaurolophus's crest stay inside the 47 px height (a smaller head and body under them); the Therizinosaurus's claws stay inside the front of the box. Every slide pose lays the body flat on its belly and flattens the sail, crest or claws, so each one passes under a mid pterodactyl like the T-Rex.
 - **Telling them apart:** several are big two-legged meat-eaters, so each one gets one clear head feature (Ceratosaurus nose horn, Allosaurus eye crests, Megalosaurus plain heavy head and dark stripe) and its own main color. The Hadrosaur and the Parasaurolophus differ by the crest.
-- **Reference for the redraw:** `reference/hangman-beast.png`.
 
 ### 7.2 What brings players back
 Best distance, the golden egg and its bonus flight (a reason to take the full jump), the next egg hatch (the results show "Parasaurolophus: 2,230 / 3,000 🥚"), the next achievement (the Runners screen shows each one's progress), and 2P rematches.
@@ -230,7 +227,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (Night Ink with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. While `DEBUG` is true, a temporary **DEBUG ON / OFF** button bottom left turns the debug keys (G, H, I, U) and the 300 m golden eggs on and off for the page's life (starts ON; removed in release builds). Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (Night Ink with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. While `DEBUG` is true, a temporary **DEBUG ON / OFF** button bottom left turns the debug keys (G, H, I, N, U) and the 300 m golden eggs on and off for the page's life (starts ON; removed in release builds). Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
@@ -253,7 +250,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
 | Dino Slate | `#5A6B7D` | the T-Rex (a nod to the original's gray), UI panels |
 | Egg Cream | `#FFF6E0` | eggs, light rims at night, text on dark |
 
-  The T-Rex is slate, not green, so it never blends with the cacti. Each dinosaur has its own main color (7.1), none of them Cactus Green; the Hangman beast keeps its colors from Hangman. All use the same Night Ink outline.
+  The T-Rex is slate, not green, so it never blends with the cacti. Each dinosaur has its own main color (7.1), none of them Cactus Green. All use the same Night Ink outline.
 - **Key visuals:**
   - **Chunky pixels:** like the one-pager, every art pixel is 2×2 logical px: sprites are cell maps (`src/art.js`) with a 1 art pixel Night Ink outline, the background layers are drawn at half resolution and scaled up, and dust, icons, panels and text step in 2 px. Positions, speeds and hitboxes stay in 640×360 logical px, and motion stays smooth (sprites are not snapped to the art grid). On a 1440p screen an art pixel is 8 screen pixels.
   - **Runners:** about 44×47 logical px each (22×23 art pixels), 1 art pixel Night Ink outline, 3–5 colors each. The crash frame has dizzy eyes. Final art is a PNG sprite sheet in `assets/` (about 100 KB) drawn in a pixel editor; until then, the prototype uses best-effort placeholder sprites drawn in code.
@@ -340,14 +337,14 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 - **Simulation:** fixed 60 Hz step, deterministic (3.2). The sim runs headless, so a test can replay a seed and a list of inputs.
 - **Save:** one key, `cm_dinosaur-game-hd_save`:
   `{ v: 1, best, eggs, flights, totalEggs, totalDistance, totalNights, versusWins, unlocked: [ids], equipped, p2Runner, firstRunDone, flown, tutorial: { jump, duck, done }, settings: { sfx } }` (`tutorial` remembers which `tutorial:*` events were sent; `flown`, that the first flight's hint has shown), read inside `try/catch` (a broken save resets to defaults). Saved after every run, hatch, equip and settings change.
-- **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused' | 'bonus'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds. Debug keys: **G** golden egg, **H** hitboxes, **I** invincible, **U** show every runner as unlocked.
+- **Testing hook:** `window.game`, matching STANDARDS: `screen` (`'title' | 'playing' | 'complete'` as in STANDARDS, plus `'runners' | 'setup' | 'paused' | 'bonus'`; `'complete'` is the results screen), `level` (the mode name), `score` (distance), plus `mode` (`'endless' | 'versus'`) and `eggs`. Helpers `start()`, `restart()`, `crash()` and `win()` (an alias of `crash()`, so shared checks work), debug only, removed in release builds. Debug keys: **G** golden egg, **H** hitboxes, **I** invincible, **N** night now, **U** show every runner as unlocked.
 - **Headless tests (`tools/`):** `physics-test.mjs`, `art-test.mjs` (every frame covers the hitbox template), `egg-test.mjs` (every pattern's move collects its eggs safely), `golden-test.mjs` (placement and reach), `flight-test.mjs` (egg count, bounds, bot reach).
 - **Riskiest piece: matching the original's feel.** Prove it first: build `sim.js` with the original's numbers, then compare jump apex, airtime, the gap range at 3 speeds and the time to top speed against `chrome://dino` (frame-by-frame screen recordings), and log the measured values in `DEVLOG.md`. Only then add art and eggs.
-- **Second risk: runner art.** 10 dinosaurs × 8 frames plus the Hangman beast × 5 frames is 85 sprites, plus eggs, hatching, obstacles and backgrounds. The shared run cycle keeps that manageable. Prototype with placeholders; draw the Spinosaurus and the Parasaurolophus early as rough sprites over the hitbox template to check that the sail and the crest fit at 44×47, and put the 4 big theropods side by side to check that they read as different dinosaurs.
+- **Second risk: runner art.** 10 dinosaurs × 8 frames is 80 sprites, plus eggs, hatching, obstacles and backgrounds. The shared run cycle keeps that manageable. Prototype with placeholders; draw the Spinosaurus and the Parasaurolophus early as rough sprites over the hitbox template to check that the sail and the crest fit at 44×47, and put the 4 big theropods side by side to check that they read as different dinosaurs.
 - **Third risk: the bonus flight's payout.** The flight has no hazards, so the risk is the egg amount, not fairness. `flight.js` runs headless; `tools/flight-test.mjs` checks the egg count, that every egg is inside the flying area, and that a simple bot reaches them (about 40%).
 
 ## 13. Scope
-- **v1:** 1P endless, 2P race (keyboard and touch), eggs, the golden egg and its 20 s bonus pterodactyl flight, 11 runners (10 dinosaurs at 8 frames, the Hangman beast at 5 frames), day and night, one desert scene.
+- **v1:** 1P endless, 2P race (keyboard and touch), eggs, the golden egg and its 20 s bonus pterodactyl flight, 10 runners (all dinosaurs, 8 frames each), day and night, one desert scene.
 - **Later (only if data says so):** more scenes (jungle, volcano, ice) every 1000 m; a ghost of your best run; color variants of each dinosaur as an egg sink once all 3 are hatched; more flight hazards or a longer flight.
 - **Cut:**
   - power-ups, upgrades, lives, missions, loot boxes: they break the "feels like the original" pillar;
@@ -372,6 +369,7 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-11-25 — Hangman beast removed (Pao's call): 10 runners, all dinosaurs (2, 7.1, 9, 12, 13). `totalNights` stays in the save as a lifetime stat.
 - 2026-11-24 — Synced with the build (no design change): the results show the hopping golden egg instead of a Fly! button, Retry and Menu only (3.8, 8); the flight has no hazards, so no hit end, no warning sound, no thunderclouds (3.8, 9, 10, 12); flight egg rate ~810 (14); debug builds put a golden egg every 300 m and the title has a temporary DEBUG button (3.7, 8, 12); `tools/` tests listed (12). This document is also the canvas main design document.
 - 2026-11-03 — Debug builds: a golden egg about every 300 m, and a temporary DEBUG ON / OFF button on the title (3.7, 8).
 - 2026-11-02 — The bonus flight is eggs only (3.8): thunderclouds and wild pterodactyls cut (too hard for a bonus); about 810 eggs a flight in Joyride shapes. Flight is 20 s.

@@ -8,11 +8,659 @@
     {
       "id": "gdd-doc",
       "type": "document",
-      "title": "Game design document",
-      "description": "Main design document: mechanics, original tuning numbers, runners, screens, art, audio, analytics, tech plan and scope. Mirrors GDD.md.",
       "data": {
         "documentId": "gdd"
-      }
+      },
+      "title": "Game design document",
+      "description": "Main design document: mechanics, original tuning numbers, runners, screens, art, audio, analytics, tech plan and scope. Mirrors GDD.md."
+    },
+    {
+      "id": "sprite-redraw-group",
+      "type": "group",
+      "data": {
+        "name": "Sprite redraw (Aseprite)",
+        "pixelStyle": "classic"
+      },
+      "title": "Sprite redraw",
+      "description": "The Aseprite sprite redraw: the plan, what gets replaced, and one review per batch."
+    },
+    {
+      "id": "sprite-redraw-plan",
+      "type": "document",
+      "data": {
+        "documentId": "sprite-redraw",
+        "references": [
+          {
+            "type": "node",
+            "nodeId": "current-sprites"
+          }
+        ]
+      },
+      "parentId": "sprite-redraw-group",
+      "title": "Sprite redraw plan",
+      "description": "Plan for redrawing every sprite in Aseprite in 5 batches, with a review after each batch."
+    },
+    {
+      "id": "current-sprites",
+      "type": "asset",
+      "data": {
+        "assetId": "current-sprites",
+        "mediaType": "image"
+      },
+      "parentId": "sprite-redraw-group",
+      "title": "Current placeholder sprites",
+      "description": "Reference only: the placeholder sprites the redraw replaces."
+    },
+    {
+      "id": "batch1-group",
+      "type": "group",
+      "data": {
+        "name": "Batch 1: T-Rex (approved)",
+        "pixelStyle": "classic"
+      },
+      "parentId": "sprite-redraw-group",
+      "title": "Batch 1 review",
+      "description": "Batch 1: the Aseprite pipeline and the T-Rex, with Pao's edits. Approved."
+    },
+    {
+      "id": "batch1-trex-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch1-trex-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch1-group",
+      "title": "T-Rex, new sheet",
+      "description": "Production asset preview: the redrawn T-Rex frames (assets/sprites/trex.png in game)."
+    },
+    {
+      "id": "batch1-trex-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch1-trex-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch1-group",
+      "title": "T-Rex run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch1-ingame-crash",
+      "type": "asset",
+      "data": {
+        "assetId": "batch1-ingame-crash",
+        "mediaType": "image"
+      },
+      "parentId": "batch1-group",
+      "title": "In game: crash",
+      "description": "Playtest screenshot with the new T-Rex."
+    },
+    {
+      "id": "batch1-ingame-slide",
+      "type": "asset",
+      "data": {
+        "assetId": "batch1-ingame-slide",
+        "mediaType": "image"
+      },
+      "parentId": "batch1-group",
+      "title": "In game: slide",
+      "description": "Playtest frame with the new T-Rex sliding."
+    },
+    {
+      "id": "batch2-group",
+      "type": "group",
+      "data": {
+        "name": "Batch 2: hatch dinosaurs (approved)",
+        "pixelStyle": "classic"
+      },
+      "title": "Batch 2 review",
+      "description": "Batch 2: Velociraptor, Pachycephalosaurus, Parasaurolophus. Approved (raptor tail redone after Pao's note)."
+    },
+    {
+      "id": "batch2-velociraptor-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-velociraptor-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "Velociraptor, new sheet",
+      "description": "Production asset preview: assets/sprites/velociraptor.png in game."
+    },
+    {
+      "id": "batch2-velociraptor-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-velociraptor-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "Velociraptor run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch2-pachycephalosaurus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-pachycephalosaurus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "Pachycephalosaurus, new sheet",
+      "description": "Production asset preview: assets/sprites/pachycephalosaurus.png in game."
+    },
+    {
+      "id": "batch2-pachycephalosaurus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-pachycephalosaurus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "Pachycephalosaurus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch2-parasaurolophus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-parasaurolophus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "Parasaurolophus, new sheet",
+      "description": "Production asset preview: assets/sprites/parasaurolophus.png in game."
+    },
+    {
+      "id": "batch2-parasaurolophus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-parasaurolophus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "Parasaurolophus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch2-runners-screen",
+      "type": "asset",
+      "data": {
+        "assetId": "batch2-runners-screen",
+        "mediaType": "image"
+      },
+      "parentId": "batch2-group",
+      "title": "In game: Runners screen",
+      "description": "Playtest screenshot with the 4 redrawn runners."
+    },
+    {
+      "id": "batch3-group",
+      "type": "group",
+      "data": {
+        "name": "Batch 3: achievement dinosaurs I (approved)",
+        "pixelStyle": "classic"
+      },
+      "title": "Batch 3 review",
+      "description": "Batch 3: Hadrosaur, Ceratosaurus, Megalosaurus, Therizinosaurus. Approved."
+    },
+    {
+      "id": "batch3-hadrosaur-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-hadrosaur-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Hadrosaur, new sheet",
+      "description": "Production asset preview: assets/sprites/hadrosaur.png in game."
+    },
+    {
+      "id": "batch3-hadrosaur-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-hadrosaur-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Hadrosaur run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch3-ceratosaurus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-ceratosaurus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Ceratosaurus, new sheet",
+      "description": "Production asset preview: assets/sprites/ceratosaurus.png in game."
+    },
+    {
+      "id": "batch3-ceratosaurus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-ceratosaurus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Ceratosaurus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch3-megalosaurus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-megalosaurus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Megalosaurus, new sheet",
+      "description": "Production asset preview: assets/sprites/megalosaurus.png in game."
+    },
+    {
+      "id": "batch3-megalosaurus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-megalosaurus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Megalosaurus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch3-therizinosaurus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-therizinosaurus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Therizinosaurus, new sheet",
+      "description": "Production asset preview: assets/sprites/therizinosaurus.png in game."
+    },
+    {
+      "id": "batch3-therizinosaurus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-therizinosaurus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "Therizinosaurus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch3-runners-screen",
+      "type": "asset",
+      "data": {
+        "assetId": "batch3-runners-screen",
+        "mediaType": "image"
+      },
+      "parentId": "batch3-group",
+      "title": "In game: Runners screen",
+      "description": "Playtest screenshot with all 8 redrawn runners."
+    },
+    {
+      "id": "batch4-group",
+      "type": "group",
+      "data": {
+        "name": "Batch 4: achievement dinosaurs II (approved)",
+        "pixelStyle": "classic"
+      },
+      "title": "Batch 4 review",
+      "description": "Batch 4: Allosaurus and Spinosaurus. Approved."
+    },
+    {
+      "id": "batch4-allosaurus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch4-allosaurus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch4-group",
+      "title": "Allosaurus, new sheet",
+      "description": "Production asset preview: assets/sprites/allosaurus.png in game."
+    },
+    {
+      "id": "batch4-allosaurus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch4-allosaurus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch4-group",
+      "title": "Allosaurus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch4-spinosaurus-sheet",
+      "type": "asset",
+      "data": {
+        "assetId": "batch4-spinosaurus-sheet",
+        "mediaType": "image"
+      },
+      "parentId": "batch4-group",
+      "title": "Spinosaurus, new sheet",
+      "description": "Production asset preview: assets/sprites/spinosaurus.png in game."
+    },
+    {
+      "id": "batch4-spinosaurus-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch4-spinosaurus-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch4-group",
+      "title": "Spinosaurus run cycle",
+      "description": "Production asset preview: the run animation."
+    },
+    {
+      "id": "batch4-runners-screen",
+      "type": "asset",
+      "data": {
+        "assetId": "batch4-runners-screen",
+        "mediaType": "image"
+      },
+      "parentId": "batch4-group",
+      "title": "In game: Runners page 2",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch4-locked",
+      "type": "asset",
+      "data": {
+        "assetId": "batch4-locked",
+        "mediaType": "image"
+      },
+      "parentId": "batch4-group",
+      "title": "In game: locked silhouettes",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch5-group",
+      "type": "group",
+      "data": {
+        "name": "Batch 5: world and eggs (approved)",
+        "pixelStyle": "classic"
+      },
+      "title": "Batch 5 review",
+      "description": "Batch 5: cacti, pterodactyl, flight mount, eggs, golden egg, hatch egg in Aseprite. Approved."
+    },
+    {
+      "id": "batch5-cactus-small",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-cactus-small",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Small cactus",
+      "description": "Production asset preview: assets/sprites/cactus-small.png in game."
+    },
+    {
+      "id": "batch5-cactus-large",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-cactus-large",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Large cactus",
+      "description": "Production asset preview: assets/sprites/cactus-large.png in game."
+    },
+    {
+      "id": "batch5-ptero",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-ptero",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Pterodactyl (2 flaps)",
+      "description": "Production asset preview: assets/sprites/ptero.png in game."
+    },
+    {
+      "id": "batch5-mount",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-mount",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Flight mount (2 flaps)",
+      "description": "Production asset preview: assets/sprites/mount.png in game."
+    },
+    {
+      "id": "batch5-egg",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-egg",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Egg (plain, glint)",
+      "description": "Production asset preview: assets/sprites/egg.png in game."
+    },
+    {
+      "id": "batch5-gold-egg",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-gold-egg",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Golden egg (plain, glint)",
+      "description": "Production asset preview: assets/sprites/gold-egg.png in game."
+    },
+    {
+      "id": "batch5-hatch-egg",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-hatch-egg",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "Hatch egg (4 stages, 2 top halves, bottom)",
+      "description": "Production asset preview: assets/sprites/hatch-egg.png in game."
+    },
+    {
+      "id": "batch5-ingame-run",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-ingame-run",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "In game: run with cacti and eggs",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch5-ingame-golden",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-ingame-golden",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "In game: results with the golden egg",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch5-ingame-flight",
+      "type": "asset",
+      "data": {
+        "assetId": "batch5-ingame-flight",
+        "mediaType": "image"
+      },
+      "parentId": "batch5-group",
+      "title": "In game: bonus flight on the mount",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch6-group",
+      "type": "group",
+      "data": {
+        "name": "Batch 6: backgrounds and UI buttons (review)",
+        "pixelStyle": "classic"
+      },
+      "title": "Batch 6 review",
+      "description": "Batch 6: background layers, 9-slice buttons and icons in Aseprite. Waiting for review."
+    },
+    {
+      "id": "batch6-bg-sky",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-sky",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Sky (day, night)",
+      "description": "Production asset preview: assets/sprites/bg-sky.png in game."
+    },
+    {
+      "id": "batch6-bg-stars",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-stars",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Stars (cream on transparent)",
+      "description": "Production asset preview: assets/sprites/bg-stars.png in game (night only)."
+    },
+    {
+      "id": "batch6-bg-sun",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-sun",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Sun",
+      "description": "Production asset preview: assets/sprites/bg-sun.png in game."
+    },
+    {
+      "id": "batch6-bg-moon",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-moon",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Moon",
+      "description": "Production asset preview: assets/sprites/bg-moon.png in game."
+    },
+    {
+      "id": "batch6-button",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-button",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Buttons: orange, slate, gold (normal, pressed)",
+      "description": "Production asset preview: assets/sprites/ui-button.png in game."
+    },
+    {
+      "id": "batch6-icons",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-icons",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Icons: pause, sound on, sound off, prev, next",
+      "description": "Production asset preview: assets/sprites/ui-icons.png in game."
+    },
+    {
+      "id": "batch6-bg-clouds",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-clouds",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Clouds",
+      "description": "Production asset preview: assets/sprites/bg-clouds.png in game."
+    },
+    {
+      "id": "batch6-bg-mesas",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-mesas",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Mesas and hills",
+      "description": "Production asset preview: assets/sprites/bg-mesas.png in game."
+    },
+    {
+      "id": "batch6-bg-dunes",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-dunes",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Dunes",
+      "description": "Production asset preview: assets/sprites/bg-dunes.png in game."
+    },
+    {
+      "id": "batch6-bg-ground",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-bg-ground",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "Ground",
+      "description": "Production asset preview: assets/sprites/bg-ground.png in game."
+    },
+    {
+      "id": "batch6-ingame-title",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-ingame-title",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "In game: title (day)",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch6-ingame-night",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-ingame-night",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "In game: run at night",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch6-ingame-runners",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-ingame-runners",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "In game: Runners screen",
+      "description": "Playtest screenshot."
+    },
+    {
+      "id": "batch6-ingame-results",
+      "type": "asset",
+      "data": {
+        "assetId": "batch6-ingame-results",
+        "mediaType": "image"
+      },
+      "parentId": "batch6-group",
+      "title": "In game: results at night",
+      "description": "Playtest screenshot."
     }
   ],
   "edges": [],

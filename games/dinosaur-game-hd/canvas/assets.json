@@ -1,4 +1,260 @@
 {
   "version": 1,
-  "assets": {}
+  "assets": {
+    "current-sprites": {
+      "name": "Current placeholder sprites",
+      "path": "art/plan/current-sprites.png",
+      "description": "Contact sheet of the placeholder cell-map sprites from src/art.js, rendered at 4x: one row per dinosaur (run 1, run 2, jump, crash, sleep, slide 1, slide 2, slide crash), then cacti, pterodactyl, eggs, golden egg and hatch egg. What the Aseprite redraw replaces."
+    },
+    "batch1-trex-sheet": {
+      "name": "Batch 1: T-Rex sheet (new)",
+      "path": "art/plan/batch1-trex-sheet.png",
+      "description": "The redrawn T-Rex at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Drawn in Aseprite (art/aseprite/trex.aseprite)."
+    },
+    "batch1-trex-run": {
+      "name": "Batch 1: T-Rex run cycle",
+      "path": "art/plan/batch1-trex-run.gif",
+      "description": "The 4-frame run cycle at 12 fps, 8x."
+    },
+    "batch1-ingame-crash": {
+      "name": "Batch 1: in game, crash",
+      "path": "art/plan/batch1-ingame-crash.jpg",
+      "description": "Playtest screenshot: the new T-Rex crash frame on the results screen."
+    },
+    "batch1-ingame-slide": {
+      "name": "Batch 1: in game, slide",
+      "path": "art/plan/batch1-ingame-slide.png",
+      "description": "Playtest frame: the new T-Rex sliding."
+    },
+    "batch2-velociraptor-sheet": {
+      "name": "Batch 2: Velociraptor sheet",
+      "path": "art/plan/batch2-velociraptor-sheet.png",
+      "description": "The redrawn Velociraptor at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/velociraptor.aseprite)."
+    },
+    "batch2-velociraptor-run": {
+      "name": "Batch 2: Velociraptor run cycle",
+      "path": "art/plan/batch2-velociraptor-run.gif",
+      "description": "The Velociraptor run cycle at 12 fps, 8x."
+    },
+    "batch2-pachycephalosaurus-sheet": {
+      "name": "Batch 2: Pachycephalosaurus sheet",
+      "path": "art/plan/batch2-pachycephalosaurus-sheet.png",
+      "description": "The redrawn Pachycephalosaurus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/pachycephalosaurus.aseprite)."
+    },
+    "batch2-pachycephalosaurus-run": {
+      "name": "Batch 2: Pachycephalosaurus run cycle",
+      "path": "art/plan/batch2-pachycephalosaurus-run.gif",
+      "description": "The Pachycephalosaurus run cycle at 12 fps, 8x."
+    },
+    "batch2-parasaurolophus-sheet": {
+      "name": "Batch 2: Parasaurolophus sheet",
+      "path": "art/plan/batch2-parasaurolophus-sheet.png",
+      "description": "The redrawn Parasaurolophus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/parasaurolophus.aseprite)."
+    },
+    "batch2-parasaurolophus-run": {
+      "name": "Batch 2: Parasaurolophus run cycle",
+      "path": "art/plan/batch2-parasaurolophus-run.gif",
+      "description": "The Parasaurolophus run cycle at 12 fps, 8x."
+    },
+    "batch2-runners-screen": {
+      "name": "Batch 2: Runners screen",
+      "path": "art/plan/batch2-runners-screen.jpg",
+      "description": "Playtest screenshot (debug peek): the 4 redrawn runners on the top row, the placeholders below."
+    },
+    "batch3-hadrosaur-sheet": {
+      "name": "Batch 3: Hadrosaur sheet",
+      "path": "art/plan/batch3-hadrosaur-sheet.png",
+      "description": "The redrawn Hadrosaur at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/hadrosaur.aseprite)."
+    },
+    "batch3-hadrosaur-run": {
+      "name": "Batch 3: Hadrosaur run cycle",
+      "path": "art/plan/batch3-hadrosaur-run.gif",
+      "description": "The Hadrosaur run cycle at 12 fps, 8x."
+    },
+    "batch3-ceratosaurus-sheet": {
+      "name": "Batch 3: Ceratosaurus sheet",
+      "path": "art/plan/batch3-ceratosaurus-sheet.png",
+      "description": "The redrawn Ceratosaurus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/ceratosaurus.aseprite)."
+    },
+    "batch3-ceratosaurus-run": {
+      "name": "Batch 3: Ceratosaurus run cycle",
+      "path": "art/plan/batch3-ceratosaurus-run.gif",
+      "description": "The Ceratosaurus run cycle at 12 fps, 8x."
+    },
+    "batch3-megalosaurus-sheet": {
+      "name": "Batch 3: Megalosaurus sheet",
+      "path": "art/plan/batch3-megalosaurus-sheet.png",
+      "description": "The redrawn Megalosaurus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/megalosaurus.aseprite)."
+    },
+    "batch3-megalosaurus-run": {
+      "name": "Batch 3: Megalosaurus run cycle",
+      "path": "art/plan/batch3-megalosaurus-run.gif",
+      "description": "The Megalosaurus run cycle at 12 fps, 8x."
+    },
+    "batch3-therizinosaurus-sheet": {
+      "name": "Batch 3: Therizinosaurus sheet",
+      "path": "art/plan/batch3-therizinosaurus-sheet.png",
+      "description": "The redrawn Therizinosaurus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/therizinosaurus.aseprite)."
+    },
+    "batch3-therizinosaurus-run": {
+      "name": "Batch 3: Therizinosaurus run cycle",
+      "path": "art/plan/batch3-therizinosaurus-run.gif",
+      "description": "The Therizinosaurus run cycle at 12 fps, 8x."
+    },
+    "batch3-runners-screen": {
+      "name": "Batch 3: Runners screen",
+      "path": "art/plan/batch3-runners-screen.jpg",
+      "description": "Playtest screenshot (debug peek): all 8 redrawn runners on the first page."
+    },
+    "batch4-allosaurus-sheet": {
+      "name": "Batch 4: Allosaurus sheet",
+      "path": "art/plan/batch4-allosaurus-sheet.png",
+      "description": "The redrawn Allosaurus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/allosaurus.aseprite)."
+    },
+    "batch4-allosaurus-run": {
+      "name": "Batch 4: Allosaurus run cycle",
+      "path": "art/plan/batch4-allosaurus-run.gif",
+      "description": "The Allosaurus run cycle at 12 fps, 8x."
+    },
+    "batch4-spinosaurus-sheet": {
+      "name": "Batch 4: Spinosaurus sheet",
+      "path": "art/plan/batch4-spinosaurus-sheet.png",
+      "description": "The redrawn Spinosaurus at 8x: run 1-4, jump, crash, sleep, slide 1-2, slide crash. Built on Pao's T-Rex (art/aseprite/spinosaurus.aseprite)."
+    },
+    "batch4-spinosaurus-run": {
+      "name": "Batch 4: Spinosaurus run cycle",
+      "path": "art/plan/batch4-spinosaurus-run.gif",
+      "description": "The Spinosaurus run cycle at 12 fps, 8x."
+    },
+    "batch4-runners-screen": {
+      "name": "Batch 4: Runners screen page 2",
+      "path": "art/plan/batch4-runners-screen.jpg",
+      "description": "Playtest screenshot (debug peek): Allosaurus and Spinosaurus on page 2."
+    },
+    "batch4-locked": {
+      "name": "Batch 4: locked silhouettes",
+      "path": "art/plan/batch4-locked.jpg",
+      "description": "Playtest screenshot: the locked silhouettes of the Allosaurus and Spinosaurus."
+    },
+    "batch5-cactus-small": {
+      "name": "Batch 5: Small cactus",
+      "path": "art/plan/batch5-cactus-small.png",
+      "description": "Redrawn in Aseprite (art/aseprite/cactus-small.aseprite), 8x."
+    },
+    "batch5-cactus-large": {
+      "name": "Batch 5: Large cactus",
+      "path": "art/plan/batch5-cactus-large.png",
+      "description": "Redrawn in Aseprite (art/aseprite/cactus-large.aseprite), 8x."
+    },
+    "batch5-ptero": {
+      "name": "Batch 5: Pterodactyl (2 flaps)",
+      "path": "art/plan/batch5-ptero.png",
+      "description": "Redrawn in Aseprite (art/aseprite/ptero.aseprite), 8x."
+    },
+    "batch5-mount": {
+      "name": "Batch 5: Flight mount (2 flaps)",
+      "path": "art/plan/batch5-mount.png",
+      "description": "Redrawn in Aseprite (art/aseprite/mount.aseprite), 8x."
+    },
+    "batch5-egg": {
+      "name": "Batch 5: Egg (plain, glint)",
+      "path": "art/plan/batch5-egg.png",
+      "description": "Redrawn in Aseprite (art/aseprite/egg.aseprite), 8x."
+    },
+    "batch5-gold-egg": {
+      "name": "Batch 5: Golden egg (plain, glint)",
+      "path": "art/plan/batch5-gold-egg.png",
+      "description": "Redrawn in Aseprite (art/aseprite/gold-egg.aseprite), 8x."
+    },
+    "batch5-hatch-egg": {
+      "name": "Batch 5: Hatch egg (4 stages, 2 top halves, bottom)",
+      "path": "art/plan/batch5-hatch-egg.png",
+      "description": "Redrawn in Aseprite (art/aseprite/hatch-egg.aseprite), 8x."
+    },
+    "batch5-ingame-run": {
+      "name": "Batch 5: In game: run with cacti and eggs",
+      "path": "art/plan/batch5-ingame-run.jpg",
+      "description": "Playtest screenshot."
+    },
+    "batch5-ingame-golden": {
+      "name": "Batch 5: In game: results with the golden egg",
+      "path": "art/plan/batch5-ingame-golden.jpg",
+      "description": "Playtest screenshot."
+    },
+    "batch5-ingame-flight": {
+      "name": "Batch 5: In game: bonus flight on the mount",
+      "path": "art/plan/batch5-ingame-flight.jpg",
+      "description": "Playtest screenshot."
+    },
+    "batch6-bg-sky": {
+      "name": "Batch 6: Sky (day, night)",
+      "path": "art/plan/batch6-bg-sky.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-sky.aseprite), 4x: 6 bands with a dither between them."
+    },
+    "batch6-bg-stars": {
+      "name": "Batch 6: Stars (cream on transparent)",
+      "path": "art/plan/batch6-bg-stars.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-stars.aseprite), 4x."
+    },
+    "batch6-bg-sun": {
+      "name": "Batch 6: Sun",
+      "path": "art/plan/batch6-bg-sun.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-sun.aseprite), 8x."
+    },
+    "batch6-bg-moon": {
+      "name": "Batch 6: Moon",
+      "path": "art/plan/batch6-bg-moon.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-moon.aseprite), 8x."
+    },
+    "batch6-button": {
+      "name": "Batch 6: Buttons: orange, slate, gold (normal, pressed)",
+      "path": "art/plan/batch6-button.png",
+      "description": "Drawn in Aseprite (art/aseprite/ui-button.aseprite), 8x: 9-slice frames."
+    },
+    "batch6-icons": {
+      "name": "Batch 6: Icons: pause, sound on, sound off, prev, next",
+      "path": "art/plan/batch6-icons.png",
+      "description": "Drawn in Aseprite (art/aseprite/ui-icons.aseprite), 8x."
+    },
+    "batch6-bg-clouds": {
+      "name": "Batch 6: Clouds",
+      "path": "art/plan/batch6-bg-clouds.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-clouds.aseprite), 4x."
+    },
+    "batch6-bg-mesas": {
+      "name": "Batch 6: Mesas and hills",
+      "path": "art/plan/batch6-bg-mesas.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-mesas.aseprite), 4x."
+    },
+    "batch6-bg-dunes": {
+      "name": "Batch 6: Dunes",
+      "path": "art/plan/batch6-bg-dunes.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-dunes.aseprite), 4x."
+    },
+    "batch6-bg-ground": {
+      "name": "Batch 6: Ground",
+      "path": "art/plan/batch6-bg-ground.png",
+      "description": "Redrawn in Aseprite (art/aseprite/bg-ground.aseprite), 4x."
+    },
+    "batch6-ingame-title": {
+      "name": "Batch 6: In game: title (day)",
+      "path": "art/plan/batch6-ingame-title.jpg",
+      "description": "Playtest screenshot, batch 6."
+    },
+    "batch6-ingame-night": {
+      "name": "Batch 6: In game: run at night",
+      "path": "art/plan/batch6-ingame-night.jpg",
+      "description": "Playtest screenshot, batch 6 (debug N)."
+    },
+    "batch6-ingame-runners": {
+      "name": "Batch 6: In game: Runners screen",
+      "path": "art/plan/batch6-ingame-runners.jpg",
+      "description": "Playtest screenshot, batch 6."
+    },
+    "batch6-ingame-results": {
+      "name": "Batch 6: In game: results at night",
+      "path": "art/plan/batch6-ingame-results.jpg",
+      "description": "Playtest screenshot, batch 6."
+    }
+  }
 }

@@ -4,7 +4,6 @@
 // pixels and 144 Hz screens don't judder. The layers are pre-rendered once.
 import { VIEW_W, VIEW_H, LANE, RUN, RUNNER, RUNNER_BOXES, OBSTACLES, ANIM, EGGS, RUNNER_IDS, FLIGHT } from './config.js';
 import { drawText } from './font.js';
-import { mulberry32 } from './gen.js';
 import { SPR, PAL, MARGIN, up } from './sprites.js';
 import { CELL } from './art.js';
 import { drawUI } from './ui.js';
@@ -25,28 +24,10 @@ function canvas(w, h) {
   return [c, c.getContext('2d')];
 }
 
-// The background layers are drawn at art resolution (1 px per art pixel,
-// half the logical size) and scaled up CELL times, so they are as chunky as
-// the sprites. A = art px; W, H, GA = the view width, height and ground in art px.
-const W = VIEW_W / CELL, H = VIEW_H / CELL, GA = GROUND / CELL;
-
-// Stepped bands, top to bottom: the 16-bit look of a gradient.
-function bands(h, colors) {
-  const [c, g] = canvas(1, h), bh = h / colors.length;
-  colors.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, Math.round(i * bh), 1, Math.ceil(bh)); });
-  return up(c);
-}
-
-function disc(r, fill, rim) {
-  const [c, g] = canvas(r * 2, r * 2);
-  for (let y = 0; y < r * 2; y++) {
-    const half = Math.round(Math.sqrt(r * r - (y + 0.5 - r) ** 2));
-    g.fillStyle = rim; g.fillRect(r - half, y, half * 2, 1);
-    g.fillStyle = fill; g.fillRect(r - half + 1, y, Math.max(0, half * 2 - 2), 1);
-  }
-  return [c, g];
-}
-
+// The background layers are Aseprite images at art resolution (1 px per art
+// pixel, half the logical size; art/aseprite/bg), scaled up CELL times so
+// they are as chunky as the sprites. Each tiles every 640 logical px; the
+// night versions are tinted here.
 function tinted(src) {
   const [c, g] = canvas(src.width, src.height);
   g.drawImage(src, 0, 0);
@@ -58,101 +39,16 @@ function tinted(src) {
 }
 
 function buildLayers() {
-  const rand = mulberry32(7);
-  const L = { skyDay: bands(GA, SKY_DAY), skyNight: bands(GA, SKY_NIGHT) };
-
-  // Stars, a 640 px tile over the sky.
-  {
-    const [c, g] = canvas(W, 100);
-    for (let i = 0; i < 70; i++) {
-      g.fillStyle = i % 5 ? 'rgba(255,246,224,0.7)' : PAL.cream;
-      const x = Math.floor(rand() * W), y = Math.floor(rand() * 100);
-      if (i % 9) g.fillRect(x, y, 1, 1);
-      else { g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); }   // a bright one: a little cross
-    }
-    L.stars = up(c);
-  }
-  L.sun = up(disc(11, '#FFF1C2', '#FDD27E')[0]);
-  {
-    const [moon, g] = disc(7, PAL.cream, '#D8D2C0');
-    g.fillStyle = '#E4DDC8';
-    g.fillRect(4, 4, 2, 2); g.fillRect(8, 8, 3, 2); g.fillRect(6, 10, 2, 2);
-    L.moon = up(moon);
-  }
-
-  // Clouds (0.05×), a 640×60 tile with its top at y = 24.
-  {
-    const [c, g] = canvas(W, 30);
-    g.fillStyle = 'rgba(255,246,224,0.85)';
-    for (const [x, y, w] of [[15, 15, 28], [95, 4, 20], [165, 18, 35], [235, 7, 24], [290, 20, 18]]) {
-      g.fillRect(x, y + 3, w, 3);
-      g.fillRect(x + 3, y + 1, w - 8, 2);
-      g.fillRect(x + Math.round(w * 0.3), y, Math.round(w * 0.3), 1);
-    }
-    L.clouds = up(c); L.cloudsN = tinted(L.clouds);
-  }
-
-  // Mountains (0.1×), a 640×110 tile resting on the ground: flat-topped mesas and rounded hills
-  // of different heights. Each is [kind, x, width, height] in half-size pixels.
-  {
-    const [c, g] = canvas(W, 55);
-    const LIGHT = '#E39A57', TOP = '#EDB073', SHADE = '#CF844A';
-    const shapes = [
-      ['mesa', 10, 54, 35], ['hill', 72, 46, 48], ['hill', 108, 44, 30], ['mesa', 156, 60, 40],
-      ['hill', 208, 40, 52], ['hill', 250, 38, 34], ['hill', 292, 26, 28],
-    ];
-    for (const [kind, x, w, h] of shapes) {
-      for (let row = 0; row < h; row++) {
-        const y = 55 - h + row;
-        if (kind === 'mesa') {
-          const grow = Math.floor(row / 3);
-          g.fillStyle = row < 2 ? TOP : LIGHT;
-          g.fillRect(x - grow, y, w + grow * 2, 1);
-          g.fillStyle = SHADE;
-          g.fillRect(x + w + grow - 4, y, 4, 1);
-        } else {
-          // a rounded hill, between a mesa and a peak
-          const cx = x + Math.floor(w / 2), t = (row + 0.5) / h;
-          const half = Math.round((w / 2) * Math.pow(t, 0.55));
-          const l = cx - half, r = cx + half + 1;
-          g.fillStyle = row < 2 ? TOP : LIGHT;
-          g.fillRect(l, y, r - l, 1);
-          const split = cx + Math.round(half * 0.2);   // the shaded side, a smooth diagonal
-          if (row >= 3) { g.fillStyle = SHADE; g.fillRect(split, y, r - split, 1); }
-        }
-      }
-    }
-    L.mesas = up(c); L.mesasN = tinted(L.mesas);
-  }
-
-  // Dunes (0.2×), a 640×50 tile resting on the ground; the curve repeats every 640 px.
-  {
-    const [c, g] = canvas(W, 25);
-    for (let x = 0; x < W; x++) {
-      const h = Math.round(10 + 4.5 * Math.sin(x / W * Math.PI * 6) + 3 * Math.sin(x / W * Math.PI * 10 + 1));
-      g.fillStyle = '#EDBE6E'; g.fillRect(x, 25 - h, 1, h);
-      g.fillStyle = '#F6D592'; g.fillRect(x, 25 - h, 1, 1);
-    }
-    L.dunes = up(c); L.dunesN = tinted(L.dunes);
-  }
-
-  // Ground (1×): sand with pebbles, a 640×110 tile from the ground line down.
-  {
-    const [c, g] = canvas(W, H - GA);
-    g.fillStyle = PAL.sand; g.fillRect(0, 0, c.width, c.height);
-    g.fillStyle = '#B07A3A'; g.fillRect(0, 0, c.width, 1);
-    g.fillStyle = '#D7A458'; g.fillRect(0, 1, c.width, 1);
-    for (let i = 0; i < 60; i++) {
-      const x = Math.floor(rand() * W), y = 3 + Math.floor(rand() * (c.height - 4));
-      g.fillStyle = i % 4 ? '#D7A458' : '#B07A3A';
-      g.fillRect(x, y, i % 3 ? 1 : 2, 1);
-    }
-    for (let i = 0; i < 12; i++) {   // bumps on the ground line
-      g.fillStyle = '#B07A3A';
-      g.fillRect(Math.floor(rand() * W), 1, 1 + Math.floor(rand() * 2), 1);
-    }
-    L.ground = up(c); L.groundN = tinted(L.ground);
-  }
+  const B = SPR.bg, one = id => up(B[id].idle[0]);
+  const L = {
+    skyDay: up(B.sky.day[0]), skyNight: up(B.sky.night[0]),
+    stars: one('stars'), sun: one('sun'), moon: one('moon'),
+    clouds: one('clouds'),   // 0.05×, top at y = 24
+    mesas: one('mesas'),     // 0.1×, resting on the ground
+    dunes: one('dunes'),     // 0.2×, resting on the ground
+    ground: one('ground'),   // 1×, from the ground line down
+  };
+  for (const k of ['clouds', 'mesas', 'dunes', 'ground']) L[k + 'N'] = tinted(L[k]);
   return L;
 }
 
@@ -560,12 +456,12 @@ export class Renderer {
     const { ctx, L, night: n } = this, { x0, x1, y0, y1 } = this.bounds, w = x1 - x0;
     ctx.fillStyle = SKY_DAY[0];
     ctx.fillRect(x0, y0, w, -y0 + 1);
-    ctx.drawImage(L.skyDay, x0, 0, w, GROUND);
+    this.tile(L.skyDay, 0, 0);
     if (n > 0) {
       ctx.globalAlpha = n;
       ctx.fillStyle = SKY_NIGHT[0];
       ctx.fillRect(x0, y0, w, -y0 + 1);
-      ctx.drawImage(L.skyNight, x0, 0, w, GROUND);
+      this.tile(L.skyNight, 0, 0);
       this.tile(L.stars, scroll * 0.02, 0);
       ctx.drawImage(L.moon, 500, 40);
       ctx.globalAlpha = 1;

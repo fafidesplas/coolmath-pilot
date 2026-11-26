@@ -6,12 +6,264 @@
       "y": 0,
       "width": 720,
       "height": 900
+    },
+    "sprite-redraw-group": {
+      "x": 800,
+      "y": 0,
+      "width": 2496,
+      "height": 2900
+    },
+    "sprite-redraw-plan": {
+      "x": 40,
+      "y": 60,
+      "width": 720,
+      "height": 1300
+    },
+    "current-sprites": {
+      "x": 800,
+      "y": 60
+    },
+    "batch1-group": {
+      "x": 40,
+      "y": 1440,
+      "width": 2440,
+      "height": 1400
+    },
+    "batch1-trex-sheet": {
+      "x": 40,
+      "y": 60
+    },
+    "batch1-trex-run": {
+      "x": 40,
+      "y": 360
+    },
+    "batch1-ingame-crash": {
+      "x": 400,
+      "y": 360
+    },
+    "batch1-ingame-slide": {
+      "x": 1100,
+      "y": 360
+    },
+    "batch2-group": {
+      "x": 800,
+      "y": 3000,
+      "width": 2588,
+      "height": 1940
+    },
+    "batch2-velociraptor-sheet": {
+      "x": 40,
+      "y": 60
+    },
+    "batch2-velociraptor-run": {
+      "x": 2140,
+      "y": 60
+    },
+    "batch2-pachycephalosaurus-sheet": {
+      "x": 40,
+      "y": 540
+    },
+    "batch2-pachycephalosaurus-run": {
+      "x": 2140,
+      "y": 540
+    },
+    "batch2-parasaurolophus-sheet": {
+      "x": 40,
+      "y": 1020
+    },
+    "batch2-parasaurolophus-run": {
+      "x": 2140,
+      "y": 1020
+    },
+    "batch2-runners-screen": {
+      "x": 40,
+      "y": 1500
+    },
+    "batch3-group": {
+      "x": 800,
+      "y": 5040,
+      "width": 2588,
+      "height": 2420
+    },
+    "batch3-hadrosaur-sheet": {
+      "x": 40,
+      "y": 60
+    },
+    "batch3-hadrosaur-run": {
+      "x": 2140,
+      "y": 60
+    },
+    "batch3-ceratosaurus-sheet": {
+      "x": 40,
+      "y": 540
+    },
+    "batch3-ceratosaurus-run": {
+      "x": 2140,
+      "y": 540
+    },
+    "batch3-megalosaurus-sheet": {
+      "x": 40,
+      "y": 1020
+    },
+    "batch3-megalosaurus-run": {
+      "x": 2140,
+      "y": 1020
+    },
+    "batch3-therizinosaurus-sheet": {
+      "x": 40,
+      "y": 1500
+    },
+    "batch3-therizinosaurus-run": {
+      "x": 2140,
+      "y": 1500
+    },
+    "batch3-runners-screen": {
+      "x": 40,
+      "y": 1980
+    },
+    "batch4-group": {
+      "x": 800,
+      "y": 7560,
+      "width": 2588,
+      "height": 1500
+    },
+    "batch4-allosaurus-sheet": {
+      "x": 40,
+      "y": 60
+    },
+    "batch4-allosaurus-run": {
+      "x": 2140,
+      "y": 60
+    },
+    "batch4-spinosaurus-sheet": {
+      "x": 40,
+      "y": 540
+    },
+    "batch4-spinosaurus-run": {
+      "x": 2140,
+      "y": 540
+    },
+    "batch4-runners-screen": {
+      "x": 40,
+      "y": 1020
+    },
+    "batch4-locked": {
+      "x": 1400,
+      "y": 1020
+    },
+    "batch5-group": {
+      "x": 800,
+      "y": 9160,
+      "width": 2440,
+      "height": 1700
+    },
+    "batch5-cactus-small": {
+      "x": 40,
+      "y": 60
+    },
+    "batch5-cactus-large": {
+      "x": 220,
+      "y": 60
+    },
+    "batch5-ptero": {
+      "x": 440,
+      "y": 60
+    },
+    "batch5-mount": {
+      "x": 900,
+      "y": 60
+    },
+    "batch5-egg": {
+      "x": 1360,
+      "y": 60
+    },
+    "batch5-gold-egg": {
+      "x": 1520,
+      "y": 60
+    },
+    "batch5-hatch-egg": {
+      "x": 40,
+      "y": 400
+    },
+    "batch5-ingame-run": {
+      "x": 40,
+      "y": 720
+    },
+    "batch5-ingame-golden": {
+      "x": 840,
+      "y": 720
+    },
+    "batch5-ingame-flight": {
+      "x": 1640,
+      "y": 720
+    },
+    "batch6-group": {
+      "x": 800,
+      "y": 10960,
+      "width": 2680,
+      "height": 3480
+    },
+    "batch6-bg-sky": {
+      "x": 40,
+      "y": 60
+    },
+    "batch6-bg-stars": {
+      "x": 1360,
+      "y": 60
+    },
+    "batch6-bg-sun": {
+      "x": 1360,
+      "y": 520
+    },
+    "batch6-bg-moon": {
+      "x": 1980,
+      "y": 80
+    },
+    "batch6-button": {
+      "x": 1760,
+      "y": 520
+    },
+    "batch6-icons": {
+      "x": 2000,
+      "y": 520
+    },
+    "batch6-bg-clouds": {
+      "x": 40,
+      "y": 1120
+    },
+    "batch6-bg-mesas": {
+      "x": 40,
+      "y": 1280
+    },
+    "batch6-bg-dunes": {
+      "x": 40,
+      "y": 1540
+    },
+    "batch6-bg-ground": {
+      "x": 40,
+      "y": 1680
+    },
+    "batch6-ingame-title": {
+      "x": 40,
+      "y": 1960
+    },
+    "batch6-ingame-night": {
+      "x": 1360,
+      "y": 1960
+    },
+    "batch6-ingame-runners": {
+      "x": 40,
+      "y": 2720
+    },
+    "batch6-ingame-results": {
+      "x": 1360,
+      "y": 2720
     }
   },
   "viewport": {
-    "x": 64,
-    "y": 32,
-    "zoom": 1
+    "x": -552.259712087648,
+    "y": -8751.558729527946,
+    "zoom": 0.7515873819917045
   },
   "view": "canvas"
 }

@@ -1,0 +1,66 @@
+-- Pterodactyl (GDD 3.5), 23×20 art px, faces left: wings up, wings down.
+-- Redrawn: a lit leading edge H on the wing and an orange beak B.
+local L = ...
+
+local palette = {
+  k = '#1B2340',
+  c = '#FFF6E0',
+  W = '#FFFFFF',
+  P = '#C8662A',
+  D = '#9E4F22',
+  H = '#E0884A',
+  B = '#F08A24',
+  f = '#E8A468',
+  w = '#FFF6E0',
+}
+
+return {
+  palette = palette,
+  simple = true,
+  frames = {
+    { tag = 'flap', rows = {
+      '..........HH...........',
+      '..........DDH..........',
+      '..........DDDH.........',
+      '......PP..DDDDH........',
+      '.....PPPP.DDDDDH.......',
+      '....PPPPP.DDDDDDH......',
+      '...PPwwPPPDDDDDDDH.....',
+      'BBBPPwkPPPPPPPPPPPP....',
+      'BBBPPPPPPPPPPPPPPPPPPPP',
+      '...PPPPPPPPPffffffPPPPP',
+      '.........PPPffffffPPP..',
+      '..........PPPPPPPPPPP..',
+      '.......................',
+      '.......................',
+      '.......................',
+      '.......................',
+      '.......................',
+      '.......................',
+      '.......................',
+      '.......................',
+    } },
+    { tag = 'flap', rows = {
+      '.......................',
+      '.......................',
+      '.......................',
+      '......PP...............',
+      '.....PPPP..............',
+      '....PPPPP..............',
+      '...PPwwPPP.............',
+      'BBBPPwkPPPPPPPPPPPP....',
+      'BBBPPPPPPPPPPPPPPPPPPPP',
+      '...PPPPPPPPPffffffPPPPP',
+      '.........PPPffffffPPP..',
+      '..........PPPPPPPPPPP..',
+      '..........DDDDDDDD.....',
+      '..........DDDDDDD......',
+      '..........DDDDDD.......',
+      '..........DDDDD........',
+      '..........DDDD.........',
+      '..........DDD..........',
+      '..........DD...........',
+      '.......................',
+    } },
+  },
+}

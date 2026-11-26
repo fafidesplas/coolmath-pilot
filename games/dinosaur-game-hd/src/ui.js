@@ -129,15 +129,34 @@ function box(ctx, x, y, w, h, border, fill, lip) {
   ctx.fillRect(x + 2, y + 2, w - 4, h - 8);
 }
 
+// An Aseprite 9-slice frame (art/aseprite/ui) at any size: corners fixed,
+// edges and middle stretched, every art px CELL×CELL logical px.
+function nine(ctx, img, { left, top, right, bottom }, x, y, w, h) {
+  const sx = [0, left, img.width - right, img.width], sy = [0, top, img.height - bottom, img.height];
+  const dx = [x, x + left * CELL, x + w - right * CELL, x + w], dy = [y, y + top * CELL, y + h - bottom * CELL, y + h];
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) {
+    const sw = sx[i + 1] - sx[i], sh = sy[j + 1] - sy[j];
+    if (sw > 0 && sh > 0) ctx.drawImage(img, sx[i], sy[j], sw, sh, dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
+  }
+}
+
+// A button shows its pressed frame for a moment after it is pressed (main.js sets g.press).
+export const PRESS_MS = 140;
+const isPressed = (b, g, now) => g.press && now - g.press.at < PRESS_MS && g.press.id === b.id && g.press.x === b.x && g.press.y === b.y;
+const SINK = 2 * CELL;   // how far a pressed button's face sinks
+
 function drawButton(ctx, b, now, g) {
   if (b.card) return;   // drawn by drawRunners
   if (b.egg) return drawFlyEgg(ctx, b, now, g);
-  if (b.icon) return drawIcon(ctx, b);
-  const [fill, lip] = b.gold ? [GOLD_C, '#C9932A'] : b.big ? [PAL.orange, '#C46A12'] : [PAL.slate, '#46546A'];
-  box(ctx, b.x, b.y, b.w, b.h, PAL.ink, fill, lip);
-  ctx.fillStyle = 'rgba(255,246,224,0.35)';
-  ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, 2);
-  drawText(ctx, b.label, b.x + b.w / 2, b.y + 2 * Math.round((b.h - 4 - 7 * b.size) / 4), b.size, b.gold ? PAL.ink : PAL.cream, 'center');
+  const down = isPressed(b, g, now), sink = down ? SINK : 0;
+  const color = b.icon ? 'slate' : b.gold ? 'gold' : b.big ? 'orange' : 'slate';
+  nine(ctx, SPR.button[color][down ? 1 : 0], SPR.button.nine, b.x, b.y, b.w, b.h);
+  if (b.icon) {   // the glyph at the top left; a taller arrow button gets it centered
+    const name = b.icon === 'sound' ? (b.on ? 'soundOn' : 'soundOff') : b.icon, img = SPR.icons[name][0];
+    ctx.drawImage(img, b.x, b.y + sink + grid((b.h - img.height * CELL) / 2), img.width * CELL, img.height * CELL);
+    return;
+  }
+  drawText(ctx, b.label, b.x + b.w / 2, b.y + sink + 2 * Math.round((b.h - 4 - 7 * b.size) / 4), b.size, b.gold ? PAL.ink : PAL.cream, 'center');
 }
 
 // The golden egg asking to be clicked: quick hops with a squash on each
@@ -176,28 +195,6 @@ function drawFlyEgg(ctx, b, now, g) {
     const label = String(b.count), bx = EGG_X + 18, by = grid(ground - lift) - 74;
     box(ctx, bx, by, textWidth(label, 2) + 12, 22, PAL.ink, PAL.cream, '#D8D2C0');
     drawText(ctx, label, bx + 6, by + 4, 2, PAL.ink);
-  }
-}
-
-function drawIcon(ctx, b) {
-  box(ctx, b.x, b.y, b.w, b.h, PAL.ink, PAL.slate, '#46546A');
-  ctx.fillStyle = PAL.cream;
-  const x = b.x, y = b.y;
-  if (b.icon === 'pause') {
-    ctx.fillRect(x + 6, y + 6, 4, 10);
-    ctx.fillRect(x + 14, y + 6, 4, 10);
-  } else if (b.icon === 'sound') {
-    ctx.fillRect(x + 4, y + 8, 2, 6);                       // speaker
-    for (let i = 0; i < 2; i++) ctx.fillRect(x + 6 + i * 2, y + 6 - i * 2, 2, 10 + i * 4);
-    if (b.on) {
-      ctx.fillRect(x + 14, y + 8, 2, 6);
-      ctx.fillRect(x + 18, y + 6, 2, 10);
-    } else {
-      for (let i = 0; i < 3; i++) { ctx.fillRect(x + 13 + i * 2, y + 7 + i * 2, 2, 2); ctx.fillRect(x + 17 - i * 2, y + 7 + i * 2, 2, 2); }
-    }
-  } else {   // a page arrow, pointing left (prev) or right (next)
-    const dir = b.icon === 'next' ? 1 : -1, cx = x + b.w / 2, cy = y + 16;
-    for (let i = 0; i < 4; i++) ctx.fillRect(cx - dir * (2 * i - 3) - 1, cy - 2 * i, 2, 4 * i + 2);
   }
 }
 

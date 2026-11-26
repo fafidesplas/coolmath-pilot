@@ -1,5 +1,43 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-26 — Sprite redraw, batch 6: backgrounds and UI buttons
+- Pao approved batch 5. The old cell maps are gone from `art.js` (it keeps `CELL`, `FOOTFALL_X` and the cactus offsets). `sprites.js` loads every sprite from its sheet, with no fallback. The art test checks the sheets only: 230/230 (the dropped checks were the cell maps' row lengths).
+- Backgrounds: `art/aseprite/bg/*.lua` (built with the new `lib.lua` `buildImage`: painted pixels, no outline, x wraps so tiles meet at the seam). The sky has 6 bands per tag (day, night) with a 2 row dither, then stars with crosses, a sun with sunset stripes, a moon with craters and a shaded edge, puffy 3-tone clouds (85% opaque, as before), mesas with rock strata and dithered shade, dunes with shaded slopes and wind ripples, and ground with pebbles, specks and streaks. Same sizes, placement and parallax; `buildLayers()` scales them and tints the night versions. The sky now tiles like the other layers instead of being stretched.
+- Buttons: `ui-button.aseprite` holds 9-slice frames (orange, slate, gold; normal and pressed, where the face sinks 2 art px into its lip), and `ui-icons.aseprite` holds the pause, sound on, sound off, prev and next glyphs. `ui.js` `nine()` draws them at any size. A press shows the pressed frame for 140 ms (`g.press`). Panels, cards and tags stay in code.
+- Debug key N: night now. Played: title, Runners (arrows), a run by day and at night, results, and the sound toggle (pressed frame seen in a recording). All tests pass.
+- Next: Pao reviews batch 6.
+
+## 2026-11-26 — Sprite redraw, batch 5: world and eggs
+- Pao approved batch 4 and asked for a batch 6: backgrounds and UI buttons in Aseprite too.
+- `art/aseprite/world/*.lua` (built with `lib.lua` `buildSimple`, no slices): small cactus (a cleaner two-armed saguaro with spine dots), large cactus (same outline, spines, a pink flower), pterodactyl (lit wing edge, orange beak, softer belly), flight mount (its own teal art facing right with a red saddle), egg, golden egg, hatch egg (a highlight arc). `sprites.js` loads them with night rims made from the new pixels; the cell maps stay as the fallback until Pao approves. `art-test.mjs` checks the cactus and pterodactyl boxes from the sheets: 333/333.
+- Played: run with cacti and eggs, golden egg, results, bonus flight on the new mount. Not seen in game: the hatch scene and a pterodactyl in a run (both covered by the art test).
+- Next: Pao reviews batch 5; then delete the cell maps and do batch 6.
+
+## 2026-11-26 — Sprite redraw, batch 4: Allosaurus and Spinosaurus
+- Pao approved batch 3.
+- Allosaurus (purple-gray, red horn crest over the eye) and Spinosaurus (deep blue, orange sail with dark spines inside the 47 px height, long croc snout, sail flat in the slide), built on Pao's T-Rex. All 10 runners now load from Aseprite sheets (`SHEETS` lists them all; 40 KB of sheets in total). Art test 329/329; checked on Runners page 2, unlocked and as locked silhouettes.
+- Next: Pao reviews batch 4; then batch 5 (cacti, pterodactyl, flight mount, eggs, golden egg, hatch egg) and removing the runner cell maps from `art.js`.
+
+## 2026-11-26 — Sprite redraw, batch 3: achievement dinosaurs I
+- Pao approved batch 2 (after the Velociraptor got the T-Rex's rising tail).
+- Built on Pao's T-Rex like batch 2: Hadrosaur (olive, cream duck bill, no crest), Ceratosaurus (red-orange, cream nose horn, dark back bumps and stripes), Megalosaurus (plain heavy brown, deeper jaw, a 2 px dark stripe down the back), Therizinosaurus (pale gold, two hooked cream scythe claws that fold away in the slide, feather tips). Added to `SHEETS`. Art test 342/342; checked on the Runners screen (all 8 redrawn on page 1).
+- Next: Pao reviews batch 3; then batch 4 (Allosaurus, Spinosaurus).
+
+## 2026-11-26 — Sprite redraw, batch 2: hatch dinosaurs
+- Pao edited the T-Rex in Aseprite (no teeth, a mouth line, no red crash mouth, a shut-line sleep eye, no arm swing) and approved batch 1; the other dinosaurs follow that style.
+- `art/aseprite/runners/base.lua`: Pao's T-Rex frames as fill grids (outline stripped; rebuilding it gives back the exact pixels). `lib.lua` `theropod()` lays a species' head, tail and slide overlay on it and draws the face (open, X or shut).
+- Velociraptor (feather tuft, long snout, the T-Rex's rising tail with dark feather bands after Pao's note, longer arm, sickle claws), Pachycephalosaurus (cream knobbed dome, worn forward in the slide), Parasaurolophus (orange tube crest, cream bill) exported and added to `SHEETS`. Art test 366/366; checked on the Runners screen.
+- Next: Pao reviews batch 2; then batch 3 (Hadrosaur, Ceratosaurus, Megalosaurus, Therizinosaurus).
+
+## 2026-11-25 — Sprite redraw, batch 1: Aseprite pipeline and T-Rex
+- Pao: redraw every sprite in Aseprite, in 5 batches, with a review after each (plan: `canvas/documents/sprite-redraw.md`).
+- Pipeline: `art/aseprite/runners/<id>.lua` draws the frames (`build.lua`, `lib.lua` add the outline, tags and the `stand` / `slide` slices) into `art/aseprite/<id>.aseprite`; `tools/export-sprites.sh` exports `assets/sprites/<id>.png` + `.json`. `src/sprites.js` loads the sheets listed in `SHEETS` (top-level await) and keeps the cell maps for the others; `tools/art-test.mjs` checks sheet frames from their pixels (`tools/png.mjs`).
+- T-Rex redrawn: 5 shades, 4 different run poses (the planted foot still alternates every frame, so `FOOTFALL_X` holds), arm swing and cream claws, X eyes and an open mouth on crash, shut eyes on sleep. 1.2 KB. Art test 386/386; checked in game (title, run, jump, slide, crash).
+- Next: Pao reviews batch 1 on the canvas; then batch 2 (Velociraptor, Pachycephalosaurus, Parasaurolophus).
+
+## 2026-11-25 — Hangman beast removed
+- Pao: the Hangman beast is out of the game. 10 runners, all dinosaurs. Removed from `GDD.md`, the canvas GDD, the brief (`CLAUDE.md`) and the sprite redraw plan; `reference/hangman-beast.png` deleted. It was never built, so no game code changed; `totalNights` stays in the save as a lifetime stat.
+
 ## 2026-11-25 — GDD on the OhMyGame canvas
 - Pao: the GDD is now also the OhMyGame canvas main design document (`canvas/documents/gdd.md`, same text as `GDD.md` plus the mechanic diagram; change both together). `GDD.md` synced with the build, no design change: the hopping golden egg instead of a Fly! button, Retry and Menu on the results, a flight with no hazards (~810 eggs), the debug golden egg every 300 m and the DEBUG button, the `tools/` tests. Next: playtest; the hatch prices are still open.
 

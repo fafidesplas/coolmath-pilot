@@ -1,22 +1,14 @@
-// Placeholder sprites drawn in code (GDD 9): the runners, the cacti, the
-// pterodactyl and the egg, built from the cell maps in art.js in the
-// one-pager's chunky style: each art pixel is CELL×CELL logical px, with a
-// 1 cell Night Ink outline. The final art replaces them with a sprite sheet.
+// Sprites (GDD 9): every sprite loads from its Aseprite sheet (SHEETS and
+// the world sheets below). Each art pixel is CELL×CELL logical px, with a
+// 1 cell Night Ink outline.
 // Every sprite canvas has a 1 cell margin for the outline: draw it at
 // (x - MARGIN, y + oy - MARGIN), where oy is the sprite's own offset.
-import { RUNNERS, ART, CELL } from './art.js';
+import { CELL, CACTUS_OY } from './art.js';
 
 export const PAL = {
   ink: '#1B2340', sand: '#F2C879', orange: '#F08A24', green: '#3FA34D', slate: '#5A6B7D', cream: '#FFF6E0',
 };
 export const MARGIN = CELL;
-const COLOR = {
-  g: PAL.green, l: '#6CC46F', G: '#2C7D3A',          // cactus
-  P: '#C8662A', D: '#9E4F22', f: PAL.sand,           // pterodactyl
-  c: PAL.cream, o: PAL.orange, W: '#FFFFFF',         // egg
-  w: PAL.cream, k: PAL.ink,
-};
-
 function canvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
@@ -31,24 +23,6 @@ export function up(src) {
   return c;
 }
 
-// The cell map at 1 px per cell, with a 1 cell margin for the outline.
-function cells(rows, colors = COLOR) {
-  const [fill, f] = canvas(rows[0].length + 2, rows.length + 2);
-  rows.forEach((row, y) => [...row].forEach((v, x) => {
-    if (v === '.') return;
-    f.fillStyle = colors[v];
-    f.fillRect(x + 1, y + 1, 1, 1);
-  }));
-  const [out, o] = canvas(fill.width, fill.height);
-  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) o.drawImage(fill, dx, dy);
-  o.globalCompositeOperation = 'source-in';
-  o.fillStyle = PAL.ink;
-  o.fillRect(0, 0, out.width, out.height);
-  o.globalCompositeOperation = 'source-over';
-  o.drawImage(fill, 0, 0);
-  return out;
-}
-
 // A night rim (GDD 3.6): the outlined shape grown by 1 cell, in Egg Cream.
 // Draw it 1 cell further up and left than the sprite, under it, so only the ring shows.
 function rim(small) {
@@ -58,27 +32,6 @@ function rim(small) {
   o.fillStyle = PAL.cream;
   o.fillRect(0, 0, out.width, out.height);
   return up(out);
-}
-
-function sprite({ rows, oy }, withRim, colors) {
-  const small = cells(rows, colors), img = up(small);
-  img.oy = oy;
-  if (withRim) img.rim = rim(small);
-  return img;
-}
-
-// A runner's frames, in its own colors.
-function runner(R) {
-  const colors = { ...COLOR, ...R.colors }, one = s => sprite(s, false, colors);
-  return {
-    run: R.run.map(one),
-    jump: one(R.jump),
-    crash: one(R.crash),
-    sleep: one(R.sleep),
-    slide: R.slide.map(one),
-    slideCrash: one(R.slideCrash),
-    shadow: silhouette(one(R.jump)),   // a locked achievement runner's card
-  };
 }
 
 // The sprite filled with Night Ink.
@@ -91,18 +44,100 @@ function silhouette(img) {
   return c;
 }
 
+// ---- Aseprite sheets (art/aseprite, exported by tools/export-sprites.sh) ----
+// One horizontal strip per sprite set, with tags. Runner sheets are 30×25 art
+// px frames with two slices: 'stand' (24×25) and 'slide' (30×12); world
+// sheets (cacti, pterodactyl, eggs...) are their own size, no slices. Every
+// frame includes the 1 px outline margin.
+const SHEETS = ['trex', 'velociraptor', 'pachycephalosaurus', 'parasaurolophus', 'hadrosaur', 'ceratosaurus', 'megalosaurus', 'therizinosaurus', 'allosaurus', 'spinosaurus'];
+const OY = { stand: 1, slide: 5 };   // px below the footprint's top
+
+function loadImage(url) {
+  return new Promise((ok, fail) => {
+    const img = new Image();
+    img.onload = () => ok(img);
+    img.onerror = () => fail(new Error(`can't load ${url}`));
+    img.src = url;
+  });
+}
+
+// { tag: [small canvas at 1 px per art px, ...] }; a runner frame has .kind.
+async function loadSheet(name) {
+  const url = ext => new URL(`../assets/sprites/${name}.${ext}`, import.meta.url).href;
+  const [img, data] = await Promise.all([loadImage(url('png')), fetch(url('json')).then(r => r.json())]);
+  const slice = Object.fromEntries((data.meta.slices || []).map(s => [s.name, s.keys[0].bounds]));
+  const tags = {};
+  // A 9-slice's fixed borders, in art px: { left, top, right, bottom }.
+  const nine = (data.meta.slices || []).find(s => s.keys[0].center)?.keys[0];
+  if (nine) {
+    const { bounds: b, center: c } = nine;
+    Object.defineProperty(tags, 'nine', { value: { left: c.x, top: c.y, right: b.w - c.x - c.w, bottom: b.h - c.y - c.h } });
+  }
+  for (const t of data.meta.frameTags) {
+    const kind = slice.stand ? (t.name.startsWith('slide') ? 'slide' : 'stand') : null;
+    tags[t.name] = [];
+    for (let i = t.from; i <= t.to; i++) {
+      const f = data.frames[i].frame, b = kind ? slice[kind] : { x: 0, y: 0, w: f.w, h: f.h };
+      const [c, g] = canvas(b.w, b.h);
+      g.drawImage(img, f.x + b.x, f.y + b.y, b.w, b.h, 0, 0, b.w, b.h);
+      c.kind = kind;
+      tags[t.name].push(c);
+    }
+  }
+  return tags;
+}
+
+// A sheet frame as a game sprite: scaled up, with its offset and night rim.
+function sheetSprite(small, oy, withRim) {
+  const img = up(small);
+  img.oy = oy;
+  if (withRim) img.rim = rim(small);
+  return img;
+}
+
+function sheetRunner(T) {
+  const one = c => sheetSprite(c, OY[c.kind]);
+  const jump = one(T.jump[0]);
+  return {
+    run: T.run.map(one), jump, crash: one(T.crash[0]), sleep: one(T.sleep[0]),
+    slide: T.slide.map(one), slideCrash: one(T.slideCrash[0]),
+    shadow: silhouette(jump),
+  };
+}
+
+const runners = Object.fromEntries(await Promise.all(SHEETS.map(async id => [id, sheetRunner(await loadSheet(id))])));
+
+const [cactusSmall, cactusLarge, ptero, egg, goldEgg, mount, hatchEgg] = await Promise.all([
+  loadSheet('cactus-small').then(T => sheetSprite(T.idle[0], CACTUS_OY['cactus-small'], true)),
+  loadSheet('cactus-large').then(T => sheetSprite(T.idle[0], CACTUS_OY['cactus-large'], true)),
+  loadSheet('ptero').then(T => T.flap.map(c => sheetSprite(c, 0, true))),
+  loadSheet('egg').then(T => T.glint.map(c => sheetSprite(c, 0, true))),
+  loadSheet('gold-egg').then(T => T.glint.map(c => sheetSprite(c, 0, true))),
+  loadSheet('mount').then(T => T.flap.map(c => sheetSprite(c, 0))),
+  loadSheet('hatch-egg').then(T => ({
+    stages: T.stage.map(c => sheetSprite(c, 0)),
+    left: sheetSprite(T.left[0], 0), right: sheetSprite(T.right[0], 0), bottom: sheetSprite(T.bottom[0], 0),
+  })),
+]);
+
+// Background layers (GDD 3.6), at art resolution (1 px per art px); render.js
+// scales them up and makes the night versions.
+const BG = ['sky', 'stars', 'sun', 'moon', 'clouds', 'mesas', 'dunes', 'ground'];
+const bg = Object.fromEntries(await Promise.all(BG.map(async id => [id, await loadSheet(`bg-${id}`)])));
+
+// Buttons (GDD 8): 9-slice frames per color, [normal, pressed]; icon glyphs.
+const [button, icons] = await Promise.all([loadSheet('ui-button'), loadSheet('ui-icons')]);
+
 export const SPR = {
-  runners: Object.fromEntries(Object.entries(RUNNERS).map(([id, R]) => [id, runner(R)])),
-  'cactus-small': sprite(ART['cactus-small'], true),
-  'cactus-large': sprite(ART['cactus-large'], true),
-  ptero: ART.ptero.map(s => sprite(s, true)),
-  egg: ART.egg.map(s => sprite(s, true)),   // plain, glinting
-  goldEgg: ART.goldEgg.map(s => sprite(s, true, { ...COLOR, y: '#F5C542', Y: '#C9932A' })),
-  mount: ART.mount.map(s => sprite(s, false, { ...COLOR, P: '#3E8A9A', D: '#2C6474' })),
-  hatchEgg: {
-    stages: ART.hatchEgg.stages.map(s => sprite(s)),
-    left: sprite(ART.hatchEgg.left),
-    right: sprite(ART.hatchEgg.right),
-    bottom: sprite(ART.hatchEgg.bottom),
-  },
+  bg,
+  button,
+  icons,
+  runners,
+  'cactus-small': cactusSmall,
+  'cactus-large': cactusLarge,
+  ptero,
+  egg,       // plain, glinting
+  goldEgg,
+  mount,
+  hatchEgg,
 };

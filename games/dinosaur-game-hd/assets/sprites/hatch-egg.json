@@ -1,0 +1,82 @@
+{ "frames": [
+   {
+    "filename": "hatch-egg 0.aseprite",
+    "frame": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   },
+   {
+    "filename": "hatch-egg 1.aseprite",
+    "frame": { "x": 24, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   },
+   {
+    "filename": "hatch-egg 2.aseprite",
+    "frame": { "x": 48, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   },
+   {
+    "filename": "hatch-egg 3.aseprite",
+    "frame": { "x": 72, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   },
+   {
+    "filename": "hatch-egg 4.aseprite",
+    "frame": { "x": 96, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   },
+   {
+    "filename": "hatch-egg 5.aseprite",
+    "frame": { "x": 120, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   },
+   {
+    "filename": "hatch-egg 6.aseprite",
+    "frame": { "x": 144, "y": 0, "w": 24, "h": 30 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 30 },
+    "sourceSize": { "w": 24, "h": 30 },
+    "duration": 83
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.18.6-arm64",
+  "image": "hatch-egg.png",
+  "format": "RGBA8888",
+  "size": { "w": 168, "h": 30 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "stage", "from": 0, "to": 3, "direction": "forward", "color": "#000000ff" },
+   { "name": "left", "from": 4, "to": 4, "direction": "forward", "color": "#000000ff" },
+   { "name": "right", "from": 5, "to": 5, "direction": "forward", "color": "#000000ff" },
+   { "name": "bottom", "from": 6, "to": 6, "direction": "forward", "color": "#000000ff" }
+  ],
+  "slices": [
+  ]
+ }
+}

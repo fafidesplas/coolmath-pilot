@@ -1,30 +1,19 @@
 // Checks every sprite against its hitboxes (GDD 3.4): no box pixel may be
 // more than 2 px from the outlined sprite, so nobody dies without visibly
-// touching something. Sprites are cell maps (art.js) drawn CELL px per cell
-// with a 1 cell outline.
+// touching something. Sprites are the exported Aseprite sheets
+// (assets/sprites, see tools/export-sprites.sh), drawn CELL px per art px.
 //   node tools/art-test.mjs
-import { RUNNERS, ART, CELL } from '../src/art.js';
-import { RUNNER, RUNNER_BOXES, OBSTACLES } from '../src/config.js';
+import fs from 'node:fs';
+import { CELL, CACTUS_OY } from '../src/art.js';
+import { RUNNER, RUNNER_BOXES, OBSTACLES, RUNNER_IDS } from '../src/config.js';
+import { readPng } from './png.mjs';
 
 let failed = 0, passed = 0;
 const ok = (cond, msg) => { console.log(`${cond ? 'PASS' : 'FAIL'}  ${msg}`); if (cond) passed++; else failed++; };
 
-// Logical px covered by the sprite and its outline, with the first row oy px down.
-function covered({ rows, oy }) {
-  const on = new Set();
-  rows.forEach((row, cy) => [...row].forEach((c, cx) => {
-    if (c === '.') return;
-    for (let y = (cy - 1) * CELL; y < (cy + 2) * CELL; y++) for (let x = (cx - 1) * CELL; x < (cx + 2) * CELL; x++) {
-      const outline = (y < cy * CELL || y >= (cy + 1) * CELL) && (x < cx * CELL || x >= (cx + 1) * CELL);
-      if (!outline) on.add(`${x},${y + oy}`);   // the outline is 4-connected: no corners
-    }
-  }));
-  return on;
-}
-
 // The farthest any box pixel is from the outlined sprite (Chebyshev px).
 function gap(sprite, boxes) {
-  const on = covered(sprite);
+  const on = sprite.on;
   let worst = 0;
   for (const [bx, by, bw, bh] of boxes) for (let y = by; y < by + bh; y++) for (let x = bx; x < bx + bw; x++) {
     let d = 0;
@@ -39,14 +28,50 @@ function gap(sprite, boxes) {
   return worst;
 }
 
-const same = rows => rows.every(r => r.length === rows[0].length);
 const check = (name, sprite, boxes, limit = 2) => {
-  ok(same(sprite.rows), `${name}: rows all the same length`);
   const g = gap(sprite, boxes);
   ok(g <= limit, `${name}: every box within ${limit} px of the outline (worst ${g} px)`);
 };
 
-for (const [id, R] of Object.entries(RUNNERS)) {
+// Each frame is checked from its exported pixels: every opaque pixel, outline
+// included, of a runner frame's 'stand' or 'slide' slice, or a world frame.
+// Pixel (px, py) of a slice covers logical ((px - 1) * CELL, (py - 1) * CELL + oy).
+const OY = { stand: 1, slide: 5 };
+// { tag: [{ on, oy, rows }] } from assets/sprites/<name>.png + .json.
+// Runner sheets use their 'stand' / 'slide' slices; world sheets the whole
+// frame with the given oy.
+function readSheet(name, worldOy = 0) {
+  const base = new URL(`../assets/sprites/${name}`, import.meta.url).pathname;
+  if (!fs.existsSync(`${base}.png`)) throw new Error(`missing sheet assets/sprites/${name}.png`);
+  const png = readPng(`${base}.png`), data = JSON.parse(fs.readFileSync(`${base}.json`, 'utf8'));
+  const slice = Object.fromEntries((data.meta.slices || []).map(s => [s.name, s.keys[0].bounds]));
+  const T = {};
+  for (const t of data.meta.frameTags) {
+    const kind = slice.stand ? (t.name.startsWith('slide') ? 'slide' : 'stand') : null;
+    T[t.name] = [];
+    for (let i = t.from; i <= t.to; i++) {
+      const f = data.frames[i].frame, b = kind ? slice[kind] : { x: 0, y: 0, w: f.w, h: f.h };
+      const oy = kind ? OY[kind] : worldOy, on = new Set();
+      let last = -1;
+      for (let py = 0; py < b.h; py++) for (let px = 0; px < b.w; px++) {
+        if (png.alpha(f.x + b.x + px, f.y + b.y + py) < 128) continue;
+        last = Math.max(last, py);
+        for (let y = 0; y < CELL; y++) for (let x = 0; x < CELL; x++) on.add(`${(px - 1) * CELL + x},${(py - 1) * CELL + oy + y}`);
+      }
+      // rows: one row per fill row, for the footprint checks below.
+      T[t.name].push({ on, oy, rows: Array(last - 1).fill('x'), sheet: true });
+    }
+  }
+  return T;
+}
+function sheet(id) {
+  const T = readSheet(id);
+  return { run: T.run, jump: T.jump[0], crash: T.crash[0], sleep: T.sleep[0], slide: T.slide, slideCrash: T.slideCrash[0] };
+}
+
+for (const id of RUNNER_IDS) {
+  const R = sheet(id);
+  ok(R.run.length === 4 && R.slide.length === 2, `${id}: sheet has 4 run and 2 slide frames`);
   const standing = { ...Object.fromEntries(R.run.map((s, i) => [`${id} run ${i}`, s])), [`${id} jump`]: R.jump, [`${id} crash`]: R.crash, [`${id} sleep`]: R.sleep };
   for (const [name, s] of Object.entries(standing)) {
     ok(s.oy + s.rows.length * CELL === RUNNER.height, `${name}: feet on the footprint's bottom`);
@@ -66,18 +91,33 @@ for (const [id, R] of Object.entries(RUNNERS)) {
     const low = RUNNER_BOXES.duck.map(([x, y, w, h]) => [x, Math.max(y - shift, s.oy), w, y - shift + h - Math.max(y - shift, s.oy)]);
     check(name, s, low);
   }
-  for (const k of new Set(R.slide.concat(R.run, [R.jump]).flatMap(s => [...s.rows.join('')])))
-    ok(k === '.' || k === 'w' || k === 'k' || k in R.colors, `${id}: cell '${k}' has a color`);
 }
 
 for (const id of ['cactus-small', 'cactus-large']) {
-  const s = ART[id], t = OBSTACLES[id];
+  const t = OBSTACLES[id], s = readSheet(id, CACTUS_OY[id]).idle[0];
   ok(s.oy + s.rows.length * CELL === t.h, `${id}: base on the ground`);
   check(id, s, t.boxes);
 }
-ART.ptero.forEach((s, i) => check(`ptero ${i}`, s, OBSTACLES.ptero.boxes));
-ART.egg.forEach((s, i) => ok(same(s.rows), `egg ${i}: rows all the same length`));
-for (const [k, v] of Object.entries(ART.hatchEgg)) [].concat(v).forEach((s, i) => ok(same(s.rows), `hatch egg ${k} ${i}: rows all the same length`));
+readSheet('ptero').flap.forEach((s, i) => check(`ptero ${i}`, s, OBSTACLES.ptero.boxes));
+for (const [id, tag, n] of [['egg', 'glint', 2], ['gold-egg', 'glint', 2], ['mount', 'flap', 2], ['hatch-egg', 'stage', 4]]) {
+  ok(readSheet(id)[tag].length === n, `${id}: sheet has ${n} ${tag} frames`);
+}
+
+// Background layers (batch 6): 320 art px wide so they tile every 640 logical
+// px, and the heights render.js places them at. Buttons: a 9-slice per color.
+const size = name => { const d = JSON.parse(fs.readFileSync(new URL(`../assets/sprites/${name}.json`, import.meta.url), 'utf8')); return [d.frames[0].frame.w, d.frames[0].frame.h, d]; };
+for (const [id, w, h] of [['sky', 320, 125], ['stars', 320, 100], ['clouds', 320, 30], ['mesas', 320, 55], ['dunes', 320, 25], ['ground', 320, 55]]) {
+  const [fw, fh] = size(`bg-${id}`);
+  ok(fw === w && fh === h, `bg-${id}: ${w}×${h} art px (is ${fw}×${fh})`);
+}
+ok(readSheet('bg-sky').day && readSheet('bg-sky').night, 'bg-sky: day and night tags');
+{
+  const [, , d] = size('ui-button'), T = readSheet('ui-button'), c = d.meta.slices?.[0]?.keys[0].center;
+  ok(['orange', 'slate', 'gold'].every(k => T[k]?.length === 2), 'ui-button: orange, slate, gold, each normal and pressed');
+  ok(!!c, 'ui-button: a 9-slice center');
+  const I = readSheet('ui-icons');
+  ok(['pause', 'soundOn', 'soundOff', 'prev', 'next'].every(k => I[k]?.length === 1), 'ui-icons: all 5 glyphs');
+}
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

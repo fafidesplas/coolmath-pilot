@@ -10,7 +10,7 @@
 @../../PHASES.md
 
 ## Why it works for Coolmath
-Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: eggs, unlockable runners (more dinosaurs, plus the beast from our game Hangman), and a 2-player race on one keyboard.
+Almost every player has already played the dinosaur game in Chrome when the internet was down, often at school. It needs no tutorial, a run lasts under a minute, and "one more try" comes by itself. The original is bare on purpose; this version keeps its exact feel and adds only the modern runner features that give a reason to come back: eggs, unlockable runners (more dinosaurs), and a 2-player race on one keyboard.
 
 **Name:** "Dinosaur Game: Cool Edition" (the folder slug stays `dinosaur-game-hd`). The original belongs to Google: the name, the logo and the store text never say "Chrome", "Google" or "T-Rex Runner", and the dino and its sprites are original art, not traced from Chrome. We copy the original's tuning numbers, never its code or art.
 
@@ -64,14 +64,11 @@ The rewards for achievers and completionists: each one unlocks with one achievem
 | **Allosaurus** | horn crests over the eyes | Win 10 two-player races (the 2P-only bonus) |
 | **Spinosaurus** | tall back sail, long snout | Unlock every other runner except Allosaurus (the completionist prize) |
 
-### Hangman beast (achievement)
-The furry beast from **Coolmath Hangman** (also ours) joins as one more achievement runner: a round black fur ball with two horns, sleepy white eyes and one fang (reference: `reference/hangman-beast.png`, redrawn as pixel art). Achievement: see 10 nights in total, since it is a creature of the dark. Its sprite needs a light rim or outline so it stays visible against the night sky.
-
 The achievements are tracked only in the save file: no separate achievements screen, the Runners screen is the list.
 
 ## Progression and content (v1)
 - Endless 1P run, 2P race.
-- 11 runners: the T-Rex, 3 dinosaurs hatched with eggs, and 6 dinosaurs plus the Hangman beast unlocked by achievements.
+- 10 runners: the T-Rex, 3 dinosaurs hatched with eggs, and 6 dinosaurs unlocked by achievements.
 - One desert scene with day and night.
 
 ## Retention
@@ -100,7 +97,7 @@ Jump "boop", duck swoosh, egg "pip" (pitch rises on an egg streak), hatch crack 
 - Questions to answer: do eggs and unlockable runners make runs per session go up compared with plain best-distance? How often is the 2P mode played, and are those sessions longer?
 
 ## Scope
-- **v1:** 1P endless, 2P race, eggs, a golden egg that earns a bonus pterodactyl flight (Jetpack Joyride style, after the run), 11 runners (4 dinosaurs, 6 achievement dinosaurs and the Hangman beast), day/night, one desert scene.
+- **v1:** 1P endless, 2P race, eggs, a golden egg that earns a bonus pterodactyl flight (Jetpack Joyride style, after the run), 10 runners (4 dinosaurs and 6 achievement dinosaurs), day/night, one desert scene.
 - **Later (only if data says so):** more scenes (jungle, volcano, ice) that change every 1000 m, ghost of your best run, color variants of each dinosaur as an egg sink once all 3 are hatched. Not planned: power-ups, missions, upgrades, lives, loot boxes.
 
 ## Risks and open questions
