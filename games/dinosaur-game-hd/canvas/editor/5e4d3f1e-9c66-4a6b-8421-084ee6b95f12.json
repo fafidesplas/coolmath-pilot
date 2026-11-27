@@ -298,12 +298,64 @@
     "batch6-ingame-clean-ground": {
       "x": 1360,
       "y": 3340
+    },
+    "font-header-group": {
+      "x": 800,
+      "y": 16540,
+      "width": 2720,
+      "height": 1640
+    },
+    "font-header-specimen": {
+      "x": 40,
+      "y": 60
+    },
+    "font-header-title": {
+      "x": 1360,
+      "y": 60
+    },
+    "font-header-runners": {
+      "x": 40,
+      "y": 860
+    },
+    "font-header-gameover": {
+      "x": 1360,
+      "y": 860
+    },
+    "font-dirt-group": {
+      "x": 800,
+      "y": 18280,
+      "width": 2720,
+      "height": 3440
+    },
+    "font-dirt-specimen": {
+      "x": 40,
+      "y": 60
+    },
+    "font-compare-title": {
+      "x": 1360,
+      "y": 60
+    },
+    "font-dirt-title": {
+      "x": 40,
+      "y": 860
+    },
+    "font-dirt-runners": {
+      "x": 1360,
+      "y": 860
+    },
+    "font-dirt-gameover": {
+      "x": 40,
+      "y": 1660
+    },
+    "font-compare-all": {
+      "x": 40,
+      "y": 2460
     }
   },
   "viewport": {
-    "x": -1400.7899142032327,
-    "y": -21833.370822278142,
-    "zoom": 1.4800682180438889
+    "x": 86.10047695634546,
+    "y": -1841.83487989669,
+    "zoom": 0.1
   },
   "view": "canvas"
 }

@@ -232,7 +232,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   ├──Fly (banked flights)──▶ Bonus flight ──▶ Title
   └──Settings (sound)
 ```
-- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (Night Ink with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. While `DEBUG` is true, a temporary **DEBUG ON / OFF** button bottom left turns the debug keys (G, H, I, N, U) and the 300 m golden eggs on and off for the page's life (starts ON; removed in release builds). Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
+- **Title:** the desert with the equipped runner asleep ("Zz"), the logo "COOL DINO GAME" (the header font at its big size, with an orange drop shadow; no subtitle), the buttons **Play** (big), **2 Players**, **Runners**, **Fly** (only when flights are banked, with the count), and a sound toggle. While `DEBUG` is true, a temporary **DEBUG ON / OFF** button bottom left turns the debug keys (G, H, I, N, U) and the 300 m golden eggs on and off for the page's life (starts ON; removed in release builds). Pressing Space, Up or W starts a 1P run, and that first press is also the run's first jump, like the original.
 - **Playing (HUD):** in the sky band. Top center, the original's score style: `HI 01240  00321`. Top left, an egg icon with this run's count. Top right corner, the pause button (alone, so it never covers the score).
 - **Bonus flight (HUD):** a 20 s bar at the top center instead of the score, the egg count top left, pause top right.
 - **Paused:** dimmed scene, **Resume**, **Restart**, **Menu**. The game also pauses when the tab is hidden.
@@ -262,7 +262,7 @@ Title ──Play / Space──▶ Playing ──crash──▶ Results ──Ret
   - **Obstacles:** cacti with strong silhouettes and arms; a pterodactyl with a big wing flap.
   - **Bonus flight:** a bigger pterodactyl mount (about 56×32 px) with the equipped runner's jump frame on its back; the golden egg in gold (`#F5C542`) with a white sparkle; the same desert sky, seen higher up (more sky, the mesas low).
   - **Background:** 3 parallax layers (dunes at 0.2×, mesas at 0.1×, clouds at 0.05× the scroll speed), each pre-rendered once to an offscreen canvas. A warm sunset band by day; stars and a moon at night.
-  - **UI:** a pixel bitmap font drawn in code (no web fonts), slate panels with a Night Ink border, orange buttons.
+  - **UI:** two pixel fonts, no web fonts. Body text: a 5×7 bitmap font drawn in code. Headers (the title logo, PAUSED, GAME OVER, RUNNERS, 2 PLAYERS, the hatch name, the flight and race results): "Rubik Dirt (Pixel)", a hand-made pixel version of the Rubik Dirt font (SIL Open Font License 1.1; license in `art/fonts/OFL-RubikDirt.txt`, credit in `CREDITS.md`), drawn in Aseprite (`art/aseprite/ui/font-header.lua`): heavy rounded capitals with dirt specks from the real font's texture, Egg Cream letters shading to a warm cream, a Night Ink outline, an orange or Night Ink drop shadow. Glyphs are 12 art px tall; the title uses a big size with the fill doubled and the outline kept at 1 art px. Slate panels with a Night Ink border, orange buttons.
 - **Juice list:**
   - run cycle dust puffs (one at each footfall); a puff from the feet on takeoff and on landing; landing squash (2 frames, 50 ms each: 6 px wider and lower, then 2 px) and takeoff stretch (3 frames, 50 ms each: 8 px narrower and 10 px taller, then 4 and 5, then 2 and 2), feet kept in place;
   - slide: a sand burst along the belly on entry (bigger when landing into it) and, while it lasts, a dust trail from the tail and sand spraying off the whole belly (drawn over the runner's lower edge);
@@ -385,6 +385,8 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-11-27 — Header font is now Rubik Dirt (Pixel), a pixel version of the OFL font Rubik Dirt (9; Pao's call after a side-by-side of every header). The first header font is removed.
+- 2026-11-27 — Header font (8, 9): screen headers and the title logo use a new display pixel font drawn in Aseprite; body text keeps the 5×7 code font. Pao's call, from a lettering reference.
 - 2026-11-27 — Stretch goals (13): five more scenes, Fern Jungle, Volcano, Ice Age, Prehistoric Coast and Glow Swamp, from the location passes on the canvas. They replace "more scenes (jungle, volcano, ice)" in Later. Not in v1.
 - 2026-11-25 — Hangman beast removed (Pao's call): 10 runners, all dinosaurs (2, 7.1, 9, 12, 13). `totalNights` stays in the save as a lifetime stat.
 - 2026-11-24 — Synced with the build (no design change): the results show the hopping golden egg instead of a Fly! button, Retry and Menu only (3.8, 8); the flight has no hazards, so no hit end, no warning sound, no thunderclouds (3.8, 9, 10, 12); flight egg rate ~810 (14); debug builds put a golden egg every 300 m and the title has a temporary DEBUG button (3.7, 8, 12); `tools/` tests listed (12). This document is also the canvas main design document.

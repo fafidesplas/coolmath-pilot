@@ -128,8 +128,25 @@ const bg = Object.fromEntries(await Promise.all(BG.map(async id => [id, await lo
 // Buttons (GDD 8): 9-slice frames per color, [normal, pressed]; icon glyphs.
 const [button, icons] = await Promise.all([loadSheet('ui-button'), loadSheet('ui-icons')]);
 
+// Header font (GDD 8): one glyph per tag, left-aligned in its cell. adv is
+// the glyph's width with its outline, in art px: the next glyph starts there.
+// The font is Rubik Dirt (Pixel), art/aseprite/ui/font-header.lua.
+const reader = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+async function loadFont(name) {
+  return Object.fromEntries(Object.entries(await loadSheet(name)).map(([k, [small]]) => {
+    reader.canvas.width = small.width; reader.canvas.height = small.height;
+    reader.drawImage(small, 0, 0);
+    const a = reader.getImageData(0, 0, small.width, small.height).data;
+    let adv = 0;
+    for (let i = 3; i < a.length; i += 4) if (a[i]) adv = Math.max(adv, ((i - 3) / 4) % small.width + 1);
+    return [k, { small, adv }];
+  }));
+}
+const header = await loadFont('font-header');
+
 export const SPR = {
   bg,
+  header,
   button,
   icons,
   runners,

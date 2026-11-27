@@ -791,22 +791,142 @@
     {
       "id": "batch6-bg-ground-before",
       "type": "asset",
-      "parentId": "batch6-group",
-      "title": "Ground, before (with pebbles)",
       "data": {
         "assetId": "batch6-bg-ground-before",
         "mediaType": "image"
-      }
+      },
+      "parentId": "batch6-group",
+      "title": "Ground, before (with pebbles)"
     },
     {
       "id": "batch6-ingame-clean-ground",
       "type": "asset",
-      "parentId": "batch6-group",
-      "title": "In game: clean ground",
       "data": {
         "assetId": "batch6-ingame-clean-ground",
         "mediaType": "image"
-      }
+      },
+      "parentId": "batch6-group",
+      "title": "In game: clean ground"
+    },
+    {
+      "id": "font-header-group",
+      "type": "group",
+      "data": {
+        "name": "Header font: first try (not chosen)",
+        "pixelStyle": "classic"
+      },
+      "title": "Header font",
+      "description": "The first header font, replaced by Rubik Dirt (Pixel). Kept here as a record; its files are removed."
+    },
+    {
+      "id": "font-header-specimen",
+      "type": "asset",
+      "data": {
+        "assetId": "font-header-specimen",
+        "mediaType": "image"
+      },
+      "parentId": "font-header-group",
+      "title": "Header font: specimen"
+    },
+    {
+      "id": "font-header-title",
+      "type": "asset",
+      "data": {
+        "assetId": "font-header-title",
+        "mediaType": "image"
+      },
+      "parentId": "font-header-group",
+      "title": "Header font: title in game"
+    },
+    {
+      "id": "font-header-runners",
+      "type": "asset",
+      "data": {
+        "assetId": "font-header-runners",
+        "mediaType": "image"
+      },
+      "parentId": "font-header-group",
+      "title": "Header font: Runners in game"
+    },
+    {
+      "id": "font-header-gameover",
+      "type": "asset",
+      "data": {
+        "assetId": "font-header-gameover",
+        "mediaType": "image"
+      },
+      "parentId": "font-header-group",
+      "title": "Header font: results in game"
+    },
+    {
+      "id": "font-dirt-group",
+      "type": "group",
+      "data": {
+        "name": "Header font: Rubik Dirt (Pixel) (chosen)",
+        "pixelStyle": "classic"
+      },
+      "title": "Dirt header font",
+      "description": "The header font in the game: a pixel version of Rubik Dirt (OFL), art/aseprite/ui/font-header.lua."
+    },
+    {
+      "id": "font-dirt-specimen",
+      "type": "asset",
+      "data": {
+        "assetId": "font-dirt-specimen",
+        "mediaType": "image"
+      },
+      "parentId": "font-dirt-group",
+      "title": "Dirt font: specimen"
+    },
+    {
+      "id": "font-compare-title",
+      "type": "asset",
+      "data": {
+        "assetId": "font-compare-title",
+        "mediaType": "image"
+      },
+      "parentId": "font-dirt-group",
+      "title": "Title: current font vs Dirt font"
+    },
+    {
+      "id": "font-dirt-title",
+      "type": "asset",
+      "data": {
+        "assetId": "font-dirt-title",
+        "mediaType": "image"
+      },
+      "parentId": "font-dirt-group",
+      "title": "Dirt font: title in game"
+    },
+    {
+      "id": "font-dirt-runners",
+      "type": "asset",
+      "data": {
+        "assetId": "font-dirt-runners",
+        "mediaType": "image"
+      },
+      "parentId": "font-dirt-group",
+      "title": "Dirt font: Runners in game"
+    },
+    {
+      "id": "font-dirt-gameover",
+      "type": "asset",
+      "data": {
+        "assetId": "font-dirt-gameover",
+        "mediaType": "image"
+      },
+      "parentId": "font-dirt-group",
+      "title": "Dirt font: results in game"
+    },
+    {
+      "id": "font-compare-all",
+      "type": "asset",
+      "data": {
+        "assetId": "font-compare-all",
+        "mediaType": "image"
+      },
+      "parentId": "font-dirt-group",
+      "title": "All headers: first font vs Rubik Dirt"
     }
   ],
   "edges": [],

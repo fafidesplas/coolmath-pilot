@@ -290,6 +290,56 @@
       "name": "Batch 6: in game, clean ground",
       "path": "art/plan/batch6-ingame-clean-ground.jpg",
       "description": "Playtest screenshot: a day run on the ground without pebbles."
+    },
+    "font-header-specimen": {
+      "name": "Header font: specimen",
+      "path": "art/plan/font-header-specimen.png",
+      "description": "Every glyph at 4x, with the orange drop shadow on sand and without it on a slate panel."
+    },
+    "font-header-title": {
+      "name": "Header font: title in game",
+      "path": "art/plan/font-header-title.jpg",
+      "description": "Playtest screenshot: the title logo at the big size."
+    },
+    "font-header-runners": {
+      "name": "Header font: Runners in game",
+      "path": "art/plan/font-header-runners.jpg",
+      "description": "Playtest screenshot: the RUNNERS header."
+    },
+    "font-header-gameover": {
+      "name": "Header font: results in game",
+      "path": "art/plan/font-header-gameover.jpg",
+      "description": "Playtest screenshot: GAME OVER on the results panel."
+    },
+    "font-dirt-specimen": {
+      "name": "Dirt font: specimen",
+      "path": "art/plan/font-dirt-specimen.png",
+      "description": "Every glyph of the pixel Rubik Dirt font at 4x: orange drop shadow on sand, none on a slate panel."
+    },
+    "font-compare-title": {
+      "name": "Title: current font vs Dirt font",
+      "path": "art/plan/font-compare-title.png",
+      "description": "The title logo in game: the current header font on top, the Dirt font below."
+    },
+    "font-dirt-title": {
+      "name": "Dirt font: title in game",
+      "path": "art/plan/font-dirt-title.jpg",
+      "description": "Playtest screenshot: the title logo at the big size."
+    },
+    "font-dirt-runners": {
+      "name": "Dirt font: Runners in game",
+      "path": "art/plan/font-dirt-runners.jpg",
+      "description": "Playtest screenshot: the RUNNERS header."
+    },
+    "font-dirt-gameover": {
+      "name": "Dirt font: results in game",
+      "path": "art/plan/font-dirt-gameover.jpg",
+      "description": "Playtest screenshot: GAME OVER on the results panel."
+    },
+    "font-compare-all": {
+      "name": "Headers: first font vs Rubik Dirt",
+      "path": "art/plan/font-compare-all.png",
+      "description": "Every header the game uses, in both fonts side by side at 4x, drawn with the game's rules: the title at the big size, each header's shadow and background from its screen (sky, dimmed scene, slate panel)."
     }
   }
 }

@@ -2,7 +2,7 @@
 // frame's buttons, and main.js hit-tests pointers against the same list, so a
 // sliding panel's buttons are always where they are drawn.
 import { VIEW_W, VIEW_H, LANE, RACE, RUN, HATCH, RUNNER_LIST, FLIGHT, DEBUG } from './config.js';
-import { drawText, textWidth } from './font.js';
+import { drawText, textWidth, drawHeader } from './font.js';
 import { PAL, SPR, MARGIN } from './sprites.js';
 import { CELL } from './art.js';
 
@@ -266,22 +266,21 @@ function arrow(ctx, x, y, dir) {
 
 function drawTitle(ctx, g, now) {
   const cx = VIEW_W / 2;
-  drawText(ctx, 'COOL DINO GAME', cx + 2, 30, 4, PAL.orange, 'center');
-  drawText(ctx, 'COOL DINO GAME', cx, 28, 4, PAL.ink, 'center');
+  drawHeader(ctx, 'COOL DINO GAME', cx, 22, { big: true, shadow: PAL.orange });
   if (Math.floor(now / 600) % 2 === 0) drawText(ctx, 'SPACE, UP OR W TO START', cx, 156, 2, PAL.ink, 'center');
   if (g.data.best) drawText(ctx, `BEST ${g.data.best} M`, cx, 178, 2, PAL.ink, 'center');
 }
 
 function drawPause(ctx, r) {
   dim(ctx, r, 0.6);
-  drawText(ctx, 'PAUSED', VIEW_W / 2, 80, 4, PAL.cream, 'center');
+  drawHeader(ctx, 'PAUSED', VIEW_W / 2, 80, { shadow: PAL.ink });
 }
 
 function drawResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
   const x = 140, w = 360, y = panelY(g, now), cx = x + w / 2;
   box(ctx, x, y, w, PANEL_H, PAL.ink, PAL.slate, '#46546A');
-  drawText(ctx, 'GAME OVER', cx, y + 12, 4, PAL.cream, 'center');
+  drawHeader(ctx, 'GAME OVER', cx, y + 10);
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
   drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
   drawText(ctx, `BEST ${g.data.best} M`, cx, y + 84, 2, PAL.sand, 'center');
@@ -316,8 +315,7 @@ function drawResults(ctx, g, now) {
 // The focused card has a cream frame.
 function drawRunners(ctx, g, now) {
   const d = g.data, cx = VIEW_W / 2;
-  drawText(ctx, 'RUNNERS', cx + 2, 14, 4, PAL.orange, 'center');
-  drawText(ctx, 'RUNNERS', cx, 12, 4, PAL.ink, 'center');
+  drawHeader(ctx, 'RUNNERS', cx, 10, { shadow: PAL.orange });
   const bank = String(d.eggs);   // the egg bank, top right
   ctx.drawImage(SPR.egg[0], VIEW_W - 34 - textWidth(bank, 2), 14);
   drawText(ctx, bank, VIEW_W - 16, 16, 2, PAL.ink, 'right');
@@ -392,7 +390,7 @@ function drawHatch(ctx, g, now, r) {
   ctx.drawImage(E.bottom, ex - MARGIN, ey - MARGIN);
 
   const pop = 2 * Math.round(-Math.abs(Math.sin(Math.min(1, s / 0.4) * Math.PI)) * 4);
-  drawText(ctx, `${h.name}!`, cx, 70 + pop, 4, PAL.cream, 'center');
+  drawHeader(ctx, `${h.name}!`, cx, 68 + pop, { shadow: PAL.ink });
   drawText(ctx, 'HATCHED AND READY TO RUN', cx, 110, 2, PAL.sand, 'center');
   if (t >= HATCH_MS.done && Math.floor(now / 500) % 2 === 0) drawText(ctx, 'CLICK OR PRESS ANY KEY', cx, 280, 2, PAL.cream, 'center');
 }
@@ -423,7 +421,7 @@ function drawFlightHud(ctx, g, now) {
     const label = `+${Math.round(f.eggCount * p)} EGGS`, w = textWidth(label, 4) + 28, left = cx - w / 2;
     const pop = 2 * Math.round(-Math.abs(Math.sin(Math.min(1, t / 400) * Math.PI)) * 4);
     box(ctx, cx - 184, 76, 368, 100, PAL.ink, PAL.slate, '#46546A');
-    drawText(ctx, f.result === 'complete' ? 'WHAT A FLIGHT!' : 'OOF!', cx, 90 + pop, 4, PAL.cream, 'center');
+    drawHeader(ctx, f.result === 'complete' ? 'WHAT A FLIGHT!' : 'OOF!', cx, 88 + pop);
     ctx.drawImage(SPR.egg[0], left, 146);
     drawText(ctx, label, left + 28, 142, 4, PAL.cream);
   }
@@ -453,8 +451,7 @@ function trophy(ctx, x, y, k = 2) {
 
 function drawSetup(ctx, g) {
   const d = g.data;
-  drawText(ctx, '2 PLAYERS', VIEW_W / 2 + 2, 14, 4, PAL.orange, 'center');
-  drawText(ctx, '2 PLAYERS', VIEW_W / 2, 12, 4, PAL.ink, 'center');
+  drawHeader(ctx, '2 PLAYERS', VIEW_W / 2, 10, { shadow: PAL.orange });
   const keys = ['A / D TO CHANGE   W JUMP   S SLIDE', 'LEFT / RIGHT TO CHANGE   UP JUMP   DOWN SLIDE'];
   for (const p of [0, 1]) {
     const top = LANE.top2P[p] - 10;
@@ -499,7 +496,7 @@ function drawRaceResults(ctx, g, now) {
   if (now - g.crashAt < RESULTS_DELAY_MS) return;
   const { x, w, h } = RACE_PANEL, y = panelY(g, now), cx = x + w / 2, win = g.winner;
   box(ctx, x, y, w, h, PAL.ink, PAL.slate, '#46546A');
-  drawText(ctx, win === 'draw' ? 'DRAW!' : `${win.toUpperCase()} WINS!`, cx, y + 12, 4, PAL.cream, 'center');
+  drawHeader(ctx, win === 'draw' ? 'DRAW!' : `${win.toUpperCase()} WINS!`, cx, y + 10);
   const p = ease((now - g.crashAt - RESULTS_DELAY_MS - PANEL_MS) / COUNT_MS);
   drawText(ctx, `${Math.round(g.result * p)} M`, cx, y + 48, 4, PAL.cream, 'center');
   tag(ctx, 0, cx - 100, y + 110, PAL.cream, 3);

@@ -118,6 +118,13 @@ ok(readSheet('bg-sky').day && readSheet('bg-sky').night, 'bg-sky: day and night 
   const I = readSheet('ui-icons');
   ok(['pause', 'soundOn', 'soundOff', 'prev', 'next'].every(k => I[k]?.length === 1), 'ui-icons: all 5 glyphs');
 }
+{
+  // Header font (Rubik Dirt (Pixel)): every character the headers use, one frame each, 13×14 art px cells.
+  const F = readSheet('font-header'), [w, h] = size('font-header');
+  const need = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 'excl', 'quest', 'dash', 'apos', 'dot'];
+  ok(need.every(k => F[k]?.length === 1), 'font-header: A-Z, 0-9 and punctuation');
+  ok(w === 13 && h === 14, `font-header: 13×14 art px cells (is ${w}×${h})`);
+}
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
