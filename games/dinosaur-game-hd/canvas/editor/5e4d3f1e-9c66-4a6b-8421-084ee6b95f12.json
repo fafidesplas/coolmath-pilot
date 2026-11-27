@@ -201,7 +201,7 @@
       "x": 800,
       "y": 10960,
       "width": 2680,
-      "height": 3480
+      "height": 4096
     },
     "batch6-bg-sky": {
       "x": 40,
@@ -258,12 +258,52 @@
     "batch6-ingame-results": {
       "x": 1360,
       "y": 2720
+    },
+    "locations-group": {
+      "x": 800,
+      "y": 14540,
+      "width": 4080,
+      "height": 1900
+    },
+    "locations-note": {
+      "x": 40,
+      "y": 60,
+      "width": 1360,
+      "height": 200
+    },
+    "loc-jungle": {
+      "x": 40,
+      "y": 320
+    },
+    "loc-volcano": {
+      "x": 1380,
+      "y": 320
+    },
+    "loc-ice": {
+      "x": 2720,
+      "y": 320
+    },
+    "loc-coast": {
+      "x": 40,
+      "y": 1120
+    },
+    "loc-swamp": {
+      "x": 1380,
+      "y": 1120
+    },
+    "batch6-bg-ground-before": {
+      "x": 40,
+      "y": 3420
+    },
+    "batch6-ingame-clean-ground": {
+      "x": 1360,
+      "y": 3340
     }
   },
   "viewport": {
-    "x": -552.259712087648,
-    "y": -8751.558729527946,
-    "zoom": 0.7515873819917045
+    "x": -1400.7899142032327,
+    "y": -21833.370822278142,
+    "zoom": 1.4800682180438889
   },
   "view": "canvas"
 }

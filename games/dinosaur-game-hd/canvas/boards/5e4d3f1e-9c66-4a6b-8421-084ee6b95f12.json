@@ -502,7 +502,7 @@
       "id": "batch6-group",
       "type": "group",
       "data": {
-        "name": "Batch 6: backgrounds and UI buttons (review)",
+        "name": "Batch 6: backgrounds and UI buttons (approved)",
         "pixelStyle": "classic"
       },
       "title": "Batch 6 review",
@@ -615,7 +615,7 @@
         "mediaType": "image"
       },
       "parentId": "batch6-group",
-      "title": "Ground",
+      "title": "Ground (clean, no pebbles)",
       "description": "Production asset preview: assets/sprites/bg-ground.png in game."
     },
     {
@@ -661,6 +661,152 @@
       "parentId": "batch6-group",
       "title": "In game: results at night",
       "description": "Playtest screenshot."
+    },
+    {
+      "id": "locations-group",
+      "type": "group",
+      "data": {
+        "name": "Locations: 5 non-desert passes (pick one)",
+        "pixelStyle": "classic"
+      },
+      "title": "Locations: pick a direction",
+      "description": "Five concept passes for a non-desert location, each a reskin of the current in-game run screenshot (batch5-ingame-run). Reference mockups only, not production art."
+    },
+    {
+      "id": "locations-note",
+      "type": "text",
+      "data": {
+        "text": "Five non-desert passes, drawn at the game's own 320x180 art resolution with the real T-Rex, eggs and HUD so they read like real screenshots (no image model is connected, so nothing was AI-generated). Each keeps the run the same (ground height, obstacle footprints, egg arc) and swaps only sky, parallax layers, ground and the cactus stand-ins. The GDD already lists jungle, volcano and ice as later scenes; Coast and Glow Swamp are new. Pick one, or mix (e.g. Swamp mushrooms in the Jungle), and it goes into the GDD and gets redrawn in Aseprite like batch 6.",
+        "instruction": ""
+      },
+      "parentId": "locations-group",
+      "title": "How to read these",
+      "description": "Notes for picking a location direction."
+    },
+    {
+      "id": "loc-jungle",
+      "type": "image",
+      "data": {
+        "prompt": "Redraw this game screenshot as the same 16-bit SNES-style pixel art side-scrolling runner, keeping the exact same layout and camera: the same slate-gray pixel T-Rex with a big head and tiny arms running on the left on a flat ground line at the same height, the same arc of small cream eggs with orange speckles, the same HUD (egg counter top left, score top center, pause button top right), crisp pixels, dark outlines, flat readable ground, strong obstacle silhouettes, 3 parallax background layers plus a far sky. Change only the location: lush prehistoric jungle in warm morning light: giant ferns, cycads and tall tree trunks with hanging vines in the parallax layers, a misty waterfall far back, a mossy dark-green dirt ground with small pebbles; the cacti are replaced by spiky thorn bushes and a fallen log, same sizes and positions. Palette: deep greens, teal shadows, golden light shafts. No desert, no sand, no saguaro cactus, no text other than the HUD, no watermark, not photorealistic, no blur.",
+        "presetId": "scene",
+        "pixelStyle": "classic",
+        "resolution": "1K",
+        "aspectRatio": "16:9",
+        "images": [
+          {
+            "type": "library",
+            "assetId": "batch5-ingame-run"
+          }
+        ],
+        "assetId": "loc-jungle"
+      },
+      "parentId": "locations-group",
+      "title": "Pass 1: Fern Jungle",
+      "description": "Reference mockup, not production art. Morning jungle: canopy and vines, light shafts, a waterfall far back, fern line, dark dirt ground. Thorn bushes for small cacti, an upright log for the big one. The prompt is kept for an AI pass once an image model is connected."
+    },
+    {
+      "id": "loc-volcano",
+      "type": "image",
+      "data": {
+        "prompt": "Redraw this game screenshot as the same 16-bit SNES-style pixel art side-scrolling runner, keeping the exact same layout and camera: the same slate-gray pixel T-Rex with a big head and tiny arms running on the left on a flat ground line at the same height, the same arc of small cream eggs with orange speckles, the same HUD (egg counter top left, score top center, pause button top right), crisp pixels, dark outlines, flat readable ground, strong obstacle silhouettes, 3 parallax background layers plus a far sky. Change only the location: volcanic badlands at dusk: a smoking volcano with glowing orange lava streams in the far layer, dark basalt cliffs and ash clouds in the middle layers, a charcoal rock ground with faint glowing cracks; the cacti are replaced by jagged black obsidian spikes with orange rims, same sizes and positions. Palette: charcoal, maroon sky, hot orange and yellow accents, ember particles. No desert, no sand, no saguaro cactus, no text other than the HUD, no watermark, not photorealistic, no blur.",
+        "presetId": "scene",
+        "pixelStyle": "classic",
+        "resolution": "1K",
+        "aspectRatio": "16:9",
+        "images": [
+          {
+            "type": "library",
+            "assetId": "batch5-ingame-run"
+          }
+        ],
+        "assetId": "loc-volcano"
+      },
+      "parentId": "locations-group",
+      "title": "Pass 2: Volcano",
+      "description": "Reference mockup, not production art. Dusk volcano with lava streams, basalt ridges, charcoal ground with glowing cracks, embers. Obsidian spikes with orange rims for cacti. HUD turns cream. The prompt is kept for an AI pass once an image model is connected."
+    },
+    {
+      "id": "loc-ice",
+      "type": "image",
+      "data": {
+        "prompt": "Redraw this game screenshot as the same 16-bit SNES-style pixel art side-scrolling runner, keeping the exact same layout and camera: the same slate-gray pixel T-Rex with a big head and tiny arms running on the left on a flat ground line at the same height, the same arc of small cream eggs with orange speckles, the same HUD (egg counter top left, score top center, pause button top right), crisp pixels, dark outlines, flat readable ground, strong obstacle silhouettes, 3 parallax background layers plus a far sky. Change only the location: frozen ice age tundra under a pale sky with a faint green aurora: blue glaciers and snowy peaks in the far layers, snow drifts and frosted pine trees in the middle, a packed white snow ground with blue shadows; the cacti are replaced by pointed ice crystal spikes, same sizes and positions. Palette: white, ice blue, lavender shadows, a little mint aurora. No desert, no sand, no saguaro cactus, no text other than the HUD, no watermark, not photorealistic, no blur.",
+        "presetId": "scene",
+        "pixelStyle": "classic",
+        "resolution": "1K",
+        "aspectRatio": "16:9",
+        "images": [
+          {
+            "type": "library",
+            "assetId": "batch5-ingame-run"
+          }
+        ],
+        "assetId": "loc-ice"
+      },
+      "parentId": "locations-group",
+      "title": "Pass 3: Ice Age",
+      "description": "Reference mockup, not production art. Pale lavender sky with a mint aurora, snowy peaks, frosted pines, snow ground. Ice crystal spikes for cacti. The prompt is kept for an AI pass once an image model is connected."
+    },
+    {
+      "id": "loc-coast",
+      "type": "image",
+      "data": {
+        "prompt": "Redraw this game screenshot as the same 16-bit SNES-style pixel art side-scrolling runner, keeping the exact same layout and camera: the same slate-gray pixel T-Rex with a big head and tiny arms running on the left on a flat ground line at the same height, the same arc of small cream eggs with orange speckles, the same HUD (egg counter top left, score top center, pause button top right), crisp pixels, dark outlines, flat readable ground, strong obstacle silhouettes, 3 parallax background layers plus a far sky. Change only the location: sunny prehistoric beach and lagoon: turquoise sea with tall sea stacks and a distant island in the far layer, cycad palms and tide pools in the middle layers, a wet pale shoreline ground with shells; the cacti are replaced by spiky coral rocks and a big spiral ammonite shell, same sizes and positions; a plesiosaur neck silhouette far out at sea. Palette: turquoise, coral pink, palm green, warm white. No desert, no sand, no saguaro cactus, no text other than the HUD, no watermark, not photorealistic, no blur.",
+        "presetId": "scene",
+        "pixelStyle": "classic",
+        "resolution": "1K",
+        "aspectRatio": "16:9",
+        "images": [
+          {
+            "type": "library",
+            "assetId": "batch5-ingame-run"
+          }
+        ],
+        "assetId": "loc-coast"
+      },
+      "parentId": "locations-group",
+      "title": "Pass 4: Prehistoric Coast",
+      "description": "Reference mockup, not production art. Turquoise sea with sea stacks, an island and a plesiosaur, cycad palms, a pale shell shore with tide pools. Pink coral for small cacti, tall orange coral for the big one. The prompt is kept for an AI pass once an image model is connected."
+    },
+    {
+      "id": "loc-swamp",
+      "type": "image",
+      "data": {
+        "prompt": "Redraw this game screenshot as the same 16-bit SNES-style pixel art side-scrolling runner, keeping the exact same layout and camera: the same slate-gray pixel T-Rex with a big head and tiny arms running on the left on a flat ground line at the same height, the same arc of small cream eggs with orange speckles, the same HUD (egg counter top left, score top center, pause button top right), crisp pixels, dark outlines, flat readable ground, strong obstacle silhouettes, 3 parallax background layers plus a far sky. Change only the location: misty twilight swamp: giant glowing mushrooms and twisted mangrove trees in the parallax layers, still dark water with reflections far back, fireflies, a muddy moss ground with roots; the cacti are replaced by tall spiky cattail and thorn-vine clumps, same sizes and positions. Palette: deep purple and navy, moss green, glowing cyan and pink mushroom accents. No desert, no sand, no saguaro cactus, no text other than the HUD, no watermark, not photorealistic, no blur.",
+        "presetId": "scene",
+        "pixelStyle": "classic",
+        "resolution": "1K",
+        "aspectRatio": "16:9",
+        "images": [
+          {
+            "type": "library",
+            "assetId": "batch5-ingame-run"
+          }
+        ],
+        "assetId": "loc-swamp"
+      },
+      "parentId": "locations-group",
+      "title": "Pass 5: Glow Swamp",
+      "description": "Reference mockup, not production art. Night swamp: moon, mangroves, still water, giant glowing cyan and pink mushrooms, fireflies, moss mud ground. Cattails for small cacti, a thorn vine for the big one. HUD turns cream. The prompt is kept for an AI pass once an image model is connected."
+    },
+    {
+      "id": "batch6-bg-ground-before",
+      "type": "asset",
+      "parentId": "batch6-group",
+      "title": "Ground, before (with pebbles)",
+      "data": {
+        "assetId": "batch6-bg-ground-before",
+        "mediaType": "image"
+      }
+    },
+    {
+      "id": "batch6-ingame-clean-ground",
+      "type": "asset",
+      "parentId": "batch6-group",
+      "title": "In game: clean ground",
+      "data": {
+        "assetId": "batch6-ingame-clean-ground",
+        "mediaType": "image"
+      }
     }
   ],
   "edges": [],

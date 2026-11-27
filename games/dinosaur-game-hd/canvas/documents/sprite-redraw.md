@@ -1,6 +1,6 @@
 # Sprite redraw in Aseprite: plan
 
-**Status:** batches 1 to 5 approved, and the old cell maps are deleted. Batch 6 (backgrounds and UI buttons) is done and waiting for review. See "Batch 6 review" on this board.
+**Status:** done. All 6 batches are approved (batch 6 on 2026-11-27), and the old cell maps are deleted. Every sprite, background and UI button now comes from an `.aseprite` file.
 
 ## Goal
 Replace the placeholder sprites in `src/art.js` (cell maps drawn in code) with hand-drawn pixel art made in Aseprite. The result is real SNES-style art, as GDD section 9 asks for: "a PNG sprite sheet drawn in a pixel editor".
@@ -36,7 +36,7 @@ Each batch ends with a review on this board: a contact sheet of the new frames n
 | 3 | **Achievement dinosaurs I** **Approved** | Hadrosaur, Ceratosaurus, Megalosaurus, Therizinosaurus | 40 |
 | 4 | **Achievement dinosaurs II** **Approved** | Allosaurus, Spinosaurus | 20 |
 | 5 | **World and eggs** **Approved** | Small cactus, large cactus, pterodactyl (2), flight mount (2, own art, not a flipped pterodactyl), egg (2), golden egg (2), hatch egg (4 stages + 3 shell pieces) | 16 |
-| 6 | **Backgrounds and UI buttons** (added by Pao) **Done** | Sky bands (day, night), stars, sun, moon, clouds, mesas, dunes, ground; button frames (orange, slate and gold, normal and pressed, 9-slice) and icons (pause, sound on and off, previous, next) | 21 |
+| 6 | **Backgrounds and UI buttons** (added by Pao) **Approved** | Sky bands (day, night), stars, sun, moon, clouds, mesas, dunes, ground; button frames (orange, slate and gold, normal and pressed, 9-slice) and icons (pause, sound on and off, previous, next) | 21 |
 
 A dinosaur has 10 frames: 4 run, jump, crash, sleep, 2 slide and a slide crash (slide 1 with dizzy eyes).
 

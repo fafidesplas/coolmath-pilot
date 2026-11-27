@@ -1,5 +1,11 @@
 # Dinosaur Game: Cool Edition — devlog
 
+## 2026-11-27 — Sprite redraw done; location passes
+- Pao approved batch 6. The Aseprite redraw is finished: all 6 batches approved, and every runner, obstacle, egg, background layer and UI button loads from an `.aseprite` export.
+- Location concepts: 5 non-desert passes drawn at 320x180 art px with the real sprites (`art/plan/locations/make_locations.py`; no image model was connected): Fern Jungle, Volcano, Ice Age, Prehistoric Coast, Glow Swamp. Shown on the canvas ("Locations" group) and added to `GDD.md` 13 as stretch goals, not v1.
+- Ground cleanup (Pao: the dark dashes looked dirty): the dark pebbles are gone from `bg-ground.lua`; the ground line, light specks and wind streaks stay. Before and after are in the Batch 6 group on the canvas. Art test 230/230; checked in a day run.
+- Next: a full playtest with the final art (the hatch scene and a pterodactyl in a run haven't been seen in game yet), then the open tuning in GDD 14 (hatch prices with the flight egg rate, achievement targets, golden egg window).
+
 ## 2026-11-26 — Sprite redraw, batch 6: backgrounds and UI buttons
 - Pao approved batch 5. The old cell maps are gone from `art.js` (it keeps `CELL`, `FOOTFALL_X` and the cactus offsets). `sprites.js` loads every sprite from its sheet, with no fallback. The art test checks the sheets only: 230/230 (the dropped checks were the cell maps' row lengths).
 - Backgrounds: `art/aseprite/bg/*.lua` (built with the new `lib.lua` `buildImage`: painted pixels, no outline, x wraps so tiles meet at the seam). The sky has 6 bands per tag (day, night) with a 2 row dither, then stars with crosses, a sun with sunset stripes, a moon with craters and a shaded edge, puffy 3-tone clouds (85% opaque, as before), mesas with rock strata and dithered shade, dunes with shaded slopes and wind ripples, and ground with pebbles, specks and streaks. Same sizes, placement and parallax; `buildLayers()` scales them and tints the night versions. The sky now tiles like the other layers instead of being stretched.

@@ -1,7 +1,7 @@
 # Dinosaur Game: Cool Edition — Game design document
 
 **Status:** Approved
-**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-25
+**Owner:** Pao · **Reviewed by:** Fafi · **Last updated:** 2026-11-27
 
 > The offline browser dino you already know, with the same jump, the same speed and the same "one mistake and it's over". Now in 16-bit pixel art, with eggs to collect, new runners to hatch and unlock, a golden egg that earns a bonus pterodactyl flight, and a race against a friend on the same keyboard.
 
@@ -345,7 +345,18 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 
 ## 13. Scope
 - **v1:** 1P endless, 2P race (keyboard and touch), eggs, the golden egg and its 20 s bonus pterodactyl flight, 10 runners (all dinosaurs, 8 frames each), day and night, one desert scene.
-- **Later (only if data says so):** more scenes (jungle, volcano, ice) every 1000 m; a ghost of your best run; color variants of each dinosaur as an egg sink once all 3 are hatched; more flight hazards or a longer flight.
+- **Stretch goals: more scenes.** Five location passes are on the canvas (group "Locations", files in `art/plan/locations/`). A scene changes only the look: the sky, the 3 parallax layers, the ground and the obstacle art. Obstacle footprints and hitboxes, the speed curve, the gaps and the egg patterns stay the same, so a run feels the same in every scene.
+
+  | Scene | Look | In place of the cacti |
+  |---|---|---|
+  | Fern Jungle | Morning tree canopy with vines, light shafts, a waterfall far back, ferns, dark dirt ground | Thorn bushes (small), an upright log (large) |
+  | Volcano | Dusk sky, a volcano with lava streams, basalt ridges, charcoal ground with glowing cracks, embers | Black obsidian spikes with orange rims |
+  | Ice Age | Pale sky with a mint aurora, snowy peaks, frosted pines, snow ground | Ice crystal spikes |
+  | Prehistoric Coast | Turquoise sea with sea stacks and a plesiosaur, cycad palms, a pale shell shore with tide pools | Pink coral (small), tall orange coral (large) |
+  | Glow Swamp | Night sky and moon, mangroves, still water, giant glowing cyan and pink mushrooms, fireflies, moss mud ground | Cattails (small), a thorn vine (large) |
+
+  Open before building: how a run moves between scenes (every 1000 m, or one scene picked on the title); Volcano and Glow Swamp are dark by default, so they need their own day and night palettes, and the HUD text turns Egg Cream on them.
+- **Later (only if data says so):** a ghost of your best run; color variants of each dinosaur as an egg sink once all 3 are hatched; more flight hazards or a longer flight.
 - **Cut:**
   - power-ups, upgrades, lives, missions, loot boxes: they break the "feels like the original" pillar;
   - a bonus flight in the middle of a run: it plays after the run, so the run never changes;
@@ -369,6 +380,7 @@ Progression ids are one per mode: `endless`, `versus`. A run has no "complete", 
 | Does 2P on a tablet work with four hands? | Build it; if testers can't use it, show "Needs a keyboard" on touch. | Playtest | Open |
 
 ## 15. Changelog
+- 2026-11-27 — Stretch goals (13): five more scenes, Fern Jungle, Volcano, Ice Age, Prehistoric Coast and Glow Swamp, from the location passes on the canvas. They replace "more scenes (jungle, volcano, ice)" in Later. Not in v1.
 - 2026-11-25 — Hangman beast removed (Pao's call): 10 runners, all dinosaurs (2, 7.1, 9, 12, 13). `totalNights` stays in the save as a lifetime stat.
 - 2026-11-24 — Synced with the build (no design change): the results show the hopping golden egg instead of a Fly! button, Retry and Menu only (3.8, 8); the flight has no hazards, so no hit end, no warning sound, no thunderclouds (3.8, 9, 10, 12); flight egg rate ~810 (14); debug builds put a golden egg every 300 m and the title has a temporary DEBUG button (3.7, 8, 12); `tools/` tests listed (12). This document is also the canvas main design document.
 - 2026-11-03 — Debug builds: a golden egg about every 300 m, and a temporary DEBUG ON / OFF button on the title (3.7, 8).

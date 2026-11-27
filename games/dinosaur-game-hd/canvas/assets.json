@@ -234,7 +234,7 @@
     "batch6-bg-ground": {
       "name": "Batch 6: Ground",
       "path": "art/plan/batch6-bg-ground.png",
-      "description": "Redrawn in Aseprite (art/aseprite/bg-ground.aseprite), 4x."
+      "description": "Ground tile at 4x, cleaned up: the dark pebbles are removed; the ground line, light specks and wind streaks stay."
     },
     "batch6-ingame-title": {
       "name": "Batch 6: In game: title (day)",
@@ -255,6 +255,41 @@
       "name": "Batch 6: In game: results at night",
       "path": "art/plan/batch6-ingame-results.jpg",
       "description": "Playtest screenshot, batch 6."
+    },
+    "loc-jungle": {
+      "name": "Location pass: Fern Jungle",
+      "path": "art/plan/locations/loc-jungle.png",
+      "description": "Reference mockup at 4x of the 640x360 view, drawn by art/plan/locations/make_locations.py with the real T-Rex, egg and HUD sprites. Morning jungle: canopy and vines, light shafts, a waterfall far back, fern line, dark dirt ground. Thorn bushes for small cacti, an upright log for the big one."
+    },
+    "loc-volcano": {
+      "name": "Location pass: Volcano",
+      "path": "art/plan/locations/loc-volcano.png",
+      "description": "Reference mockup at 4x of the 640x360 view, drawn by art/plan/locations/make_locations.py with the real T-Rex, egg and HUD sprites. Dusk volcano with lava streams, basalt ridges, charcoal ground with glowing cracks, embers. Obsidian spikes with orange rims for cacti. HUD turns cream."
+    },
+    "loc-ice": {
+      "name": "Location pass: Ice Age",
+      "path": "art/plan/locations/loc-ice.png",
+      "description": "Reference mockup at 4x of the 640x360 view, drawn by art/plan/locations/make_locations.py with the real T-Rex, egg and HUD sprites. Pale lavender sky with a mint aurora, snowy peaks, frosted pines, snow ground. Ice crystal spikes for cacti."
+    },
+    "loc-coast": {
+      "name": "Location pass: Prehistoric Coast",
+      "path": "art/plan/locations/loc-coast.png",
+      "description": "Reference mockup at 4x of the 640x360 view, drawn by art/plan/locations/make_locations.py with the real T-Rex, egg and HUD sprites. Turquoise sea with sea stacks, an island and a plesiosaur, cycad palms, a pale shell shore with tide pools. Pink coral for small cacti, tall orange coral for the big one."
+    },
+    "loc-swamp": {
+      "name": "Location pass: Glow Swamp",
+      "path": "art/plan/locations/loc-swamp.png",
+      "description": "Reference mockup at 4x of the 640x360 view, drawn by art/plan/locations/make_locations.py with the real T-Rex, egg and HUD sprites. Night swamp: moon, mangroves, still water, giant glowing cyan and pink mushrooms, fireflies, moss mud ground. Cattails for small cacti, a thorn vine for the big one. HUD turns cream."
+    },
+    "batch6-bg-ground-before": {
+      "name": "Batch 6: ground, before cleanup",
+      "path": "art/plan/batch6-bg-ground-before.png",
+      "description": "The first batch 6 ground tile at 4x, with the dark pebbles Pao found dirty. Kept for comparison."
+    },
+    "batch6-ingame-clean-ground": {
+      "name": "Batch 6: in game, clean ground",
+      "path": "art/plan/batch6-ingame-clean-ground.jpg",
+      "description": "Playtest screenshot: a day run on the ground without pebbles."
     }
   }
 }
