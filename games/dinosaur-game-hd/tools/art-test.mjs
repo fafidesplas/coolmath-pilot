@@ -125,6 +125,14 @@ ok(readSheet('bg-sky').day && readSheet('bg-sky').night, 'bg-sky: day and night 
   ok(need.every(k => F[k]?.length === 1), 'font-header: A-Z, 0-9 and punctuation');
   ok(w === 13 && h === 14, `font-header: 13×14 art px cells (is ${w}×${h})`);
 }
+{
+  // Body font (Jersey 25 (Pixel)): every character drawText uses, one frame each, 7×8 art px cells.
+  const F = readSheet('font-body'), [w, h] = size('font-body');
+  const need = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+    'dot', 'comma', 'excl', 'quest', 'colon', 'dash', 'slash', 'apos', 'plus', 'lparen', 'rparen'];
+  ok(need.every(k => F[k]?.length === 1), 'font-body: A-Z, 0-9 and punctuation');
+  ok(w === 7 && h === 8, `font-body: 7×8 art px cells (is ${w}×${h})`);
+}
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

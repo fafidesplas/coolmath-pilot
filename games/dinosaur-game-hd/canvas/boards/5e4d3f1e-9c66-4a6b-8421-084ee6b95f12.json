@@ -927,6 +927,36 @@
       },
       "parentId": "font-dirt-group",
       "title": "All headers: first font vs Rubik Dirt"
+    },
+    {
+      "id": "velociraptor-slim-group",
+      "type": "group",
+      "data": {
+        "name": "Velociraptor: slimmer",
+        "pixelStyle": "classic"
+      },
+      "title": "Velociraptor: slimmer",
+      "description": "Pao asked for a skinnier Velociraptor: its own slim body instead of the shared T-Rex body."
+    },
+    {
+      "id": "velociraptor-slim-before-after",
+      "type": "asset",
+      "data": {
+        "assetId": "velociraptor-slim-before-after",
+        "mediaType": "image"
+      },
+      "parentId": "velociraptor-slim-group",
+      "title": "Velociraptor: before and after"
+    },
+    {
+      "id": "velociraptor-slim-runners",
+      "type": "asset",
+      "data": {
+        "assetId": "velociraptor-slim-runners",
+        "mediaType": "image"
+      },
+      "parentId": "velociraptor-slim-group",
+      "title": "In game: slimmer Velociraptor"
     }
   ],
   "edges": [],

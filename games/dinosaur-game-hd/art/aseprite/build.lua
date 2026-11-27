@@ -19,5 +19,6 @@ assert(file, 'no Lua script for ' .. name)
 local R = assert(loadfile(file))(L)
 local out = app.fs.joinPath(dir, name .. '.aseprite')
 if R.image then L.buildImage(out, R)
-else (R.simple and L.buildSimple or L.build)(out, R.palette, R.frames, R.fps or 12) end
+elseif R.simple then L.buildSimple(out, R.palette, R.frames, R.fps or 12, R)
+else L.build(out, R.palette, R.frames, R.fps or 12) end
 print('built ' .. name .. '.aseprite, ' .. #R.frames .. ' frames')

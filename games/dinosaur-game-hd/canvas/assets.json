@@ -340,6 +340,81 @@
       "name": "Headers: first font vs Rubik Dirt",
       "path": "art/plan/font-compare-all.png",
       "description": "Every header the game uses, in both fonts side by side at 4x, drawn with the game's rules: the title at the big size, each header's shadow and background from its screen (sky, dimmed scene, slate panel)."
+    },
+    "font-body-specimen": {
+      "name": "Body font VT323 (Pixel): specimen",
+      "path": "art/plan/font-body-specimen.png",
+      "description": "Every glyph of VT323 (Pixel) at 2x screen zoom: capitals, digits, punctuation, lowercase (in the sheet, not used yet), two body lines, and the current 5x7 font against VT323 at the normal and big sizes."
+    },
+    "font-body-compare-title": {
+      "name": "Title: 5x7 vs VT323 (Pixel)",
+      "path": "art/plan/font-body-compare-title.jpg",
+      "description": "Title screen, 5x7 font (left) and VT323 (Pixel) (right, with ?bfont). The 5x7 shot caught the blinking start hint while it was off."
+    },
+    "font-body-compare-gameover": {
+      "name": "Results: 5x7 vs VT323 (Pixel)",
+      "path": "art/plan/font-body-compare-gameover.jpg",
+      "description": "Results panel, 5x7 font (left) and VT323 (Pixel) (right)."
+    },
+    "font-body-runners": {
+      "name": "VT323 (Pixel): Runners in game",
+      "path": "art/plan/font-body-runners.jpg",
+      "description": "Runners screen with ?bfont: prices, achievement goals, name and BACK button."
+    },
+    "font-body-run": {
+      "name": "VT323 (Pixel): run HUD in game",
+      "path": "art/plan/font-body-run.jpg",
+      "description": "In-run HUD with ?bfont: egg count and distance."
+    },
+    "font-body-2p": {
+      "name": "VT323 (Pixel): 2P setup in game (key hints overflow)",
+      "path": "art/plan/font-body-2p.jpg",
+      "description": "2P setup with ?bfont. The size-1 key hints become 14 px tall and the P2 line runs off the right edge; needs a layout fix before switching."
+    },
+    "font-vt-vs-jersey-specimen": {
+      "name": "Specimen: VT323 vs Jersey 25 (Pixel)",
+      "path": "art/plan/font-vt-vs-jersey-specimen.png",
+      "description": "Every capital, digit and punctuation glyph of both pixel body fonts, plus two body lines and the big size, at the same game sizes."
+    },
+    "font-vt-vs-jersey-title": {
+      "name": "Title: VT323 vs Jersey 25",
+      "path": "art/plan/font-vt-vs-jersey-title.jpg",
+      "description": "Title screen with ?bfont=vt323 (left) and ?bfont=jersey (right)."
+    },
+    "font-vt-vs-jersey-gameover": {
+      "name": "Results: VT323 vs Jersey 25",
+      "path": "art/plan/font-vt-vs-jersey-gameover.jpg",
+      "description": "Results panel, VT323 (left) and Jersey 25 (right)."
+    },
+    "font-vt-vs-jersey-runners": {
+      "name": "Runners: VT323 vs Jersey 25",
+      "path": "art/plan/font-vt-vs-jersey-runners.jpg",
+      "description": "Runners screen, VT323 (left) and Jersey 25 (right)."
+    },
+    "font-vt-vs-jersey-run": {
+      "name": "Run HUD: VT323 vs Jersey 25",
+      "path": "art/plan/font-vt-vs-jersey-run.jpg",
+      "description": "In-run HUD, VT323 (left) and Jersey 25 (right)."
+    },
+    "font-vt-vs-jersey-2p": {
+      "name": "2P setup: VT323 vs Jersey 25",
+      "path": "art/plan/font-vt-vs-jersey-2p.jpg",
+      "description": "2P setup, VT323 (left, P2 key hints overflow) and Jersey 25 (right, fits at the small size)."
+    },
+    "font-jersey-race": {
+      "name": "Jersey 25 (Pixel): 2P race result",
+      "path": "art/plan/font-jersey-race.jpg",
+      "description": "2P race result with Jersey 25 (Pixel) as the default body font: tally at size 3, REMATCH and HOME buttons, the race HUD behind."
+    },
+    "velociraptor-slim-before-after": {
+      "name": "Velociraptor: before and after (slimmer)",
+      "path": "art/plan/velociraptor-slim-before-after.png",
+      "description": "Every Velociraptor frame at 6x: the batch 2 version on top (the T-Rex body), the slimmer build below (thin neck, low narrow head, slim chest, 2 px tail, narrow thigh). Same legs, same hitboxes."
+    },
+    "velociraptor-slim-runners": {
+      "name": "In game: slimmer Velociraptor on the Runners screen",
+      "path": "art/plan/velociraptor-slim-runners.jpg",
+      "description": "Runners screen with every runner shown (debug U): the slimmer Velociraptor on its card and running in the background."
     }
   }
 }

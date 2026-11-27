@@ -350,12 +350,26 @@
     "font-compare-all": {
       "x": 40,
       "y": 2460
+    },
+    "velociraptor-slim-group": {
+      "x": 3500,
+      "y": 3000,
+      "width": 1880,
+      "height": 1260
+    },
+    "velociraptor-slim-before-after": {
+      "x": 40,
+      "y": 60
+    },
+    "velociraptor-slim-runners": {
+      "x": 40,
+      "y": 480
     }
   },
   "viewport": {
-    "x": 86.10047695634546,
-    "y": -1841.83487989669,
-    "zoom": 0.1
+    "x": -4246.361202721407,
+    "y": -4313.431119874418,
+    "zoom": 1.4628041149677922
   },
   "view": "canvas"
 }

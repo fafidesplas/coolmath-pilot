@@ -5,3 +5,8 @@
   Project Authors, licensed under the SIL Open Font License 1.1
   (`art/fonts/OFL-RubikDirt.txt`). The pixel version (`art/aseprite/ui/font-header.lua`,
   `assets/sprites/font-header.png`) is under the same license.
+- **Body font: "Jersey 25 (Pixel)"**, a hand-made pixel version of
+  [Jersey 25](https://github.com/scfried/soft-type-jersey), Copyright 2023 The Soft Type
+  Project Authors, licensed under the SIL Open Font License 1.1
+  (`art/fonts/OFL-Jersey25.txt`). The pixel version (`art/aseprite/ui/font-body.lua`,
+  `assets/sprites/font-body.png`) is under the same license.

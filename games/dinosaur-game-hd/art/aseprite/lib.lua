@@ -39,7 +39,8 @@ function M.concat(a, b)
 end
 
 -- Draw a grid with its outline into an image at (ox, oy) + 1 (the margin).
-local function paint(img, rows, palette, ox, oy)
+-- With noOutline, only the grid is drawn, still at (ox, oy) + 1.
+local function paint(img, rows, palette, ox, oy, noOutline)
   local w = #rows[1]
   for y, r in ipairs(rows) do
     assert(#r == w, 'row ' .. y .. ' is ' .. #r .. ' wide, expected ' .. w)
@@ -59,7 +60,7 @@ local function paint(img, rows, palette, ox, oy)
         local hex = palette[c]
         assert(hex, "no color for '" .. c .. "'")
         img:drawPixel(ox + x, oy + y, rgba(hex))
-      elseif at(x - 1, y) or at(x + 1, y) or at(x, y - 1) or at(x, y + 1) then
+      elseif not noOutline and (at(x - 1, y) or at(x + 1, y) or at(x, y - 1) or at(x, y + 1)) then
         img:drawPixel(ox + x, oy + y, ink)
       end
     end
@@ -110,16 +111,19 @@ end
 
 -- A world sprite (cactus, pterodactyl, egg...): every frame is its grid plus
 -- the 1 px outline margin, all frames the same size, no slices.
-function M.buildSimple(out, palette, frames, fps)
-  local gw, gh = #frames[1].rows[1] + 2, #frames[1].rows + 2
+-- opts.outline = false: no outline and no margin (the body font).
+function M.buildSimple(out, palette, frames, fps, opts)
+  opts = opts or {}
+  local m = opts.outline == false and 0 or 2
+  local gw, gh = #frames[1].rows[1] + m, #frames[1].rows + m
   local spr = Sprite(gw, gh, ColorMode.RGB)
   local layer = spr.layers[1]
   layer.name = 'art'
   for i = 2, #frames do spr:newEmptyFrame() end
   for i, f in ipairs(frames) do
-    assert(#f.rows[1] + 2 == gw and #f.rows + 2 == gh, f.tag .. ' frame ' .. i .. ' is a different size')
+    assert(#f.rows[1] + m == gw and #f.rows + m == gh, f.tag .. ' frame ' .. i .. ' is a different size')
     local img = Image(gw, gh, ColorMode.RGB)
-    paint(img, f.rows, palette, 0, 0)
+    paint(img, f.rows, palette, m / 2 - 1, m / 2 - 1, m == 0)
     spr:newCel(layer, i, img, Point(0, 0))
     spr.frames[i].duration = 1 / (f.fps or fps)
   end

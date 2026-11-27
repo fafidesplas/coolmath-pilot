@@ -144,9 +144,14 @@ async function loadFont(name) {
 }
 const header = await loadFont('font-header');
 
+// Body font (GDD 8): Jersey 25 (Pixel), art/aseprite/ui/font-body.lua. One
+// white glyph per tag, left-aligned in its cell; font.js tints it.
+const body = await loadFont('font-body');
+
 export const SPR = {
   bg,
   header,
+  body,
   button,
   icons,
   runners,

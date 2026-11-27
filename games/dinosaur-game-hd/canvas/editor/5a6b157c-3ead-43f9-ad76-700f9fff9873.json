@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "nodes": {
+    "font-body-note": {
+      "x": 0,
+      "y": 0,
+      "width": 520,
+      "height": 640
+    },
+    "font-body-specimen": {
+      "x": 600,
+      "y": 0
+    },
+    "font-body-compare-title": {
+      "x": 0,
+      "y": 860
+    },
+    "font-body-compare-gameover": {
+      "x": 0,
+      "y": 1720
+    },
+    "font-body-runners": {
+      "x": 0,
+      "y": 2580
+    },
+    "font-body-run": {
+      "x": 1360,
+      "y": 2580
+    },
+    "font-body-2p": {
+      "x": 0,
+      "y": 3380
+    },
+    "font-compare-note": {
+      "x": 0,
+      "y": 4300,
+      "width": 560,
+      "height": 620
+    },
+    "font-vt-vs-jersey-specimen": {
+      "x": 640,
+      "y": 4300
+    },
+    "font-vt-vs-jersey-title": {
+      "x": 0,
+      "y": 5100
+    },
+    "font-vt-vs-jersey-gameover": {
+      "x": 0,
+      "y": 6000
+    },
+    "font-vt-vs-jersey-runners": {
+      "x": 0,
+      "y": 7800
+    },
+    "font-vt-vs-jersey-run": {
+      "x": 0,
+      "y": 8700
+    },
+    "font-vt-vs-jersey-2p": {
+      "x": 0,
+      "y": 6900
+    },
+    "font-jersey-race": {
+      "x": 2700,
+      "y": 5100
+    }
+  },
+  "viewport": {
+    "x": 228.67487110998184,
+    "y": 260.2662490534219,
+    "zoom": 0.832701932125542
+  },
+  "view": "canvas"
+}

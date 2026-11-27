@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "nodes": [
+    {
+      "id": "font-body-note",
+      "type": "text",
+      "data": {
+        "text": "First option, not chosen: VT323 (Pixel). VT323 (OFL) is drawn on a terminal dot grid: 10 dots per character, capitals 7 dots tall, every dot twice as tall as it is wide. The pixel version kept exactly those dots: in game each dot was 1 px wide and 2 px tall (half an art px wide). Its 2P key hints overflowed, since it can't go below its normal size.\n\nThese shots are kept for reference; the VT323 files and the ?bfont switch are removed.",
+        "instruction": ""
+      },
+      "title": "VT323 (Pixel): first option",
+      "description": "What VT323 (Pixel) is, how it maps to the game grid, and open issues."
+    },
+    {
+      "id": "font-body-specimen",
+      "type": "asset",
+      "data": {
+        "assetId": "font-body-specimen",
+        "mediaType": "image"
+      },
+      "title": "Body font VT323 (Pixel): specimen"
+    },
+    {
+      "id": "font-body-compare-title",
+      "type": "asset",
+      "data": {
+        "assetId": "font-body-compare-title",
+        "mediaType": "image"
+      },
+      "title": "Title: 5x7 vs VT323 (Pixel)"
+    },
+    {
+      "id": "font-body-compare-gameover",
+      "type": "asset",
+      "data": {
+        "assetId": "font-body-compare-gameover",
+        "mediaType": "image"
+      },
+      "title": "Results: 5x7 vs VT323 (Pixel)"
+    },
+    {
+      "id": "font-body-runners",
+      "type": "asset",
+      "data": {
+        "assetId": "font-body-runners",
+        "mediaType": "image"
+      },
+      "title": "VT323 (Pixel): Runners in game"
+    },
+    {
+      "id": "font-body-run",
+      "type": "asset",
+      "data": {
+        "assetId": "font-body-run",
+        "mediaType": "image"
+      },
+      "title": "VT323 (Pixel): run HUD in game"
+    },
+    {
+      "id": "font-body-2p",
+      "type": "asset",
+      "data": {
+        "assetId": "font-body-2p",
+        "mediaType": "image"
+      },
+      "title": "VT323 (Pixel): 2P setup in game (key hints overflow)"
+    },
+    {
+      "id": "font-compare-note",
+      "type": "text",
+      "data": {
+        "text": "Jersey 25 (Pixel) next to VT323 (Pixel), both in the game.\n\nJersey 25 (OFL) is itself a pixel font, but 25 dots tall with 5-dot stems, far bigger than body text. So it is redrawn on the art grid like the Rubik Dirt header: capitals 7 art px tall (14 px, same as now), 2 px stems, 1 px bars, its cut corners and flat ends, proportional widths. art/aseprite/ui/font-body.lua.\n\nVT323 (Pixel): thin, monospaced terminal look, dots half an art px wide; lowercase included. Can't go smaller than its normal size, so the 2P key hints overflow.\nJersey 25 (Pixel): bold and blocky, on the art grid, close to the Rubik Dirt headers in weight. Same size steps as the 5x7 font, so every screen fits as is, the 2P hints too. Capitals only.\n\nChosen: Jersey 25 (Pixel). It is now the game's body and button font (art/aseprite/ui/font-body.lua); the 5x7 code font and VT323 are removed.",
+        "instruction": ""
+      },
+      "title": "VT323 vs Jersey 25: how to read this",
+      "description": "What each option is and how they differ."
+    },
+    {
+      "id": "font-vt-vs-jersey-specimen",
+      "type": "asset",
+      "data": {
+        "assetId": "font-vt-vs-jersey-specimen",
+        "mediaType": "image"
+      },
+      "title": "Specimen: VT323 vs Jersey 25 (Pixel)"
+    },
+    {
+      "id": "font-vt-vs-jersey-title",
+      "type": "asset",
+      "data": {
+        "assetId": "font-vt-vs-jersey-title",
+        "mediaType": "image"
+      },
+      "title": "Title: VT323 vs Jersey 25"
+    },
+    {
+      "id": "font-vt-vs-jersey-gameover",
+      "type": "asset",
+      "data": {
+        "assetId": "font-vt-vs-jersey-gameover",
+        "mediaType": "image"
+      },
+      "title": "Results: VT323 vs Jersey 25"
+    },
+    {
+      "id": "font-vt-vs-jersey-runners",
+      "type": "asset",
+      "data": {
+        "assetId": "font-vt-vs-jersey-runners",
+        "mediaType": "image"
+      },
+      "title": "Runners: VT323 vs Jersey 25"
+    },
+    {
+      "id": "font-vt-vs-jersey-run",
+      "type": "asset",
+      "data": {
+        "assetId": "font-vt-vs-jersey-run",
+        "mediaType": "image"
+      },
+      "title": "Run HUD: VT323 vs Jersey 25"
+    },
+    {
+      "id": "font-vt-vs-jersey-2p",
+      "type": "asset",
+      "data": {
+        "assetId": "font-vt-vs-jersey-2p",
+        "mediaType": "image"
+      },
+      "title": "2P setup: VT323 vs Jersey 25"
+    },
+    {
+      "id": "font-jersey-race",
+      "type": "asset",
+      "data": {
+        "assetId": "font-jersey-race",
+        "mediaType": "image"
+      },
+      "title": "Jersey 25 (Pixel): 2P race result in game"
+    }
+  ],
+  "edges": [],
+  "id": "5a6b157c-3ead-43f9-ad76-700f9fff9873"
+}
